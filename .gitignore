@@ -6,5 +6,6 @@ php_system/conexion.php
 *.gz
 /archivoscheque
 archivox/
+/backup_db_local/
 
 .vscode/

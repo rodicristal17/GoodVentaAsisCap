@@ -8,6 +8,7 @@
     include_once("abmgasto.php");
     require_once("abmDictamen.php");
     require_once("interconsulta_seguimiento_paciente_helper.php");
+    require_once("interconsulta_seguimiento_programado_helper.php");
 
     date_default_timezone_set('America/Asuncion');
 
@@ -274,7 +275,7 @@
                 $limite= $esConsultaAuxiliar ? '60' : normalizarLimiteListadoInterConsulta($limiteSolicitado, 30);
 
                 if ($funt == 'buscarInterConsultasEnriquecidos') {
-                    obtenerVistaInterConsulta($filtros, $limite, $esConsultaAuxiliar ? 60 : 30);
+                    obtenerVistaInterConsulta($filtros, $limite, $esConsultaAuxiliar ? 60 : 30, $user);
                 } else {
                     obtenerVistaInterConsultaBasica($filtros, $limite);
                 }
@@ -451,14 +452,162 @@
                 
                 obtenerVistaMensaje($filtros, $limite);
                 break;
+            case 'obtenerContextoSeguimientoProgramado':
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? intval($_POST['cod_interConsulta']) : 0;
+                if (!seguimientoProgramadoEstructuraDisponible()) {
+                    echo json_encode(array("1" => "error", "2" => array("mensaje" => "La estructura de seguimientos programados no esta instalada.")));
+                    break;
+                }
+                if (!seguimientoProgramadoPuedeAccederHilo($cod_interConsulta, $user, true)) {
+                    echo json_encode(array("1" => "NI", "2" => array("mensaje" => "Usted no tiene acceso para programar seguimientos en este hilo.")));
+                    break;
+                }
+                $puedeAdministrarPlantillas= seguimientoProgramadoPuedeAdministrarPlantillas($user);
+                echo json_encode(array(
+                    "1" => "exito",
+                    "2" => array(
+                        "plantillas" => seguimientoProgramadoObtenerPlantillas(false),
+                        "responsables" => seguimientoProgramadoObtenerResponsables($cod_interConsulta, $user),
+                        "puede_administrar_plantillas" => $puedeAdministrarPlantillas ? 1 : 0,
+                        "plantillas_administracion" => $puedeAdministrarPlantillas ? seguimientoProgramadoObtenerPlantillas(true) : array(),
+                        "alertas" => seguimientoProgramadoObtenerResumenAlertas($user)
+                    )
+                ));
+                break;
+            case 'guardarPlantillaSeguimientoProgramado':
+                $datosPlantilla= array(
+                    "id_plantilla" => isset($_POST['id_plantilla']) ? intval($_POST['id_plantilla']) : 0,
+                    "nombre" => isset($_POST['nombre']) ? mb_convert_encoding((string)$_POST['nombre'], 'ISO-8859-1', 'UTF-8') : '',
+                    "categoria" => isset($_POST['categoria']) ? mb_convert_encoding((string)$_POST['categoria'], 'ISO-8859-1', 'UTF-8') : '',
+                    "mensaje" => isset($_POST['mensaje']) ? mb_convert_encoding((string)$_POST['mensaje'], 'ISO-8859-1', 'UTF-8') : '',
+                    "orden" => isset($_POST['orden']) ? intval($_POST['orden']) : 0,
+                    "estado" => isset($_POST['estado']) ? (string)$_POST['estado'] : 'activo'
+                );
+                $resultadoPlantilla= seguimientoProgramadoGuardarPlantilla($datosPlantilla, $user);
+                echo json_encode(array("1" => !empty($resultadoPlantilla['ok']) ? "exito" : "error", "2" => seguimientoPacienteValorSalidaJson($resultadoPlantilla)));
+                break;
+            case 'cambiarEstadoPlantillaSeguimientoProgramado':
+                $idPlantilla= isset($_POST['id_plantilla']) ? intval($_POST['id_plantilla']) : 0;
+                $estadoPlantilla= isset($_POST['estado']) && $_POST['estado'] === 'activo' ? 'activo' : 'inactivo';
+                $resultadoPlantilla= seguimientoProgramadoCambiarEstadoPlantilla($idPlantilla, $estadoPlantilla, $user);
+                echo json_encode(array("1" => !empty($resultadoPlantilla['ok']) ? "exito" : "error", "2" => seguimientoPacienteValorSalidaJson($resultadoPlantilla)));
+                break;
+            case 'programarSeguimientoInterConsulta':
+                $datosSeguimiento= array(
+                    "cod_interConsulta" => isset($_POST['cod_interConsulta']) ? intval($_POST['cod_interConsulta']) : 0,
+                    "id_plantilla" => isset($_POST['id_plantilla']) ? intval($_POST['id_plantilla']) : 0,
+                    "motivo" => isset($_POST['motivo']) ? mb_convert_encoding((string)$_POST['motivo'], 'ISO-8859-1', 'UTF-8') : '',
+                    "mensaje" => isset($_POST['mensaje']) ? mb_convert_encoding((string)$_POST['mensaje'], 'ISO-8859-1', 'UTF-8') : '',
+                    "fecha_programada" => isset($_POST['fecha_programada']) ? (string)$_POST['fecha_programada'] : '',
+                    "cod_responsable" => isset($_POST['cod_responsable']) ? intval($_POST['cod_responsable']) : intval($user),
+                    "id_seguimiento_origen" => isset($_POST['id_seguimiento_origen']) ? intval($_POST['id_seguimiento_origen']) : 0,
+                    "token_solicitud" => isset($_POST['token_solicitud']) ? (string)$_POST['token_solicitud'] : ''
+                );
+                $resultadoSeguimiento= seguimientoProgramadoCrear($datosSeguimiento, $user);
+                echo json_encode(array("1" => !empty($resultadoSeguimiento['ok']) ? "exito" : "error", "2" => seguimientoPacienteValorSalidaJson($resultadoSeguimiento)));
+                break;
+            case 'completarSeguimientoInterConsulta':
+                $idSeguimiento= isset($_POST['id_seguimiento']) ? intval($_POST['id_seguimiento']) : 0;
+                $resultadoGestion= isset($_POST['resultado']) ? mb_convert_encoding((string)$_POST['resultado'], 'ISO-8859-1', 'UTF-8') : '';
+                $resultadoSeguimiento= seguimientoProgramadoCompletar($idSeguimiento, $resultadoGestion, $user);
+                echo json_encode(array("1" => !empty($resultadoSeguimiento['ok']) ? "exito" : "error", "2" => seguimientoPacienteValorSalidaJson($resultadoSeguimiento)));
+                break;
+            case 'buscarAlertasSeguimientoInterConsulta':
+                echo json_encode(array("1" => "exito", "2" => seguimientoProgramadoObtenerResumenAlertas($user)));
+                break;
+            case 'buscarContextoMensajeInterConsulta':
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? intval($_POST['cod_interConsulta']) : 0;
+                $cod_mensaje_contexto= isset($_POST['cod_mensaje']) ? intval($_POST['cod_mensaje']) : 0;
+                if (!seguimientoProgramadoPuedeAccederHilo($cod_interConsulta, $user)) {
+                    echo json_encode(array("1" => "NI", "2" => array("mensaje" => "Usted no tiene acceso a este hilo.")));
+                    break;
+                }
+                $mysqliContexto= conectar_al_servidor();
+                $sqlContexto= "SELECT m.cod_mensaje,m.contenido,m.fecha_creacion,p.nombre_persona
+                               FROM mensaje m
+                               LEFT JOIN persona p ON p.cod_persona=m.cod_usuarioFK
+                               WHERE m.cod_mensaje=? AND m.cod_interConsultaFK=?
+                                 AND m.estado='activo' AND m.fecha_creacion<=NOW()
+                               LIMIT 1";
+                $stmtContexto= $mysqliContexto->prepare($sqlContexto);
+                if (!$stmtContexto) {
+                    $mysqliContexto->close();
+                    echo json_encode(array("1" => "error", "2" => array("mensaje" => "No se pudo consultar el mensaje original.")));
+                    break;
+                }
+                $stmtContexto->bind_param('ii', $cod_mensaje_contexto, $cod_interConsulta);
+                $stmtContexto->execute();
+                $mensajeContexto= $stmtContexto->get_result()->fetch_assoc();
+                $stmtContexto->close();
+                $mysqliContexto->close();
+                if (!$mensajeContexto) {
+                    echo json_encode(array("1" => "error", "2" => array("mensaje" => "El mensaje original ya no esta disponible.")));
+                    break;
+                }
+                echo json_encode(array("1" => "exito", "2" => seguimientoProgramadoFilaUtf8($mensajeContexto)));
+                break;
             case 'nuevo/editar mensaje':
                 $cod_mensaje= isset($_POST['cod_mensaje']) ? mb_convert_encoding((string)($_POST['cod_mensaje']), 'ISO-8859-1', 'UTF-8') : null;
                 $contenido= isset($_POST['contenido']) ? mb_convert_encoding((string)($_POST['contenido']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? mb_convert_encoding((string)($_POST['cod_interConsulta']), 'ISO-8859-1', 'UTF-8') : null;
-                $fecha_creacion= isset($_POST['fecha_creacion']) ? mb_convert_encoding((string)($_POST['fecha_creacion']), 'ISO-8859-1', 'UTF-8') : 'NOW()';
+                $fecha_creacion= $fechaActual->format('Y-m-d H:i:s');
                 $cod_dictamenFK= isset($_POST['cod_dictamenFK']) && !empty($_POST['cod_dictamenFK']) ? mb_convert_encoding((string)($_POST['cod_dictamenFK']), 'ISO-8859-1', 'UTF-8') : NULL;
+                $cod_mensaje_respuestaFK= isset($_POST['cod_mensaje_respuestaFK']) && intval($_POST['cod_mensaje_respuestaFK']) > 0 ? intval($_POST['cod_mensaje_respuestaFK']) : NULL;
 
-                $cod_mensaje= abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user,$cod_dictamenFK);
+                $codInterConsultaMensaje= intval($cod_interConsulta);
+                if (!seguimientoProgramadoPuedeAccederHilo($codInterConsultaMensaje, $user, true)) {
+                    echo json_encode(array("1" => "NI", "mensaje" => "Usted no tiene acceso para responder en este hilo o el hilo esta inactivo."));
+                    break;
+                }
+                if (!empty($cod_mensaje)) {
+                    $mysqliEdicionMensaje= conectar_al_servidor();
+                    $stmtEdicionMensaje= $mysqliEdicionMensaje->prepare("SELECT cod_mensaje FROM mensaje WHERE cod_mensaje=? AND cod_interConsultaFK=? AND cod_usuarioFK=? AND estado='activo' LIMIT 1");
+                    if (!$stmtEdicionMensaje) {
+                        $mysqliEdicionMensaje->close();
+                        echo json_encode(array("1" => "error", "mensaje" => "No se pudo validar el mensaje a editar."));
+                        break;
+                    }
+                    $codMensajeEdicion= intval($cod_mensaje);
+                    $codUsuarioEdicion= intval($user);
+                    $stmtEdicionMensaje->bind_param('iii', $codMensajeEdicion, $codInterConsultaMensaje, $codUsuarioEdicion);
+                    $stmtEdicionMensaje->execute();
+                    $edicionPermitida= $stmtEdicionMensaje->get_result()->num_rows > 0;
+                    $stmtEdicionMensaje->close();
+                    $mysqliEdicionMensaje->close();
+                    if (!$edicionPermitida) {
+                        echo json_encode(array("1" => "NI", "mensaje" => "Solo puede editar sus propios mensajes dentro del hilo actual."));
+                        break;
+                    }
+                }
+
+                if ($cod_mensaje_respuestaFK !== NULL) {
+                    if (!seguimientoProgramadoRespuestaCitadaDisponible()) {
+                        echo json_encode(array("1" => "error", "mensaje" => "La respuesta citada todavia no esta disponible."));
+                        break;
+                    }
+                    $mysqliRespuesta= conectar_al_servidor();
+                    $sqlRespuesta= "SELECT cod_mensaje FROM mensaje
+                                    WHERE cod_mensaje=? AND cod_interConsultaFK=?
+                                      AND estado='activo' AND fecha_creacion<=NOW() LIMIT 1";
+                    $stmtRespuesta= $mysqliRespuesta->prepare($sqlRespuesta);
+                    if (!$stmtRespuesta) {
+                        $mysqliRespuesta->close();
+                        echo json_encode(array("1" => "error", "mensaje" => "No se pudo validar el mensaje citado."));
+                        break;
+                    }
+                    $codInterConsultaRespuesta= intval($cod_interConsulta);
+                    $stmtRespuesta->bind_param('ii', $cod_mensaje_respuestaFK, $codInterConsultaRespuesta);
+                    $stmtRespuesta->execute();
+                    $respuestaValida= $stmtRespuesta->get_result()->num_rows > 0;
+                    $stmtRespuesta->close();
+                    $mysqliRespuesta->close();
+                    if (!$respuestaValida) {
+                        echo json_encode(array("1" => "error", "mensaje" => "El mensaje citado no pertenece a este hilo o ya no esta disponible."));
+                        break;
+                    }
+                }
+
+                $cod_mensaje= abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user,$cod_dictamenFK, FALSE, $cod_mensaje_respuestaFK);
                 echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
                 break;
             case 'subirImagenMensaje':
@@ -535,10 +684,13 @@
                 echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
                 break;
             case 'fusionarInterConsultas':
+                if (!function_exists('controldeaccesoacasas') || controldeaccesoacasas(intval($user), 'FUSIONARINTERCONSULTA', " u.accion='SI' ") != 1) {
+                    echo json_encode(array("1" => "NI", "2" => "No tiene permiso para fusionar hilos."));
+                    break;
+                }
                 $cod_interConsulta= mb_convert_encoding((string)($_POST['cod_interConsulta']), "ISO-8859-1", "UTF-8");
                 $cod_interConsulta_destino= mb_convert_encoding((string)($_POST['cod_interConsulta_destino']), "ISO-8859-1", "UTF-8");
-                fusionarInterconsultas($cod_interConsulta, $cod_interConsulta_destino, $user);
-                echo json_encode(array("1"=> "exito", "2" => $cod_interConsulta, "3" => $cod_interConsulta_destino));
+                echo json_encode(fusionarInterconsultas($cod_interConsulta, $cod_interConsulta_destino, $user));
                 break;
             default:
                 echo json_encode(array("1"=> "error", "2" => "$funt NO IMPLEMENTADA."));
@@ -546,24 +698,29 @@
     }
 
     function fusionarInterconsultas($cod_interConsulta, $cod_interConsulta_destino, $cod_usuarioFK) {
-        if (empty($cod_interConsulta) || empty($cod_interConsulta_destino)) {
-            echo json_encode(array("1" => "error", "2" => "Campos vacios."));
-            exit;
+        $cod_interConsulta= intval($cod_interConsulta);
+        $cod_interConsulta_destino= intval($cod_interConsulta_destino);
+        $cod_usuarioFK= intval($cod_usuarioFK);
+        if ($cod_interConsulta <= 0 || $cod_interConsulta_destino <= 0) {
+            return array("1" => "error", "2" => "Campos vacios.");
         }
-        $ids_menciones= [];
+        if ($cod_interConsulta === $cod_interConsulta_destino) {
+            return array("1" => "error", "2" => "El hilo de origen y destino deben ser diferentes.");
+        }
+        $ids_menciones= array();
         set_time_limit(300);
-        
-        // Obtiene la informacion de la interconsulta
-        $registroInterc= obtenerInterConsulta(array(
+
+        $registrosDestino= obtenerInterConsulta(array(
             "cod_interConsulta" => $cod_interConsulta_destino
-        ), 0)[0];
-        
-        // Obtiene las menciones de la interconsulta origen
-        $fechaActual= new DateTime();
+        ), 0);
+        if (count($registrosDestino) === 0) {
+            return array("1" => "error", "2" => "No se encontro el hilo de destino.");
+        }
+        $registroInterc= $registrosDestino[0];
+
         $registrosMens= obtenerMensaje(array(
             'cod_interConsultaFK' => $cod_interConsulta,
         ), 0);
-        $valueMens= end($registrosMens);
         $mencionesTemp= array();
         foreach ($registrosMens as $valueMens) {
             $registrosMenc= obtenerMencion(array(
@@ -580,67 +737,99 @@
             }
         }
         $ids_menciones = array_unique($ids_menciones);
-        
-        // Genera un mensaje del sistema
-        $fechaActual= new Datetime();
-        $cod_mensaje= abmMensaje("", "esta y la interconsulta ".$registroInterc['asunto']." fueron unidas por @{$cod_usuarioFK}", $fechaActual->format('Y-m-d H:i:s'), $cod_interConsulta_destino, NULL, NULL, FALSE);
-
-        // Pasa todos los mensajes al interconsulta destino
-        foreach ($registrosMens as $mensj) {
-            abmMensaje($mensj['cod_mensaje'], NULL, NULL, $cod_interConsulta_destino, NULL, NULL);
-        }
-        
-        // Agrega las menciones faltantes al mensaje del sistema
-        foreach ($ids_menciones as $value) {
-            if (empty($value)) {continue;}
-            abmMencion(null, $value, $cod_mensaje, 0, 'activo');
-        }
-
-        // Agrega las menciones a los mensajes futuros del sistema
-        $registrosMens= obtenerMensaje(array(
-            'cod_interConsultaFK' => $cod_interConsulta_destino,
-            'fecha_creacion' => "> '".$fechaActual->format('Y-m-d H:i:s')."'",
-        ), 0);
-
-        foreach ($registrosMens as $mensj) {
-            $registroMenc = obtenerMencion(array(
-                "cod_mensajeFK" => $mensj['cod_mensaje'],
-            ), 0);
-            
-            // Construir array de usuarios mencionados existentes para evitar consultas frecuentes
-            $usuariosMencionadosExistentes = array();
-            foreach ($registroMenc as $mencion) {
-                $usuariosMencionadosExistentes[] = $mencion['cod_usuarioFK'];
+        $mysqli = conectar_al_servidor();
+        $mysqli->begin_transaction();
+        try {
+            $stmt= $mysqli->prepare("SELECT cod_interConsulta,estado FROM interconsulta WHERE cod_interConsulta IN (?,?) FOR UPDATE");
+            if (!$stmt) { throw new Exception('No se pudieron bloquear los hilos para la fusion.'); }
+            $stmt->bind_param('ii', $cod_interConsulta, $cod_interConsulta_destino);
+            if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudieron validar los hilos para la fusion.'); }
+            $hilosFusion= array();
+            $resultadoHilos= $stmt->get_result();
+            while ($hiloFusion= $resultadoHilos->fetch_assoc()) {
+                $hilosFusion[intval($hiloFusion['cod_interConsulta'])]= $hiloFusion['estado'];
             }
-            
-            foreach ($ids_menciones as $value) {
-                if (empty($value)) {continue;}
-                
-                // Verificar si la mención ya existe en el array de menciones existentes
-                if (!in_array($value, $usuariosMencionadosExistentes)) {
-                    abmMencion(null, $value, $mensj['cod_mensaje'], 0, 'activo');
+            $stmt->close();
+            if (!isset($hilosFusion[$cod_interConsulta]) || !isset($hilosFusion[$cod_interConsulta_destino])) {
+                throw new Exception('No se encontraron ambos hilos para la fusion.');
+            }
+            if ($hilosFusion[$cod_interConsulta] === 'inactivo' || $hilosFusion[$cod_interConsulta_destino] === 'inactivo') {
+                throw new Exception('No se pueden fusionar hilos inactivos.');
+            }
+
+            $fechaFusion= (new DateTime())->format('Y-m-d H:i:s');
+            $contenidoFusion= "esta y la interconsulta ".$registroInterc['asunto']." fueron unidas por @{".$cod_usuarioFK."}";
+            $usuarioSistema= null;
+            $dictamenSistema= null;
+            $stmt= $mysqli->prepare("INSERT INTO mensaje (contenido,fecha_creacion,cod_interConsultaFK,cod_usuarioFK,cod_dictamenFK) VALUES (?,?,?,?,?)");
+            if (!$stmt) { throw new Exception('No se pudo preparar el registro de auditoria de la fusion.'); }
+            $stmt->bind_param('ssiii', $contenidoFusion, $fechaFusion, $cod_interConsulta_destino, $usuarioSistema, $dictamenSistema);
+            if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudo registrar la fusion en el timeline.'); }
+            $cod_mensaje= intval($stmt->insert_id);
+            $stmt->close();
+
+            $stmt= $mysqli->prepare("UPDATE mensaje SET cod_interConsultaFK=? WHERE cod_interConsultaFK=?");
+            if (!$stmt) { throw new Exception('No se pudieron preparar los mensajes para la fusion.'); }
+            $stmt->bind_param('ii', $cod_interConsulta_destino, $cod_interConsulta);
+            if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudieron mover los mensajes al hilo destino.'); }
+            $stmt->close();
+
+            $stmtMencion= $mysqli->prepare("INSERT INTO menciones (cod_usuarioFK,cod_mensajeFK,isLeido,estado) VALUES (?,?,0,'activo') ON DUPLICATE KEY UPDATE estado='activo'");
+            if (!$stmtMencion) { throw new Exception('No se pudieron preparar las menciones para la fusion.'); }
+            foreach ($ids_menciones as $codUsuarioMencion) {
+                $codUsuarioMencion= intval($codUsuarioMencion);
+                if ($codUsuarioMencion <= 0) { continue; }
+                $stmtMencion->bind_param('ii', $codUsuarioMencion, $cod_mensaje);
+                if (!$stmtMencion->execute()) { $stmtMencion->close(); throw new Exception('No se pudieron conservar las menciones de la fusion.'); }
+            }
+
+            $stmtFuturos= $mysqli->prepare("SELECT cod_mensaje FROM mensaje WHERE cod_interConsultaFK=? AND fecha_creacion>?");
+            if (!$stmtFuturos) { $stmtMencion->close(); throw new Exception('No se pudieron consultar los recordatorios futuros.'); }
+            $stmtFuturos->bind_param('is', $cod_interConsulta_destino, $fechaFusion);
+            if (!$stmtFuturos->execute()) { $stmtFuturos->close(); $stmtMencion->close(); throw new Exception('No se pudieron consultar los recordatorios futuros.'); }
+            $mensajesFuturos= array();
+            $resultadoFuturos= $stmtFuturos->get_result();
+            while ($mensajeFuturo= $resultadoFuturos->fetch_assoc()) {
+                $mensajesFuturos[]= intval($mensajeFuturo['cod_mensaje']);
+            }
+            $stmtFuturos->close();
+            foreach ($mensajesFuturos as $codMensajeFuturo) {
+                foreach ($ids_menciones as $codUsuarioMencion) {
+                    $codUsuarioMencion= intval($codUsuarioMencion);
+                    if ($codUsuarioMencion <= 0) { continue; }
+                    $stmtMencion->bind_param('ii', $codUsuarioMencion, $codMensajeFuturo);
+                    if (!$stmtMencion->execute()) { $stmtMencion->close(); throw new Exception('No se pudieron conservar las menciones de los recordatorios futuros.'); }
                 }
             }
-        }
+            $stmtMencion->close();
 
-        // Actualizar el cod_interconsulta de los gastos
-        $sql= "UPDATE gastos SET cod_interConsultaFK= ? WHERE cod_interConsultaFK= ?";
-        $mysqli = conectar_al_servidor();
-        $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param('ii',$registroInterc['cod_interConsulta'], $cod_interConsulta);
-        if (!$stmt->execute()) {
-            $informacion = array("1" => "error", "mensaje" => "Error al guardar: " . $stmt->error, "sql" => $sql);
-            echo json_encode($informacion);
-            exit;
-        }
+            $stmt= $mysqli->prepare("UPDATE gastos SET cod_interConsultaFK=? WHERE cod_interConsultaFK=?");
+            if (!$stmt) { throw new Exception('No se pudieron preparar los gastos para la fusion.'); }
+            $stmt->bind_param('ii', $cod_interConsulta_destino, $cod_interConsulta);
+            if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudieron mover los gastos al hilo destino.'); }
+            $stmt->close();
 
-        $sql= "UPDATE interconsulta SET estado='inactivo', cod_usuarioFK_edit=? WHERE cod_interConsulta=?";
-        $stmt = $mysqli->prepare($sql);
-        $stmt->bind_param('ii',$cod_usuarioFK,$cod_interConsulta);
-        if (!$stmt->execute()) {
-            $informacion = array("1" => "error", "mensaje" => "Error al inactivar interconsulta original: " . $stmt->error, "sql" => $sql);
-            echo json_encode($informacion);
-            exit;
+            if (seguimientoProgramadoTablaExiste($mysqli, 'interconsulta_seguimiento_programado')) {
+                $stmt= $mysqli->prepare("UPDATE interconsulta_seguimiento_programado SET cod_interConsultaFK=?,cod_usuarioFK_update=?,fecha_actualizacion=NOW() WHERE cod_interConsultaFK=?");
+                if (!$stmt) { throw new Exception('No se pudieron preparar los seguimientos para la fusion.'); }
+                $stmt->bind_param('iii', $cod_interConsulta_destino, $cod_usuarioFK, $cod_interConsulta);
+                if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudieron mover los seguimientos al hilo destino.'); }
+                $stmt->close();
+            }
+
+            $stmt= $mysqli->prepare("UPDATE interconsulta SET estado='inactivo',cod_usuarioFK_edit=? WHERE cod_interConsulta=?");
+            if (!$stmt) { throw new Exception('No se pudo preparar el cierre del hilo de origen.'); }
+            $stmt->bind_param('ii', $cod_usuarioFK, $cod_interConsulta);
+            if (!$stmt->execute() || $stmt->affected_rows !== 1) { $stmt->close(); throw new Exception('No se pudo inactivar el hilo de origen.'); }
+            $stmt->close();
+
+            $mysqli->commit();
+            $mysqli->close();
+            return array("1"=> "exito", "2" => $cod_interConsulta, "3" => $cod_interConsulta_destino);
+        } catch (Exception $error) {
+            $mysqli->rollback();
+            $mysqli->close();
+            return array("1" => "error", "2" => $error->getMessage());
         }
     }
 
@@ -884,6 +1073,9 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         if ($cod_interConsulta <= 0 || $cod_usuarioFK <= 0) {
             return array();
         }
+        if (!seguimientoProgramadoPuedeAccederHilo($cod_interConsulta, $cod_usuarioFK)) {
+            return array();
+        }
 
         $mysqli= conectar_al_servidor();
         $sql= "SELECT ic.*,
@@ -919,24 +1111,13 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             LEFT JOIN persona creador ON creador.cod_persona=ic.cod_usuarioFK_create
             LEFT JOIN local l ON l.cod_local=ic.cod_localFK
             WHERE ic.cod_interConsulta=?
-            AND (
-                ic.cod_usuarioFK_create=?
-                OR EXISTS(
-                    SELECT 1 FROM menciones ma
-                    INNER JOIN mensaje mm ON mm.cod_mensaje=ma.cod_mensajeFK
-                    WHERE mm.cod_interConsultaFK=ic.cod_interConsulta
-                    AND ma.cod_usuarioFK=?
-                    LIMIT 1
-                )
-                OR ip.id IS NOT NULL
-            )
             LIMIT 1";
         $stmt= $mysqli->prepare($sql);
         if (!$stmt) {
             $mysqli->close();
             return array();
         }
-        $stmt->bind_param('iiii', $cod_usuarioFK, $cod_interConsulta, $cod_usuarioFK, $cod_usuarioFK);
+        $stmt->bind_param('ii', $cod_usuarioFK, $cod_interConsulta);
         if (!$stmt->execute()) {
             $stmt->close();
             $mysqli->close();
@@ -1165,6 +1346,122 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         return true;
     }
 
+    function obtenerVistaSeguimientosProgramadosInterConsulta($codInterConsulta, $codUsuario) {
+        if (!seguimientoProgramadoEstructuraDisponible()
+            || !seguimientoProgramadoPuedeAccederHilo($codInterConsulta, $codUsuario)) {
+            return '';
+        }
+
+        $seguimientos= seguimientoProgramadoObtenerSeguimientosHilo($codInterConsulta, 40);
+        if (count($seguimientos) === 0) {
+            return '';
+        }
+
+        $puedeAdministrar= seguimientoProgramadoPuedeAdministrarPlantillas($codUsuario);
+        $cantidadActivos= 0;
+        $tarjetas= '';
+        foreach ($seguimientos as $seguimiento) {
+            $idSeguimiento= intval($seguimiento['id_seguimiento']);
+            $estadoVisual= seguimientoProgramadoEstadoVisual($seguimiento);
+            $estadoEtiqueta= seguimientoProgramadoEtiquetaEstado($estadoVisual);
+            $esActivo= isset($seguimiento['estado']) && $seguimiento['estado'] === 'programado';
+            if ($esActivo) {
+                $cantidadActivos++;
+            }
+            $puedeGestionar= $esActivo && (
+                intval($seguimiento['cod_responsableFK']) === intval($codUsuario)
+                || intval($seguimiento['cod_usuarioFK_create']) === intval($codUsuario)
+                || $puedeAdministrar
+            );
+            $fechaProgramada= !empty($seguimiento['fecha_programada']) && strtotime($seguimiento['fecha_programada'])
+                ? date('d/m/Y H:i', strtotime($seguimiento['fecha_programada']))
+                : (string)$seguimiento['fecha_programada'];
+            $fechaCreacion= !empty($seguimiento['fecha_creacion']) && strtotime($seguimiento['fecha_creacion'])
+                ? date('d/m/Y H:i', strtotime($seguimiento['fecha_creacion']))
+                : (string)$seguimiento['fecha_creacion'];
+            $fechaCierre= !empty($seguimiento['fecha_cierre']) && strtotime($seguimiento['fecha_cierre'])
+                ? date('d/m/Y H:i', strtotime($seguimiento['fecha_cierre']))
+                : '';
+            $motivo= trim((string)$seguimiento['motivo']) !== '' ? $seguimiento['motivo'] : 'Seguimiento personalizado';
+            $nombreResponsable= trim((string)$seguimiento['nombre_responsable']) !== '' ? $seguimiento['nombre_responsable'] : 'Responsable no disponible';
+            $nombreCreador= trim((string)$seguimiento['nombre_creador']) !== '' ? $seguimiento['nombre_creador'] : 'Usuario no disponible';
+            $mensajeSeguimiento= isset($seguimiento['mensaje']) ? trim((string)$seguimiento['mensaje']) : '';
+            $mensajePlano= trim(preg_replace('/\s+/', ' ', strip_tags($mensajeSeguimiento)));
+            $urlResponsable= isset($seguimiento['url_responsable']) ? trim((string)$seguimiento['url_responsable']) : '';
+            $urlAvatarResponsable= $urlResponsable !== '' ? $urlResponsable : '/GoodVentaAsisCap/iconos/user.png';
+            $avatarResponsable= '<img src="'.escaparHtmlInterconsulta($urlAvatarResponsable).'" alt="Foto del responsable '.escaparHtmlInterconsulta($nombreResponsable).'" onerror="this.onerror=null;this.src=\'/GoodVentaAsisCap/iconos/user.png\';">';
+            $resultado= isset($seguimiento['resultado']) ? trim((string)$seguimiento['resultado']) : '';
+
+            $atributos= ' data-seguimiento-id="'.$idSeguimiento.'"'
+                .' data-cod-hilo="'.intval($codInterConsulta).'"'
+                .' data-plantilla-id="'.intval($seguimiento['id_plantillaFK']).'"'
+                .' data-motivo="'.escaparHtmlInterconsulta($motivo).'"'
+                .' data-mensaje="'.escaparHtmlInterconsulta($mensajeSeguimiento).'"'
+                .' data-fecha-programada="'.escaparHtmlInterconsulta($seguimiento['fecha_programada']).'"'
+                .' data-responsable="'.intval($seguimiento['cod_responsableFK']).'"';
+
+            $mensajeHtml= $mensajeSeguimiento !== ''
+                ? '<p class="interconsulta-followup-card__message" title="'.escaparHtmlInterconsulta($mensajePlano).'">'.nl2br(escaparHtmlInterconsulta($mensajeSeguimiento), false).'</p>'
+                : '';
+            $resultadoHtml= $resultado !== ''
+                ? '<div class="interconsulta-followup-card__result"><strong>Resultado:</strong> '.nl2br(escaparHtmlInterconsulta($resultado), false).'</div>'
+                : '';
+            $auditoriaHtml= '<span class="interconsulta-followup-card__audit"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i>Programado por '.escaparHtmlInterconsulta($nombreCreador)
+                .($fechaCreacion !== '' ? ' el '.escaparHtmlInterconsulta($fechaCreacion) : '')
+                .($fechaCierre !== '' ? ' &middot; Cerrado el '.escaparHtmlInterconsulta($fechaCierre) : '')
+                .'</span>';
+
+            $accionesHtml= '';
+            $completarHtml= '';
+            if ($puedeGestionar) {
+                $accionesHtml= '<div class="interconsulta-followup-card__actions">'
+                    .'<button type="button" class="interconsulta-followup-action interconsulta-followup-action--complete" data-action="mostrar-completar-seguimiento" aria-expanded="false"><i class="fa-solid fa-check" aria-hidden="true"></i> Completar</button>'
+                    .'<button type="button" class="interconsulta-followup-action" data-action="reprogramar-seguimiento"><i class="fa-solid fa-calendar-plus" aria-hidden="true"></i> Reprogramar</button>'
+                    .'</div>';
+                $completarHtml= '<div class="interconsulta-followup-complete" hidden>'
+                        .'<label>Resultado de la gesti&oacute;n<textarea maxlength="750" data-role="resultado-seguimiento" placeholder="Ej.: Se logr&oacute; contactar y se coordin&oacute; el siguiente paso."></textarea></label>'
+                        .'<div class="interconsulta-followup-complete__buttons">'
+                            .'<button type="button" data-action="cancelar-completar-seguimiento">Cancelar</button>'
+                            .'<button type="button" data-action="completar-seguimiento">Completar</button>'
+                            .'<button type="button" data-action="completar-y-programar-seguimiento">Completar y programar otro</button>'
+                        .'</div>'
+                        .'</div>';
+            }
+
+            $tarjetas .= '<article id="seguimientoInterConsulta-'.$idSeguimiento.'" class="interconsulta-followup-card interconsulta-followup-card--'.escaparHtmlInterconsulta($estadoVisual).'"'.$atributos.'>'
+                .'<span class="interconsulta-followup-card__avatar" title="Responsable: '.escaparHtmlInterconsulta($nombreResponsable).'">'.$avatarResponsable.'</span>'
+                .'<div class="interconsulta-followup-card__body">'
+                    .'<header class="interconsulta-followup-card__header">'
+                        .'<div class="interconsulta-followup-card__title">'
+                            .'<span>Seguimiento programado #'.$idSeguimiento.'</span>'
+                            .'<h4 title="'.escaparHtmlInterconsulta($motivo).'">'.escaparHtmlInterconsulta($motivo).'</h4>'
+                        .'</div>'
+                    .'</header>'
+                    .'<div class="interconsulta-followup-card__details">'
+                        .'<span><i class="fa-regular fa-calendar" aria-hidden="true"></i><strong>Fecha:</strong>'.escaparHtmlInterconsulta($fechaProgramada).'</span>'
+                        .'<span><i class="fa-regular fa-user" aria-hidden="true"></i><strong>Responsable:</strong>'.escaparHtmlInterconsulta($nombreResponsable).'</span>'
+                        .$auditoriaHtml
+                    .'</div>'
+                    .$mensajeHtml
+                    .$resultadoHtml
+                .'</div>'
+                .'<aside class="interconsulta-followup-card__aside">'
+                    .'<span class="interconsulta-followup-status interconsulta-followup-status--'.escaparHtmlInterconsulta($estadoVisual).'">'.escaparHtmlInterconsulta($estadoEtiqueta).'</span>'
+                    .$accionesHtml
+                .'</aside>'
+                .$completarHtml
+            .'</article>';
+        }
+
+        return '<section class="interconsulta-followup-timeline" data-role="seguimientos-programados" aria-label="Seguimientos programados. Tareas internas que no env&iacute;an mensajes al paciente.">'
+            .'<header class="interconsulta-followup-timeline__header">'
+                .'<div><span>Tareas internas</span><span class="interconsulta-followup-timeline__separator" aria-hidden="true">&middot;</span><h3>Seguimientos programados</h3></div>'
+                .'<span class="interconsulta-followup-timeline__count">'.$cantidadActivos.' pendiente'.($cantidadActivos === 1 ? '' : 's').'</span>'
+            .'</header>'
+            .'<div class="interconsulta-followup-timeline__list">'.$tarjetas.'</div>'
+            .'</section>';
+    }
+
     function obtenerVistaInterConsultaYMensajes($filtros, $limite, $nombre_usuario, $normalizacion_seguimiento = array()) {
         $pagina = "";
         $limiteMensajes= intval($limite);
@@ -1321,7 +1618,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $mesActualProgramados = '';
             $diaActualProgramados = '';
             foreach ($registrosMens2 as $valueMens) {
-                $textoProgramado = 'Mensaje programado '.($valueMens['nombre_persona'] ? 'de '.$valueMens['nombre_persona'] : 'por el sistema').' para el '.$valueMens['fecha_creacion'];
+                $textoProgramado = 'Recordatorio heredado '.($valueMens['nombre_persona'] ? 'de '.$valueMens['nombre_persona'] : 'del sistema').' para el '.$valueMens['fecha_creacion'];
                 $paginaMensajes .= obtenerSeparadoresCronologiaInterconsulta($valueMens['fecha_creacion'], $mesActualProgramados, $diaActualProgramados);
                 $paginaMensajes .= obtenerVistaEventoSistemaInterconsulta($textoProgramado, $valueMens['fecha_creacion'], 'fa-clock');
             }
@@ -1333,6 +1630,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 $pagina .= obtenerBotonMasMensajesInterconsulta($limiteMensajes, "");
             }
             $pagina .= $paginaMensajes. '</div></div>';
+            $pagina .= obtenerVistaSeguimientosProgramadosInterConsulta($valueInter['cod_interConsulta'], $filtros['cod_usuarioFK']);
 
             $totalCantMensaje += obtenerCantidadMensajesInterConsulta($valueInter['cod_interConsulta']);
         }   
@@ -1721,12 +2019,14 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 $colorTarjeta="#8bc34a";
             }
 
-            $contenidoMensaje= $valueMens['contenido'];
+            $contenidoMensaje= escaparHtmlInterconsulta($valueMens['contenido']);
             // Transforma las menciones con el mapa de usuarios cargado una sola vez por solicitud.
             foreach ($usuarios as $valueUsu) {
+                $codUsuarioMencion= intval($valueUsu['cod_usuario']);
+                $nombreUsuarioMencion= escaparHtmlInterconsulta($valueUsu['nombre_persona']);
                 $contenidoMensaje= str_replace(
-                    '@{'.$valueUsu['cod_usuario'].'}', 
-                    '<b class="menciones-mensaje" id="'.$valueUsu['cod_usuario'].'" title="Mencion a '.$valueUsu['nombre_persona'].'">@'.$valueUsu['nombre_persona'].'</b>', 
+                    '@{'.$codUsuarioMencion.'}',
+                    '<b class="menciones-mensaje" id="'.$codUsuarioMencion.'" title="Mencion a '.$nombreUsuarioMencion.'">@'.$nombreUsuarioMencion.'</b>',
                     $contenidoMensaje
                 );
             }
@@ -1761,19 +2061,62 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             } else {
                 $claseMensajePropio= ($posicion == 'flex-end') ? ' interconsulta-message-row--own' : '';
                 $fechaDiaMensaje = substr($valueMens['fecha_creacion'], 0, 10);
-                $paginaMensajes .= '<div class="interconsulta-message-row'.$claseMensajePropio.'" data-fecha="'.$fechaDiaMensaje.'">
+                $codigoMensaje= intval($valueMens['cod_mensaje']);
+                $nombreAutorSeguro= escaparHtmlInterconsulta($valueMens['nombre_persona']);
+                $urlAutorSeguro= escaparHtmlInterconsulta($valueMens['url_usuario'] == null ? "/GoodVentaAsisCap/iconos/user.png" : $valueMens['url_usuario']);
+                $fechaMensajeSeguro= escaparHtmlInterconsulta($valueMens['fecha_creacion']);
+                $respuestaCitada= '';
+                $codigoRespuesta= isset($valueMens['cod_mensaje_respuestaFK']) ? intval($valueMens['cod_mensaje_respuestaFK']) : 0;
+                if ($codigoRespuesta > 0) {
+                    $respuestaDisponible= isset($valueMens['respuesta_cod_mensaje'])
+                        && intval($valueMens['respuesta_cod_mensaje']) === $codigoRespuesta
+                        && isset($valueMens['respuesta_estado'])
+                        && $valueMens['respuesta_estado'] === 'activo'
+                        && intval($valueMens['respuesta_cod_interConsultaFK']) === intval($filtros['cod_interConsultaFK']);
+                    if ($respuestaDisponible) {
+                        $textoRespuesta= isset($valueMens['respuesta_contenido']) ? (string)$valueMens['respuesta_contenido'] : '';
+                        foreach ($usuarios as $usuarioRespuesta) {
+                            $textoRespuesta= str_replace(
+                                '@{'.intval($usuarioRespuesta['cod_usuario']).'}',
+                                '@'.(string)$usuarioRespuesta['nombre_persona'],
+                                $textoRespuesta
+                            );
+                        }
+                        $textoRespuesta= limitarTextoListadoInterConsulta($textoRespuesta, 150);
+                        $autorRespuesta= !empty($valueMens['respuesta_nombre_persona']) ? $valueMens['respuesta_nombre_persona'] : 'Participante del hilo';
+                        $fechaRespuesta= !empty($valueMens['respuesta_fecha_creacion']) && strtotime($valueMens['respuesta_fecha_creacion'])
+                            ? date('d/m/Y H:i', strtotime($valueMens['respuesta_fecha_creacion']))
+                            : '';
+                        $respuestaCitada= '<button type="button" class="interconsulta-message-quote" data-action="ir-mensaje-citado" data-cod-mensaje="'.$codigoRespuesta.'" title="Ir al mensaje original">'
+                            .'<span class="interconsulta-message-quote__author"><i class="fa-solid fa-reply" aria-hidden="true"></i>'.escaparHtmlInterconsulta($autorRespuesta).'</span>'
+                            .'<span class="interconsulta-message-quote__text">'.escaparHtmlInterconsulta($textoRespuesta != '' ? $textoRespuesta : 'Mensaje sin texto').'</span>'
+                            .($fechaRespuesta != '' ? '<time>'.escaparHtmlInterconsulta($fechaRespuesta).'</time>' : '')
+                            .'</button>';
+                    } else {
+                        $respuestaCitada= '<div class="interconsulta-message-quote interconsulta-message-quote--unavailable">'
+                            .'<span class="interconsulta-message-quote__author"><i class="fa-solid fa-reply" aria-hidden="true"></i>Mensaje original no disponible</span>'
+                            .'</div>';
+                    }
+                }
+                $paginaMensajes .= '<div id="mensajeInterConsulta-'.$codigoMensaje.'" class="interconsulta-message-row'.$claseMensajePropio.'" data-fecha="'.escaparHtmlInterconsulta($fechaDiaMensaje).'" data-cod-mensaje="'.$codigoMensaje.'">
                     <article class="interconsulta-message-card">
                         <header class="interconsulta-message-header">
                             <div class="interconsulta-message-author">
-                                <img src="'.($valueMens['url_usuario'] == null ? "/GoodVentaAsisCap/iconos/user.png" : $valueMens['url_usuario']).'" alt="Foto de '.$valueMens['nombre_persona'].'">
+                                <img src="'.$urlAutorSeguro.'" alt="Foto de '.$nombreAutorSeguro.'">
                                 <div>
-                                    <strong>'.$valueMens['nombre_persona'].'</strong>
+                                    <strong>'.$nombreAutorSeguro.'</strong>
                                     <span>Participante del hilo</span>
                                 </div>
                             </div>
-                            <time>'.$valueMens['fecha_creacion'].'</time>
+                            <div class="interconsulta-message-header__actions">
+                                <time>'.$fechaMensajeSeguro.'</time>
+                                <button type="button" class="interconsulta-message-reply" data-action="responder-mensaje" data-cod-mensaje="'.$codigoMensaje.'" title="Responder citando este mensaje" aria-label="Responder citando este mensaje">
+                                    <i class="fa-solid fa-reply" aria-hidden="true"></i>
+                                </button>
+                            </div>
                         </header>
                         <div class="interconsulta-message-body">
+                            '.$respuestaCitada.'
                             '.$miniatura_imagen.'
                             <p>'.$contenidoMensaje.'</p>
                         </div>
@@ -2128,11 +2471,54 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             .'</div>';
     }
 
+    function renderSeguimientoProgramadoInternoInterConsulta($seguimiento) {
+        if (!is_array($seguimiento) || empty($seguimiento['id_seguimiento'])) {
+            return renderGestionProgramadaInterConsulta();
+        }
+        $estadoVisual= seguimientoProgramadoEstadoVisual($seguimiento);
+        $estadoEtiqueta= seguimientoProgramadoEtiquetaEstado($estadoVisual);
+        $motivo= limitarTextoListadoInterConsulta(isset($seguimiento['motivo']) ? $seguimiento['motivo'] : '', 58);
+        $responsable= limitarTextoListadoInterConsulta(isset($seguimiento['nombre_responsable']) ? $seguimiento['nombre_responsable'] : '', 42);
+        $fechaTexto= !empty($seguimiento['fecha_programada']) && strtotime($seguimiento['fecha_programada'])
+            ? date('d/m H:i', strtotime($seguimiento['fecha_programada']))
+            : (isset($seguimiento['fecha_programada']) ? $seguimiento['fecha_programada'] : '');
+        $urlResponsable= isset($seguimiento['url_responsable']) ? trim((string)$seguimiento['url_responsable']) : '';
+        $titulo= $estadoEtiqueta.': '.$motivo.'. Responsable: '.($responsable !== '' ? $responsable : 'Sin responsable').'. Fecha: '.$fechaTexto;
+        $avatar= $urlResponsable !== ''
+            ? '<img src="'.escaparHtmlInterconsulta($urlResponsable).'" alt="Foto de '.escaparHtmlInterconsulta($responsable).'">'
+            : '<span>'.escaparHtmlInterconsulta(obtenerInicialesInterConsulta($responsable, 'SG')).'</span>';
+
+        return '<div class="interconsulta-management-summary interconsulta-management-summary--'.escaparHtmlInterconsulta($estadoVisual).'" title="'.escaparHtmlInterconsulta($titulo).'" tabindex="0">'
+            .'<span class="interconsulta-management-summary__avatar">'.$avatar
+                .'<span class="interconsulta-management-summary__clock"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i></span>'
+            .'</span>'
+            .'<span class="interconsulta-management-summary__body">'
+                .'<strong>'.escaparHtmlInterconsulta($motivo !== '' ? $motivo : 'Seguimiento personalizado').'</strong>'
+                .'<span>'.escaparHtmlInterconsulta($responsable !== '' ? $responsable : 'Sin responsable').'</span>'
+                .'<small>'.escaparHtmlInterconsulta($estadoEtiqueta.': '.$fechaTexto).'</small>'
+            .'</span>'
+            .'</div>';
+    }
+
     function obtenerActividadDiariaSeguimientoInterConsulta($cod_localFK= "") {
         $mysqli= conectar_al_servidor();
         $codLocal= (is_numeric($cod_localFK) && intval($cod_localFK) > 0) ? intval($cod_localFK) : 0;
         $condicionLocalMensajes= $codLocal > 0 ? " AND ic.cod_localFK = ".$codLocal." " : "";
         $condicionLocalAgenda= $codLocal > 0 ? " AND u_ag.cod_localFK = ".$codLocal." " : "";
+        $actividadSeguimientos= "";
+        if (seguimientoProgramadoTablaExiste($mysqli, 'interconsulta_seguimiento_programado')) {
+            $actividadSeguimientos= "
+                UNION ALL
+                SELECT sp.cod_usuarioFK_update AS cod_usuario, COUNT(DISTINCT sp.id_seguimiento) AS total
+                FROM interconsulta_seguimiento_programado sp
+                INNER JOIN interconsulta ic_sp ON ic_sp.cod_interConsulta=sp.cod_interConsultaFK
+                WHERE sp.estado='completado'
+                    AND sp.cod_usuarioFK_update IS NOT NULL
+                    AND sp.fecha_cierre >= CURDATE()
+                    AND sp.fecha_cierre < DATE_ADD(CURDATE(), INTERVAL 1 DAY)"
+                    .($codLocal > 0 ? " AND ic_sp.cod_localFK = ".$codLocal." " : "")."
+                GROUP BY sp.cod_usuarioFK_update";
+        }
 
         $sql= "SELECT u.cod_usuario, IFNULL(p.nombre_persona, CONCAT('Usuario ', u.cod_usuario)) AS nombre_persona,
                 IFNULL(u.url,'') AS url_usuario, SUM(actividad.total) AS total_gestiones
@@ -2157,6 +2543,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                     AND IFNULL(ag.estado,'') <> 'CANCELADO'
                     ".$condicionLocalAgenda."
                 GROUP BY CAST(ag.creado_por AS UNSIGNED)
+                ".$actividadSeguimientos."
             ) actividad
             INNER JOIN usuario u ON u.cod_usuario = actividad.cod_usuario
             LEFT JOIN persona p ON p.cod_persona = u.cod_usuario
@@ -2168,6 +2555,8 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         $registros= array();
         $stmt= $mysqli->prepare($sql);
         if (!$stmt || !$stmt->execute()) {
+            if ($stmt) { $stmt->close(); }
+            $mysqli->close();
             return $registros;
         }
         $result= $stmt->get_result();
@@ -2180,6 +2569,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             );
         }
         $stmt->close();
+        $mysqli->close();
 
         return $registros;
     }
@@ -2405,10 +2795,17 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         ));
     }
 
-    function obtenerVistaInterConsulta($filtros= array(), $limite= 0, $maximoLimite= 30) {
+    function obtenerVistaInterConsulta($filtros= array(), $limite= 0, $maximoLimite= 30, $codUsuarioSesion= 0) {
         $cantRegistros= obtenerCantidadInterConsulta($filtros);
         $limite = normalizarLimiteListadoInterConsulta($limite, $maximoLimite);
         $registros= obtenerInterConsulta($filtros, $limite);
+        $codigosHilosSeguimiento= array();
+        foreach ($registros as $registroSeguimiento) {
+            if (!empty($registroSeguimiento['cod_interConsulta'])) {
+                $codigosHilosSeguimiento[]= intval($registroSeguimiento['cod_interConsulta']);
+            }
+        }
+        $seguimientosActivosPorHilo= seguimientoProgramadoObtenerActivosPorHilos($codigosHilosSeguimiento);
         $conteosCategorias = obtenerConteosCategoriasInterConsulta($filtros);
         $categoriaActiva = isset($filtros['categoria_principal']) ? $filtros['categoria_principal'] : 'pagos_egresos';
         $mostrarColumnasSeguimiento = in_array($categoriaActiva, array('administrativo_clinico', 'judiciales'), true);
@@ -2420,6 +2817,9 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         $cant_interConsulta_abierto= 0;
         $styleName="tableRegistroSearch";
         foreach ($registros as $value) {
+            $codigoHiloActual= intval($value['cod_interConsulta']);
+            $seguimientoActivo= isset($seguimientosActivosPorHilo[$codigoHiloActual]) ? $seguimientosActivosPorHilo[$codigoHiloActual] : null;
+            $estadoSeguimientoActivo= $seguimientoActivo ? seguimientoProgramadoEstadoVisual($seguimientoActivo) : '';
             if ($value['estado'] == 'pendiente' || $value['estado'] == 'proceso') {
                 $cant_interConsulta_abierto++;
             }
@@ -2584,11 +2984,26 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 .(($tieneConflictoPaciente || $tieneConflictoLocalPaciente) ? ' interconsulta-thread-row--patient-conflict' : '')
                 .($ventasSinPlanMadre > 0 ? ' interconsulta-thread-row--without-plan' : '')
                 .($cuotasVencidasSeguimiento > 0 ? ' interconsulta-thread-row--financial-warning' : '')
-                .(($totalCreditosSeguimiento > 0 && $cuotasPendientesSeguimiento == 0) ? ' interconsulta-thread-row--financial-ok' : '');
+                .(($totalCreditosSeguimiento > 0 && $cuotasPendientesSeguimiento == 0) ? ' interconsulta-thread-row--financial-ok' : '')
+                .($estadoSeguimientoActivo === 'vencido' ? ' interconsulta-thread-row--followup-overdue' : '')
+                .($estadoSeguimientoActivo === 'para_hoy' ? ' interconsulta-thread-row--followup-today' : '');
             $claseHiloVinculado = ' class="interconsulta-subject-text interconsulta-subject-title'.($esHiloVinculado ? ' interconsulta-linked-subject' : '').'"';
             $tituloHiloVinculado = $esHiloVinculado ? ' title="Hilo vinculado. Haga clic para ver la referencia asociada."' : '';
             $iconoHiloVinculado = $esHiloVinculado ? ' <i class="fa-solid fa-link interconsulta-linked-icon" title="Hilo vinculado. Haga clic para ver la referencia asociada." aria-hidden="true"></i>' : '';
             $badgesSeguimientoPaciente = "";
+            if ($estadoSeguimientoActivo === 'vencido') {
+                $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta(
+                    'conflict',
+                    'Seguimiento vencido',
+                    'El seguimiento interno asignado ya supero su fecha y hora programadas.'
+                );
+            } else if ($estadoSeguimientoActivo === 'para_hoy') {
+                $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta(
+                    'warning',
+                    'Seguimiento hoy',
+                    'Este hilo tiene un seguimiento interno asignado para hoy.'
+                );
+            }
             if ($esHiloAdministrativoSinPaciente) {
                 $tipoAdministrativo = trim((string)$value['tipo']) != "" ? ucfirst(strtolower(trim((string)$value['tipo']))) : "Administrativo";
                 $badgesSeguimientoPaciente .= renderBadgeSeguimientoInterConsulta(
@@ -2667,12 +3082,14 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $contenidoAsunto = $asuntoVista
                 .$iconoHiloVinculado
                 .$cantMensajesNoLeidosOtrosUsuarios;
-            $celdaGestionProgramada = $mostrarGestionProgramada ? renderGestionProgramadaInterConsulta() : "";
+            $celdaGestionProgramada = $mostrarGestionProgramada
+                ? ($seguimientoActivo ? renderSeguimientoProgramadoInternoInterConsulta($seguimientoActivo) : renderGestionProgramadaInterConsulta())
+                : "";
             if ($esHiloPendienteRespuesta) {
                 $cant_mensajes_no_leidos += intval($value['cantMensajesNoLeidos']);
             }
 
-            if ($value["cantMensajesProgramados"]) {
+            if (!$seguimientoActivo && $value["cantMensajesProgramados"]) {
                 // Obtiene los mensajes programados
                 $registrosMens= obtenerMensaje(array(
                     'estado' => 'activo',
@@ -2763,6 +3180,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         }
 
         $actividadDiariaSeguimiento= obtenerVistaActividadDiariaSeguimientoInterConsulta(isset($filtros['cod_localFK']) ? $filtros['cod_localFK'] : "");
+        $alertasSeguimientoProgramado= seguimientoProgramadoObtenerResumenAlertas($codUsuarioSesion);
 
         $estadoRegistros= array();
         foreach ($registros as $registroEstado) {
@@ -2772,7 +3190,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             );
         }
 
-        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $estadoRegistros, "4" => count($registros), "5" => $cantRegistros, "6" => $cant_mensajes_no_leidos, "7" => $cant_interConsulta_abierto, "8" => $datalist, "9" => $conteosCategorias, "10" => $actividadDiariaSeguimiento, "11" => "enriquecido"));
+        echo json_encode(array("1" => "exito", "2" => $pagina, "3" => $estadoRegistros, "4" => count($registros), "5" => $cantRegistros, "6" => $cant_mensajes_no_leidos, "7" => $cant_interConsulta_abierto, "8" => $datalist, "9" => $conteosCategorias, "10" => $actividadDiariaSeguimiento, "11" => "enriquecido", "12" => $alertasSeguimientoProgramado));
     }
 
     function obtenerVistaMensaje($filtros= [], $limite= 0) {
@@ -3044,20 +3462,37 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $limite = "LIMIT $limite";
         }
 
+        $mysqli=conectar_al_servidor();
+        $camposRespuesta = ", NULL AS respuesta_cod_mensaje, NULL AS respuesta_contenido,
+            NULL AS respuesta_fecha_creacion, NULL AS respuesta_estado,
+            NULL AS respuesta_cod_interConsultaFK, NULL AS respuesta_nombre_persona";
+        $joinRespuesta = "";
+        if (seguimientoProgramadoRespuestaCitadaDisponible($mysqli)) {
+            $camposRespuesta = ", mr.cod_mensaje AS respuesta_cod_mensaje,
+                mr.contenido AS respuesta_contenido,
+                mr.fecha_creacion AS respuesta_fecha_creacion,
+                mr.estado AS respuesta_estado,
+                mr.cod_interConsultaFK AS respuesta_cod_interConsultaFK,
+                pr.nombre_persona AS respuesta_nombre_persona";
+            $joinRespuesta = "
+                LEFT JOIN mensaje mr ON mr.cod_mensaje=m.cod_mensaje_respuestaFK
+                LEFT JOIN persona pr ON pr.cod_persona=mr.cod_usuarioFK";
+        }
+
         $sql= "SELECT * FROM (
-                SELECT m.*, u.url AS url_usuario, p.nombre_persona AS nombre_persona
+                SELECT m.*, u.url AS url_usuario, p.nombre_persona AS nombre_persona".$camposRespuesta."
                 FROM mensaje m
                 LEFT JOIN usuario u ON u.cod_usuario=m.cod_usuarioFK
-                LEFT JOIN persona p ON p.cod_persona=m.cod_usuarioFK
+                LEFT JOIN persona p ON p.cod_persona=m.cod_usuarioFK".$joinRespuesta."
                 $sqlFiltro ORDER BY m.fecha_creacion ".$ordenFechaMensaje.", m.cod_mensaje ".$ordenFechaMensaje." $limite
             ) AS subquery ORDER BY fecha_creacion ASC, cod_mensaje ASC";
 
-        $mysqli=conectar_al_servidor();
-
         $stmt = $mysqli->prepare($sql);
-        if ( !$stmt->execute()) {
-            $informacion =array("1" => "error", "mensaje" => "Error al registrar la asistencia: " . $stmt->error, "sql" => $sql);
+        if (!$stmt || !$stmt->execute()) {
+            $informacion =array("1" => "error", "mensaje" => "No se pudieron consultar los mensajes del hilo.");
             echo json_encode($informacion);	
+            if ($stmt) { $stmt->close(); }
+            $mysqli->close();
             exit;
         }        
 
@@ -3081,10 +3516,11 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $registros[] = $reg;
         }
         $stmt->close();
+        $mysqli->close();
         return $registros;
     }
 
-    function abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user,$cod_dictamenFK, $visto_creador= FALSE) {
+    function abmMensaje($cod_mensaje, $contenido, $fecha_creacion, $cod_interConsulta, $user,$cod_dictamenFK, $visto_creador= FALSE, $cod_mensaje_respuestaFK= NULL) {
         $mysqli = conectar_al_servidor();
         $contenidoLimpiado= "";
 
@@ -3135,10 +3571,33 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $contenidoLimpiado = trim($contenidoLimpiado);
         }
 
+        $encodingContenido = function_exists('mb_check_encoding') && mb_check_encoding($contenidoLimpiado, 'UTF-8') ? 'UTF-8' : 'ISO-8859-1';
+        $longitudContenido = function_exists('mb_strlen') ? mb_strlen($contenidoLimpiado, $encodingContenido) : strlen($contenidoLimpiado);
+        if (empty($cod_mensaje) && $contenidoLimpiado === '') {
+            echo json_encode(array("1" => "error", "mensaje" => "Ingrese el contenido del mensaje."));
+            $mysqli->close();
+            exit;
+        }
+        if ($longitudContenido > 750) {
+            echo json_encode(array("1" => "error", "mensaje" => "El mensaje supera el limite de 750 caracteres."));
+            $mysqli->close();
+            exit;
+        }
+
         if (empty($cod_mensaje)) {
-            $sql = "INSERT INTO mensaje (contenido, fecha_creacion, cod_interConsultaFK, cod_usuarioFK, cod_dictamenFK) VALUES (?, ?, ?, ?, ?)";
-            $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('ssiis', $contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user, $cod_dictamenFK);
+            if (seguimientoProgramadoRespuestaCitadaDisponible($mysqli)) {
+                $sql = "INSERT INTO mensaje (contenido, fecha_creacion, cod_interConsultaFK, cod_usuarioFK, cod_dictamenFK, cod_mensaje_respuestaFK) VALUES (?, ?, ?, ?, ?, ?)";
+                $stmt = $mysqli->prepare($sql);
+                if ($stmt) {
+                    $stmt->bind_param('ssiiii', $contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user, $cod_dictamenFK, $cod_mensaje_respuestaFK);
+                }
+            } else {
+                $sql = "INSERT INTO mensaje (contenido, fecha_creacion, cod_interConsultaFK, cod_usuarioFK, cod_dictamenFK) VALUES (?, ?, ?, ?, ?)";
+                $stmt = $mysqli->prepare($sql);
+                if ($stmt) {
+                    $stmt->bind_param('ssiis', $contenidoLimpiado, $fecha_creacion, $cod_interConsulta, $user, $cod_dictamenFK);
+                }
+            }
         } else {
             $parametros= array();
             $atributos= "";
@@ -3170,12 +3629,16 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $refs = [];
             foreach ($parametros as $k => $v) {$refs[$k] = &$parametros[$k];}
 
-            call_user_func_array([$stmt, 'bind_param'], array_merge([$ss], $refs));
+            if ($stmt) {
+                call_user_func_array([$stmt, 'bind_param'], array_merge([$ss], $refs));
+            }
         }
         
-        if (!$stmt->execute()) {
-            $informacion = array("1" => "error", "mensaje" => "Error al guardar: " . $stmt->error, "sql" => $sql);
+        if (!$stmt || !$stmt->execute()) {
+            $informacion = array("1" => "error", "mensaje" => "No se pudo guardar el mensaje. Intente nuevamente.");
             echo json_encode($informacion);
+            if ($stmt) { $stmt->close(); }
+            $mysqli->close();
             exit;
         }
         
@@ -3225,9 +3688,10 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 }
             }
             
-            $stmt->close();        
         }
 
+        $stmt->close();
+        $mysqli->close();
         return $cod_mensaje;
     }
 

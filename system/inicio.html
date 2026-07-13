@@ -22,7 +22,8 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=agenda-carga-progresiva-20260713" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=hilos-filtros-colapsados-20260712" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=20260713-6" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-horizontal-ios-20260713" />
@@ -62,7 +63,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
-<script src="../js_system/abmInterConsulta.js?x=hilos-listado-progresivo-20260712"></script>
+<script src="../js_system/abmInterConsulta.js?x=hilos-seguimientos-citados-20260713-5"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
@@ -7726,6 +7727,12 @@ style='background-color:#5bc572'>
               <div class="interconsulta-daily-activity__empty">Sin gestiones hoy</div>
             </div>
           </div>
+          <div class="interconsulta-followup-alerts" id="panelAlertasSeguimientoInterConsulta" aria-live="polite">
+            <span class="interconsulta-followup-alerts__label"><i class="fa-solid fa-bell" aria-hidden="true"></i> Seguimientos</span>
+            <span class="interconsulta-followup-alerts__count interconsulta-followup-alerts__count--today">Hoy <strong id="cantidadSeguimientosHoyInterConsulta">0</strong></span>
+            <span class="interconsulta-followup-alerts__count interconsulta-followup-alerts__count--overdue">Vencidos <strong id="cantidadSeguimientosVencidosInterConsulta">0</strong></span>
+            <div class="interconsulta-followup-alerts__items" id="itemsAlertasSeguimientoInterConsulta"></div>
+          </div>
         </div>
       </section>
     </div>
@@ -8016,6 +8023,7 @@ style='background-color:#5bc572'>
                 <span class="interconsulta-detail-badge interconsulta-detail-badge--warning" id="badgePendienteDetalle" style="display:none;">Sin responder</span>
                 <span class="interconsulta-detail-badge interconsulta-detail-badge--linked" id="badgeVinculadoDetalle" style="display:none;">Hilo vinculado</span>
                 <span class="interconsulta-detail-badge interconsulta-detail-badge--dictamen" id="badgeDictamenDetalle" style="display:none;">Dictamen registrado</span>
+                <span class="interconsulta-detail-badge interconsulta-detail-badge--followup" id="badgeSeguimientoDetalle" style="display:none;">Seguimiento programado</span>
               </div>
               <div class="interconsulta-avatar-stack" id="avatarStackDetalle" aria-label="Participantes del hilo"></div>
             </div>
@@ -8175,9 +8183,9 @@ style='background-color:#5bc572'>
                         <strong id="nombreUsuarioMensaje">Usuario</strong>
                       </div>
                       <div class="interconsulta-composer-tools">
-                        <button type="button" class="interconsulta-composer-tool" aria-expanded="false" aria-controls="opcionesFechaMensajeInterConsulta" data-text-open="Fecha" data-text-close="Ocultar fecha" onclick="alternarOpcionesComposerInterConsulta('opcionesFechaMensajeInterConsulta', this)">
-                          <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
-                          <span data-label>Fecha</span>
+                        <button type="button" id="btnAbrirSeguimientoProgramadoInterConsulta" class="interconsulta-composer-tool" aria-expanded="false" aria-haspopup="dialog" aria-controls="panelProgramarSeguimientoInterConsulta" onclick="alternarPanelSeguimientoProgramadoInterConsulta()">
+                          <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+                          <span>Seguimiento programado</span>
                         </button>
                         <button type="button" class="interconsulta-composer-tool interconsulta-composer-tool--secondary" title="Limpiar mensaje" onclick="limpiarcamposMensaje()">
                           <i class="fa-solid fa-eraser" aria-hidden="true"></i>
@@ -8189,16 +8197,94 @@ style='background-color:#5bc572'>
                         </button>
                         <select id="dictamenAbmMensaje" style="display: none;"></select>
                       </div>
-                      <div class="interconsulta-composer-meta collapse" id="opcionesFechaMensajeInterConsulta">
-                        <label for="inptFechaAbmMensaje">Fecha/hora del mensaje</label>
-                        <input class="inputText" type="datetime-local" id="inptFechaAbmMensaje" value="2026-01-20T15:26">
-                      </div>
+                      <input type="hidden" id="inptFechaAbmMensaje">
                   </div>
+                  <section class="interconsulta-followup-panel" id="panelProgramarSeguimientoInterConsulta" hidden role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="tituloProgramarSeguimientoInterConsulta" aria-describedby="descripcionProgramarSeguimientoInterConsulta" onclick="manejarClickFondoSeguimientoInterConsulta(event)">
+                    <div class="interconsulta-followup-dialog" role="document">
+                      <header class="interconsulta-followup-panel__header">
+                        <div>
+                          <span>Tarea interna del CRM</span>
+                          <h4 id="tituloProgramarSeguimientoInterConsulta" tabindex="-1">Programar seguimiento</h4>
+                          <p id="descripcionProgramarSeguimientoInterConsulta">Se registrar&aacute; en el timeline y alertar&aacute; al responsable. No env&iacute;a mensajes al paciente.</p>
+                        </div>
+                        <button type="button" class="interconsulta-followup-panel__close" onclick="cerrarPanelSeguimientoProgramadoInterConsulta()" title="Cerrar conservando los datos" aria-label="Cerrar seguimiento programado"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                      </header>
+                      <div class="interconsulta-followup-dialog__body">
+                        <input type="hidden" id="idSeguimientoOrigenInterConsulta">
+                        <input type="hidden" id="tokenSolicitudSeguimientoInterConsulta">
+                        <div id="vistaFormularioSeguimientoInterConsulta">
+                          <div class="interconsulta-followup-panel__grid">
+                            <div class="interconsulta-followup-step interconsulta-followup-step--date">
+                              <label for="fechaProgramadaSeguimientoInterConsulta"><span class="interconsulta-followup-step__number">1</span> &iquest;Cu&aacute;ndo realizar el seguimiento?</label>
+                              <div class="interconsulta-followup-quick-dates" role="group" aria-label="Fechas r&aacute;pidas">
+                                <button type="button" data-followup-days="1" aria-pressed="true" onclick="seleccionarFechaRapidaSeguimientoInterConsulta(this)">Ma&ntilde;ana</button>
+                                <button type="button" data-followup-days="3" aria-pressed="false" onclick="seleccionarFechaRapidaSeguimientoInterConsulta(this)">3 d&iacute;as</button>
+                                <button type="button" data-followup-days="7" aria-pressed="false" onclick="seleccionarFechaRapidaSeguimientoInterConsulta(this)">1 semana</button>
+                                <button type="button" data-followup-days="15" aria-pressed="false" onclick="seleccionarFechaRapidaSeguimientoInterConsulta(this)">15 d&iacute;as</button>
+                                <button type="button" data-followup-months="1" aria-pressed="false" onclick="seleccionarFechaRapidaSeguimientoInterConsulta(this)">1 mes</button>
+                                <button type="button" data-followup-custom="1" aria-pressed="false" onclick="seleccionarFechaRapidaSeguimientoInterConsulta(this)">Personalizado</button>
+                              </div>
+                              <input class="inputText" type="datetime-local" id="fechaProgramadaSeguimientoInterConsulta" onchange="seleccionarFechaPersonalizadaSeguimientoInterConsulta()">
+                              <small>La hora actual se propone por defecto y puede editarse.</small>
+                            </div>
+                            <div class="interconsulta-followup-step interconsulta-followup-step--template">
+                              <label for="selectPlantillaSeguimientoInterConsulta"><span class="interconsulta-followup-step__number">2</span> Motivo o plantilla</label>
+                              <div class="interconsulta-followup-template-line">
+                                <select class="inputText" id="selectPlantillaSeguimientoInterConsulta" onchange="seleccionarPlantillaSeguimientoInterConsulta()">
+                                  <option value="">Seguimiento personalizado</option>
+                                </select>
+                                <button type="button" id="btnAdministrarPlantillasSeguimientoInterConsulta" class="interconsulta-followup-template-admin" onclick="alternarAdministracionPlantillasSeguimientoInterConsulta()" title="Administrar plantillas" aria-label="Administrar plantillas" aria-controls="panelAdministrarPlantillasSeguimientoInterConsulta" aria-expanded="false" hidden><i class="fa-solid fa-gear" aria-hidden="true"></i></button>
+                              </div>
+                              <input class="inputText" type="text" id="motivoSeguimientoInterConsulta" maxlength="120" aria-label="Motivo del seguimiento" placeholder="Ej.: No atiende" oninput="actualizarResumenSeguimientoProgramadoInterConsulta()">
+                            </div>
+                            <div class="interconsulta-followup-step interconsulta-followup-step--message">
+                              <label for="mensajeSeguimientoInterConsulta"><span class="interconsulta-followup-step__number">3</span> Nota para el seguimiento</label>
+                              <textarea class="inputText" id="mensajeSeguimientoInterConsulta" maxlength="750" rows="3" placeholder="Escriba qu&eacute; debe hacerse o seleccione una plantilla." oninput="actualizarResumenSeguimientoProgramadoInterConsulta()"></textarea>
+                              <small><span id="contadorMensajeSeguimientoInterConsulta">0</span> / 750</small>
+                            </div>
+                            <div class="interconsulta-followup-step interconsulta-followup-step--responsible">
+                              <label for="responsableSeguimientoInterConsulta"><span class="interconsulta-followup-step__number">4</span> Responsable interno</label>
+                              <select class="inputText" id="responsableSeguimientoInterConsulta" onchange="actualizarResumenSeguimientoProgramadoInterConsulta()"></select>
+                            </div>
+                          </div>
+                          <div class="interconsulta-followup-summary" id="resumenSeguimientoProgramadoInterConsulta" role="status" aria-live="polite">Seleccione fecha, motivo y responsable para ver el resumen.</div>
+                        </div>
+                        <section class="interconsulta-template-admin-panel" id="panelAdministrarPlantillasSeguimientoInterConsulta" hidden aria-labelledby="tituloAdministrarPlantillasSeguimientoInterConsulta">
+                          <header><div><span>Configuraci&oacute;n</span><h5 id="tituloAdministrarPlantillasSeguimientoInterConsulta" tabindex="-1">Plantillas de seguimiento</h5><p id="descripcionAdministrarPlantillasSeguimientoInterConsulta">Cree o edite mensajes reutilizables para los seguimientos internos.</p></div><button type="button" onclick="nuevaPlantillaSeguimientoInterConsulta()">Nueva plantilla</button></header>
+                          <div class="interconsulta-template-admin-panel__grid">
+                            <label>Plantilla<select class="inputText" id="selectAdministrarPlantillaSeguimientoInterConsulta" onchange="cargarPlantillaAdministracionSeguimientoInterConsulta()"></select></label>
+                            <input type="hidden" id="idPlantillaAdministracionSeguimientoInterConsulta">
+                            <label>Nombre<input class="inputText" type="text" id="nombrePlantillaAdministracionSeguimientoInterConsulta" maxlength="120"></label>
+                            <label>Categor&iacute;a<input class="inputText" type="text" id="categoriaPlantillaAdministracionSeguimientoInterConsulta" maxlength="80"></label>
+                            <label>Orden<input class="inputText" type="number" id="ordenPlantillaAdministracionSeguimientoInterConsulta" min="0" step="1" value="0"></label>
+                            <label>Estado<select class="inputText" id="estadoPlantillaAdministracionSeguimientoInterConsulta"><option value="activo">Activa</option><option value="inactivo">Inactiva</option></select></label>
+                            <label class="interconsulta-template-admin-panel__message">Mensaje sugerido<textarea class="inputText" id="mensajePlantillaAdministracionSeguimientoInterConsulta" maxlength="750" rows="3"></textarea></label>
+                          </div>
+                        </section>
+                      </div>
+                      <footer class="interconsulta-followup-dialog__footer">
+                        <div class="interconsulta-followup-panel__actions" id="accionesProgramarSeguimientoInterConsulta">
+                          <button type="button" class="interconsulta-followup-secondary" onclick="cerrarPanelSeguimientoProgramadoInterConsulta()">Cerrar</button>
+                          <button type="button" class="interconsulta-followup-primary" id="btnProgramarSeguimientoInterConsulta" onclick="programarSeguimientoInterConsulta()"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i> Programar seguimiento</button>
+                        </div>
+                        <div class="interconsulta-template-admin-panel__actions" id="accionesAdministrarPlantillasSeguimientoInterConsulta" hidden>
+                          <button type="button" onclick="alternarAdministracionPlantillasSeguimientoInterConsulta()">Volver</button>
+                          <button type="button" id="btnGuardarPlantillaSeguimientoInterConsulta" onclick="guardarPlantillaSeguimientoInterConsulta()">Guardar plantilla</button>
+                        </div>
+                      </footer>
+                    </div>
+                  </section>
                   <div id="avisoMensajesPendientesInterConsulta" class="card-subtitle justify-content-between align-items-center">
                     <h6 class="mb-2 text-muted">Tiene mensajes pendientes...</h6>
                       <input type="button" value="Cargar" class="btn1" onclick="buscarInterConsultasYContenido(cod_interConsulta);" >
                   </div>
                   <div class="card-body">
+                      <div class="interconsulta-reply-preview" id="vistaRespuestaCitadaInterConsulta" hidden>
+                        <i class="fa-solid fa-reply" aria-hidden="true"></i>
+                        <div><strong id="autorRespuestaCitadaInterConsulta">Mensaje citado</strong><time id="fechaRespuestaCitadaInterConsulta"></time><span id="textoRespuestaCitadaInterConsulta"></span></div>
+                        <button type="button" onclick="cancelarRespuestaCitadaInterConsulta()" title="Quitar mensaje citado" aria-label="Quitar mensaje citado"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                      </div>
+                      <input type="hidden" id="codMensajeRespuestaInterConsulta">
                       <div id="editorMensajeInterConsulta">
                         <button type="button" class="interconsulta-attach-action" title="Adjuntar archivo o imagen" aria-label="Adjuntar archivo o imagen" onclick="vercerrarcargadefotos('fotoAnexoInterchat')">
                           <span id="imgfotoAnexoInterchat" class="imgFotoProducto"></span>

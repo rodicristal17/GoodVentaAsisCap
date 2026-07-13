@@ -1233,8 +1233,19 @@ function seguimientoPacienteMoverHiloUnificacion($mysqli, $hiloOrigen, $codDesti
         array("UPDATE mensaje SET cod_interConsultaFK = ? WHERE cod_interConsultaFK = ?", "ii", array($codDestino, $codOrigen)),
         array("UPDATE gastos SET cod_interConsultaFK = ? WHERE cod_interConsultaFK = ?", "ii", array($codDestino, $codOrigen)),
         array("UPDATE dictamenes SET cod_interConsultaFK = ? WHERE cod_interConsultaFK = ?", "ii", array($codDestino, $codOrigen)),
-        array("UPDATE interconsulta_paciente_venta SET cod_interConsultaFK = ?, estado = 'activo', fecha_actualizacion = NOW(), cod_usuarioFK_update = NULLIF(?,0) WHERE cod_interConsultaFK = ?", "iii", array($codDestino, $usuario, $codOrigen)),
-        array("UPDATE interconsulta SET estado = 'inactivo', cod_usuarioFK_edit = NULLIF(?,0), fecha_edit = NOW() WHERE cod_interConsulta = ?", "ii", array($usuario, $codOrigen))
+        array("UPDATE interconsulta_paciente_venta SET cod_interConsultaFK = ?, estado = 'activo', fecha_actualizacion = NOW(), cod_usuarioFK_update = NULLIF(?,0) WHERE cod_interConsultaFK = ?", "iii", array($codDestino, $usuario, $codOrigen))
+    );
+    if (seguimientoPacienteTablaExiste($mysqli, "interconsulta_seguimiento_programado")) {
+        $consultas[] = array(
+            "UPDATE interconsulta_seguimiento_programado SET cod_interConsultaFK = ?, cod_usuarioFK_update = NULLIF(?,0), fecha_actualizacion = NOW() WHERE cod_interConsultaFK = ?",
+            "iii",
+            array($codDestino, $usuario, $codOrigen)
+        );
+    }
+    $consultas[] = array(
+        "UPDATE interconsulta SET estado = 'inactivo', cod_usuarioFK_edit = NULLIF(?,0), fecha_edit = NOW() WHERE cod_interConsulta = ?",
+        "ii",
+        array($usuario, $codOrigen)
     );
 
     foreach ($consultas as $consulta) {
