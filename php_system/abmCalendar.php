@@ -73,6 +73,10 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
     }
     
     switch ($funt) {
+        case 'cargarAgendaBasica':
+            cargarAgendaBasica($mysqli, $useru);
+            break;
+
         case 'cargarAgenda':
             cargarAgenda($mysqli, $useru);
             break;
@@ -1664,9 +1668,11 @@ function obtenerCodLocalConsultorioAgenda($mysqli, $idConsultorio)
     return 0;
 }
 
-function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detalles = array(), $consultorio = 0, $estadoAgenda = "")
+function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detalles = array(), $consultorio = 0, $estadoAgenda = "", $prepararEstructura = true)
 {
-    asegurarEstructuraAgendaInsumos($mysqli);
+    if ($prepararEstructura) {
+        asegurarEstructuraAgendaInsumos($mysqli);
+    }
     $idAgenda = (int)$idAgenda;
     $codVenta = (int)$codVenta;
     $insumos = array();
@@ -3848,9 +3854,388 @@ function normalizarTextoUtf8($valor){
     return mb_convert_encoding($valor, 'UTF-8', 'ISO-8859-1');
 }
 
+function obtenerContextoAccesoAgenda($mysqli, $useru)
+{
+    $useru = (int)$useru;
+    $sql = "SELECT u.cod_localFK,
+            MAX(CASE
+                WHEN (l.codigo='VERFORMULARIOCALENDARIO' OR a.formulario='VERFORMULARIOCALENDARIO')
+                    AND UPPER(TRIM(IFNULL(a.accion,'')))='SI'
+                THEN 1 ELSE 0 END) AS puede_ver,
+            MAX(CASE
+                WHEN (l.codigo='VERTODOSLOSCONSULTORIOS' OR a.formulario='VERTODOSLOSCONSULTORIOS')
+                    AND UPPER(TRIM(IFNULL(a.accion,'')))='SI'
+                THEN 1 ELSE 0 END) AS puede_ver_todos
+        FROM usuario u
+        LEFT JOIN accesosuser a ON a.usuarios_idusario=u.cod_usuario
+        LEFT JOIN listadodeacceso l ON l.idlistadodeacceso=a.idlistadodeaccesoFK
+        WHERE u.cod_usuario='".$useru."'
+        GROUP BY u.cod_usuario, u.cod_localFK
+        LIMIT 1";
+    $result = $mysqli->query($sql);
+    if (!$result || !($row = $result->fetch_assoc())) {
+        return array("puede_ver" => false, "puede_ver_todos" => false, "cod_local_usuario" => 0);
+    }
+    return array(
+        "puede_ver" => (int)$row["puede_ver"] > 0,
+        "puede_ver_todos" => (int)$row["puede_ver_todos"] > 0,
+        "cod_local_usuario" => (int)$row["cod_localFK"]
+    );
+}
+
+function condicionVisibilidadConsultorioAgenda($contexto, $aliasConsultorio, $fecha)
+{
+    $aliasConsultorio = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$aliasConsultorio);
+    if ($aliasConsultorio === '') {
+        $aliasConsultorio = 'c';
+    }
+    if (!empty($contexto["puede_ver_todos"])) {
+        return "1=1";
+    }
+
+    $useru = isset($contexto["useru"]) ? (int)$contexto["useru"] : 0;
+    $fecha = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$fecha) ? (string)$fecha : date('Y-m-d');
+    $diaSemana = addslashes(obtenerDiaSemanaAgenda($fecha));
+    return "(
+        ".$aliasConsultorio.".cod_doctorFK='".$useru."'
+        OR EXISTS (
+            SELECT 1
+            FROM consultorio_doctor_asignacion a_perm
+            INNER JOIN horario_usuario hu_perm ON hu_perm.id=a_perm.id_horario_usuario
+            WHERE a_perm.id_consultorio=".$aliasConsultorio.".id_consultorio
+                AND a_perm.estado='activo'
+                AND hu_perm.cod_usuarioFK='".$useru."'
+                AND hu_perm.dia_semana='".$diaSemana."'
+                AND IFNULL(hu_perm.estado_horario,'activo')='activo'
+                AND (hu_perm.vigente_desde IS NULL OR hu_perm.vigente_desde<='".$fecha."')
+                AND (hu_perm.vigente_hasta IS NULL OR hu_perm.vigente_hasta>='".$fecha."')
+                AND hu_perm.hora_salida IS NOT NULL
+            LIMIT 1
+        )
+    )";
+}
+
+function condicionVisibilidadConsultorioAgendaPorFechaSql($contexto, $aliasConsultorio, $expresionFecha)
+{
+    $aliasConsultorio = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$aliasConsultorio);
+    if ($aliasConsultorio === '') {
+        $aliasConsultorio = 'c';
+    }
+    if (!empty($contexto["puede_ver_todos"])) {
+        return "1=1";
+    }
+
+    $expresionFecha = preg_replace('/[^a-zA-Z0-9_.]/', '', (string)$expresionFecha);
+    if ($expresionFecha === '') {
+        $expresionFecha = 'a.fecha';
+    }
+    $useru = isset($contexto["useru"]) ? (int)$contexto["useru"] : 0;
+    $diaSemanaSql = "CASE DAYOFWEEK(".$expresionFecha.")
+        WHEN 1 THEN 'domingo'
+        WHEN 2 THEN 'lunes'
+        WHEN 3 THEN 'martes'
+        WHEN 4 THEN 'miercoles'
+        WHEN 5 THEN 'jueves'
+        WHEN 6 THEN 'viernes'
+        WHEN 7 THEN 'sabado'
+    END";
+
+    return "(
+        ".$aliasConsultorio.".cod_doctorFK='".$useru."'
+        OR EXISTS (
+            SELECT 1
+            FROM consultorio_doctor_asignacion a_perm
+            INNER JOIN horario_usuario hu_perm ON hu_perm.id=a_perm.id_horario_usuario
+            WHERE a_perm.id_consultorio=".$aliasConsultorio.".id_consultorio
+                AND a_perm.estado='activo'
+                AND hu_perm.cod_usuarioFK='".$useru."'
+                AND hu_perm.dia_semana=(".$diaSemanaSql.")
+                AND IFNULL(hu_perm.estado_horario,'activo')='activo'
+                AND (hu_perm.vigente_desde IS NULL OR hu_perm.vigente_desde<=".$expresionFecha.")
+                AND (hu_perm.vigente_hasta IS NULL OR hu_perm.vigente_hasta>=".$expresionFecha.")
+                AND hu_perm.hora_salida IS NOT NULL
+            LIMIT 1
+        )
+    )";
+}
+
+function normalizarIdsConsultoriosAgenda($valor)
+{
+    $ids = array();
+    $partes = is_array($valor) ? $valor : explode(',', (string)$valor);
+    foreach ($partes as $parte) {
+        $id = (int)$parte;
+        if ($id > 0) {
+            $ids[$id] = $id;
+        }
+    }
+    return array_values($ids);
+}
+
+function obtenerCatalogoConsultoriosAgendaBasica($mysqli, $contexto, $fecha, $codLocal = '')
+{
+    $diaSemana = addslashes(obtenerDiaSemanaAgenda($fecha));
+    $fechaSql = addslashes($fecha);
+    $condicionVisibilidad = condicionVisibilidadConsultorioAgenda($contexto, 'c', $fecha);
+    $filtroLocal = (int)$codLocal > 0 ? " AND c.cod_localFk='".(int)$codLocal."'" : "";
+    $condicionHorario = " AND IFNULL(hu.estado_horario,'activo')='activo'
+        AND (hu.vigente_desde IS NULL OR hu.vigente_desde<='".$fechaSql."')
+        AND (hu.vigente_hasta IS NULL OR hu.vigente_hasta>='".$fechaSql."')";
+    $sql = "SELECT c.id_consultorio, c.nombre, c.cod_localFk, l.Nombre AS nombre_local,
+            IFNULL(asig.nombres_doctores, (SELECT nombre_persona FROM persona WHERE cod_persona=c.cod_doctorFK)) AS nombre_doctor,
+            IFNULL(TIME_FORMAT(asig.horario_inicio_dia,'%H:%i'), (SELECT TIME_FORMAT(MIN(hu.hora_entrada),'%H:%i')
+                FROM horario_usuario hu
+                WHERE hu.cod_usuarioFK=c.cod_doctorFK AND hu.cod_localFK=c.cod_localFk
+                    AND hu.dia_semana='".$diaSemana."' ".$condicionHorario.")) AS horario_inicio_dia,
+            IFNULL(TIME_FORMAT(asig.horario_fin_dia,'%H:%i'), (SELECT TIME_FORMAT(MAX(hu.hora_salida),'%H:%i')
+                FROM horario_usuario hu
+                WHERE hu.cod_usuarioFK=c.cod_doctorFK AND hu.cod_localFK=c.cod_localFk
+                    AND hu.dia_semana='".$diaSemana."' ".$condicionHorario." AND hu.hora_salida IS NOT NULL)) AS horario_fin_dia,
+            IFNULL(asig.horarios_dia, (SELECT GROUP_CONCAT(CONCAT(TIME_FORMAT(hu.hora_entrada,'%H:%i'),
+                    IF(hu.hora_salida IS NULL,'',CONCAT(' - ',TIME_FORMAT(hu.hora_salida,'%H:%i'))))
+                    ORDER BY hu.hora_entrada SEPARATOR ' | ')
+                FROM horario_usuario hu
+                WHERE hu.cod_usuarioFK=c.cod_doctorFK AND hu.cod_localFK=c.cod_localFk
+                    AND hu.dia_semana='".$diaSemana."' ".$condicionHorario.")) AS horarios_dia,
+            c.descripcion, IFNULL(asig.cod_doctorFK,c.cod_doctorFK) AS cod_doctorFK, c.color
+        FROM consultorios c
+        LEFT JOIN local l ON l.cod_local=c.cod_localFk
+        LEFT JOIN (
+            SELECT a.id_consultorio,
+                SUBSTRING_INDEX(GROUP_CONCAT(hu.cod_usuarioFK ORDER BY hu.hora_entrada SEPARATOR ','),',',1) AS cod_doctorFK,
+                MIN(hu.hora_entrada) AS horario_inicio_dia,
+                MAX(hu.hora_salida) AS horario_fin_dia,
+                GROUP_CONCAT(CONCAT(p.nombre_persona,' (',TIME_FORMAT(hu.hora_entrada,'%H:%i'),' - ',TIME_FORMAT(hu.hora_salida,'%H:%i'),')')
+                    ORDER BY hu.hora_entrada SEPARATOR ' | ') AS nombres_doctores,
+                GROUP_CONCAT(CONCAT(TIME_FORMAT(hu.hora_entrada,'%H:%i'),' - ',TIME_FORMAT(hu.hora_salida,'%H:%i'))
+                    ORDER BY hu.hora_entrada SEPARATOR ' | ') AS horarios_dia
+            FROM consultorio_doctor_asignacion a
+            INNER JOIN consultorios ca ON ca.id_consultorio=a.id_consultorio
+            INNER JOIN horario_usuario hu ON hu.id=a.id_horario_usuario
+            INNER JOIN usuario u ON u.cod_usuario=hu.cod_usuarioFK
+            INNER JOIN persona p ON p.cod_persona=u.cod_usuario
+            WHERE a.estado='activo' AND ca.estado='Activo' AND u.tipo='DOCTOR' AND u.estado='Activo'
+                AND IFNULL(hu.estado_horario,'activo')='activo'
+                AND hu.dia_semana='".$diaSemana."' AND hu.cod_localFK=ca.cod_localFk
+                AND (hu.vigente_desde IS NULL OR hu.vigente_desde<='".$fechaSql."')
+                AND (hu.vigente_hasta IS NULL OR hu.vigente_hasta>='".$fechaSql."')
+                AND hu.hora_salida IS NOT NULL
+            GROUP BY a.id_consultorio
+        ) asig ON asig.id_consultorio=c.id_consultorio
+        WHERE c.estado='Activo' AND ".$condicionVisibilidad.$filtroLocal."
+        ORDER BY c.cod_localFk, c.nombre";
+    $result = $mysqli->query($sql);
+    $consultorios = array();
+    if (!$result) {
+        return false;
+    }
+    while ($row = $result->fetch_assoc()) {
+        $consultorios[] = array(
+            "id" => (int)$row["id_consultorio"],
+            "cod_doctorFK" => (int)$row["cod_doctorFK"],
+            "cod_localFk" => (int)$row["cod_localFk"],
+            "nombre_local" => normalizarTextoUtf8($row["nombre_local"]),
+            "horario_inicio_dia" => normalizarTextoUtf8($row["horario_inicio_dia"]),
+            "horario_fin_dia" => normalizarTextoUtf8($row["horario_fin_dia"]),
+            "horarios_dia" => normalizarTextoUtf8($row["horarios_dia"]),
+            "nombre" => normalizarTextoUtf8($row["nombre"]),
+            "nombre_doctor" => normalizarTextoUtf8($row["nombre_doctor"]),
+            "color" => $row["color"] != '' ? $row["color"] : '#7c3aed',
+            "descripcion" => normalizarTextoUtf8($row["descripcion"])
+        );
+    }
+    return $consultorios;
+}
+
+function cargarAgendaBasica($mysqli, $useru)
+{
+    $contexto = obtenerContextoAccesoAgenda($mysqli, $useru);
+    $contexto["useru"] = (int)$useru;
+    if (empty($contexto["puede_ver"])) {
+        responderJsonCalendar(array("1" => "NI"));
+    }
+
+    $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : date('Y-m-d');
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+        $fecha = date('Y-m-d');
+    }
+    $paciente = isset($_POST['paciente']) ? limpiar($mysqli, $_POST['paciente']) : '';
+    $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : '';
+    $codLocal = isset($_POST['cod_local']) ? (int)$_POST['cod_local'] : 0;
+    $codLocalPreferido = isset($_POST['cod_local_preferido']) ? (int)$_POST['cod_local_preferido'] : 0;
+    if ($codLocalPreferido <= 0) {
+        $codLocalPreferido = (int)$contexto['cod_local_usuario'];
+    }
+    $codConsultorio = isset($_POST['cod_consultorio']) ? (int)$_POST['cod_consultorio'] : 0;
+    $idsSolicitados = normalizarIdsConsultoriosAgenda(isset($_POST['cod_consultorios']) ? $_POST['cod_consultorios'] : '');
+    $seleccionarLocalUsuario = isset($_POST['seleccionar_local_usuario']) && $_POST['seleccionar_local_usuario'] == '1';
+    $consultorios = obtenerCatalogoConsultoriosAgendaBasica($mysqli, $contexto, $fecha, $codLocal);
+    if ($consultorios === false) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "No se pudieron cargar los consultorios."));
+    }
+    $permitidos = array();
+    foreach ($consultorios as $consultorio) {
+        $permitidos[(int)$consultorio['id']] = $consultorio;
+    }
+
+    if (count($idsSolicitados) === 0 && $codConsultorio > 0) {
+        $idsSolicitados[] = $codConsultorio;
+    }
+    if (count($idsSolicitados) === 0 && $seleccionarLocalUsuario) {
+        foreach ($consultorios as $consultorio) {
+            if ((int)$consultorio['cod_localFk'] === $codLocalPreferido) {
+                $idsSolicitados[] = (int)$consultorio['id'];
+            }
+        }
+    }
+    $idsSeleccionados = array();
+    foreach ($idsSolicitados as $idSolicitado) {
+        if (isset($permitidos[(int)$idSolicitado])) {
+            $idsSeleccionados[] = (int)$idSolicitado;
+        }
+    }
+    if (count($idsSeleccionados) === 0 && count($idsSolicitados) > 0 && $codLocalPreferido > 0) {
+        foreach ($consultorios as $consultorio) {
+            if ((int)$consultorio['cod_localFk'] === $codLocalPreferido) {
+                $idsSeleccionados[] = (int)$consultorio['id'];
+            }
+        }
+    }
+
+    $eventos = array();
+    $eventosOcupacion = array();
+    if (count($idsSeleccionados) > 0) {
+        $listaIds = implode(',', $idsSeleccionados);
+        $sqlOcupacion = "SELECT a.id_agenda,a.id_consultorio,a.fecha,
+                TIME_FORMAT(a.hora_inicio,'%H:%i') AS hora_inicio,
+                TIME_FORMAT(a.hora_fin,'%H:%i') AS hora_fin,a.estado
+            FROM agenda a
+            WHERE a.fecha='".$fecha."' AND a.id_consultorio IN (".$listaIds.")
+            ORDER BY a.id_consultorio,a.hora_inicio,a.id_agenda";
+        $resultOcupacion = $mysqli->query($sqlOcupacion);
+        while ($resultOcupacion && ($rowOcupacion = $resultOcupacion->fetch_assoc())) {
+            $eventosOcupacion[] = array(
+                "id" => (int)$rowOcupacion['id_agenda'],
+                "consultorio" => (int)$rowOcupacion['id_consultorio'],
+                "fecha" => $rowOcupacion['fecha'],
+                "inicio" => $rowOcupacion['hora_inicio'],
+                "fin" => $rowOcupacion['hora_fin'],
+                "estado" => $rowOcupacion['estado']
+            );
+        }
+
+        $nivelRiesgo = ProductoRiesgoFinancieroNivelSql($mysqli, 'p_at_base');
+        $badgeRiesgo = ProductoRiesgoFinancieroBadgeSql($nivelRiesgo, 'agenda-riesgo-badge');
+        $condicion = " AND a.fecha='".$fecha."' AND a.id_consultorio IN (".$listaIds.")";
+        if ($paciente !== '') {
+            $condicion .= " AND (p.nombre_persona LIKE '%".$paciente."%' OR cl.ci_cliente LIKE '%".$paciente."%' OR a.id_paciente LIKE '%".$paciente."%')";
+        }
+        if ($estado !== '') {
+            $condicion .= " AND a.estado='".$estado."'";
+        }
+        $sqlEventos = "SELECT a.id_agenda,a.id_consultorio,a.id_paciente,a.fecha,
+                TIME_FORMAT(a.hora_inicio,'%H:%i') AS hora_inicio,
+                TIME_FORMAT(a.hora_fin,'%H:%i') AS hora_fin,a.estado,a.motivo,
+                a.cod_ventaFK,a.cod_detalle_ventaFK,IFNULL(v.apodo,'') AS venta_apodo,
+                IFNULL(v.num_factura,'') AS venta_num_factura,
+                cl.ci_cliente,cl.idzonaFk,cl.whapp,p.telefono,p.direccion,cl.fechanac,
+                cl.rut_cliente,cl.cod_cliente,IFNULL(z.nombre,'') AS nombre_zona,
+                IF(DATE(IFNULL(pr.fecha_create,'1900-01-01'))=a.fecha,IFNULL(p_pr.nombre_persona,''),'') AS nombre_doctor,
+                IFNULL(trat.tratamientos_ids,IF(a.cod_detalle_ventaFK IS NULL,'',a.cod_detalle_ventaFK)) AS tratamientos_ids,
+                IFNULL(trat.tratamientos_agenda,IF(p_dir.cod_producto IS NULL,'',CONCAT(p_dir.nombre_producto,' (',IFNULL(dv_dir.progreso_porcentaje,0),'%)'))) AS tratamientos_agenda,
+                p.nombre_persona
+            FROM agenda a
+            INNER JOIN persona p ON p.cod_persona=a.id_paciente
+            INNER JOIN cliente cl ON cl.cod_cliente=a.id_paciente
+            LEFT JOIN zona z ON z.idzona=cl.idzonaFk
+            LEFT JOIN venta v ON v.cod_venta=a.cod_ventaFK
+            LEFT JOIN detalle_venta dv_dir ON dv_dir.cod_detalle=a.cod_detalle_ventaFK
+            LEFT JOIN producto p_dir ON p_dir.cod_producto=dv_dir.cod_productoFK
+            LEFT JOIN presupuesto pr ON pr.id=a.cod_presupuestoFK
+            LEFT JOIN persona p_pr ON p_pr.cod_persona=pr.cod_usuarioFK_create
+            LEFT JOIN (
+                SELECT at_base.id_agenda,
+                    GROUP_CONCAT(at_base.cod_detalle_ventaFK ORDER BY at_base.id SEPARATOR ',') AS tratamientos_ids,
+                    GROUP_CONCAT(CONCAT(p_at_base.nombre_producto,' ',".$badgeRiesgo.",' (',IFNULL(dv_at_base.progreso_porcentaje,0),'%)')
+                        ORDER BY p_at_base.nombre_producto SEPARATOR '<br>') AS tratamientos_agenda
+                FROM agenda_tratamientos at_base
+                INNER JOIN agenda a_at_base ON a_at_base.id_agenda=at_base.id_agenda
+                INNER JOIN detalle_venta dv_at_base ON dv_at_base.cod_detalle=at_base.cod_detalle_ventaFK
+                INNER JOIN producto p_at_base ON p_at_base.cod_producto=dv_at_base.cod_productoFK
+                WHERE at_base.estado<>'cancelado'
+                    AND a_at_base.fecha='".$fecha."'
+                    AND a_at_base.id_consultorio IN (".$listaIds.")
+                GROUP BY at_base.id_agenda
+            ) trat ON trat.id_agenda=a.id_agenda
+            WHERE 1=1 ".$condicion."
+            ORDER BY a.id_consultorio,a.hora_inicio,a.id_agenda";
+        $resultEventos = $mysqli->query($sqlEventos);
+        if (!$resultEventos) {
+            responderJsonCalendar(array("1" => "Error", "mensaje" => "No se pudo cargar la agenda."));
+        }
+        while ($row = $resultEventos->fetch_assoc()) {
+            $esPrimera = esEstadoPrimeraConsultaAgenda($row['estado']);
+            $tratamientosIds = normalizarIdsConsultoriosAgenda($row['tratamientos_ids']);
+            $tratamientosTexto = $row['tratamientos_agenda'];
+            if ($esPrimera && trim((string)$tratamientosTexto) === '') {
+                $tratamientosTexto = 'Primera consulta';
+            }
+            $eventos[] = array(
+                "id" => (int)$row['id_agenda'],
+                "consultorio" => (int)$row['id_consultorio'],
+                "id_paciente" => (int)$row['id_paciente'],
+                "cod_ventaFK" => (int)$row['cod_ventaFK'],
+                "cod_detalle_ventaFK" => (int)$row['cod_detalle_ventaFK'],
+                "venta_apodo" => normalizarTextoUtf8($row['venta_apodo']),
+                "venta_num_factura" => normalizarTextoUtf8($row['venta_num_factura']),
+                "tratamientos_ids" => $tratamientosIds,
+                "paciente" => normalizarTextoUtf8($row['nombre_persona']),
+                "fecha" => $row['fecha'],
+                "inicio" => $row['hora_inicio'],
+                "fin" => $row['hora_fin'],
+                "estado" => $row['estado'],
+                "ci_cliente" => $row['ci_cliente'],
+                "idzonaFk" => $row['idzonaFk'],
+                "whapp" => $row['whapp'],
+                "telefono" => $row['telefono'],
+                "direccion" => normalizarTextoUtf8($row['direccion']),
+                "fechanac" => $row['fechanac'],
+                "nombre_zona" => normalizarTextoUtf8($row['nombre_zona']),
+                "rut_cliente" => $row['rut_cliente'],
+                "cod_cliente" => $row['cod_cliente'],
+                "nombre_doctor" => normalizarTextoUtf8($row['nombre_doctor']),
+                "nombres_tratamiento" => normalizarTextoUtf8($tratamientosTexto),
+                "nombre_tratamiento_pendiente" => normalizarTextoUtf8($tratamientosTexto),
+                "sin_tratamiento" => count($tratamientosIds) === 0 && !$esPrimera,
+                "riesgo_insumos" => false,
+                "insumos_previstos" => array(),
+                "insumos_faltantes" => array(),
+                "motivo" => normalizarTextoUtf8($row['motivo']),
+                "motivo_limpio" => '',
+                "_agendaCompleto" => false
+            );
+        }
+    }
+
+    $feriados = obtenerDiasFeriados($mysqli, array("fecha" => $fecha, "cod_local" => $codLocal));
+    responderJsonCalendar(array(
+        "1" => "exito",
+        "consultorios" => $consultorios,
+        "consultorios_seleccionados" => $idsSeleccionados,
+        "eventos" => $eventos,
+        "eventos_ocupacion" => $eventosOcupacion,
+        "feriados" => $feriados,
+        "fase" => "basica",
+        "local_usuario" => $codLocalPreferido
+    ));
+}
+
 function cargarAgenda($mysqli, $useru){
-    asegurarEstructuraAgendaInsumos($mysqli);
-    asegurarEstructuraConsultorioDoctorAsignacion($mysqli);
+    $contextoAccesoAgenda = obtenerContextoAccesoAgenda($mysqli, $useru);
+    $contextoAccesoAgenda["useru"] = (int)$useru;
+    if (empty($contextoAccesoAgenda["puede_ver"])) {
+        responderJsonCalendar(array("1" => "NI"));
+    }
     $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
     $fecha_desde = isset($_POST['fecha_desde']) ? limpiar($mysqli, $_POST['fecha_desde']) : '';
     $fecha_hasta = isset($_POST['fecha_hasta']) ? limpiar($mysqli, $_POST['fecha_hasta']) : '';
@@ -3859,7 +4244,7 @@ function cargarAgenda($mysqli, $useru){
     $cod_consultorios = isset($_POST['cod_consultorios']) ? limpiar($mysqli, $_POST['cod_consultorios']) : '';
     $cod_local = isset($_POST['cod_local']) ? limpiar($mysqli, $_POST['cod_local']) : '';
     $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : '';
-    $ver_todos_consoltorios = isset($_POST['ver_todos_consoltorios']) ? limpiar($mysqli, $_POST['ver_todos_consoltorios']) : 'true';
+    $ver_todos_consoltorios = !empty($contextoAccesoAgenda["puede_ver_todos"]) ? 'true' : 'false';
     $solo_catalogo = isset($_POST['solo_catalogo']) ? limpiar($mysqli, $_POST['solo_catalogo']) : '0';
     $idsConsultoriosFiltro = array();
     if ($cod_consultorios != '') {
@@ -3872,15 +4257,15 @@ function cargarAgenda($mysqli, $useru){
         }
         $idsConsultoriosFiltro = array_values($idsConsultoriosFiltro);
     }
+    $teniaFiltroConsultoriosAgenda = count($idsConsultoriosFiltro) > 0;
     $sqlFiltroConsultoriosAgenda = count($idsConsultoriosFiltro) > 0 ? implode(',', $idsConsultoriosFiltro) : '';
 
     if ($fecha == '') {
         $fecha = date('Y-m-d');
     }
     $dia_semana_agenda = obtenerDiaSemanaAgenda($fecha);
-    if (function_exists('asegurarEstructuraHorarioUsuarioEsperado')) {
-        asegurarEstructuraHorarioUsuarioEsperado($mysqli);
-    }
+    $condicionVisibilidadCatalogoAgenda = condicionVisibilidadConsultorioAgenda($contextoAccesoAgenda, 'c', $fecha);
+    $condicionVisibilidadEventosAgenda = condicionVisibilidadConsultorioAgendaPorFechaSql($contextoAccesoAgenda, 'c', 'a.fecha');
     $condicionHorarioVigenteAgenda = " AND IFNULL(hu.estado_horario,'activo')='activo'
         AND (hu.vigente_desde IS NULL OR hu.vigente_desde <= '".$fecha."')
         AND (hu.vigente_hasta IS NULL OR hu.vigente_hasta >= '".$fecha."')";
@@ -3896,9 +4281,7 @@ function cargarAgenda($mysqli, $useru){
     if($cod_local!=""){
 		$sqlFiltro.=" and c.cod_localFk = '".$cod_local."'";
 	}
-    if ($ver_todos_consoltorios == 'false') {
-        $sqlFiltro .= " AND (c.cod_doctorFK = '".$useru."' OR FIND_IN_SET('".$useru."', IFNULL(asig.cod_doctores,'')) > 0)";
-    }
+    $sqlFiltro .= " AND ".$condicionVisibilidadCatalogoAgenda;
 	
     $sqlConsultorios = "
         SELECT  c.id_consultorio,
@@ -3977,6 +4360,8 @@ function cargarAgenda($mysqli, $useru){
             AND IFNULL(hu.estado_horario,'activo') = 'activo'
             AND hu.dia_semana = '".$dia_semana_agenda."'
             AND hu.cod_localFK = ca.cod_localFk
+            AND (hu.vigente_desde IS NULL OR hu.vigente_desde <= '".$fecha."')
+            AND (hu.vigente_hasta IS NULL OR hu.vigente_hasta >= '".$fecha."')
             AND hu.hora_salida IS NOT NULL
             GROUP BY a.id_consultorio
         ) asig ON asig.id_consultorio = c.id_consultorio
@@ -3986,12 +4371,7 @@ function cargarAgenda($mysqli, $useru){
     $resultConsultorios = $mysqli->query($sqlConsultorios);
 
     if (!$resultConsultorios) {
-        echo json_encode(array(
-            "1" => "Error al consultar consultorios",
-            "sql" => $sqlConsultorios,
-            "mysql" => $mysqli->error
-        ));
-        exit;
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "No se pudieron cargar los consultorios."));
     }
 
     while ($row = $resultConsultorios->fetch_assoc()) {
@@ -4010,13 +4390,31 @@ function cargarAgenda($mysqli, $useru){
         );
     }
 
+    $idsPermitidosAgenda = array();
+    foreach ($consultorios as $consultorioPermitidoAgenda) {
+        $idsPermitidosAgenda[(int)$consultorioPermitidoAgenda["id"]] = true;
+    }
+    if ($teniaFiltroConsultoriosAgenda) {
+        $idsConsultoriosAutorizadosAgenda = array();
+        foreach ($idsConsultoriosFiltro as $idConsultorioSolicitadoAgenda) {
+            if (isset($idsPermitidosAgenda[(int)$idConsultorioSolicitadoAgenda])) {
+                $idsConsultoriosAutorizadosAgenda[] = (int)$idConsultorioSolicitadoAgenda;
+            }
+        }
+        $idsConsultoriosFiltro = $idsConsultoriosAutorizadosAgenda;
+        $sqlFiltroConsultoriosAgenda = count($idsConsultoriosFiltro) > 0 ? implode(',', $idsConsultoriosFiltro) : '0';
+    }
+
     if ($solo_catalogo == '1' || (count($idsConsultoriosFiltro) == 0 && $cod_consultorio == '')) {
         echo json_encode(array(
             "1" => "exito",
             "consultorios" => $consultorios,
+            "consultorios_seleccionados" => $idsConsultoriosFiltro,
             "eventos" => array(),
             "eventos_ocupacion" => array(),
-            "feriados" => array()
+            "feriados" => array(),
+            "fase" => "enriquecida",
+            "local_usuario" => (int)$contextoAccesoAgenda["cod_local_usuario"]
         ));
         exit;
     }
@@ -4031,23 +4429,7 @@ function cargarAgenda($mysqli, $useru){
     if($cod_local!=""){
         $condicionOcupacion.=" and c.cod_localFk = '".$cod_local."'";
     }
-    if ($ver_todos_consoltorios == 'false') {
-        $condicionOcupacion .= " AND (
-            c.cod_doctorFK = '".$useru."'
-            OR EXISTS (
-                SELECT 1
-                FROM consultorio_doctor_asignacion a_vis
-                INNER JOIN horario_usuario hu_vis ON hu_vis.id = a_vis.id_horario_usuario
-                WHERE a_vis.id_consultorio = c.id_consultorio
-                AND a_vis.estado = 'activo'
-                AND hu_vis.cod_usuarioFK = '".$useru."'
-                AND hu_vis.dia_semana = '".$dia_semana_agenda."'
-                AND IFNULL(hu_vis.estado_horario,'activo') = 'activo'
-                AND hu_vis.hora_salida IS NOT NULL
-                LIMIT 1
-            )
-        )";
-    }
+    $condicionOcupacion .= " AND ".$condicionVisibilidadEventosAgenda;
 
     $sqlEventosOcupacion = "SELECT
             a.id_agenda,
@@ -4105,6 +4487,8 @@ function cargarAgenda($mysqli, $useru){
 	if($cod_local!=""){
 		$condicion.=" and c.cod_localFk = '".$cod_local."'";
 	}
+
+    $condicion .= " AND ".$condicionVisibilidadEventosAgenda;
 	
 	if($estado!=""){
 		$condicion.=" and a.estado = '".$estado."'";
@@ -4151,12 +4535,7 @@ function cargarAgenda($mysqli, $useru){
     $resultEventos = $mysqli->query($sqlEventos);
 
     if (!$resultEventos) {
-        echo json_encode(array(
-            "1" => "Error al consultar agenda",
-            "sql" => $sqlEventos,
-            "mysql" => $mysqli->error
-        ));
-        exit;
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "No se pudo cargar la agenda."));
     }
 
     $usuariosAgenda = obtenerUsuariosAgenda($mysqli);
@@ -4272,7 +4651,8 @@ function cargarAgenda($mysqli, $useru){
             (int)$eventos[$i]["cod_ventaFK"],
             $eventos[$i]["tratamientos_ids"],
             (int)$eventos[$i]["consultorio"],
-            $eventos[$i]["estado"]
+            $eventos[$i]["estado"],
+            false
         );
 
         $faltantes = array();
@@ -4311,9 +4691,12 @@ function cargarAgenda($mysqli, $useru){
     echo json_encode(array(
         "1" => "exito",
         "consultorios" => $consultorios,
+        "consultorios_seleccionados" => $idsConsultoriosFiltro,
         "eventos" => $eventos,
         "eventos_ocupacion" => $eventosOcupacion,
-        "feriados" => $feriados /* <-- AGREGADO */
+        "feriados" => $feriados,
+        "fase" => "enriquecida",
+        "local_usuario" => (int)$contextoAccesoAgenda["cod_local_usuario"]
     ));
     exit;
 }

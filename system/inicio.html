@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=hilos-filtros-colapsados-20260712" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=agenda-carga-progresiva-20260713" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-citas-notas-panel-fijo-20260709" />
@@ -53,7 +53,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-detalle-emergente-20260711"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-fechas-servidor-v2-20260708"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=detalle-turno-citas-notas-cierre-20260709"></script>
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-carga-progresiva-20260713"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js?x=baja-hilo-20260710"></script>
@@ -28431,7 +28431,7 @@ function escaparHtmlInformeInsumosAgenda(valor){
 
               <div class="filtro-grupo">
                   <label for="inptEstadoAgenda">Estado</label>
-                  <select id="inptEstadoAgenda" class="catalogo-selectBuscador select-filtro-pro" onchange="cargarAgendaConsultoriosDesdePHP()">
+                  <select id="inptEstadoAgenda" class="catalogo-selectBuscador select-filtro-pro">
                       <option value="">Todos los estados</option>
                       <option value="AGENDADO">Agendado</option>
                       <option value="CONFIRMADO">Confirmado</option>

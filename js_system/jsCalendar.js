@@ -4,6 +4,13 @@ var agendaConsultoriosData = {
     eventosOcupacion: [],
     feriados: []
 };
+var agendaSolicitudBaseActiva = null;
+var agendaSolicitudEnriquecidaActiva = null;
+var agendaSecuenciaCarga = 0;
+var agendaTimeoutSeleccion = null;
+var agendaCallbackCargaActiva = null;
+var agendaSeleccionInicialResuelta = false;
+var agendaPreferenciasPendientes = null;
 var agendaTratamientosSeleccionados = [];
 var agendaVentaSeleccionada = "";
 var agendaTratamientosVentaMap = {};
@@ -30,6 +37,11 @@ function obtenerIdsConsultoriosSeleccionadosParaCargaAgenda() {
     var consultoriosSeleccionados = obtenerConsultoriosSeleccionadosAgenda();
     var filtroConsultorio = document.getElementById('inptConsultorioAgendaFiltro');
 
+    if(consultoriosSeleccionados.length === 0 && !agendaSeleccionInicialResuelta){
+        agendaPreferenciasPendientes = agendaPreferenciasPendientes || leerPreferenciasAgendaConsultorios();
+        consultoriosSeleccionados = agendaPreferenciasPendientes.consultorios.slice(0);
+    }
+
     if(consultoriosSeleccionados.length === 0 && filtroConsultorio && filtroConsultorio.value !== ''){
         consultoriosSeleccionados.push(String(filtroConsultorio.value));
     }
@@ -37,144 +49,316 @@ function obtenerIdsConsultoriosSeleccionadosParaCargaAgenda() {
     return consultoriosSeleccionados;
 }
 
-function cargarAgendaConsultoriosDesdePHP(callback) {
-    obtener_datos_user();
+function clavePreferenciasAgendaConsultorios(){
+    return 'goodventa.agenda.seleccion.v1.' + String(typeof userid !== 'undefined' ? userid : '0');
+}
 
+function leerPreferenciasAgendaConsultorios(){
+    var vacio = {local: '', consultorios: []};
+    try{
+        var guardado = window.sessionStorage.getItem(clavePreferenciasAgendaConsultorios());
+        var datos = guardado ? JSON.parse(guardado) : null;
+        if(!datos || !Array.isArray(datos.consultorios)){
+            return vacio;
+        }
+        return {
+            local: String(datos.local || ''),
+            consultorios: datos.consultorios.map(String).filter(function(id){ return /^\d+$/.test(id); })
+        };
+    }catch(error){
+        return vacio;
+    }
+}
+
+function guardarPreferenciasAgendaConsultorios(){
+    var local = document.getElementById('inptLocalAgendaFiltro');
+    try{
+        window.sessionStorage.setItem(clavePreferenciasAgendaConsultorios(), JSON.stringify({
+            local: local ? String(local.value || '') : '',
+            consultorios: obtenerConsultoriosSeleccionadosAgenda()
+        }));
+    }catch(error){}
+}
+
+function resolverCallbackCargaAgenda(exito){
+    var callbackActual = agendaCallbackCargaActiva;
+    agendaCallbackCargaActiva = null;
+    if(callbackActual && typeof callbackActual === 'function'){
+        callbackActual(exito === true);
+    }
+}
+
+function cancelarSolicitudesAgenda(incrementarSecuencia){
+    if(agendaTimeoutSeleccion){
+        clearTimeout(agendaTimeoutSeleccion);
+        agendaTimeoutSeleccion = null;
+    }
+    resolverCallbackCargaAgenda(false);
+    if(incrementarSecuencia){
+        agendaSecuenciaCarga++;
+    }
+    if(agendaSolicitudBaseActiva && agendaSolicitudBaseActiva.readyState !== 4){
+        agendaSolicitudBaseActiva.abort();
+    }
+    if(agendaSolicitudEnriquecidaActiva && agendaSolicitudEnriquecidaActiva.readyState !== 4){
+        agendaSolicitudEnriquecidaActiva.abort();
+    }
+    agendaSolicitudBaseActiva = null;
+    agendaSolicitudEnriquecidaActiva = null;
+}
+
+function crearDatosCargaAgenda(funt, idsForzados){
     var paciente = document.getElementById('inptBuscarPacienteAgenda').value || '';
     var consultorio = document.getElementById('inptConsultorioAgendaFiltro').value || '';
     var selectLocalAgenda = document.getElementById('inptLocalAgendaFiltro');
-    var local = selectLocalAgenda.value || '';
-    var verTodosConsultorios = controlacceso2("VERTODOSLOSCONSULTORIOS", "accion");
-    if(local == '' && !verTodosConsultorios && selectLocalAgenda.options.length <= 1 && typeof cod_localFKUSer !== "undefined"){
-        local = cod_localFKUSer || '';
-    }
+    var local = selectLocalAgenda ? (selectLocalAgenda.value || '') : '';
     var estado = document.getElementById('inptEstadoAgenda').value || '';
     var fecha = document.getElementById('inptFechaAgenda').value || '';
-    var consultoriosSeleccionadosCarga = obtenerIdsConsultoriosSeleccionadosParaCargaAgenda();
-    var soloCatalogo = consultoriosSeleccionadosCarga.length === 0;
-    if(consultoriosSeleccionadosCarga.length > 0 && obtenerConsultoriosSeleccionadosAgenda().length > 0){
+    var ids = Array.isArray(idsForzados) ? idsForzados.map(String) : obtenerIdsConsultoriosSeleccionadosParaCargaAgenda();
+    var seleccionarLocalUsuario = ids.length === 0 && !agendaSeleccionInicialResuelta;
+    var localPreferido = '';
+
+    agendaPreferenciasPendientes = agendaPreferenciasPendientes || leerPreferenciasAgendaConsultorios();
+    if(agendaPreferenciasPendientes.local){
+        localPreferido = agendaPreferenciasPendientes.local;
+    }else if(typeof cod_localFKUSer !== 'undefined'){
+        localPreferido = String(cod_localFKUSer || '');
+    }
+    if(local !== ''){
+        localPreferido = String(local);
+    }
+    if(ids.length > 0){
         consultorio = '';
         local = '';
     }
-    actualizarTextoFechaAgenda();
 
-    var datos = {
+    return {
         "useru": userid,
         "passu": passuser,
         "navegador": navegador,
         "paciente": paciente,
         "cod_consultorio": consultorio,
         "cod_local": local,
-        "cod_consultorios": consultoriosSeleccionadosCarga.join(','),
-        "solo_catalogo": soloCatalogo ? "1" : "0",
+        "cod_local_preferido": localPreferido,
+        "cod_consultorios": ids.join(','),
+        "solo_catalogo": ids.length === 0 && agendaSeleccionInicialResuelta ? "1" : "0",
+        "seleccionar_local_usuario": seleccionarLocalUsuario ? "1" : "0",
         "fecha": fecha,
         "estado": estado,
-        "ver_todos_consoltorios": verTodosConsultorios,
-        "funt": "cargarAgenda"
+        "ver_todos_consoltorios": controlacceso2("VERTODOSLOSCONSULTORIOS", "accion"),
+        "funt": funt
     };
+}
 
-	verCerrarEfectoCargando("1");
-    $.ajax({
-        data: datos,
+function mostrarCargaLocalAgenda(){
+    var contenedor = document.getElementById("agendaGridConsultorios");
+    if(!contenedor){ return; }
+    contenedor.setAttribute('aria-busy', 'true');
+    contenedor.innerHTML = ""
+        + "<div class='agenda-carga-local' role='status' aria-live='polite'>"
+            + "<div class='agenda-carga-local__cabecera'></div>"
+            + "<div class='agenda-carga-local__columnas'>"
+                + "<span></span><span></span><span></span>"
+            + "</div>"
+            + "<div class='agenda-carga-local__mensaje'>Cargando agenda...</div>"
+        + "</div>";
+}
+
+function mostrarErrorLocalAgenda(mensaje){
+    var contenedor = document.getElementById("agendaGridConsultorios");
+    if(!contenedor){ return; }
+    contenedor.setAttribute('aria-busy', 'false');
+    contenedor.innerHTML = "<div class='agenda-carga-local agenda-carga-local--error'>"
+        + "<b>No se pudo cargar la agenda</b>"
+        + "<span>" + escaparHtmlAgenda(mensaje || "Actualice para volver a intentar.") + "</span>"
+        + "</div>";
+}
+
+function aplicarSeleccionConsultoriosAgenda(ids){
+    var permitidos = {};
+    (ids || []).forEach(function(id){ permitidos[String(id)] = true; });
+    document.querySelectorAll('#listaConsultoriosAgenda .check-consultorio-agenda').forEach(function(check){
+        check.checked = !!permitidos[String(check.value)];
+    });
+    actualizarEstadoGruposConsultoriosAgenda();
+}
+
+function construirEventosVisualesAgenda(eventos, feriados, consultorios, completo){
+    var visuales = (eventos || []).map(function(evento){
+        evento._agendaCompleto = !!completo;
+        return evento;
+    });
+    (feriados || []).forEach(function(feriado){
+        (consultorios || []).forEach(function(consultorio){
+            if(feriado.cod_localFK === '' || String(feriado.cod_localFK) === String(consultorio.cod_localFk)){
+                visuales.push({
+                    id: 'feriado_' + feriado.id + '_' + consultorio.id,
+                    consultorio: consultorio.id,
+                    paciente: "FERIADO: " + feriado.descripcion,
+                    fecha: feriado.fecha,
+                    inicio: "07:00",
+                    fin: "22:30",
+                    estado: "FERIADO",
+                    ci_cliente: "",
+                    nombre_doctor: "",
+                    nombres_tratamiento: "",
+                    nombre_tratamiento_pendiente: "",
+                    motivo: feriado.descripcion,
+                    motivo_limpio: feriado.descripcion,
+                    _agendaCompleto: true
+                });
+            }
+        });
+    });
+    return visuales;
+}
+
+function aplicarRespuestaCargaAgenda(datosRespuesta, completo){
+    var contenedor = document.getElementById("agendaGridConsultorios");
+    var scrollLeft = contenedor ? contenedor.scrollLeft : 0;
+    var scrollTop = contenedor ? contenedor.scrollTop : 0;
+    var seleccion = datosRespuesta["consultorios_seleccionados"] || obtenerConsultoriosSeleccionadosAgenda();
+    var eraSeleccionInicial = !agendaSeleccionInicialResuelta;
+
+    resumenInsumosConsultorioSemanaCache = {};
+    agendaConsultoriosData.consultorios = datosRespuesta["consultorios"] || [];
+    agendaConsultoriosData.feriados = datosRespuesta["feriados"] || [];
+    agendaConsultoriosData.eventos = construirEventosVisualesAgenda(
+        datosRespuesta["eventos"] || [],
+        agendaConsultoriosData.feriados,
+        agendaConsultoriosData.consultorios,
+        completo
+    );
+    agendaConsultoriosData.eventosOcupacion = datosRespuesta["eventos_ocupacion"] || datosRespuesta["eventos"] || [];
+
+    renderListaConsultoriosAgenda();
+    aplicarSeleccionConsultoriosAgenda(seleccion);
+    cargarSelectConsultoriosAgenda();
+    if(eraSeleccionInicial && datosRespuesta["local_usuario"]){
+        var selectLocal = document.getElementById('inptLocalAgendaFiltro');
+        if(selectLocal && selectLocal.querySelector("option[value='" + String(datosRespuesta["local_usuario"]).replace(/'/g, "\\'") + "']")){
+            selectLocal.value = String(datosRespuesta["local_usuario"]);
+        }
+    }
+    cargarAgendaConsultorios();
+    agendaSeleccionInicialResuelta = true;
+    agendaPreferenciasPendientes = null;
+    guardarPreferenciasAgendaConsultorios();
+
+    if(contenedor){
+        contenedor.setAttribute('aria-busy', 'false');
+        contenedor.scrollLeft = scrollLeft;
+        contenedor.scrollTop = scrollTop;
+    }
+    if(completo){
+        actualizarDetalleAgendaEnriquecidoSiAbierto();
+    }
+}
+
+function marcarErrorEnriquecimientoAgenda(){
+    (agendaConsultoriosData.eventos || []).forEach(function(evento){
+        if(evento.estado !== 'FERIADO' && evento._agendaCompleto === false){
+            evento._agendaEnriquecimientoError = true;
+        }
+    });
+    cargarAgendaConsultorios();
+    actualizarDetalleAgendaEnriquecidoSiAbierto();
+}
+
+function cargarAgendaConsultoriosDesdePHP(callback, idsForzados) {
+    obtener_datos_user();
+    cancelarSolicitudesAgenda(false);
+    var token = ++agendaSecuenciaCarga;
+    var callbackEjecutado = false;
+    agendaCallbackCargaActiva = typeof callback === 'function' ? callback : null;
+    actualizarTextoFechaAgenda();
+    mostrarCargaLocalAgenda();
+
+    function contextoVigente(){
+        return token === agendaSecuenciaCarga;
+    }
+    function finalizar(exito){
+        if(!callbackEjecutado){
+            callbackEjecutado = true;
+            resolverCallbackCargaAgenda(exito === true);
+        }
+    }
+
+    var datosBase = crearDatosCargaAgenda("cargarAgendaBasica", idsForzados);
+    var solicitudBase = $.ajax({
+        data: datosBase,
         url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
         type: "post",
-        xhr: function () {
-            var xhr = new window.XMLHttpRequest();
-
-            xhr.upload.addEventListener("progress", function (evt) {
-                var kb = ((evt.loaded * 1) / 1000).toFixed(1);
-                if (kb == "0.0") {
-                    kb = 0.1;
-                }
-                cargarConectividad("enviado", kb, "0");
-            }, false);
-
-            xhr.addEventListener("progress", function (evt) {
-                var kb = ((evt.loaded * 1) / 1000).toFixed(1);
-                if (kb == "0.0") {
-                    kb = 0.1;
-                }
-                cargarConectividad("recibido", "0", kb);
-            }, false);
-
-            return xhr;
-        },
-        error: function (jqXHR, textstatus, errorThrowm) {
-            console.error(jqXHR, textstatus, errorThrowm);
+        error: function(jqXHR, textstatus){
+            if(textstatus === "abort" || !contextoVigente()){ return; }
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
-            document.getElementById("agendaGridConsultorios").innerHTML = '';
-	        verCerrarEfectoCargando();
+            mostrarErrorLocalAgenda("No fue posible obtener los turnos.");
+            finalizar(false);
         },
-        success: function (responseText) {
-	        verCerrarEfectoCargando();
-            try {
-                var datosRespuesta = responseText;
-                if (typeof responseText === "string") {
-                    datosRespuesta = $.parseJSON(responseText);
+        success: function(responseText){
+            if(!contextoVigente()){ return; }
+            try{
+                var respuesta = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(respuesta["1"]) != true){
+                    mostrarErrorLocalAgenda("No tiene acceso o la sesi\u00f3n finaliz\u00f3.");
+                    finalizar(false);
+                    return;
+                }
+                aplicarRespuestaCargaAgenda(respuesta, false);
+                var seleccion = respuesta["consultorios_seleccionados"] || [];
+                if(seleccion.length === 0){
+                    finalizar(true);
+                    return;
                 }
 
-                var Respuesta = datosRespuesta["1"];
-                Respuesta = respuestaJqueryAjax(Respuesta);
-
-                if (Respuesta == true) {
-                    resumenInsumosConsultorioSemanaCache = {};
-                    agendaConsultoriosData.consultorios = datosRespuesta["consultorios"] || [];
-                    agendaConsultoriosData.eventos = datosRespuesta["eventos"] || [];
-                    agendaConsultoriosData.eventosOcupacion = datosRespuesta["eventos_ocupacion"] || agendaConsultoriosData.eventos;
-                    agendaConsultoriosData.feriados = datosRespuesta["feriados"] || [];
-					 
-                    for(var f = 0; f < agendaConsultoriosData.feriados.length; f++) {
-                        var feriado = agendaConsultoriosData.feriados[f];
-                        for(var c = 0; c < agendaConsultoriosData.consultorios.length; c++) {
-                            var consultorio = agendaConsultoriosData.consultorios[c];
-                            
-                            if(feriado.cod_localFK === '' || String(feriado.cod_localFK) === String(consultorio.cod_localFk)) {
-                                agendaConsultoriosData.eventos.push({
-                                    id: 'feriado_' + feriado.id + '_' + consultorio.id,
-                                    consultorio: consultorio.id,
-                                    paciente: "FERIADO: " + feriado.descripcion,
-                                    fecha: feriado.fecha,
-                                    inicio: "07:00",
-                                    fin: "22:30",
-                                    estado: "FERIADO",
-                                    ci_cliente: "",
-                                    nombre_doctor: "",
-                                    nombres_tratamiento: "",
-                                    nombre_tratamiento_pendiente: "",
-                                    motivo: feriado.descripcion,
-                                    motivo_limpio: feriado.descripcion
-                                });
+                var datosEnriquecidos = crearDatosCargaAgenda("cargarAgenda", seleccion);
+                datosEnriquecidos.solo_catalogo = "0";
+                var solicitudEnriquecida = $.ajax({
+                    data: datosEnriquecidos,
+                    url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+                    type: "post",
+                    error: function(jqXHR, textstatus){
+                        if(textstatus === "abort" || !contextoVigente()){ return; }
+                        console.warn("No se pudo completar la informaci\u00f3n de insumos de la agenda.");
+                        marcarErrorEnriquecimientoAgenda();
+                        finalizar(false);
+                    },
+                    success: function(responseCompleta){
+                        if(!contextoVigente()){ return; }
+                        try{
+                            var completa = typeof responseCompleta === "string" ? $.parseJSON(responseCompleta) : responseCompleta;
+                            if(respuestaJqueryAjax(completa["1"]) == true){
+                                aplicarRespuestaCargaAgenda(completa, true);
+                                finalizar(true);
+                                return;
                             }
+                        }catch(errorCompleto){
+                            GuardarArchivosLog("Error al completar agenda: " + errorCompleto);
+                        }
+                        marcarErrorEnriquecimientoAgenda();
+                        finalizar(false);
+                    },
+                    complete: function(){
+                        if(agendaSolicitudEnriquecidaActiva === solicitudEnriquecida){
+                            agendaSolicitudEnriquecidaActiva = null;
                         }
                     }
-
-                    renderListaConsultoriosAgenda();
-                    cargarSelectConsultoriosAgenda();
-                    cargarAgendaConsultorios();
-                    if (typeof callback === "function") {
-                        callback();
-                    }
-                } else {
-                    document.getElementById("agendaGridConsultorios").innerHTML = "";
-                }
-            } catch (error) {
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR");
-                var consolaTexto = "";
-
-                try {
-                    consolaTexto = (typeof responseText === "string")
-                        ? responseText
-                        : JSON.stringify(responseText);
-                } catch(e) {
-                    consolaTexto = "" + responseText;
-                }
-
-                var titulo = "Error: " + error + " \r\n Consola: " + consolaTexto;
-                GuardarArchivosLog(titulo);
-                console.log(responseText);
+                });
+                agendaSolicitudEnriquecidaActiva = solicitudEnriquecida;
+            }catch(error){
+                mostrarErrorLocalAgenda("La respuesta recibida no es v\u00e1lida.");
+                GuardarArchivosLog("Error al cargar agenda: " + error);
+                finalizar(false);
+            }
+        },
+        complete: function(){
+            if(agendaSolicitudBaseActiva === solicitudBase){
+                agendaSolicitudBaseActiva = null;
             }
         }
     });
+    agendaSolicitudBaseActiva = solicitudBase;
+    return solicitudBase;
 }
 
 var agendaDragState = {
@@ -203,7 +387,7 @@ function iniciarAgendaConsultorios(){
     document.getElementById('inptFechaNuevaCita').value = y + '-' + m + '-' + d;
     actualizarTextoFechaAgenda();
 
-    limpiarSeleccionConsultoriosAgenda();
+    agendaPreferenciasPendientes = leerPreferenciasAgendaConsultorios();
     cargarAgendaConsultoriosDesdePHP();
 }
 
@@ -385,7 +569,14 @@ function seleccionarGrupoConsultoriosAgenda(checkGrupo){
 
 function cambiarSeleccionConsultoriosAgenda(){
     actualizarEstadoGruposConsultoriosAgenda();
-    cargarAgendaConsultoriosDesdePHP();
+    agendaSeleccionInicialResuelta = true;
+    guardarPreferenciasAgendaConsultorios();
+    var idsDeseados = obtenerConsultoriosSeleccionadosAgenda().slice(0);
+    cancelarSolicitudesAgenda(true);
+    agendaTimeoutSeleccion = setTimeout(function(){
+        agendaTimeoutSeleccion = null;
+        cargarAgendaConsultoriosDesdePHP(null, idsDeseados);
+    }, 120);
 }
 
 function actualizarEstadoGruposConsultoriosAgenda(){
@@ -531,6 +722,10 @@ function cargarSelectConsultoriosAgenda(){
     var html = "<option value=''>Seleccionar</option>";
     var htmlFiltro = "<option value=''>Seleccionar</option>";
     var i, c;
+    var selectAgenda = document.getElementById('inptConsultorioAgenda');
+    var selectFiltro = document.getElementById('inptConsultorioAgendaFiltro');
+    var valorAgenda = selectAgenda ? String(selectAgenda.value || '') : '';
+    var valorFiltro = selectFiltro ? String(selectFiltro.value || '') : '';
 
     for(i = 0; i < agendaConsultoriosData.consultorios.length; i++){
         c = agendaConsultoriosData.consultorios[i];
@@ -538,8 +733,14 @@ function cargarSelectConsultoriosAgenda(){
         htmlFiltro += "<option value='" + c.id + "'>" + c.nombre + "</option>";
     }
 
-    document.getElementById('inptConsultorioAgenda').innerHTML = html;
-    document.getElementById('inptConsultorioAgendaFiltro').innerHTML = htmlFiltro;
+    if(selectAgenda){
+        selectAgenda.innerHTML = html;
+        selectAgenda.value = valorAgenda;
+    }
+    if(selectFiltro){
+        selectFiltro.innerHTML = htmlFiltro;
+        selectFiltro.value = valorFiltro;
+    }
 }
 
 function obtenerConsultorioAgendaPorId(idConsultorio){
@@ -927,7 +1128,23 @@ function closestByClass(elemento, clase){
 function pintarEventosAgenda(fecha, estado, consultoriosSeleccionados){
     var slots = document.querySelectorAll('#agendaGridInterno .agenda-slot');
     var i, j, slot, consultorioId, horaSlot, eventosConsultorio, htmlEventos;
-    var partesHora, horaNumero, minutoNumero, datosAlmuerzo, htmlFinal, htmlCuartosHora;
+    var partesHora, horaNumero, minutoNumero, datosAlmuerzo, htmlFinal;
+    var eventosPorConsultorio = {};
+    var eventosPorHora = {};
+
+    for(i = 0; i < consultoriosSeleccionados.length; i++){
+        consultorioId = String(consultoriosSeleccionados[i]);
+        eventosConsultorio = obtenerEventosFiltradosConsultorio(fecha, estado, consultoriosSeleccionados, consultorioId);
+        eventosPorConsultorio[consultorioId] = eventosConsultorio;
+        eventosPorHora[consultorioId] = {};
+        for(j = 0; j < eventosConsultorio.length; j++){
+            horaSlot = obtenerHoraVisualAgenda(eventosConsultorio[j].inicio);
+            if(!eventosPorHora[consultorioId][horaSlot]){
+                eventosPorHora[consultorioId][horaSlot] = [];
+            }
+            eventosPorHora[consultorioId][horaSlot].push(eventosConsultorio[j]);
+        }
+    }
 
     for(i = 0; i < slots.length; i++){
         slot = slots[i];
@@ -938,13 +1155,12 @@ function pintarEventosAgenda(fecha, estado, consultoriosSeleccionados){
         horaNumero = parseInt(partesHora[0], 10);
         minutoNumero = parseInt(partesHora[1], 10);
 
-        eventosConsultorio = obtenerEventosFiltradosConsultorio(fecha, estado, consultoriosSeleccionados, consultorioId);
+        eventosConsultorio = eventosPorConsultorio[consultorioId] || [];
+        var eventosHora = (eventosPorHora[consultorioId] && eventosPorHora[consultorioId][horaSlot]) || [];
         htmlEventos = '';
 
-        for(j = 0; j < eventosConsultorio.length; j++){
-            if(obtenerHoraVisualAgenda(eventosConsultorio[j].inicio) === horaSlot){
-                htmlEventos += renderEventoAgenda(eventosConsultorio[j], eventosConsultorio);
-            }
+        for(j = 0; j < eventosHora.length; j++){
+            htmlEventos += renderEventoAgenda(eventosHora[j], eventosConsultorio);
         }
 
         datosAlmuerzo = obtenerDatosAlmuerzoAgendaMediaHora(fecha, horaNumero, minutoNumero);
@@ -1070,6 +1286,31 @@ function renderInsumosDiaConsultorioDropdownAgenda(idConsultorio, fecha){
     var insumos = obtenerInsumosDiaConsultorioAgenda(idConsultorio, fecha);
     var html = "";
     var i, item, detalleStock;
+    var enriquecimientoFallido = (agendaConsultoriosData.eventos || []).some(function(evento){
+        return String(evento.consultorio) === String(idConsultorio)
+            && String(evento.fecha) === String(fecha)
+            && evento._agendaEnriquecimientoError === true;
+    });
+    var enriquecimientoPendiente = (agendaConsultoriosData.eventos || []).some(function(evento){
+        return String(evento.consultorio) === String(idConsultorio)
+            && String(evento.fecha) === String(fecha)
+            && evento.estado !== 'FERIADO'
+            && evento._agendaCompleto === false;
+    });
+
+    if(enriquecimientoFallido){
+        return "<details class='agenda-insumos-dia-dropdown' onclick='event.stopPropagation()'>"
+            + "<summary>Insumos en el d&iacute;a <b>!</b></summary>"
+            + "<div class='agenda-insumos-dia-dropdown-body'><span class='agenda-ayuda-inline'>Stock e insumos no disponibles. Vuelva a actualizar.</span></div>"
+            + "</details>";
+    }
+
+    if(enriquecimientoPendiente){
+        return "<details class='agenda-insumos-dia-dropdown' onclick='event.stopPropagation()'>"
+            + "<summary>Insumos en el d&iacute;a <b>...</b></summary>"
+            + "<div class='agenda-insumos-dia-dropdown-body'><span class='agenda-ayuda-inline'>Completando stock e insumos...</span></div>"
+            + "</details>";
+    }
 
     if(insumos.length === 0){
         return "<details class='agenda-insumos-dia-dropdown' onclick='event.stopPropagation()'>"
@@ -2705,6 +2946,27 @@ function vercerrarModalFiltrosAgenda(mostrar){
 
 function aplicarFiltrosAgenda(){
     vercerrarModalFiltrosAgenda(false);
+    var local = document.getElementById('inptLocalAgendaFiltro');
+    var consultorio = document.getElementById('inptConsultorioAgendaFiltro');
+    var ids = [];
+    if(consultorio && consultorio.value !== ''){
+        ids.push(String(consultorio.value));
+    }else if(local && local.value !== ''){
+        agendaConsultoriosData.consultorios.forEach(function(item){
+            if(String(item.cod_localFk) === String(local.value)){
+                ids.push(String(item.id));
+            }
+        });
+    }
+    if(ids.length > 0){
+        aplicarSeleccionConsultoriosAgenda(ids);
+        agendaSeleccionInicialResuelta = true;
+        guardarPreferenciasAgendaConsultorios();
+    }else if(local && local.value !== ''){
+        aplicarSeleccionConsultoriosAgenda([]);
+        agendaSeleccionInicialResuelta = false;
+        agendaPreferenciasPendientes = {local: String(local.value), consultorios: []};
+    }
     cargarAgendaConsultoriosDesdePHP();
 }
 
@@ -3480,7 +3742,9 @@ function verDetalleAgenda(id){
     }
     document.getElementById('detAgendaHorarioInicio').value = evento.inicio || '';
     document.getElementById('detAgendaHorarioFin').value = evento.fin || '';
-    document.getElementById('detAgendaMotivo').innerHTML = evento.motivo_limpio || "<div class='detalle-notas-empty'>Todavia no se registraron notas.</div>";
+    document.getElementById('detAgendaMotivo').innerHTML = evento._agendaCompleto === false
+        ? "<div class='detalle-notas-empty'>Completando notas del turno...</div>"
+        : (evento.motivo_limpio || "<div class='detalle-notas-empty'>Todavia no se registraron notas.</div>");
     document.getElementById('detAgendaMotivo').setAttribute('data-motivo-base', evento.motivo_limpio || '');
     document.getElementById('detAgendaMotivoInput').value = '';
     cerrarReprogramacionDetalleAgenda();
@@ -3512,6 +3776,36 @@ function verDetalleAgenda(id){
     document.getElementById('table_historial_paciente_agenda_detalle').innerHTML = 'Cargando...'
     buscarHistorialPacienteCalendario('detalle_agendamiento');
     obtenerComentariosAgendamiento();
+}
+
+function actualizarDetalleAgendaEnriquecidoSiAbierto(){
+    var modal = document.getElementById('modalDetalleAgenda');
+    if(!modal || modal.style.display === 'none' || !agendaEventoDetalleActual){
+        return;
+    }
+    var evento = obtenerEventoPorId(agendaEventoDetalleActual.id);
+    if(!evento){
+        return;
+    }
+    agendaEventoDetalleActual = evento;
+    if(document.getElementById('detAgendaTratamientoAsignado')){
+        document.getElementById('detAgendaTratamientoAsignado').innerHTML = renderTratamientosDetalleAgenda(evento.nombres_tratamiento || '');
+    }
+    if(document.getElementById('detAgendaVentaAsignada')){
+        document.getElementById('detAgendaVentaAsignada').innerHTML = renderVentaDetalleAgenda(evento);
+    }
+    if(document.getElementById('detAgendaPresupuesto')){
+        document.getElementById('detAgendaPresupuesto').innerHTML = escaparHtmlAgenda(evento.nombre_doctor || 'Sin doctor asignado');
+    }
+    if(document.getElementById('detAgendaMotivo')){
+        if(evento._agendaEnriquecimientoError === true){
+            document.getElementById('detAgendaMotivo').innerHTML = "<div class='detalle-notas-empty'>No se pudo completar la informaci&oacute;n. Vuelva a actualizar.</div>";
+        }else if(evento._agendaCompleto !== false){
+            document.getElementById('detAgendaMotivo').innerHTML = evento.motivo_limpio || "<div class='detalle-notas-empty'>Todavia no se registraron notas.</div>";
+            document.getElementById('detAgendaMotivo').setAttribute('data-motivo-base', evento.motivo_limpio || '');
+        }
+    }
+    renderPrevisionInsumosAgenda(evento);
 }
 
 function escaparHtmlAgenda(valor){
@@ -3910,6 +4204,14 @@ function toggleHistorialCompletoDetalleAgenda(){
 function renderPrevisionInsumosAgenda(evento){
     var cont = document.getElementById('detAgendaInsumosPrevistos');
     if(!cont){ return; }
+    if(evento._agendaEnriquecimientoError === true){
+        cont.innerHTML = "<span class='agenda-ayuda-inline'>Stock e insumos no disponibles. Vuelva a actualizar.</span>";
+        return;
+    }
+    if(evento._agendaCompleto === false){
+        cont.innerHTML = "<span class='agenda-ayuda-inline'>Completando stock e insumos...</span>";
+        return;
+    }
     if(evento.sin_tratamiento){
         cont.innerHTML = "<span class='agenda-ayuda-inline'>Se calcularan al seleccionar los tratamientos.</span>";
         return;
@@ -3979,7 +4281,13 @@ function guardarVarianteInsumoAgenda(idAgenda, idInsumo, idVariante){
             try{
                 var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
                 if(respuestaJqueryAjax(resp["1"])){
-                    cargarAgendaConsultoriosDesdePHP(function(){ verDetalleAgenda(idAgenda); });
+                    cargarAgendaConsultoriosDesdePHP(function(cargaCompleta){
+                        if(cargaCompleta){
+                            verDetalleAgenda(idAgenda);
+                        }else{
+                            ver_vetana_informativa("La variante se guardo, pero no se pudo actualizar la agenda.", "", "error");
+                        }
+                    });
                 }else{
                     ver_vetana_informativa(resp.mensaje || "No se pudo guardar la variante.", "", "error");
                 }
@@ -4543,7 +4851,13 @@ function guardarTratamientosDetalleAgenda(){
                 var resp = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
                 if(respuestaJqueryAjax(resp["1"])){
                     verCerrarAsignarTratamiento(false);
-                    cargarAgendaConsultoriosDesdePHP(function(){ verDetalleAgenda(idAgenda); });
+                    cargarAgendaConsultoriosDesdePHP(function(cargaCompleta){
+                        if(cargaCompleta){
+                            verDetalleAgenda(idAgenda);
+                        }else{
+                            ver_vetana_informativa("Los tratamientos se guardaron, pero no se pudo actualizar la agenda.", "", "error");
+                        }
+                    });
                 }else{
                     ver_vetana_informativa(resp.mensaje || "No se pudo guardar.", "", "error");
                 }
@@ -4619,6 +4933,7 @@ function minimizarAgendaConsultorios(){
 }
 
 function cerrarAgendaConsultorios(){
+    cancelarSolicitudesAgenda(true);
     document.getElementById('divAgendaConsultorios').style.display = 'none';
 }
 
@@ -4629,7 +4944,9 @@ function AbrirAgendaConsultorios(ir_hoy= true){
         document.getElementById('inptFechaAgenda').value = formatearFechaInput(hoy);
     }
     actualizarTextoFechaAgenda();
-    limpiarSeleccionConsultoriosAgenda();
+    if(!agendaSeleccionInicialResuelta){
+        agendaPreferenciasPendientes = leerPreferenciasAgendaConsultorios();
+    }
     cargarAgendaConsultoriosDesdePHP();
 }
 
@@ -5231,11 +5548,14 @@ console.log(responseText);
                         if (typeof idAbmAgenda !== "undefined") {
                             idAbmAgenda = idAgenda;
                         }
-                        cargarAgendaConsultoriosDesdePHP(function () {
+                        cargarAgendaConsultoriosDesdePHP(function (cargaCompleta) {
                             if (typeof idAbmAgenda !== "undefined") {
                                 idAbmAgenda = idAgenda;
                             }
                             setAccionesDetalleAgendaProcesando(false);
+                            if(!cargaCompleta && typeof ver_vetana_informativa === "function"){
+                                ver_vetana_informativa("El horario se actualizo, pero no se pudo refrescar la agenda.", "", "error");
+                            }
                         });
                     } else {
                         cerrarDetalleAgenda();

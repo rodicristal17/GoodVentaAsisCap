@@ -4905,6 +4905,82 @@ border-radius: 50%;
   inset: 0;
   z-index: 3100;
 }
+#divAgendaConsultorios .agenda-carga-local {
+  position: relative;
+  width: 100%;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  overflow: hidden;
+  border: 1px solid #d9e4ef;
+  border-radius: 12px;
+  background: #f8fbff;
+  box-sizing: border-box;
+}
+#divAgendaConsultorios .agenda-carga-local__cabecera,
+#divAgendaConsultorios .agenda-carga-local__columnas span {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e6eef7;
+}
+#divAgendaConsultorios .agenda-carga-local__cabecera {
+  width: 100%;
+  height: 42px;
+}
+#divAgendaConsultorios .agenda-carga-local__columnas {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 10px;
+}
+#divAgendaConsultorios .agenda-carga-local__columnas span::after,
+#divAgendaConsultorios .agenda-carga-local__cabecera::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent);
+  animation: agenda-carga-desplazar 1.15s infinite;
+}
+#divAgendaConsultorios .agenda-carga-local__mensaje {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: #315675;
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 4px 16px rgba(37, 76, 112, .12);
+  font-size: 12px;
+  font-weight: 700;
+}
+#divAgendaConsultorios .agenda-carga-local--error {
+  min-height: 220px;
+  align-items: center;
+  justify-content: center;
+  color: #8f2929;
+  background: #fff7f7;
+}
+#divAgendaConsultorios .agenda-carga-local--error span {
+  color: #6f4a4a;
+}
+@keyframes agenda-carga-desplazar {
+  100% { transform: translateX(100%); }
+}
+@media (max-width: 900px) {
+  #divAgendaConsultorios .agenda-carga-local__columnas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #divAgendaConsultorios .agenda-carga-local__columnas span::after,
+  #divAgendaConsultorios .agenda-carga-local__cabecera::after {
+    animation: none;
+  }
+}
 #divAddFotos { z-index: 3100 !important; }
 #overlayNuevaCita,
 #overlayFeriadosAgenda,
