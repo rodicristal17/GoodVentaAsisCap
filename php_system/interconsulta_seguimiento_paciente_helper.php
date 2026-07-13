@@ -81,12 +81,25 @@ function seguimientoPacienteAsegurarIndice($mysqli, $tabla, $indice, $columnas) 
 }
 
 function asegurarEstructuraSeguimientoPacienteInterConsulta($mysqli = null) {
+    static $estructuraVerificada = false;
     $cerrarConexion = false;
     if ($mysqli === null) {
         $mysqli = conectar_al_servidor();
         $cerrarConexion = true;
     }
     if (!$mysqli || $mysqli->connect_errno) { return false; }
+
+    if ($estructuraVerificada) {
+        if ($cerrarConexion) { $mysqli->close(); }
+        return true;
+    }
+
+    if (seguimientoPacienteTablaExiste($mysqli, 'interconsulta_paciente')
+        && seguimientoPacienteTablaExiste($mysqli, 'interconsulta_paciente_venta')) {
+        $estructuraVerificada = true;
+        if ($cerrarConexion) { $mysqli->close(); }
+        return true;
+    }
 
     $sqlPaciente = "CREATE TABLE IF NOT EXISTS interconsulta_paciente (
         id INT NOT NULL AUTO_INCREMENT,
@@ -134,6 +147,9 @@ function asegurarEstructuraSeguimientoPacienteInterConsulta($mysqli = null) {
     ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci";
 
     $ok = $mysqli->query($sqlPaciente) && $mysqli->query($sqlVenta);
+    if ($ok) {
+        $estructuraVerificada = true;
+    }
     if ($cerrarConexion) { $mysqli->close(); }
     return $ok;
 }

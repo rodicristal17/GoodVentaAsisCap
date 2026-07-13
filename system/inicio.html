@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ueno-detalle-emergente-20260711" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=hilos-filtros-colapsados-20260712" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-citas-notas-panel-fijo-20260709" />
@@ -44,7 +44,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=consulta-historial-empty-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=hilos-ueno-merge-20260710"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=hilos-filtros-colapsados-20260712"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -62,7 +62,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
-<script src="../js_system/abmInterConsulta.js?x=hilo-selector-ventas-20260710"></script>
+<script src="../js_system/abmInterConsulta.js?x=hilos-listado-progresivo-20260712"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
@@ -7518,8 +7518,19 @@ style='background-color:#5bc572'>
             </td>
           </tr></table>
         </div>
-        <section class="interconsulta-controls-panel" aria-label="Busqueda y filtros de hilos">
-          <div class="interconsulta-toolbar">
+        <section id="panelControlesInterConsulta" class="interconsulta-controls-panel is-collapsed" aria-label="Busqueda y filtros de hilos">
+          <div class="interconsulta-controls-summary">
+            <button type="button" id="btnAlternarControlesInterConsulta" class="interconsulta-controls-toggle"
+              aria-expanded="false" aria-controls="contenidoControlesInterConsulta"
+              onclick="alternarControlesInterConsulta()">
+              <i class="fa-solid fa-filter"></i>
+              <span id="textoAlternarControlesInterConsulta">Ver filtros</span>
+              <i class="fa-solid fa-chevron-down interconsulta-controls-toggle__chevron" aria-hidden="true"></i>
+            </button>
+            <span id="resumenControlesInterConsulta" class="interconsulta-controls-summary__text" aria-live="polite">Sin filtros aplicados</span>
+          </div>
+          <div id="contenidoControlesInterConsulta" class="interconsulta-controls-content" hidden>
+            <div class="interconsulta-toolbar">
             <label class="interconsulta-search-field" for="inptBuscarInterConsultaGlobal">
               <span>Buscar hilos</span>
               <input type="text" id="inptBuscarInterConsultaGlobal" class="interconsulta-search-input"
@@ -7567,14 +7578,11 @@ style='background-color:#5bc572'>
               <i class="fa-solid fa-sliders"></i>
               <span>Filtros avanzados</span>
             </button>
-            <button type="button" class="interconsulta-toolbar-btn interconsulta-toolbar-btn--secondary" onclick="crearHilosSeguimientoPacienteHistorico()">
-              <i class="fa-solid fa-rotate"></i>
-              <span>Sincronizar históricos</span>
-            </button>
             <button type="button" class="interconsulta-toolbar-btn interconsulta-toolbar-btn--primary" onclick="limpiarcamposInterconsulta();verCerrarVentanaInterConsulta(true, 'divListadoInterConsulta');">
               <i class="fa-solid fa-plus"></i>
               <span>Nuevo hilo</span>
             </button>
+            </div>
           </div>
         </section>
         <section class="presupuesto-panel presupuesto-search-results hilos-thread-panel">
@@ -7683,7 +7691,7 @@ style='background-color:#5bc572'>
             </table>
           </div>
         </section>
-      <section class="presupuesto-panel presupuesto-search-results interconsulta-legend-panel" style="padding:5px 20px;margin-top: 10px;">
+      <section class="presupuesto-panel presupuesto-search-results interconsulta-legend-panel" hidden aria-hidden="true">
         <div class="form-section interconsulta-legend">
         <span class="interconsulta-legend__sample interconsulta-legend__sample--linked"></span>
         <p class="interconsulta-legend__text">Hilo con referencia vinculada</p>

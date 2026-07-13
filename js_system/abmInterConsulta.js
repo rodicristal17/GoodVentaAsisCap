@@ -6,8 +6,12 @@ var registroInterConsultaAbierta= 0;
 var cod_interConsulta= "";
 var temporizadorBusquedaGlobalInterConsulta= null;
 var busquedaInterConsultaCancelada= false;
-var limiteMaximoListadoInterConsulta= 60;
+var limiteMaximoListadoInterConsulta= 30;
 var filtrosUltimaBusquedaInterConsulta= null;
+var solicitudListadoInterConsultaActiva= null;
+var solicitudEnriquecimientoListadoInterConsultaActiva= null;
+var secuenciaListadoInterConsulta= 0;
+var solicitudDetalleInterConsultaActiva= null;
 var categoriaActivaInterConsulta= "pagos_egresos";
 var categoriaOriginalAbmInterConsulta= "";
 var tipoOriginalAbmInterConsulta= "";
@@ -345,11 +349,138 @@ function valorCampoInterConsulta(id) {
     return elemento ? elemento.value : "";
 }
 
+function obtenerLocalUsuarioInterConsulta() {
+    if (typeof cod_localFKUSer == "undefined" || cod_localFKUSer === null) {
+        return "";
+    }
+    var localUsuario= String(cod_localFKUSer).trim();
+    return localUsuario != "" && localUsuario != "0" ? localUsuario : "";
+}
+
 function asignarValorCampoInterConsulta(id, valor) {
     const elemento= document.getElementById(id);
     if (elemento) {
         elemento.value= valor || "";
     }
+}
+
+function asignarValorSelectInterConsulta(id, valor) {
+    const elemento= document.getElementById(id);
+    if (!elemento) {
+        return false;
+    }
+    elemento.value= valor || "";
+    return elemento.value == (valor || "");
+}
+
+var localUsuarioInicializadoInterConsulta= false;
+
+function aplicarLocalUsuarioInterConsulta(forzar= false) {
+    var localUsuario= obtenerLocalUsuarioInterConsulta();
+    if (localUsuario == "") {
+        return false;
+    }
+
+    if (!forzar && localUsuarioInicializadoInterConsulta) {
+        return false;
+    }
+
+    if (!forzar && (valorCampoInterConsulta("inptBuscarInterConsulta7") != "" || valorCampoInterConsulta("inptFiltroRapidoLocalInterConsulta") != "")) {
+        localUsuarioInicializadoInterConsulta= true;
+        return false;
+    }
+
+    var aplicadoAvanzado= asignarValorSelectInterConsulta("inptBuscarInterConsulta7", localUsuario);
+    var aplicadoRapido= asignarValorSelectInterConsulta("inptFiltroRapidoLocalInterConsulta", localUsuario);
+
+    if (aplicadoAvanzado || aplicadoRapido) {
+        localUsuarioInicializadoInterConsulta= true;
+        actualizarResumenControlesInterConsulta();
+        return true;
+    }
+    return false;
+}
+
+function textoOpcionSeleccionadaInterConsulta(id) {
+    var elemento= document.getElementById(id);
+    if (!elemento || elemento.value == "" || elemento.selectedIndex < 0) {
+        return "";
+    }
+    var opcion= elemento.options[elemento.selectedIndex];
+    return opcion ? (opcion.textContent || opcion.innerText || elemento.value).trim() : elemento.value;
+}
+
+function actualizarResumenControlesInterConsulta() {
+    var resumen= document.getElementById("resumenControlesInterConsulta");
+    if (!resumen) {
+        return;
+    }
+
+    var filtros= [];
+    var busqueda= valorCampoInterConsulta("inptBuscarInterConsultaGlobal").trim();
+    if (busqueda != "") {
+        filtros.push('Busqueda: "' + (busqueda.length > 32 ? busqueda.substring(0, 32) + "..." : busqueda) + '"');
+    }
+
+    [
+        {id: "inptFiltroRapidoEstadoInterConsulta", etiqueta: "Estado"},
+        {id: "inptFiltroRapidoTipoInterConsulta", etiqueta: "Subtipo"},
+        {id: "inptFiltroRapidoLocalInterConsulta", etiqueta: "Local"},
+        {id: "inptFiltroRapidoResponsableInterConsulta", etiqueta: "Responsable"}
+    ].forEach(function(campo) {
+        var texto= textoOpcionSeleccionadaInterConsulta(campo.id);
+        if (texto != "") {
+            filtros.push(campo.etiqueta + ": " + texto);
+        }
+    });
+
+    var fechaDesde= valorCampoInterConsulta("inptBuscarInterConsultaFechaDesde");
+    var fechaHasta= valorCampoInterConsulta("inptBuscarInterConsultaFechaHasta");
+    if (fechaDesde != "") {
+        filtros.push("Desde: " + fechaDesde);
+    }
+    if (fechaHasta != "") {
+        filtros.push("Hasta: " + fechaHasta);
+    }
+
+    resumen.textContent= filtros.length > 0 ? filtros.join(" · ") : "Sin filtros aplicados";
+    resumen.title= resumen.textContent;
+}
+
+function establecerControlesInterConsultaColapsados(colapsado) {
+    var panel= document.getElementById("panelControlesInterConsulta");
+    var contenido= document.getElementById("contenidoControlesInterConsulta");
+    var boton= document.getElementById("btnAlternarControlesInterConsulta");
+    var ventana= document.getElementById("divListadoInterConsulta");
+    if (!panel || !contenido || !boton) {
+        return;
+    }
+
+    colapsado= !!colapsado;
+    panel.classList.toggle("is-collapsed", colapsado);
+    contenido.hidden= colapsado;
+    boton.setAttribute("aria-expanded", colapsado ? "false" : "true");
+    boton.title= colapsado ? "Mostrar busqueda y filtros" : "Ocultar busqueda y filtros";
+    var textoBoton= document.getElementById("textoAlternarControlesInterConsulta");
+    if (textoBoton) {
+        textoBoton.textContent= colapsado ? "Ver filtros" : "Ocultar filtros";
+    }
+    if (ventana) {
+        ventana.classList.toggle("interconsulta-filters-collapsed", colapsado);
+    }
+    actualizarResumenControlesInterConsulta();
+}
+
+function alternarControlesInterConsulta() {
+    var panel= document.getElementById("panelControlesInterConsulta");
+    if (!panel) {
+        return;
+    }
+    establecerControlesInterConsultaColapsados(!panel.classList.contains("is-collapsed"));
+}
+
+function inicializarControlesInterConsulta() {
+    establecerControlesInterConsultaColapsados(true);
 }
 
 function clonarOpcionesInterConsulta(origenId, destinoId, usarTextoComoValor= false) {
@@ -386,6 +517,7 @@ function sincronizarOpcionesRapidasInterConsulta() {
     actualizarOpcionesSubtipoInterConsulta();
     clonarOpcionesInterConsulta("inptBuscarInterConsulta7", "inptFiltroRapidoLocalInterConsulta");
     clonarOpcionesInterConsulta("inptUsuariosInterConsulta", "inptFiltroRapidoResponsableInterConsulta", true);
+    aplicarLocalUsuarioInterConsulta(false);
 }
 
 function sincronizarFiltrosInterConsultaDesdeBarra() {
@@ -394,6 +526,7 @@ function sincronizarFiltrosInterConsultaDesdeBarra() {
     asignarValorCampoInterConsulta("inptBuscarInterConsulta4", valorCampoInterConsulta("inptFiltroRapidoTipoInterConsulta"));
     asignarValorCampoInterConsulta("inptBuscarInterConsulta7", valorCampoInterConsulta("inptFiltroRapidoLocalInterConsulta"));
     asignarValorCampoInterConsulta("inptBuscarInterConsulta6", valorCampoInterConsulta("inptFiltroRapidoResponsableInterConsulta"));
+    actualizarResumenControlesInterConsulta();
 }
 
 function sincronizarFiltrosInterConsultaDesdeAvanzado() {
@@ -403,6 +536,7 @@ function sincronizarFiltrosInterConsultaDesdeAvanzado() {
     asignarValorCampoInterConsulta("inptFiltroRapidoLocalInterConsulta", valorCampoInterConsulta("inptBuscarInterConsulta7"));
     asignarValorCampoInterConsulta("inptFiltroRapidoResponsableInterConsulta", valorCampoInterConsulta("inptBuscarInterConsulta6"));
     actualizarChipActivoInterConsulta();
+    actualizarResumenControlesInterConsulta();
 }
 
 function abrirFiltrosAvanzadosInterConsulta() {
@@ -449,12 +583,16 @@ function limpiarFiltrosInterConsulta(ejecutarBusqueda= true) {
         asignarValorCampoInterConsulta(id, "");
     });
 
+    localUsuarioInicializadoInterConsulta= false;
+    aplicarLocalUsuarioInterConsulta(true);
+
     const ocultarInactivos= document.getElementById("inptSeleccFiltroEstadoInterConsulta");
     if (ocultarInactivos) {
         ocultarInactivos.checked= true;
     }
 
     actualizarChipActivoInterConsulta();
+    actualizarResumenControlesInterConsulta();
     if (ejecutarBusqueda) {
         buscarPacientesConInterConsultas();
     }
@@ -1092,7 +1230,7 @@ function actualizarAvisosSeguimientoPacienteDetalle(datosHilo) {
     if (ventasSinPlan > 0) {
         agregarAviso(
             "warning",
-            "Ventas sin plan",
+            "Sin plan madre",
             ventasSinPlan + " venta(s) real(es) del paciente no estan vinculadas a un plan madre. Es solo un aviso; no bloquea el flujo."
         );
     }
@@ -1241,7 +1379,15 @@ function actualizarCabeceraDetalleHilo(datosHilo, opcionesDictamen= "") {
         btnUnificarSeguimiento.style.display= puedeUnificarSeguimiento ? "" : "none";
         btnUnificarSeguimiento.disabled= !puedeUnificarSeguimiento;
     }
-    actualizarAvisosSeguimientoPacienteDetalle(datosHilo);
+    if (Number(datosHilo.resumen_seguimiento_cargado || 0) > 0) {
+        actualizarAvisosSeguimientoPacienteDetalle(datosHilo);
+    } else {
+        const avisosSeguimiento= document.getElementById("avisosSeguimientoPacienteInterConsulta");
+        if (avisosSeguimiento) {
+            avisosSeguimiento.innerHTML= "";
+            avisosSeguimiento.style.display= "none";
+        }
+    }
 
     const resumen= document.getElementById("contenedorEncabezadoInterConsulta");
     if (resumen) {
@@ -1328,6 +1474,88 @@ function inicializarLecturaEditorInterConsulta() {
         editorMensaje.addEventListener("click", marcarInterConsultaLeidaDesdeEditor);
         editorMensaje.addEventListener("focus", marcarInterConsultaLeidaDesdeEditor);
     }
+}
+
+function mostrarEstadoResumenSeguimientoInterConsulta(texto, esError= false) {
+    const resumen= document.getElementById("contenedorEncabezadoInterConsulta");
+    if (!resumen) {return;}
+    let contenedor= document.getElementById("avisosSeguimientoPacienteInterConsulta");
+    if (!contenedor) {
+        contenedor= document.createElement("div");
+        contenedor.id= "avisosSeguimientoPacienteInterConsulta";
+        contenedor.className= "interconsulta-patient-alerts";
+        const titulo= resumen.querySelector(".card-title");
+        if (titulo && titulo.parentNode) {
+            titulo.parentNode.insertBefore(contenedor, titulo.nextSibling);
+        } else {
+            resumen.appendChild(contenedor);
+        }
+    }
+    contenedor.style.display= "";
+    contenedor.innerHTML= '<div class="interconsulta-flow-state'+(esError ? ' interconsulta-flow-state--error' : '')+'">'+texto+'</div>';
+}
+
+function cargarResumenSeguimientoInterConsulta() {
+    const detalles= document.querySelector("#divAbmDetallesInterConsulta .interconsulta-thread-details");
+    if (!detalles || !detalles.open || !cod_interConsulta) {return;}
+    const codigoSolicitud= String(cod_interConsulta);
+    if (detalles.dataset.resumenCargado == codigoSolicitud || detalles.dataset.resumenCargando == codigoSolicitud) {return;}
+
+    detalles.dataset.resumenCargando= codigoSolicitud;
+    mostrarEstadoResumenSeguimientoInterConsulta("Cargando resumen del paciente...");
+    obtener_datos_user();
+    const datos= new FormData();
+    datos.append("useru", userid);
+    datos.append("passu", passuser);
+    datos.append("navegador", navegador);
+    datos.append("accion", "buscarResumenSeguimientoInterConsulta");
+    datos.append("cod_interConsulta", codigoSolicitud);
+
+    $.ajax({
+        data: datos,
+        url: "../php_system/abmInterConsulta.php",
+        type: "post",
+        cache: false,
+        contentType: false,
+        processData: false,
+        error: function () {
+            if (String(cod_interConsulta) == codigoSolicitud) {
+                mostrarEstadoResumenSeguimientoInterConsulta("No se pudo cargar el resumen del paciente.", true);
+            }
+        },
+        success: function (responseText) {
+            try {
+                const respuesta= $.parseJSON(responseText);
+                if (String(cod_interConsulta) != codigoSolicitud) {return;}
+                if (respuesta["1"] == "exito") {
+                    actualizarAvisosSeguimientoPacienteDetalle(respuesta["2"] || {});
+                    detalles.dataset.resumenCargado= codigoSolicitud;
+                } else {
+                    mostrarEstadoResumenSeguimientoInterConsulta("No se pudo cargar el resumen del paciente.", true);
+                }
+            } catch (error) {
+                if (String(cod_interConsulta) == codigoSolicitud) {
+                    mostrarEstadoResumenSeguimientoInterConsulta("No se pudo cargar el resumen del paciente.", true);
+                }
+            }
+        },
+        complete: function () {
+            if (detalles.dataset.resumenCargando == codigoSolicitud) {
+                delete detalles.dataset.resumenCargando;
+            }
+        }
+    });
+}
+
+function inicializarResumenDiferidoInterConsulta() {
+    const detalles= document.querySelector("#divAbmDetallesInterConsulta .interconsulta-thread-details");
+    if (!detalles || detalles.dataset.resumenDiferidoInicializado) {return;}
+    detalles.dataset.resumenDiferidoInicializado= "1";
+    detalles.addEventListener("toggle", function() {
+        if (detalles.open) {
+            cargarResumenSeguimientoInterConsulta();
+        }
+    });
 }
 
 function actualizarContadorMensajeInterConsulta() {
@@ -1426,16 +1654,20 @@ document.addEventListener("DOMContentLoaded", function() {
     actualizarOpcionesSubtipoInterConsulta();
     sincronizarOpcionesRapidasInterConsulta();
     actualizarChipActivoInterConsulta();
+    inicializarControlesInterConsulta();
     inicializarLecturaEditorInterConsulta();
     inicializarComposerMensajeInterConsulta();
+    inicializarResumenDiferidoInterConsulta();
 });
 window.addEventListener("load", function() {
     actualizarTabsCategoriaHilosInterConsulta();
     actualizarOpcionesSubtipoInterConsulta();
     sincronizarOpcionesRapidasInterConsulta();
     actualizarChipActivoInterConsulta();
+    inicializarControlesInterConsulta();
     inicializarLecturaEditorInterConsulta();
     inicializarComposerMensajeInterConsulta();
+    inicializarResumenDiferidoInterConsulta();
 });
 
 function buscarPacientesConInterConsultas() {
@@ -1452,6 +1684,7 @@ function buscarPacientesConInterConsultas() {
     const fecha_desde= valorCampoInterConsulta("inptBuscarInterConsultaFechaDesde");
     const fecha_hasta= valorCampoInterConsulta("inptBuscarInterConsultaFechaHasta");
     const categoria_principal= obtenerCategoriaActivaInterConsulta();
+    actualizarResumenControlesInterConsulta();
     
     buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, userid, limiteMaximoListadoInterConsulta, ocultar_inactivos, usuario_vinculado, busqueda_global, fecha_desde, fecha_hasta, categoria_principal);
 }
@@ -1464,33 +1697,175 @@ function actualizarActividadDiariaSeguimientoInterConsulta(html) {
     contenedor.innerHTML= html || '<div class="interconsulta-daily-activity__empty">Sin gestiones hoy</div>';
 }
 
-function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, cod_usuarioFK, limite, ocultar_inactivos, usuario_vinculado, busqueda_global= "", fecha_desde= "", fecha_hasta= "", categoria_principal= "") {
+function crearDatosSolicitudListadoInterConsulta(filtros, accion) {
     let datos= new FormData();
-    categoria_principal= categoria_principal || obtenerCategoriaActivaInterConsulta();
     datos.append("useru", userid);
-	datos.append("passu", passuser);
-	datos.append("navegador", navegador);
-    datos.append("accion", 'buscarInterConsultas');
-    datos.append("cod_interConsulta", cod_interC);
-    datos.append("cod_usuarioFK", cod_usuarioFK);
-    datos.append("asunto", asunto);
-    datos.append("nombre_responsable", nombre_responsable);
-    datos.append("nombre_cliente", nombre_cliente);
-    datos.append("estado", estado);
-    datos.append("tipo", tipo);
-    datos.append("usuario_vinculado", usuario_vinculado);
-    datos.append("cod_localFK", cod_localFK);
-    datos.append("busqueda_global", busqueda_global);
-    datos.append("fecha_desde", fecha_desde);
-    datos.append("fecha_hasta", fecha_hasta);
-    datos.append("categoria_principal", categoria_principal);
+    datos.append("passu", passuser);
+    datos.append("navegador", navegador);
+    datos.append("accion", accion || "buscarInterConsultas");
+    datos.append("cod_interConsulta", filtros.cod_interC || "");
+    datos.append("cod_usuarioFK", filtros.cod_usuarioFK || "");
+    datos.append("asunto", filtros.asunto || "");
+    datos.append("nombre_responsable", filtros.nombre_responsable || "");
+    datos.append("nombre_cliente", filtros.nombre_cliente || "");
+    datos.append("estado", filtros.estado || "");
+    datos.append("tipo", filtros.tipo || "");
+    datos.append("usuario_vinculado", filtros.usuario_vinculado || "");
+    datos.append("cod_localFK", filtros.cod_localFK || "");
+    datos.append("busqueda_global", filtros.busqueda_global || "");
+    datos.append("fecha_desde", filtros.fecha_desde || "");
+    datos.append("fecha_hasta", filtros.fecha_hasta || "");
+    datos.append("categoria_principal", filtros.categoria_principal || obtenerCategoriaActivaInterConsulta());
+    datos.append("limite", filtros.limite !== undefined ? filtros.limite : limiteMaximoListadoInterConsulta);
+    if (filtros.ocultar_inactivos) {
+        datos.append("ocultar_inactivos", filtros.ocultar_inactivos);
+    }
+    return datos;
+}
 
-    // Evalua si se ocultan los inactivos
-    if (ocultar_inactivos) {
-        datos.append("ocultar_inactivos", ocultar_inactivos);
+function abortarSolicitudHilosInterConsulta(solicitud) {
+    if (solicitud && solicitud.readyState !== 4) {
+        solicitud.abort();
+    }
+}
+
+function verificarMensajesPendientesListadoInterConsulta(registros) {
+    if (!cod_interConsulta || !Array.isArray(registros)) {
+        return;
+    }
+    registros.forEach(function(valor) {
+        if (valor.cod_interConsulta == cod_interConsulta && parseInt(valor.cantMensajes, 10) > totalRegistroMensaje) {
+            var aviso= document.getElementById('avisoMensajesPendientesInterConsulta');
+            if (aviso) {
+                aviso.style.display= "flex";
+            }
+        }
+    });
+}
+
+function aplicarPaginaListadoInterConsulta(datos, offsetPagina, esEnriquecido) {
+    var listado= document.getElementById('table_frm_VistaInterConsulta');
+    var contenedorScroll= document.querySelector("#divListadoInterConsulta .hilos-thread-table-wrap");
+    var scrollAnterior= contenedorScroll ? contenedorScroll.scrollTop : 0;
+    if (listado) {
+        listado.innerHTML= datos["2"];
+    }
+    if (esEnriquecido && contenedorScroll) {
+        contenedorScroll.scrollTop= scrollAnterior;
+    } else {
+        desplazarListadoHilosAlInicio();
     }
 
-    if (limite != 0) {
+    registrocargadoInterConsulta= Number(datos["4"]) || 0;
+    paginaOffsetInterConsulta= Math.max(0, Number(offsetPagina) || 0);
+    registroInterConsultaAbierta= Number(datos["7"]) || 0;
+    totalregistroinformeInterConsulta= Number(datos["5"]) || 0;
+    var proceso= document.getElementById("tbProcessInformeInterConsulta");
+    if (proceso) {
+        proceso.style.display= "none";
+    }
+    controldebusquedadInformeInterConsulta= false;
+
+    var cargados= document.getElementById('inptRegistoCargadoInterConsulta');
+    var abiertos= document.getElementById('inptRegistoInterConsultaAbierta');
+    if (cargados) {
+        cargados.value= registrocargadoInterConsulta;
+    }
+    if (abiertos) {
+        abiertos.value= registroInterConsultaAbierta;
+    }
+    if (esEnriquecido) {
+        actualizarTabsCategoriaHilosInterConsulta(datos["9"]);
+        actualizarActividadDiariaSeguimientoInterConsulta(datos["10"]);
+    }
+    actualizarBotonCargarMasHilosInterConsulta();
+    verificarMensajesPendientesListadoInterConsulta(datos["3"]);
+}
+
+function marcarEnriquecimientoListadoInterConsultaNoDisponible() {
+    document.querySelectorAll("#table_frm_VistaInterConsulta .interconsulta-thread-row--loading").forEach(function(fila) {
+        fila.classList.remove("interconsulta-thread-row--loading");
+        fila.querySelectorAll(".interconsulta-status-pill--muted").forEach(function(indicador) {
+            var principal= indicador.querySelector("strong");
+            var detalle= indicador.querySelector("span");
+            if (principal) {
+                principal.textContent= "No disponible";
+            }
+            if (detalle) {
+                detalle.textContent= "Actualice para reintentar";
+            }
+            indicador.title= "No se pudo completar esta informacion. Actualice el listado para reintentar.";
+        });
+    });
+}
+
+function cargarEnriquecimientoListadoInterConsulta(filtros, token, offsetPagina) {
+    abortarSolicitudHilosInterConsulta(solicitudEnriquecimientoListadoInterConsultaActiva);
+    var datosSolicitud= crearDatosSolicitudListadoInterConsulta(filtros, "buscarInterConsultasEnriquecidos");
+    var solicitud= $.ajax({
+        data: datosSolicitud,
+        url: "../php_system/abmInterConsulta.php",
+        type: "post",
+        cache: false,
+        contentType: false,
+        processData: false,
+        error: function(jqXHR, textstatus) {
+            if (textstatus != "abort" && token == secuenciaListadoInterConsulta) {
+                marcarEnriquecimientoListadoInterConsultaNoDisponible();
+                console.warn("No se pudo completar la informacion complementaria del listado de hilos.");
+            }
+        },
+        success: function(responseText) {
+            if (token != secuenciaListadoInterConsulta || busquedaInterConsultaCancelada) {
+                return;
+            }
+            try {
+                var respuesta= $.parseJSON(responseText);
+                if (respuestaJqueryAjax(respuesta["1"]) == true) {
+                    aplicarPaginaListadoInterConsulta(respuesta, offsetPagina, true);
+                } else {
+                    marcarEnriquecimientoListadoInterConsultaNoDisponible();
+                }
+            } catch (error) {
+                marcarEnriquecimientoListadoInterConsultaNoDisponible();
+                GuardarArchivosLog("Error al completar el listado de hilos: " + error);
+            }
+        },
+        complete: function() {
+            if (solicitudEnriquecimientoListadoInterConsultaActiva === solicitud) {
+                solicitudEnriquecimientoListadoInterConsultaActiva= null;
+            }
+        }
+    });
+    solicitudEnriquecimientoListadoInterConsultaActiva= solicitud;
+}
+
+function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, cod_usuarioFK, limite, ocultar_inactivos, usuario_vinculado, busqueda_global= "", fecha_desde= "", fecha_hasta= "", categoria_principal= "") {
+    categoria_principal= categoria_principal || obtenerCategoriaActivaInterConsulta();
+    var filtrosSolicitud= {
+        cod_interC: cod_interC,
+        cod_usuarioFK: cod_usuarioFK,
+        asunto: asunto,
+        nombre_responsable: nombre_responsable,
+        nombre_cliente: nombre_cliente,
+        estado: estado,
+        tipo: tipo,
+        usuario_vinculado: usuario_vinculado,
+        cod_localFK: cod_localFK,
+        busqueda_global: busqueda_global,
+        fecha_desde: fecha_desde,
+        fecha_hasta: fecha_hasta,
+        categoria_principal: categoria_principal,
+        ocultar_inactivos: ocultar_inactivos,
+        limite: limite
+    };
+    var esCargaListado= limite != 0;
+    var token= secuenciaListadoInterConsulta;
+
+    if (esCargaListado) {
+        token= ++secuenciaListadoInterConsulta;
+        abortarSolicitudHilosInterConsulta(solicitudListadoInterConsultaActiva);
+        abortarSolicitudHilosInterConsulta(solicitudEnriquecimientoListadoInterConsultaActiva);
         busquedaInterConsultaCancelada= false;
         controldebusquedadInformeInterConsulta= false;
         registrocargadoInterConsulta= 0;
@@ -1504,9 +1879,12 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
             etiquetaProceso.textContent= "Cargando hilos";
         }
         document.getElementById('table_frm_VistaInterConsulta').innerHTML= paginacargando;
-        datos.append("limite", limite);
     }
 
+    var datos= crearDatosSolicitudListadoInterConsulta(
+        filtrosSolicitud,
+        esCargaListado ? "buscarInterConsultas" : "buscarInterConsultasEnriquecidos"
+    );
     var OpAjax = $.ajax({
 		data: datos,
 		url: "../php_system/abmInterConsulta.php",
@@ -1536,32 +1914,28 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
         return xhr;
     },
 		error: function (jqXHR, textstatus, errorThrowm) {
+            if (textstatus == "abort") {
+                return;
+            }
             manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
             ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
             controldebusquedadInformeInterConsulta= false;
             actualizarBotonCargarMasHilosInterConsulta();
 		},
 		success: function (responseText) {
-            Respuesta = responseText;
-			console.log(Respuesta)
+			if (esCargaListado && (token != secuenciaListadoInterConsulta || busquedaInterConsultaCancelada)) {
+                return;
+            }
 			try {
-                var datos = $.parseJSON(Respuesta);
-				Respuesta = datos["1"];
-                Respuesta=respuestaJqueryAjax(Respuesta)
-				if (Respuesta) {
-                    if (limite != 0 && busquedaInterConsultaCancelada) {
+                var datos = $.parseJSON(responseText);
+				var respuestaValida=respuestaJqueryAjax(datos["1"])
+				if (respuestaValida) {
+                    if (esCargaListado && (token != secuenciaListadoInterConsulta || busquedaInterConsultaCancelada)) {
                         actualizarBotonCargarMasHilosInterConsulta();
                         return;
                     }
 
-                    // Verifica si hay mensajes pendientes en una interconsulta abierta
-                    if (cod_interConsulta) {
-                        datos["3"].forEach(function(valor) {
-                            if (valor.cod_interConsulta == cod_interConsulta && parseInt(valor.cantMensajes) > totalRegistroMensaje) {
-                                document.getElementById('avisoMensajesPendientesInterConsulta').style.display= "flex";
-                            }
-                        });
-                    }
+                    verificarMensajesPendientesListadoInterConsulta(datos["3"]);
 
                     // Una busqueda unica
                     if (limite == 0) {
@@ -1583,22 +1957,8 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
                             }
                         }
                     } else {
-    					document.getElementById('table_frm_VistaInterConsulta').innerHTML= datos["2"];
-                        desplazarListadoHilosAlInicio();
-
-                        registrocargadoInterConsulta= Number(datos["4"]);
-                        paginaOffsetInterConsulta= 0;
-                        registroInterConsultaAbierta= Number(datos["7"]);
-                        totalregistroinformeInterConsulta= Number(datos["5"]);
-                        document.getElementById("tbProcessInformeInterConsulta").style.display="none"
-                        controldebusquedadInformeInterConsulta=false
-    
-                        // Completa los contadores
-                        document.getElementById('inptRegistoCargadoInterConsulta').value= registrocargadoInterConsulta;
-                        document.getElementById('inptRegistoInterConsultaAbierta').value= registroInterConsultaAbierta;
-                        actualizarTabsCategoriaHilosInterConsulta(datos["9"]);
-                        actualizarActividadDiariaSeguimientoInterConsulta(datos["10"]);
-                        actualizarBotonCargarMasHilosInterConsulta();
+                        aplicarPaginaListadoInterConsulta(datos, 0, false);
+                        cargarEnriquecimientoListadoInterConsulta(filtrosSolicitud, token, 0);
                     }
 				}
 			} catch (error) {
@@ -1607,8 +1967,16 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
-		}
+		},
+        complete: function() {
+            if (solicitudListadoInterConsultaActiva === OpAjax) {
+                solicitudListadoInterConsultaActiva= null;
+            }
+        }
 	});
+    if (esCargaListado) {
+        solicitudListadoInterConsultaActiva= OpAjax;
+    }
 }
 
 function crearHilosSeguimientoPacienteHistorico() {
@@ -1648,7 +2016,7 @@ function crearHilosSeguimientoPacienteHistorico() {
                         + ". Ventas vinculadas: " + (resumen.ventas_vinculadas || 0)
                         + ". Hilos unificados: " + (resumen.hilos_unificados || 0)
                         + ". Conflictos: " + (resumen.conflictos || 0)
-                        + ". Ventas sin plan: " + (resumen.con_ventas_sin_plan_madre || 0)
+                        + ". Sin plan madre: " + (resumen.con_ventas_sin_plan_madre || 0)
                         + ".";
                     ver_vetana_informativa("Sincronizacion finalizada", mensaje, "info");
                     seleccionarCategoriaHilosInterConsulta("administrativo_clinico");
@@ -1929,35 +2297,33 @@ function cargarPaginaAnteriorHilosInterConsulta() {
 }
 
 function buscarMasPacientesConInterConsultas2(cod_interC, cod_usuarioFK, asunto, nombre_responsable, nombre_cliente, estado, tipo, cod_localFK, limite, ocultar_inactivos, usuario_vinculado, busqueda_global= "", fecha_desde= "", fecha_hasta= "", categoria_principal= "", offsetPagina= 0) {
-    let datos= new FormData();
     categoria_principal= categoria_principal || obtenerCategoriaActivaInterConsulta();
-    datos.append("useru", userid);
-	datos.append("passu", passuser);
-	datos.append("navegador", navegador);
-    datos.append("accion", 'buscarInterConsultas');
-    datos.append("cod_interConsulta", cod_interC);
-    datos.append("cod_usuarioFK", cod_usuarioFK);
-    datos.append("cod_localFK", cod_localFK);
-    datos.append("asunto", asunto);
-    datos.append("nombre_responsable", nombre_responsable);
-    datos.append("nombre_cliente", nombre_cliente);
-    datos.append("estado", estado);
-    datos.append("tipo", tipo);
-    datos.append("usuario_vinculado", usuario_vinculado);
-    datos.append("limite", limite);
-    datos.append("busqueda_global", busqueda_global);
-    datos.append("fecha_desde", fecha_desde);
-    datos.append("fecha_hasta", fecha_hasta);
-    datos.append("categoria_principal", categoria_principal);
 
     if (!controldebusquedadInformeInterConsulta) {
         return;
     }
-    
-    // Evalua si se ocultan los inactivos
-    if (ocultar_inactivos) {
-        datos.append("ocultar_inactivos", ocultar_inactivos);
-    }
+
+    var filtrosSolicitud= {
+        cod_interC: cod_interC,
+        cod_usuarioFK: cod_usuarioFK,
+        asunto: asunto,
+        nombre_responsable: nombre_responsable,
+        nombre_cliente: nombre_cliente,
+        estado: estado,
+        tipo: tipo,
+        usuario_vinculado: usuario_vinculado,
+        cod_localFK: cod_localFK,
+        busqueda_global: busqueda_global,
+        fecha_desde: fecha_desde,
+        fecha_hasta: fecha_hasta,
+        categoria_principal: categoria_principal,
+        ocultar_inactivos: ocultar_inactivos,
+        limite: limite
+    };
+    var token= ++secuenciaListadoInterConsulta;
+    abortarSolicitudHilosInterConsulta(solicitudListadoInterConsultaActiva);
+    abortarSolicitudHilosInterConsulta(solicitudEnriquecimientoListadoInterConsultaActiva);
+    var datos= crearDatosSolicitudListadoInterConsulta(filtrosSolicitud, "buscarInterConsultas");
 
     var OpAjax = $.ajax({
 		data: datos,
@@ -1988,48 +2354,29 @@ function buscarMasPacientesConInterConsultas2(cod_interC, cod_usuarioFK, asunto,
         return xhr;
     },
 		error: function (jqXHR, textstatus, errorThrowm) {
+            if (textstatus == "abort") {
+                return;
+            }
             manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
             ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
             controldebusquedadInformeInterConsulta= false;
             actualizarBotonCargarMasHilosInterConsulta();
 		},
 		success: function (responseText) {
-			Respuesta = responseText;
-			console.log(Respuesta)
-            
+			if (token != secuenciaListadoInterConsulta || busquedaInterConsultaCancelada) {
+                return;
+            }
 			try {
-				var datos = $.parseJSON(Respuesta);
-				Respuesta = datos["1"];
-                Respuesta=respuestaJqueryAjax(Respuesta)
-				if (Respuesta) {
-                    if (busquedaInterConsultaCancelada || !controldebusquedadInformeInterConsulta) {
+				var datos = $.parseJSON(responseText);
+                var respuestaValida=respuestaJqueryAjax(datos["1"])
+				if (respuestaValida) {
+                    if (token != secuenciaListadoInterConsulta || busquedaInterConsultaCancelada) {
                         actualizarBotonCargarMasHilosInterConsulta();
                         return;
                     }
 
-                    const registrosRecibidos= Number(datos["4"]);
-                    totalregistroinformeInterConsulta= Number(datos["5"]) || totalregistroinformeInterConsulta;
-                    paginaOffsetInterConsulta= Math.max(0, Number(offsetPagina) || 0);
-                    registrocargadoInterConsulta= registrosRecibidos;
-                    registroInterConsultaAbierta= Number(datos["7"]);
-                    if (registrosRecibidos == 0) {
-                        document.getElementById("tbProcessInformeInterConsulta").style.display="none"
-                        controldebusquedadInformeInterConsulta=false
-                        actualizarTabsCategoriaHilosInterConsulta(datos["9"]);
-                        actualizarActividadDiariaSeguimientoInterConsulta(datos["10"]);
-                        actualizarBotonCargarMasHilosInterConsulta();
-                        return;
-                    }
-                    document.getElementById('table_frm_VistaInterConsulta').innerHTML= datos["2"];
-                    desplazarListadoHilosAlInicio();
-                    document.getElementById("tbProcessInformeInterConsulta").style.display="none"
-                    controldebusquedadInformeInterConsulta=false
-                    // Completa los contadores
-                    document.getElementById('inptRegistoCargadoInterConsulta').value= registrocargadoInterConsulta;
-                    document.getElementById('inptRegistoInterConsultaAbierta').value= registroInterConsultaAbierta;
-                    actualizarTabsCategoriaHilosInterConsulta(datos["9"]);
-                    actualizarActividadDiariaSeguimientoInterConsulta(datos["10"]);
-                    actualizarBotonCargarMasHilosInterConsulta();
+                    aplicarPaginaListadoInterConsulta(datos, offsetPagina, false);
+                    cargarEnriquecimientoListadoInterConsulta(filtrosSolicitud, token, offsetPagina);
 				}
 			} catch (error) {
                 document.getElementById("divProgressInformeInterConsulta").style.backgroundColor='#ff5722'
@@ -2038,9 +2385,15 @@ function buscarMasPacientesConInterConsultas2(cod_interC, cod_usuarioFK, asunto,
                 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
-			}
-		}
+            }
+		},
+        complete: function() {
+            if (solicitudListadoInterConsultaActiva === OpAjax) {
+                solicitudListadoInterConsultaActiva= null;
+            }
+        }
 	});
+    solicitudListadoInterConsultaActiva= OpAjax;
 }
 
 function solicitarMencionInterConsulta(cod_interC) {
@@ -2781,7 +3134,7 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
     datos.append("cod_interConsulta", codInterConsulta);
     datos.append("cod_clienteFK", cod_clienteFK);
     datos.append("nombre_usuario", document.getElementById("lblUser").textContent);
-    datos.append("limite", 5);
+    datos.append("limite", 10);
     
     verCerrarEfectoCargando("1");
     document.getElementById('avisoMensajesPendientesInterConsulta').style.display= "none";
@@ -2794,6 +3147,8 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
     const detallesHilo= document.querySelector("#divAbmDetallesInterConsulta .interconsulta-thread-details");
     if (detallesHilo) {
         detallesHilo.removeAttribute("open");
+        delete detallesHilo.dataset.resumenCargado;
+        delete detallesHilo.dataset.resumenCargando;
     }
     document.getElementById('txtUsuarioCreadorInterConsulta').innerHTML= '';
     document.getElementById('txtFechaCreadorInterConsulta').innerHTML= '';
@@ -2803,6 +3158,9 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
     document.getElementById('localDetalleInterConsulta').innerHTML= '';
     document.getElementById('txtCodVenta').innerHTML= '';
     document.getElementById('txtMontoLimite').innerHTML= '';
+    if (solicitudDetalleInterConsultaActiva && solicitudDetalleInterConsultaActiva.readyState !== 4) {
+        solicitudDetalleInterConsultaActiva.abort();
+    }
     var OpAjax = $.ajax({
 		data: datos,
 		url: "../php_system/abmInterConsulta.php",
@@ -2832,6 +3190,7 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
         return xhr;
     },
 		error: function (jqXHR, textstatus, errorThrowm) {
+	        if (textstatus == "abort") {return;}
 	        verCerrarEfectoCargando("");
             manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
             ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
@@ -2876,6 +3235,7 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
                     // Asigna los dictamenes al select de mensajes
                     document.getElementById('dictamenAbmMensaje').innerHTML= "<option value=''>Ninguna</option>" + datos["7"];
                     actualizarCabeceraDetalleHilo(datos["4"], datos["7"]);
+                    inicializarResumenDiferidoInterConsulta();
                     const normalizacionSeguimiento= datos["8"] || {};
 
                     // Carga las observaciones en caso de existir
@@ -2949,6 +3309,7 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null) {
 			}
 		}
 	});
+    solicitudDetalleInterConsultaActiva= OpAjax;
 }
 
 function cargarFlujoGastosInterConsulta(codInterConsulta) {
@@ -3020,6 +3381,90 @@ function alternarPanelDictamenInterConsulta(idPanel, boton) {
         }
         boton.setAttribute("aria-expanded", seAbrira ? "true" : "false");
     }
+}
+
+function cargarPanelDictamenInterConsulta(codDictamen, idPanelResolucion, idPanelMensajes, boton) {
+    const panelObjetivoId= boton ? boton.getAttribute("aria-controls") : idPanelResolucion;
+    const panelObjetivo= document.getElementById(panelObjetivoId);
+    const panelResolucion= document.getElementById(idPanelResolucion);
+    const panelMensajes= document.getElementById(idPanelMensajes);
+    const tarjeta= panelObjetivo ? panelObjetivo.closest(".interc-dictamen-card") : null;
+    if (!panelObjetivo || !panelResolucion || !panelMensajes || !tarjeta) {return;}
+
+    if (tarjeta.dataset.detalleCargado == "1") {
+        alternarPanelDictamenInterConsulta(panelObjetivoId, boton);
+        return;
+    }
+    if (tarjeta.dataset.detalleCargando == "1") {return;}
+
+    const codigoHiloSolicitud= String(cod_interConsulta || "");
+    tarjeta.dataset.detalleCargando= "1";
+    Array.from(tarjeta.querySelectorAll(".interc-dictamen-action-btn")).forEach(function(botonTarjeta) {
+        botonTarjeta.disabled= true;
+    });
+    const estadoObjetivo= panelObjetivo.querySelector(".interconsulta-flow-state");
+    if (estadoObjetivo) {
+        estadoObjetivo.textContent= "Cargando información del dictamen...";
+    }
+
+    obtener_datos_user();
+    const datos= new FormData();
+    datos.append("useru", userid);
+    datos.append("passu", passuser);
+    datos.append("navegador", navegador);
+    datos.append("accion", "buscarDetalleDictamenInterConsulta");
+    datos.append("cod_interConsulta", codigoHiloSolicitud);
+    datos.append("cod_dictamen", codDictamen);
+
+    $.ajax({
+        data: datos,
+        url: "../php_system/abmInterConsulta.php",
+        type: "post",
+        cache: false,
+        contentType: false,
+        processData: false,
+        error: function () {
+            if (String(cod_interConsulta) == codigoHiloSolicitud) {
+                const estado= panelObjetivo.querySelector(".interconsulta-flow-state");
+                if (estado) {
+                    estado.classList.add("interconsulta-flow-state--error");
+                    estado.textContent= "No se pudo cargar el dictamen.";
+                }
+            }
+        },
+        success: function (responseText) {
+            try {
+                const respuesta= $.parseJSON(responseText);
+                if (String(cod_interConsulta) != codigoHiloSolicitud) {return;}
+                if (respuesta["1"] != "exito") {
+                    throw new Error("No se pudo cargar el dictamen.");
+                }
+                const resolucion= panelResolucion.querySelector('[data-role="dictamen-resolucion"]');
+                const chat= panelMensajes.querySelector('[data-role="dictamen-chat-panel"]');
+                if (resolucion) {
+                    resolucion.innerHTML= respuesta["2"] || '<div class="interconsulta-flow-state">Sin resolución registrada.</div>';
+                }
+                if (chat) {
+                    chat.innerHTML= respuesta["3"] || '<div class="interconsulta-flow-state">Sin mensajes relacionados.</div>';
+                }
+                panelMensajes.dataset.totalMensajes= parseInt(respuesta["4"] || 0, 10);
+                tarjeta.dataset.detalleCargado= "1";
+                alternarPanelDictamenInterConsulta(panelObjetivoId, boton);
+            } catch (error) {
+                const estado= panelObjetivo.querySelector(".interconsulta-flow-state");
+                if (estado) {
+                    estado.classList.add("interconsulta-flow-state--error");
+                    estado.textContent= "No se pudo cargar el dictamen.";
+                }
+            }
+        },
+        complete: function () {
+            delete tarjeta.dataset.detalleCargando;
+            Array.from(tarjeta.querySelectorAll(".interc-dictamen-action-btn")).forEach(function(botonTarjeta) {
+                botonTarjeta.disabled= false;
+            });
+        }
+    });
 }
 
 function verMasMensajesInterconsulta(offset, cod_dictamen) {
@@ -3543,7 +3988,10 @@ function buscarInterConsultasAsociadasPaciente(cod_cliente) {
     datos.append("cod_cliente", cod_cliente);
     datos.append("cod_interConsulta", cod_interConsulta);
 
-    verCerrarEfectoCargando("1");
+    const contenedorAsociados= document.getElementById('list_detalles_interconsultas_asoc');
+    if (contenedorAsociados) {
+        contenedorAsociados.innerHTML= '<div class="interconsulta-flow-state">Cargando hilos relacionados...</div>';
+    }
     var OpAjax = $.ajax({
 		data: datos,
 		url: "../php_system/abmInterConsulta.php",
@@ -3573,9 +4021,13 @@ function buscarInterConsultasAsociadasPaciente(cod_cliente) {
         return xhr;
     },
 		error: function (jqXHR, textstatus, errorThrowm) {
-	        verCerrarEfectoCargando("");
+            if (textstatus == "abort") {
+                return;
+            }
             manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
-            ver_vetana_informativa("SE HA PRODUCTIDO UN ERROR");
+            if (contenedorAsociados) {
+                contenedorAsociados.innerHTML= '<div class="interconsulta-flow-state interconsulta-flow-state--error">No se pudieron cargar los hilos relacionados.</div>';
+            }
 		},
 		success: function (responseText) {
 			Respuesta = responseText;
@@ -3593,12 +4045,12 @@ function buscarInterConsultasAsociadasPaciente(cod_cliente) {
                     throw new Error("Error producido en eliminarMencionMensaje de JavaScript.");
                 }
 			} catch (error) {
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
                 var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
-			} finally {
-                verCerrarEfectoCargando("");
-            }
+                if (contenedorAsociados) {
+                    contenedorAsociados.innerHTML= '<div class="interconsulta-flow-state interconsulta-flow-state--error">No se pudieron cargar los hilos relacionados.</div>';
+                }
+			}
 		}
 	});
 }
@@ -3606,7 +4058,15 @@ function buscarInterConsultasAsociadasPaciente(cod_cliente) {
 function cancelarInformeInterConsulta() {
     busquedaInterConsultaCancelada= true;
 	controldebusquedadInformeInterConsulta=false
-	document.getElementById("divProgressInformeInterConsulta").style.backgroundColor='#ff5722'
+	secuenciaListadoInterConsulta++;
+    abortarSolicitudHilosInterConsulta(solicitudListadoInterConsultaActiva);
+    abortarSolicitudHilosInterConsulta(solicitudEnriquecimientoListadoInterConsultaActiva);
+    solicitudListadoInterConsultaActiva= null;
+    solicitudEnriquecimientoListadoInterConsultaActiva= null;
+    var progreso= document.getElementById("divProgressInformeInterConsulta");
+    if (progreso) {
+        progreso.style.backgroundColor='#ff5722';
+    }
     actualizarBotonCargarMasHilosInterConsulta();
 }
 
@@ -3705,9 +4165,12 @@ function verCerrarVentanaListadoInterConsulta(mostrar, anterior= '') {
             cargarUsuariosMencionesInterConsulta();
         }
         buscarabmusuario2('', '', '', 'Activo', '');
+        sincronizarOpcionesRapidasInterConsulta();
+        aplicarLocalUsuarioInterConsulta(false);
         buscarPacientesConInterConsultas();
 
         document.getElementById("divListadoInterConsulta").style.display= "";
+        inicializarControlesInterConsulta();
 
         if (anterior) {
             document.getElementById(anterior).style.display= "none";
