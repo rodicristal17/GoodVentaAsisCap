@@ -5231,9 +5231,34 @@ function limpiarcamposInterconsulta() {
 }
 
 var ventanaAnterior= [];
+function ajustarAltoDetalleInterConsulta() {
+    var detalle= document.getElementById("divAbmDetallesInterConsulta");
+    if (!detalle) {
+        return;
+    }
+
+    var viewport= window.visualViewport;
+    if (viewport) {
+        detalle.style.setProperty("--interconsulta-viewport-height", Math.round(viewport.height) + "px");
+        detalle.style.setProperty("--interconsulta-viewport-offset-top", Math.round(viewport.offsetTop || 0) + "px");
+        return;
+    }
+
+    detalle.style.setProperty("--interconsulta-viewport-height", window.innerHeight + "px");
+    detalle.style.setProperty("--interconsulta-viewport-offset-top", "0px");
+}
+
+if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", ajustarAltoDetalleInterConsulta);
+    window.visualViewport.addEventListener("scroll", ajustarAltoDetalleInterConsulta);
+} else {
+    window.addEventListener("resize", ajustarAltoDetalleInterConsulta);
+}
+
 function verCerrarVentanaDetalleInterConsulta(mostrar, anterior= '') {
     if (mostrar) {
         verCerrarVentanaListadoInterConsulta(false);
+        ajustarAltoDetalleInterConsulta();
         document.getElementById("divAbmDetallesInterConsulta").style.display= "";
 
         if (!anterior && ventanaAnterior.length > 0) {

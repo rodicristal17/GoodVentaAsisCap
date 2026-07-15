@@ -22,7 +22,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=hilos-filtros-colapsados-20260712" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=interconsulta-alto-adaptable-20260715" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=20260713-6" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
@@ -63,7 +63,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
-<script src="../js_system/abmInterConsulta.js?x=hilos-seguimientos-citados-20260713-5"></script>
+<script src="../js_system/abmInterConsulta.js?x=interconsulta-alto-adaptable-20260715"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
@@ -85,7 +85,8 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 20;
+    /* Delante del panel principal (z-index: 1000) y debajo de los modales (3000). */
+    z-index: 2000;
     display: grid;
     grid-template-columns: minmax(220px, max-content) minmax(240px, 1fr) minmax(0, max-content);
     align-items: center;
@@ -8011,7 +8012,7 @@ style='background-color:#5bc572'>
 </div>
 <div id="divAbmDetallesInterConsulta" class="principal2 interconsulta-detail-overlay" style="display: none;">
   <center>
-    <div id="divAbmDetallesInterConsulta" class="divAbms interconsulta-detail-modal">
+    <div class="divAbms interconsulta-detail-modal">
         <div class="interconsulta-detail-header">
           <div class="interconsulta-detail-title-group">
             <h2 id="tituloInterConsultas">Hilo # - </h2>
