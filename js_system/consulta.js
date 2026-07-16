@@ -2329,13 +2329,16 @@ function ajustarVisualModalNuevaConsulta() {
 	var shell = modal.querySelector(".consulta-nueva-modal-shell") || modal.querySelector(".modal-detalle-agenda-box");
 	var cuerpo = modal.querySelector(".modal-filtros-body");
 	var lista = document.getElementById("consultaTratamientoPlanLista");
+	var esTabletOTactil = window.matchMedia && window.matchMedia("(max-width: 1100px), (pointer: coarse)").matches;
 	modal.style.alignItems = "flex-start";
-	modal.style.padding = "32px 24px";
-	modal.style.overflow = "auto";
+	modal.style.padding = esTabletOTactil ? "12px" : "32px 24px";
+	modal.style.overflow = esTabletOTactil ? "hidden" : "auto";
 	if (shell) {
-		shell.style.width = "min(1000px, calc(100vw - 48px))";
+		shell.style.width = esTabletOTactil ? "calc(100vw - 24px)" : "min(1000px, calc(100vw - 48px))";
 		shell.style.maxWidth = "1000px";
-		shell.style.maxHeight = "calc(100vh - 64px)";
+		shell.style.height = esTabletOTactil ? "calc(100vh - 24px)" : "auto";
+		shell.style.height = esTabletOTactil ? "calc(100dvh - 24px)" : "auto";
+		shell.style.maxHeight = esTabletOTactil ? "calc(100dvh - 24px)" : "calc(100vh - 64px)";
 		shell.style.display = "flex";
 		shell.style.flexDirection = "column";
 		shell.style.margin = "0 auto";
@@ -2344,11 +2347,14 @@ function ajustarVisualModalNuevaConsulta() {
 	if (cuerpo) {
 		cuerpo.style.flex = "1 1 auto";
 		cuerpo.style.minHeight = "0";
-		cuerpo.style.overflow = "auto";
+		cuerpo.style.overflowX = "hidden";
+		cuerpo.style.overflowY = "auto";
+		cuerpo.style.webkitOverflowScrolling = "touch";
+		cuerpo.style.touchAction = "pan-y";
 	}
 	if (lista) {
-		lista.style.maxHeight = "clamp(230px, 34vh, 360px)";
-		lista.style.overflowY = "auto";
+		lista.style.maxHeight = esTabletOTactil ? "none" : "clamp(230px, 34vh, 360px)";
+		lista.style.overflowY = esTabletOTactil ? "visible" : "auto";
 		lista.style.alignContent = "start";
 		lista.style.padding = "8px";
 		lista.style.border = "1px solid #d9e4ee";

@@ -32125,6 +32125,44 @@ button.dashboard-summary-item:hover {
     padding: 9px 16px;
 }
 
+@media (max-width: 1100px), (pointer: coarse) {
+    #divAbmDetalleConsulta {
+        padding: 12px !important;
+        overflow: hidden !important;
+        overscroll-behavior: none;
+    }
+
+    #divAbmDetalleConsulta .consulta-nueva-modal-shell {
+        width: calc(100vw - 24px) !important;
+        height: calc(100vh - 24px) !important;
+        height: calc(100dvh - 24px) !important;
+        max-height: calc(100vh - 24px) !important;
+        max-height: calc(100dvh - 24px) !important;
+        overflow: hidden;
+    }
+
+    #divAbmDetalleConsulta .modal-filtros-body {
+        min-height: 0;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+    }
+
+    #divAbmDetalleConsulta .clinical-treatment-plan-list {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    #divAbmDetalleConsulta .clinical-register-footer {
+        position: sticky;
+        bottom: -14px;
+        z-index: 3;
+        box-shadow: 0 -8px 18px rgba(15, 23, 42, 0.08);
+    }
+}
+
 @media (max-width: 980px) {
     #divAbmDetalleConsulta .clinical-treatment-plan-card {
         grid-template-columns: 1fr;

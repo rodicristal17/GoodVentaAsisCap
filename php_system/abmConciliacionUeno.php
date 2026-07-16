@@ -1781,7 +1781,7 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 			$claseOrigen = "otro";
 		}
 		$creditoHtml = number_format($credito, 0, ",", ".");
-		if ($etiquetaOrigen != "") {
+		if ($estado_clave != "conciliado" && $etiquetaOrigen != "") {
 			$creditoHtml .= "<button type='button' class='ueno-origin-badge ueno-origin-badge--" . $claseOrigen . "' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")'>" . ueno_escape_html($etiquetaOrigen) . "</button>";
 		}
 		if ($credito > 0 && $disponible > 0 && $estado_clave != "revisar") {

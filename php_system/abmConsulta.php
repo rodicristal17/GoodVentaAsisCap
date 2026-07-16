@@ -4970,18 +4970,38 @@ exit;
 function buscarConsulta($Paciente,$local,$num_factura) {
     $mysqli=conectar_al_servidor();
 	$pagina='';
+
+	$Paciente = trim((string)$Paciente);
+	$local = trim((string)$local);
+	$num_factura = trim((string)$num_factura);
+	$pacienteSql = mysqli_real_escape_string($mysqli,$Paciente);
+	$localSql = mysqli_real_escape_string($mysqli,$local);
+	$numFacturaSql = mysqli_real_escape_string($mysqli,$num_factura);
 	 
     $sqlFiltro= "";
+	$sqlJoinBusquedaPaciente = "";
 	if($local!=""){
-		$sqlFiltro=" and  cod_local='".$local."' ";
+		$sqlFiltro.=" and vt.cod_local='".$localSql."' ";
 	}
 	
 	if($Paciente!=""){
-		$sqlFiltro=" and  concat(cl.ci_cliente,' ',cl.rut_cliente ,' ',p.nombre_persona )   like '%".$Paciente."%' ";
+		$pacienteSoloNumeros = preg_replace('/[^0-9]/','',$Paciente);
+		$esDocumentoOTelefonoExacto = ($pacienteSoloNumeros === $Paciente && strlen($Paciente) >= 5);
+		if ($esDocumentoOTelefonoExacto) {
+			$sqlJoinBusquedaPaciente=" inner join (
+				select cl_busqueda.cod_cliente from cliente cl_busqueda where cl_busqueda.ci_cliente='".$pacienteSql."'
+				union
+				select cl_busqueda.cod_cliente from cliente cl_busqueda where cl_busqueda.rut_cliente='".$pacienteSql."'
+				union
+				select p_busqueda.cod_persona as cod_cliente from persona p_busqueda where p_busqueda.telefono='".$pacienteSql."'
+			) busqueda_paciente on busqueda_paciente.cod_cliente=vt.cod_clienteFK ";
+		} else {
+			$sqlFiltro.=" and (cl.ci_cliente like '%".$pacienteSql."%' or cl.rut_cliente like '%".$pacienteSql."%' or p.nombre_persona like '%".$pacienteSql."%' or p.telefono like '%".$pacienteSql."%') ";
+		}
 	}
 
     if($num_factura!=""){
-		$sqlFiltro=" and num_factura like '%".$num_factura."%' ";
+		$sqlFiltro.=" and vt.num_factura='".$numFacturaSql."' ";
 	}
 
 	$planesMadreDisponibles = planDefinitivoTablasDisponiblesConsulta($mysqli);
@@ -4999,9 +5019,9 @@ function buscarConsulta($Paciente,$local,$num_factura) {
     (select Nombre from local where cod_local=vt.cod_local) as nombre_local , 
     (select count(*) from detalle_venta dtv_tot inner join producto pr_tot on pr_tot.cod_producto=dtv_tot.cod_productoFK where dtv_tot.cod_ventaFK=vt.cod_venta".$condicionTratamientoClinicoTotal.") as totalporcentaje
     ".$planDefinitivoSelect."
-    from venta vt inner join cliente cl on cod_clienteFK=cod_cliente
-    inner join persona p on cod_cliente=cod_persona
-    where cl.estado = 'Activo' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0".$sqlFiltro." limit 100;";
+    from venta vt ".$sqlJoinBusquedaPaciente." inner join cliente cl on vt.cod_clienteFK=cl.cod_cliente
+    inner join persona p on cl.cod_cliente=p.cod_persona
+    where cl.estado = 'Activo' and not exists (select 1 from cancelaciones ca where ca.cod_venta=vt.cod_venta)".$sqlFiltro." limit 100;";
   
     $stmt = $mysqli->prepare($sql);
     if ( ! $stmt->execute()) {
