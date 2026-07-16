@@ -20,6 +20,8 @@ var responsablesSeguimientoInterConsulta= [];
 var solicitudContextoSeguimientoInterConsultaActiva= null;
 var solicitudContextoMensajeInterConsultaActiva= null;
 var secuenciaContextoMensajeInterConsulta= 0;
+var solicitudCargaMensajeCitadoInterConsultaActiva= null;
+var secuenciaCargaMensajeCitadoInterConsulta= 0;
 var solicitudAlertasSeguimientoInterConsultaActiva= null;
 var secuenciaAlertasSeguimientoInterConsulta= 0;
 var firmaAlertasSeguimientoInterConsulta= "";
@@ -2631,12 +2633,23 @@ function completarSeguimientoInterConsulta(tarjeta, programarOtro) {
     });
 }
 
+function cancelarCargaMensajeCitadoInterConsulta() {
+    secuenciaCargaMensajeCitadoInterConsulta++;
+    if (solicitudCargaMensajeCitadoInterConsultaActiva && solicitudCargaMensajeCitadoInterConsultaActiva.readyState !== 4) {
+        solicitudCargaMensajeCitadoInterConsultaActiva.abort();
+    }
+    solicitudCargaMensajeCitadoInterConsultaActiva= null;
+    var timeline= document.getElementById("table_abm_InterConsulta");
+    if (timeline) { timeline.removeAttribute("aria-busy"); }
+}
+
 function cancelarSolicitudContextoMensajeInterConsulta() {
     secuenciaContextoMensajeInterConsulta++;
     if (solicitudContextoMensajeInterConsultaActiva && solicitudContextoMensajeInterConsultaActiva.readyState !== 4) {
         solicitudContextoMensajeInterConsultaActiva.abort();
     }
     solicitudContextoMensajeInterConsultaActiva= null;
+    cancelarCargaMensajeCitadoInterConsulta();
 }
 
 function solicitarContextoMensajeInterConsulta(codMensaje, callback) {
@@ -2700,35 +2713,241 @@ function seleccionarRespuestaCitadaInterConsulta(codMensaje) {
         document.getElementById("autorRespuestaCitadaInterConsulta").textContent= mensaje.nombre_persona || "Participante del hilo";
         document.getElementById("fechaRespuestaCitadaInterConsulta").textContent= mensaje.fecha_creacion || "";
         document.getElementById("textoRespuestaCitadaInterConsulta").textContent= contenido || "Mensaje sin texto";
-        document.getElementById("vistaRespuestaCitadaInterConsulta").hidden= false;
+        var vistaRespuesta= document.getElementById("vistaRespuestaCitadaInterConsulta");
+        vistaRespuesta.hidden= false;
+        vistaRespuesta.setAttribute("aria-live", "polite");
         var editor= document.getElementById("inptContenidoAbmMensaje");
+        if (vistaRespuesta && typeof vistaRespuesta.scrollIntoView == "function") {
+            vistaRespuesta.scrollIntoView({behavior: "smooth", block: "nearest"});
+        }
         if (editor) { editor.focus(); }
     });
 }
 
-function cancelarRespuestaCitadaInterConsulta() {
+function cancelarRespuestaCitadaInterConsulta(enfocarEditor) {
     var codigo= document.getElementById("codMensajeRespuestaInterConsulta");
     var vista= document.getElementById("vistaRespuestaCitadaInterConsulta");
     if (codigo) { codigo.value= ""; }
     if (vista) { vista.hidden= true; }
+    if (enfocarEditor !== false) {
+        var editor= document.getElementById("inptContenidoAbmMensaje");
+        if (editor) { editor.focus(); }
+    }
+}
+
+function mensajeCitadoVisibleInterConsulta(mensaje) {
+    return !!(mensaje && (!mensaje.getClientRects || mensaje.getClientRects().length > 0));
+}
+
+function resaltarMensajeCitadoInterConsulta(codMensaje) {
+    var mensaje= document.getElementById("mensajeInterConsulta-" + codMensaje);
+    if (!mensajeCitadoVisibleInterConsulta(mensaje)) { return false; }
+    var movimientoReducido= window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    mensaje.classList.remove("interconsulta-message-row--highlight");
+    void mensaje.offsetWidth;
+    mensaje.classList.add("interconsulta-message-row--highlight");
+    mensaje.scrollIntoView({behavior: movimientoReducido ? "auto" : "smooth", block: "center"});
+    setTimeout(function() { mensaje.classList.remove("interconsulta-message-row--highlight"); }, 2200);
+    return true;
+}
+
+function mostrarPanelDictamenMensajeCitadoInterConsulta(panel, boton, callback) {
+    if (!panel) {
+        callback(new Error("No se encontro la seccion del mensaje original."));
+        return;
+    }
+    if (!panel.classList.contains("show")) {
+        if (typeof bootstrap !== "undefined" && bootstrap.Collapse) {
+            bootstrap.Collapse.getOrCreateInstance(panel, {toggle: false}).show();
+        } else {
+            panel.classList.add("show");
+            panel.style.display= "block";
+        }
+    }
+    if (boton) {
+        boton.setAttribute("aria-expanded", "true");
+        var etiqueta= boton.querySelector("[data-label]");
+        if (etiqueta) {
+            etiqueta.textContent= boton.getAttribute("data-text-close") || "Ocultar mensajes relacionados";
+        }
+    }
+    setTimeout(function() { callback(null, panel); }, 180);
+}
+
+function asegurarContenedorMensajeCitadoInterConsulta(contexto, callback) {
+    var codDictamen= parseInt(contexto && contexto.cod_dictamenFK ? contexto.cod_dictamenFK : "0", 10);
+    if (!codDictamen) {
+        var contenedorPrincipal= document.getElementById("contenedorMensajesInterConsulta");
+        if (!contenedorPrincipal) {
+            callback(new Error("No se encontro la conversacion del hilo."));
+            return;
+        }
+        callback(null, contenedorPrincipal);
+        return;
+    }
+
+    var idPanelResolucion= "contenedorResolucionInterConsulta" + codDictamen;
+    var idPanelMensajes= "contenedorMensajesInterConsulta" + codDictamen;
+    var panelMensajes= document.getElementById(idPanelMensajes);
+    var panelResolucion= document.getElementById(idPanelResolucion);
+    var tarjeta= panelMensajes ? panelMensajes.closest(".interc-dictamen-card") : null;
+    var boton= tarjeta ? tarjeta.querySelector('[aria-controls="' + idPanelMensajes + '"]') : null;
+    if (!panelMensajes || !panelResolucion || !tarjeta || !boton) {
+        callback(new Error("No se encontro la resolucion que contiene el mensaje original."));
+        return;
+    }
+    if (tarjeta.dataset.detalleCargado == "1") {
+        mostrarPanelDictamenMensajeCitadoInterConsulta(panelMensajes, boton, callback);
+        return;
+    }
+    cargarPanelDictamenInterConsulta(codDictamen, idPanelResolucion, idPanelMensajes, boton, function(error) {
+        if (error) {
+            callback(error);
+            return;
+        }
+        mostrarPanelDictamenMensajeCitadoInterConsulta(panelMensajes, boton, callback);
+    });
+}
+
+function htmlBotonMasMensajesInterconsulta(offset, codDictamen) {
+    var siguienteOffset= Math.max(0, parseInt(offset || "0", 10));
+    var codigoDictamen= String(codDictamen || "");
+    return '<div data-role="dictamen-boton-mas" data-next-offset="'+siguienteOffset+'" data-cod-dictamen="'+escaparHtmlSeguimientoHilo(codigoDictamen)+'" style="width:100%;display:flex;justify-content:center;margin-bottom:12px;">'
+        +'<button type="button" class="btn btn-success" onclick=\'verMasMensajesInterconsulta('+siguienteOffset+', '+JSON.stringify(codigoDictamen)+')\'>Ver m&aacute;s mensajes...</button>'
+        +'</div>';
+}
+
+function panelListaMensajesInterConsulta(contenedor) {
+    if (!contenedor) { return null; }
+    return contenedor.querySelector('[data-role="dictamen-mensajes"]')
+        || contenedor.querySelector('[data-role="dictamen-chat-panel"]')
+        || contenedor;
+}
+
+function panelLecturaMensajesInterConsulta(contenedor) {
+    if (!contenedor) { return null; }
+    return contenedor.querySelector('[data-role="dictamen-chat-panel"]') || contenedor;
+}
+
+function offsetSiguienteMensajesInterConsulta(contenedor) {
+    var botonMas= contenedor ? contenedor.querySelector('[data-role="dictamen-boton-mas"]') : null;
+    if (!botonMas) { return 0; }
+    var offset= parseInt(botonMas.getAttribute("data-next-offset") || "", 10);
+    if (!isNaN(offset)) { return offset; }
+    var boton= botonMas.querySelector("button[onclick]");
+    var coincidencia= boton ? String(boton.getAttribute("onclick") || "").match(/verMasMensajesInterconsulta\((\d+)/) : null;
+    return coincidencia ? parseInt(coincidencia[1], 10) : 0;
+}
+
+function insertarTramoMensajeCitadoInterConsulta(contenedor, html, siguienteOffset, totalMensajes, codDictamen) {
+    var lista= panelListaMensajesInterConsulta(contenedor);
+    var panelLectura= panelLecturaMensajesInterConsulta(contenedor);
+    if (!lista || !panelLectura) { return false; }
+    contenedor.dataset.totalMensajes= String(Math.max(0, parseInt(totalMensajes || "0", 10)));
+    var botonActual= contenedor.querySelector('[data-role="dictamen-boton-mas"]');
+    if (botonActual) { botonActual.remove(); }
+    if (html) { lista.insertAdjacentHTML("afterbegin", html); }
+    if (siguienteOffset < totalMensajes) {
+        panelLectura.insertAdjacentHTML("afterbegin", htmlBotonMasMensajesInterconsulta(siguienteOffset, codDictamen));
+    }
+    return true;
+}
+
+function cargarTramoMensajeCitadoInterConsulta(codMensaje, contexto, contenedor, offsetDesde, secuenciaSolicitud, callback) {
+    var hiloSolicitado= String(cod_interConsulta || "");
+    obtener_datos_user();
+    var datos= new FormData();
+    datos.append("useru", userid);
+    datos.append("passu", passuser);
+    datos.append("navegador", navegador);
+    datos.append("accion", "cargarMensajeCitadoInterConsulta");
+    datos.append("cod_interConsulta", hiloSolicitado);
+    datos.append("cod_mensaje", codMensaje);
+    datos.append("offset_desde", Math.max(0, parseInt(offsetDesde || "0", 10)));
+    var solicitud= $.ajax({
+        data: datos,
+        url: "../php_system/abmInterConsulta.php",
+        type: "post",
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function(responseText) {
+            if (secuenciaSolicitud !== secuenciaCargaMensajeCitadoInterConsulta || String(cod_interConsulta) !== hiloSolicitado) { return; }
+            try {
+                var respuesta= $.parseJSON(responseText);
+                if (respuesta["1"] != "exito") {
+                    throw new Error(mensajeRespuestaSeguimientoInterConsulta(respuesta, "No se pudo cargar el mensaje original."));
+                }
+                var resultado= respuesta["2"] || {};
+                var siguienteOffset= parseInt(resultado.offset_siguiente || "0", 10);
+                var totalMensajes= parseInt(resultado.total_mensajes || "0", 10);
+                var offsetObjetivo= parseInt(resultado.offset_objetivo || "0", 10);
+                var codDictamen= resultado.cod_dictamenFK || (contexto ? contexto.cod_dictamenFK : "") || "";
+                if (!insertarTramoMensajeCitadoInterConsulta(contenedor, resultado.html || "", siguienteOffset, totalMensajes, codDictamen)) {
+                    throw new Error("No se encontro el panel donde cargar el mensaje original.");
+                }
+                if (resaltarMensajeCitadoInterConsulta(codMensaje)) {
+                    callback(null);
+                    return;
+                }
+                if (siguienteOffset > parseInt(offsetDesde || "0", 10) && siguienteOffset <= offsetObjetivo) {
+                    cargarTramoMensajeCitadoInterConsulta(codMensaje, contexto, contenedor, siguienteOffset, secuenciaSolicitud, callback);
+                    return;
+                }
+                throw new Error("El mensaje original no pudo posicionarse dentro del historial.");
+            } catch (error) {
+                callback(error);
+            }
+        },
+        error: function(jqXHR, textstatus) {
+            if (textstatus != "abort" && secuenciaSolicitud === secuenciaCargaMensajeCitadoInterConsulta && String(cod_interConsulta) === hiloSolicitado) {
+                callback(new Error("No se pudo cargar el historial del mensaje original."));
+            }
+        },
+        complete: function() {
+            if (solicitudCargaMensajeCitadoInterConsultaActiva === solicitud) {
+                solicitudCargaMensajeCitadoInterConsultaActiva= null;
+            }
+        }
+    });
+    solicitudCargaMensajeCitadoInterConsultaActiva= solicitud;
+}
+
+function mostrarContextoMensajeCitadoInterConsulta(contexto, error) {
+    var texto= escaparHtmlSeguimientoHilo(String(contexto && contexto.contenido ? contexto.contenido : "").replace(/@\{\d+\}/g, "@usuario")).replace(/\n/g, "<br>");
+    var autor= escaparHtmlSeguimientoHilo(contexto && contexto.nombre_persona ? contexto.nombre_persona : "un participante");
+    var detalle= error && error.message ? escaparHtmlSeguimientoHilo(error.message) + "<br><br>" : "";
+    ver_vetana_informativa("Mensaje original de " + autor, detalle + (texto || "Mensaje sin texto"), "advertencia");
 }
 
 function irMensajeCitadoInterConsulta(codMensaje) {
-    var mensaje= document.getElementById("mensajeInterConsulta-" + codMensaje);
-    if (mensaje) {
-        mensaje.classList.add("interconsulta-message-row--highlight");
-        mensaje.scrollIntoView({behavior: "smooth", block: "center"});
-        setTimeout(function() { mensaje.classList.remove("interconsulta-message-row--highlight"); }, 2200);
-        return;
-    }
+    if (!codMensaje) { return; }
+    if (resaltarMensajeCitadoInterConsulta(codMensaje)) { return; }
     solicitarContextoMensajeInterConsulta(codMensaje, function(error, contexto) {
         if (error) {
             ver_vetana_informativa("Mensaje no disponible", error.message, "advertencia");
             return;
         }
-        var texto= escaparHtmlSeguimientoHilo(String(contexto.contenido || "").replace(/@\{\d+\}/g, "@usuario")).replace(/\n/g, "<br>");
-        var autor= escaparHtmlSeguimientoHilo(contexto.nombre_persona || "un participante");
-        ver_vetana_informativa("Mensaje original de " + autor, texto, "info");
+        var secuenciaContextoActual= secuenciaContextoMensajeInterConsulta;
+        asegurarContenedorMensajeCitadoInterConsulta(contexto, function(errorContenedor, contenedor) {
+            if (secuenciaContextoActual !== secuenciaContextoMensajeInterConsulta) { return; }
+            if (errorContenedor) {
+                mostrarContextoMensajeCitadoInterConsulta(contexto, errorContenedor);
+                return;
+            }
+            if (resaltarMensajeCitadoInterConsulta(codMensaje)) { return; }
+            cancelarCargaMensajeCitadoInterConsulta();
+            var secuenciaSolicitud= ++secuenciaCargaMensajeCitadoInterConsulta;
+            var offsetDesde= offsetSiguienteMensajesInterConsulta(contenedor);
+            var timeline= document.getElementById("table_abm_InterConsulta");
+            if (timeline) { timeline.setAttribute("aria-busy", "true"); }
+            cargarTramoMensajeCitadoInterConsulta(codMensaje, contexto, contenedor, offsetDesde, secuenciaSolicitud, function(errorCarga) {
+                if (timeline) { timeline.removeAttribute("aria-busy"); }
+                if (errorCarga && secuenciaSolicitud === secuenciaCargaMensajeCitadoInterConsulta) {
+                    mostrarContextoMensajeCitadoInterConsulta(contexto, errorCarga);
+                }
+            });
+        });
     });
 }
 
@@ -4771,7 +4990,7 @@ function limpiarcamposMensaje() {
     // Limpiar campos dictamen
     document.getElementById('dictamenAbmMensaje').value= "";
     document.getElementById('inptAsuntoDictamenInterConsulta').value= "";
-    cancelarRespuestaCitadaInterConsulta();
+    cancelarRespuestaCitadaInterConsulta(false);
 }
 
 function subirImagenMensajeInterconsulta(cod_mens, codHilo, fotoCapturada, extensionCapturada, tipoAdjuntoCapturado) {
@@ -5255,16 +5474,40 @@ function alternarPanelDictamenInterConsulta(idPanel, boton) {
     }
 }
 
-function cargarPanelDictamenInterConsulta(codDictamen, idPanelResolucion, idPanelMensajes, boton) {
+function agregarCallbackPanelDictamenInterConsulta(tarjeta, callback) {
+    if (!tarjeta || typeof callback != "function") { return; }
+    if (!Array.isArray(tarjeta._callbacksCargaDictamenInterConsulta)) {
+        tarjeta._callbacksCargaDictamenInterConsulta= [];
+    }
+    tarjeta._callbacksCargaDictamenInterConsulta.push(callback);
+}
+
+function resolverCallbacksPanelDictamenInterConsulta(tarjeta, error) {
+    if (!tarjeta || !Array.isArray(tarjeta._callbacksCargaDictamenInterConsulta)) { return; }
+    var callbacks= tarjeta._callbacksCargaDictamenInterConsulta.slice();
+    tarjeta._callbacksCargaDictamenInterConsulta= [];
+    callbacks.forEach(function(callback) {
+        callback(error || null);
+    });
+}
+
+function cargarPanelDictamenInterConsulta(codDictamen, idPanelResolucion, idPanelMensajes, boton, despuesDeCargar) {
     const panelObjetivoId= boton ? boton.getAttribute("aria-controls") : idPanelResolucion;
     const panelObjetivo= document.getElementById(panelObjetivoId);
     const panelResolucion= document.getElementById(idPanelResolucion);
     const panelMensajes= document.getElementById(idPanelMensajes);
     const tarjeta= panelObjetivo ? panelObjetivo.closest(".interc-dictamen-card") : null;
-    if (!panelObjetivo || !panelResolucion || !panelMensajes || !tarjeta) {return;}
+    if (!panelObjetivo || !panelResolucion || !panelMensajes || !tarjeta) {
+        if (typeof despuesDeCargar == "function") {
+            despuesDeCargar(new Error("No se encontro el panel del dictamen."));
+        }
+        return;
+    }
+    agregarCallbackPanelDictamenInterConsulta(tarjeta, despuesDeCargar);
 
     if (tarjeta.dataset.detalleCargado == "1") {
         alternarPanelDictamenInterConsulta(panelObjetivoId, boton);
+        resolverCallbacksPanelDictamenInterConsulta(tarjeta, null);
         return;
     }
     if (tarjeta.dataset.detalleCargando == "1") {return;}
@@ -5302,6 +5545,7 @@ function cargarPanelDictamenInterConsulta(codDictamen, idPanelResolucion, idPane
                     estado.classList.add("interconsulta-flow-state--error");
                     estado.textContent= "No se pudo cargar el dictamen.";
                 }
+                resolverCallbacksPanelDictamenInterConsulta(tarjeta, new Error("No se pudo cargar la resolucion del mensaje original."));
             }
         },
         success: function (responseText) {
@@ -5322,12 +5566,16 @@ function cargarPanelDictamenInterConsulta(codDictamen, idPanelResolucion, idPane
                 panelMensajes.dataset.totalMensajes= parseInt(respuesta["4"] || 0, 10);
                 tarjeta.dataset.detalleCargado= "1";
                 alternarPanelDictamenInterConsulta(panelObjetivoId, boton);
+                setTimeout(function() {
+                    resolverCallbacksPanelDictamenInterConsulta(tarjeta, null);
+                }, 180);
             } catch (error) {
                 const estado= panelObjetivo.querySelector(".interconsulta-flow-state");
                 if (estado) {
                     estado.classList.add("interconsulta-flow-state--error");
                     estado.textContent= "No se pudo cargar el dictamen.";
                 }
+                resolverCallbacksPanelDictamenInterConsulta(tarjeta, error);
             }
         },
         complete: function () {
@@ -5412,9 +5660,7 @@ function verMasMensajesInterconsulta(offset, cod_dictamen) {
                     const siguienteOffset = parseInt(offset, 10) + 10;
                     let btnMasMensajes= "";
                     if (siguienteOffset < totalMensajesContenedor) {
-                        btnMasMensajes= "<div data-role='dictamen-boton-mas' style='width: 100%; display: flex; justify-content: center; margin-bottom: 12px;'>"+
-                                "<button class='btn btn-success' onclick='verMasMensajesInterconsulta("+siguienteOffset+", "+JSON.stringify(String(cod_dictamen ?? ""))+")'>Ver más mensajes...</button>"+
-                            "</div>";
+                        btnMasMensajes= htmlBotonMasMensajesInterconsulta(siguienteOffset, cod_dictamen || "");
                     }
                     
                     if (listaMensajes) {
@@ -5423,7 +5669,7 @@ function verMasMensajesInterconsulta(offset, cod_dictamen) {
                             panelMensajes.insertAdjacentHTML("afterbegin", btnMasMensajes);
                         }
                     } else {
-                        elemContenedor.innerHTML = btnMasMensajes + datos["2"] + elemContenedor.innerHTML;
+                        panelMensajes.innerHTML = btnMasMensajes + datos["2"] + panelMensajes.innerHTML;
                     }
                     preservarScrollCargaAnteriorInterConsulta(scrollLectura, altoAnterior, scrollAnterior);
 				} else {
@@ -5983,7 +6229,7 @@ function limpiarCamposDetallesInterConsulta() {
     }
     solicitudContextoSeguimientoInterConsultaActiva= null;
     cancelarSolicitudContextoMensajeInterConsulta();
-    cancelarRespuestaCitadaInterConsulta();
+    cancelarRespuestaCitadaInterConsulta(false);
     cerrarPanelSeguimientoProgramadoInterConsulta(false);
     reiniciarFormularioSeguimientoInterConsulta();
     plantillasSeguimientoInterConsulta= [];

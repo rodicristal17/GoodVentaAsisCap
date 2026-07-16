@@ -561,7 +561,7 @@
                     break;
                 }
                 $mysqliContexto= conectar_al_servidor();
-                $sqlContexto= "SELECT m.cod_mensaje,m.contenido,m.fecha_creacion,p.nombre_persona
+                $sqlContexto= "SELECT m.cod_mensaje,m.contenido,m.fecha_creacion,m.cod_dictamenFK,p.nombre_persona
                                FROM mensaje m
                                LEFT JOIN persona p ON p.cod_persona=m.cod_usuarioFK
                                WHERE m.cod_mensaje=? AND m.cod_interConsultaFK=?
@@ -583,6 +583,119 @@
                     break;
                 }
                 echo json_encode(array("1" => "exito", "2" => seguimientoProgramadoFilaUtf8($mensajeContexto)));
+                break;
+            case 'cargarMensajeCitadoInterConsulta':
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? intval($_POST['cod_interConsulta']) : 0;
+                $cod_mensaje_contexto= isset($_POST['cod_mensaje']) ? intval($_POST['cod_mensaje']) : 0;
+                $offset_desde= isset($_POST['offset_desde']) ? max(0, intval($_POST['offset_desde'])) : 0;
+                if (!seguimientoProgramadoPuedeAccederHilo($cod_interConsulta, $user)) {
+                    echo json_encode(array("1" => "NI", "2" => array("mensaje" => "Usted no tiene acceso a este hilo.")));
+                    break;
+                }
+                $mysqliCargaCitada= conectar_al_servidor();
+                $sqlObjetivoCitado= "SELECT cod_mensaje,cod_dictamenFK,fecha_creacion
+                    FROM mensaje
+                    WHERE cod_mensaje=? AND cod_interConsultaFK=?
+                      AND estado='activo' AND fecha_creacion<=NOW()
+                    LIMIT 1";
+                $stmtObjetivoCitado= $mysqliCargaCitada->prepare($sqlObjetivoCitado);
+                if (!$stmtObjetivoCitado) {
+                    $mysqliCargaCitada->close();
+                    echo json_encode(array("1" => "error", "2" => array("mensaje" => "No se pudo localizar el mensaje citado.")));
+                    break;
+                }
+                $stmtObjetivoCitado->bind_param('ii', $cod_mensaje_contexto, $cod_interConsulta);
+                $mensajeObjetivoCitado= null;
+                if ($stmtObjetivoCitado->execute()) {
+                    $resultadoObjetivoCitado= $stmtObjetivoCitado->get_result();
+                    $mensajeObjetivoCitado= $resultadoObjetivoCitado ? $resultadoObjetivoCitado->fetch_assoc() : null;
+                }
+                $stmtObjetivoCitado->close();
+                if (!$mensajeObjetivoCitado) {
+                    $mysqliCargaCitada->close();
+                    echo json_encode(array("1" => "error", "2" => array("mensaje" => "El mensaje original ya no esta disponible.")));
+                    break;
+                }
+
+                $codDictamenCitado= isset($mensajeObjetivoCitado['cod_dictamenFK']) && intval($mensajeObjetivoCitado['cod_dictamenFK']) > 0
+                    ? intval($mensajeObjetivoCitado['cod_dictamenFK'])
+                    : 0;
+                $fechaObjetivoCitado= (string)$mensajeObjetivoCitado['fecha_creacion'];
+                if ($codDictamenCitado > 0) {
+                    $sqlTotalCitado= "SELECT COUNT(*) AS total
+                        FROM mensaje
+                        WHERE cod_interConsultaFK=? AND cod_dictamenFK=? AND fecha_creacion<=NOW()";
+                    $stmtTotalCitado= $mysqliCargaCitada->prepare($sqlTotalCitado);
+                    if ($stmtTotalCitado) {
+                        $stmtTotalCitado->bind_param('ii', $cod_interConsulta, $codDictamenCitado);
+                    }
+                    $sqlOffsetCitado= "SELECT COUNT(*) AS total
+                        FROM mensaje
+                        WHERE cod_interConsultaFK=? AND cod_dictamenFK=? AND fecha_creacion<=NOW()
+                          AND (fecha_creacion>? OR (fecha_creacion=? AND cod_mensaje>?))";
+                    $stmtOffsetCitado= $mysqliCargaCitada->prepare($sqlOffsetCitado);
+                    if ($stmtOffsetCitado) {
+                        $stmtOffsetCitado->bind_param('iissi', $cod_interConsulta, $codDictamenCitado, $fechaObjetivoCitado, $fechaObjetivoCitado, $cod_mensaje_contexto);
+                    }
+                } else {
+                    $sqlTotalCitado= "SELECT COUNT(*) AS total
+                        FROM mensaje
+                        WHERE cod_interConsultaFK=? AND cod_dictamenFK IS NULL AND fecha_creacion<=NOW()";
+                    $stmtTotalCitado= $mysqliCargaCitada->prepare($sqlTotalCitado);
+                    if ($stmtTotalCitado) {
+                        $stmtTotalCitado->bind_param('i', $cod_interConsulta);
+                    }
+                    $sqlOffsetCitado= "SELECT COUNT(*) AS total
+                        FROM mensaje
+                        WHERE cod_interConsultaFK=? AND cod_dictamenFK IS NULL AND fecha_creacion<=NOW()
+                          AND (fecha_creacion>? OR (fecha_creacion=? AND cod_mensaje>?))";
+                    $stmtOffsetCitado= $mysqliCargaCitada->prepare($sqlOffsetCitado);
+                    if ($stmtOffsetCitado) {
+                        $stmtOffsetCitado->bind_param('issi', $cod_interConsulta, $fechaObjetivoCitado, $fechaObjetivoCitado, $cod_mensaje_contexto);
+                    }
+                }
+                if (!$stmtTotalCitado || !$stmtOffsetCitado
+                    || !$stmtTotalCitado->execute() || !$stmtOffsetCitado->execute()) {
+                    if ($stmtTotalCitado) { $stmtTotalCitado->close(); }
+                    if ($stmtOffsetCitado) { $stmtOffsetCitado->close(); }
+                    $mysqliCargaCitada->close();
+                    echo json_encode(array("1" => "error", "2" => array("mensaje" => "No se pudo cargar el tramo del mensaje citado.")));
+                    break;
+                }
+                $filaTotalCitado= $stmtTotalCitado->get_result()->fetch_assoc();
+                $filaOffsetCitado= $stmtOffsetCitado->get_result()->fetch_assoc();
+                $stmtTotalCitado->close();
+                $stmtOffsetCitado->close();
+                $mysqliCargaCitada->close();
+
+                $totalMensajesCitado= isset($filaTotalCitado['total']) ? intval($filaTotalCitado['total']) : 0;
+                $offsetObjetivoCitado= isset($filaOffsetCitado['total']) ? intval($filaOffsetCitado['total']) : 0;
+                if ($offset_desde > $offsetObjetivoCitado) {
+                    $offset_desde= $offsetObjetivoCitado;
+                }
+                $cantidadCitada= min(100, max(1, ($offsetObjetivoCitado - $offset_desde) + 1));
+                $filtrosCargaCitada= array(
+                    'cod_interConsultaFK' => $cod_interConsulta,
+                    'cod_usuarioFK' => $user
+                );
+                if ($codDictamenCitado > 0) {
+                    $filtrosCargaCitada['cod_dictamenFK']= $codDictamenCitado;
+                } else {
+                    $filtrosCargaCitada['sin_dictamen']= true;
+                }
+                $htmlCargaCitada= obtenerVistaTarjetaInterConsuta($filtrosCargaCitada, $cantidadCitada, $offset_desde);
+                $siguienteOffsetCitado= $offset_desde + $cantidadCitada;
+                echo json_encode(array(
+                    "1" => "exito",
+                    "2" => array(
+                        "html" => $htmlCargaCitada,
+                        "offset_siguiente" => $siguienteOffsetCitado,
+                        "offset_objetivo" => $offsetObjetivoCitado,
+                        "objetivo_cargado" => $siguienteOffsetCitado > $offsetObjetivoCitado ? 1 : 0,
+                        "total_mensajes" => $totalMensajesCitado,
+                        "cod_dictamenFK" => $codDictamenCitado > 0 ? $codDictamenCitado : null
+                    )
+                ));
                 break;
             case 'contextoAdjuntoDocumento':
                 $cod_interConsulta= isset($_POST['cod_interConsulta']) ? intval($_POST['cod_interConsulta']) : 0;
@@ -1099,8 +1212,8 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         $cod_dictamen = $cod_dictamen === null ? '' : (string)$cod_dictamen;
         $codDictamenJs = htmlspecialchars(json_encode($cod_dictamen), ENT_QUOTES, 'UTF-8');
 
-        return '<div data-role="dictamen-boton-mas" style="width: 100%; display: flex; justify-content: center; margin-bottom: 12px;">'
-            . '<button class="btn btn-success" onclick="verMasMensajesInterconsulta('.intval($offset).', '.$codDictamenJs.')">Ver más mensajes...</button>'
+        return '<div data-role="dictamen-boton-mas" data-next-offset="'.intval($offset).'" data-cod-dictamen="'.escaparHtmlInterconsulta($cod_dictamen).'" style="width: 100%; display: flex; justify-content: center; margin-bottom: 12px;">'
+            . '<button type="button" class="btn btn-success" onclick="verMasMensajesInterconsulta('.intval($offset).', '.$codDictamenJs.')">Ver más mensajes...</button>'
             . '</div>';
     }
 
@@ -2258,6 +2371,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                                 <time>'.$fechaMensajeSeguro.'</time>
                                 <button type="button" class="interconsulta-message-reply" data-action="responder-mensaje" data-cod-mensaje="'.$codigoMensaje.'" title="Responder citando este mensaje" aria-label="Responder citando este mensaje">
                                     <i class="fa-solid fa-reply" aria-hidden="true"></i>
+                                    <span>Responder</span>
                                 </button>
                             </div>
                         </header>

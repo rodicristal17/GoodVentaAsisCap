@@ -152,6 +152,13 @@
 .centro-facturas-table strong { color: #173b39; }
 .centro-facturas-table small { display: block; margin-top: 2px; color: #708381; }
 .centro-facturas-table button { padding: 6px 9px; border-radius: 7px; background: #e6f4f2; color: #0f766e; font-size: 11px; font-weight: 700; }
+.centro-facturas-table .cf-lot-indicator { display: grid; min-width: 148px; max-width: 210px; grid-template-columns: 26px minmax(0, 1fr); align-items: center; gap: 7px; padding: 7px; border: 1px solid #bfdbfe; background: #eff6ff; color: #1e40af; text-align: left; }
+.cf-lot-indicator > i { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 7px; background: #dbeafe; }
+.cf-lot-indicator > span { min-width: 0; }
+.cf-lot-indicator strong,
+.cf-lot-indicator small { display: block; overflow: hidden; margin: 0; color: inherit; text-overflow: ellipsis; white-space: nowrap; }
+.cf-lot-indicator strong { font-size: 10px; }
+.cf-lot-indicator small { margin-top: 2px; font-size: 9px; font-weight: 600; }
 .centro-facturas-loading { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; background: rgba(255,255,255,.82); color: #0f766e; font-weight: 700; }
 .centro-facturas-empty { display: grid; min-height: 240px; place-items: center; padding: 30px; color: #657d7b; text-align: center; }
 .centro-facturas-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 45px; padding: 7px 12px; border-top: 1px solid #e4edec; color: #657d7b; font-size: 11px; }
@@ -206,6 +213,58 @@
 .centro-facturas-drawer h3,
 .centro-facturas-dialog h3 { margin: 2px 0 0; color: #173b39; font-size: 21px; }
 .centro-facturas-drawer__content { height: calc(100% - 73px); padding: 16px; overflow-y: auto; }
+.centro-facturas-drawer.is-legajo-detail { display: grid; width: min(1040px, 100vw); grid-template-rows: auto minmax(0, 1fr); }
+.centro-facturas-drawer.is-legajo-detail .centro-facturas-drawer__content { box-sizing: border-box; height: auto; min-height: 0; padding: 12px 14px; overflow: hidden; }
+.cf-legajo-detail { display: grid; height: 100%; min-height: 0; grid-template-rows: auto auto minmax(0, 1fr); gap: 9px; }
+.cf-legajo-detail__summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+.cf-legajo-detail__summary > div { min-width: 0; padding: 8px 10px; border: 1px solid #dce8e6; border-radius: 9px; background: #fff; }
+.cf-legajo-detail__summary span,
+.cf-legajo-data-grid span,
+.cf-legajo-document-row > div > span { display: block; margin-bottom: 2px; color: #708381; font-size: 9px; font-weight: 750; text-transform: uppercase; }
+.cf-legajo-detail__summary b,
+.cf-legajo-data-grid b { display: block; overflow: hidden; color: #193c3a; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.cf-legajo-detail__tabs { display: flex; min-height: 38px; gap: 5px; padding: 4px; border: 1px solid #dce8e6; border-radius: 9px; background: #fff; }
+.cf-legajo-detail__tabs button { flex: 1 1 0; min-height: 30px; padding: 5px 9px; border-radius: 7px; background: transparent; color: #56716f; font-size: 11px; font-weight: 700; }
+.cf-legajo-detail__tabs button.is-active { background: #e6f4f2; color: #0f766e; box-shadow: inset 0 0 0 1px #b9ddd8; }
+.cf-legajo-detail__panel { min-height: 0; overflow: hidden; padding: 10px; border: 1px solid #dce8e6; border-radius: 10px; background: #fff; }
+.cf-legajo-detail__help { margin: 0 0 7px; color: #5c7472; font-size: 10px; }
+.cf-legajo-document-list { display: grid; height: calc(100% - 24px); min-height: 0; grid-template-rows: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.cf-legajo-document-row { display: grid; min-height: 0; grid-template-columns: 30px minmax(150px, 1.25fr) minmax(110px, .8fr) minmax(130px, 1fr) minmax(235px, 1.7fr); align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid #dce8e6; border-radius: 8px; background: #f8fbfa; color: #405b59; }
+.cf-legajo-document-row > i { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 7px; background: #eef2f2; }
+.cf-legajo-document-row > div { min-width: 0; }
+.cf-legajo-document-row > div > b,
+.cf-legajo-document-row > div > small { display: block; overflow: hidden; color: inherit; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.cf-legajo-document-row > div > small { margin-top: 2px; font-size: 9px; }
+.cf-legajo-document-row--completo { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+.cf-legajo-document-row--pendiente { border-color: #fed7aa; background: #fff7ed; color: #9a3412; }
+.cf-legajo-document-row--observado { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+.cf-legajo-document-row--informativo { border-color: #bfdbfe; background: #eff6ff; color: #1e40af; }
+.cf-legajo-document-row--no-aplica { color: #728482; }
+.cf-legajo-document-row__actions { display: flex; justify-content: flex-end; gap: 4px; }
+.cf-legajo-document-row__actions button,
+.cf-legajo-detail__actions button { min-height: 31px; padding: 5px 8px; border-radius: 7px; background: #e6f4f2; color: #0f766e; font-size: 9px; font-weight: 750; white-space: nowrap; }
+.cf-legajo-document-row__actions .cf-button--request { background: #dbeafe; color: #1e40af; }
+.cf-muted { color: #859694; font-size: 9px; }
+.cf-legajo-data-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.cf-legajo-data-grid > div { min-width: 0; padding: 9px; border-radius: 8px; background: #f3f7f6; }
+.cf-legajo-data-grid small { display: block; overflow: hidden; margin-top: 2px; color: #708381; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.cf-legajo-detail__actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.cf-legajo-detail__pagination { display: flex; align-items: center; justify-content: center; gap: 9px; margin-top: 6px; color: #607573; font-size: 9px; }
+.cf-legajo-detail__pagination button { min-height: 28px; padding: 4px 8px; border-radius: 6px; background: #e6f4f2; color: #0f766e; font-size: 9px; font-weight: 700; }
+.cf-legajo-detail__pagination button:disabled { opacity: .45; cursor: default; }
+.cf-legajo-trace-panel { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+.cf-legajo-detail .cf-legajo-trace { height: auto; min-height: 0; grid-template-rows: repeat(5, minmax(0, 1fr)); }
+.cf-legajo-detail .cf-legajo-trace__item { min-height: 0; padding-bottom: 5px; }
+.cf-legajo-detail .cf-legajo-trace__body span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cf-legajo-empty-trace { display: grid; place-items: center; color: #718584; font-size: 11px; }
+.cf-pagare-request-detail { grid-template-rows: auto auto minmax(0, 1fr); }
+.cf-legajo-data-grid b.cf-pagare-request-motive { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; white-space: normal; }
+.cf-pagare-resolution-context { margin-bottom: 10px; padding: 9px 11px; border: 1px solid #bfdbfe; border-radius: 8px; background: #eff6ff; }
+.cf-pagare-resolution-context span { color: #526c6a; font-size: 9px; font-weight: 750; text-transform: uppercase; }
+.cf-pagare-resolution-context p { margin: 4px 0 0; color: #1e3a5f; font-size: 11px; line-height: 1.45; white-space: pre-wrap; }
+.cf-pagare-request-trace { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.cf-pagare-request-trace h4 { margin: 0 0 6px; color: #193c3a; font-size: 12px; }
+.cf-pagare-request-trace .cf-legajo-trace { height: auto; grid-template-rows: repeat(4, minmax(0, 1fr)); }
 .cf-detail-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
 .cf-detail-summary > div,
 .cf-card { padding: 12px; border: 1px solid #dce8e6; border-radius: 10px; background: #fff; }
@@ -251,6 +310,8 @@
   .centro-facturas-table--legajos { min-width: 1020px; }
   .centro-facturas-table--legajos .cf-legajo-documents-cell { min-width: 390px; }
   .cf-legajo-docs { grid-template-columns: repeat(3, minmax(100px, 1fr)); }
+  .centro-facturas-drawer.is-legajo-detail { width: 100vw; }
+  .cf-legajo-document-row { grid-template-columns: 28px minmax(135px, 1.15fr) minmax(95px, .7fr) minmax(115px, .9fr) minmax(210px, 1.5fr); gap: 6px; }
 }
 
 @media (max-width: 760px) {
@@ -278,11 +339,38 @@
   .cf-legajo-docs { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
   .cf-legajo-trace__item { grid-template-columns: 20px minmax(0, 1fr); }
   .cf-legajo-trace__meta { grid-column: 2; text-align: left; }
+  .cf-legajo-detail .cf-legajo-trace__item { grid-template-columns: 20px minmax(0, 1fr) auto; }
+  .cf-legajo-detail .cf-legajo-trace__meta { grid-column: auto; text-align: right; }
+  .centro-facturas-drawer.is-legajo-detail > header { padding: 10px 12px; }
+  .centro-facturas-drawer.is-legajo-detail .centro-facturas-drawer__content { height: auto; padding: 8px; }
+  .cf-legajo-detail__summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+  .cf-legajo-detail__summary > div { padding: 5px 7px; }
+  .cf-legajo-detail__tabs { min-height: 34px; }
+  .cf-legajo-document-row { grid-template-columns: 26px minmax(120px, 1fr) minmax(90px, .7fr) minmax(105px, .9fr) minmax(190px, 1.4fr); padding: 4px 6px; }
+  .cf-legajo-document-row__actions button { padding: 4px 6px; }
+  .cf-legajo-data-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cf-detail-summary { grid-template-columns: 1fr 1fr; }
   .cf-grid { grid-template-columns: 1fr; }
   .cf-grid label.cf-span-2 { grid-column: auto; }
   .cf-reception-item { grid-template-columns: 1fr; }
   .interconsulta-attachment-type { min-width: 120px; }
+}
+
+@media (max-width: 620px) {
+  .cf-legajo-document-row { grid-template-columns: 26px minmax(90px, 1fr) minmax(70px, .7fr) minmax(120px, 1.1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .cf-legajo-document-row > i { grid-column: 1; grid-row: 1 / span 2; }
+  .cf-legajo-document-row > div:nth-of-type(1) { grid-column: 2; grid-row: 1; }
+  .cf-legajo-document-row > div:nth-of-type(2) { grid-column: 3; grid-row: 1; }
+  .cf-legajo-document-row > div:nth-of-type(3) { grid-column: 2 / 4; grid-row: 2; }
+  .cf-legajo-document-row > div:nth-of-type(3) span,
+  .cf-legajo-document-row > div:nth-of-type(3) b { display: inline; }
+  .cf-legajo-document-row > div:nth-of-type(3) span { margin: 0 4px 0 0; }
+  .cf-legajo-document-row__actions { grid-column: 4; grid-row: 1 / span 2; }
+  .cf-legajo-document-row__actions button { font-size: 0; }
+  .cf-legajo-document-row__actions button i { font-size: 10px; }
+  .cf-legajo-document-row__actions button { min-width: 40px; min-height: 40px; }
+  .cf-legajo-document-row__actions .cf-button--request { font-size: 8px; }
+  .cf-pagare-request-detail .cf-legajo-data-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media print {

@@ -9,6 +9,7 @@ include_once('buscar_nivel.php');
 require_once('interconsulta_seguimiento_programado_helper.php');
 require_once('centro_facturas_helper.php');
 require_once('centro_legajos_helper.php');
+require_once('centro_legajo_pagares_helper.php');
 
 date_default_timezone_set('America/Asuncion');
 
@@ -100,7 +101,11 @@ if (!centroFacturaEstructuraDisponible()) {
 
 switch ($accion) {
     case 'contexto':
-        centroFacturasResponder(centroFacturaCatalogos($codUsuario));
+        $contextoCentro = centroFacturaCatalogos($codUsuario);
+        if (!empty($contextoCentro['ok'])) {
+            $contextoCentro['solicitudes_pagare_disponibles'] = centroLegajoPagareEstructuraDisponible() ? 1 : 0;
+        }
+        centroFacturasResponder($contextoCentro);
         break;
     case 'metricas':
         if (!centroFacturaTienePermiso($codUsuario, 'VERCENTROFACTURAS')) {
@@ -133,7 +138,14 @@ switch ($accion) {
         ));
         break;
     case 'detalleLegajo':
-        centroFacturasResponder(centroLegajoDetalle(intval(centroFacturasPost('cod_venta')), $codUsuario));
+        $codVentaLegajo = intval(centroFacturasPost('cod_venta'));
+        $detalleLegajo = centroLegajoDetalle($codVentaLegajo, $codUsuario);
+        if (!empty($detalleLegajo['ok'])) {
+            $detalleLegajo['solicitudes_pagare_disponibles'] = centroLegajoPagareEstructuraDisponible() ? 1 : 0;
+            $detalleLegajo['solicitud_pagare_activa'] = $detalleLegajo['solicitudes_pagare_disponibles']
+                ? centroLegajoPagareSolicitudActivaVenta($codVentaLegajo, $codUsuario) : array();
+        }
+        centroFacturasResponder($detalleLegajo);
         break;
     case 'guardarDocumentoLegajo':
         centroFacturasResponder(centroLegajoGuardarDocumento(
@@ -143,6 +155,73 @@ switch ($accion) {
             centroFacturasPost('observaciones'),
             $codUsuario
         ));
+        break;
+    case 'listarSolicitudesPagare':
+        centroFacturasResponder(centroLegajoPagareListar(
+            $codUsuario,
+            centroFacturasFiltrosPost(),
+            intval(centroFacturasPost('limite', 80)),
+            intval(centroFacturasPost('offset', 0))
+        ));
+        break;
+    case 'detalleSolicitudPagare':
+        centroFacturasResponder(centroLegajoPagareDetalle(intval(centroFacturasPost('id_solicitud')), $codUsuario));
+        break;
+    case 'crearSolicitudPagare':
+        $datosSolicitudPagare = centroFacturasJsonPost('datos', array());
+        foreach (array('solicitante_nombre','solicitante_documento','motivo_solicitud') as $campoSolicitudPagare) {
+            if (isset($_POST[$campoSolicitudPagare])) {
+                $datosSolicitudPagare[$campoSolicitudPagare] = $_POST[$campoSolicitudPagare];
+            }
+        }
+        centroFacturasResponder(centroLegajoPagareCrear(
+            intval(centroFacturasPost('cod_venta')),
+            $datosSolicitudPagare,
+            $codUsuario
+        ));
+        break;
+    case 'aprobarSolicitudPagare':
+        centroFacturasResponder(centroLegajoPagareAprobar(
+            intval(centroFacturasPost('id_solicitud')),
+            centroFacturasPost('observacion'),
+            $codUsuario
+        ));
+        break;
+    case 'rechazarSolicitudPagare':
+        centroFacturasResponder(centroLegajoPagareRechazar(
+            intval(centroFacturasPost('id_solicitud')),
+            centroFacturasPost('observacion'),
+            $codUsuario
+        ));
+        break;
+    case 'prepararSolicitudPagare':
+        centroFacturasResponder(centroLegajoPagarePreparar(intval(centroFacturasPost('id_solicitud')), $codUsuario));
+        break;
+    case 'entregarSolicitudPagare':
+        $datosEntregaPagare = centroFacturasJsonPost('datos', array());
+        foreach (array('receptor_nombre','receptor_documento','receptor_relacion','observacion_entrega') as $campoEntregaPagare) {
+            if (isset($_POST[$campoEntregaPagare])) {
+                $datosEntregaPagare[$campoEntregaPagare] = $_POST[$campoEntregaPagare];
+            }
+        }
+        centroFacturasResponder(centroLegajoPagareEntregar(
+            intval(centroFacturasPost('id_solicitud')),
+            $datosEntregaPagare,
+            centroFacturasArchivos('archivos'),
+            $codUsuario
+        ));
+        break;
+    case 'cancelarSolicitudPagare':
+        centroFacturasResponder(centroLegajoPagareCancelar(
+            intval(centroFacturasPost('id_solicitud')),
+            centroFacturasPost('motivo'),
+            $codUsuario
+        ));
+        break;
+    case 'descargarEvidenciaSolicitudPagare':
+    case 'descargarEvidenciaPagare':
+        $descargaPagare = centroLegajoPagareDescargarEvidencia(intval(centroFacturasPost('id_solicitud')), $codUsuario);
+        centroFacturasResponder($descargaPagare);
         break;
     case 'detalle':
         centroFacturasResponder(centroFacturaObtenerDetalle(intval(centroFacturasPost('id_factura')), $codUsuario));

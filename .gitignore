@@ -1,4 +1,7 @@
-fotos/
+fotos/*
+!fotos/fotosLegajosPagares/
+fotos/fotosLegajosPagares/*
+!fotos/fotosLegajosPagares/.htaccess
 archivos/cierres_caja/
 php/conexion.php
 php_system/conexion.php

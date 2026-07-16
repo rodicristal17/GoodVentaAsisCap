@@ -413,7 +413,23 @@ function centroFacturaBaseSelect()
         (SELECT ld.id_loteFK FROM centro_factura_lote_detalle ld
          INNER JOIN centro_factura_lote lo ON lo.id_lote=ld.id_loteFK
          WHERE ld.id_facturaFK=cf.id_factura AND ld.estado<>'retirada' AND lo.estado<>'anulado'
-         ORDER BY ld.id_lote_detalle DESC LIMIT 1) AS id_lote_actual
+         ORDER BY ld.id_lote_detalle DESC LIMIT 1) AS id_lote_actual,
+        (SELECT lo.codigo_lote FROM centro_factura_lote_detalle ld
+         INNER JOIN centro_factura_lote lo ON lo.id_lote=ld.id_loteFK
+         WHERE ld.id_facturaFK=cf.id_factura AND ld.estado<>'retirada' AND lo.estado<>'anulado'
+         ORDER BY ld.id_lote_detalle DESC LIMIT 1) AS codigo_lote_actual,
+        (SELECT lo.estado FROM centro_factura_lote_detalle ld
+         INNER JOIN centro_factura_lote lo ON lo.id_lote=ld.id_loteFK
+         WHERE ld.id_facturaFK=cf.id_factura AND ld.estado<>'retirada' AND lo.estado<>'anulado'
+         ORDER BY ld.id_lote_detalle DESC LIMIT 1) AS estado_lote_actual,
+        (SELECT ld.estado FROM centro_factura_lote_detalle ld
+         INNER JOIN centro_factura_lote lo ON lo.id_lote=ld.id_loteFK
+         WHERE ld.id_facturaFK=cf.id_factura AND ld.estado<>'retirada' AND lo.estado<>'anulado'
+         ORDER BY ld.id_lote_detalle DESC LIMIT 1) AS estado_detalle_lote_actual,
+        (SELECT lo.destino FROM centro_factura_lote_detalle ld
+         INNER JOIN centro_factura_lote lo ON lo.id_lote=ld.id_loteFK
+         WHERE ld.id_facturaFK=cf.id_factura AND ld.estado<>'retirada' AND lo.estado<>'anulado'
+         ORDER BY ld.id_lote_detalle DESC LIMIT 1) AS destino_lote_actual
       FROM centro_factura cf
       INNER JOIN local l ON l.cod_local=cf.cod_localFK
       LEFT JOIN interconsulta ic ON ic.cod_interConsulta=cf.cod_interConsultaFK
@@ -580,6 +596,7 @@ function centroFacturaCargarGastosEsperados($mysqli, $codUsuario, $filtros)
         COALESCE(cf.estado_original,'en_proceso') AS estado_original,cf.fecha_registro_digital,
         cf.fecha_limite_original,cf.estado_registro,cf.idgastosFK,cf.cod_compraFK,
         cf.fecha_recepcion_fisica,cf.fecha_observacion,cf.posible_duplicado,cf.duplicado_confirmado,
+        cf.lote_archivo,cf.carpeta_archivo,cf.caja_archivo,cf.periodo_archivo,cf.ubicacion_fisica,
         cf.version_registro,cf.cod_responsable_envioFK,
         g.idgastos AS id_gasto_esperado,g.fecha AS fecha_origen,g.monto AS importe_esperado,
         g.motivo AS gasto_motivo,g.personales AS gasto_contraparte,g.estado AS gasto_estado,
@@ -612,7 +629,23 @@ function centroFacturaCargarGastosEsperados($mysqli, $codUsuario, $filtros)
         (SELECT ld.id_loteFK FROM centro_factura_lote_detalle ld
           INNER JOIN centro_factura_lote lo ON lo.id_lote=ld.id_loteFK
           WHERE ld.id_facturaFK=cf.id_factura AND ld.estado<>'retirada' AND lo.estado<>'anulado'
-          ORDER BY ld.id_lote_detalle DESC LIMIT 1) AS id_lote_actual
+          ORDER BY ld.id_lote_detalle DESC LIMIT 1) AS id_lote_actual,
+        (SELECT lo.codigo_lote FROM centro_factura_lote_detalle ld
+          INNER JOIN centro_factura_lote lo ON lo.id_lote=ld.id_loteFK
+          WHERE ld.id_facturaFK=cf.id_factura AND ld.estado<>'retirada' AND lo.estado<>'anulado'
+          ORDER BY ld.id_lote_detalle DESC LIMIT 1) AS codigo_lote_actual,
+        (SELECT lo.estado FROM centro_factura_lote_detalle ld
+          INNER JOIN centro_factura_lote lo ON lo.id_lote=ld.id_loteFK
+          WHERE ld.id_facturaFK=cf.id_factura AND ld.estado<>'retirada' AND lo.estado<>'anulado'
+          ORDER BY ld.id_lote_detalle DESC LIMIT 1) AS estado_lote_actual,
+        (SELECT ld.estado FROM centro_factura_lote_detalle ld
+          INNER JOIN centro_factura_lote lo ON lo.id_lote=ld.id_loteFK
+          WHERE ld.id_facturaFK=cf.id_factura AND ld.estado<>'retirada' AND lo.estado<>'anulado'
+          ORDER BY ld.id_lote_detalle DESC LIMIT 1) AS estado_detalle_lote_actual,
+        (SELECT lo.destino FROM centro_factura_lote_detalle ld
+          INNER JOIN centro_factura_lote lo ON lo.id_lote=ld.id_loteFK
+          WHERE ld.id_facturaFK=cf.id_factura AND ld.estado<>'retirada' AND lo.estado<>'anulado'
+          ORDER BY ld.id_lote_detalle DESC LIMIT 1) AS destino_lote_actual
       FROM gastos g
       INNER JOIN local l ON l.cod_local=g.cod_local
       LEFT JOIN interconsulta ic ON ic.cod_interConsulta=g.cod_interConsultaFK
@@ -946,6 +979,7 @@ function centroFacturaCatalogos($codUsuario)
         'configuracion' => $configuracion,
         'permisos' => $permisos,
         'legajos_disponibles' => function_exists('centroLegajoEstructuraDisponible') && centroLegajoEstructuraDisponible() ? 1 : 0,
+        'solicitudes_pagare_disponibles' => function_exists('centroLegajoPagareEstructuraDisponible') && centroLegajoPagareEstructuraDisponible() ? 1 : 0,
         'metricas' => centroFacturaMetricas($codUsuario)
     );
 }

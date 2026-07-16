@@ -24,8 +24,8 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=adjuntos-guiados-20260716-2" />
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=interconsulta-enviar-arriba-derecha-20260716" />
-<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=20260713-6" />
-<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=legajos-tabs-20260716-2" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=reply-20260716-1" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=legajos-pagare-20260716-5" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-horizontal-ios-20260713" />
@@ -65,8 +65,8 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
-<script src="../js_system/abmInterConsulta.js?x=adjuntos-guiados-20260716-2"></script>
-<script src="../js_system/abmCentroFacturas.js?x=legajos-20260716-1"></script>
+<script src="../js_system/abmInterConsulta.js?x=reply-20260716-1"></script>
+<script src="../js_system/abmCentroFacturas.js?x=legajos-pagare-20260716-5"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
@@ -36185,6 +36185,7 @@ id='vantana_info_001' style='display:none'>
     <nav class="centro-facturas-legajos-subtabs" id="centroFacturasLegajosSubtabs" aria-label="Vistas de Legajos y documentos" hidden>
       <button type="button" class="is-active" data-cf-legajos-vista="ventas" onclick="centroFacturasCambiarVistaLegajos('ventas')" aria-pressed="true"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Legajos</button>
       <button type="button" data-cf-legajos-vista="lotes" onclick="centroFacturasCambiarVistaLegajos('lotes')" aria-pressed="false"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Lotes de legajos</button>
+      <button type="button" id="btnCentroFacturasSolicitudesPagare" data-cf-legajos-vista="solicitudes" onclick="centroFacturasCambiarVistaLegajos('solicitudes')" aria-pressed="false" hidden><i class="fa-solid fa-file-signature" aria-hidden="true"></i> Solicitudes de pagar&eacute;s</button>
     </nav>
 
     <section class="centro-facturas-summary is-collapsed" id="centroFacturasResumen">

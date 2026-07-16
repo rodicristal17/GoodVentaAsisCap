@@ -38,16 +38,57 @@ function centroLegajoPuedeVer($codUsuario)
 
 function centroLegajoTipos()
 {
-    return array('contrato', 'pagare', 'consentimiento', 'cedula', 'detalle_venta');
+    return array('contrato', 'pagare', 'cedula', 'consentimiento', 'detalle_venta');
+}
+
+function centroLegajoNumerosDocumento()
+{
+    return array(
+        'contrato' => '01',
+        'pagare' => '02',
+        'cedula' => '03',
+        'consentimiento' => '04',
+        'detalle_venta' => '05'
+    );
+}
+
+function centroLegajoCodigoDocumento($codVenta, $tipoDocumento)
+{
+    $numeros = centroLegajoNumerosDocumento();
+    $tipoDocumento = (string)$tipoDocumento;
+    if (!isset($numeros[$tipoDocumento])) return '';
+    return 'Legajo #'.intval($codVenta).'-'.$numeros[$tipoDocumento];
+}
+
+function centroLegajoTipoEsRequerido($venta, $tipoDocumento)
+{
+    if (!in_array($tipoDocumento, centroLegajoTipos(), true)) return false;
+    $tipoVenta = isset($venta['tipo_venta']) ? strtoupper(trim((string)$venta['tipo_venta'])) : '';
+    if ($tipoVenta === 'CONTADO') return $tipoDocumento === 'consentimiento';
+    return true;
+}
+
+function centroLegajoSolicitudPagareAbiertaDocumento($mysqli, $idDocumento, $bloquear = false)
+{
+    if (!centroFacturaTablaExiste($mysqli, 'centro_legajo_pagare_solicitud')) return array();
+    $stmt = $mysqli->prepare('SELECT id_solicitud,codigo_solicitud,estado,estado_fisico_snapshot,id_lote_snapshotFK
+        FROM centro_legajo_pagare_solicitud WHERE id_documentoFK=? AND solicitud_abierta=1 LIMIT 1'.($bloquear ? ' FOR UPDATE' : ''));
+    if (!$stmt) return array();
+    $idDocumento = intval($idDocumento);
+    $stmt->bind_param('i', $idDocumento);
+    if (!$stmt->execute()) { $stmt->close(); return array(); }
+    $fila = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $fila ? $fila : array();
 }
 
 function centroLegajoTiposRequeridosVenta($venta)
 {
-    $tipos = centroLegajoTipos();
-    if (strtoupper(trim((string)$venta['tipo_venta'])) === 'CONTADO') {
-        $tipos = array_values(array_diff($tipos, array('pagare')));
+    $requeridos = array();
+    foreach (centroLegajoTipos() as $tipo) {
+        if (centroLegajoTipoEsRequerido($venta, $tipo)) $requeridos[] = $tipo;
     }
-    return $tipos;
+    return $requeridos;
 }
 
 function centroLegajoPrepararEscritura($mysqli, $sql)
@@ -149,13 +190,12 @@ function centroLegajoPuedeOperarDestino($codUsuario, $lote, $mysqli)
 function centroLegajoAsegurarDocumentosVenta($mysqli, $venta, $codUsuario)
 {
     $codVenta = intval($venta['cod_venta']);
-    $esContado = strtoupper(trim((string)$venta['tipo_venta'])) === 'CONTADO';
     $stmt = $mysqli->prepare("INSERT IGNORE INTO centro_legajo_documento
         (cod_ventaFK,tipo_documento,es_requerido,estado_documental,estado_fisico,cod_usuarioFK_create)
         VALUES (?,?,?,?,?,?)");
     if (!$stmt) return false;
     foreach (centroLegajoTipos() as $tipo) {
-        $requerido = ($tipo === 'pagare' && $esContado) ? 0 : 1;
+        $requerido = centroLegajoTipoEsRequerido($venta, $tipo) ? 1 : 0;
         $estadoDocumento = $requerido ? 'pendiente' : 'no_aplica';
         $estadoFisico = $requerido ? 'pendiente' : 'no_aplica';
         $stmt->bind_param('isissi', $codVenta, $tipo, $requerido, $estadoDocumento, $estadoFisico, $codUsuario);
@@ -166,45 +206,46 @@ function centroLegajoAsegurarDocumentosVenta($mysqli, $venta, $codUsuario)
     }
     $stmt->close();
 
-    $debeRequerirPagare = !$esContado;
-    $stmt = $mysqli->prepare("SELECT * FROM centro_legajo_documento
-        WHERE cod_ventaFK=? AND tipo_documento='pagare' LIMIT 1 FOR UPDATE");
+    $stmt = $mysqli->prepare("SELECT d.*,
+        EXISTS(SELECT 1 FROM centro_legajo_lote_detalle ld
+          INNER JOIN centro_legajo_lote lo ON lo.id_lote=ld.id_loteFK
+          WHERE ld.id_documentoFK=d.id_documento AND ld.estado<>'retirado' AND lo.estado='borrador') AS en_lote_borrador
+        FROM centro_legajo_documento d WHERE d.cod_ventaFK=? ORDER BY d.id_documento FOR UPDATE");
     if (!$stmt) return false;
     $stmt->bind_param('i', $codVenta);
     if (!$stmt->execute()) { $stmt->close(); return false; }
-    $pagare = $stmt->get_result()->fetch_assoc();
+    $documentos = array();
+    $resultado = $stmt->get_result();
+    while ($fila = $resultado->fetch_assoc()) $documentos[] = $fila;
     $stmt->close();
-    if ($pagare && intval($pagare['es_requerido']) !== ($debeRequerirPagare ? 1 : 0)) {
-        $idDocumento = intval($pagare['id_documento']);
-        $stmt = $mysqli->prepare("SELECT 1 FROM centro_legajo_lote_detalle ld
-            INNER JOIN centro_legajo_lote lo ON lo.id_lote=ld.id_loteFK
-            WHERE ld.id_documentoFK=? AND ld.estado<>'retirado' AND lo.estado<>'anulado' LIMIT 1");
-        if (!$stmt) return false;
-        $stmt->bind_param('i', $idDocumento);
-        if (!$stmt->execute()) { $stmt->close(); return false; }
-        $enLote = (bool)$stmt->get_result()->fetch_assoc();
-        $stmt->close();
-        if (!$enLote) {
-            $nuevoDocumento = $pagare['estado_documental'];
-            $nuevoFisico = $pagare['estado_fisico'];
-            if ($debeRequerirPagare && ($nuevoDocumento === 'no_aplica' || $nuevoFisico === 'no_aplica')) {
-                $nuevoDocumento = 'pendiente';
-                $nuevoFisico = 'pendiente';
-            }
-            $requerido = $debeRequerirPagare ? 1 : 0;
-            $ahora = date('Y-m-d H:i:s');
-            $stmt = $mysqli->prepare("UPDATE centro_legajo_documento SET es_requerido=?,estado_documental=?,estado_fisico=?,
-                cod_usuarioFK_update=?,fecha_actualizacion=?,version_registro=version_registro+1 WHERE id_documento=?");
-            if (!$stmt) return false;
-            $stmt->bind_param('issisi', $requerido, $nuevoDocumento, $nuevoFisico, $codUsuario, $ahora, $idDocumento);
-            if (!$stmt->execute() || $stmt->affected_rows !== 1) { $stmt->close(); return false; }
-            $stmt->close();
-            $detalle = $debeRequerirPagare
-                ? 'El pagare pasa a ser obligatorio por el tipo actual de la venta.'
-                : 'El pagare deja de ser obligatorio por el tipo actual de la venta; se conserva su historial.';
-            if (!centroLegajoRegistrarEventoDocumento($mysqli, $pagare, 'sincronizar_tipo_venta',
-                $pagare['estado_documental'], $nuevoDocumento, $pagare['estado_fisico'], $nuevoFisico, $detalle, $codUsuario)) return false;
+
+    foreach ($documentos as $documento) {
+        $tipo = (string)$documento['tipo_documento'];
+        $requerido = centroLegajoTipoEsRequerido($venta, $tipo) ? 1 : 0;
+        $idDocumento = intval($documento['id_documento']);
+        $nuevoDocumento = (string)$documento['estado_documental'];
+        $nuevoFisico = (string)$documento['estado_fisico'];
+        $requiereSincronizacion = intval($documento['es_requerido']) !== $requerido;
+        if ($requerido) {
+            if ($nuevoDocumento === 'no_aplica') { $nuevoDocumento = 'pendiente'; $requiereSincronizacion = true; }
+            if ($nuevoFisico === 'no_aplica') { $nuevoFisico = 'pendiente'; $requiereSincronizacion = true; }
         }
+        if (!$requiereSincronizacion) continue;
+        // El indicador vigente funciona tambien como snapshot mientras el manifiesto
+        // permanece en borrador. Asi un cambio contado/credito obliga a reconstruirlo.
+        if (!empty($documento['en_lote_borrador'])) continue;
+        $ahora = date('Y-m-d H:i:s');
+        $stmt = $mysqli->prepare("UPDATE centro_legajo_documento SET es_requerido=?,estado_documental=?,estado_fisico=?,
+            cod_usuarioFK_update=?,fecha_actualizacion=?,version_registro=version_registro+1 WHERE id_documento=?");
+        if (!$stmt) return false;
+        $stmt->bind_param('issisi', $requerido, $nuevoDocumento, $nuevoFisico, $codUsuario, $ahora, $idDocumento);
+        if (!$stmt->execute() || $stmt->affected_rows !== 1) { $stmt->close(); return false; }
+        $stmt->close();
+        $detalle = $requerido
+            ? 'El documento pasa a ser obligatorio por el tipo actual de la venta.'
+            : 'El documento deja de ser obligatorio por el tipo actual de la venta; se conservan su estado, ubicacion e historial.';
+        if (!centroLegajoRegistrarEventoDocumento($mysqli, $documento, 'sincronizar_tipo_venta',
+            $documento['estado_documental'], $nuevoDocumento, $documento['estado_fisico'], $nuevoFisico, $detalle, $codUsuario)) return false;
     }
     return true;
 }
@@ -223,7 +264,9 @@ function centroLegajoDocumentosPorVentas($mysqli, $ventas)
         while ($fila = $resultado->fetch_assoc()) {
             $venta = intval($fila['cod_ventaFK']);
             if (!isset($salida[$venta])) $salida[$venta] = array();
-            $salida[$venta][$fila['tipo_documento']] = centroFacturaFilaUtf8($fila);
+            $fila = centroFacturaFilaUtf8($fila);
+            $fila['codigo_documento'] = centroLegajoCodigoDocumento($venta, $fila['tipo_documento']);
+            $salida[$venta][$fila['tipo_documento']] = $fila;
         }
     }
     return $salida;
@@ -267,7 +310,7 @@ function centroLegajoConstruirDocumentos($venta, $existentes)
     $salida = array();
     $esContado = strtoupper(trim((string)$venta['tipo_venta'])) === 'CONTADO';
     foreach (centroLegajoTipos() as $tipo) {
-        $requerido = !($tipo === 'pagare' && $esContado);
+        $requerido = centroLegajoTipoEsRequerido($venta, $tipo);
         $documento = isset($existentes[$tipo]) ? $existentes[$tipo] : array(
             'id_documento' => 0,
             'cod_ventaFK' => intval($venta['cod_venta']),
@@ -281,10 +324,7 @@ function centroLegajoConstruirDocumentos($venta, $existentes)
             'observaciones' => ''
         );
         $documento['es_requerido'] = $requerido ? 1 : 0;
-        if (!$requerido) {
-            $documento['estado_documental'] = 'no_aplica';
-            $documento['estado_fisico'] = 'no_aplica';
-        }
+        $documento['codigo_documento'] = centroLegajoCodigoDocumento($venta['cod_venta'], $tipo);
         $fuente = 0;
         if ($tipo === 'cedula') $fuente = intval($venta['fuente_cedula']);
         if ($tipo === 'detalle_venta') $fuente = intval($venta['fuente_detalle_venta']);
@@ -301,23 +341,27 @@ function centroLegajoDecorarVenta($venta, $existentes, $loteActual)
     $requeridos = 0;
     $listos = 0;
     $elegibles = 0;
+    $enviables = 0;
     $observado = false;
     foreach ($documentos as $documento) {
-        if (!intval($documento['es_requerido'])) continue;
-        $requeridos++;
         $estadoDocumento = (string)$documento['estado_documental'];
         $estadoFisico = (string)$documento['estado_fisico'];
-        if (in_array($estadoDocumento, array('disponible','validado'), true)
-            && in_array($estadoFisico, array('en_sucursal','en_lote','pendiente_custodia','en_transito','recibido'), true)) {
+        $documentoConfirmado = in_array($estadoDocumento, array('disponible','validado'), true);
+        if ($documentoConfirmado && $estadoFisico === 'en_sucursal') $enviables++;
+        if (!intval($documento['es_requerido'])) continue;
+        $requeridos++;
+        if ($documentoConfirmado
+            && in_array($estadoFisico, array('en_sucursal','en_lote','pendiente_custodia','en_transito','recibido','devuelto_cliente'), true)) {
             $listos++;
         }
-        if (in_array($estadoDocumento, array('disponible','validado'), true) && $estadoFisico === 'en_sucursal') $elegibles++;
+        if ($documentoConfirmado && $estadoFisico === 'en_sucursal') $elegibles++;
         if ($estadoDocumento === 'observado' || in_array($estadoFisico, array('faltante','observado'), true)) $observado = true;
     }
     $completo = $requeridos > 0 && $listos === $requeridos;
     $venta['documentos'] = $documentos;
     $venta['cantidad_requerida'] = $requeridos;
     $venta['cantidad_lista'] = $listos;
+    $venta['cantidad_enviable'] = $enviables;
     $venta['cantidad_documentos_lote'] = $loteActual && isset($loteActual['cantidad_documentos_lote'])
         ? intval($loteActual['cantidad_documentos_lote']) : 0;
     $venta['estado_legajo'] = $observado ? 'observado' : ($completo ? 'completo' : 'incompleto');
@@ -463,7 +507,11 @@ function centroLegajoDetalle($codVenta, $codUsuario)
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $resultado = $stmt->get_result();
-    while ($fila = $resultado->fetch_assoc()) $eventos[] = centroFacturaFilaUtf8($fila);
+    while ($fila = $resultado->fetch_assoc()) {
+        $fila = centroFacturaFilaUtf8($fila);
+        $fila['codigo_documento'] = centroLegajoCodigoDocumento($id, $fila['tipo_documento']);
+        $eventos[] = $fila;
+    }
     $stmt->close();
     $mysqli->close();
     return array('ok' => true, 'venta' => $venta, 'documentos' => $venta['documentos'],
@@ -514,7 +562,8 @@ function centroLegajoGuardarDocumento($codVenta, $tipoDocumento, $accion, $obser
         $stmt->bind_param('is', $codVenta, $tipoDocumento);
         if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudo preparar el documento.'); }
         $documento = $stmt->get_result()->fetch_assoc(); $stmt->close();
-        if (!$documento || !intval($documento['es_requerido']) || $documento['estado_documental'] === 'no_aplica') throw new Exception('Este documento no aplica a la venta.');
+        if (!$documento) throw new Exception('El documento no existe en el legajo.');
+        if ($documento['estado_fisico'] === 'devuelto_cliente') throw new Exception('Un documento devuelto al cliente solo puede modificarse mediante su flujo de devolucion.');
         $idDocumento = intval($documento['id_documento']);
         $stmt = centroLegajoPrepararEscritura($mysqli, "SELECT lo.codigo_lote FROM centro_legajo_lote_detalle ld
             INNER JOIN centro_legajo_lote lo ON lo.id_lote=ld.id_loteFK
@@ -526,7 +575,12 @@ function centroLegajoGuardarDocumento($codVenta, $tipoDocumento, $accion, $obser
         $anteriorDocumento = $documento['estado_documental'];
         $anteriorFisico = $documento['estado_fisico'];
         if ($accion === 'confirmar_copia') { $nuevoDocumento = 'disponible'; $nuevoFisico = 'en_sucursal'; $local = intval($venta['cod_local']); }
-        elseif ($accion === 'marcar_pendiente') { $nuevoDocumento = 'pendiente'; $nuevoFisico = 'pendiente'; $local = null; }
+        elseif ($accion === 'marcar_pendiente') {
+            $requerido = centroLegajoTipoEsRequerido($venta, $tipoDocumento);
+            $nuevoDocumento = $requerido ? 'pendiente' : 'no_aplica';
+            $nuevoFisico = $requerido ? 'pendiente' : 'no_aplica';
+            $local = null;
+        }
         else { $nuevoDocumento = 'observado'; $nuevoFisico = 'observado'; $local = intval($venta['cod_local']); }
         $ahora = date('Y-m-d H:i:s');
         $ubicacion = $local ? centroFacturaTextoBaseDatos($venta['nombre_local'], 255) : null;
@@ -548,6 +602,7 @@ function centroLegajoGuardarDocumento($codVenta, $tipoDocumento, $accion, $obser
             $anteriorFisico, $nuevoFisico, $observaciones, $codUsuario)) throw new Exception('No se pudo auditar el cambio documental.');
         $mysqli->commit(); $mysqli->close();
         return array('ok' => true, 'cod_venta' => $codVenta, 'id_documento' => $idDocumento,
+            'codigo_documento' => centroLegajoCodigoDocumento($codVenta, $tipoDocumento),
             'estado_documental' => $nuevoDocumento, 'estado_fisico' => $nuevoFisico);
     } catch (Exception $e) {
         $mysqli->rollback(); $mysqli->close();
@@ -694,16 +749,29 @@ function centroLegajoValidarVentaParaLote($mysqli, $codVenta, $codLocal, $codUsu
     $resultado = $stmt->get_result();
     $documentos = array();
     $tiposEncontrados = array();
+    $idPagareConfirmado = 0;
     while ($fila = $resultado->fetch_assoc()) {
-        if (!intval($fila['es_requerido']) || $fila['estado_documental'] === 'no_aplica') continue;
-        if (!in_array($fila['estado_documental'], array('disponible','validado'), true) || $fila['estado_fisico'] !== 'en_sucursal') {
+        $tipo = (string)$fila['tipo_documento'];
+        $requerido = centroLegajoTipoEsRequerido($venta, $tipo);
+        $confirmadoEnSucursal = in_array($fila['estado_documental'], array('disponible','validado'), true)
+            && $fila['estado_fisico'] === 'en_sucursal';
+        if ($requerido && !$confirmadoEnSucursal) {
             $stmt->close();
             return array('ok' => false, 'mensaje' => 'El Legajo #'.$codVenta.' no esta completo o tiene copias fisicas pendientes.');
         }
-        $documentos[] = $fila;
-        $tiposEncontrados[] = $fila['tipo_documento'];
+        if ($requerido) $tiposEncontrados[] = $tipo;
+        if ($confirmadoEnSucursal) {
+            $documentos[] = $fila;
+            if ($tipo === 'pagare') $idPagareConfirmado = intval($fila['id_documento']);
+        }
     }
     $stmt->close();
+    if ($idPagareConfirmado > 0) {
+        $solicitudPagare = centroLegajoSolicitudPagareAbiertaDocumento($mysqli, $idPagareConfirmado, true);
+        if ($solicitudPagare) {
+            return array('ok' => false, 'mensaje' => 'El Legajo #'.$codVenta.' tiene una solicitud activa de devolucion de pagare. Resuelvala o cancelela antes de formar un lote.');
+        }
+    }
     $tiposRequeridos = centroLegajoTiposRequeridosVenta($venta);
     sort($tiposEncontrados); sort($tiposRequeridos);
     if ($tiposEncontrados !== $tiposRequeridos) return array('ok' => false, 'mensaje' => 'El Legajo #'.$codVenta.' no contiene todas sus copias obligatorias.');
@@ -731,12 +799,28 @@ function centroLegajoRevalidarLoteAntesEnvio($mysqli, $documentos)
         if (!$venta || intval($venta['es_anulada'])) throw new Exception('El Legajo #'.$codVenta.' pertenece a una venta anulada o inactiva. Retire el lote antes de enviarlo.');
         $requeridos = centroLegajoTiposRequeridosVenta($venta);
         $presentes = array();
+        $incluidos = array();
         foreach ($documentosVenta as $documento) {
             $tipo = (string)$documento['tipo_documento'];
-            if (isset($presentes[$tipo]) || !in_array($tipo, $requeridos, true) || !intval($documento['es_requerido'])) {
+            if (!in_array($tipo, centroLegajoTipos(), true) || isset($incluidos[$tipo])) {
                 throw new Exception('El tipo de venta del Legajo #'.$codVenta.' cambio despues de preparar el lote. Anule el borrador y vuelva a formarlo.');
             }
-            $presentes[$tipo] = 1;
+            $requeridoActual = in_array($tipo, $requeridos, true) ? 1 : 0;
+            if (intval($documento['es_requerido']) !== $requeridoActual) {
+                throw new Exception('El tipo de venta del Legajo #'.$codVenta.' cambio despues de preparar el lote. Anule el borrador y vuelva a formarlo.');
+            }
+            if ($tipo === 'pagare') {
+                $solicitudPagare = centroLegajoSolicitudPagareAbiertaDocumento($mysqli, intval($documento['id_documento']), true);
+                if ($solicitudPagare) {
+                    $mismoLote = (string)$solicitudPagare['estado_fisico_snapshot'] === 'en_lote'
+                        && intval($solicitudPagare['id_lote_snapshotFK']) === intval($documento['id_loteFK']);
+                    if (!$mismoLote) {
+                        throw new Exception('El Legajo #'.$codVenta.' tiene una solicitud activa de devolucion de pagare incompatible con este envio. Anule el borrador o resuelva la solicitud.');
+                    }
+                }
+            }
+            $incluidos[$tipo] = 1;
+            if (in_array($tipo, $requeridos, true)) $presentes[$tipo] = 1;
         }
         foreach ($requeridos as $tipo) {
             if (!isset($presentes[$tipo])) throw new Exception('El Legajo #'.$codVenta.' ya no contiene todos los documentos obligatorios. Anule el borrador y vuelva a formarlo.');
@@ -853,9 +937,14 @@ function centroLegajoDetalleLote($idLote, $codUsuario)
       LEFT JOIN venta v ON v.cod_venta=ld.cod_ventaFK
       LEFT JOIN cliente c ON c.cod_cliente=v.cod_clienteFK
       LEFT JOIN persona p ON p.cod_persona=c.cod_cliente
-      WHERE ld.id_loteFK=? ORDER BY ld.cod_ventaFK,d.id_documento");
+      WHERE ld.id_loteFK=? ORDER BY ld.cod_ventaFK,
+        FIELD(d.tipo_documento,'contrato','pagare','cedula','consentimiento','detalle_venta'),d.id_documento");
     $stmt->bind_param('i', $idLote); $stmt->execute(); $resultado = $stmt->get_result();
-    while ($fila = $resultado->fetch_assoc()) $documentos[] = centroFacturaFilaUtf8($fila);
+    while ($fila = $resultado->fetch_assoc()) {
+        $fila = centroFacturaFilaUtf8($fila);
+        $fila['codigo_documento'] = centroLegajoCodigoDocumento($fila['cod_ventaFK'], $fila['tipo_documento']);
+        $documentos[] = $fila;
+    }
     $stmt->close();
     $eventos = array();
     $stmt = $mysqli->prepare("SELECT e.*,pa.nombre_persona AS usuario_actor,pr.nombre_persona AS usuario_responsable
@@ -872,7 +961,7 @@ function centroLegajoDetalleLote($idLote, $codUsuario)
 function centroLegajoDocumentosLoteBloqueados($mysqli, $idLote)
 {
     $idLote = intval($idLote);
-    $stmt = centroLegajoPrepararEscritura($mysqli, "SELECT ld.id_lote_detalle,ld.estado AS estado_lote,ld.observacion AS observacion_lote,
+    $stmt = centroLegajoPrepararEscritura($mysqli, "SELECT ld.id_lote_detalle,ld.id_loteFK,ld.estado AS estado_lote,ld.observacion AS observacion_lote,
         d.* FROM centro_legajo_lote_detalle ld
         INNER JOIN centro_legajo_documento d ON d.id_documento=ld.id_documentoFK
         WHERE ld.id_loteFK=? AND ld.estado<>'retirado' ORDER BY ld.id_lote_detalle FOR UPDATE");
@@ -1003,6 +1092,9 @@ function centroLegajoRecibirLote($idLote, $recepciones, $datos, $codUsuario)
         foreach ($documentos as $documento) $porId[intval($documento['id_documento'])] = $documento;
         foreach ($mapa as $idDocumento => $recepcion) {
             if (!isset($porId[$idDocumento])) throw new Exception('Un documento indicado no pertenece al lote.');
+            if ($porId[$idDocumento]['estado_fisico'] === 'devuelto_cliente' && $recepcion['estado'] !== 'recibido') {
+                throw new Exception('Un documento ya devuelto al cliente no puede corregirse desde la recepcion del lote.');
+            }
             if ($recepcion['estado'] !== 'recibido' && $recepcion['observacion'] === '') throw new Exception('Describa cada documento faltante u observado.');
             if ($porId[$idDocumento]['estado_lote'] === 'recibido' && $recepcion['estado'] !== 'recibido'
                 && !centroFacturaTienePermiso($codUsuario, 'ADMINCENTROFACTURAS')) throw new Exception('Corregir un documento ya recibido requiere permiso superior.');
@@ -1011,6 +1103,7 @@ function centroLegajoRecibirLote($idLote, $recepciones, $datos, $codUsuario)
         $destinoNombre = centroFacturaTextoBaseDatos($lote['destino_snapshot'], 255);
         foreach ($mapa as $idDocumento => $recepcion) {
             $documento = $porId[$idDocumento];
+            if ($documento['estado_fisico'] === 'devuelto_cliente') continue;
             if ($documento['estado_lote'] === 'recibido' && $recepcion['estado'] === 'recibido') continue;
             $stmt = centroLegajoPrepararEscritura($mysqli, "UPDATE centro_legajo_lote_detalle SET estado=?,observacion=?,fecha_estado=?,cod_usuario_estadoFK=?
                 WHERE id_loteFK=? AND id_documentoFK=?");
@@ -1078,7 +1171,7 @@ function centroLegajoAnularLote($idLote, $motivo, $codUsuario)
         if (!$stmt->execute() || $stmt->affected_rows !== count($documentos)) { $stmt->close(); throw new Exception('No se pudo retirar todo el manifiesto del lote.'); }
         $stmt->close();
         foreach ($documentos as $documento) {
-            if ($documento['estado_fisico'] === 'recibido') continue;
+            if (in_array($documento['estado_fisico'], array('recibido','devuelto_cliente'), true)) continue;
             $permaneceEnOrigen = in_array($lote['estado'], array('borrador','pendiente_custodia'), true);
             $nuevoDocumento = $permaneceEnOrigen ? $documento['estado_documental'] : 'observado';
             $nuevoFisico = $permaneceEnOrigen ? 'en_sucursal' : 'observado';
