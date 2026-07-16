@@ -247,7 +247,7 @@ function buscaregastos($fecha1,$fecha2)
 {
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
-		$sql= "Select sum(monto) as total from gastos where fecha>='$fecha1' and fecha<='$fecha2' and estado='Activo' ";
+		$sql= "Select sum(monto) as total from gastos where fecha>='$fecha1' and fecha<='$fecha2' and estado='Activo' and LOWER(TRIM(IFNULL(tipo,'')))!='deposito' ";
 		
    
    

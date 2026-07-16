@@ -63,7 +63,69 @@ var movimientoFinancieroContextoActual = {
 
 function normalizarTipoMovimientoFinanciero(tipoMovimiento) {
 	var tipo = ((tipoMovimiento || "") + "").toLowerCase();
-	return tipo == "ingreso" ? "Ingreso" : "Egreso";
+	if (tipo == "ingreso") { return "Ingreso"; }
+	if (tipo == "deposito" || tipo == "depósito") { return "Deposito"; }
+	return "Egreso";
+}
+
+function esContextoDepositoCentral(contexto) {
+	return normalizarTipoMovimientoFinanciero(contexto && contexto.tipoMovimiento) == "Deposito";
+}
+
+function asegurarOpcionTipoDepositoCentral() {
+	var select = document.getElementById("inptTipoGasto");
+	if (!select || select.querySelector('option[value="Deposito"]')) { return; }
+	var opcion = document.createElement("option");
+	opcion.value = "Deposito";
+	opcion.text = "DEPOSITO A CENTRAL";
+	select.appendChild(opcion);
+}
+
+function alternarElementoDepositoCentral(elemento, ocultar) {
+	if (!elemento) { return; }
+	if (ocultar) {
+		if (!elemento.hasAttribute("data-deposito-display-anterior")) {
+			elemento.setAttribute("data-deposito-display-anterior", elemento.style.display || "");
+		}
+		elemento.style.display = "none";
+		return;
+	}
+	if (elemento.hasAttribute("data-deposito-display-anterior")) {
+		elemento.style.display = elemento.getAttribute("data-deposito-display-anterior");
+		elemento.removeAttribute("data-deposito-display-anterior");
+	}
+}
+
+function configurarCamposDepositoCentral(esDeposito) {
+	var idsOcultar = [
+		"inptMotivoMisGastos", "inptDescripcionGasto", "inptlocalMisGastos",
+		"inptAbmInterConsultaGasto", "inptProyectoGasto", "inptTipoGasto",
+		"inptEstadoGasto", "inptCantCuotaGasto", "inptPeriodicidadGasto"
+	];
+	idsOcultar.forEach(function (id) {
+		var campo = document.getElementById(id);
+		var fila = campo && campo.closest ? campo.closest(".form-row") : null;
+		alternarElementoDepositoCentral(fila, esDeposito);
+	});
+	alternarElementoDepositoCentral(document.querySelector("#divAbmGasto2 .movimiento-financiero-adjuntos"), esDeposito);
+	alternarElementoDepositoCentral(document.querySelector("#divAbmGasto2 .movimiento-financiero-nuevo-proyecto"), esDeposito);
+	alternarElementoDepositoCentral(document.getElementById("vistaPreviaPlanificacionGasto"), esDeposito);
+	var aviso = document.getElementById("avisoDepositoCentral");
+	if (aviso) { aviso.style.display = esDeposito ? "" : "none"; }
+	var etiquetaComprobante = document.querySelector('label[for="inptNroBoletaGasto"]');
+	if (etiquetaComprobante) { etiquetaComprobante.innerHTML = esDeposito ? "N.&ordm; de comprobante* :" : "Nro de Boleta :"; }
+	var paneles = document.querySelectorAll("#divAbmGasto2 .movimiento-financiero-panel .panel-title");
+	if (paneles[0]) { paneles[0].textContent = esDeposito ? "Fecha del deposito" : "Identificación"; }
+	if (paneles[1]) { paneles[1].textContent = esDeposito ? "Monto y comprobante" : "Pago y planificación"; }
+	if (esDeposito) {
+		asegurarOpcionTipoDepositoCentral();
+		document.getElementById("inptTipoGasto").value = "Deposito";
+		document.getElementById("inptEstadoGasto").value = "Activo";
+		document.getElementById("inptDescripcionGasto").value = "Deposito bancario a Faraone Capital S.A.";
+		document.getElementById("inptCantCuotaGasto").value = "";
+		document.getElementById("inptPeriodicidadGasto").value = "";
+		document.getElementById("inptProyectoGasto").value = "0";
+	}
 }
 
 function obtenerCategoriaConceptoMovimientoFinanciero() {
@@ -89,18 +151,25 @@ function obtenerFechaDefaultMovimientoFinanciero() {
 function configurarModalMovimientoFinanciero(contexto) {
 	contexto = contexto || {};
 	movimientoFinancieroContextoActual = contexto;
+	var esDeposito = esContextoDepositoCentral(contexto);
 	var modal = document.getElementById("divAbmGasto2");
 	var titulo = document.getElementById("tituloMovimientoFinanciero");
 	var chip = document.getElementById("chipContextoMovimientoFinanciero");
 	if (modal) {
-		modal.classList.remove("movimiento-financiero-modal--ingreso", "movimiento-financiero-modal--egreso", "movimiento-financiero-modal--editar");
+		modal.classList.remove("movimiento-financiero-modal--ingreso", "movimiento-financiero-modal--egreso", "movimiento-financiero-modal--deposito", "movimiento-financiero-modal--editar");
 	}
+	configurarCamposDepositoCentral(esDeposito);
 	if (!titulo) { return; }
 	if (contexto.modo == "editar") {
-		titulo.textContent = "Editar movimiento financiero";
-		if (modal) { modal.classList.add("movimiento-financiero-modal--editar"); }
+		titulo.textContent = esDeposito ? "Editar deposito a central" : "Editar movimiento financiero";
+		if (modal) {
+			modal.classList.add("movimiento-financiero-modal--editar");
+			if (esDeposito) { modal.classList.add("movimiento-financiero-modal--deposito"); }
+		}
 		if (chip) {
-			chip.textContent = "Editando registro existente";
+			chip.textContent = esDeposito
+				? "Destino: Faraone Capital S.A. | Salida de caja sin impacto en el resultado"
+				: "Editando registro existente";
 			chip.style.display = "";
 		}
 		return;
@@ -108,16 +177,20 @@ function configurarModalMovimientoFinanciero(contexto) {
 	if (contexto.modo == "crear") {
 		var tipo = normalizarTipoMovimientoFinanciero(contexto.tipoMovimiento);
 		var conceptoNombre = contexto.conceptoNombre || "";
-		if (contexto.esNuevoProyecto && contexto.proyectoNombre) {
+		if (tipo == "Deposito") {
+			titulo.textContent = "Registrar deposito a central";
+		} else if (contexto.esNuevoProyecto && contexto.proyectoNombre) {
 			titulo.textContent = "Nuevo proyecto - " + contexto.proyectoNombre;
 		} else {
 			titulo.textContent = (tipo == "Ingreso" ? "Nuevo ingreso" : "Nuevo egreso") + (conceptoNombre ? " - " + conceptoNombre : "");
 		}
 		if (modal) {
-			modal.classList.add(tipo == "Ingreso" ? "movimiento-financiero-modal--ingreso" : "movimiento-financiero-modal--egreso");
+			modal.classList.add(tipo == "Ingreso" ? "movimiento-financiero-modal--ingreso" : (tipo == "Deposito" ? "movimiento-financiero-modal--deposito" : "movimiento-financiero-modal--egreso"));
 		}
 		if (chip) {
-			chip.textContent = "Impactar\u00e1 en: " + (contexto.categoriaFlujo || "Flujo financiero") + (conceptoNombre ? " > " + conceptoNombre : "") + (contexto.proyectoNombre ? " | Proyecto: " + contexto.proyectoNombre : "");
+			chip.textContent = tipo == "Deposito"
+				? "Destino: Faraone Capital S.A. | Salida de caja sin impacto en el resultado"
+				: "Impactar\u00e1 en: " + (contexto.categoriaFlujo || "Flujo financiero") + (conceptoNombre ? " > " + conceptoNombre : "") + (contexto.proyectoNombre ? " | Proyecto: " + contexto.proyectoNombre : "");
 			chip.style.display = "";
 		}
 		return;
@@ -144,6 +217,32 @@ function asegurarOpcionConceptoMovimientoFinanciero(codConcepto, conceptoNombre)
 	selectConcepto.appendChild(opcion);
 }
 
+function esConceptoDepositoCentralSeleccionado(selectConcepto) {
+	if (!selectConcepto || selectConcepto.selectedIndex < 0 || !selectConcepto.options[selectConcepto.selectedIndex]) {
+		return false;
+	}
+	var texto = (selectConcepto.options[selectConcepto.selectedIndex].text || "").toLowerCase();
+	texto = texto.replace(/[áàäâ]/g, "a").replace(/[éèëê]/g, "e").replace(/[íìïî]/g, "i").replace(/[óòöô]/g, "o").replace(/[úùüû]/g, "u");
+	return texto.indexOf("deposito") !== -1 && texto.indexOf("faraone") !== -1;
+}
+
+function manejarCambioConceptoMovimientoFinanciero() {
+	var selectConcepto = document.getElementById("inptMotivoMisGastos");
+	if (!esConceptoDepositoCentralSeleccionado(selectConcepto)) {
+		return;
+	}
+	var opcion = selectConcepto.options[selectConcepto.selectedIndex];
+	aplicarContextoCrearMovimientoFinanciero({
+		modo: "crear",
+		tipoMovimiento: "Deposito",
+		categoriaFlujo: "Movimiento de caja",
+		categoriaCodigo: "deposito",
+		conceptoId: selectConcepto.value || "",
+		conceptoNombre: opcion.text || "",
+		localId: document.getElementById("inptlocalMisGastosBusca") ? document.getElementById("inptlocalMisGastosBusca").value : ""
+	});
+}
+
 function enfocarPagoYPlanificacionMovimientoFinanciero() {
 	var monto = document.getElementById("inptMontoGasto");
 	if (!monto) { return; }
@@ -159,12 +258,14 @@ function enfocarPagoYPlanificacionMovimientoFinanciero() {
 
 function aplicarContextoCrearMovimientoFinanciero(contexto) {
 	var tipo = normalizarTipoMovimientoFinanciero(contexto.tipoMovimiento);
+	var esDeposito = tipo == "Deposito";
 	var codConcepto = contexto.conceptoId || "";
 	var conceptoNombre = contexto.conceptoNombre || "";
 	var localFiltrado = contexto.localId || (document.getElementById("inptlocalMisGastosBusca") ? document.getElementById("inptlocalMisGastosBusca").value : "");
 	configurarModalMovimientoFinanciero(contexto);
 	idAbmGasto = "";
-	document.getElementById("btnAbmGastos").value = (tipo == "Ingreso" ? "Guardar ingreso" : "Guardar egreso");
+	document.getElementById("btnAbmGastos").value = (tipo == "Ingreso" ? "Guardar ingreso" : (esDeposito ? "Guardar deposito" : "Guardar egreso"));
+	if (esDeposito) { asegurarOpcionTipoDepositoCentral(); }
 	document.getElementById("inptTipoGasto").value = tipo;
 	if (contexto.interconsultaId) {
 		cod_interConsulta = contexto.interconsultaId;
@@ -176,7 +277,10 @@ function aplicarContextoCrearMovimientoFinanciero(contexto) {
 		asegurarOpcionConceptoMovimientoFinanciero(codConcepto, conceptoNombre);
 		document.getElementById("inptMotivoMisGastos").value = codConcepto;
 	}
-	if (conceptoNombre && document.getElementById("inptDescripcionGasto").value == "") {
+	if (esDeposito) {
+		document.getElementById("inptDescripcionGasto").value = "Deposito bancario a Faraone Capital S.A.";
+		document.getElementById("inptEstadoGasto").value = "Activo";
+	} else if (conceptoNombre && document.getElementById("inptDescripcionGasto").value == "") {
 		document.getElementById("inptDescripcionGasto").value = conceptoNombre;
 	}
 	if (localFiltrado && document.getElementById("inptlocalMisGastos")) {
@@ -1164,10 +1268,14 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('inptNroBoletaGasto').value = $(datostr).children('td[id="td_datos_8"]').html();
 	document.getElementById('inptBancoGasto').value = $(datostr).children('td[id="td_datos_9"]').html();
 	document.getElementById('inptCuentaGasto').value = $(datostr).children('td[id="td_datos_10"]').html();
-	document.getElementById('inptTipoGasto').value = $(datostr).children('td[id="td_datos_6"]').html();
+	var tipoMovimientoSeleccionado = $(datostr).children('td[id="td_datos_6"]').html();
+	if (normalizarTipoMovimientoFinanciero(tipoMovimientoSeleccionado) == "Deposito") {
+		asegurarOpcionTipoDepositoCentral();
+	}
+	document.getElementById('inptTipoGasto').value = tipoMovimientoSeleccionado;
 	document.getElementById('inptArregloGasto').value = $(datostr).children('td[id="td_datos_11"]').html();
 	document.getElementById('btnAbmGastos').value = "Actualizar movimiento";
-	configurarModalMovimientoFinanciero({ modo: "editar" });
+	configurarModalMovimientoFinanciero({ modo: "editar", tipoMovimiento: tipoMovimientoSeleccionado });
 	document.getElementById('btnEditarGastos').style.backgroundColor="";
 	document.getElementById('btnImprimirRegistroGastos').style.backgroundColor="";
 	document.getElementById('btnAutorizarGastos').style.backgroundColor="#28a745";
@@ -1744,6 +1852,7 @@ function verificarcamposGasto() {
 	let actualizar_caja= false;
 
     const inptMotivoMisGastos= document.getElementById('inptMotivoMisGastos').value;
+	const esDepositoCentral= normalizarTipoMovimientoFinanciero(inptTipoGasto) == "Deposito";
 
     if (inptMotivoMisGastos == '') {
         ver_vetana_informativa("FALTO SELECCIONAR UN MOTIVO DE LA LISTA.");
@@ -1759,6 +1868,10 @@ function verificarcamposGasto() {
 	}
 	if (inptFechaGasto == "") {
 		ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DEL GASTO")
+		return false;
+	}
+	if (esDepositoCentral && String(inptNroBoletaGasto || "").trim() == "") {
+		ver_vetana_informativa("FALTO INGRESAR EL NUMERO DE COMPROBANTE DEL DEPOSITO")
 		return false;
 	}
 	if (inptCantCuotaGasto > 1 && inptPeriodicidadGasto == "") {
@@ -2841,6 +2954,7 @@ function categoriasComposicionFlujoGasto(resumen) {
 	var categorias = resumen && resumen.categorias ? resumen.categorias : [];
 	var mapa = {};
 	Array.prototype.forEach.call(categorias, function (categoria) {
+		if (!categoria || categoria.codigo == "deposito") { return; }
 		mapa[categoria.codigo || "sinCategoria"] = categoria;
 	});
 	return ["ingreso", "directo", "operativo", "administracion", "sinCategoria"].map(function (codigo) {

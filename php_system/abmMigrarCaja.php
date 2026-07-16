@@ -39,7 +39,7 @@ if($operacion=="nuevo" || $operacion=="editar")
 {
 	$informacion = array(
 		"1" => "bloqueado",
-		"2" => "Migrar caja quedo disponible solo como historial. Registre el movimiento como egreso con el concepto DEPOSITO BANCARIO - FARAONE CAPITAL S.A."
+		"2" => "Migrar caja quedo disponible solo como historial. Registre la operacion desde Depositos a central."
 	);
 	echo json_encode($informacion);
 	exit;

@@ -309,6 +309,36 @@ function ueno_movimiento_cumple_filtro_rapido($filtro, $estado_clave, $credito, 
 	return true;
 }
 
+function ueno_clasificar_origen_movimiento($credito, $disponible, $sugerencias_deposito, $tiene_deposito_conciliado)
+{
+	$credito = (int)$credito;
+	$disponible = (int)$disponible;
+	$sugerencias_deposito = (int)$sugerencias_deposito;
+	if ($tiene_deposito_conciliado) {
+		return "deposito_conciliado";
+	}
+	if ($credito > 0 && $disponible == $credito && $sugerencias_deposito > 0) {
+		return $sugerencias_deposito == 1 ? "deposito" : "revisar";
+	}
+	if ($credito > 0 && $disponible > 0) {
+		return "cuota";
+	}
+	return "otro";
+}
+
+function ueno_origen_cumple_filtro($origen_probable, $clasificacion_origen)
+{
+	$origen_probable = trim((string)$origen_probable);
+	$clasificacion_origen = trim((string)$clasificacion_origen);
+	if ($origen_probable == "" || $origen_probable == "todos") {
+		return true;
+	}
+	if ($origen_probable == "deposito") {
+		return in_array($clasificacion_origen, array("deposito", "deposito_conciliado"));
+	}
+	return $clasificacion_origen == $origen_probable;
+}
+
 function ueno_sincronizar_accesos_usuario($usuario)
 {
 	static $usuariosSincronizados = array();
@@ -1526,7 +1556,8 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 {
 	$tieneConciliacionEgresos = ueno_tabla_existe($mysqli, "ueno_movimiento_gasto");
 	$tieneConciliacionMigracion = ueno_tabla_existe($mysqli, "ueno_movimiento_migracion_caja") && ueno_tabla_existe($mysqli, "migrar_caja");
-	$tieneDepositosFaraone = ueno_tabla_existe($mysqli, "ueno_movimiento_deposito") && ueno_tabla_existe($mysqli, "migrar_caja");
+	$tieneVinculosDepositoFaraone = ueno_tabla_existe($mysqli, "ueno_movimiento_deposito");
+	$tieneDepositosFaraone = $tieneVinculosDepositoFaraone && ueno_tabla_existe($mysqli, "migrar_caja");
 	$condicion = "";
 	$monto = (int)$monto;
 	if ($id_importacion != "") {
@@ -1584,11 +1615,23 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 				AND umm_sug.estado='activo'
 			)),0) AS sugerencias_migracion"
 		: ", 0 AS monto_aplicado_migracion, '' AS migraciones_conciliacion, '' AS usuarios_migracion, 0 AS sugerencias_migracion";
+	$subqueryVinculosDeposito = $tieneVinculosDepositoFaraone
+		? ", IFNULL((SELECT GROUP_CONCAT(DISTINCT CONCAT(
+			CASE WHEN udc.origen_tipo='migrar_caja' THEN 'Monto migrado' ELSE 'Deposito registrado' END,
+			' #', udc.origen_id
+		) ORDER BY udc.fecha_hora_asociacion ASC SEPARATOR ', ')
+			FROM ueno_movimiento_deposito udc
+			WHERE udc.id_movimiento=mv.id_movimiento AND udc.estado='activo'), '') AS depositos_conciliacion,
+		IFNULL((SELECT GROUP_CONCAT(DISTINCT IFNULL(per_dep.nombre_persona, CONCAT('Usuario ', ud_usuario.usuario_asocio)) ORDER BY ud_usuario.fecha_hora_asociacion ASC SEPARATOR ', ')
+			FROM ueno_movimiento_deposito ud_usuario
+			LEFT JOIN persona per_dep ON per_dep.cod_persona=ud_usuario.usuario_asocio
+			WHERE ud_usuario.id_movimiento=mv.id_movimiento AND ud_usuario.estado='activo'), '') AS usuarios_deposito"
+		: ", '' AS depositos_conciliacion, '' AS usuarios_deposito";
 	$subqueryDepositos = $tieneDepositosFaraone
 		? ", ((SELECT COUNT(*) FROM gastos gd
 			INNER JOIN motivos_ingreso_egreso md ON md.cod_motivo_ingreso_egreso=gd.cod_motivoIngresoEgresoFK
 			WHERE UPPER(TRIM(md.descripcion))='DEPOSITO BANCARIO - FARAONE CAPITAL S.A.'
-			AND LOWER(TRIM(gd.tipo))='egreso' AND LOWER(TRIM(gd.estado)) NOT IN ('inactivo','anulado','baja')
+			AND LOWER(TRIM(gd.tipo)) IN ('egreso','deposito') AND LOWER(TRIM(gd.estado)) NOT IN ('inactivo','anulado','baja')
 			AND gd.monto=mv.monto_disponible AND DATE(gd.fecha) BETWEEN DATE_SUB(mv.fecha_confirmacion, INTERVAL 2 DAY) AND mv.fecha_confirmacion
 			AND NOT EXISTS (SELECT 1 FROM ueno_movimiento_deposito udd WHERE udd.origen_tipo='gasto' AND udd.origen_id=gd.idgastos AND udd.estado='activo'))
 		+ (SELECT COUNT(*) FROM migrar_caja mcd
@@ -1618,6 +1661,7 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 			WHERE ump_cliente.id_movimiento=mv.id_movimiento AND ump_cliente.estado='activo'), '') AS clientes_conciliacion
 		$subqueryDebitoAplicado
 		$subqueryMigracion
+		$subqueryVinculosDeposito
 		$subqueryDepositos
 		FROM ueno_movimiento_bancario mv
 		INNER JOIN ueno_importacion_extracto imp ON imp.id_importacion=mv.id_importacion
@@ -1652,6 +1696,9 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		$aplicadoMigracion = isset($row["monto_aplicado_migracion"]) ? (int)$row["monto_aplicado_migracion"] : 0;
 		$sugerenciasMigracion = isset($row["sugerencias_migracion"]) ? (int)$row["sugerencias_migracion"] : 0;
 		$sugerenciasDeposito = isset($row["sugerencias_deposito"]) ? (int)$row["sugerencias_deposito"] : 0;
+		$depositosConciliacion = isset($row["depositos_conciliacion"]) ? trim((string)$row["depositos_conciliacion"]) : "";
+		$usuariosDeposito = isset($row["usuarios_deposito"]) ? trim((string)$row["usuarios_deposito"]) : "";
+		$tieneDepositoConciliado = $depositosConciliacion != "";
 		$disponible = $credito > 0 ? ueno_saldo_disponible_movimiento($mysqli, $row) : (int)$row["monto_disponible"];
 		$aplicado = $credito > 0 ? max(0, $credito - $disponible) : 0;
 		$baseAplicacion = $credito;
@@ -1683,10 +1730,8 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		if (!ueno_movimiento_cumple_filtro_rapido($filtro_rapido, $estado_clave, $credito, $disponible)) {
 			continue;
 		}
-		$clasificacionOrigen = $credito > 0 && $disponible == $credito && $sugerenciasDeposito > 0
-			? ($sugerenciasDeposito == 1 ? "deposito" : "revisar")
-			: ($credito > 0 ? "cuota" : "otro");
-		if ($origen_probable != "" && $origen_probable != "todos" && $clasificacionOrigen != $origen_probable) {
+		$clasificacionOrigen = ueno_clasificar_origen_movimiento($credito, $disponible, $sugerenciasDeposito, $tieneDepositoConciliado);
+		if (!ueno_origen_cumple_filtro($origen_probable, $clasificacionOrigen)) {
 			continue;
 		}
 		$total++;
@@ -1714,11 +1759,15 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 			"monto_asignado_migracion_fmt" => number_format($aplicadoMigracion, 0, ",", "."),
 			"sugerencias_migracion" => $sugerenciasMigracion,
 			"sugerencias_deposito" => $sugerenciasDeposito,
+			"depositos_conciliacion" => $depositosConciliacion,
 			"estado" => $estado_visual,
 			"estado_clave" => $estado_clave
 		);
 		$datos_js = htmlspecialchars(json_encode($datos_movimiento), ENT_QUOTES, 'UTF-8');
-		if ($clasificacionOrigen == "deposito") {
+		if ($clasificacionOrigen == "deposito_conciliado") {
+			$etiquetaOrigen = "Depósito Faraone conciliado";
+			$claseOrigen = "deposito-conciliado";
+		} elseif ($clasificacionOrigen == "deposito") {
 			$etiquetaOrigen = "Posible deposito Faraone Capital";
 			$claseOrigen = "deposito";
 		} elseif ($clasificacionOrigen == "revisar") {
@@ -1763,6 +1812,9 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		$usuarios_migracion = ($credito > 0 && $aplicadoMigracion > 0) ? trim((string)$row["usuarios_migracion"]) : "";
 		if ($usuarios_migracion != "") {
 			$usuarios_conciliacion .= ($usuarios_conciliacion != "" ? ", " : "") . $usuarios_migracion;
+		}
+		if ($tieneDepositoConciliado && $usuariosDeposito != "") {
+			$usuarios_conciliacion .= ($usuarios_conciliacion != "" ? ", " : "") . $usuariosDeposito;
 		}
 		$usuarios_html = $usuarios_conciliacion != ""
 			? "<span class='ueno-user-cell' title='" . ueno_escape_html($usuarios_conciliacion) . "'>" . ueno_escape_html($usuarios_conciliacion) . "</span>"
@@ -3375,7 +3427,7 @@ function ueno_html_sugerencias_deposito($mysqli, $movimiento)
 		LEFT JOIN local l ON l.cod_local=g.cod_local
 		LEFT JOIN persona p ON p.cod_persona=g.cod_usuario
 		WHERE UPPER(TRIM(mie.descripcion))='DEPOSITO BANCARIO - FARAONE CAPITAL S.A.'
-		AND LOWER(TRIM(g.tipo))='egreso' AND LOWER(TRIM(g.estado)) NOT IN ('inactivo','anulado','baja')
+		AND LOWER(TRIM(g.tipo)) IN ('egreso','deposito') AND LOWER(TRIM(g.estado)) NOT IN ('inactivo','anulado','baja')
 		AND g.monto=$monto AND DATE(g.fecha) BETWEEN '$inicio' AND '$fin'
 		AND NOT EXISTS (SELECT 1 FROM ueno_movimiento_deposito ud WHERE ud.origen_tipo='gasto' AND ud.origen_id=g.idgastos AND ud.estado='activo')
 		UNION ALL
@@ -3431,6 +3483,27 @@ function ueno_conciliar_deposito($usuario)
 	$mysqli->begin_transaction();
 	try {
 		$mov = ueno_obtener_movimiento_credito_para_migracion($mysqli, $idMovimiento, true);
+		if ($origenTipo == 'gasto') {
+			$stmtOrigen= $mysqli->prepare("SELECT g.idgastos,g.monto,g.tipo,g.estado,IFNULL(mie.descripcion,'') AS concepto
+				FROM gastos g
+				LEFT JOIN motivos_ingreso_egreso mie ON mie.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
+				WHERE g.idgastos=? LIMIT 1 FOR UPDATE");
+			if (!$stmtOrigen) { throw new Exception('No se pudo bloquear el deposito seleccionado.'); }
+			$stmtOrigen->bind_param('i', $origenId);
+			if (!$stmtOrigen->execute()) {
+				$stmtOrigen->close();
+				throw new Exception('No se pudo validar el deposito seleccionado.');
+			}
+			$origen= $stmtOrigen->get_result()->fetch_assoc();
+			$stmtOrigen->close();
+			if (!$origen
+				|| strtoupper(trim((string)$origen['concepto'])) != 'DEPOSITO BANCARIO - FARAONE CAPITAL S.A.'
+				|| !in_array(strtolower(trim((string)$origen['tipo'])), array('egreso','deposito'), true)
+				|| in_array(strtolower(trim((string)$origen['estado'])), array('inactivo','anulado','baja'), true)
+				|| (int)$origen['monto'] !== (int)$mov['monto_disponible']) {
+				throw new Exception('El deposito cambio, ya no esta activo o no coincide con el credito Ueno. Actualice las sugerencias.');
+			}
+		}
 		$sugerencias = ueno_html_sugerencias_deposito($mysqli, $mov);
 		$patron = "uenoConfirmarConciliacionDeposito(" . $idMovimiento . ",\"" . $origenTipo . "\"," . $origenId . ")";
 		if (strpos($sugerencias["html"], $patron) === false) { throw new Exception("El deposito ya no esta disponible o no coincide exactamente con el credito."); }
@@ -3809,6 +3882,13 @@ function ueno_buscar_auditoria($usuario)
 		LEFT JOIN migrar_caja mc ON mc.idmigrar_caja=umm.idmigrar_caja
 		LEFT JOIN persona per_envia ON per_envia.cod_persona=mc.cod_UsuEnviaFK"
 		: "";
+	$tieneDepositoAuditoria = ueno_tabla_existe($mysqli, "ueno_movimiento_deposito");
+	$camposDepositoAuditoria = $tieneDepositoAuditoria
+		? ", IFNULL(ud.origen_tipo,'') AS deposito_origen_tipo, IFNULL(ud.origen_id,'') AS deposito_origen_id"
+		: ", '' AS deposito_origen_tipo, '' AS deposito_origen_id";
+	$joinDepositoAuditoria = $tieneDepositoAuditoria
+		? "LEFT JOIN ueno_movimiento_deposito ud ON ud.id=CAST(a.registro_id AS UNSIGNED) AND a.tabla_afectada='ueno_movimiento_deposito'"
+		: "";
 
 	$sql = "SELECT a.id_auditoria, a.fecha_hora, a.accion, a.tabla_afectada, a.registro_id, a.cod_pagoFK,
 		a.id_movimiento, a.estado_anterior, a.estado_nuevo, a.monto, a.usuario, a.observacion,
@@ -3818,6 +3898,7 @@ function ueno_buscar_auditoria($usuario)
 		IF(IFNULL(p.titulocuota,'')!='', p.titulocuota, IFNULL(cr.plazo,'')) AS cuota_detalle,
 		IFNULL(vt.cod_venta,'') AS cod_venta
 		$camposMigracionAuditoria
+		$camposDepositoAuditoria
 		FROM ueno_auditoria_conciliacion a
 		LEFT JOIN pago p ON p.idPago=a.cod_pagoFK
 		LEFT JOIN credito cr ON cr.idcredito=p.cod_creditoFK
@@ -3825,6 +3906,7 @@ function ueno_buscar_auditoria($usuario)
 		LEFT JOIN persona per ON per.cod_persona=vt.cod_clienteFK
 		LEFT JOIN cliente cl ON cl.cod_cliente=vt.cod_clienteFK
 		$joinsMigracionAuditoria
+		$joinDepositoAuditoria
 		WHERE a.id_auditoria!='0' $condicion
 		ORDER BY a.id_auditoria DESC
 		LIMIT 250";
@@ -3861,6 +3943,10 @@ function ueno_buscar_auditoria($usuario)
 			if ((int)$row["monto_migracion"] > 0) {
 				$clienteCuota .= " / " . ueno_numero($row["monto_migracion"]);
 			}
+		}
+		if (trim((string)$row["deposito_origen_id"]) != "") {
+			$tipoOrigenDeposito = $row["deposito_origen_tipo"] == "migrar_caja" ? "Monto migrado" : "Deposito registrado";
+			$clienteCuota = "Depósito Faraone / " . $tipoOrigenDeposito . " #" . trim((string)$row["deposito_origen_id"]);
 		}
 		if ($clienteCuota == "") {
 			$clienteCuota = "-";

@@ -22,8 +22,9 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=interconsulta-alto-adaptable-20260715" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=interconsulta-responsive-fecha-rapida-20260715-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=20260713-6" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=20260714-periodos-1" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-horizontal-ios-20260713" />
@@ -45,25 +46,27 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=consulta-historial-empty-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=hilos-filtros-colapsados-20260712"></script>
-<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=dashboard-shortcuts-20-20260628"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=dashboard-flujo-periodos-integrado-20260715-2"></script>
+<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=centro-facturas-permisos-20260713-5"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
-<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=ueno-detalle-emergente-20260711"></script>
+<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=depositos-central-20260713"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-fechas-servidor-v2-20260708"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=detalle-turno-horizontal-ios-20260713"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
-<script src="../js_system/abmGasto_ingresosEgresos.js?x=baja-hilo-20260710"></script>
+<script src="../js_system/abmGasto_ingresosEgresos.js?x=flujo-sin-depositos-20260713-2"></script>
 <script src="../js_system/abmAsistencia.js?x=jornada-cargando-topbar-20260619"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
 <script src="../js_system/abmInterConsulta.js?x=interconsulta-performance-hosting-v2-20260716"></script>
+<script src="../js_system/abmInterConsulta.js?x=interconsulta-responsive-fecha-rapida-20260715-2"></script>
+<script src="../js_system/abmCentroFacturas.js?x=20260714-colapsado-default-1"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
@@ -1609,6 +1612,61 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                         font-weight: 900 !important;
                         line-height: 1.15 !important;
                       }
+                      #dashboardFlujoFinanciero .dashboard-flujo-title-line {
+                        display: flex !important;
+                        align-items: center !important;
+                        flex-wrap: wrap !important;
+                        gap: 8px 12px !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-period-selector {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        height: 28px !important;
+                        overflow: hidden !important;
+                        border: 1px solid #d0dbea !important;
+                        border-radius: 7px !important;
+                        background: #ffffff !important;
+                        box-shadow: 0 4px 10px rgba(18, 31, 53, 0.06) !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-period-arrow {
+                        width: 28px !important;
+                        height: 28px !important;
+                        padding: 0 !important;
+                        border: 0 !important;
+                        background: #f8fafc !important;
+                        color: #344054 !important;
+                        cursor: pointer !important;
+                        font-size: 19px !important;
+                        font-weight: 900 !important;
+                        line-height: 1 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-period-arrow:hover:not(:disabled),
+                      #dashboardFlujoFinanciero .dashboard-flujo-period-arrow:focus:not(:disabled) {
+                        background: #eaf8f0 !important;
+                        color: #159947 !important;
+                        outline: none !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-period-arrow:disabled {
+                        color: #98a2b3 !important;
+                        cursor: not-allowed !important;
+                        opacity: 0.55 !important;
+                      }
+                      #dashboardFlujoFinanciero .dashboard-flujo-period-text {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        min-width: 96px !important;
+                        height: 28px !important;
+                        padding: 0 9px !important;
+                        border-right: 1px solid #e4e7ec !important;
+                        border-left: 1px solid #e4e7ec !important;
+                        color: #172033 !important;
+                        font-size: 11px !important;
+                        font-weight: 900 !important;
+                        line-height: 1 !important;
+                        white-space: nowrap !important;
+                        box-sizing: border-box !important;
+                      }
                       #dashboardFlujoFinanciero .dashboard-card__subtitle {
                         margin: 3px 0 0 !important;
                         color: #475467 !important;
@@ -2340,6 +2398,10 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                         }
                       }
                       @media (max-width: 560px) {
+                        #dashboardFlujoFinanciero .dashboard-flujo-title-line {
+                          align-items: flex-start !important;
+                          flex-direction: column !important;
+                        }
                         #dashboardFlujoFinanciero .dashboard-flujo-grid {
                           grid-template-columns: 1fr !important;
                         }
@@ -2367,7 +2429,14 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
                     <section class="dashboard-card dashboard-card--flujo-financiero" id="dashboardFlujoFinanciero" style="display:none;">
                       <div class="dashboard-card__header dashboard-flujo-header"  >
                         <div>
-                          <h2 class="dashboard-card__title">Composici&oacute;n econ&oacute;mica por sucursal</h2>
+                          <div class="dashboard-flujo-title-line">
+                            <h2 class="dashboard-card__title">Composici&oacute;n econ&oacute;mica por sucursal</h2>
+                            <div class="dashboard-flujo-period-selector" id="dashboardFlujoPeriodoSelector" role="group" aria-label="Seleccionar per&iacute;odo mensual" aria-busy="true">
+                              <button type="button" class="dashboard-flujo-period-arrow" id="dashboardFlujoPeriodoAnterior" onclick="cambiarPeriodoDashboardFlujoFinanciero(-1)" title="Mes anterior" aria-label="Ver mes anterior" disabled>&lsaquo;</button>
+                              <span class="dashboard-flujo-period-text" id="dashboardFlujoPeriodoTexto" aria-live="polite">Cargando per&iacute;odo</span>
+                              <button type="button" class="dashboard-flujo-period-arrow" id="dashboardFlujoPeriodoSiguiente" onclick="cambiarPeriodoDashboardFlujoFinanciero(1)" title="Mes siguiente" aria-label="Ver mes siguiente" disabled>&rsaquo;</button>
+                            </div>
+                          </div>
                           <p class="dashboard-card__subtitle" id="dashboardFlujoFinancieroSubtitulo">&Uacute;ltimo mes cerrado con escala com&uacute;n</p>
                         </div>
                         <div class="dashboard-flujo-actions">
@@ -2781,6 +2850,17 @@ src='/GoodVentaAsisCap/iconos/consultamedica.png' />
 style='display:none' class='divMinimizado'>
 </div>
 </center>
+</td>
+</tr>
+</table>
+
+<table class='divMenub' id='divMenuCentroFacturas' data-access-key="centro_facturas"
+onclick='verCerrarCentroFacturas(true)' style='width:20%;text-align:center;display:none'>
+<tr>
+<td>
+<span class="centro-facturas-menu-icon"><img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/centro_facturas.svg?x=20260713-2' /><b id="centroFacturasMenuBadge" hidden>0</b></span>
+<p class='pTitulo4'>Centro de Facturas</p>
+<center><div id='divMinimizadoCentroFacturas' style='display:none' class='divMinimizado'></div></center>
 </td>
 </tr>
 </table>
@@ -7569,12 +7649,22 @@ style='background-color:#5bc572'>
               </select>
             </label>
 
-            <label class="interconsulta-filter-field" for="inptFiltroRapidoResponsableInterConsulta">
-              <span>Responsable</span>
-              <select id="inptFiltroRapidoResponsableInterConsulta" onchange="aplicarFiltrosInterConsultaDesdeBarra()" onfocus="sincronizarOpcionesRapidasInterConsulta()">
-                <option value="">Todos</option>
-              </select>
-            </label>
+            <div class="interconsulta-filter-field interconsulta-day-filter">
+              <span>Fecha</span>
+              <div class="interconsulta-day-selector">
+                <button type="button" class="interconsulta-day-selector__nav" onclick="moverFechaRapidaInterConsulta(-1)" aria-label="Dia anterior" title="Dia anterior">
+                  <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="interconsulta-day-selector__current" onclick="abrirCalendarioRapidoInterConsulta()" aria-label="Cambiar fecha" title="Cambiar fecha">
+                  <strong id="textoDiaRapidoInterConsulta">Hoy</strong>
+                  <small id="textoFechaRapidaInterConsulta">--/--/----</small>
+                </button>
+                <button type="button" class="interconsulta-day-selector__nav" onclick="moverFechaRapidaInterConsulta(1)" aria-label="Dia siguiente" title="Dia siguiente">
+                  <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                </button>
+                <input type="date" id="inptFiltroRapidoFechaInterConsulta" onchange="aplicarFechaRapidaInterConsulta(this.value, true)" aria-label="Seleccionar fecha">
+              </div>
+            </div>
 
             <button type="button" class="interconsulta-toolbar-btn interconsulta-toolbar-btn--secondary" onclick="abrirFiltrosAvanzadosInterConsulta()">
               <i class="fa-solid fa-sliders"></i>
@@ -8291,6 +8381,14 @@ style='background-color:#5bc572'>
                           <span id="imgfotoAnexoInterchat" class="imgFotoProducto"></span>
                           <span class="interconsulta-attach-action__text">Adjuntar</span>
                         </button>
+                        <label class="interconsulta-attachment-type" for="tipoAdjuntoInterConsulta">
+                          <span>Tipo de adjunto</span>
+                          <select id="tipoAdjuntoInterConsulta" class="inputText" onchange="tipoAdjuntoMensajeInterconsulta=this.value">
+                            <option value="otro">Otro documento</option>
+                            <option value="factura">Factura recibida</option>
+                            <option value="comprobante">Recibo / comprobante recibido</option>
+                          </select>
+                        </label>
                         <p id="inptContenidoAbmMensaje" class="form-control mensaje-interconsulta" contenteditable="true" data-placeholder="Escribir respuesta..."></p>
                         <div id="accionesMensajeInterConsulta">
                           <span><b id="limiteCaracteresMensajeInterconsulta">0</b> /750</span>
@@ -8496,6 +8594,10 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 </div>
 </header>
 <div id='chipContextoMovimientoFinanciero' class='movimiento-financiero-contexto-chip' style='display:none;'></div>
+<div id='avisoDepositoCentral' class='movimiento-financiero-deposito-aviso' style='display:none;'>
+  <i class='fa-solid fa-building-columns' aria-hidden='true'></i>
+  <span><b>Dep&oacute;sito a central.</b> Descuenta el efectivo de esta caja y queda pendiente de conciliaci&oacute;n con Ueno, pero no reduce el resultado operativo.</span>
+</div>
 
 <section class='detalles-section movimiento-financiero-grid'>
 <div class='presupuesto-panel tabla-detalles movimiento-financiero-panel'>
@@ -8508,7 +8610,7 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 <div class='form-row flex-grow' style='flex:1 1 100%;'>
 <label for='inptMotivoMisGastos'>Concepto contable* :</label>
 <div style='display:flex;gap:10px;align-items:flex-end;width:100%;'>
-<select class="inputSelect" id="inptMotivoMisGastos"></select>
+<select class="inputSelect" id="inptMotivoMisGastos" onchange="manejarCambioConceptoMovimientoFinanciero();actualizarVistaPreviaPlanificacionGasto()"></select>
 <input type='button' value='+ Concepto' class='btn4 movimiento-financiero-inline-action' onclick='verCerrarAbmNuevoMotivo()' />
 </div>
 </div>
@@ -27488,6 +27590,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 </td>
 </tr>
 </table>
+
 <div class='ueno-origin-filter'>
 <label for='inptUenoMovOrigen'>Origen probable</label>
 <select class='inputSelect' id='inptUenoMovOrigen' onchange='uenoBuscarMovimientos()'>
@@ -35989,6 +36092,110 @@ id='vantana_info_001' style='display:none'>
 
 
 
+
+<div id="divCentroFacturas" class="principal2 centro-facturas-window" style="display:none" aria-hidden="true">
+  <section class="centro-facturas-app" aria-labelledby="centroFacturasTitulo">
+    <header class="centro-facturas-header">
+      <div>
+        <span class="centro-facturas-eyebrow">Administraci&oacute;n financiera</span>
+        <h2 id="centroFacturasTitulo">Centro de Facturas</h2>
+        <p>Controle el registro digital, el pago y la entrega del original sin perder el Hilo de origen.</p>
+      </div>
+      <div class="centro-facturas-header__actions">
+        <button type="button" class="cf-button cf-button--secondary" id="btnCentroFacturasActualizar" onclick="centroFacturasRecargar()"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Actualizar</button>
+        <button type="button" class="cf-icon-button" onclick="verCerrarCentroFacturas(false)" title="Cerrar Centro de Facturas" aria-label="Cerrar Centro de Facturas">&times;</button>
+      </div>
+    </header>
+
+    <div id="centroFacturasAviso" class="centro-facturas-notice" hidden role="status"></div>
+
+    <nav class="centro-facturas-tabs" aria-label="Secciones del Centro de Facturas">
+      <button type="button" class="is-active" data-cf-tab="entrantes" onclick="centroFacturasCambiarTab('entrantes')"><i class="fa-solid fa-inbox" aria-hidden="true"></i> Recibidas</button>
+      <button type="button" data-cf-tab="emitidas" onclick="centroFacturasCambiarTab('emitidas')"><i class="fa-solid fa-file-export" aria-hidden="true"></i> Emitidas</button>
+      <button type="button" data-cf-tab="lotes" onclick="centroFacturasCambiarTab('lotes')"><i class="fa-solid fa-box-archive" aria-hidden="true"></i> Lotes</button>
+    </nav>
+
+    <section class="centro-facturas-summary is-collapsed" id="centroFacturasResumen">
+      <button type="button" class="centro-facturas-summary__toggle" id="centroFacturasResumenToggle" onclick="centroFacturasAlternarMetricas()" aria-expanded="false" aria-controls="centroFacturasMetricas">
+        <span><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Indicadores del per&iacute;odo</span>
+        <span class="centro-facturas-summary__hint" id="centroFacturasResumenTexto">Resumen del mes seleccionado</span>
+        <i class="fa-solid fa-chevron-up centro-facturas-summary__chevron" aria-hidden="true"></i>
+      </button>
+      <div class="centro-facturas-metrics" id="centroFacturasMetricas" aria-label="Resumen de indicadores"></div>
+    </section>
+
+    <section class="centro-facturas-toolbar">
+      <div class="centro-facturas-period" aria-label="Per&iacute;odo visualizado">
+        <button type="button" class="cf-icon-button centro-facturas-period__arrow" onclick="centroFacturasCambiarMes(-1)" title="Mes anterior" aria-label="Mes anterior"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+        <label class="centro-facturas-period__picker" for="centroFacturasMes">
+          <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+          <span><b id="centroFacturasMesTexto">Mes actual</b><small id="centroFacturasPeriodoTexto">Per&iacute;odo</small></span>
+          <input type="month" id="centroFacturasMes" onchange="centroFacturasSeleccionarMes(this.value)" aria-label="Seleccionar mes">
+        </label>
+        <button type="button" class="cf-icon-button centro-facturas-period__arrow" onclick="centroFacturasCambiarMes(1)" title="Mes siguiente" aria-label="Mes siguiente"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <div class="centro-facturas-search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" id="centroFacturasBusqueda" placeholder="Proveedor, factura, recibo, concepto o Hilo" onkeydown="if(event.key==='Enter'){centroFacturasBuscar();}">
+      </div>
+      <select id="centroFacturasFiltroLocal" aria-label="Filtrar por local" onchange="centroFacturasBuscar()"></select>
+      <select id="centroFacturasFiltroPago" aria-label="Filtrar por estado de pago" onchange="centroFacturasBuscar()">
+        <option value="">Todos los pagos</option><option value="Pendiente">Pago pendiente</option><option value="En revision">Pago en revisi&oacute;n</option><option value="Pagado">Pagado</option><option value="Rechazado">Rechazado</option>
+      </select>
+      <select id="centroFacturasFiltroOriginal" aria-label="Filtrar por original" onchange="centroFacturasBuscar()">
+        <option value="">Todos los originales</option><option value="en_proceso">En proceso</option><option value="enviado_central">Enviado a central</option><option value="recibido">Recibido</option><option value="observado">Observado</option><option value="vencido">Vencido</option><option value="no_requiere_original">No requiere original</option>
+      </select>
+      <button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasAlternarFiltros()"><i class="fa-solid fa-sliders" aria-hidden="true"></i> M&aacute;s filtros</button>
+      <button type="button" class="cf-button cf-button--primary" id="btnCentroFacturasManual" onclick="centroFacturasAbrirRegistroManual()" hidden><i class="fa-solid fa-plus" aria-hidden="true"></i> Registrar comprobante</button>
+      <button type="button" class="cf-button cf-button--secondary" id="btnCentroFacturasConfig" onclick="centroFacturasAbrirConfiguracion()" hidden><i class="fa-solid fa-gear" aria-hidden="true"></i> Configuraci&oacute;n</button>
+    </section>
+
+    <section class="centro-facturas-extra-filters" id="centroFacturasFiltrosExtra" hidden>
+      <label>Validaci&oacute;n<select id="centroFacturasFiltroValidacion" onchange="centroFacturasBuscar()"><option value="">Todas</option><option value="pendiente">Pendiente</option><option value="en_revision">En revisi&oacute;n</option><option value="validada">Validada</option><option value="rechazada">Rechazada</option></select></label>
+      <label>Proveedor<select id="centroFacturasFiltroProveedor" onchange="centroFacturasBuscar()"><option value="">Todos</option></select></label>
+      <label>Funcionario<select id="centroFacturasFiltroFuncionario" onchange="centroFacturasBuscar()"><option value="">Todos</option></select></label>
+      <label>Responsable<select id="centroFacturasFiltroResponsable" onchange="centroFacturasBuscar()"><option value="">Todos</option></select></label>
+      <label>Hilo<input type="number" min="1" id="centroFacturasFiltroHilo" placeholder="N.&ordm;" onchange="centroFacturasBuscar()"></label>
+      <label>Importe desde<input inputmode="decimal" id="centroFacturasImporteDesde" placeholder="0" onchange="centroFacturasBuscar()"></label>
+      <label>Importe hasta<input inputmode="decimal" id="centroFacturasImporteHasta" placeholder="0" onchange="centroFacturasBuscar()"></label>
+      <label>Desde<input type="date" id="centroFacturasFechaDesde" onchange="centroFacturasCambiarRangoManual()"></label>
+      <label>Hasta<input type="date" id="centroFacturasFechaHasta" onchange="centroFacturasCambiarRangoManual()"></label>
+      <label class="cf-check"><input type="checkbox" id="centroFacturasIncluirAnuladas" onchange="centroFacturasBuscar()"> Incluir anuladas</label>
+      <button type="button" class="cf-link-button" onclick="centroFacturasLimpiarFiltros()">Limpiar filtros</button>
+    </section>
+
+    <div class="centro-facturas-selection" id="centroFacturasSeleccion" hidden>
+      <span><b id="centroFacturasSeleccionCantidad">0</b> facturas seleccionadas</span>
+      <button type="button" class="cf-button cf-button--primary" onclick="centroFacturasCrearLoteSeleccion()"><i class="fa-solid fa-box" aria-hidden="true"></i> Crear lote</button>
+      <button type="button" class="cf-link-button" onclick="centroFacturasLimpiarSeleccion()">Cancelar selecci&oacute;n</button>
+    </div>
+
+    <main class="centro-facturas-results">
+      <div class="centro-facturas-loading" id="centroFacturasCargando" hidden><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Cargando informaci&oacute;n...</div>
+      <div class="centro-facturas-table-wrap">
+        <table class="centro-facturas-table" id="centroFacturasTabla">
+          <thead id="centroFacturasTablaCabecera"></thead>
+          <tbody id="centroFacturasTablaCuerpo"></tbody>
+        </table>
+        <div class="centro-facturas-empty" id="centroFacturasVacio" hidden></div>
+      </div>
+      <footer class="centro-facturas-pagination" id="centroFacturasPaginacion"></footer>
+    </main>
+  </section>
+
+  <aside class="centro-facturas-drawer" id="centroFacturasDetalle" hidden aria-labelledby="centroFacturasDetalleTitulo">
+    <header><div><span>Detalle y trazabilidad</span><h3 id="centroFacturasDetalleTitulo">Factura</h3></div><button type="button" class="cf-icon-button" onclick="centroFacturasCerrarDetalle()" aria-label="Cerrar detalle">&times;</button></header>
+    <div id="centroFacturasDetalleContenido" class="centro-facturas-drawer__content"></div>
+  </aside>
+
+  <div class="centro-facturas-dialog-backdrop" id="centroFacturasDialogo" hidden>
+    <section class="centro-facturas-dialog" role="dialog" aria-modal="true" aria-labelledby="centroFacturasDialogoTitulo">
+      <header><div><span id="centroFacturasDialogoEtiqueta">Proceso guiado</span><h3 id="centroFacturasDialogoTitulo">Centro de Facturas</h3></div><button type="button" class="cf-icon-button" onclick="centroFacturasCerrarDialogo()" aria-label="Cerrar">&times;</button></header>
+      <div id="centroFacturasDialogoContenido" class="centro-facturas-dialog__content"></div>
+      <footer id="centroFacturasDialogoAcciones"></footer>
+    </section>
+  </div>
+</div>
 
 <div id='cntSegundoplando' class='divSegundoplano'>
 </div>

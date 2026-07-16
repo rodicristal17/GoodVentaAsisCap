@@ -1,0 +1,230 @@
+.centro-facturas-window {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  overflow: hidden;
+  background: #f4f7f8;
+  color: #183032;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.centro-facturas-window *,
+.centro-facturas-window *::before,
+.centro-facturas-window *::after { box-sizing: border-box; }
+
+.centro-facturas-app { display: flex; flex-direction: column; height: 100%; min-width: 0; }
+
+.centro-facturas-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 26px 14px;
+  border-bottom: 1px solid #dbe7e6;
+  background: #fff;
+}
+
+.centro-facturas-header h2 { margin: 2px 0 3px; color: #133c3b; font-size: 27px; font-weight: 750; }
+.centro-facturas-header p { margin: 0; color: #587171; font-size: 13px; }
+.centro-facturas-eyebrow,
+.centro-facturas-drawer header span,
+.centro-facturas-dialog header span { color: #0f766e; font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.centro-facturas-header__actions { display: flex; align-items: center; gap: 8px; }
+
+.cf-button,
+.cf-icon-button,
+.cf-link-button,
+.centro-facturas-tabs button,
+.centro-facturas-table button,
+.interconsulta-message-invoice button {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.cf-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 39px; padding: 8px 13px; border-radius: 9px; font-size: 12px; font-weight: 700; }
+.cf-button--primary { background: #0f766e; color: #fff; box-shadow: 0 5px 12px rgba(15,118,110,.18); }
+.cf-button--primary:hover { background: #0b5f59; }
+.cf-button--secondary { border: 1px solid #cadbd9; background: #fff; color: #315b58; }
+.cf-button--danger { background: #b42318; color: #fff; }
+.cf-icon-button { display: inline-grid; width: 39px; height: 39px; place-items: center; border-radius: 9px; background: #eef4f3; color: #315b58; font-size: 24px; line-height: 1; }
+.cf-link-button { padding: 6px; background: transparent; color: #0f766e; font-size: 12px; font-weight: 700; }
+.cf-button:disabled,
+.centro-facturas-table button:disabled { cursor: not-allowed; opacity: .55; }
+
+.centro-facturas-notice { margin: 10px 26px 0; padding: 10px 13px; border: 1px solid #fed7aa; border-radius: 9px; background: #fff7ed; color: #9a3412; font-size: 13px; }
+.centro-facturas-notice.is-error { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+.centro-facturas-notice.is-success { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+
+.centro-facturas-tabs { display: flex; gap: 4px; padding: 0 26px; border-bottom: 1px solid #dbe7e6; background: #fff; }
+.centro-facturas-tabs button { display: flex; align-items: center; gap: 7px; padding: 13px 16px 11px; border-bottom: 3px solid transparent; background: transparent; color: #607575; font-size: 13px; font-weight: 700; }
+.centro-facturas-tabs button.is-active { border-bottom-color: #0f766e; color: #0f766e; }
+
+.centro-facturas-summary { border-bottom: 1px solid #e1eae9; background: #f4f7f8; }
+.centro-facturas-summary__toggle { display: flex; width: calc(100% - 52px); min-height: 30px; align-items: center; gap: 8px; margin: 5px 26px 0; padding: 4px 2px; border: 0; background: transparent; color: #315b58; cursor: pointer; font-size: 11px; font-weight: 750; text-align: left; }
+.centro-facturas-summary__toggle > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.centro-facturas-summary__hint { flex: 1 1 auto; color: #718584; font-weight: 500; }
+.centro-facturas-summary__chevron { transition: transform .18s ease; }
+.centro-facturas-summary.is-collapsed .centro-facturas-summary__chevron { transform: rotate(180deg); }
+.centro-facturas-summary.is-collapsed .centro-facturas-metrics { display: none; }
+.centro-facturas-metrics { display: flex; flex-wrap: nowrap; gap: 8px; padding: 4px 26px 10px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.centro-facturas-metric { display: flex; min-width: 138px; flex: 1 0 138px; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #dce8e6; border-radius: 10px; background: #fff; text-align: left; cursor: pointer; }
+.centro-facturas-metric i { display: grid; width: 31px; height: 31px; flex: 0 0 auto; place-items: center; border-radius: 9px; background: #ecfdf5; color: #0f766e; }
+.centro-facturas-metric b { display: block; color: #193c3a; font-size: 17px; }
+.centro-facturas-metric span { display: block; overflow: hidden; color: #617776; font-size: 10px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.centro-facturas-metric.is-alert i { background: #fff7ed; color: #c2410c; }
+.centro-facturas-metric.is-danger i { background: #fef2f2; color: #b42318; }
+.centro-facturas-metric.is-active { border-color: #0f766e; box-shadow: 0 0 0 2px rgba(15,118,110,.1); }
+
+.centro-facturas-toolbar { display: flex; align-items: center; gap: 8px; padding: 0 26px 11px; }
+.centro-facturas-period { display: flex; flex: 0 0 auto; align-items: stretch; gap: 4px; }
+.centro-facturas-period__arrow { width: 32px; height: 39px; font-size: 11px; }
+.centro-facturas-period__picker { position: relative; display: flex; min-width: 155px; height: 39px; align-items: center; gap: 8px; padding: 5px 9px; border: 1px solid #b9d0ce; border-radius: 9px; background: #fff; color: #0f766e; cursor: pointer; }
+.centro-facturas-period__picker > i { font-size: 15px; }
+.centro-facturas-period__picker span { display: grid; min-width: 0; line-height: 1.1; }
+.centro-facturas-period__picker b { overflow: hidden; color: #173b39; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.centro-facturas-period__picker small { margin-top: 2px; color: #718584; font-size: 9px; }
+.centro-facturas-period__picker input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
+.centro-facturas-toolbar select,
+.centro-facturas-extra-filters select,
+.centro-facturas-extra-filters input,
+.centro-facturas-dialog input,
+.centro-facturas-dialog select,
+.centro-facturas-dialog textarea,
+.centro-facturas-drawer input,
+.centro-facturas-drawer select,
+.centro-facturas-drawer textarea {
+  min-height: 39px;
+  padding: 8px 10px;
+  border: 1px solid #cbdcda;
+  border-radius: 8px;
+  outline: none;
+  background: #fff;
+  color: #183032;
+  font-size: 12px;
+}
+#centroFacturasFiltroLocal { width: 190px; min-width: 145px; }
+#centroFacturasFiltroPago { width: 145px; min-width: 125px; }
+#centroFacturasFiltroOriginal { width: 165px; min-width: 140px; }
+.centro-facturas-toolbar select:focus,
+.centro-facturas-search:focus-within,
+.centro-facturas-dialog input:focus,
+.centro-facturas-dialog select:focus,
+.centro-facturas-dialog textarea:focus { border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,.1); }
+.centro-facturas-search { display: flex; align-items: center; flex: 1 1 190px; min-width: 150px; height: 39px; padding: 0 11px; border: 1px solid #cbdcda; border-radius: 9px; background: #fff; color: #718584; }
+.centro-facturas-search input { width: 100%; height: 100%; margin-left: 8px; border: 0; outline: 0; background: transparent; color: #183032; font-size: 12px; }
+.centro-facturas-extra-filters { display: flex; align-items: flex-end; gap: 10px; margin: -3px 26px 11px; padding: 11px; border: 1px solid #dce8e6; border-radius: 10px; background: #fff; }
+.centro-facturas-extra-filters label { display: grid; gap: 4px; color: #526c6a; font-size: 11px; font-weight: 700; }
+.centro-facturas-extra-filters .cf-check { display: flex; align-items: center; padding-bottom: 8px; }
+.centro-facturas-extra-filters .cf-check input { min-height: 0; }
+
+.centro-facturas-selection { display: flex; align-items: center; gap: 12px; margin: 0 26px 10px; padding: 9px 12px; border: 1px solid #99f6e4; border-radius: 9px; background: #f0fdfa; color: #115e59; font-size: 12px; }
+.centro-facturas-results { position: relative; display: flex; flex: 1 1 auto; min-height: 0; flex-direction: column; margin: 0 26px 18px; border: 1px solid #dbe7e6; border-radius: 12px; overflow: hidden; background: #fff; }
+.centro-facturas-table-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.centro-facturas-table { width: 100%; min-width: 1040px; border-collapse: collapse; font-size: 11px; }
+.centro-facturas-table th { position: sticky; top: 0; z-index: 2; padding: 10px 9px; border-bottom: 1px solid #d7e3e2; background: #eff5f4; color: #476260; text-align: left; text-transform: uppercase; letter-spacing: .03em; }
+.centro-facturas-table td { padding: 9px; border-bottom: 1px solid #edf2f1; color: #294644; vertical-align: middle; }
+.centro-facturas-table tbody tr { transition: background .15s ease; }
+.centro-facturas-table tbody tr:hover { background: #f6fbfa; }
+.centro-facturas-table tbody tr.is-selected { background: #ecfdf5; }
+.centro-facturas-table tbody tr.cf-row--complete { background: #fff; box-shadow: inset 3px 0 #16a085; }
+.centro-facturas-table tbody tr.cf-row--pending { background: rgba(255,247,237,.7); box-shadow: inset 3px 0 #f59e0b; }
+.centro-facturas-table tbody tr.cf-row--missing { background: rgba(241,245,244,.58); box-shadow: inset 3px 0 #a8b8b6; }
+.centro-facturas-table tbody tr.cf-row--observed { background: rgba(254,242,242,.72); box-shadow: inset 3px 0 #dc2626; }
+.centro-facturas-table tbody tr.cf-row--missing td:not(:last-child) { color: #819391; }
+.centro-facturas-table tbody tr.cf-row--missing td:not(:last-child) strong { color: #607573; }
+.centro-facturas-table tbody tr.cf-row--missing td:not(:last-child) small { color: #91a09f; }
+.centro-facturas-table tbody tr.cf-row--missing:hover { background: rgba(233,240,239,.8); }
+.centro-facturas-table strong { color: #173b39; }
+.centro-facturas-table small { display: block; margin-top: 2px; color: #708381; }
+.centro-facturas-table button { padding: 6px 9px; border-radius: 7px; background: #e6f4f2; color: #0f766e; font-size: 11px; font-weight: 700; }
+.centro-facturas-loading { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; background: rgba(255,255,255,.82); color: #0f766e; font-weight: 700; }
+.centro-facturas-empty { display: grid; min-height: 240px; place-items: center; padding: 30px; color: #657d7b; text-align: center; }
+.centro-facturas-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 45px; padding: 7px 12px; border-top: 1px solid #e4edec; color: #657d7b; font-size: 11px; }
+
+.cf-badge { display: inline-flex; align-items: center; max-width: 160px; padding: 4px 7px; border-radius: 999px; background: #eef2f2; color: #506564; font-size: 10px; font-weight: 750; line-height: 1.25; white-space: normal; }
+.cf-badge--success { background: #dcfce7; color: #166534; }
+.cf-badge--warning { background: #ffedd5; color: #9a3412; }
+.cf-badge--danger { background: #fee2e2; color: #991b1b; }
+.cf-badge--info { background: #dbeafe; color: #1e40af; }
+
+.centro-facturas-drawer { position: fixed; z-index: 10022; top: 0; right: 0; width: min(620px, 95vw); height: 100%; border-left: 1px solid #cddcda; background: #f8fbfa; box-shadow: -18px 0 40px rgba(23,59,57,.18); }
+.centro-facturas-drawer > header,
+.centro-facturas-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; border-bottom: 1px solid #dbe7e6; background: #fff; }
+.centro-facturas-drawer h3,
+.centro-facturas-dialog h3 { margin: 2px 0 0; color: #173b39; font-size: 21px; }
+.centro-facturas-drawer__content { height: calc(100% - 73px); padding: 16px; overflow-y: auto; }
+.cf-detail-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.cf-detail-summary > div,
+.cf-card { padding: 12px; border: 1px solid #dce8e6; border-radius: 10px; background: #fff; }
+.cf-detail-summary span,
+.cf-field-label { display: block; margin-bottom: 4px; color: #687e7c; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.cf-detail-summary b { color: #193c3a; font-size: 12px; }
+.cf-card { margin-bottom: 10px; }
+.cf-card h4 { margin: 0 0 9px; color: #193c3a; font-size: 14px; }
+.cf-card p { color: #4f6866; font-size: 12px; line-height: 1.45; }
+.cf-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
+.cf-grid label { display: grid; gap: 4px; color: #526c6a; font-size: 11px; font-weight: 700; }
+.cf-grid label.cf-span-2 { grid-column: 1 / -1; }
+.cf-card-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.cf-file-list,
+.cf-timeline { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.cf-file-list li,
+.cf-timeline li { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 8px; border-radius: 8px; background: #f3f7f6; color: #405b59; font-size: 11px; }
+.cf-file-list a { color: #0f766e; font-weight: 700; text-decoration: none; }
+.cf-candidate { display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 8px 0; border-bottom: 1px solid #edf2f1; font-size: 11px; }
+.cf-warning-box { margin-bottom: 9px; padding: 9px; border: 1px solid #fed7aa; border-radius: 8px; background: #fff7ed; color: #9a3412; font-size: 11px; }
+
+.centro-facturas-dialog-backdrop { position: fixed; inset: 0; z-index: 10025; display: grid; place-items: center; padding: 20px; background: rgba(15,40,39,.45); }
+.centro-facturas-dialog { display: flex; width: min(760px, 96vw); max-height: 92vh; flex-direction: column; overflow: hidden; border-radius: 14px; background: #fff; box-shadow: 0 24px 60px rgba(15,40,39,.28); }
+.centro-facturas-dialog__content { min-height: 120px; padding: 17px 18px; overflow-y: auto; }
+.centro-facturas-dialog > footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid #dbe7e6; background: #f8fbfa; }
+.cf-step-help { margin: 0 0 12px; padding: 9px 11px; border-left: 3px solid #0f766e; background: #f0fdfa; color: #41615e; font-size: 12px; }
+.cf-form-error { margin: 8px 0; color: #b42318; font-size: 11px; font-weight: 700; }
+.cf-reception-list { display: grid; gap: 8px; }
+.cf-reception-item { display: grid; grid-template-columns: minmax(170px,1fr) 130px minmax(180px,1fr); gap: 8px; align-items: center; padding: 9px; border: 1px solid #dce8e6; border-radius: 9px; }
+
+.centro-facturas-menu-icon { position: relative; display: inline-block; }
+.centro-facturas-menu-icon b { position: absolute; top: -5px; right: -8px; min-width: 21px; padding: 3px 5px; border-radius: 999px; background: #dc2626; color: #fff; font-size: 10px; }
+
+.interconsulta-attachment-type { display: grid; align-self: center; gap: 3px; min-width: 145px; color: #59716f; font-size: 10px; font-weight: 700; }
+.interconsulta-attachment-type .inputText { width: 100%; height: 34px; min-height: 34px; padding: 4px 7px; font-size: 11px; }
+.interconsulta-message-invoice { display: flex; align-items: center; justify-content: space-between; gap: 7px; margin: 7px 0; padding: 7px 8px; border: 1px solid #99f6e4; border-radius: 8px; background: #f0fdfa; color: #115e59; font-size: 10px; font-weight: 700; }
+.interconsulta-message-invoice--pending { border-color: #fed7aa; background: #fff7ed; color: #9a3412; }
+.interconsulta-message-invoice button { padding: 5px 7px; border-radius: 6px; background: #0f766e; color: #fff; font-size: 10px; font-weight: 700; }
+
+@media (max-width: 1100px) {
+  .centro-facturas-toolbar { flex-wrap: wrap; }
+  .centro-facturas-search { flex-basis: calc(100% - 285px); }
+}
+
+@media (max-width: 760px) {
+  .centro-facturas-header { padding: 13px; }
+  .centro-facturas-header p,
+  #btnCentroFacturasActualizar { display: none; }
+  .centro-facturas-tabs,
+  .centro-facturas-toolbar { padding-left: 12px; padding-right: 12px; }
+  .centro-facturas-summary__toggle { width: calc(100% - 24px); margin-left: 12px; margin-right: 12px; }
+  .centro-facturas-summary__hint { display: none; }
+  .centro-facturas-metrics { padding: 4px 12px 9px; }
+  .centro-facturas-metric { min-width: 145px; flex-basis: 145px; }
+  .centro-facturas-period { width: 100%; }
+  .centro-facturas-period__picker { flex: 1 1 auto; }
+  .centro-facturas-search { flex-basis: 100%; }
+  .centro-facturas-extra-filters { margin-left: 12px; margin-right: 12px; flex-wrap: wrap; }
+  .centro-facturas-results { margin-left: 12px; margin-right: 12px; }
+  .cf-detail-summary { grid-template-columns: 1fr 1fr; }
+  .cf-grid { grid-template-columns: 1fr; }
+  .cf-grid label.cf-span-2 { grid-column: auto; }
+  .cf-reception-item { grid-template-columns: 1fr; }
+  .interconsulta-attachment-type { min-width: 120px; }
+}
+
+@media print {
+  body.centro-facturas-print-lote > * { display: none !important; }
+  body.centro-facturas-print-lote #divCentroFacturas { position: static; display: block !important; background: #fff; }
+  body.centro-facturas-print-lote .centro-facturas-app,
+  body.centro-facturas-print-lote .centro-facturas-drawer > header { display: none !important; }
+  body.centro-facturas-print-lote .centro-facturas-drawer { position: static; display: block !important; width: 100%; height: auto; border: 0; box-shadow: none; }
+  body.centro-facturas-print-lote .centro-facturas-drawer__content { height: auto; overflow: visible; }
+}

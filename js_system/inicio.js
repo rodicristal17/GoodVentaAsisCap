@@ -4490,6 +4490,9 @@ $("div[id=divPresentacion]").fadeOut(500);
 					codEncargadoSolicitud = userid;
 					CodCobradorUser = datos["7"];
  accesosuser=datos["5"];
+ if (typeof centroFacturasPrepararAccesoInicial === "function") {
+	centroFacturasPrepararAccesoInicial();
+ }
  if (typeof actualizarVisibilidadSolicitudEliminado == "function") {
 	actualizarVisibilidadSolicitudEliminado();
  }
@@ -7595,8 +7598,14 @@ function actualizarPermisoSesionUsuarioActual(check, accion) {
 		accesosuser[codigo] = {};
 	}
 	accesosuser[codigo].accion = accion;
+	if(typeof centroFacturasActualizarPermisoSesion == "function"){
+		centroFacturasActualizarPermisoSesion(codigo, accion);
+	}
 	if(codigo == dashboardFlujoFinancieroPermiso){
 		dashboardFlujoFinancieroCache = null;
+		dashboardFlujoFinancieroCachePeriodos = {};
+		dashboardFlujoFinancieroPeriodoActual = "";
+		dashboardFlujoFinancieroPeriodoMaximo = "";
 		dashboardFlujoDetalleCache = {};
 		if(accion == "SI"){
 			inicializarDashboardFlujoFinanciero();
@@ -33710,7 +33719,11 @@ function renderDetalleComparativaVentasCobranzas(datos){
 }
 
 var dashboardFlujoFinancieroCache = null;
+var dashboardFlujoFinancieroCachePeriodos = {};
 var dashboardFlujoFinancieroCargando = false;
+var dashboardFlujoFinancieroPeriodoActual = "";
+var dashboardFlujoFinancieroPeriodoMinimo = "2026-05";
+var dashboardFlujoFinancieroPeriodoMaximo = "";
 var dashboardFlujoDetalleCache = {};
 var dashboardFlujoDetalleActual = null;
 var dashboardFlujoDetalleCodLocalActual = null;
@@ -33726,6 +33739,86 @@ function usuarioPuedeVerDashboardFlujoFinanciero(){
 	return permisoAccesoUser(dashboardFlujoFinancieroPermiso, "accion");
 }
 
+function periodoValidoDashboardFlujoFinanciero(periodo){
+	return /^\d{4}-(0[1-9]|1[0-2])$/.test(String(periodo || ""));
+}
+
+function desplazarPeriodoDashboardFlujoFinanciero(periodo, direccion){
+	if(!periodoValidoDashboardFlujoFinanciero(periodo)){
+		return "";
+	}
+	var partes = periodo.split("-");
+	var fecha = new Date(Number(partes[0]), Number(partes[1]) - 1 + Number(direccion || 0), 1);
+	return fecha.getFullYear() + "-" + ("0" + (fecha.getMonth() + 1)).slice(-2);
+}
+
+function etiquetaPeriodoDashboardFlujoFinanciero(periodo){
+	if(!periodoValidoDashboardFlujoFinanciero(periodo)){
+		return "";
+	}
+	var nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+	var partes = periodo.split("-");
+	return nombres[Number(partes[1]) - 1] + " " + partes[0];
+}
+
+function actualizarSelectorPeriodoDashboardFlujoFinanciero(cargando){
+	var texto = document.getElementById("dashboardFlujoPeriodoTexto");
+	var anterior = document.getElementById("dashboardFlujoPeriodoAnterior");
+	var siguiente = document.getElementById("dashboardFlujoPeriodoSiguiente");
+	var control = document.getElementById("dashboardFlujoPeriodoSelector");
+	var periodoDatos = dashboardFlujoFinancieroCache && dashboardFlujoFinancieroCache.periodo
+		? dashboardFlujoFinancieroCache.periodo : {};
+	var periodo = dashboardFlujoFinancieroPeriodoActual || periodoDatos.mes || "";
+
+	if(texto){
+		texto.textContent = periodoDatos.etiqueta || etiquetaPeriodoDashboardFlujoFinanciero(periodo)
+			|| (cargando ? "Cargando periodo" : "Periodo no disponible");
+		texto.title = periodoDatos.esActual
+			? "Mes actual en curso; incluye movimientos registrados hasta hoy"
+			: "Periodo mensual seleccionado";
+	}
+	if(anterior){
+		anterior.disabled = !!cargando || !periodoValidoDashboardFlujoFinanciero(periodo)
+			|| periodo <= dashboardFlujoFinancieroPeriodoMinimo;
+	}
+	if(siguiente){
+		siguiente.disabled = !!cargando || !periodoValidoDashboardFlujoFinanciero(periodo)
+			|| !periodoValidoDashboardFlujoFinanciero(dashboardFlujoFinancieroPeriodoMaximo)
+			|| periodo >= dashboardFlujoFinancieroPeriodoMaximo;
+	}
+	if(control){
+		control.setAttribute("aria-busy", cargando ? "true" : "false");
+	}
+}
+
+function seleccionarPeriodoDashboardFlujoFinanciero(periodo){
+	if(!periodoValidoDashboardFlujoFinanciero(periodo)){
+		return;
+	}
+	if(periodo < dashboardFlujoFinancieroPeriodoMinimo
+		|| (periodoValidoDashboardFlujoFinanciero(dashboardFlujoFinancieroPeriodoMaximo)
+			&& periodo > dashboardFlujoFinancieroPeriodoMaximo)){
+		return;
+	}
+	dashboardFlujoFinancieroPeriodoActual = periodo;
+	dashboardFlujoFinancieroCache = dashboardFlujoFinancieroCachePeriodos[periodo] || null;
+	dashboardFlujoDetalleActual = null;
+	var subtitulo = document.getElementById("dashboardFlujoFinancieroSubtitulo");
+	if(subtitulo){
+		subtitulo.textContent = "Cargando periodo: " + etiquetaPeriodoDashboardFlujoFinanciero(periodo);
+	}
+	actualizarSelectorPeriodoDashboardFlujoFinanciero(true);
+	cargarDashboardFlujoFinanciero(false);
+}
+
+function cambiarPeriodoDashboardFlujoFinanciero(direccion){
+	if(dashboardFlujoFinancieroCargando){
+		return;
+	}
+	var nuevoPeriodo = desplazarPeriodoDashboardFlujoFinanciero(dashboardFlujoFinancieroPeriodoActual, direccion);
+	seleccionarPeriodoDashboardFlujoFinanciero(nuevoPeriodo);
+}
+
 function inicializarDashboardFlujoFinanciero(){
 	var card = document.getElementById("dashboardFlujoFinanciero");
 	if(!card){
@@ -33737,6 +33830,7 @@ function inicializarDashboardFlujoFinanciero(){
 	}
 	card.style.display = "";
 	renderCargandoDashboardFlujoFinanciero();
+	actualizarSelectorPeriodoDashboardFlujoFinanciero(true);
 	cargarDashboardFlujoFinanciero(false);
 }
 
@@ -33752,8 +33846,13 @@ function renderCargandoDashboardFlujoFinanciero(){
 
 function renderErrorDashboardFlujoFinanciero(mensaje){
 	var body = document.getElementById("dashboardFlujoFinancieroBody");
+	var subtitulo = document.getElementById("dashboardFlujoFinancieroSubtitulo");
 	if(!body){
 		return;
+	}
+	if(subtitulo && periodoValidoDashboardFlujoFinanciero(dashboardFlujoFinancieroPeriodoActual)){
+		subtitulo.textContent = "No se pudo cargar el periodo: "
+			+ etiquetaPeriodoDashboardFlujoFinanciero(dashboardFlujoFinancieroPeriodoActual);
 	}
 	body.innerHTML = "<div class='dashboard-flujo-state dashboard-flujo-state--error'>"
 		+ "<strong>No se pudo cargar el flujo financiero</strong>"
@@ -33771,13 +33870,22 @@ function cargarDashboardFlujoFinanciero(forzar){
 	if(dashboardFlujoFinancieroCargando){
 		return;
 	}
-	if(dashboardFlujoFinancieroCache && !forzar){
-		renderDashboardFlujoFinanciero(dashboardFlujoFinancieroCache);
+	var periodoConsulta = dashboardFlujoFinancieroPeriodoActual;
+	if(forzar && periodoConsulta){
+		limpiarCacheDetallePeriodoDashboardFlujoFinanciero(periodoConsulta);
+		dashboardFlujoDetalleActual = null;
+	}
+	var cachePeriodo = periodoConsulta ? dashboardFlujoFinancieroCachePeriodos[periodoConsulta] : null;
+	if(cachePeriodo && !forzar){
+		dashboardFlujoFinancieroCache = cachePeriodo;
+		renderDashboardFlujoFinanciero(cachePeriodo);
+		actualizarSelectorPeriodoDashboardFlujoFinanciero(false);
 		return;
 	}
 
 	dashboardFlujoFinancieroCargando = true;
 	renderCargandoDashboardFlujoFinanciero();
+	actualizarSelectorPeriodoDashboardFlujoFinanciero(true);
 	obtener_datos_user();
 
 	$.ajax({
@@ -33785,12 +33893,14 @@ function cargarDashboardFlujoFinanciero(forzar){
 			useru: userid,
 			passu: passuser,
 			navegador: navegador,
-			funt: "resumen"
+			funt: "resumen",
+			periodo: periodoConsulta
 		},
 		url: "/GoodVentaAsisCap/php_system/dashboard_flujo_financiero.php",
 		type: "post",
 		error: function (jqXHR, textstatus) {
 			dashboardFlujoFinancieroCargando = false;
+			actualizarSelectorPeriodoDashboardFlujoFinanciero(false);
 			renderErrorDashboardFlujoFinanciero("No se pudo consultar el servidor.");
 			if(typeof manejadordeerroresjquery == "function"){
 				manejadordeerroresjquery(jqXHR.status, textstatus, "dashboard_flujo_financiero");
@@ -33802,10 +33912,12 @@ function cargarDashboardFlujoFinanciero(forzar){
 				var datos = typeof responseText == "string" ? $.parseJSON(responseText) : responseText;
 				var respuesta = datos["1"];
 				if(datos["1"] == "NI"){
+					actualizarSelectorPeriodoDashboardFlujoFinanciero(false);
 					if(card){ card.style.display = "none"; }
 					return;
 				}
 				if(datos["1"] == "UI"){
+					actualizarSelectorPeriodoDashboardFlujoFinanciero(false);
 					if(typeof ir_a_login == "function"){
 						ir_a_login();
 					}
@@ -33815,12 +33927,25 @@ function cargarDashboardFlujoFinanciero(forzar){
 					respuesta = respuestaJqueryAjax(respuesta);
 				}
 				if(respuesta === true || datos["1"] == "exito"){
+					var periodoRespuesta = datos.periodo && datos.periodo.mes ? datos.periodo.mes : periodoConsulta;
+					var limites = datos.limitesPeriodo || {};
+					if(periodoValidoDashboardFlujoFinanciero(limites.minimo)){
+						dashboardFlujoFinancieroPeriodoMinimo = limites.minimo;
+					}
+					if(periodoValidoDashboardFlujoFinanciero(limites.maximo)){
+						dashboardFlujoFinancieroPeriodoMaximo = limites.maximo;
+					}
+					dashboardFlujoFinancieroPeriodoActual = periodoRespuesta;
 					dashboardFlujoFinancieroCache = datos;
+					dashboardFlujoFinancieroCachePeriodos[periodoRespuesta] = datos;
 					renderDashboardFlujoFinanciero(datos);
+					actualizarSelectorPeriodoDashboardFlujoFinanciero(false);
 					return;
 				}
+				actualizarSelectorPeriodoDashboardFlujoFinanciero(false);
 				renderErrorDashboardFlujoFinanciero(datos["2"] || "Respuesta no reconocida.");
 			} catch (error) {
+				actualizarSelectorPeriodoDashboardFlujoFinanciero(false);
 				renderErrorDashboardFlujoFinanciero("La respuesta recibida no tiene el formato esperado.");
 				if(typeof GuardarArchivosLog == "function"){
 					GuardarArchivosLog("Error dashboard flujo financiero: " + error + " \r\n Consola: " + responseText);
@@ -34017,7 +34142,10 @@ function renderDashboardFlujoFinanciero(datos){
 
 	var periodo = datos && datos.periodo ? datos.periodo : {};
 	if(subtitulo){
-		subtitulo.textContent = "Ultimo mes cerrado: " + (periodo.etiqueta || "-") + " | escala comun entre sucursales";
+		subtitulo.textContent = (periodo.esActual ? "Mes actual en curso: " : "Periodo seleccionado: ")
+			+ (periodo.etiqueta || "-")
+			+ (periodo.esActual ? " | movimientos hasta hoy" : "")
+			+ " | escala comun entre sucursales";
 	}
 
 	var locales = datos && datos.locales ? datos.locales : [];
@@ -34124,6 +34252,19 @@ function cerrarDashboardFlujoFinancieroDetalle(){
 	restaurarBarraSuperiorDashboardFlujoDetalle();
 }
 
+function claveCacheDetalleDashboardFlujoFinanciero(codLocal, periodo){
+	return String(periodo || "") + "|" + String(codLocal || "");
+}
+
+function limpiarCacheDetallePeriodoDashboardFlujoFinanciero(periodo){
+	var prefijo = String(periodo || "") + "|";
+	for(var clave in dashboardFlujoDetalleCache){
+		if(Object.prototype.hasOwnProperty.call(dashboardFlujoDetalleCache, clave) && clave.indexOf(prefijo) === 0){
+			delete dashboardFlujoDetalleCache[clave];
+		}
+	}
+}
+
 function abrirDashboardFlujoFinancieroLocal(codLocal){
 	if(!dashboardFlujoFinancieroCache){
 		return;
@@ -34141,6 +34282,8 @@ function abrirDashboardFlujoFinancieroLocal(codLocal){
 		return;
 	}
 	dashboardFlujoDetalleCodLocalActual = codLocal;
+	var periodoActual = dashboardFlujoFinancieroPeriodoActual;
+	var claveCache = claveCacheDetalleDashboardFlujoFinanciero(codLocal, periodoActual);
 	ocultarBarraSuperiorDashboardFlujoDetalle();
 	modal.style.display = "flex";
 	var titulo = document.getElementById("dashboardFlujoDetalleTitulo");
@@ -34149,10 +34292,12 @@ function abrirDashboardFlujoFinancieroLocal(codLocal){
 		titulo.textContent = "Analisis de flujo - " + nombreLocalDashboardFlujoFinanciero(local.sucursalNombre);
 	}
 	if(subtitulo){
-		subtitulo.textContent = "Cargando detalle del ultimo mes cerrado";
+		var etiquetaPeriodo = dashboardFlujoFinancieroCache.periodo && dashboardFlujoFinancieroCache.periodo.etiqueta
+			? dashboardFlujoFinancieroCache.periodo.etiqueta : "periodo seleccionado";
+		subtitulo.textContent = "Cargando detalle de " + etiquetaPeriodo;
 	}
-	if(dashboardFlujoDetalleCache[codLocal]){
-		renderDashboardFlujoFinancieroDetalle(dashboardFlujoDetalleCache[codLocal]);
+	if(dashboardFlujoDetalleCache[claveCache]){
+		renderDashboardFlujoFinancieroDetalle(dashboardFlujoDetalleCache[claveCache]);
 		return;
 	}
 	renderCargandoDashboardFlujoFinancieroDetalle();
@@ -34166,8 +34311,10 @@ function cargarDetalleDashboardFlujoFinanciero(codLocal, forzar){
 	if(dashboardFlujoDetalleCargando){
 		return;
 	}
-	if(dashboardFlujoDetalleCache[codLocal] && !forzar){
-		renderDashboardFlujoFinancieroDetalle(dashboardFlujoDetalleCache[codLocal]);
+	var periodoConsulta = dashboardFlujoFinancieroPeriodoActual;
+	var claveCache = claveCacheDetalleDashboardFlujoFinanciero(codLocal, periodoConsulta);
+	if(dashboardFlujoDetalleCache[claveCache] && !forzar){
+		renderDashboardFlujoFinancieroDetalle(dashboardFlujoDetalleCache[claveCache]);
 		return;
 	}
 	dashboardFlujoDetalleCargando = true;
@@ -34180,7 +34327,8 @@ function cargarDetalleDashboardFlujoFinanciero(codLocal, forzar){
 			passu: passuser,
 			navegador: navegador,
 			funt: "detalle",
-			cod_local: codLocal
+			cod_local: codLocal,
+			periodo: periodoConsulta
 		},
 		url: "/GoodVentaAsisCap/php_system/dashboard_flujo_financiero.php",
 		type: "post",
@@ -34210,7 +34358,9 @@ function cargarDetalleDashboardFlujoFinanciero(codLocal, forzar){
 					respuesta = respuestaJqueryAjax(respuesta);
 				}
 				if(respuesta === true || datos["1"] == "exito"){
-					dashboardFlujoDetalleCache[codLocal] = datos;
+					var periodoRespuesta = datos.periodo && datos.periodo.mes ? datos.periodo.mes : periodoConsulta;
+					var claveRespuesta = claveCacheDetalleDashboardFlujoFinanciero(codLocal, periodoRespuesta);
+					dashboardFlujoDetalleCache[claveRespuesta] = datos;
 					renderDashboardFlujoFinancieroDetalle(datos);
 					return;
 				}
@@ -34378,6 +34528,9 @@ function htmlCategoriasDashboardFlujoDetalle(datos){
 	var html = "";
 	for(var i = 0; i < categorias.length; i++){
 		var categoria = categorias[i] || {};
+		if(categoria.codigo == "deposito"){
+			continue;
+		}
 		var total = numeroValorDashboardFlujoFinanciero(categoria.total);
 		var conceptos = categoria.conceptos || [];
 		var movimientos = cantidadMovimientosDashboardFlujoDetalle(conceptos);
@@ -34604,7 +34757,10 @@ function renderDashboardFlujoFinancieroDetalle(datos){
 		titulo.textContent = "Analisis de flujo - " + nombreLocalDashboardFlujoFinanciero(local.sucursalNombre || "");
 	}
 	if(subtitulo){
-		subtitulo.textContent = "Ultimo mes cerrado: " + (periodo.etiqueta || "-") + " | solo lectura";
+		subtitulo.textContent = (periodo.esActual ? "Mes actual en curso: " : "Periodo seleccionado: ")
+			+ (periodo.etiqueta || "-")
+			+ (periodo.esActual ? " | movimientos hasta hoy" : "")
+			+ " | solo lectura";
 	}
 	body.innerHTML = "<section class='dashboard-flujo-detalle-panel dashboard-flujo-detalle-panel--grafico'>"
 		+ "<div class='dashboard-flujo-detalle-title'><span>Composicion economica</span><strong>" + escaparHtmlDashboardFlujoFinanciero(nombreLocalDashboardFlujoFinanciero(local.sucursalNombre || "")) + "</strong></div>"
@@ -34646,6 +34802,9 @@ function htmlInformeFormalDashboardFlujoFinanciero(datos){
 	var categorias = datos && datos.categorias ? datos.categorias : [];
 	for(var i = 0; i < categorias.length; i++){
 		var categoria = categorias[i] || {};
+		if(categoria.codigo == "deposito"){
+			continue;
+		}
 		html += "<h3 style='margin:14px 0 6px;font-size:15px;'>" + escaparHtmlDashboardFlujoFinanciero(categoria.titulo || "") + " - " + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(categoria.total)) + "</h3>";
 		var conceptos = categoria.conceptos || [];
 		for(var c = 0; c < conceptos.length; c++){
@@ -34713,6 +34872,9 @@ function exportarCsvDashboardFlujoFinancieroDetalle(){
 	var categorias = datos.categorias || [];
 	for(var i = 0; i < categorias.length; i++){
 		var categoria = categorias[i] || {};
+		if(categoria.codigo == "deposito"){
+			continue;
+		}
 		var conceptos = categoria.conceptos || [];
 		for(var c = 0; c < conceptos.length; c++){
 			var concepto = conceptos[c] || {};

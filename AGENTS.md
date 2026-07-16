@@ -2,13 +2,24 @@
 
 Estas reglas se aplican a todo el repositorio `GoodVentaAsisCap`.
 
-## Fuente de conocimiento obligatoria
+## Fuente de conocimiento del proyecto
 
 El vault de Obsidian se encuentra en:
 
 `C:\Users\HP\Documents\Clinident Knowledge Base`
 
-Antes de analizar o modificar una funcionalidad, consultar como mínimo:
+El vault es una fuente de apoyo del proyecto, pero no debe bloquear ni demorar consultas simples.
+
+Para conversaciones, explicaciones, diseño funcional, revisiones conceptuales o modo consulta, usar primero el contexto disponible de la conversación y el código que sea estrictamente necesario. No es obligatorio consultar el vault ni releer documentación ya revisada, salvo que el usuario lo pida o falte contexto crítico.
+
+Consultar el vault antes de implementar cambios cuando:
+
+- Se vaya a modificar código, base de datos, permisos, flujos administrativos, clínicos o financieros.
+- El cambio pueda afectar caja, facturas, pagos, cuotas, inventario, legajos, pacientes o registros históricos.
+- Sea necesario documentar una decisión, migración, prueba o cambio funcional.
+- El usuario solicite explícitamente revisar la documentación.
+
+Cuando corresponda consultar el vault, revisar como mínimo:
 
 1. `00 - Inicio/Panel de desarrollo.md`.
 2. `01 - GoodVenta/Arquitectura actual.md`.
@@ -16,7 +27,9 @@ Antes de analizar o modificar una funcionalidad, consultar como mínimo:
 4. La ficha técnica de `01 - GoodVenta/Modulos tecnicos` relacionada, si existe.
 5. El proceso de `03 - Procesos` y los antecedentes de `06 - Cambios y decisiones`.
 
-Si el vault no está disponible, informarlo y continuar únicamente con la inspección del código. No inventar contenido faltante.
+Si el vault no está disponible y la tarea es de consulta o análisis liviano, continuar con el contexto disponible e informarlo solo si afecta la respuesta.
+
+Si el vault no está disponible y la tarea implica implementación o riesgo sobre datos sensibles, informarlo antes de avanzar y continuar únicamente con inspección del código si es seguro hacerlo. No inventar contenido faltante.
 
 ## Antes de programar
 
@@ -46,9 +59,9 @@ Si el vault no está disponible, informarlo y continuar únicamente con la inspe
 - No publicar el vault ni sus adjuntos en servicios externos sin autorización.
 - No considerar segura una acción solamente porque su botón esté oculto.
 
-## Documentación obligatoria al terminar
+## Documentación al terminar
 
-Actualizar solamente las notas relacionadas, manteniendo el vault útil y sin ruido:
+Actualizar solamente las notas relacionadas, manteniendo el vault útil y sin ruido, cuando se haya implementado un cambio real en código, base de datos, permisos o flujo operativo:
 
 1. La ficha técnica y funcional del módulo.
 2. El proceso operativo si cambió el recorrido del usuario.
@@ -71,4 +84,3 @@ Un cambio no está terminado hasta que:
 - No expone información sensible.
 - La documentación relacionada quedó actualizada.
 - Se informó qué cambió, cómo probarlo y qué sigue pendiente.
-

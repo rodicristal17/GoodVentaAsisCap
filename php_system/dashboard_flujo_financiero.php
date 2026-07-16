@@ -11,6 +11,7 @@ date_default_timezone_set('America/Asuncion');
 
 define('FLUJO_DASHBOARD_PERMISO', 'VERDASHBOARDFLUJOFINANCIERO');
 define('FLUJO_DASHBOARD_LOCAL_ADMIN', 1);
+define('FLUJO_DASHBOARD_PERIODO_MINIMO', '2026-05');
 
 function flujo_dashboard_json($datos)
 {
@@ -45,6 +46,27 @@ function flujo_dashboard_to_iso($valor)
 function flujo_dashboard_to_utf8($valor)
 {
     return mb_convert_encoding((string)$valor, 'UTF-8', 'ISO-8859-1');
+}
+
+function flujo_dashboard_normalizar_concepto_interno($valor)
+{
+    $texto = (string)$valor;
+    if ($texto != '' && !mb_check_encoding($texto, 'UTF-8')) {
+        $texto = mb_convert_encoding($texto, 'UTF-8', 'ISO-8859-1');
+    }
+
+    $texto = mb_strtoupper(trim($texto), 'UTF-8');
+    $texto = str_replace(
+        array('Á', 'É', 'Í', 'Ó', 'Ú', 'Ü'),
+        array('A', 'E', 'I', 'O', 'U', 'U'),
+        $texto
+    );
+    return preg_replace('/\s+/u', ' ', $texto);
+}
+
+function flujo_dashboard_es_migracion_caja($concepto)
+{
+    return flujo_dashboard_normalizar_concepto_interno($concepto) == 'MIGRACION DE CAJA';
 }
 
 function flujo_dashboard_autenticar_usuario()
@@ -119,18 +141,40 @@ function flujo_dashboard_mes_nombre($mes)
     return isset($nombres[$mes]) ? $nombres[$mes] : '';
 }
 
-function flujo_dashboard_periodo_cerrado()
+function flujo_dashboard_periodo($mesSolicitado = '')
 {
     $zona = new DateTimeZone('America/Asuncion');
     $ahora = new DateTime('now', $zona);
     $primerDiaMesActual = new DateTime($ahora->format('Y-m-01'), $zona);
+    $mesActual = $primerDiaMesActual->format('Y-m');
 
-    $desde = clone $primerDiaMesActual;
-    $desde->modify('-1 month');
+    $mesPorDefecto = clone $primerDiaMesActual;
+    $mesPorDefecto->modify('-1 month');
+    $mesSolicitado = trim((string)$mesSolicitado);
+    if ($mesSolicitado == '') {
+        $mesSolicitado = $mesPorDefecto->format('Y-m');
+    }
+
+    if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $mesSolicitado)) {
+        return null;
+    }
+    if (strcmp($mesSolicitado, FLUJO_DASHBOARD_PERIODO_MINIMO) < 0 || strcmp($mesSolicitado, $mesActual) > 0) {
+        return null;
+    }
+
+    $desde = DateTime::createFromFormat('!Y-m-d', $mesSolicitado . '-01', $zona);
+    if (!$desde || $desde->format('Y-m') != $mesSolicitado) {
+        return null;
+    }
     $desde->setTime(0, 0, 0);
 
-    $hasta = clone $desde;
-    $hasta->modify('last day of this month');
+    $esActual = $mesSolicitado == $mesActual;
+    if ($esActual) {
+        $hasta = clone $ahora;
+    } else {
+        $hasta = clone $desde;
+        $hasta->modify('last day of this month');
+    }
     $hasta->setTime(23, 59, 59);
 
     return array(
@@ -139,7 +183,48 @@ function flujo_dashboard_periodo_cerrado()
         'desdeFecha' => $desde->format('Y-m-d'),
         'hastaFecha' => $hasta->format('Y-m-d'),
         'mes' => $desde->format('Y-m'),
-        'etiqueta' => flujo_dashboard_mes_nombre((int)$desde->format('n')) . ' ' . $desde->format('Y')
+        'etiqueta' => flujo_dashboard_mes_nombre((int)$desde->format('n')) . ' ' . $desde->format('Y'),
+        'esActual' => $esActual,
+        'minimo' => FLUJO_DASHBOARD_PERIODO_MINIMO,
+        'maximo' => $mesActual
+    );
+}
+
+function flujo_dashboard_periodo_cerrado()
+{
+    return flujo_dashboard_periodo('');
+}
+
+function flujo_dashboard_periodo_solicitado()
+{
+    $periodo = flujo_dashboard_periodo(flujo_dashboard_param('periodo', ''));
+    if ($periodo === null) {
+        flujo_dashboard_json(array(
+            '1' => 'error',
+            '2' => 'Periodo no valido. Selecciona un mes entre Mayo 2026 y el mes actual.'
+        ));
+    }
+    return $periodo;
+}
+
+function flujo_dashboard_periodo_respuesta($periodo)
+{
+    return array(
+        'desde' => $periodo['desde']->format('Y-m-d H:i:s'),
+        'hasta' => $periodo['hasta']->format('Y-m-d H:i:s'),
+        'desdeFecha' => $periodo['desdeFecha'],
+        'hastaFecha' => $periodo['hastaFecha'],
+        'mes' => $periodo['mes'],
+        'etiqueta' => $periodo['etiqueta'],
+        'esActual' => $periodo['esActual']
+    );
+}
+
+function flujo_dashboard_limites_periodo_respuesta($periodo)
+{
+    return array(
+        'minimo' => $periodo['minimo'],
+        'maximo' => $periodo['maximo']
     );
 }
 
@@ -226,10 +311,13 @@ function flujo_dashboard_sumar_pagos($mysqli, $ids, $desde, $hasta)
     return $totales;
 }
 
-function flujo_dashboard_categoria($categoria)
+function flujo_dashboard_categoria($categoria, $tipo = '')
 {
+	if (strtolower(trim((string)$tipo)) == 'deposito') {
+		return 'deposito';
+	}
     $categoria = strtolower(trim((string)$categoria));
-    if ($categoria == 'ingreso' || $categoria == 'directo' || $categoria == 'operativo') {
+    if ($categoria == 'ingreso' || $categoria == 'directo' || $categoria == 'operativo' || $categoria == 'deposito') {
         return $categoria;
     }
     return 'sinCategoria';
@@ -245,7 +333,8 @@ function flujo_dashboard_sumar_movimientos($mysqli, $ids, $desde, $hasta)
 
     $desdeSql = $mysqli->real_escape_string($desde);
     $hastaSql = $mysqli->real_escape_string($hasta);
-    $sql = "SELECT g.cod_local,
+    $sql = "SELECT g.cod_local, IFNULL(g.tipo,'') AS tipo,
+            IFNULL(m.descripcion,'') AS concepto,
             IFNULL(m.categoria,'') AS categoria,
             IFNULL(SUM(g.monto),0) AS total
             FROM gastos g
@@ -254,7 +343,7 @@ function flujo_dashboard_sumar_movimientos($mysqli, $ids, $desde, $hasta)
             AND g.fecha<='$hastaSql'
             AND g.cod_local IN ($idsSql)
             AND LOWER(TRIM(IFNULL(g.estado,''))) IN ('activo','pendiente','solicitado')
-            GROUP BY g.cod_local, IFNULL(m.categoria,'')";
+            GROUP BY g.cod_local, IFNULL(g.tipo,''), IFNULL(m.descripcion,''), IFNULL(m.categoria,'')";
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt || !$stmt->execute()) {
@@ -263,12 +352,18 @@ function flujo_dashboard_sumar_movimientos($mysqli, $ids, $desde, $hasta)
 
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
+        if (flujo_dashboard_es_migracion_caja($row['concepto'])) {
+            continue;
+        }
         $codLocal = (int)$row['cod_local'];
-        $categoria = flujo_dashboard_categoria($row['categoria']);
+        $categoria = flujo_dashboard_categoria($row['categoria'], $row['tipo']);
         if (!isset($totales[$codLocal])) {
             $totales[$codLocal] = array();
         }
-        $totales[$codLocal][$categoria] = (int)round($row['total']);
+		if (!isset($totales[$codLocal][$categoria])) {
+			$totales[$codLocal][$categoria] = 0;
+		}
+		$totales[$codLocal][$categoria] += (int)round($row['total']);
     }
 
     return $totales;
@@ -353,6 +448,13 @@ function flujo_dashboard_categorias_base()
             'total' => 0,
             'conceptos' => array()
         ),
+        'deposito' => array(
+            'codigo' => 'deposito',
+            'titulo' => 'Depositos a central - no afecta el resultado',
+            'color' => '#2879a8',
+            'total' => 0,
+            'conceptos' => array()
+        ),
         'sinCategoria' => array(
             'codigo' => 'sinCategoria',
             'titulo' => 'Sin categorizar',
@@ -363,9 +465,9 @@ function flujo_dashboard_categorias_base()
     );
 }
 
-function flujo_dashboard_nombre_categoria($categoria)
+function flujo_dashboard_nombre_categoria($categoria, $tipo = '')
 {
-    $categoria = flujo_dashboard_categoria($categoria);
+    $categoria = flujo_dashboard_categoria($categoria, $tipo);
     return $categoria;
 }
 
@@ -534,7 +636,10 @@ function flujo_dashboard_detalle_gastos_local($mysqli, &$categorias, $codLocal, 
 
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
-        $categoria = flujo_dashboard_nombre_categoria($row['categoria']);
+        if (flujo_dashboard_es_migracion_caja($row['concepto'])) {
+            continue;
+        }
+        $categoria = flujo_dashboard_nombre_categoria($row['categoria'], $row['tipo']);
         $conceptoCodigo = trim((string)$row['cod_motivoIngresoEgresoFK']);
         $conceptoNombre = flujo_dashboard_to_utf8($row['concepto']);
         flujo_dashboard_agregar_movimiento(
@@ -637,6 +742,9 @@ function flujo_dashboard_finalizar_categorias($categorias)
 {
     $salida = array();
     foreach ($categorias as $categoria) {
+        if (isset($categoria['codigo']) && $categoria['codigo'] == 'deposito') {
+            continue;
+        }
         $conceptos = array();
         foreach ($categoria['conceptos'] as $concepto) {
             $conceptos[] = $concepto;
@@ -659,12 +767,12 @@ function flujo_dashboard_detalle_responder($user)
         flujo_dashboard_json(array('1' => 'NI', '2' => 'Sucursal no autorizada'));
     }
 
+    $periodo = flujo_dashboard_periodo_solicitado();
     $mysqli = conectar_al_servidor();
     if (!$mysqli || $mysqli->connect_errno) {
         flujo_dashboard_json(array('1' => 'error', '2' => 'No se pudo conectar a la base de datos'));
     }
 
-    $periodo = flujo_dashboard_periodo_cerrado();
     $desde = $periodo['desdeFecha'];
     $hasta = $periodo['hastaFecha'];
     $nombres = flujo_dashboard_nombres_locales($mysqli);
@@ -688,14 +796,8 @@ function flujo_dashboard_detalle_responder($user)
 
     flujo_dashboard_json(array(
         '1' => 'exito',
-        'periodo' => array(
-            'desde' => $periodo['desde']->format('Y-m-d H:i:s'),
-            'hasta' => $periodo['hasta']->format('Y-m-d H:i:s'),
-            'desdeFecha' => $periodo['desdeFecha'],
-            'hastaFecha' => $periodo['hastaFecha'],
-            'mes' => $periodo['mes'],
-            'etiqueta' => $periodo['etiqueta']
-        ),
+        'periodo' => flujo_dashboard_periodo_respuesta($periodo),
+        'limitesPeriodo' => flujo_dashboard_limites_periodo_respuesta($periodo),
         'local' => array(
             'sucursalId' => $codLocal,
             'sucursalNombre' => $nombreLocal
@@ -720,12 +822,12 @@ function flujo_dashboard_responder($user)
         flujo_dashboard_json(array('1' => 'NI', '2' => 'Sin permiso'));
     }
 
+    $periodo = flujo_dashboard_periodo_solicitado();
     $mysqli = conectar_al_servidor();
     if (!$mysqli || $mysqli->connect_errno) {
         flujo_dashboard_json(array('1' => 'error', '2' => 'No se pudo conectar a la base de datos'));
     }
 
-    $periodo = flujo_dashboard_periodo_cerrado();
     $desde = $periodo['desdeFecha'];
     $hasta = $periodo['hastaFecha'];
     $idsAutorizados = flujo_dashboard_ids_autorizados($user);
@@ -788,14 +890,8 @@ function flujo_dashboard_responder($user)
 
     flujo_dashboard_json(array(
         '1' => 'exito',
-        'periodo' => array(
-            'desde' => $periodo['desde']->format('Y-m-d H:i:s'),
-            'hasta' => $periodo['hasta']->format('Y-m-d H:i:s'),
-            'desdeFecha' => $periodo['desdeFecha'],
-            'hastaFecha' => $periodo['hastaFecha'],
-            'mes' => $periodo['mes'],
-            'etiqueta' => $periodo['etiqueta']
-        ),
+        'periodo' => flujo_dashboard_periodo_respuesta($periodo),
+        'limitesPeriodo' => flujo_dashboard_limites_periodo_respuesta($periodo),
         'escala' => $escala > 0 ? $escala : 1,
         'locales' => $locales,
         'resumenGeneral' => array(
@@ -816,17 +912,19 @@ function flujo_dashboard_responder($user)
     ));
 }
 
-$user = flujo_dashboard_autenticar_usuario();
-$funt = flujo_dashboard_to_iso(flujo_dashboard_param('funt', 'resumen'));
+if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+    $user = flujo_dashboard_autenticar_usuario();
+    $funt = flujo_dashboard_to_iso(flujo_dashboard_param('funt', 'resumen'));
 
-if ($funt == 'resumen') {
-    flujo_dashboard_responder($user);
+    if ($funt == 'resumen') {
+        flujo_dashboard_responder($user);
+    }
+
+    if ($funt == 'detalle') {
+        flujo_dashboard_detalle_responder($user);
+    }
+
+    flujo_dashboard_json(array('1' => 'error', '2' => 'Operacion no reconocida'));
 }
-
-if ($funt == 'detalle') {
-    flujo_dashboard_detalle_responder($user);
-}
-
-flujo_dashboard_json(array('1' => 'error', '2' => 'Operacion no reconocida'));
 
 ?>

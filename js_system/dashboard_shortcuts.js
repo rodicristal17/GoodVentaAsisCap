@@ -5,6 +5,7 @@ var dashboardShortcutSelectedKeys = [];
 var dashboardShortcutTemplatesReady = false;
 var dashboardShortcutCatalogLoaded = false;
 var dashboardShortcutCatalogLoading = false;
+var dashboardShortcutCatalogReloadPending = false;
 var dashboardShortcutCatalogCallbacks = [];
 var dashboardShortcutCatalogLastError = "";
 var dashboardShortcutDragSource = "";
@@ -22,6 +23,7 @@ var DASHBOARD_SHORTCUT_DEFAULT_KEYS = [
 	"flujo_egreso_ingreso",
 	"cerrar_caja",
 	"hilos_interconsultas",
+	"centro_facturas",
 	"historial_presupuestos",
 	"insumos",
 	"migrar_caja",
@@ -42,6 +44,7 @@ var DASHBOARD_ACCESS_REGISTRY = {
 	flujo_egreso_ingreso: { sourceSelector: "#divMenuEgreso_Ingreso2", permissionKey: "VERLISTADOEGRESOINGRESO" },
 	cerrar_caja: { sourceSelector: "#divMenuArqueo", permissionKey: "VERCERRARCAJA" },
 	hilos_interconsultas: { sourceSelector: "#divMenuInterConsulta" },
+	centro_facturas: { sourceSelector: "#divMenuCentroFacturas", permissionKey: "VERCENTROFACTURAS", allowHiddenTemplate: true },
 	historial_presupuestos: { sourceSelector: "#divMenuPresupuestoProducto2" },
 	insumos: { sourceSelector: "#divMenuInsumos" },
 	migrar_caja: { sourceSelector: "#divMenuMigrarCaja", permissionKey: "VERMIGRARCAJA" },
@@ -500,10 +503,11 @@ function dashboardShortcutPrepareTemplates() {
 			continue;
 		}
 
+		var registry = DASHBOARD_ACCESS_REGISTRY[accessKey];
 		var source = dashboardShortcutGetSource(accessKey);
 		var sourceAccessKey = dashboardShortcutAccessKeyFromElement(source, accessKey);
 
-		if (!source || dashboardShortcutIsInlineHidden(source) || !dashboardShortcutHasPermission(accessKey)) {
+		if (!source || (!registry.allowHiddenTemplate && dashboardShortcutIsInlineHidden(source)) || !dashboardShortcutHasPermission(accessKey)) {
 			continue;
 		}
 
@@ -757,6 +761,9 @@ function cargarDashboardAccessCatalog(callback) {
 		error: function () {
 			dashboardShortcutCatalogLoading = false;
 			dashboardShortcutCatalogLastError = "No se pudo conectar con el servidor del catalogo.";
+			if (dashboardShortcutReloadCatalogIfPending()) {
+				return;
+			}
 			console.error("No se pudo cargar el catalogo de accesos rapidos");
 			renderDashboardShortcutModalContent();
 			dashboardShortcutFlushCatalogCallbacks(false);
@@ -772,6 +779,9 @@ function cargarDashboardAccessCatalog(callback) {
 					dashboardShortcutCatalogLastError = "El servidor respondio: " + respuesta["2"];
 				} else {
 					dashboardShortcutCatalogLastError = "El servidor devolvio una respuesta invalida del catalogo.";
+				}
+				if (dashboardShortcutReloadCatalogIfPending()) {
+					return;
 				}
 				console.error("Respuesta invalida al cargar catalogo", responseText);
 				renderDashboardShortcutModalContent();
@@ -803,6 +813,9 @@ function cargarDashboardAccessCatalog(callback) {
 			dashboardShortcutCatalogLoaded = true;
 			dashboardShortcutCatalogLoading = false;
 			dashboardShortcutCatalogLastError = "";
+			if (dashboardShortcutReloadCatalogIfPending()) {
+				return;
+			}
 			dashboardShortcutSyncSelectionWithCatalog();
 			renderDashboardShortcutModalContent();
 			dashboardShortcutFlushCatalogCallbacks(true);
@@ -953,6 +966,20 @@ function dashboardShortcutRemove(accessKey) {
 	renderDashboardShortcutModalContent();
 }
 
+function dashboardShortcutReloadCatalogIfPending() {
+	if (!dashboardShortcutCatalogReloadPending) {
+		return false;
+	}
+
+	dashboardShortcutCatalogReloadPending = false;
+	dashboardShortcutCatalogLoaded = false;
+	dashboardShortcutCatalogLastError = "";
+	dashboardShortcutCatalog = [];
+	dashboardShortcutCatalogByKey = {};
+	cargarDashboardAccessCatalog();
+	return true;
+}
+
 function dashboardShortcutGetInsertIndex(targetKey, fallbackIndex) {
 	if (!targetKey) {
 		return fallbackIndex;
@@ -1029,6 +1056,50 @@ function dashboardShortcutHandleDragStart(event, accessKey, source) {
 	var modal = document.getElementById("dashboardShortcutModal");
 	if (modal) {
 		modal.classList.add("dashboard-shortcut-modal--dragging");
+	}
+}
+
+function dashboardShortcutRefreshAccessPermission(accessKey) {
+	var registry = DASHBOARD_ACCESS_REGISTRY[accessKey];
+	if (!registry) {
+		return;
+	}
+
+	var source = dashboardShortcutGetSource(accessKey);
+	var permitido = dashboardShortcutHasPermission(accessKey);
+	var puedeCrearTemplate = source && permitido
+		&& (registry.allowHiddenTemplate || !dashboardShortcutIsInlineHidden(source));
+
+	if (puedeCrearTemplate) {
+		registry.template = source.cloneNode(true);
+	} else if (registry.template) {
+		delete registry.template;
+	}
+
+	if (!permitido) {
+		dashboardShortcutSelectedKeys = dashboardShortcutSelectedKeys.filter(function (key) {
+			return key !== accessKey;
+		});
+		var accesosRenderizados = document.querySelectorAll('[data-dashboard-rendered-shortcut="1"][data-dashboard-access-key="' + accessKey + '"]');
+		for (var i = 0; i < accesosRenderizados.length; i++) {
+			if (accesosRenderizados[i].parentNode) {
+				accesosRenderizados[i].parentNode.removeChild(accesosRenderizados[i]);
+			}
+		}
+	}
+
+	dashboardShortcutCatalogLoaded = false;
+	dashboardShortcutCatalogLastError = "";
+	dashboardShortcutCatalog = [];
+	dashboardShortcutCatalogByKey = {};
+	if (!dashboardShortcutCatalogLoading) {
+		cargarDashboardAccessCatalog(function () {
+			renderDashboardShortcutModalContent();
+		});
+		renderDashboardShortcutModalContent();
+	} else {
+		dashboardShortcutCatalogReloadPending = true;
+		renderDashboardShortcutModalContent();
 	}
 }
 

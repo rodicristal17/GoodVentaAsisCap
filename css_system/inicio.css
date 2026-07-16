@@ -7858,6 +7858,7 @@ textarea:focus, select:focus {
 
 #divAbmGasto2.movimiento-financiero-modal--ingreso .presupuesto-header,
 #divAbmGasto2.movimiento-financiero-modal--egreso .presupuesto-header,
+#divAbmGasto2.movimiento-financiero-modal--deposito .presupuesto-header,
 #divAbmGasto2.movimiento-financiero-modal--editar .presupuesto-header {
   padding-top: 8px;
   border-top: 3px solid #6f8aa4;
@@ -7869,6 +7870,10 @@ textarea:focus, select:focus {
 
 #divAbmGasto2.movimiento-financiero-modal--egreso .presupuesto-header {
   border-top-color: #d0643c;
+}
+
+#divAbmGasto2.movimiento-financiero-modal--deposito .presupuesto-header {
+  border-top-color: #2879a8;
 }
 
 #divAbmGasto2.movimiento-financiero-modal--editar .presupuesto-header {
@@ -10149,6 +10154,79 @@ html body #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jo
 .interconsulta-filter-field select:focus {
   border-color: #2390ce;
   box-shadow: 0 0 0 3px rgba(35, 144, 206, 0.14);
+}
+
+.interconsulta-day-selector {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(86px, 1fr) 34px;
+  align-items: stretch;
+  min-height: 38px;
+  border: 1px solid #ccd8e6;
+  border-radius: 12px;
+  background: #f9fbfe;
+  box-shadow: inset 0 1px 2px rgba(37, 71, 106, 0.06);
+  overflow: hidden;
+}
+
+.interconsulta-day-selector:focus-within {
+  border-color: #2390ce;
+  box-shadow: 0 0 0 3px rgba(35, 144, 206, 0.14);
+}
+
+.interconsulta-day-selector__nav,
+.interconsulta-day-selector__current {
+  border: 0;
+  background: transparent;
+  color: #243b53;
+  cursor: pointer;
+  outline: none;
+}
+
+.interconsulta-day-selector__nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.interconsulta-day-selector__nav:hover,
+.interconsulta-day-selector__current:hover {
+  background: #eef7ff;
+}
+
+.interconsulta-day-selector__current {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1px;
+  padding: 4px 6px;
+  border-left: 1px solid rgba(204, 216, 230, 0.7);
+  border-right: 1px solid rgba(204, 216, 230, 0.7);
+}
+
+.interconsulta-day-selector__current strong {
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.interconsulta-day-selector__current small {
+  color: #5c738b;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+#inptFiltroRapidoFechaInterConsulta {
+  position: absolute;
+  right: 38px;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .interconsulta-chipbar {
@@ -42252,6 +42330,43 @@ button.tratamiento-ubicacion-visual {
 #divConciliacionUeno .ueno-origin-badge--deposito {
   border-color: #86efac;
   background: #f0fdf4;
+  color: #166534;
+}
+
+#divAbmGasto2.movimiento-financiero-modal--deposito .movimiento-financiero-contexto-chip {
+  border-left-color: #2879a8;
+  background: #edf7ff;
+  color: #175779;
+}
+
+.movimiento-financiero-deposito-aviso {
+  width: calc(100% - 28px);
+  margin: 0 auto 12px;
+  padding: 11px 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #b9ddef;
+  border-radius: 9px;
+  background: #f1f9fd;
+  color: #164f6d;
+  box-sizing: border-box;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.movimiento-financiero-deposito-aviso i {
+  font-size: 19px;
+  color: #2879a8;
+}
+
+#divAbmGasto2.movimiento-financiero-modal--deposito {
+  max-width: 780px !important;
+}
+
+#divConciliacionUeno .ueno-origin-badge--deposito-conciliado {
+  border-color: #4ade80;
+  background: #dcfce7;
   color: #166534;
 }
 
