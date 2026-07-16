@@ -56,9 +56,18 @@
 .centro-facturas-notice.is-error { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
 .centro-facturas-notice.is-success { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
 
-.centro-facturas-tabs { display: flex; gap: 4px; padding: 0 26px; border-bottom: 1px solid #dbe7e6; background: #fff; }
-.centro-facturas-tabs button { display: flex; align-items: center; gap: 7px; padding: 13px 16px 11px; border-bottom: 3px solid transparent; background: transparent; color: #607575; font-size: 13px; font-weight: 700; }
+.centro-facturas-tabs,
+.centro-facturas-legajos-subtabs { flex: 0 0 auto; }
+
+.centro-facturas-tabs { display: flex; gap: 4px; padding: 0 26px; border-bottom: 1px solid #dbe7e6; overflow-x: auto; overflow-y: hidden; background: #fff; scrollbar-width: thin; }
+.centro-facturas-tabs button { display: flex; flex: 0 0 auto; align-items: center; gap: 7px; padding: 13px 16px 11px; border-bottom: 3px solid transparent; background: transparent; color: #607575; font-size: 13px; font-weight: 700; white-space: nowrap; }
 .centro-facturas-tabs button.is-active { border-bottom-color: #0f766e; color: #0f766e; }
+
+.centro-facturas-legajos-subtabs { display: flex; align-items: center; gap: 4px; padding: 7px 26px; border-bottom: 1px solid #dbe7e6; overflow-x: auto; background: #f8fbfa; }
+.centro-facturas-legajos-subtabs button { display: inline-flex; min-height: 32px; flex: 0 0 auto; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #607575; cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.centro-facturas-legajos-subtabs button:hover { background: #eef7f5; color: #315b58; }
+.centro-facturas-legajos-subtabs button.is-active { border-color: #b9d8d4; background: #fff; color: #0f766e; box-shadow: 0 2px 6px rgba(23,59,57,.08); }
+.centro-facturas-legajos-subtabs button:focus-visible { outline: 2px solid rgba(15,118,110,.35); outline-offset: 1px; }
 
 .centro-facturas-summary { border-bottom: 1px solid #e1eae9; background: #f4f7f8; }
 .centro-facturas-summary__toggle { display: flex; width: calc(100% - 52px); min-height: 30px; align-items: center; gap: 8px; margin: 5px 26px 0; padding: 4px 2px; border: 0; background: transparent; color: #315b58; cursor: pointer; font-size: 11px; font-weight: 750; text-align: left; }
@@ -119,9 +128,14 @@
 .centro-facturas-extra-filters .cf-check input { min-height: 0; }
 
 .centro-facturas-selection { display: flex; align-items: center; gap: 12px; margin: 0 26px 10px; padding: 9px 12px; border: 1px solid #99f6e4; border-radius: 9px; background: #f0fdfa; color: #115e59; font-size: 12px; }
+.centro-facturas-selection--legajos > span { display: flex; flex: 1 1 auto; align-items: baseline; gap: 5px; }
+.centro-facturas-selection--legajos small { margin-left: 4px; color: #537370; font-size: 10px; }
+.centro-facturas-selection--legajos small::before { margin-right: 7px; color: #8a9d9b; content: "\00b7"; }
 .centro-facturas-results { position: relative; display: flex; flex: 1 1 auto; min-height: 0; flex-direction: column; margin: 0 26px 18px; border: 1px solid #dbe7e6; border-radius: 12px; overflow: hidden; background: #fff; }
 .centro-facturas-table-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .centro-facturas-table { width: 100%; min-width: 1040px; border-collapse: collapse; font-size: 11px; }
+.centro-facturas-table--legajos { min-width: 1180px; }
+.centro-facturas-table--legajos .cf-legajo-documents-cell { width: 48%; min-width: 520px; }
 .centro-facturas-table th { position: sticky; top: 0; z-index: 2; padding: 10px 9px; border-bottom: 1px solid #d7e3e2; background: #eff5f4; color: #476260; text-align: left; text-transform: uppercase; letter-spacing: .03em; }
 .centro-facturas-table td { padding: 9px; border-bottom: 1px solid #edf2f1; color: #294644; vertical-align: middle; }
 .centro-facturas-table tbody tr { transition: background .15s ease; }
@@ -147,6 +161,44 @@
 .cf-badge--warning { background: #ffedd5; color: #9a3412; }
 .cf-badge--danger { background: #fee2e2; color: #991b1b; }
 .cf-badge--info { background: #dbeafe; color: #1e40af; }
+
+.cf-legajo-docs { display: grid; grid-template-columns: repeat(5, minmax(88px, 1fr)); gap: 6px; min-width: 0; }
+.cf-legajo-doc { display: grid; min-width: 0; grid-template-columns: 22px minmax(0, 1fr); align-items: center; gap: 6px; padding: 6px; border: 1px solid #dce8e6; border-radius: 8px; background: #f8fbfa; color: #506765; }
+.cf-legajo-doc > i { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 6px; background: #eef2f2; color: #607573; font-size: 10px; }
+.cf-legajo-doc > span { min-width: 0; }
+.cf-legajo-doc strong,
+.cf-legajo-doc small { display: block; overflow: hidden; margin: 0; text-overflow: ellipsis; white-space: nowrap; }
+.cf-legajo-doc strong { color: inherit; font-size: 9px; text-transform: uppercase; }
+.cf-legajo-doc small { margin-top: 2px; color: inherit; font-size: 9px; }
+.cf-legajo-doc--completo { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+.cf-legajo-doc--completo > i { background: #dcfce7; color: #166534; }
+.cf-legajo-doc--pendiente { border-color: #fed7aa; background: #fff7ed; color: #9a3412; }
+.cf-legajo-doc--pendiente > i { background: #ffedd5; color: #c2410c; }
+.cf-legajo-doc--observado { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+.cf-legajo-doc--observado > i { background: #fee2e2; color: #b42318; }
+.cf-legajo-doc--informativo { border-color: #bfdbfe; background: #eff6ff; color: #1e40af; }
+.cf-legajo-doc--informativo > i { background: #dbeafe; color: #1d4ed8; }
+.cf-legajo-doc--no-aplica { border-color: #e2e8e7; background: #f4f7f7; color: #728482; }
+
+.cf-legajo-progress { display: grid; min-width: 130px; gap: 5px; }
+.cf-legajo-progress__heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; color: #526c6a; }
+.cf-legajo-progress__heading b { color: #173b39; font-size: 12px; }
+.cf-legajo-progress__heading span { font-size: 9px; font-weight: 700; }
+.cf-legajo-progress__track { height: 6px; overflow: hidden; border-radius: 999px; background: #e5eceb; }
+.cf-legajo-progress__bar { width: var(--cf-legajo-progress, 0%); height: 100%; border-radius: inherit; background: #0f766e; transition: width .2s ease; }
+.cf-legajo-progress > small { margin: 0; color: #708381; font-size: 9px; }
+.cf-legajo-progress--pendiente .cf-legajo-progress__bar { background: #f59e0b; }
+.cf-legajo-progress--observado .cf-legajo-progress__bar { background: #dc2626; }
+
+.cf-legajo-trace { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.cf-legajo-trace__item { position: relative; display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; padding: 0 0 14px; color: #405b59; font-size: 11px; }
+.cf-legajo-trace__item::before { position: absolute; top: 18px; bottom: 0; left: 9px; width: 1px; background: #d7e3e2; content: ""; }
+.cf-legajo-trace__item:last-child { padding-bottom: 0; }
+.cf-legajo-trace__item:last-child::before { display: none; }
+.cf-legajo-trace__icon { position: relative; z-index: 1; display: grid; width: 20px; height: 20px; place-items: center; border: 2px solid #fff; border-radius: 50%; background: #dff3ef; color: #0f766e; font-size: 8px; box-shadow: 0 0 0 1px #b9d8d4; }
+.cf-legajo-trace__body { min-width: 0; line-height: 1.4; }
+.cf-legajo-trace__body b { display: block; color: #193c3a; }
+.cf-legajo-trace__meta { color: #718584; font-size: 9px; text-align: right; white-space: nowrap; }
 
 .centro-facturas-drawer { position: fixed; z-index: 10022; top: 0; right: 0; width: min(620px, 95vw); height: 100%; border-left: 1px solid #cddcda; background: #f8fbfa; box-shadow: -18px 0 40px rgba(23,59,57,.18); }
 .centro-facturas-drawer > header,
@@ -196,6 +248,9 @@
 @media (max-width: 1100px) {
   .centro-facturas-toolbar { flex-wrap: wrap; }
   .centro-facturas-search { flex-basis: calc(100% - 285px); }
+  .centro-facturas-table--legajos { min-width: 1020px; }
+  .centro-facturas-table--legajos .cf-legajo-documents-cell { min-width: 390px; }
+  .cf-legajo-docs { grid-template-columns: repeat(3, minmax(100px, 1fr)); }
 }
 
 @media (max-width: 760px) {
@@ -204,6 +259,7 @@
   #btnCentroFacturasActualizar { display: none; }
   .centro-facturas-tabs,
   .centro-facturas-toolbar { padding-left: 12px; padding-right: 12px; }
+  .centro-facturas-legajos-subtabs { padding-left: 12px; padding-right: 12px; }
   .centro-facturas-summary__toggle { width: calc(100% - 24px); margin-left: 12px; margin-right: 12px; }
   .centro-facturas-summary__hint { display: none; }
   .centro-facturas-metrics { padding: 4px 12px 9px; }
@@ -212,7 +268,16 @@
   .centro-facturas-period__picker { flex: 1 1 auto; }
   .centro-facturas-search { flex-basis: 100%; }
   .centro-facturas-extra-filters { margin-left: 12px; margin-right: 12px; flex-wrap: wrap; }
+  .centro-facturas-selection--legajos { flex-wrap: wrap; margin-left: 12px; margin-right: 12px; }
+  .centro-facturas-selection--legajos > span { width: 100%; flex-wrap: wrap; }
+  .centro-facturas-selection--legajos small { width: 100%; margin-left: 0; }
+  .centro-facturas-selection--legajos small::before { display: none; }
   .centro-facturas-results { margin-left: 12px; margin-right: 12px; }
+  .centro-facturas-table--legajos { min-width: 900px; }
+  .centro-facturas-table--legajos .cf-legajo-documents-cell { min-width: 310px; }
+  .cf-legajo-docs { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+  .cf-legajo-trace__item { grid-template-columns: 20px minmax(0, 1fr); }
+  .cf-legajo-trace__meta { grid-column: 2; text-align: left; }
   .cf-detail-summary { grid-template-columns: 1fr 1fr; }
   .cf-grid { grid-template-columns: 1fr; }
   .cf-grid label.cf-span-2 { grid-column: auto; }

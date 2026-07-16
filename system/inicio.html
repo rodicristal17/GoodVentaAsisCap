@@ -22,9 +22,9 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=interconsulta-responsive-fecha-rapida-20260715-2" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=adjuntos-guiados-20260716-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=20260713-6" />
-<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=20260714-periodos-1" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=legajos-tabs-20260716-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-horizontal-ios-20260713" />
@@ -46,7 +46,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=consulta-historial-empty-20260706"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=dashboard-flujo-periodos-integrado-20260715-2"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=adjuntos-guiados-temas-20260716-2"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=centro-facturas-permisos-20260713-5"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -58,15 +58,14 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=detalle-turno-horizontal-ios-20260713"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
-<script src="../js_system/abmGasto_ingresosEgresos.js?x=flujo-sin-depositos-20260713-2"></script>
+<script src="../js_system/abmGasto_ingresosEgresos.js?x=adjuntos-guiados-20260716-2"></script>
 <script src="../js_system/abmAsistencia.js?x=jornada-cargando-topbar-20260619"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
-<script src="../js_system/abmInterConsulta.js?x=interconsulta-performance-hosting-v2-20260716"></script>
-<script src="../js_system/abmInterConsulta.js?x=interconsulta-responsive-fecha-rapida-20260715-2"></script>
-<script src="../js_system/abmCentroFacturas.js?x=20260714-colapsado-default-1"></script>
+<script src="../js_system/abmInterConsulta.js?x=adjuntos-guiados-20260716-2"></script>
+<script src="../js_system/abmCentroFacturas.js?x=legajos-20260716-1"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
@@ -79,6 +78,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/historial_ventas.css?x=historial-ventas-ui-20260530" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_adjuntos.css?x=adjuntos-guiados-20260716-2" />
 <style>
   #principalMenub .dashboard-contenedor {
     padding-top: 76px !important;
@@ -7656,8 +7656,8 @@ style='background-color:#5bc572'>
                   <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
                 </button>
                 <button type="button" class="interconsulta-day-selector__current" onclick="abrirCalendarioRapidoInterConsulta()" aria-label="Cambiar fecha" title="Cambiar fecha">
-                  <strong id="textoDiaRapidoInterConsulta">Hoy</strong>
-                  <small id="textoFechaRapidaInterConsulta">--/--/----</small>
+                  <strong id="textoDiaRapidoInterConsulta">Todas</strong>
+                  <small id="textoFechaRapidaInterConsulta">Todas las fechas</small>
                 </button>
                 <button type="button" class="interconsulta-day-selector__nav" onclick="moverFechaRapidaInterConsulta(1)" aria-label="Dia siguiente" title="Dia siguiente">
                   <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
@@ -8377,21 +8377,14 @@ style='background-color:#5bc572'>
                       </div>
                       <input type="hidden" id="codMensajeRespuestaInterConsulta">
                       <div id="editorMensajeInterConsulta">
-                        <button type="button" class="interconsulta-attach-action" title="Adjuntar archivo o imagen" aria-label="Adjuntar archivo o imagen" onclick="vercerrarcargadefotos('fotoAnexoInterchat')">
+                        <button type="button" class="interconsulta-attach-action" title="Adjuntar archivo o imagen" aria-label="Adjuntar archivo o imagen" aria-haspopup="dialog" aria-controls="dialogoAdjuntoDocumentoGuiado" onclick="abrirAdjuntoDocumentoGuiado('hilo')">
                           <span id="imgfotoAnexoInterchat" class="imgFotoProducto"></span>
                           <span class="interconsulta-attach-action__text">Adjuntar</span>
                         </button>
-                        <label class="interconsulta-attachment-type" for="tipoAdjuntoInterConsulta">
-                          <span>Tipo de adjunto</span>
-                          <select id="tipoAdjuntoInterConsulta" class="inputText" onchange="tipoAdjuntoMensajeInterconsulta=this.value">
-                            <option value="otro">Otro documento</option>
-                            <option value="factura">Factura recibida</option>
-                            <option value="comprobante">Recibo / comprobante recibido</option>
-                          </select>
-                        </label>
-                        <p id="inptContenidoAbmMensaje" class="form-control mensaje-interconsulta" contenteditable="true" data-placeholder="Escribir respuesta..."></p>
+                        <input type="hidden" id="tipoAdjuntoInterConsulta" value="otro">
+                        <p id="inptContenidoAbmMensaje" class="form-control mensaje-interconsulta" contenteditable="true" role="textbox" aria-multiline="true" aria-describedby="contadorMensajeInterConsulta" data-placeholder="Escribir respuesta..."></p>
                         <div id="accionesMensajeInterConsulta">
-                          <span><b id="limiteCaracteresMensajeInterconsulta">0</b> /750</span>
+                          <span id="contadorMensajeInterConsulta"><b id="limiteCaracteresMensajeInterconsulta">0</b> /750</span>
                           <input id="btnEnviarContenidoAbmMensaje" type="button" value="Enviar" class="btn1" onclick="verificarCamposMensaje()">
                         </div>
                       </div>
@@ -8402,6 +8395,77 @@ style='background-color:#5bc572'>
             </div>         
       </div>
   </center>
+</div>
+
+<div id="dialogoAdjuntoDocumentoGuiado" class="adjunto-documento-dialog-backdrop" hidden>
+  <section class="adjunto-documento-dialog" role="dialog" aria-modal="true" aria-labelledby="tituloAdjuntoDocumentoGuiado" aria-describedby="ayudaAdjuntoDocumentoGuiado">
+    <header class="adjunto-documento-dialog__header">
+      <div>
+        <span id="etiquetaAdjuntoDocumentoGuiado">Respaldo del Hilo</span>
+        <h3 id="tituloAdjuntoDocumentoGuiado" tabindex="-1">Adjuntar archivo o imagen</h3>
+        <p id="ayudaAdjuntoDocumentoGuiado">Primero identifique el tipo de documento y luego seleccione el archivo.</p>
+      </div>
+      <button type="button" class="adjunto-documento-dialog__close" onclick="cerrarAdjuntoDocumentoGuiado()" aria-label="Cerrar ventana">&times;</button>
+    </header>
+    <div class="adjunto-documento-dialog__body">
+      <section class="adjunto-documento-step" aria-labelledby="tituloTipoAdjuntoDocumento">
+        <div class="adjunto-documento-step__heading">
+          <span>1</span>
+          <div><strong id="tituloTipoAdjuntoDocumento">Tipo de adjunto</strong><small>Esta selecci&oacute;n define los datos que se solicitar&aacute;n.</small></div>
+        </div>
+        <div class="adjunto-documento-types" id="tiposAdjuntoDocumentoGuiado">
+          <button type="button" data-tipo-adjunto="factura" onclick="seleccionarTipoAdjuntoDocumentoGuiado('factura')"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i><strong>Factura</strong><small>Factura recibida de un proveedor</small></button>
+          <button type="button" data-tipo-adjunto="comprobante" onclick="seleccionarTipoAdjuntoDocumentoGuiado('comprobante')"><i class="fa-solid fa-receipt" aria-hidden="true"></i><strong>Recibo</strong><small>Recibo o comprobante recibido</small></button>
+          <button type="button" data-tipo-adjunto="otro" onclick="seleccionarTipoAdjuntoDocumentoGuiado('otro')"><i class="fa-regular fa-image" aria-hidden="true"></i><strong id="tituloTipoOtroAdjuntoDocumento">Imagen o archivo</strong><small id="ayudaTipoOtroAdjuntoDocumento">Respaldo simple, sin datos fiscales</small></button>
+        </div>
+      </section>
+
+      <section class="adjunto-documento-step" id="pasoDatosAdjuntoDocumento" hidden aria-labelledby="tituloDatosAdjuntoDocumento">
+        <div class="adjunto-documento-step__heading">
+          <span>2</span>
+          <div><strong id="tituloDatosAdjuntoDocumento">Datos principales</strong><small id="ayudaDatosAdjuntoDocumento">Complete los datos que identifican el documento.</small></div>
+        </div>
+        <div id="camposFacturaAdjuntoDocumento" class="adjunto-documento-fields" hidden>
+          <label class="adjunto-documento-field adjunto-documento-field--wide">Proveedor registrado
+            <select id="proveedorAdjuntoDocumento" class="inputText" onchange="cambiarProveedorAdjuntoDocumentoGuiado()">
+              <option value="">No est&aacute; registrado / cargar manualmente</option>
+            </select>
+          </label>
+          <div id="datosProveedorManualAdjuntoDocumento" class="adjunto-documento-fields adjunto-documento-fields--nested">
+            <label class="adjunto-documento-field">Raz&oacute;n social*<input type="text" id="razonSocialAdjuntoDocumento" class="inputText" maxlength="255" autocomplete="organization" oninput="actualizarResumenAdjuntoDocumentoGuiado()"></label>
+            <label class="adjunto-documento-field">RUC*<input type="text" id="rucAdjuntoDocumento" class="inputText" maxlength="45" autocomplete="off" oninput="actualizarResumenAdjuntoDocumentoGuiado()"></label>
+          </div>
+        </div>
+        <div id="camposDocumentoFiscalAdjunto" class="adjunto-documento-fields" hidden>
+          <label class="adjunto-documento-field"><span id="etiquetaNumeroAdjuntoDocumento">N.&ordm; de documento (opcional)</span><input type="text" id="numeroAdjuntoDocumento" class="inputText" maxlength="80" autocomplete="off" oninput="actualizarResumenAdjuntoDocumentoGuiado()"></label>
+          <label class="adjunto-documento-field">Fecha*<input type="date" id="fechaAdjuntoDocumento" class="inputText" onchange="actualizarResumenAdjuntoDocumentoGuiado()"></label>
+          <label class="adjunto-documento-field">Monto (Gs.)*<input type="text" inputmode="decimal" id="montoAdjuntoDocumento" class="inputText" maxlength="25" oninput="actualizarResumenAdjuntoDocumentoGuiado()"></label>
+          <label id="grupoDescripcionAdjuntoDocumento" class="adjunto-documento-field adjunto-documento-field--wide" hidden>Descripci&oacute;n del recibo*<textarea id="descripcionAdjuntoDocumento" class="inputText" maxlength="500" rows="2" oninput="actualizarResumenAdjuntoDocumentoGuiado()"></textarea></label>
+        </div>
+        <div id="avisoConceptoAdjuntoDocumento" class="adjunto-documento-note" hidden><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>El concepto contable no se solicita aqu&iacute;. En un egreso se hereda del movimiento; desde un Hilo puede quedar pendiente de clasificar.</span></div>
+      </section>
+
+      <section class="adjunto-documento-step" id="pasoArchivoAdjuntoDocumento" hidden aria-labelledby="tituloArchivoAdjuntoDocumento">
+        <div class="adjunto-documento-step__heading">
+          <span id="numeroPasoArchivoAdjuntoDocumento">3</span>
+          <div><strong id="tituloArchivoAdjuntoDocumento">Archivo</strong><small>Imagen JPG, PNG, WEBP, GIF o documento PDF de hasta 10 MB.</small></div>
+        </div>
+        <label class="adjunto-documento-file" for="archivoAdjuntoDocumento">
+          <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+          <strong>Seleccionar archivo</strong>
+          <span id="nombreArchivoAdjuntoDocumento">Todav&iacute;a no se seleccion&oacute; un archivo.</span>
+          <input type="file" id="archivoAdjuntoDocumento" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/jpeg,image/png,image/webp,image/gif,application/pdf" onchange="leerArchivoAdjuntoDocumentoGuiado(this)">
+        </label>
+      </section>
+
+      <div id="errorAdjuntoDocumentoGuiado" class="adjunto-documento-error" role="alert" hidden></div>
+      <div id="resumenAdjuntoDocumentoGuiado" class="adjunto-documento-summary" aria-live="polite" hidden></div>
+    </div>
+    <footer class="adjunto-documento-dialog__footer">
+      <button type="button" class="adjunto-documento-secondary" onclick="cerrarAdjuntoDocumentoGuiado()">Cancelar</button>
+      <button type="button" class="adjunto-documento-primary" id="btnConfirmarAdjuntoDocumentoGuiado" onclick="confirmarAdjuntoDocumentoGuiado()" disabled><i class="fa-solid fa-paperclip" aria-hidden="true"></i> Adjuntar al Hilo</button>
+    </footer>
+  </section>
 </div>
 
 <div id="divAbmInterConsulta" class="principal2" style="display: none;">
@@ -8631,7 +8695,7 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 <select class='inputSelect' id='inptlocalMisGastos'></select>
 </div>
 <div class='form-row flex-grow' style='flex:1 1 100%;'>
-<label for='inptAbmInterConsultaGasto'>Interconsulta* :</label>
+<label for='inptAbmInterConsultaGasto'>Hilo relacionado (opcional) :</label>
 <div style='display:flex;gap:10px;align-items:flex-end;width:100%;'>
 <input type='text' class='inputTextDisable' id='inptAbmInterConsultaGasto' disabled style='flex:1 1 auto;min-width:0;'>
 <input type='button' value='Seleccionar' class='btn4 movimiento-financiero-inline-action' onclick="verCerrarVentanaListadoInterConsulta(true, 'divAbmGastos')">
@@ -8658,7 +8722,7 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 </div>
 <div class='form-row'>
 <label for='inptTipoGasto'>Tipo* :</label>
-<select class='inputSelect' id='inptTipoGasto' onchange='actualizarVistaPreviaPlanificacionGasto()'>
+<select class='inputSelect' id='inptTipoGasto' onchange='manejarCambioTipoMovimientoAdjuntoGuiado();actualizarVistaPreviaPlanificacionGasto()'>
 <option value='Ingreso'>INGRESO</option>
 <option value='Egreso'>EGRESOS</option>
 </select>
@@ -8704,11 +8768,12 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 </div>
 
 <div class='presupuesto-panel tabla-detalles movimiento-financiero-panel movimiento-financiero-adjuntos'>
-<div class='panel-title'>Adjuntos</div>
-<label>Comprobante</label>
-<center>
-<div id='imgfotoGasto' class='imgFotoProducto' onclick="vercerrarcargadefotos('fotoGasto')" style="background-image:url('/GoodVentaAsisCap/iconos/imagenphoto.png');"></div>
-</center>
+<div class='panel-title'>Respaldo documental</div>
+<button type='button' id='btnAdjuntarMovimientoFinanciero' class='movimiento-financiero-attachment-action' aria-haspopup='dialog' aria-controls='dialogoAdjuntoDocumentoGuiado' onclick="abrirAdjuntoDocumentoGuiado('gasto')">
+<span id='imgfotoGasto' class='imgFotoProducto' style="background-image:url('/GoodVentaAsisCap/iconos/imagenphoto.png');"></span>
+<span><strong id='tituloAdjuntoMovimientoFinanciero'>Adjuntar comprobante</strong><small id='ayudaAdjuntoMovimientoFinanciero'>Identifique primero si es factura, recibo o imagen.</small></span>
+</button>
+<div id='resumenAdjuntoMovimientoFinanciero' class='movimiento-financiero-attachment-summary' hidden></div>
 <label>Documento firmado</label>
 <center>
 <div id='imgdocumentoFirmadoGasto' class='imgFotoProducto' onclick="vercerrarcargadefotos('documentoFirmadoGasto')" style="background-image:url('/GoodVentaAsisCap/iconos/imagenphoto.png');"></div>
@@ -36112,7 +36177,13 @@ id='vantana_info_001' style='display:none'>
     <nav class="centro-facturas-tabs" aria-label="Secciones del Centro de Facturas">
       <button type="button" class="is-active" data-cf-tab="entrantes" onclick="centroFacturasCambiarTab('entrantes')"><i class="fa-solid fa-inbox" aria-hidden="true"></i> Recibidas</button>
       <button type="button" data-cf-tab="emitidas" onclick="centroFacturasCambiarTab('emitidas')"><i class="fa-solid fa-file-export" aria-hidden="true"></i> Emitidas</button>
-      <button type="button" data-cf-tab="lotes" onclick="centroFacturasCambiarTab('lotes')"><i class="fa-solid fa-box-archive" aria-hidden="true"></i> Lotes</button>
+      <button type="button" data-cf-tab="lotes" onclick="centroFacturasCambiarTab('lotes')"><i class="fa-solid fa-box-archive" aria-hidden="true"></i> Lotes de comprobantes</button>
+      <button type="button" id="btnCentroFacturasTabLegajos" data-cf-tab="legajos" onclick="centroFacturasCambiarTab('legajos')" hidden><i class="fa-solid fa-folder-tree" aria-hidden="true"></i> Legajos y documentos</button>
+    </nav>
+
+    <nav class="centro-facturas-legajos-subtabs" id="centroFacturasLegajosSubtabs" aria-label="Vistas de Legajos y documentos" hidden>
+      <button type="button" class="is-active" data-cf-legajos-vista="ventas" onclick="centroFacturasCambiarVistaLegajos('ventas')" aria-pressed="true"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Legajos</button>
+      <button type="button" data-cf-legajos-vista="lotes" onclick="centroFacturasCambiarVistaLegajos('lotes')" aria-pressed="false"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Lotes de legajos</button>
     </nav>
 
     <section class="centro-facturas-summary is-collapsed" id="centroFacturasResumen">
@@ -36145,7 +36216,7 @@ id='vantana_info_001' style='display:none'>
       <select id="centroFacturasFiltroOriginal" aria-label="Filtrar por original" onchange="centroFacturasBuscar()">
         <option value="">Todos los originales</option><option value="en_proceso">En proceso</option><option value="enviado_central">Enviado a central</option><option value="recibido">Recibido</option><option value="observado">Observado</option><option value="vencido">Vencido</option><option value="no_requiere_original">No requiere original</option>
       </select>
-      <button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasAlternarFiltros()"><i class="fa-solid fa-sliders" aria-hidden="true"></i> M&aacute;s filtros</button>
+      <button type="button" class="cf-button cf-button--secondary" id="btnCentroFacturasMasFiltros" onclick="centroFacturasAlternarFiltros()"><i class="fa-solid fa-sliders" aria-hidden="true"></i> M&aacute;s filtros</button>
       <button type="button" class="cf-button cf-button--primary" id="btnCentroFacturasManual" onclick="centroFacturasAbrirRegistroManual()" hidden><i class="fa-solid fa-plus" aria-hidden="true"></i> Registrar comprobante</button>
       <button type="button" class="cf-button cf-button--secondary" id="btnCentroFacturasConfig" onclick="centroFacturasAbrirConfiguracion()" hidden><i class="fa-solid fa-gear" aria-hidden="true"></i> Configuraci&oacute;n</button>
     </section>
@@ -36165,9 +36236,15 @@ id='vantana_info_001' style='display:none'>
     </section>
 
     <div class="centro-facturas-selection" id="centroFacturasSeleccion" hidden>
-      <span><b id="centroFacturasSeleccionCantidad">0</b> facturas seleccionadas</span>
+      <span><b id="centroFacturasSeleccionCantidad">0</b> comprobantes seleccionados</span>
       <button type="button" class="cf-button cf-button--primary" onclick="centroFacturasCrearLoteSeleccion()"><i class="fa-solid fa-box" aria-hidden="true"></i> Crear lote</button>
       <button type="button" class="cf-link-button" onclick="centroFacturasLimpiarSeleccion()">Cancelar selecci&oacute;n</button>
+    </div>
+
+    <div class="centro-facturas-selection centro-facturas-selection--legajos" id="centroFacturasSeleccionLegajos" hidden aria-live="polite">
+      <span><b id="centroFacturasSeleccionLegajosCantidad">0</b> legajos seleccionados <small><b id="centroFacturasSeleccionLegajosDocumentos">0</b> documentos listos para el lote</small></span>
+      <button type="button" class="cf-button cf-button--primary" onclick="centroFacturasPrepararLoteLegajos()"><i class="fa-solid fa-folder-plus" aria-hidden="true"></i> Crear lote de legajos</button>
+      <button type="button" class="cf-link-button" onclick="centroFacturasLimpiarSeleccionLegajos()">Cancelar selecci&oacute;n</button>
     </div>
 
     <main class="centro-facturas-results">

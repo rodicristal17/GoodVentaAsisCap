@@ -69,12 +69,12 @@ function esCodigoConceptoDepositoCentral($mysqli, $codMotivo)
 
 function obtenerClasificacionGastoActual($idgastos)
 {
-	$clasificacion= array('existe' => false, 'tipo' => '');
+	$clasificacion= array('existe' => false, 'tipo' => '', 'cod_local' => 0, 'estado' => '');
 	if (!is_numeric($idgastos) || intval($idgastos) <= 0) {
 		return $clasificacion;
 	}
 	$mysqli= conectar_al_servidor();
-	$stmt= $mysqli->prepare("SELECT tipo FROM gastos WHERE idgastos=? LIMIT 1");
+	$stmt= $mysqli->prepare("SELECT tipo,cod_local,estado FROM gastos WHERE idgastos=? LIMIT 1");
 	if ($stmt) {
 		$id= intval($idgastos);
 		$stmt->bind_param('i', $id);
@@ -83,12 +83,27 @@ function obtenerClasificacionGastoActual($idgastos)
 			if ($resultado && $fila= $resultado->fetch_assoc()) {
 				$clasificacion['existe']= true;
 				$clasificacion['tipo']= (string)$fila['tipo'];
+				$clasificacion['cod_local']= intval($fila['cod_local']);
+				$clasificacion['estado']= (string)$fila['estado'];
 			}
 		}
 		$stmt->close();
 	}
 	mysqli_close($mysqli);
 	return $clasificacion;
+}
+
+function usuarioPuedeGestionarLocalGasto($codUsuario, $codLocal)
+{
+	$codUsuario= intval($codUsuario);
+	$codLocal= intval($codLocal);
+	if ($codUsuario <= 0 || $codLocal <= 0) {
+		return false;
+	}
+	if (intval(buscarlocaluser($codUsuario)) === $codLocal) {
+		return true;
+	}
+	return controldeaccesoacasas($codUsuario, 'CAMBIARLOCAL', " u.accion='SI' ") == 1;
 }
 
 function validarDepositoCentralEnCaja($idgastos, $operacion, $codApertura, $codCaja, $codLocal, $nroComprobante, $monto, $fecha, $estado = 'Activo', $mysqliExistente = null, $bloquear = false)
@@ -261,6 +276,18 @@ if($operacion=="obtener_crear_interconsulta_movimiento")
 	$tipo= isset($_POST['tipo']) ? mb_convert_encoding((string)($_POST['tipo']), 'ISO-8859-1', 'UTF-8') : 'Egreso';
 	$cod_local= isset($_POST['cod_local']) ? mb_convert_encoding((string)($_POST['cod_local']), 'ISO-8859-1', 'UTF-8') : '';
 	$cod_motivo= isset($_POST['cod_motivoFK']) ? mb_convert_encoding((string)($_POST['cod_motivoFK']), 'ISO-8859-1', 'UTF-8') : '';
+	if (controldeaccesoacasas($user, 'INSERTARLISTADOEGRESOINGRESO', " u.accion='SI' ") != 1) {
+		echo json_encode(array("1" => "NI", "2" => "No tiene permiso para preparar un movimiento financiero."));
+		exit;
+	}
+	if (!usuarioPuedeGestionarLocalGasto($user, $cod_local)) {
+		echo json_encode(array("1" => "NI", "2" => "No puede preparar movimientos para el local seleccionado."));
+		exit;
+	}
+	if (esTipoDepositoCentral($tipo)) {
+		echo json_encode(array("1" => "error", "2" => "Los depositos a central no generan un Hilo financiero."));
+		exit;
+	}
 	if (trim($motivo) == '' && is_numeric($cod_motivo)) {
 		$registrosMotivo= buscarabmmotivoingresoegreso('', 'activo', $cod_motivo);
 		if (isset($registrosMotivo[4][0]['descripcion'])) {
@@ -327,10 +354,26 @@ if (esTipoDepositoCentral($tipo) && !$esDepositoCentral) {
 	echo json_encode($informacion);
 	exit;
 }
+$permisoMovimiento= ($operacion == 'editar') ? 'EDITARLISTADOEGRESOINGRESO' : 'INSERTARLISTADOEGRESOINGRESO';
+if (controldeaccesoacasas($user, $permisoMovimiento, " u.accion='SI' ") != 1) {
+	$informacion= array("1" => "NI", "2" => "No tiene permiso para guardar este movimiento financiero.");
+	echo json_encode($informacion);
+	exit;
+}
+if (!usuarioPuedeGestionarLocalGasto($user, $cod_local)) {
+	$informacion= array("1" => "NI", "2" => "No puede guardar movimientos para el local seleccionado.");
+	echo json_encode($informacion);
+	exit;
+}
 if ($operacion == 'editar') {
 	$clasificacionActual= obtenerClasificacionGastoActual($idgastos);
 	if (!$clasificacionActual['existe']) {
 		$informacion= array("1" => "error", "2" => "El movimiento que intenta editar ya no existe.");
+		echo json_encode($informacion);
+		exit;
+	}
+	if (!usuarioPuedeGestionarLocalGasto($user, $clasificacionActual['cod_local'])) {
+		$informacion= array("1" => "NI", "2" => "No puede editar el movimiento del local de origen.");
 		echo json_encode($informacion);
 		exit;
 	}
@@ -383,10 +426,127 @@ if (!is_numeric($cod_proyecto_gastoFK)) {
 	$cod_proyecto_gastoFK= NULL;
 }
 
+$tipoAdjuntoDocumentoGasto= isset($_POST['tipo_adjunto_documento']) ? strtolower(trim((string)$_POST['tipo_adjunto_documento'])) : 'otro';
+if (!in_array($tipoAdjuntoDocumentoGasto, array('factura','comprobante','otro'), true)) {
+	$informacion= array("1" => "error", "2" => "El tipo de documento del movimiento no es valido.");
+	echo json_encode($informacion);
+	exit;
+}
+$datosDocumentoGasto= array();
+if (isset($_POST['datos_documento']) && trim((string)$_POST['datos_documento']) != '') {
+	$datosDocumentoDecodificados= json_decode((string)$_POST['datos_documento'], true);
+	if (!is_array($datosDocumentoDecodificados)) {
+		$informacion= array("1" => "error", "2" => "Los datos del documento no tienen un formato valido.");
+		echo json_encode($informacion);
+		exit;
+	}
+	$datosDocumentoGasto= $datosDocumentoDecodificados;
+}
+$fotoDocumentoGasto= isset($_POST['foto']) ? (string)$_POST['foto'] : '';
+$extensionDocumentoGasto= isset($_POST['ext']) ? strtolower(trim((string)$_POST['ext'])) : '';
+$nombreDocumentoGasto= isset($_POST['nombre_archivo_documento']) && trim((string)$_POST['nombre_archivo_documento']) != ''
+	? (string)$_POST['nombre_archivo_documento']
+	: 'documento.'.$extensionDocumentoGasto;
+$hayArchivoDocumentoGasto= trim($fotoDocumentoGasto) != '' || trim($extensionDocumentoGasto) != '';
+$archivoPreparadoDocumentoGasto= array();
+if ($hayArchivoDocumentoGasto) {
+	$archivoPreparadoDocumentoGasto= centroFacturaPrepararArchivo(array('data' => $fotoDocumentoGasto, 'nombre' => $nombreDocumentoGasto));
+	if (empty($archivoPreparadoDocumentoGasto['ok'])) {
+		$informacion= array("1" => "error", "2" => $archivoPreparadoDocumentoGasto['mensaje']);
+		echo json_encode(centroFacturaValorUtf8($informacion), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		exit;
+	}
+	// El guardador legacy utiliza esta extension para construir una ruta publica.
+	// Nunca se conserva la extension enviada por el navegador: se deriva del MIME real.
+	$_POST['ext']= $archivoPreparadoDocumentoGasto['extension'];
+}
+$esDocumentoFinancieroGasto= in_array($tipoAdjuntoDocumentoGasto, array('factura','comprobante'), true);
+if ($operacion == 'editar' && intval($idgastos) > 0 && $hayArchivoDocumentoGasto) {
+	$mysqliDocumentoExistente= conectar_al_servidor();
+	if (centroFacturaEstructuraDisponible($mysqliDocumentoExistente)) {
+		$stmtDocumentoExistente= $mysqliDocumentoExistente->prepare("SELECT id_factura FROM centro_factura WHERE idgastosFK=? LIMIT 1");
+		if (!$stmtDocumentoExistente) {
+			$mysqliDocumentoExistente->close();
+			echo json_encode(array("1" => "error", "2" => "No se pudo comprobar el documento existente del movimiento."));
+			exit;
+		}
+		$idGastoDocumento= intval($idgastos);
+		$stmtDocumentoExistente->bind_param('i', $idGastoDocumento);
+		if (!$stmtDocumentoExistente->execute()) {
+			$stmtDocumentoExistente->close();
+			$mysqliDocumentoExistente->close();
+			echo json_encode(array("1" => "error", "2" => "No se pudo comprobar el documento existente del movimiento."));
+			exit;
+		}
+		$documentoExistente= $stmtDocumentoExistente->get_result()->fetch_assoc();
+		$stmtDocumentoExistente->close();
+		if ($documentoExistente) {
+			$mysqliDocumentoExistente->close();
+			echo json_encode(array(
+				"1" => "error",
+				"2" => "El comprobante principal esta vinculado al Centro de Facturas. Para reemplazarlo, revise o anule primero el registro documental existente."
+			));
+			exit;
+		}
+	}
+	$mysqliDocumentoExistente->close();
+}
+if ($esDocumentoFinancieroGasto) {
+	if (strtolower(trim((string)$tipo)) != 'egreso') {
+		$informacion= array("1" => "error", "2" => "Las facturas y recibos recibidos solo pueden registrarse desde un egreso.");
+		echo json_encode($informacion);
+		exit;
+	}
+	if (!centroFacturaTienePermiso($user, 'REGISTRARFACTURAMANUAL')) {
+		$informacion= array("1" => "NI", "2" => "No tiene permiso para registrar documentos en el Centro de Facturas.");
+		echo json_encode($informacion);
+		exit;
+	}
+	if (!$hayArchivoDocumentoGasto || empty($archivoPreparadoDocumentoGasto['ok'])) {
+		$informacion= array("1" => "error", "2" => "Seleccione el archivo de la factura o del recibo.");
+		echo json_encode($informacion);
+		exit;
+	}
+	$mysqliValidacionDocumento= conectar_al_servidor();
+	if (!centroFacturaEstructuraDisponible($mysqliValidacionDocumento)) {
+		$mysqliValidacionDocumento->close();
+		$informacion= array("1" => "error", "2" => "La estructura del Centro de Facturas no esta disponible.");
+		echo json_encode($informacion);
+		exit;
+	}
+	if (!centroFacturaPuedeUsarLocal($user, $cod_local, $mysqliValidacionDocumento)) {
+		$mysqliValidacionDocumento->close();
+		$informacion= array("1" => "NI", "2" => "No puede registrar documentos en el Centro de Facturas para el local seleccionado.");
+		echo json_encode($informacion);
+		exit;
+	}
+	$validacionDocumentoGasto= centroFacturaValidarAdjuntoDocumental($mysqliValidacionDocumento, $tipoAdjuntoDocumentoGasto, $datosDocumentoGasto);
+	$mysqliValidacionDocumento->close();
+	if (empty($validacionDocumentoGasto['ok'])) {
+		$informacion= array("1" => "error", "2" => $validacionDocumentoGasto['mensaje']);
+		echo json_encode(centroFacturaValorUtf8($informacion), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		exit;
+	}
+}
+$fotoDocumentoFirmadoSolicitado= isset($_POST['foto_documento_firmado']) ? (string)$_POST['foto_documento_firmado'] : '';
+$extensionDocumentoFirmadoSolicitada= isset($_POST['ext_documento_firmado']) ? strtolower(trim((string)$_POST['ext_documento_firmado'])) : '';
+if (trim($fotoDocumentoFirmadoSolicitado) != '' || trim($extensionDocumentoFirmadoSolicitada) != '') {
+	$archivoFirmadoPreparado= centroFacturaPrepararArchivo(array(
+		'data' => $fotoDocumentoFirmadoSolicitado,
+		'nombre' => 'documento_firmado.'.$extensionDocumentoFirmadoSolicitada
+	));
+	if (empty($archivoFirmadoPreparado['ok'])) {
+		$informacion= array("1" => "error", "2" => $archivoFirmadoPreparado['mensaje']);
+		echo json_encode(centroFacturaValorUtf8($informacion), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		exit;
+	}
+	$_POST['ext_documento_firmado']= $archivoFirmadoPreparado['extension'];
+}
+
 	// Comprueba si esta dentro del presupuesto
 	$fechaRango= DateTime::createFromFormat('Y-m-d', $fecha);
-	if ($esDepositoCentral && (!$fechaRango || $fechaRango->format('Y-m-d') != $fecha)) {
-		$informacion = array("1" => "error", "2" => "Ingrese una fecha valida para el deposito.");
+	if (!$fechaRango || $fechaRango->format('Y-m-d') != $fecha) {
+		$informacion = array("1" => "error", "2" => "Ingrese una fecha valida para el movimiento.");
 		echo json_encode($informacion);
 		exit;
 	}
@@ -427,17 +587,87 @@ if (!is_numeric($cod_proyecto_gastoFK)) {
 	}
 
 	$informacion= abmGasto($Arreglo,$nroboleta, $banco , $nrocuenta ,$idgastos,$monto,$motivo,$fecha,$estado,$personales,$cod_usuario,$cod_local,$tipo,$codcaja,$idaperturacierrecaja,$cod_motivo,$cod_interConsultaFK,$operacion,$editar_cuotas, $cod_proyecto_gastoFK);
-	echo json_encode($informacion);	
+	$archivoPrincipalDisponible= !isset($informacion['archivo']) || !array_key_exists('principal_ok', $informacion['archivo']) || !empty($informacion['archivo']['principal_ok']);
+	if ($esDocumentoFinancieroGasto && $archivoPrincipalDisponible && isset($informacion['1']) && $informacion['1'] == 'exito' && !empty($informacion['2'])) {
+		$informacion['documento']= centroFacturaRegistrarDesdeGasto(
+			$informacion['2'], $user,
+			array('tipo_adjunto' => $tipoAdjuntoDocumentoGasto, 'datos_documento' => $datosDocumentoGasto),
+			$archivoPreparadoDocumentoGasto
+		);
+		if (empty($informacion['documento']['ok'])) {
+			$informacion['parcial']= 1;
+		}
+	}
+	echo json_encode($informacion);
 	exit;
 }
 if ($operacion=='cargar_imagen') {
-	$idgastos=$_POST['idgastos'];
-	$foto=$_POST['foto'];
-	$ext=$_POST['ext'];
+	if (controldeaccesoacasas($user, 'EDITARLISTADOEGRESOINGRESO', " u.accion='SI' ") != 1) {
+		echo json_encode(array("1" => "NI", "2" => "No tiene permiso para reemplazar adjuntos de movimientos."));
+		exit;
+	}
+	$idgastos= isset($_POST['idgastos']) ? intval($_POST['idgastos']) : 0;
+	$clasificacionAdjunto= obtenerClasificacionGastoActual($idgastos);
+	if (!$clasificacionAdjunto['existe'] || !usuarioPuedeGestionarLocalGasto($user, $clasificacionAdjunto['cod_local'])) {
+		echo json_encode(array("1" => "NI", "2" => "El movimiento no existe o no pertenece a un local autorizado."));
+		exit;
+	}
+	$estadoAdjuntoMovimiento= strtolower(trim((string)$clasificacionAdjunto['estado']));
+	if (in_array($estadoAdjuntoMovimiento, array('inactivo','anulado','baja'), true)) {
+		echo json_encode(array("1" => "error", "2" => "Un movimiento inactivo, anulado o dado de baja no admite reemplazo de adjuntos."));
+		exit;
+	}
+	$foto= isset($_POST['foto']) ? (string)$_POST['foto'] : '';
+	$ext= isset($_POST['ext']) ? strtolower(trim((string)$_POST['ext'])) : '';
 	$foto_documento_firmado= isset($_POST['foto_documento_firmado']) ? $_POST['foto_documento_firmado'] : '';
 	$ext_documento_firmado= isset($_POST['ext_documento_firmado']) ? $_POST['ext_documento_firmado'] : '';
-	subirImagenGasto($idgastos, $foto, $ext);
-	subirDocumentoFirmadoGasto($idgastos, $foto_documento_firmado, $ext_documento_firmado);
+	if (trim($foto) != '' || trim($ext) != '') {
+		$mysqliVinculoDocumento= conectar_al_servidor();
+		if (centroFacturaEstructuraDisponible($mysqliVinculoDocumento)) {
+			$stmtVinculoDocumento= $mysqliVinculoDocumento->prepare("SELECT id_factura FROM centro_factura WHERE idgastosFK=? LIMIT 1");
+			if (!$stmtVinculoDocumento) {
+				$mysqliVinculoDocumento->close();
+				echo json_encode(array("1" => "error", "2" => "No se pudo comprobar el vinculo documental del movimiento."));
+				exit;
+			}
+			$stmtVinculoDocumento->bind_param('i', $idgastos);
+			if (!$stmtVinculoDocumento->execute()) {
+				$stmtVinculoDocumento->close();
+				$mysqliVinculoDocumento->close();
+				echo json_encode(array("1" => "error", "2" => "No se pudo comprobar el vinculo documental del movimiento."));
+				exit;
+			}
+			$documentoVinculado= $stmtVinculoDocumento->get_result()->fetch_assoc();
+			$stmtVinculoDocumento->close();
+			if ($documentoVinculado) {
+				$mysqliVinculoDocumento->close();
+				echo json_encode(array("1" => "error", "2" => "El comprobante principal esta vinculado al Centro de Facturas y no puede reemplazarse de forma silenciosa."));
+				exit;
+			}
+		}
+		$mysqliVinculoDocumento->close();
+	}
+	if ((trim($foto) != '' || trim($ext) != '')) {
+		$archivoAdjunto= centroFacturaPrepararArchivo(array('data' => $foto, 'nombre' => 'documento.'.$ext));
+		if (empty($archivoAdjunto['ok'])) {
+			echo json_encode(array("1" => "error", "2" => centroFacturaValorUtf8($archivoAdjunto['mensaje'])));
+			exit;
+		}
+		$ext= $archivoAdjunto['extension'];
+	}
+	if ((trim((string)$foto_documento_firmado) != '' || trim((string)$ext_documento_firmado) != '')) {
+		$archivoFirmado= centroFacturaPrepararArchivo(array('data' => $foto_documento_firmado, 'nombre' => 'documento_firmado.'.$ext_documento_firmado));
+		if (empty($archivoFirmado['ok'])) {
+			echo json_encode(array("1" => "error", "2" => centroFacturaValorUtf8($archivoFirmado['mensaje'])));
+			exit;
+		}
+		$ext_documento_firmado= $archivoFirmado['extension'];
+	}
+	if (!subirImagenGasto($idgastos, $foto, $ext)
+		|| !subirDocumentoFirmadoGasto($idgastos, $foto_documento_firmado, $ext_documento_firmado)) {
+		echo json_encode(array("1" => "error", "2" => "No se pudo guardar el adjunto del movimiento."));
+		exit;
+	}
 	$informacion =array("1" => "exito", "2" => $idgastos);
 	echo json_encode($informacion);	
 	exit;
@@ -1401,25 +1631,50 @@ function guardarArchivoGasto($idgastos, $foto, $ext, $columna, $prefijo= '') {
 	if (empty($foto) && empty($ext)) {
 		return true;
 	}
+	$archivoPreparado= centroFacturaPrepararArchivo(array(
+		'data' => (string)$foto,
+		'nombre' => 'documento.'.strtolower(trim((string)$ext))
+	));
+	if (empty($archivoPreparado['ok'])) {
+		return false;
+	}
 
 	$ruta= NULL;
-	$foto = substr($foto, strpos($foto, ",") + 1);
-	$foto = base64_decode($foto);
+	$foto= $archivoPreparado['binario'];
+	$ext= $archivoPreparado['extension'];
 	$donde = "../fotos/fotosGastos/";
 	$id_foto = $prefijo.$idgastos;
-	$id_f = subir_imagen_base64($donde, $foto, $id_foto, $ext);
+	try {
+		$id_f = subir_imagen_base64($donde, $foto, $id_foto, $ext);
+	} catch (Exception $e) {
+		return false;
+	}
 	$ruta = "/GoodVentaAsisCap/fotos/fotosGastos/" . $prefijo . $idgastos . $id_f . "." . $ext;
+	$rutaAbsoluta= dirname(__DIR__).DIRECTORY_SEPARATOR.'fotos'.DIRECTORY_SEPARATOR.'fotosGastos'.DIRECTORY_SEPARATOR.$prefijo.$idgastos.$id_f.'.'.$ext;
+	clearstatcache(true, $rutaAbsoluta);
+	if (!is_file($rutaAbsoluta) || filesize($rutaAbsoluta) !== strlen($foto)) {
+		if (is_file($rutaAbsoluta)) { @unlink($rutaAbsoluta); }
+		return false;
+	}
 	
 	$mysqli=conectar_al_servidor();
 	$consulta="Update gastos set $columna=? where idgastos=? ";	
 	
 	$stmt = $mysqli->prepare($consulta);
+	if (!$stmt) {
+		$mysqli->close();
+		if (is_file($rutaAbsoluta)) { @unlink($rutaAbsoluta); }
+		return false;
+	}
 	$stmt->bind_param('si', $ruta, $idgastos);
 	if ( ! $stmt->execute()) {
-		echo "Error";
-		exit;
+		$stmt->close();
+		$mysqli->close();
+		if (is_file($rutaAbsoluta)) { @unlink($rutaAbsoluta); }
+		return false;
 	}
-
+	$stmt->close();
+	$mysqli->close();
 	return true;
 }
 
@@ -2035,10 +2290,10 @@ if ($transaccionDeposito) {
 
 $foto=$_POST['foto'];
 $ext=$_POST['ext'];
-subirImagenGasto($idgastos, $foto, $ext);
+$archivoPrincipalOk= subirImagenGasto($idgastos, $foto, $ext);
 $foto_documento_firmado= isset($_POST['foto_documento_firmado']) ? $_POST['foto_documento_firmado'] : '';
 $ext_documento_firmado= isset($_POST['ext_documento_firmado']) ? $_POST['ext_documento_firmado'] : '';
-subirDocumentoFirmadoGasto($idgastos, $foto_documento_firmado, $ext_documento_firmado);
+$archivoFirmadoOk= subirDocumentoFirmadoGasto($idgastos, $foto_documento_firmado, $ext_documento_firmado);
 
 if($operacion=="editar")
 {
@@ -2067,7 +2322,19 @@ if($operacion=="editar")
 		abmMensaje("", $mensaje, $fechaActual->format('Y-m-d H:i:s'), $cod_interConsultaFK, "", NULL, TRUE);
 	}
 }
-return array("1" => "exito", "2" => $idgastos);	
+$resultadoGasto= array("1" => "exito", "2" => $idgastos);
+if (!$archivoPrincipalOk || !$archivoFirmadoOk) {
+	$resultadoGasto['parcial']= 1;
+	$resultadoGasto['archivo']= array(
+		'ok' => false,
+		'principal_ok' => $archivoPrincipalOk ? 1 : 0,
+		'firmado_ok' => $archivoFirmadoOk ? 1 : 0,
+		'mensaje' => !$archivoPrincipalOk
+			? 'El movimiento se guardo, pero no se pudo conservar el comprobante principal. Reabra el movimiento y vuelva a adjuntarlo.'
+			: 'El movimiento y su comprobante principal se guardaron, pero falta volver a adjuntar el documento firmado.'
+	);
+}
+return $resultadoGasto;
 }
 
 function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos, $fechaOrder= 'DESC', $cod_proyecto_gastoFK= '') {

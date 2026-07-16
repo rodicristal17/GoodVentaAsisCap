@@ -584,6 +584,43 @@
                 }
                 echo json_encode(array("1" => "exito", "2" => seguimientoProgramadoFilaUtf8($mensajeContexto)));
                 break;
+            case 'contextoAdjuntoDocumento':
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? intval($_POST['cod_interConsulta']) : 0;
+                if ($cod_interConsulta > 0 && !seguimientoProgramadoPuedeAccederHilo($cod_interConsulta, $user, true)) {
+                    echo json_encode(array("1" => "NI", "mensaje" => "No tiene acceso al Hilo seleccionado."));
+                    break;
+                }
+                $contextoAdjunto= centroFacturaContextoAdjuntoDocumento($user);
+                echo json_encode(array("1" => "exito", "2" => centroFacturaValorUtf8($contextoAdjunto)), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                break;
+            case 'nuevo mensaje con adjunto':
+                $cod_interConsulta= isset($_POST['cod_interConsulta']) ? intval($_POST['cod_interConsulta']) : 0;
+                $contenido= isset($_POST['contenido']) ? (string)$_POST['contenido'] : '';
+                $cod_dictamenFK= isset($_POST['cod_dictamenFK']) && intval($_POST['cod_dictamenFK']) > 0 ? intval($_POST['cod_dictamenFK']) : null;
+                $cod_mensaje_respuestaFK= isset($_POST['cod_mensaje_respuestaFK']) && intval($_POST['cod_mensaje_respuestaFK']) > 0 ? intval($_POST['cod_mensaje_respuestaFK']) : null;
+                $tipoAdjunto= isset($_POST['tipo_adjunto']) ? strtolower(trim((string)$_POST['tipo_adjunto'])) : 'otro';
+                $foto= isset($_POST['foto']) ? (string)$_POST['foto'] : '';
+                $ext= isset($_POST['ext']) ? strtolower(trim((string)$_POST['ext'])) : '';
+                $nombreArchivo= isset($_POST['nombre_archivo']) ? (string)$_POST['nombre_archivo'] : 'adjunto.'.$ext;
+                $datosDocumento= array();
+                if (isset($_POST['datos_documento']) && trim((string)$_POST['datos_documento']) !== '') {
+                    $datosDecodificados= json_decode((string)$_POST['datos_documento'], true);
+                    if (is_array($datosDecodificados)) {
+                        $datosDocumento= $datosDecodificados;
+                    }
+                }
+                $resultadoMensajeAdjunto= registrarMensajeConAdjuntoInterconsulta(
+                    $cod_interConsulta, $contenido, $cod_dictamenFK, $cod_mensaje_respuestaFK,
+                    $tipoAdjunto, $datosDocumento, array('data' => $foto, 'nombre' => $nombreArchivo, 'extension_solicitada' => $ext), $user
+                );
+                $estadoRespuesta= !empty($resultadoMensajeAdjunto['ok']) ? 'exito' : (!empty($resultadoMensajeAdjunto['codigo']) ? $resultadoMensajeAdjunto['codigo'] : 'error');
+                $respuestaMensajeAdjunto= $resultadoMensajeAdjunto;
+                $respuestaMensajeAdjunto['1']= $estadoRespuesta;
+                if (!empty($resultadoMensajeAdjunto['cod_mensaje'])) {
+                    $respuestaMensajeAdjunto['2']= intval($resultadoMensajeAdjunto['cod_mensaje']);
+                }
+                echo json_encode(centroFacturaValorUtf8($respuestaMensajeAdjunto), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                break;
             case 'nuevo/editar mensaje':
                 $cod_mensaje= isset($_POST['cod_mensaje']) ? mb_convert_encoding((string)($_POST['cod_mensaje']), 'ISO-8859-1', 'UTF-8') : null;
                 $contenido= isset($_POST['contenido']) ? mb_convert_encoding((string)($_POST['contenido']), 'ISO-8859-1', 'UTF-8') : null;
@@ -653,6 +690,12 @@
                 $foto= isset($_POST['foto']) ? mb_convert_encoding((string)($_POST['foto']), 'ISO-8859-1', 'UTF-8') : null;
                 $ext= isset($_POST['ext']) ? mb_convert_encoding((string)($_POST['ext']), 'ISO-8859-1', 'UTF-8') : null;
                 $tipoAdjunto= isset($_POST['tipo_adjunto']) ? mb_convert_encoding((string)($_POST['tipo_adjunto']), 'ISO-8859-1', 'UTF-8') : 'otro';
+                $tipoAdjunto= strtolower(trim((string)$tipoAdjunto));
+                if (in_array($tipoAdjunto, array('factura','comprobante'), true)
+                    && !centroFacturaTienePermiso($user, 'REGISTRARFACTURAHILO')) {
+                    echo json_encode(array("1" => "NI", "mensaje" => "No tiene permiso para clasificar adjuntos financieros desde Hilos."));
+                    break;
+                }
                 $validacionAdjunto= validarSubidaAdjuntoMensajeInterconsulta($cod_mensaje, $user);
                 if (empty($validacionAdjunto['ok'])) {
                     echo json_encode(array("1" => "error", "mensaje" => $validacionAdjunto['mensaje']));
@@ -2086,32 +2129,66 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
 
             $miniatura_imagen= "";
             $accionesCentroFactura= "";
+            $tarjetaDocumento= "";
             if ($valueMens['url']) {
                 $urlAdjunto= escaparHtmlInterconsulta($valueMens['url']);
                 $extensionAdjunto= escaparHtmlInterconsulta(obtenerExtensionUrlInterconsulta($valueMens['url']));
                 $esImagenAdjunto= esUrlImagenInterconsulta($valueMens['url']);
                 $urlMiniaturaAdjunto= $esImagenAdjunto ? $urlAdjunto : "/GoodVentaAsisCap/iconos/informedevolucion.png";
                 $claseDocumentoAdjunto= $esImagenAdjunto ? "" : " imgFotoProductoDocumento";
-                $miniatura_imagen= '<button type="button" class="interconsulta-message-attachment" onclick="vercerrarcargadefotos(\'fotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'\', false)" title="Ver adjunto">
-                    <span id="imgfotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'" class="imgFotoProducto'.$claseDocumentoAdjunto.'" data-adjunto-url="'.$urlAdjunto.'" data-adjunto-ext="'.$extensionAdjunto.'" style="background-image: url('.$urlMiniaturaAdjunto.');"></span>
-                    <small>Adjunto</small>
-                </button>';
                 $idFacturaAdjunto= isset($valueMens['centro_factura_id']) ? intval($valueMens['centro_factura_id']) : 0;
                 $tipoAdjuntoMensaje= isset($valueMens['tipo_adjunto']) ? strtolower(trim((string)$valueMens['tipo_adjunto'])) : '';
-                $tipoDocumentoCentro= isset($valueMens['centro_factura_tipo_documento']) ? strtolower(trim((string)$valueMens['centro_factura_tipo_documento'])) : ($tipoAdjuntoMensaje === 'comprobante' ? 'recibo' : 'factura');
-                if ($idFacturaAdjunto > 0) {
-                    $accionesCentroFactura= '<div class="interconsulta-message-invoice">'
-                        .'<span><i class="fa-solid fa-file-invoice" aria-hidden="true"></i> '.($tipoDocumentoCentro === 'recibo' ? 'Recibo registrado' : 'Factura registrada').'</span>'
-                        .'<button type="button" onclick="centroFacturasAbrirDetalle('.$idFacturaAdjunto.')">Ver en Centro de Facturas</button>'
-                        .'</div>';
-                } elseif (centroFacturaTienePermiso(isset($filtros['cod_usuarioFK']) ? $filtros['cod_usuarioFK'] : 0, 'REGISTRARFACTURAHILO')) {
-                    $esReciboAdjunto= $tipoAdjuntoMensaje === 'comprobante';
-                    $textoAccionFactura= $esReciboAdjunto ? 'Completar registro de recibo' : ($tipoAdjuntoMensaje === 'factura' ? 'Completar registro de factura' : 'Registrar como factura');
-                    $accionesCentroFactura= '<div class="interconsulta-message-invoice interconsulta-message-invoice--pending">'
-                        .(in_array($tipoAdjuntoMensaje, array('factura','comprobante'), true) ? '<span><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> '.($esReciboAdjunto ? 'Recibo' : 'Factura').' pendiente de registrar</span>' : '')
-                        .'<button type="button" onclick="centroFacturasRegistrarAdjuntoHilo('.intval($valueMens['cod_mensaje']).')">'.$textoAccionFactura.'</button>'
-                        .'</div>';
+                $tipoDocumentoCentro= !empty($valueMens['centro_factura_tipo_documento'])
+                    ? strtolower(trim((string)$valueMens['centro_factura_tipo_documento']))
+                    : ($tipoAdjuntoMensaje === 'comprobante' ? 'recibo' : ($tipoAdjuntoMensaje === 'factura' ? 'factura' : ''));
+                $esFacturaAdjunto= $tipoAdjuntoMensaje === 'factura' || $tipoDocumentoCentro === 'factura';
+                $esReciboAdjunto= $tipoAdjuntoMensaje === 'comprobante' || $tipoDocumentoCentro === 'recibo';
+                $claseTipoDocumento= $esFacturaAdjunto ? ' interconsulta-document-card--factura' : ($esReciboAdjunto ? ' interconsulta-document-card--recibo' : '');
+                $autorDocumento= !empty($valueMens['nombre_persona']) ? $valueMens['nombre_persona'] : 'Un participante';
+                $tituloDocumento= $autorDocumento.' adjuntó '.($esFacturaAdjunto ? 'una factura' : ($esReciboAdjunto ? 'un recibo / comprobante' : 'una imagen o archivo'));
+                $iconoDocumento= $esFacturaAdjunto ? 'fa-file-invoice' : ($esReciboAdjunto ? 'fa-receipt' : ($esImagenAdjunto ? 'fa-image' : 'fa-file'));
+                $datosDocumento= '';
+                $nombreContraparte= isset($valueMens['centro_factura_nombre_contraparte']) ? trim((string)$valueMens['centro_factura_nombre_contraparte']) : '';
+                $documentoContraparte= isset($valueMens['centro_factura_documento_contraparte']) ? trim((string)$valueMens['centro_factura_documento_contraparte']) : '';
+                $numeroDocumento= isset($valueMens['centro_factura_numero']) ? trim((string)$valueMens['centro_factura_numero']) : '';
+                $fechaDocumento= isset($valueMens['centro_factura_fecha_emision']) ? trim((string)$valueMens['centro_factura_fecha_emision']) : '';
+                $importeDocumento= isset($valueMens['centro_factura_importe_total']) ? (float)$valueMens['centro_factura_importe_total'] : 0;
+                $descripcionDocumento= isset($valueMens['centro_factura_observaciones']) ? trim((string)$valueMens['centro_factura_observaciones']) : '';
+                if ($nombreContraparte !== '') {
+                    $datosDocumento.= '<span>Proveedor / raz&oacute;n social<b>'.escaparHtmlInterconsulta($nombreContraparte).'</b></span>';
                 }
+                if ($documentoContraparte !== '') {
+                    $datosDocumento.= '<span>RUC<b>'.escaparHtmlInterconsulta($documentoContraparte).'</b></span>';
+                }
+                if ($numeroDocumento !== '') {
+                    $datosDocumento.= '<span>'.($esReciboAdjunto ? 'N.&ordm; de recibo' : 'N.&ordm; de factura').'<b>'.escaparHtmlInterconsulta($numeroDocumento).'</b></span>';
+                }
+                if ($fechaDocumento !== '') {
+                    $fechaDocumentoVista= strtotime($fechaDocumento) ? date('d/m/Y', strtotime($fechaDocumento)) : $fechaDocumento;
+                    $datosDocumento.= '<span>Fecha<b>'.escaparHtmlInterconsulta($fechaDocumentoVista).'</b></span>';
+                }
+                if ($importeDocumento > 0) {
+                    $datosDocumento.= '<span>Monto<b>Gs. '.number_format($importeDocumento, 0, ',', '.').'</b></span>';
+                }
+                if ($datosDocumento === '') {
+                    $datosDocumento= '<span>Archivo<b>'.escaparHtmlInterconsulta(strtoupper($extensionAdjunto)).'</b></span>';
+                }
+                $accionesDocumento= '<button type="button" onclick="vercerrarcargadefotos(\'fotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'\', false)">'
+                    .'<span id="imgfotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'" class="imgFotoProducto'.$claseDocumentoAdjunto.'" data-adjunto-url="'.$urlAdjunto.'" data-adjunto-ext="'.$extensionAdjunto.'" style="display:none;background-image:url('.$urlMiniaturaAdjunto.');"></span>'
+                    .'<i class="fa-solid fa-paperclip" aria-hidden="true"></i> Ver archivo</button>';
+                if ($idFacturaAdjunto > 0) {
+                    $accionesDocumento.= '<button type="button" onclick="centroFacturasAbrirDetalle('.$idFacturaAdjunto.')"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Ver en Centro de Facturas</button>';
+                } elseif (($esFacturaAdjunto || $esReciboAdjunto)
+                    && centroFacturaTienePermiso(isset($filtros['cod_usuarioFK']) ? $filtros['cod_usuarioFK'] : 0, 'REGISTRARFACTURAHILO')) {
+                    $textoAccionFactura= $esReciboAdjunto ? 'Completar registro de recibo' : ($tipoAdjuntoMensaje === 'factura' ? 'Completar registro de factura' : 'Registrar como factura');
+                    $accionesDocumento.= '<button type="button" onclick="centroFacturasRegistrarAdjuntoHilo('.intval($valueMens['cod_mensaje']).')"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> '.$textoAccionFactura.'</button>';
+                }
+                $tarjetaDocumento= '<section class="interconsulta-document-card'.$claseTipoDocumento.'">'
+                    .'<div class="interconsulta-document-card__header"><i class="fa-solid '.$iconoDocumento.'" aria-hidden="true"></i><strong>'.escaparHtmlInterconsulta($tituloDocumento).'</strong></div>'
+                    .'<div class="interconsulta-document-card__data">'.$datosDocumento.'</div>'
+                    .($descripcionDocumento !== '' ? '<p class="interconsulta-document-card__description">'.nl2br(escaparHtmlInterconsulta($descripcionDocumento), false).'</p>' : '')
+                    .'<div class="interconsulta-document-card__actions">'.$accionesDocumento.'</div>'
+                    .'</section>';
             }
             
             $contenidoPlano= mb_strtolower(strip_tags($contenidoMensaje));
@@ -2186,9 +2263,8 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                         </header>
                         <div class="interconsulta-message-body">
                             '.$respuestaCitada.'
-                            '.$miniatura_imagen.'
-                            '.$accionesCentroFactura.'
                             <p>'.$contenidoMensaje.'</p>
+                            '.$tarjetaDocumento.'
                         </div>
                     </article>
                 </div>';
@@ -3324,6 +3400,305 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         return strtolower(pathinfo(parse_url((string)$url, PHP_URL_PATH), PATHINFO_EXTENSION));
     }
 
+    function prepararContenidoMensajeConAdjuntoInterconsulta($contenido) {
+        $contenido= (string)$contenido;
+        if ($contenido !== '' && !mb_check_encoding($contenido, 'UTF-8')) {
+            $contenido= mb_convert_encoding($contenido, 'UTF-8', 'ISO-8859-1');
+        }
+        $contenidoLimpiado= '';
+        $idsMenciones= array();
+        if (trim($contenido) !== '') {
+            $dom= new DOMDocument();
+            libxml_use_internal_errors(true);
+            $cargado= $dom->loadHTML('<?xml encoding="UTF-8"><html><body>'.$contenido.'</body></html>', LIBXML_HTML_NODEFDTD);
+            if ($cargado) {
+                $spans= $dom->getElementsByTagName('b');
+                foreach ($spans as $span) {
+                    if ($span->hasAttribute('id') && intval($span->getAttribute('id')) > 0) {
+                        $idsMenciones[]= intval($span->getAttribute('id'));
+                    }
+                }
+                $xpath= new DOMXPath($dom);
+                $nodosMencion= array();
+                foreach ($xpath->query('//b[@id]') as $nodoMencion) {
+                    $nodosMencion[]= $nodoMencion;
+                }
+                foreach ($nodosMencion as $nodoMencion) {
+                    $idMencion= intval($nodoMencion->getAttribute('id'));
+                    $nodoMencion->parentNode->replaceChild($dom->createTextNode('@{'.$idMencion.'}'), $nodoMencion);
+                }
+                $contenidoHtml= '';
+                $body= $dom->getElementsByTagName('body')->item(0);
+                if ($body) {
+                    foreach ($body->childNodes as $nodoContenido) {
+                        $contenidoHtml.= $dom->saveHTML($nodoContenido);
+                    }
+                }
+                $contenidoHtml= preg_replace('/<br\s*\/?>/i', "\n", $contenidoHtml);
+                $contenidoHtml= preg_replace('/<\/(div|p|li|tr|h[1-6])>/i', "\n", $contenidoHtml);
+                $contenidoLimpiado= strip_tags($contenidoHtml);
+            }
+            libxml_clear_errors();
+            $contenidoLimpiado= html_entity_decode($contenidoLimpiado, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $contenidoLimpiado= str_replace("\xC2\xA0", ' ', $contenidoLimpiado);
+            $contenidoLimpiado= preg_replace("/[ \t]+\n/u", "\n", $contenidoLimpiado);
+            $contenidoLimpiado= preg_replace("/\n[ \t]+/u", "\n", $contenidoLimpiado);
+            $contenidoLimpiado= preg_replace("/\R/u", "\n", $contenidoLimpiado);
+            $contenidoLimpiado= preg_replace("/\n{3,}/", "\n\n", $contenidoLimpiado);
+            $contenidoLimpiado= trim($contenidoLimpiado);
+        }
+        $longitud= function_exists('mb_strlen') ? mb_strlen($contenidoLimpiado, 'UTF-8') : strlen($contenidoLimpiado);
+        if ($longitud > 750) {
+            return array('ok' => false, 'mensaje' => 'El mensaje supera el limite de 750 caracteres.');
+        }
+        return array(
+            'ok' => true,
+            'contenido' => centroFacturaTextoBaseDatos($contenidoLimpiado, 750, true),
+            'menciones' => array_values(array_unique($idsMenciones))
+        );
+    }
+
+    function guardarArchivoPreparadoMensajeInterconsulta($codMensaje, $archivo) {
+        $directorio= dirname(__DIR__).DIRECTORY_SEPARATOR.'fotos'.DIRECTORY_SEPARATOR.'fotosMensaje';
+        if (!is_dir($directorio) && !mkdir($directorio, 0775, true)) {
+            return array('ok' => false, 'mensaje' => 'No se pudo preparar la carpeta de adjuntos.');
+        }
+        try {
+            $sufijo= bin2hex(random_bytes(6));
+        } catch (Exception $e) {
+            $sufijo= str_replace('.', '', uniqid('', true));
+        }
+        $nombre= intval($codMensaje).'-'.$sufijo.'.'.$archivo['extension'];
+        $rutaAbsoluta= $directorio.DIRECTORY_SEPARATOR.$nombre;
+        $bytesEsperados= strlen($archivo['binario']);
+        $bytesEscritos= file_put_contents($rutaAbsoluta, $archivo['binario'], LOCK_EX);
+        if ($bytesEscritos === false || intval($bytesEscritos) !== $bytesEsperados) {
+            if (is_file($rutaAbsoluta)) {
+                @unlink($rutaAbsoluta);
+            }
+            return array('ok' => false, 'mensaje' => 'No se pudo guardar el adjunto.');
+        }
+        return array(
+            'ok' => true,
+            'ruta_absoluta' => $rutaAbsoluta,
+            'url' => '/GoodVentaAsisCap/fotos/fotosMensaje/'.$nombre
+        );
+    }
+
+    function registrarMencionesMensajeAdjuntoEnTransaccion($mysqli, $codMensaje, $codInterConsulta, $codUsuario, $idsMenciones) {
+        $usuarios= array(intval($codUsuario) => 1);
+        foreach ((array)$idsMenciones as $idMencion) {
+            $idMencion= intval($idMencion);
+            if ($idMencion > 0) {
+                $usuarios[$idMencion]= 1;
+            }
+        }
+        $stmt= $mysqli->prepare("SELECT DISTINCT mn.cod_usuarioFK
+            FROM menciones mn INNER JOIN mensaje m ON m.cod_mensaje=mn.cod_mensajeFK
+            WHERE m.cod_interConsultaFK=? AND m.estado='activo' AND m.fecha_creacion<=NOW()
+              AND mn.isLeido=0 AND mn.estado<>'inactivo'");
+        if (!$stmt) {
+            return false;
+        }
+        $stmt->bind_param('i', $codInterConsulta);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return false;
+        }
+        $resultado= $stmt->get_result();
+        while ($fila= $resultado->fetch_assoc()) {
+            $idPendiente= intval($fila['cod_usuarioFK']);
+            if ($idPendiente > 0) {
+                $usuarios[$idPendiente]= 1;
+            }
+        }
+        $stmt->close();
+        $ids= array_keys($usuarios);
+        if (count($ids) === 0) {
+            return true;
+        }
+        $idsSeguros= array_map('intval', $ids);
+        $resultadoUsuarios= $mysqli->query("SELECT cod_usuario FROM usuario WHERE cod_usuario IN (".implode(',', $idsSeguros).") AND estado='Activo'");
+        if (!$resultadoUsuarios) {
+            return false;
+        }
+        $usuariosValidos= array();
+        while ($filaUsuario= $resultadoUsuarios->fetch_assoc()) {
+            $usuariosValidos[]= intval($filaUsuario['cod_usuario']);
+        }
+        $resultadoUsuarios->free();
+        $sql= "INSERT INTO menciones (cod_usuarioFK,cod_mensajeFK,isLeido,estado)
+            VALUES (?,?,?,'activo')
+            ON DUPLICATE KEY UPDATE isLeido=VALUES(isLeido),estado='activo'";
+        $stmt= $mysqli->prepare($sql);
+        if (!$stmt) {
+            return false;
+        }
+        foreach ($usuariosValidos as $idUsuario) {
+            $leido= $idUsuario === intval($codUsuario) ? 1 : 0;
+            $stmt->bind_param('iii', $idUsuario, $codMensaje, $leido);
+            if (!$stmt->execute()) {
+                $stmt->close();
+                return false;
+            }
+        }
+        $stmt->close();
+        return true;
+    }
+
+    function registrarMensajeConAdjuntoInterconsulta($codInterConsulta, $contenido, $codDictamenFK, $codMensajeRespuestaFK, $tipoAdjunto, $datosDocumento, $archivo, $codUsuario) {
+        $codInterConsulta= intval($codInterConsulta);
+        $codUsuario= intval($codUsuario);
+        $tipoAdjunto= strtolower(trim((string)$tipoAdjunto));
+        if ($codInterConsulta <= 0 || $codUsuario <= 0 || !in_array($tipoAdjunto, array('factura','comprobante','otro'), true)) {
+            return array('ok' => false, 'codigo' => 'error', 'mensaje' => 'El Hilo o el tipo de adjunto no son validos.');
+        }
+        if (!seguimientoProgramadoPuedeAccederHilo($codInterConsulta, $codUsuario, true)) {
+            return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene acceso para responder en este Hilo.');
+        }
+        if (in_array($tipoAdjunto, array('factura','comprobante'), true)
+            && !centroFacturaTienePermiso($codUsuario, 'REGISTRARFACTURAHILO')) {
+            return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permiso para registrar facturas o recibos desde Hilos.');
+        }
+        $contenidoPreparado= prepararContenidoMensajeConAdjuntoInterconsulta($contenido);
+        if (empty($contenidoPreparado['ok'])) {
+            return $contenidoPreparado;
+        }
+        $archivoPreparado= centroFacturaPrepararArchivo($archivo);
+        if (empty($archivoPreparado['ok'])) {
+            return array('ok' => false, 'codigo' => 'archivo', 'mensaje' => $archivoPreparado['mensaje']);
+        }
+        $mysqli= conectar_al_servidor();
+        if (in_array($tipoAdjunto, array('factura','comprobante'), true) && !centroFacturaEstructuraDisponible($mysqli)) {
+            $mysqli->close();
+            return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura del Centro de Facturas no esta instalada.');
+        }
+        $rutaAbsoluta= '';
+        if (!$mysqli->begin_transaction()) {
+            $mysqli->close();
+            return array('ok' => false, 'codigo' => 'error', 'mensaje' => 'No se pudo iniciar el envio seguro del mensaje.');
+        }
+        try {
+            $stmt= $mysqli->prepare("SELECT cod_interConsulta,cod_localFK,estado FROM interconsulta WHERE cod_interConsulta=? LIMIT 1 FOR UPDATE");
+            if (!$stmt) {
+                throw new Exception('No se pudo validar el Hilo.');
+            }
+            $stmt->bind_param('i', $codInterConsulta);
+            if (!$stmt->execute()) {
+                $stmt->close();
+                throw new Exception('No se pudo validar el Hilo.');
+            }
+            $hilo= $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            if (!$hilo || strtolower(trim((string)$hilo['estado'])) === 'inactivo') {
+                throw new Exception('El Hilo ya no esta activo.');
+            }
+            if (in_array($tipoAdjunto, array('factura','comprobante'), true)
+                && !centroFacturaPuedeUsarLocal($codUsuario, $hilo['cod_localFK'], $mysqli)) {
+                throw new Exception('No puede registrar documentos para el local del Hilo.');
+            }
+            if ($codMensajeRespuestaFK !== null) {
+                if (!seguimientoProgramadoRespuestaCitadaDisponible($mysqli)) {
+                    throw new Exception('La respuesta citada todavia no esta disponible.');
+                }
+                $stmt= $mysqli->prepare("SELECT cod_mensaje FROM mensaje
+                    WHERE cod_mensaje=? AND cod_interConsultaFK=? AND estado='activo' AND fecha_creacion<=NOW() LIMIT 1");
+                if (!$stmt) {
+                    throw new Exception('No se pudo validar el mensaje citado.');
+                }
+                $stmt->bind_param('ii', $codMensajeRespuestaFK, $codInterConsulta);
+                if (!$stmt->execute()) {
+                    $stmt->close();
+                    throw new Exception('No se pudo validar el mensaje citado.');
+                }
+                $respuestaValida= $stmt->get_result()->num_rows > 0;
+                $stmt->close();
+                if (!$respuestaValida) {
+                    throw new Exception('El mensaje citado ya no pertenece a este Hilo.');
+                }
+            }
+            $validosDocumento= array('ok' => true, 'tipo_adjunto' => 'otro', 'tipo_documento' => '');
+            if (in_array($tipoAdjunto, array('factura','comprobante'), true)) {
+                $validosDocumento= centroFacturaValidarAdjuntoDocumental($mysqli, $tipoAdjunto, $datosDocumento);
+                if (empty($validosDocumento['ok'])) {
+                    throw new Exception($validosDocumento['mensaje']);
+                }
+            }
+            $fechaCreacion= date('Y-m-d H:i:s');
+            $contenidoBaseDatos= $contenidoPreparado['contenido'];
+            if (seguimientoProgramadoRespuestaCitadaDisponible($mysqli)) {
+                $stmt= $mysqli->prepare("INSERT INTO mensaje
+                    (contenido,fecha_creacion,cod_interConsultaFK,cod_usuarioFK,cod_dictamenFK,cod_mensaje_respuestaFK)
+                    VALUES (?,?,?,?,?,?)");
+                if ($stmt) {
+                    $stmt->bind_param('ssiiii', $contenidoBaseDatos, $fechaCreacion, $codInterConsulta, $codUsuario, $codDictamenFK, $codMensajeRespuestaFK);
+                }
+            } else {
+                $stmt= $mysqli->prepare("INSERT INTO mensaje
+                    (contenido,fecha_creacion,cod_interConsultaFK,cod_usuarioFK,cod_dictamenFK)
+                    VALUES (?,?,?,?,?)");
+                if ($stmt) {
+                    $stmt->bind_param('ssiii', $contenidoBaseDatos, $fechaCreacion, $codInterConsulta, $codUsuario, $codDictamenFK);
+                }
+            }
+            if (!$stmt || !$stmt->execute()) {
+                throw new Exception('No se pudo crear el mensaje con su adjunto.');
+            }
+            $codMensaje= intval($stmt->insert_id);
+            $stmt->close();
+            $guardado= guardarArchivoPreparadoMensajeInterconsulta($codMensaje, $archivoPreparado);
+            if (empty($guardado['ok'])) {
+                throw new Exception($guardado['mensaje']);
+            }
+            $rutaAbsoluta= $guardado['ruta_absoluta'];
+            $urlAdjunto= $guardado['url'];
+            $stmt= $mysqli->prepare("UPDATE mensaje SET url=?,tipo_adjunto=? WHERE cod_mensaje=? AND estado='activo'");
+            if (!$stmt) {
+                throw new Exception('No se pudo preparar el vinculo del archivo con el mensaje.');
+            }
+            $stmt->bind_param('ssi', $urlAdjunto, $tipoAdjunto, $codMensaje);
+            if (!$stmt->execute() || $stmt->affected_rows < 1) {
+                $stmt->close();
+                throw new Exception('No se pudo vincular el archivo con el mensaje.');
+            }
+            $stmt->close();
+            $resultadoCentro= null;
+            if (in_array($tipoAdjunto, array('factura','comprobante'), true)) {
+                $mensajeCentro= array(
+                    'cod_mensaje' => $codMensaje, 'cod_interConsultaFK' => $codInterConsulta,
+                    'cod_localFK' => intval($hilo['cod_localFK']), 'url' => $urlAdjunto,
+                    'contenido' => $contenidoBaseDatos, 'tipo_adjunto' => $tipoAdjunto
+                );
+                $resultadoCentro= centroFacturaInsertarDesdeMensajeEnTransaccion($mysqli, $mensajeCentro, $validosDocumento, $archivoPreparado, $codUsuario);
+                if (empty($resultadoCentro['ok'])) {
+                    throw new Exception($resultadoCentro['mensaje']);
+                }
+            }
+            if (!registrarMencionesMensajeAdjuntoEnTransaccion($mysqli, $codMensaje, $codInterConsulta, $codUsuario, $contenidoPreparado['menciones'])) {
+                throw new Exception('No se pudieron registrar los destinatarios del mensaje.');
+            }
+            if (!$mysqli->commit()) {
+                throw new Exception('No se pudo confirmar el mensaje con su adjunto.');
+            }
+            $mysqli->close();
+            $respuesta= array(
+                'ok' => true, 'cod_mensaje' => $codMensaje, 'tipo_adjunto' => $tipoAdjunto,
+                'url' => $urlAdjunto
+            );
+            if ($resultadoCentro) {
+                $respuesta['centro_facturas']= $resultadoCentro;
+            }
+            return $respuesta;
+        } catch (Exception $e) {
+            $mysqli->rollback();
+            $mysqli->close();
+            if ($rutaAbsoluta !== '' && is_file($rutaAbsoluta)) {
+                @unlink($rutaAbsoluta);
+            }
+            return array('ok' => false, 'codigo' => 'error', 'mensaje' => $e->getMessage());
+        }
+    }
+
     function validarSubidaAdjuntoMensajeInterconsulta($codMensaje, $codUsuario) {
         $codMensaje= intval($codMensaje);
         $codUsuario= intval($codUsuario);
@@ -3398,7 +3773,12 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         }
         $nombre= $cod_mensaje.'-'.$sufijo.'.'.$ext;
         $rutaAbsoluta= $directorio.DIRECTORY_SEPARATOR.$nombre;
-        if (file_put_contents($rutaAbsoluta, $contenido, LOCK_EX) === false) {
+        $bytesEsperados= strlen($contenido);
+        $bytesEscritos= file_put_contents($rutaAbsoluta, $contenido, LOCK_EX);
+        if ($bytesEscritos === false || intval($bytesEscritos) !== $bytesEsperados) {
+            if (is_file($rutaAbsoluta)) {
+                @unlink($rutaAbsoluta);
+            }
             return array('ok' => false, 'mensaje' => 'No se pudo guardar el adjunto.');
         }
         $ruta= '/GoodVentaAsisCap/fotos/fotosMensaje/'.$nombre;
@@ -3616,13 +3996,22 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 LEFT JOIN persona pr ON pr.cod_persona=mr.cod_usuarioFK";
         }
         $camposCentroFactura= ", NULL AS centro_factura_id, NULL AS centro_factura_tipo_documento,
-            NULL AS centro_factura_estado_validacion, NULL AS centro_factura_estado_original";
+            NULL AS centro_factura_estado_validacion, NULL AS centro_factura_estado_original,
+            NULL AS centro_factura_nombre_contraparte, NULL AS centro_factura_documento_contraparte,
+            NULL AS centro_factura_numero, NULL AS centro_factura_fecha_emision,
+            NULL AS centro_factura_importe_total, NULL AS centro_factura_observaciones";
         $joinCentroFactura= "";
         if (centroFacturaEstructuraDisponible($mysqli)) {
             $camposCentroFactura= ", cf.id_factura AS centro_factura_id,
                 cf.tipo_documento AS centro_factura_tipo_documento,
                 cf.estado_validacion AS centro_factura_estado_validacion,
-                cf.estado_original AS centro_factura_estado_original";
+                cf.estado_original AS centro_factura_estado_original,
+                cf.nombre_contraparte AS centro_factura_nombre_contraparte,
+                cf.documento_contraparte AS centro_factura_documento_contraparte,
+                cf.numero_factura AS centro_factura_numero,
+                cf.fecha_emision AS centro_factura_fecha_emision,
+                cf.importe_total AS centro_factura_importe_total,
+                cf.observaciones AS centro_factura_observaciones";
             $joinCentroFactura= "
                 LEFT JOIN centro_factura_archivo cfa ON cfa.cod_mensajeFK=m.cod_mensaje AND cfa.estado='activo'
                 LEFT JOIN centro_factura cf ON cf.id_factura=cfa.id_facturaFK AND cf.estado_registro='activo'";

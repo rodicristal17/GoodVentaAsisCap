@@ -1,0 +1,723 @@
+/* Flujo guiado de adjuntos para Hilos y movimientos financieros.
+   Se carga despues del tema activo para mantener el componente estable y acotado. */
+
+#editorMensajeInterConsulta {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+#divAbmDetallesInterConsulta .interconsulta-attach-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  min-width: 42px;
+  height: 44px;
+  border: 1px dashed #b8cadb;
+  border-radius: 12px;
+  background: #f7fbfe;
+  color: #315a7c;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+#divAbmDetallesInterConsulta .interconsulta-attach-action:hover,
+#divAbmDetallesInterConsulta .interconsulta-attach-action:focus {
+  border-color: #83b8e2;
+  background: #edf6ff;
+}
+
+#divAbmDetallesInterConsulta .interconsulta-attach-action__text {
+  display: none;
+}
+
+#imgfotoAnexoInterchat {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  border: none;
+  background-image: url('/GoodVentaAsisCap/iconos/subir_imagen.png');
+  background-size: contain;
+  box-shadow: none;
+}
+
+.imgFotoProducto.imgFotoProductoDocumento {
+  background-color: #eef4f8;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+#inptContenidoAbmMensaje {
+  width: 100%;
+  min-height: 38px;
+  height: 38px;
+  max-height: 112px;
+  margin: 0;
+  border: 1px solid #cdd9e4;
+  border-radius: 12px;
+  padding: 6px 10px;
+  background: #fbfdff;
+  color: #1f354c;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-y: hidden;
+  resize: none;
+}
+
+#inptContenidoAbmMensaje:empty::before {
+  content: attr(data-placeholder);
+  color: #8aa0b3;
+}
+
+#accionesMensajeInterConsulta {
+  display: flex;
+  width: auto;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+}
+
+#accionesMensajeInterConsulta > span {
+  color: #687f95;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+#btnEnviarContenidoAbmMensaje,
+#accionesMensajeInterConsulta > input[type="button"] {
+  width: auto;
+  min-width: 74px;
+  height: 36px;
+  margin: 0;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#accionesMensajeInterConsulta #btnEnviarContenidoAbmMensaje {
+  background: #1f9b5f;
+  color: #ffffff;
+}
+
+.adjunto-documento-dialog-backdrop[hidden] {
+  display: none !important;
+}
+
+body.adjunto-documento-dialog-open {
+  overflow: hidden;
+}
+
+.adjunto-documento-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 6500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(13, 35, 55, 0.56);
+  backdrop-filter: blur(3px);
+}
+
+.adjunto-documento-dialog {
+  width: min(760px, 100%);
+  max-height: min(760px, calc(100vh - 36px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #d9e4ee;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(13, 35, 55, 0.3);
+  color: #20384f;
+  text-align: left;
+}
+
+.adjunto-documento-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #e4ebf2;
+  background: linear-gradient(180deg, #f8fbfe 0%, #ffffff 100%);
+}
+
+.adjunto-documento-dialog__header > div {
+  min-width: 0;
+}
+
+.adjunto-documento-dialog__header span {
+  color: #2a799a;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.adjunto-documento-dialog__header h3 {
+  margin: 3px 0 2px;
+  color: #153c5c;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.adjunto-documento-dialog__header p {
+  margin: 0;
+  color: #61788d;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.adjunto-documento-dialog__close {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #d7e2ec;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #6f8294;
+  font-size: 24px;
+  line-height: 30px;
+  cursor: pointer;
+}
+
+.adjunto-documento-dialog__close:hover,
+.adjunto-documento-dialog__close:focus {
+  border-color: #ef9a9a;
+  background: #fff3f3;
+  color: #c33b3b;
+}
+
+.adjunto-documento-dialog__body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.adjunto-documento-step + .adjunto-documento-step {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e7edf3;
+}
+
+.adjunto-documento-step__heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.adjunto-documento-step__heading > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #eaf5fb;
+  color: #176d92;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.adjunto-documento-step__heading > div {
+  display: grid;
+  gap: 1px;
+}
+
+.adjunto-documento-step__heading strong {
+  color: #183c59;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.adjunto-documento-step__heading small {
+  color: #71869a;
+  font-size: 11px;
+}
+
+.adjunto-documento-types {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.adjunto-documento-types > button {
+  min-width: 0;
+  min-height: 92px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 1px 8px;
+  padding: 12px;
+  border: 1px solid #d4e0ea;
+  border-radius: 12px;
+  background: #fbfdff;
+  color: #36546d;
+  text-align: left;
+  cursor: pointer;
+}
+
+.adjunto-documento-types > button i {
+  grid-row: 1 / span 2;
+  color: #4e86a7;
+  font-size: 22px;
+  text-align: center;
+}
+
+.adjunto-documento-types > button strong {
+  color: #24445e;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.adjunto-documento-types > button small {
+  color: #72879a;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.adjunto-documento-types > button:hover,
+.adjunto-documento-types > button:focus {
+  border-color: #79afd0;
+  background: #f0f8fd;
+}
+
+.adjunto-documento-types > button.is-selected {
+  border-color: #1f8f69;
+  background: #eefaf5;
+  box-shadow: 0 0 0 2px rgba(31, 143, 105, 0.12);
+}
+
+.adjunto-documento-types > button.is-selected i,
+.adjunto-documento-types > button.is-selected strong {
+  color: #176f53;
+}
+
+.adjunto-documento-types > button[hidden] {
+  display: none !important;
+}
+
+.adjunto-documento-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.adjunto-documento-fields[hidden] {
+  display: none !important;
+}
+
+.adjunto-documento-fields--nested {
+  grid-column: 1 / -1;
+}
+
+.adjunto-documento-field {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  color: #4f667a;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.adjunto-documento-field--wide {
+  grid-column: 1 / -1;
+}
+
+.adjunto-documento-field .inputText {
+  width: 100%;
+  min-height: 38px;
+  margin: 0;
+  box-sizing: border-box;
+  border: 1px solid #ccd9e4;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #20384f;
+  font-size: 12px;
+}
+
+.adjunto-documento-field textarea.inputText {
+  min-height: 62px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.adjunto-documento-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 9px 10px;
+  border: 1px solid #cfe3f0;
+  border-radius: 9px;
+  background: #f2f9fd;
+  color: #42677f;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.adjunto-documento-note[hidden] {
+  display: none !important;
+}
+
+.adjunto-documento-file {
+  min-height: 88px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 2px 10px;
+  padding: 14px;
+  border: 1px dashed #91b5cc;
+  border-radius: 12px;
+  background: #f7fbfe;
+  color: #2f5d79;
+  cursor: pointer;
+}
+
+.adjunto-documento-file:hover,
+.adjunto-documento-file:focus-within {
+  border-color: #3488b5;
+  background: #eef8fd;
+}
+
+.adjunto-documento-file i {
+  grid-row: 1 / span 2;
+  color: #287da8;
+  font-size: 26px;
+  text-align: center;
+}
+
+.adjunto-documento-file strong {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.adjunto-documento-file span {
+  overflow: hidden;
+  color: #70869a;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adjunto-documento-file input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.adjunto-documento-error,
+.adjunto-documento-summary {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.adjunto-documento-error {
+  border: 1px solid #efb1b1;
+  background: #fff2f2;
+  color: #a92e2e;
+  font-weight: 800;
+}
+
+.adjunto-documento-summary {
+  border: 1px solid #d8c892;
+  background: #fffaf0;
+  color: #765b1f;
+}
+
+.adjunto-documento-summary strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #765b1f;
+  font-size: 12px;
+}
+
+.adjunto-documento-summary.is-ready {
+  border-color: #b9dfcd;
+  background: #f0faf5;
+  color: #285e48;
+}
+
+.adjunto-documento-summary.is-ready strong {
+  color: #176e51;
+}
+
+.adjunto-documento-dialog__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  padding: 12px 20px;
+  border-top: 1px solid #e2eaf1;
+  background: #f9fbfd;
+}
+
+.adjunto-documento-dialog__footer button {
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.adjunto-documento-secondary {
+  border: 1px solid #cbd8e3;
+  background: #ffffff;
+  color: #506a80;
+}
+
+.adjunto-documento-primary {
+  border: 1px solid #18855f;
+  background: #1f9b6b;
+  color: #ffffff;
+}
+
+.adjunto-documento-primary:disabled {
+  border-color: #c8d2da;
+  background: #dbe2e7;
+  color: #788895;
+  cursor: not-allowed;
+}
+
+.movimiento-financiero-attachment-action {
+  width: 100%;
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px;
+  border: 1px dashed #9eb9cc;
+  border-radius: 10px;
+  background: #f8fbfd;
+  color: #315a75;
+  text-align: left;
+  cursor: pointer;
+}
+
+.movimiento-financiero-attachment-action:hover,
+.movimiento-financiero-attachment-action:focus {
+  border-color: #4d91b8;
+  background: #eef7fc;
+}
+
+.movimiento-financiero-attachment-action .imgFotoProducto {
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  margin: 0;
+  border: 1px solid #d5e1e9;
+  border-radius: 9px;
+  background-color: #ffffff;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.movimiento-financiero-attachment-action > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.movimiento-financiero-attachment-action strong {
+  color: #274e69;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.movimiento-financiero-attachment-action small {
+  color: #71879a;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.movimiento-financiero-attachment-summary {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #b9dec9;
+  border-radius: 9px;
+  background: #f1faf5;
+  color: #2c644b;
+  box-sizing: border-box;
+  font-size: 10px;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.movimiento-financiero-attachment-summary > span {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.movimiento-financiero-attachment-summary > button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: #557466;
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.interconsulta-document-card {
+  width: min(560px, 100%);
+  display: grid;
+  gap: 9px;
+  margin-top: 8px;
+  padding: 11px 12px;
+  border: 1px solid #cbdce8;
+  border-left: 4px solid #2b83ad;
+  border-radius: 11px;
+  background: #f8fbfd;
+  color: #29475e;
+  box-sizing: border-box;
+}
+
+.interconsulta-document-card--factura {
+  border-left-color: #1d8b65;
+  background: #f3fbf7;
+}
+
+.interconsulta-document-card--recibo {
+  border-left-color: #d18a22;
+  background: #fffaf1;
+}
+
+.interconsulta-document-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.interconsulta-document-card__header i {
+  color: #347c9f;
+  font-size: 17px;
+}
+
+.interconsulta-document-card__header strong {
+  color: #1f455e;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.interconsulta-document-card__data {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 12px;
+}
+
+.interconsulta-document-card__data span {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  color: #5d7487;
+  font-size: 10px;
+}
+
+.interconsulta-document-card__data b {
+  overflow-wrap: anywhere;
+  color: #284b63;
+  font-size: 11px;
+}
+
+.interconsulta-document-card__description {
+  margin: 0;
+  color: #4e6679;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.interconsulta-document-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.interconsulta-document-card__actions button {
+  min-height: 29px;
+  padding: 6px 9px;
+  border: 1px solid #b8cddd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #286482;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.interconsulta-message-body > p:empty {
+  display: none;
+}
+
+
+@media (max-width: 560px) {
+  .adjunto-documento-dialog-backdrop {
+    padding: 0;
+  }
+
+  .adjunto-documento-dialog {
+    width: 100%;
+    max-height: 100vh;
+    min-height: 100vh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .adjunto-documento-dialog__header,
+  .adjunto-documento-dialog__body,
+  .adjunto-documento-dialog__footer {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .adjunto-documento-types,
+  .adjunto-documento-fields,
+  .interconsulta-document-card__data {
+    grid-template-columns: 1fr;
+  }
+
+  .adjunto-documento-fields--nested,
+  .adjunto-documento-field--wide {
+    grid-column: auto;
+  }
+
+  #editorMensajeInterConsulta {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  #accionesMensajeInterConsulta {
+    grid-column: 2;
+    width: 100%;
+    min-height: 32px;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 768px) {
+  #divAbmGasto2 .movimiento-financiero-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

@@ -244,6 +244,8 @@ function centroFacturaImporte($valor)
     if (strpos($texto, ',') !== false) {
         $texto = str_replace('.', '', $texto);
         $texto = str_replace(',', '.', $texto);
+    } elseif (preg_match('/^-?\d{1,3}(\.\d{3})+$/', $texto)) {
+        $texto = str_replace('.', '', $texto);
     }
     $texto = preg_replace('/[^0-9.\-]/', '', $texto);
     return round((float)$texto, 2);
@@ -398,10 +400,12 @@ function centroFacturaBaseSelect()
     return "SELECT cf.*,
         l.Nombre AS nombre_local,
         ic.asunto AS hilo_asunto,
-        COALESCE(NULLIF(cf.nombre_contraparte,''),pp.nombre_persona,pf.nombre_persona,'Pendiente de completar') AS contraparte_mostrar,
+        COALESCE(NULLIF(cf.nombre_contraparte,''),pp.nombre_persona,pf.nombre_persona,
+            CASE WHEN cf.tipo_documento='recibo' THEN 'Sin contraparte requerida' ELSE 'Pendiente de completar' END) AS contraparte_mostrar,
         presp.nombre_persona AS responsable_envio_nombre,
         prec.nombre_persona AS usuario_recepcion_nombre,
         g.estado AS gasto_estado,g.fecha AS gasto_fecha,g.fecha_autoriz AS gasto_fecha_autoriz,g.motivo AS gasto_motivo,
+        mie.descripcion AS concepto_contable,
         cp.estado AS compra_estado,cp.num_comprobante AS compra_comprobante,
         $estadoPago AS estado_pago,
         $fechaPago AS fecha_pago,
@@ -422,6 +426,7 @@ function centroFacturaBaseSelect()
       LEFT JOIN usuario urec ON urec.cod_usuario=cf.cod_usuario_recepcionFK
       LEFT JOIN persona prec ON prec.cod_persona=urec.cod_usuario
       LEFT JOIN gastos g ON g.idgastos=cf.idgastosFK
+      LEFT JOIN motivos_ingreso_egreso mie ON mie.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
       LEFT JOIN compra cp ON cp.cod_compra=cf.cod_compraFK";
 }
 
@@ -580,7 +585,8 @@ function centroFacturaCargarGastosEsperados($mysqli, $codUsuario, $filtros)
         g.motivo AS gasto_motivo,g.personales AS gasto_contraparte,g.estado AS gasto_estado,
         COALESCE(cf.cod_interConsultaFK,g.cod_interConsultaFK) AS cod_interConsultaFK,
         g.cod_local AS cod_localFK,l.Nombre AS nombre_local,ic.asunto AS hilo_asunto,
-        COALESCE(NULLIF(cf.nombre_contraparte,''),NULLIF(g.personales,''),'Pendiente de completar') AS contraparte_mostrar,
+        COALESCE(NULLIF(cf.nombre_contraparte,''),NULLIF(g.personales,''),
+            CASE WHEN cf.tipo_documento='recibo' THEN 'Sin contraparte requerida' ELSE 'Pendiente de completar' END) AS contraparte_mostrar,
         'Pagado' AS estado_pago,COALESCE(g.fecha_autoriz,CONCAT(g.fecha,' 00:00:00')) AS fecha_pago,
         CASE WHEN cf.id_factura IS NOT NULL THEN 'gasto' ELSE '' END AS tipo_referencia_pago,
         (SELECT m.cod_mensaje FROM mensaje m
@@ -642,7 +648,7 @@ function centroFacturaCargarGastosEsperados($mysqli, $codUsuario, $filtros)
     return $registros;
 }
 
-function centroFacturaCargarDocumentosSinGasto($mysqli, $codUsuario, $filtros, $hilosConGasto)
+function centroFacturaCargarDocumentosSinGasto($mysqli, $codUsuario, $filtros)
 {
     $filtrosDocumentos = (array)$filtros;
     $filtrosDocumentos['filtro_rapido'] = '';
@@ -665,10 +671,6 @@ function centroFacturaCargarDocumentosSinGasto($mysqli, $codUsuario, $filtros, $
     $resultado = $stmt->get_result();
     while ($fila = $resultado->fetch_assoc()) {
         if (intval($fila['idgastosFK']) > 0) {
-            continue;
-        }
-        $hilo = intval($fila['cod_interConsultaFK']);
-        if ($hilo > 0 && isset($hilosConGasto[$hilo])) {
             continue;
         }
         $fila['id_gasto_esperado'] = 0;
@@ -772,13 +774,7 @@ function centroFacturaListarEntrantes($codUsuario, $filtros, $limite = 80, $offs
     $mysqli = conectar_al_servidor();
     $filtros = (array)$filtros;
     $gastos = centroFacturaCargarGastosEsperados($mysqli, $codUsuario, $filtros);
-    $hilosConGasto = array();
-    foreach ($gastos as $fila) {
-        if (intval($fila['cod_interConsultaFK']) > 0) {
-            $hilosConGasto[intval($fila['cod_interConsultaFK'])] = true;
-        }
-    }
-    $documentos = centroFacturaCargarDocumentosSinGasto($mysqli, $codUsuario, $filtros, $hilosConGasto);
+    $documentos = centroFacturaCargarDocumentosSinGasto($mysqli, $codUsuario, $filtros);
     $mysqli->close();
     $base = array();
     foreach (array_merge($gastos, $documentos) as $fila) {
@@ -797,6 +793,11 @@ function centroFacturaListarEntrantes($codUsuario, $filtros, $limite = 80, $offs
         $fechaA = isset($a['fecha_origen']) ? (string)$a['fecha_origen'] : '';
         $fechaB = isset($b['fecha_origen']) ? (string)$b['fecha_origen'] : '';
         if ($fechaA === $fechaB) {
+            $facturaA = isset($a['id_factura']) ? intval($a['id_factura']) : 0;
+            $facturaB = isset($b['id_factura']) ? intval($b['id_factura']) : 0;
+            if ($facturaA !== $facturaB) {
+                return $facturaB - $facturaA;
+            }
             return intval($b['id_gasto_esperado']) - intval($a['id_gasto_esperado']);
         }
         return strcmp($fechaB, $fechaA);
@@ -883,6 +884,13 @@ function centroFacturaCatalogos($codUsuario)
         $locales[] = centroFacturaFilaUtf8($fila);
     }
     $stmt->close();
+    $localesDestino = array();
+    $resultado = $mysqli->query("SELECT cod_local,Nombre FROM local WHERE estado='Activo' ORDER BY Nombre");
+    if ($resultado) {
+        while ($fila = $resultado->fetch_assoc()) {
+            $localesDestino[] = centroFacturaFilaUtf8($fila);
+        }
+    }
     $proveedores = array();
     $resultado = $mysqli->query("SELECT pro.cod_proveedor,p.nombre_persona,pro.rut_proveedor
         FROM proveedor pro INNER JOIN persona p ON p.cod_persona=pro.cod_proveedor
@@ -893,7 +901,15 @@ function centroFacturaCatalogos($codUsuario)
         }
     }
     $funcionarios = array();
-    $sqlUsuarios = "SELECT u.cod_usuario,u.cod_localFK,p.nombre_persona,u.rut_usuario
+    $sqlUsuarios = "SELECT u.cod_usuario,u.cod_localFK,p.nombre_persona,u.rut_usuario,
+        CASE WHEN EXISTS (
+            SELECT 1
+            FROM accesosuser acu
+            INNER JOIN listadodeacceso lac ON lac.idlistadodeacceso=acu.idlistadodeaccesoFK
+            WHERE acu.usuarios_idusario=u.cod_usuario
+              AND acu.accion='SI'
+              AND lac.codigo IN ('ENVIARLOTELEGAJOS','ADMINCENTROFACTURAS')
+        ) THEN 1 ELSE 0 END AS puede_custodiar_legajos
         FROM usuario u INNER JOIN persona p ON p.cod_persona=u.cod_usuario
         WHERE u.estado='Activo'".($todos ? '' : ' AND u.cod_localFK=?').' ORDER BY p.nombre_persona';
     $stmt = $mysqli->prepare($sqlUsuarios);
@@ -912,7 +928,9 @@ function centroFacturaCatalogos($codUsuario)
     $codigosPermiso = array(
         'VERCENTROFACTURAS','VERCENTROFACTURASTODOSLOCALES','REGISTRARFACTURAHILO',
         'REGISTRARFACTURAMANUAL','VINCULARPAGOFACTURA','ENVIARORIGINALFACTURA',
-        'RECIBIRORIGINALFACTURA','GESTIONARLOTESFACTURAS','ADMINCENTROFACTURAS'
+        'RECIBIRORIGINALFACTURA','GESTIONARLOTESFACTURAS','ADMINCENTROFACTURAS',
+        'VERLEGAJOSVENTA','GESTIONARLEGAJOSVENTA','GESTIONARLOTESLEGAJOS',
+        'ENVIARLOTELEGAJOS','RECIBIRLOTELEGAJOS'
     );
     $permisos = array();
     foreach ($codigosPermiso as $codigo) {
@@ -922,10 +940,12 @@ function centroFacturaCatalogos($codUsuario)
         'ok' => true,
         'usuario' => centroFacturaFilaUtf8($contexto),
         'locales' => $locales,
+        'locales_destino' => $localesDestino,
         'proveedores' => $proveedores,
         'funcionarios' => $funcionarios,
         'configuracion' => $configuracion,
         'permisos' => $permisos,
+        'legajos_disponibles' => function_exists('centroLegajoEstructuraDisponible') && centroLegajoEstructuraDisponible() ? 1 : 0,
         'metricas' => centroFacturaMetricas($codUsuario)
     );
 }
@@ -938,12 +958,25 @@ function centroFacturaBuscarPorMensaje($codMensaje, $mysqli = null)
         $cerrar = true;
     }
     $codMensaje = intval($codMensaje);
-    $stmt = $mysqli->prepare("SELECT cf.id_factura,cf.tipo_documento,cf.estado_registro,cf.estado_validacion,cf.estado_original
+    $stmt = $mysqli->prepare("SELECT cf.id_factura,cf.tipo_documento,cf.estado_registro,cf.estado_validacion,cf.estado_original,
+            a.estado AS archivo_estado
         FROM centro_factura_archivo a
         INNER JOIN centro_factura cf ON cf.id_factura=a.id_facturaFK
-        WHERE a.cod_mensajeFK=? AND a.estado='activo' LIMIT 1");
+        WHERE a.cod_mensajeFK=? ORDER BY (a.estado='activo') DESC,a.id_archivo DESC LIMIT 1");
+    if (!$stmt) {
+        if ($cerrar) {
+            $mysqli->close();
+        }
+        return array();
+    }
     $stmt->bind_param('i', $codMensaje);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        $stmt->close();
+        if ($cerrar) {
+            $mysqli->close();
+        }
+        return array();
+    }
     $fila = $stmt->get_result()->fetch_assoc();
     $stmt->close();
     if ($cerrar) {
@@ -952,7 +985,214 @@ function centroFacturaBuscarPorMensaje($codMensaje, $mysqli = null)
     return $fila ? $fila : array();
 }
 
-function centroFacturaRegistrarDesdeMensaje($codMensaje, $codUsuario)
+function centroFacturaContextoAdjuntoDocumento($codUsuario)
+{
+    $codUsuario = intval($codUsuario);
+    $permisos = array(
+        'REGISTRARFACTURAHILO' => centroFacturaTienePermiso($codUsuario, 'REGISTRARFACTURAHILO') ? 1 : 0,
+        'REGISTRARFACTURAMANUAL' => centroFacturaTienePermiso($codUsuario, 'REGISTRARFACTURAMANUAL') ? 1 : 0
+    );
+    $proveedores = array();
+    if ($permisos['REGISTRARFACTURAHILO'] || $permisos['REGISTRARFACTURAMANUAL']) {
+        $mysqli = conectar_al_servidor();
+        $resultado = $mysqli->query("SELECT pro.cod_proveedor,p.nombre_persona,pro.rut_proveedor
+            FROM proveedor pro INNER JOIN persona p ON p.cod_persona=pro.cod_proveedor
+            WHERE pro.estado='Activo' ORDER BY p.nombre_persona LIMIT 500");
+        if ($resultado) {
+            while ($fila = $resultado->fetch_assoc()) {
+                $proveedores[] = centroFacturaFilaUtf8($fila);
+            }
+            $resultado->free();
+        }
+        $mysqli->close();
+    }
+    return array('ok' => true, 'permisos' => $permisos, 'proveedores' => $proveedores);
+}
+
+function centroFacturaValidarAdjuntoDocumental($mysqli, $tipoAdjunto, $datos)
+{
+    $tipoAdjunto = strtolower(trim((string)$tipoAdjunto));
+    if (!in_array($tipoAdjunto, array('factura','comprobante','otro'), true)) {
+        return array('ok' => false, 'mensaje' => 'El tipo de adjunto no es valido.');
+    }
+    if ($tipoAdjunto === 'otro') {
+        return array('ok' => true, 'tipo_adjunto' => 'otro', 'tipo_documento' => '');
+    }
+    $datos = is_array($datos) ? $datos : array();
+    $tipoDocumento = $tipoAdjunto === 'comprobante' ? 'recibo' : 'factura';
+    $numero = isset($datos['numero_factura']) ? centroFacturaTextoBaseDatos($datos['numero_factura'], 80) : '';
+    $fecha = isset($datos['fecha_emision']) ? centroFacturaFechaValida($datos['fecha_emision'], false) : false;
+    $importe = isset($datos['importe_total']) ? centroFacturaImporte($datos['importe_total']) : 0;
+    $observaciones = isset($datos['observaciones']) ? centroFacturaTextoBaseDatos($datos['observaciones'], 3000, true) : '';
+    if (!$fecha) {
+        return array('ok' => false, 'mensaje' => 'Ingrese una fecha valida para el documento.');
+    }
+    if ($importe <= 0) {
+        return array('ok' => false, 'mensaje' => 'El monto del documento debe ser mayor a cero.');
+    }
+    $contraparte = array(
+        'tipo' => 'otro', 'cod_proveedor' => null, 'cod_funcionario' => null,
+        'nombre' => '', 'documento' => ''
+    );
+    if ($tipoDocumento === 'factura') {
+        $datosContraparte = $datos;
+        $tipoContraparteSolicitado = isset($datosContraparte['tipo_contraparte'])
+            ? strtolower(trim((string)$datosContraparte['tipo_contraparte'])) : 'otro';
+        if (!in_array($tipoContraparteSolicitado, array('proveedor','otro'), true)) {
+            return array('ok' => false, 'mensaje' => 'Seleccione un proveedor o cargue la razon social y el RUC manualmente.');
+        }
+        $datosContraparte['tipo_contraparte'] = $tipoContraparteSolicitado;
+        $documentoManualProveedor = isset($datosContraparte['documento_contraparte'])
+            ? centroFacturaTextoBaseDatos($datosContraparte['documento_contraparte'], 45) : '';
+        if (isset($datosContraparte['tipo_contraparte']) && $datosContraparte['tipo_contraparte'] === 'proveedor') {
+            $datosContraparte['nombre_contraparte'] = '';
+            $datosContraparte['documento_contraparte'] = '';
+        }
+        $contraparte = centroFacturaResolverContraparte($mysqli, $datosContraparte);
+        if (empty($contraparte['ok'])) {
+            return $contraparte;
+        }
+        if (trim((string)$contraparte['documento']) === '' && $documentoManualProveedor !== '') {
+            $contraparte['documento'] = $documentoManualProveedor;
+        }
+        if (trim((string)$contraparte['documento']) === '') {
+            return array('ok' => false, 'mensaje' => 'Ingrese el RUC de la factura.');
+        }
+    } elseif ($observaciones === '') {
+        return array('ok' => false, 'mensaje' => 'Ingrese una descripcion breve del recibo.');
+    }
+    $numeroNormalizado = centroFacturaNormalizarClave($numero);
+    $firma = ($contraparte['documento'] !== '' || $numero !== '')
+        ? centroFacturaFirmaFiscal($contraparte['documento'], $numero, '', $fecha, $importe) : '';
+    return array(
+        'ok' => true,
+        'tipo_adjunto' => $tipoAdjunto,
+        'tipo_documento' => $tipoDocumento,
+        'tipo_contraparte' => $contraparte['tipo'],
+        'cod_proveedor' => $contraparte['cod_proveedor'],
+        'cod_funcionario' => $contraparte['cod_funcionario'],
+        'nombre_contraparte' => $contraparte['nombre'],
+        'documento_contraparte' => $contraparte['documento'],
+        'numero_factura' => $numero,
+        'numero_normalizado' => $numeroNormalizado,
+        'timbrado' => '',
+        'fecha_emision' => $fecha,
+        'importe_total' => $importe,
+        'moneda' => 'PYG',
+        'concepto' => '',
+        'observaciones' => $observaciones,
+        'firma_fiscal' => $firma
+    );
+}
+
+function centroFacturaInsertarDesdeMensajeEnTransaccion($mysqli, $mensaje, $validos, $archivo, $codUsuario)
+{
+    $codMensaje = intval($mensaje['cod_mensaje']);
+    $existente = centroFacturaBuscarPorMensaje($codMensaje, $mysqli);
+    if (!empty($existente)) {
+        if (strtolower((string)$existente['estado_registro']) !== 'activo'
+            || strtolower((string)$existente['archivo_estado']) !== 'activo') {
+            return array('ok' => false, 'mensaje' => 'El documento anterior de este mensaje esta anulado o inactivo y requiere revision en el Centro de Facturas.');
+        }
+        return array('ok' => true, 'id_factura' => intval($existente['id_factura']), 'tipo_documento' => $existente['tipo_documento'], 'idempotente' => 1);
+    }
+    $configuracion = centroFacturaConfiguracion($mysqli);
+    $dias = max(1, min(60, intval($configuracion['dias_plazo_original'])));
+    $fechaRegistro = date('Y-m-d H:i:s');
+    $fechaLimite = date('Y-m-d', strtotime('+'.$dias.' days', strtotime($fechaRegistro)));
+    $tipoDocumento = $validos['tipo_documento'];
+    $hilo = intval($mensaje['cod_interConsultaFK']);
+    $local = intval($mensaje['cod_localFK']);
+    $tipoContraparte = isset($validos['tipo_contraparte']) ? $validos['tipo_contraparte'] : 'otro';
+    $codProveedor = !empty($validos['cod_proveedor']) ? intval($validos['cod_proveedor']) : null;
+    $nombreContraparte = isset($validos['nombre_contraparte']) ? $validos['nombre_contraparte'] : '';
+    $documentoContraparte = isset($validos['documento_contraparte']) ? $validos['documento_contraparte'] : '';
+    $numero = isset($validos['numero_factura']) ? $validos['numero_factura'] : '';
+    $numeroNormalizado = isset($validos['numero_normalizado']) ? $validos['numero_normalizado'] : '';
+    $timbrado = isset($validos['timbrado']) ? $validos['timbrado'] : '';
+    $fechaEmision = isset($validos['fecha_emision']) ? $validos['fecha_emision'] : null;
+    $importe = isset($validos['importe_total']) ? (float)$validos['importe_total'] : 0;
+    $moneda = isset($validos['moneda']) ? $validos['moneda'] : 'PYG';
+    $concepto = isset($validos['concepto']) ? $validos['concepto'] : '';
+    $observaciones = isset($validos['observaciones']) ? $validos['observaciones'] : '';
+    $firma = isset($validos['firma_fiscal']) ? $validos['firma_fiscal'] : '';
+    $duplicados = $firma !== '' ? centroFacturaBuscarDuplicados($mysqli, $firma, 0, $tipoDocumento) : array();
+    $posibleDuplicado = count($duplicados) > 0 ? 1 : 0;
+    $stmt = $mysqli->prepare("INSERT INTO centro_factura
+        (direccion,tipo_documento,fuente,cod_interConsultaFK,cod_localFK,tipo_contraparte,cod_proveedorFK,cod_funcionarioFK,
+         nombre_contraparte,documento_contraparte,numero_factura,numero_factura_normalizado,timbrado,fecha_emision,
+         importe_total,moneda,concepto,observaciones,estado_validacion,estado_original,fecha_registro_digital,
+         dias_plazo_original,fecha_limite_original,cod_responsable_envioFK,firma_fiscal,posible_duplicado,cod_usuario_registroFK)
+        VALUES ('entrante',?,'hilo',?,?,?,?,NULL,?,?,?,?,?,?,?,?,?,?,'pendiente','en_proceso',?,?,?,?,?,?,?)");
+    if (!$stmt) {
+        return array('ok' => false, 'mensaje' => 'No se pudo preparar el registro documental: '.$mysqli->error);
+    }
+    $parametros = array(
+        $tipoDocumento, $hilo, $local, $tipoContraparte, $codProveedor, $nombreContraparte,
+        $documentoContraparte, $numero, $numeroNormalizado, $timbrado, $fechaEmision, $importe,
+        $moneda, $concepto, $observaciones, $fechaRegistro, $dias, $fechaLimite,
+        $codUsuario, $firma, $posibleDuplicado, $codUsuario
+    );
+    $tipos = 'siisi'.str_repeat('s', 6).'d'.str_repeat('s', 4).'isisii';
+    centroFacturaBind($stmt, $tipos, $parametros);
+    if (!$stmt->execute()) {
+        $mensajeError = $stmt->errno == 1062 ? 'REGISTRO_DUPLICADO_ADJUNTO' : 'No se pudo crear el registro documental desde el Hilo.';
+        $stmt->close();
+        return array('ok' => false, 'mensaje' => $mensajeError);
+    }
+    $idFactura = intval($stmt->insert_id);
+    $stmt->close();
+    $nombreArchivo = isset($archivo['nombre']) ? $archivo['nombre'] : basename(parse_url((string)$mensaje['url'], PHP_URL_PATH));
+    $extension = isset($archivo['extension']) ? $archivo['extension'] : strtolower(pathinfo($nombreArchivo, PATHINFO_EXTENSION));
+    $mime = isset($archivo['mime']) ? $archivo['mime'] : '';
+    $hash = isset($archivo['hash']) ? $archivo['hash'] : '';
+    $tipoOrigen = 'mensaje_hilo';
+    $stmt = $mysqli->prepare("INSERT INTO centro_factura_archivo
+        (id_facturaFK,tipo_origen,cod_mensajeFK,url,nombre_original,extension,mime_type,hash_sha256,orden_pagina,es_principal,cod_usuarioFK_create)
+        VALUES (?,?,?,NULL,?,?,?,?,1,1,?)");
+    if (!$stmt) {
+        return array('ok' => false, 'mensaje' => 'No se pudo preparar el vinculo del archivo.');
+    }
+    $stmt->bind_param('isissssi', $idFactura, $tipoOrigen, $codMensaje, $nombreArchivo, $extension, $mime, $hash, $codUsuario);
+    if (!$stmt->execute()) {
+        $mensajeError = $stmt->errno == 1062 ? 'REGISTRO_DUPLICADO_ADJUNTO' : 'No se pudo vincular el archivo con el Centro de Facturas.';
+        $stmt->close();
+        return array('ok' => false, 'mensaje' => $mensajeError);
+    }
+    $idArchivo = intval($stmt->insert_id);
+    $stmt->close();
+    $tipoAdjunto = $tipoDocumento === 'recibo' ? 'comprobante' : 'factura';
+    $stmt = $mysqli->prepare("UPDATE mensaje SET tipo_adjunto=? WHERE cod_mensaje=? AND estado='activo'");
+    if (!$stmt) {
+        return array('ok' => false, 'mensaje' => 'No se pudo preparar la clasificacion del adjunto del Hilo.');
+    }
+    $stmt->bind_param('si', $tipoAdjunto, $codMensaje);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return array('ok' => false, 'mensaje' => 'No se pudo clasificar el adjunto del Hilo.');
+    }
+    $stmt->close();
+    $auditoria = array(
+        'cod_mensaje' => $codMensaje, 'cod_interConsulta' => $hilo, 'cod_local' => $local,
+        'tipo_documento' => $tipoDocumento, 'numero_factura' => $numero,
+        'fecha_emision' => $fechaEmision, 'importe_total' => $importe,
+        'fecha_limite_original' => $fechaLimite, 'posible_duplicado' => $posibleDuplicado
+    );
+    if (!centroFacturaAuditar($mysqli, 'factura', $idFactura, $idFactura, 'crear_desde_hilo', array(), $auditoria, '', $codUsuario)
+        || !centroFacturaAuditar($mysqli, 'archivo', $idArchivo, $idFactura, 'vincular_adjunto_hilo', array(), array('cod_mensaje' => $codMensaje, 'hash' => $hash), '', $codUsuario)) {
+        return array('ok' => false, 'mensaje' => 'No se pudo auditar el registro documental.');
+    }
+    $registroIncompleto = (!$fechaEmision || $importe <= 0
+        || ($tipoDocumento === 'factura' && ($nombreContraparte === '' || $documentoContraparte === ''))
+        || ($tipoDocumento === 'recibo' && trim((string)$observaciones) === '')) ? 1 : 0;
+    return array(
+        'ok' => true, 'id_factura' => $idFactura, 'tipo_documento' => $tipoDocumento,
+        'idempotente' => 0, 'registro_incompleto' => $registroIncompleto,
+        'posible_duplicado' => $posibleDuplicado
+    );
+}
+
+function centroFacturaRegistrarDesdeMensaje($codMensaje, $codUsuario, $datos = array())
 {
     $codMensaje = intval($codMensaje);
     $codUsuario = intval($codUsuario);
@@ -964,11 +1204,6 @@ function centroFacturaRegistrarDesdeMensaje($codMensaje, $codUsuario)
         $mysqli->close();
         return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura del Centro de Facturas no esta instalada.');
     }
-    $existente = centroFacturaBuscarPorMensaje($codMensaje, $mysqli);
-    if (!empty($existente)) {
-        $mysqli->close();
-        return array('ok' => true, 'id_factura' => intval($existente['id_factura']), 'tipo_documento' => $existente['tipo_documento'], 'idempotente' => 1);
-    }
     $stmt = $mysqli->prepare("SELECT m.cod_mensaje,m.url,m.contenido,m.tipo_adjunto,m.estado,m.cod_usuarioFK,m.cod_interConsultaFK,
             ic.estado AS hilo_estado,ic.cod_localFK,p.nombre_persona,u.rut_usuario
         FROM mensaje m
@@ -976,13 +1211,21 @@ function centroFacturaRegistrarDesdeMensaje($codMensaje, $codUsuario)
         LEFT JOIN usuario u ON u.cod_usuario=m.cod_usuarioFK
         LEFT JOIN persona p ON p.cod_persona=u.cod_usuario
         WHERE m.cod_mensaje=? LIMIT 1");
+    if (!$stmt) {
+        $mysqli->close();
+        return array('ok' => false, 'codigo' => 'registro', 'mensaje' => 'No se pudo preparar la validacion del mensaje documental.');
+    }
     $stmt->bind_param('i', $codMensaje);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        $stmt->close();
+        $mysqli->close();
+        return array('ok' => false, 'codigo' => 'registro', 'mensaje' => 'No se pudo validar el mensaje documental.');
+    }
     $mensaje = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    if (!$mensaje || $mensaje['estado'] !== 'activo' || $mensaje['hilo_estado'] === 'inactivo' || trim((string)$mensaje['url']) === '') {
+    if (!$mensaje) {
         $mysqli->close();
-        return array('ok' => false, 'codigo' => 'adjunto', 'mensaje' => 'El adjunto ya no esta disponible o el Hilo esta inactivo.');
+        return array('ok' => false, 'codigo' => 'adjunto', 'mensaje' => 'No se encontro el mensaje documental solicitado.');
     }
     if (!function_exists('seguimientoProgramadoPuedeAccederHilo')
         || !seguimientoProgramadoPuedeAccederHilo($mensaje['cod_interConsultaFK'], $codUsuario, true)) {
@@ -993,75 +1236,217 @@ function centroFacturaRegistrarDesdeMensaje($codMensaje, $codUsuario)
         $mysqli->close();
         return array('ok' => false, 'codigo' => 'NI_LOCAL', 'mensaje' => 'No puede registrar facturas para este local.');
     }
-    $configuracion = centroFacturaConfiguracion($mysqli);
-    $dias = max(1, min(60, intval($configuracion['dias_plazo_original'])));
-    $fechaRegistro = date('Y-m-d H:i:s');
-    $fechaLimite = date('Y-m-d', strtotime('+'.$dias.' days', strtotime($fechaRegistro)));
-    $tipoDocumento = strtolower(trim((string)$mensaje['tipo_adjunto'])) === 'comprobante' ? 'recibo' : 'factura';
-    $concepto = centroFacturaTextoPlanoBaseDatos($mensaje['contenido'], 255);
-    if ($concepto === '') {
-        $concepto = $tipoDocumento === 'recibo' ? 'Recibo registrado desde Hilo' : 'Factura registrada desde Hilo';
-    }
-    $extension = strtolower(pathinfo(parse_url((string)$mensaje['url'], PHP_URL_PATH), PATHINFO_EXTENSION));
-    $mysqli->begin_transaction();
-    try {
-        $stmt = $mysqli->prepare("INSERT INTO centro_factura
-            (direccion,tipo_documento,fuente,cod_interConsultaFK,cod_localFK,tipo_contraparte,nombre_contraparte,
-             concepto,estado_validacion,estado_original,fecha_registro_digital,dias_plazo_original,
-             fecha_limite_original,cod_responsable_envioFK,cod_usuario_registroFK)
-            VALUES ('entrante',?,'hilo',?,?,'otro','',?,'pendiente','en_proceso',?,?,?,?,?)");
-        $hilo = intval($mensaje['cod_interConsultaFK']);
-        $local = intval($mensaje['cod_localFK']);
-        $stmt->bind_param('siissisii', $tipoDocumento, $hilo, $local, $concepto, $fechaRegistro, $dias, $fechaLimite, $codUsuario, $codUsuario);
-        if (!$stmt->execute()) {
-            throw new Exception('No se pudo crear la factura desde el Hilo.');
+    $existente = centroFacturaBuscarPorMensaje($codMensaje, $mysqli);
+    if (!empty($existente)) {
+        if (strtolower((string)$existente['estado_registro']) !== 'activo'
+            || strtolower((string)$existente['archivo_estado']) !== 'activo') {
+            $mysqli->close();
+            return array('ok' => false, 'codigo' => 'anulado', 'mensaje' => 'El documento anterior de este mensaje esta anulado o inactivo. Revise su historial en el Centro de Facturas.');
         }
-        $idFactura = intval($stmt->insert_id);
-        $stmt->close();
-        $tipoOrigen = 'mensaje_hilo';
-        $nombre = basename(parse_url((string)$mensaje['url'], PHP_URL_PATH));
-        $stmt = $mysqli->prepare("INSERT INTO centro_factura_archivo
-            (id_facturaFK,tipo_origen,cod_mensajeFK,url,nombre_original,extension,orden_pagina,es_principal,cod_usuarioFK_create)
-            VALUES (?,?,?,NULL,?,?,1,1,?)");
-        $stmt->bind_param('isissi', $idFactura, $tipoOrigen, $codMensaje, $nombre, $extension, $codUsuario);
-        if (!$stmt->execute()) {
-            if ($stmt->errno == 1062) {
-                $stmt->close();
-                throw new Exception('REGISTRO_DUPLICADO_ADJUNTO');
-            }
-            throw new Exception('No se pudo vincular el adjunto del Hilo.');
-        }
-        $idArchivo = intval($stmt->insert_id);
-        $stmt->close();
-        $tipoAdjunto = $tipoDocumento === 'recibo' ? 'comprobante' : 'factura';
-        $stmt = $mysqli->prepare("UPDATE mensaje SET tipo_adjunto=? WHERE cod_mensaje=?");
-        $stmt->bind_param('si', $tipoAdjunto, $codMensaje);
-        if (!$stmt->execute()) {
-            throw new Exception('No se pudo clasificar el adjunto.');
-        }
-        $stmt->close();
-        if (!centroFacturaAuditar($mysqli, 'factura', $idFactura, $idFactura, 'crear_desde_hilo', array(), array(
-            'cod_mensaje' => $codMensaje,
-            'cod_interConsulta' => $hilo,
-            'cod_local' => $local,
-            'tipo_documento' => $tipoDocumento,
-            'fecha_limite_original' => $fechaLimite
-        ), '', $codUsuario)) {
-            throw new Exception('No se pudo auditar la factura.');
-        }
-        centroFacturaAuditar($mysqli, 'archivo', $idArchivo, $idFactura, 'vincular_adjunto_hilo', array(), array('cod_mensaje' => $codMensaje), '', $codUsuario);
-        $mysqli->commit();
         $mysqli->close();
-        return array('ok' => true, 'id_factura' => $idFactura, 'tipo_documento' => $tipoDocumento, 'idempotente' => 0, 'registro_incompleto' => 1);
+        return array('ok' => true, 'id_factura' => intval($existente['id_factura']), 'tipo_documento' => $existente['tipo_documento'], 'idempotente' => 1);
+    }
+    if ($mensaje['estado'] !== 'activo' || $mensaje['hilo_estado'] === 'inactivo' || trim((string)$mensaje['url']) === '') {
+        $mysqli->close();
+        return array('ok' => false, 'codigo' => 'adjunto', 'mensaje' => 'El adjunto ya no esta disponible o el Hilo esta inactivo.');
+    }
+    $tipoAdjunto = strtolower(trim((string)$mensaje['tipo_adjunto'])) === 'comprobante' ? 'comprobante' : 'factura';
+    if (!empty($datos)) {
+        $validos = centroFacturaValidarAdjuntoDocumental($mysqli, $tipoAdjunto, $datos);
+        if (empty($validos['ok'])) {
+            $mysqli->close();
+            return $validos;
+        }
+    } else {
+        $tipoDocumento = $tipoAdjunto === 'comprobante' ? 'recibo' : 'factura';
+        $concepto = centroFacturaTextoPlanoBaseDatos($mensaje['contenido'], 255);
+        if ($concepto === '') {
+            $concepto = $tipoDocumento === 'recibo' ? 'Recibo registrado desde Hilo' : 'Factura registrada desde Hilo';
+        }
+        $validos = array(
+            'ok' => true, 'tipo_adjunto' => $tipoAdjunto, 'tipo_documento' => $tipoDocumento,
+            'tipo_contraparte' => 'otro', 'cod_proveedor' => null, 'nombre_contraparte' => '',
+            'documento_contraparte' => '', 'numero_factura' => '', 'numero_normalizado' => '',
+            'timbrado' => '', 'fecha_emision' => null, 'importe_total' => 0, 'moneda' => 'PYG',
+            'concepto' => $concepto, 'observaciones' => '', 'firma_fiscal' => ''
+        );
+    }
+    $archivo = array(
+        'nombre' => basename(parse_url((string)$mensaje['url'], PHP_URL_PATH)),
+        'extension' => strtolower(pathinfo(parse_url((string)$mensaje['url'], PHP_URL_PATH), PATHINFO_EXTENSION)),
+        'mime' => '', 'hash' => ''
+    );
+    if (!$mysqli->begin_transaction()) {
+        $mysqli->close();
+        return array('ok' => false, 'codigo' => 'registro', 'mensaje' => 'No se pudo iniciar el registro seguro del documento.');
+    }
+    try {
+        $resultado = centroFacturaInsertarDesdeMensajeEnTransaccion($mysqli, $mensaje, $validos, $archivo, $codUsuario);
+        if (empty($resultado['ok'])) {
+            throw new Exception($resultado['mensaje']);
+        }
+        if (!$mysqli->commit()) {
+            throw new Exception('No se pudo confirmar el registro documental.');
+        }
+        $mysqli->close();
+        return $resultado;
     } catch (Exception $e) {
         $mysqli->rollback();
         if ($e->getMessage() === 'REGISTRO_DUPLICADO_ADJUNTO') {
             $existente = centroFacturaBuscarPorMensaje($codMensaje, $mysqli);
             $mysqli->close();
-            if (!empty($existente)) {
+            if (!empty($existente)
+                && strtolower((string)$existente['estado_registro']) === 'activo'
+                && strtolower((string)$existente['archivo_estado']) === 'activo') {
                 return array('ok' => true, 'id_factura' => intval($existente['id_factura']), 'tipo_documento' => $existente['tipo_documento'], 'idempotente' => 1);
             }
         }
+        $mysqli->close();
+        return array('ok' => false, 'codigo' => 'registro', 'mensaje' => $e->getMessage());
+    }
+}
+
+function centroFacturaRegistrarDesdeGasto($idGasto, $codUsuario, $datos, $archivo = array())
+{
+    $idGasto = intval($idGasto);
+    $codUsuario = intval($codUsuario);
+    if (!centroFacturaTienePermiso($codUsuario, 'REGISTRARFACTURAMANUAL')) {
+        return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permiso para registrar documentos desde un egreso.');
+    }
+    $mysqli = conectar_al_servidor();
+    if (!centroFacturaEstructuraDisponible($mysqli)) {
+        $mysqli->close();
+        return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura del Centro de Facturas no esta instalada.');
+    }
+    if (!$mysqli->begin_transaction()) {
+        $mysqli->close();
+        return array('ok' => false, 'codigo' => 'registro', 'mensaje' => 'No se pudo iniciar el registro seguro del documento del egreso.');
+    }
+    try {
+        $stmt = $mysqli->prepare("SELECT g.idgastos,g.cod_local,g.tipo,g.estado,g.monto,g.fecha,g.motivo,g.url1,
+                g.cod_motivoIngresoEgresoFK,g.cod_interConsultaFK,mie.descripcion AS concepto_contable
+            FROM gastos g
+            LEFT JOIN motivos_ingreso_egreso mie ON mie.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
+            WHERE g.idgastos=? LIMIT 1 FOR UPDATE");
+        if (!$stmt) {
+            throw new Exception('No se pudo validar el egreso.');
+        }
+        $stmt->bind_param('i', $idGasto);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            throw new Exception('No se pudo validar el egreso.');
+        }
+        $gasto = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$gasto || strtolower(trim((string)$gasto['tipo'])) !== 'egreso') {
+            throw new Exception('Solo los egresos pueden generar facturas o recibos recibidos.');
+        }
+        if (in_array(strtolower(trim((string)$gasto['estado'])), array('inactivo','anulado','baja'), true)) {
+            throw new Exception('El egreso ya no esta activo y no admite un documento nuevo.');
+        }
+        if (trim((string)$gasto['url1']) === '') {
+            throw new Exception('El archivo del egreso no quedo disponible.');
+        }
+        if (!centroFacturaPuedeUsarLocal($codUsuario, $gasto['cod_local'], $mysqli)) {
+            throw new Exception('No puede registrar documentos para el local del egreso.');
+        }
+        $stmt = $mysqli->prepare("SELECT id_factura,tipo_documento,estado_registro FROM centro_factura WHERE idgastosFK=? LIMIT 1");
+        if (!$stmt) {
+            throw new Exception('No se pudo comprobar si el egreso ya tiene un documento registrado.');
+        }
+        $stmt->bind_param('i', $idGasto);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            throw new Exception('No se pudo comprobar el documento previo del egreso.');
+        }
+        $existente = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if ($existente) {
+            if (strtolower((string)$existente['estado_registro']) !== 'activo') {
+                throw new Exception('El egreso ya tiene un documento anulado o inactivo. Revise su historial antes de registrar otro.');
+            }
+            if (!$mysqli->commit()) {
+                throw new Exception('No se pudo confirmar la consulta del documento existente.');
+            }
+            $mysqli->close();
+            return array('ok' => true, 'id_factura' => intval($existente['id_factura']), 'tipo_documento' => $existente['tipo_documento'], 'idempotente' => 1);
+        }
+        $tipoAdjunto = isset($datos['tipo_adjunto']) ? $datos['tipo_adjunto'] : '';
+        $validos = centroFacturaValidarAdjuntoDocumental($mysqli, $tipoAdjunto, isset($datos['datos_documento']) ? $datos['datos_documento'] : $datos);
+        if (empty($validos['ok']) || $validos['tipo_adjunto'] === 'otro') {
+            throw new Exception(!empty($validos['mensaje']) ? $validos['mensaje'] : 'El documento financiero no es valido.');
+        }
+        $configuracion = centroFacturaConfiguracion($mysqli);
+        $dias = max(1, min(60, intval($configuracion['dias_plazo_original'])));
+        $fechaRegistro = date('Y-m-d H:i:s');
+        $fechaLimite = date('Y-m-d', strtotime('+'.$dias.' days', strtotime($fechaRegistro)));
+        $hilo = !empty($gasto['cod_interConsultaFK']) ? intval($gasto['cod_interConsultaFK']) : null;
+        $local = intval($gasto['cod_local']);
+        $concepto = centroFacturaTextoBaseDatos(!empty($gasto['concepto_contable']) ? $gasto['concepto_contable'] : $gasto['motivo'], 255);
+        $duplicados = $validos['firma_fiscal'] !== '' ? centroFacturaBuscarDuplicados($mysqli, $validos['firma_fiscal'], 0, $validos['tipo_documento']) : array();
+        $posibleDuplicado = count($duplicados) > 0 ? 1 : 0;
+        $stmt = $mysqli->prepare("INSERT INTO centro_factura
+            (direccion,tipo_documento,fuente,cod_interConsultaFK,cod_localFK,tipo_contraparte,cod_proveedorFK,cod_funcionarioFK,
+             nombre_contraparte,documento_contraparte,numero_factura,numero_factura_normalizado,timbrado,fecha_emision,
+             importe_total,moneda,concepto,observaciones,estado_validacion,estado_original,fecha_registro_digital,
+             dias_plazo_original,fecha_limite_original,cod_responsable_envioFK,firma_fiscal,posible_duplicado,idgastosFK,
+             fecha_vinculacion_pago,cod_usuario_vinculacion_pagoFK,cod_usuario_registroFK)
+            VALUES ('entrante',?,'manual',?,?,?,?,NULL,?,?,?,?,?,?,?,?,?,?,'pendiente','en_proceso',?,?,?,?,?,?,?,?,?,?)");
+        if (!$stmt) {
+            throw new Exception('No se pudo preparar el documento del egreso: '.$mysqli->error);
+        }
+        $parametros = array(
+            $validos['tipo_documento'], $hilo, $local, $validos['tipo_contraparte'], $validos['cod_proveedor'],
+            $validos['nombre_contraparte'], $validos['documento_contraparte'], $validos['numero_factura'],
+            $validos['numero_normalizado'], $validos['timbrado'], $validos['fecha_emision'], $validos['importe_total'],
+            $validos['moneda'], $concepto, $validos['observaciones'], $fechaRegistro, $dias, $fechaLimite,
+            $codUsuario, $validos['firma_fiscal'], $posibleDuplicado, $idGasto, $fechaRegistro, $codUsuario, $codUsuario
+        );
+        $tipos = 'siisi'.str_repeat('s', 6).'d'.str_repeat('s', 4).'isisiisii';
+        centroFacturaBind($stmt, $tipos, $parametros);
+        if (!$stmt->execute()) {
+            throw new Exception($stmt->errno == 1062 ? 'El egreso ya tiene un documento registrado.' : 'No se pudo crear el documento vinculado al egreso.');
+        }
+        $idFactura = intval($stmt->insert_id);
+        $stmt->close();
+        $url = (string)$gasto['url1'];
+        $nombreArchivo = !empty($archivo['nombre']) ? $archivo['nombre'] : basename(parse_url($url, PHP_URL_PATH));
+        $extension = !empty($archivo['extension']) ? $archivo['extension'] : strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+        $mime = isset($archivo['mime']) ? $archivo['mime'] : '';
+        $hash = isset($archivo['hash']) ? $archivo['hash'] : '';
+        $tipoOrigen = 'carga_manual';
+        $stmt = $mysqli->prepare("INSERT INTO centro_factura_archivo
+            (id_facturaFK,tipo_origen,cod_mensajeFK,url,nombre_original,extension,mime_type,hash_sha256,orden_pagina,es_principal,cod_usuarioFK_create)
+            VALUES (?,?,NULL,?,?,?,?,?,1,1,?)");
+        if (!$stmt) {
+            throw new Exception('No se pudo preparar el vinculo del archivo del egreso.');
+        }
+        $stmt->bind_param('isssssi', $idFactura, $tipoOrigen, $url, $nombreArchivo, $extension, $mime, $hash, $codUsuario);
+        if (!$stmt->execute()) {
+            throw new Exception('No se pudo vincular el archivo del egreso.');
+        }
+        $idArchivo = intval($stmt->insert_id);
+        $stmt->close();
+        $auditoria = array(
+            'idgastos' => $idGasto, 'cod_interConsulta' => $hilo, 'cod_local' => $local,
+            'tipo_documento' => $validos['tipo_documento'], 'numero_factura' => $validos['numero_factura'],
+            'fecha_emision' => $validos['fecha_emision'], 'importe_total' => $validos['importe_total'],
+            'concepto_contable_heredado' => centroFacturaValorUtf8($concepto), 'posible_duplicado' => $posibleDuplicado
+        );
+        if (!centroFacturaAuditar($mysqli, 'factura', $idFactura, $idFactura, 'crear_desde_egreso', array(), $auditoria, '', $codUsuario)
+            || !centroFacturaAuditar($mysqli, 'archivo', $idArchivo, $idFactura, 'vincular_adjunto_egreso', array(), array('idgastos' => $idGasto, 'hash' => $hash), '', $codUsuario)) {
+            throw new Exception('No se pudo auditar el documento del egreso.');
+        }
+        if (!$mysqli->commit()) {
+            throw new Exception('No se pudo confirmar el documento vinculado al egreso.');
+        }
+        $mysqli->close();
+        return array(
+            'ok' => true, 'id_factura' => $idFactura, 'tipo_documento' => $validos['tipo_documento'],
+            'idempotente' => 0, 'posible_duplicado' => $posibleDuplicado, 'concepto_heredado' => centroFacturaValorUtf8($concepto)
+        );
+    } catch (Exception $e) {
+        $mysqli->rollback();
         $mysqli->close();
         return array('ok' => false, 'codigo' => 'registro', 'mensaje' => $e->getMessage());
     }
@@ -1103,7 +1488,9 @@ function centroFacturaPrepararArchivo($archivo)
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         if ($finfo) {
             $mime = (string)finfo_buffer($finfo, $binario);
-            finfo_close($finfo);
+            if (PHP_VERSION_ID < 80500) {
+                finfo_close($finfo);
+            }
         }
     }
     $permitidos = array(
@@ -1139,7 +1526,12 @@ function centroFacturaGuardarArchivoPreparado($idFactura, $archivo)
     }
     $nombreFisico = 'factura_'.intval($idFactura).'_'.$aleatorio.'.'.$archivo['extension'];
     $rutaAbsoluta = $directorio.$nombreFisico;
-    if (file_put_contents($rutaAbsoluta, $archivo['binario'], LOCK_EX) === false) {
+    $bytesEsperados = strlen($archivo['binario']);
+    $bytesEscritos = file_put_contents($rutaAbsoluta, $archivo['binario'], LOCK_EX);
+    if ($bytesEscritos === false || intval($bytesEscritos) !== $bytesEsperados) {
+        if (is_file($rutaAbsoluta)) {
+            @unlink($rutaAbsoluta);
+        }
         return array('ok' => false, 'mensaje' => 'No se pudo guardar el archivo.');
     }
     return array(
@@ -1256,25 +1648,48 @@ function centroFacturaTipoDocumento($datos)
 function centroFacturaValidarDatosCompletos($mysqli, $datos)
 {
     $tipoDocumento = centroFacturaTipoDocumento($datos);
-    $contraparte = centroFacturaResolverContraparte($mysqli, $datos);
-    if (empty($contraparte['ok'])) {
-        return $contraparte;
+    $tieneDatosContraparte = !empty($datos['cod_proveedor']) || !empty($datos['cod_funcionario'])
+        || trim(isset($datos['nombre_contraparte']) ? (string)$datos['nombre_contraparte'] : '') !== '';
+    if ($tipoDocumento === 'recibo' && !$tieneDatosContraparte) {
+        $contraparte = array(
+            'ok' => true, 'tipo' => 'otro', 'cod_proveedor' => null, 'cod_funcionario' => null,
+            'nombre' => '', 'documento' => ''
+        );
+    } else {
+        $datosContraparte = $datos;
+        $tipoContraparteSolicitado = isset($datosContraparte['tipo_contraparte'])
+            ? strtolower(trim((string)$datosContraparte['tipo_contraparte'])) : 'otro';
+        $documentoManualProveedor = isset($datosContraparte['documento_contraparte'])
+            ? centroFacturaTextoBaseDatos($datosContraparte['documento_contraparte'], 45) : '';
+        if ($tipoContraparteSolicitado === 'proveedor') {
+            $datosContraparte['nombre_contraparte'] = '';
+            $datosContraparte['documento_contraparte'] = '';
+        }
+        $contraparte = centroFacturaResolverContraparte($mysqli, $datosContraparte);
+        if (empty($contraparte['ok'])) {
+            return $contraparte;
+        }
+        if ($tipoContraparteSolicitado === 'proveedor'
+            && trim((string)$contraparte['documento']) === '' && $documentoManualProveedor !== '') {
+            $contraparte['documento'] = $documentoManualProveedor;
+        }
+    }
+    if ($tipoDocumento === 'factura' && trim((string)$contraparte['documento']) === '') {
+        return array('ok' => false, 'mensaje' => 'Ingrese el RUC del proveedor o de la razon social.');
     }
     $numero = isset($datos['numero_factura']) ? centroFacturaTextoBaseDatos($datos['numero_factura'], 80) : '';
     $fecha = isset($datos['fecha_emision']) ? centroFacturaFechaValida($datos['fecha_emision'], false) : false;
     $importe = isset($datos['importe_total']) ? centroFacturaImporte($datos['importe_total']) : 0;
     $concepto = isset($datos['concepto']) ? centroFacturaTextoBaseDatos($datos['concepto'], 255) : '';
-    if ($numero === '') {
-        return array('ok' => false, 'mensaje' => $tipoDocumento === 'recibo' ? 'Ingrese el numero de recibo.' : 'Ingrese el numero de factura.');
-    }
+    $observaciones = isset($datos['observaciones']) ? centroFacturaTextoBaseDatos($datos['observaciones'], 3000, true) : '';
     if (!$fecha) {
         return array('ok' => false, 'mensaje' => 'Ingrese una fecha de emision valida.');
     }
     if ($importe <= 0) {
         return array('ok' => false, 'mensaje' => 'El importe debe ser mayor a cero.');
     }
-    if ($concepto === '') {
-        return array('ok' => false, 'mensaje' => 'Ingrese el concepto del comprobante.');
+    if ($tipoDocumento === 'recibo' && trim((string)$observaciones) === '') {
+        return array('ok' => false, 'mensaje' => 'Ingrese una descripcion para el recibo.');
     }
     $timbrado = isset($datos['timbrado']) ? centroFacturaTextoBaseDatos($datos['timbrado'], 45) : '';
     if ($tipoDocumento === 'recibo') {
@@ -1294,8 +1709,9 @@ function centroFacturaValidarDatosCompletos($mysqli, $datos)
         'importe_total' => $importe,
         'moneda' => $moneda,
         'concepto' => $concepto,
-        'observaciones' => isset($datos['observaciones']) ? centroFacturaTextoBaseDatos($datos['observaciones'], 3000, true) : '',
-        'firma_fiscal' => centroFacturaFirmaFiscal($contraparte['documento'], $numero, $timbrado, $fecha, $importe),
+        'observaciones' => $observaciones,
+        'firma_fiscal' => ($contraparte['documento'] !== '' || $numero !== '')
+            ? centroFacturaFirmaFiscal($contraparte['documento'], $numero, $timbrado, $fecha, $importe) : '',
         'cod_responsable' => !empty($datos['cod_responsable']) ? intval($datos['cod_responsable']) : null
     ));
 }
@@ -1613,25 +2029,25 @@ function centroFacturaGuardarDatos($idFactura, $datos, $codUsuario)
     try {
         $anterior = centroFacturaObtenerRaw($mysqli, $idFactura, true);
         if (!$anterior || !centroFacturaPuedeUsarLocal($codUsuario, $anterior['cod_localFK'], $mysqli)) {
-            throw new Exception('La factura no existe o no pertenece a un local autorizado.');
+            throw new Exception('El comprobante no existe o no pertenece a un local autorizado.');
         }
         if (!centroFacturaPuedeEditarRegistro($codUsuario, $anterior)) {
-            throw new Exception('No tiene permiso para corregir esta factura.');
+            throw new Exception('No tiene permiso para corregir este comprobante.');
         }
         $validos = centroFacturaValidarDatosCompletos($mysqli, (array)$datos);
         if (empty($validos['ok'])) {
             throw new Exception($validos['mensaje']);
         }
-        if ($validos['tipo_documento'] === 'recibo' && $anterior['tipo_documento'] !== 'recibo') {
-            $stmtLote = $mysqli->prepare("SELECT 1 FROM centro_factura_lote_detalle ld
+        if ($validos['tipo_documento'] !== $anterior['tipo_documento']) {
+            $stmtLote = $mysqli->prepare("SELECT lo.estado FROM centro_factura_lote_detalle ld
                 INNER JOIN centro_factura_lote lo ON lo.id_lote=ld.id_loteFK
-                WHERE ld.id_facturaFK=? AND ld.estado<>'retirada' AND lo.estado<>'anulado' LIMIT 1");
+                WHERE ld.id_facturaFK=? AND ld.estado<>'retirada' AND lo.estado NOT IN ('anulado','borrador') LIMIT 1");
             $stmtLote->bind_param('i', $idFactura);
             $stmtLote->execute();
-            $estaEnLote = $stmtLote->get_result()->num_rows > 0;
+            $loteDespachado = $stmtLote->get_result()->num_rows > 0;
             $stmtLote->close();
-            if ($estaEnLote) {
-                throw new Exception('Una factura incluida en un lote de originales no puede convertirse en recibo.');
+            if ($loteDespachado) {
+                throw new Exception('El tipo de un comprobante no puede cambiar despues de enviar su lote.');
             }
         }
         $duplicados = centroFacturaBuscarDuplicados($mysqli, $validos['firma_fiscal'], $idFactura, $validos['tipo_documento']);
@@ -2315,9 +2731,14 @@ function centroFacturaListarLotes($codUsuario, $filtros, $limite = 80, $offset =
     $base = "SELECT lo.*,l.Nombre AS nombre_local,pc.nombre_persona AS usuario_creador,
         pe.nombre_persona AS usuario_entrega,pr.nombre_persona AS usuario_recepcion,
         SUM(CASE WHEN ld.estado<>'retirada' THEN 1 ELSE 0 END) AS cantidad_facturas,
+        SUM(CASE WHEN ld.estado<>'retirada' THEN 1 ELSE 0 END) AS cantidad_documentos,
+        SUM(CASE WHEN ld.estado<>'retirada' AND cf.tipo_documento='factura' THEN 1 ELSE 0 END) AS cantidad_facturas_tipo,
+        SUM(CASE WHEN ld.estado<>'retirada' AND cf.tipo_documento='recibo' THEN 1 ELSE 0 END) AS cantidad_recibos,
         SUM(CASE WHEN ld.estado='recibida' THEN 1 ELSE 0 END) AS cantidad_recibidas,
         SUM(CASE WHEN ld.estado IN ('faltante','observada') THEN 1 ELSE 0 END) AS cantidad_observadas,
-        IFNULL(SUM(CASE WHEN ld.estado<>'retirada' THEN cf.importe_total ELSE 0 END),0) AS importe_total
+        IFNULL(SUM(CASE WHEN ld.estado<>'retirada' THEN cf.importe_total ELSE 0 END),0) AS importe_total,
+        IFNULL(SUM(CASE WHEN ld.estado<>'retirada' AND cf.tipo_documento='factura' THEN cf.importe_total ELSE 0 END),0) AS importe_facturas,
+        IFNULL(SUM(CASE WHEN ld.estado<>'retirada' AND cf.tipo_documento='recibo' THEN cf.importe_total ELSE 0 END),0) AS importe_recibos
       FROM centro_factura_lote lo
       INNER JOIN local l ON l.cod_local=lo.cod_local_origenFK
       LEFT JOIN persona pc ON pc.cod_persona=lo.cod_usuarioFK_create
@@ -2349,17 +2770,17 @@ function centroFacturaValidarFacturaParaLote($mysqli, $idFactura, $codLocal, $id
 {
     $factura = centroFacturaObtenerRaw($mysqli, $idFactura, $bloquear);
     if (!$factura || intval($factura['cod_localFK']) !== intval($codLocal)) {
-        return array('ok' => false, 'mensaje' => 'Una de las facturas no pertenece al local del lote.');
+        return array('ok' => false, 'mensaje' => 'Uno de los comprobantes no pertenece al local del lote.');
     }
     if ($factura['direccion'] !== 'entrante' || $factura['estado_registro'] !== 'activo'
         || in_array($factura['estado_validacion'], array('rechazada','anulada'), true)) {
-        return array('ok' => false, 'mensaje' => 'Una de las facturas ya no esta activa.');
+        return array('ok' => false, 'mensaje' => 'Uno de los comprobantes ya no esta activo.');
     }
-    if (isset($factura['tipo_documento']) && $factura['tipo_documento'] !== 'factura') {
-        return array('ok' => false, 'mensaje' => 'Los lotes de originales admiten facturas, no recibos.');
+    if (!isset($factura['tipo_documento']) || !in_array($factura['tipo_documento'], array('factura','recibo'), true)) {
+        return array('ok' => false, 'mensaje' => 'El tipo de comprobante no admite gestion por lote.');
     }
     if (in_array($factura['estado_original'], array('recibido','no_requiere_original'), true)) {
-        return array('ok' => false, 'mensaje' => 'Una de las facturas ya fue recibida o no requiere original.');
+        return array('ok' => false, 'mensaje' => 'Uno de los comprobantes ya fue recibido o no requiere original.');
     }
     $idLoteExcluir = intval($idLoteExcluir);
     $stmt = $mysqli->prepare("SELECT lo.codigo_lote FROM centro_factura_lote_detalle ld
@@ -2370,7 +2791,7 @@ function centroFacturaValidarFacturaParaLote($mysqli, $idFactura, $codLocal, $id
     $ocupada = $stmt->get_result()->fetch_assoc();
     $stmt->close();
     if ($ocupada) {
-        return array('ok' => false, 'mensaje' => 'Una de las facturas ya pertenece al lote '.centroFacturaValorUtf8($ocupada['codigo_lote']).'.');
+        return array('ok' => false, 'mensaje' => 'Uno de los comprobantes ya pertenece al lote '.centroFacturaValorUtf8($ocupada['codigo_lote']).'.');
     }
     return array('ok' => true, 'factura' => $factura);
 }
@@ -2383,7 +2804,7 @@ function centroFacturaCrearLote($codLocal, $facturas, $datos, $codUsuario)
     $codLocal = intval($codLocal);
     $ids = array_values(array_unique(array_filter(array_map('intval', (array)$facturas))));
     if (count($ids) < 1 || count($ids) > 200) {
-        return array('ok' => false, 'codigo' => 'datos', 'mensaje' => 'Seleccione entre 1 y 200 facturas para el lote.');
+        return array('ok' => false, 'codigo' => 'datos', 'mensaje' => 'Seleccione entre 1 y 200 comprobantes para el lote.');
     }
     $mysqli = conectar_al_servidor();
     if (!centroFacturaPuedeUsarLocal($codUsuario, $codLocal, $mysqli)) {
@@ -2426,7 +2847,7 @@ function centroFacturaCrearLote($codLocal, $facturas, $datos, $codUsuario)
         foreach ($ids as $idFactura) {
             $stmt->bind_param('iii', $idLote, $idFactura, $codUsuario);
             if (!$stmt->execute()) {
-                throw new Exception('No se pudo agregar una factura al lote.');
+                throw new Exception('No se pudo agregar un comprobante al lote.');
             }
         }
         $stmt->close();
@@ -2505,7 +2926,7 @@ function centroFacturaAgregarFacturaLote($idLote, $idFactura, $codUsuario)
     try {
         $lote = centroFacturaObtenerLoteRaw($mysqli, $idLote, true);
         if (!$lote || $lote['estado'] !== 'borrador' || !centroFacturaPuedeUsarLocal($codUsuario, $lote['cod_local_origenFK'], $mysqli)) {
-            throw new Exception('Solo puede agregarse facturas a un lote borrador autorizado.');
+            throw new Exception('Solo puede agregarse comprobantes a un lote borrador autorizado.');
         }
         $validacion = centroFacturaValidarFacturaParaLote($mysqli, intval($idFactura), $lote['cod_local_origenFK'], intval($idLote), true);
         if (empty($validacion['ok'])) {
@@ -2518,7 +2939,7 @@ function centroFacturaAgregarFacturaLote($idLote, $idFactura, $codUsuario)
         $idFactura = intval($idFactura);
         $stmt->bind_param('iii', $idLote, $idFactura, $codUsuario);
         if (!$stmt->execute()) {
-            throw new Exception('No se pudo agregar la factura.');
+            throw new Exception('No se pudo agregar el comprobante.');
         }
         $stmt->close();
         centroFacturaAuditar($mysqli, 'lote', $idLote, $idFactura, 'agregar_factura_lote', array(), array('id_factura' => $idFactura), '', $codUsuario);
@@ -2543,7 +2964,7 @@ function centroFacturaRetirarFacturaLote($idLote, $idFactura, $motivo, $codUsuar
     try {
         $lote = centroFacturaObtenerLoteRaw($mysqli, $idLote, true);
         if (!$lote || $lote['estado'] !== 'borrador' || !centroFacturaPuedeUsarLocal($codUsuario, $lote['cod_local_origenFK'], $mysqli)) {
-            throw new Exception('Solo puede retirarse facturas de un lote borrador autorizado.');
+            throw new Exception('Solo puede retirarse comprobantes de un lote borrador autorizado.');
         }
         $stmt = $mysqli->prepare("UPDATE centro_factura_lote_detalle SET estado='retirada',observacion=?,fecha_estado=NOW(),cod_usuario_estadoFK=?
             WHERE id_loteFK=? AND id_facturaFK=? AND estado<>'retirada'");
@@ -2552,7 +2973,7 @@ function centroFacturaRetirarFacturaLote($idLote, $idFactura, $motivo, $codUsuar
         $stmt->bind_param('siii', $motivo, $codUsuario, $idLote, $idFactura);
         $stmt->execute();
         if ($stmt->affected_rows < 1) {
-            throw new Exception('La factura no esta incluida en el lote.');
+            throw new Exception('El comprobante no esta incluido en el lote.');
         }
         $stmt->close();
         centroFacturaAuditar($mysqli, 'lote', $idLote, $idFactura, 'retirar_factura_lote', array('estado' => 'incluida'), array('estado' => 'retirada'), $motivo, $codUsuario);
@@ -2586,7 +3007,13 @@ function centroFacturaEnviarLote($idLote, $codResponsable, $codUsuario)
             $ids[] = intval($fila['id_facturaFK']);
         }
         if (count($ids) < 1) {
-            throw new Exception('El lote no tiene facturas activas para enviar.');
+            throw new Exception('El lote no tiene comprobantes activos para enviar.');
+        }
+        foreach ($ids as $idFactura) {
+            $validacion = centroFacturaValidarFacturaParaLote($mysqli, $idFactura, $lote['cod_local_origenFK'], $idLote, true);
+            if (empty($validacion['ok'])) {
+                throw new Exception($validacion['mensaje']);
+            }
         }
         $ahora = date('Y-m-d H:i:s');
         $responsable = intval($codResponsable) > 0 ? intval($codResponsable) : intval($codUsuario);
@@ -2607,8 +3034,8 @@ function centroFacturaEnviarLote($idLote, $codResponsable, $codUsuario)
             WHERE id_factura=? AND estado_registro='activo' AND estado_original NOT IN ('recibido','no_requiere_original')");
         foreach ($ids as $idFactura) {
             $stmt->bind_param('siisi', $ahora, $responsable, $codUsuario, $ahora, $idFactura);
-            if (!$stmt->execute()) {
-                throw new Exception('No se pudo actualizar una factura del lote.');
+            if (!$stmt->execute() || $stmt->affected_rows !== 1) {
+                throw new Exception('No se pudo actualizar un comprobante del lote.');
             }
             centroFacturaAuditar($mysqli, 'factura', $idFactura, $idFactura, 'enviar_original_por_lote', array(), array('estado_original' => 'enviado_central', 'id_lote' => $idLote), '', $codUsuario);
         }
@@ -2641,7 +3068,7 @@ function centroFacturaRecibirLote($idLote, $recepciones, $datos, $codUsuario)
         }
     }
     if (count($mapa) < 1) {
-        return array('ok' => false, 'codigo' => 'datos', 'mensaje' => 'Indique el resultado de recepcion de las facturas.');
+        return array('ok' => false, 'codigo' => 'datos', 'mensaje' => 'Indique el resultado de recepcion de los comprobantes.');
     }
     $ubicacion = array();
     foreach (array('lote_archivo','carpeta_archivo','caja_archivo','periodo_archivo','ubicacion_fisica') as $campo) {
@@ -2669,10 +3096,10 @@ function centroFacturaRecibirLote($idLote, $recepciones, $datos, $codUsuario)
         $stmt->close();
         foreach ($mapa as $idFactura => $recepcion) {
             if (!isset($idsLote[$idFactura])) {
-                throw new Exception('Una factura indicada no pertenece al lote.');
+                throw new Exception('Un comprobante indicado no pertenece al lote.');
             }
             if ($recepcion['estado'] !== 'recibida' && $recepcion['observacion'] === '') {
-                throw new Exception('Describa la observacion de cada factura faltante u observada.');
+                throw new Exception('Describa la observacion de cada comprobante faltante u observado.');
             }
         }
         $ahora = date('Y-m-d H:i:s');
@@ -2685,6 +3112,12 @@ function centroFacturaRecibirLote($idLote, $recepciones, $datos, $codUsuario)
             }
             $stmt->close();
             $factura = centroFacturaObtenerRaw($mysqli, $idFactura, true);
+            if (!$factura || intval($factura['cod_localFK']) !== intval($lote['cod_local_origenFK'])
+                || $factura['direccion'] !== 'entrante' || $factura['estado_registro'] !== 'activo'
+                || in_array($factura['estado_validacion'], array('rechazada','anulada'), true)
+                || !in_array($factura['tipo_documento'], array('factura','recibo'), true)) {
+                throw new Exception('Uno de los comprobantes del lote ya no esta activo o autorizado.');
+            }
             $campos = array(
                 'cod_usuario_actualizacionFK' => array('i', $codUsuario),
                 'fecha_actualizacion' => array('s', $ahora),
@@ -2713,7 +3146,7 @@ function centroFacturaRecibirLote($idLote, $recepciones, $datos, $codUsuario)
             }
             $actualizacion = centroFacturaActualizarColumnas($mysqli, 'centro_factura', $campos, 'id_factura=?', 'i', array($idFactura));
             if (empty($actualizacion['ok'])) {
-                throw new Exception('No se pudo actualizar una factura recibida.');
+                throw new Exception('No se pudo actualizar un comprobante recibido.');
             }
             centroFacturaAuditar($mysqli, 'factura', $idFactura, $idFactura, 'recibir_original_por_lote', array('estado_original' => $factura['estado_original']), array('resultado_lote' => $recepcion['estado'], 'id_lote' => $idLote), $recepcion['observacion'], $codUsuario);
         }

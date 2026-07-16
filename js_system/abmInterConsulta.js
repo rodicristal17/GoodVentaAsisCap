@@ -444,6 +444,13 @@ function actualizarVistaFechaRapidaInterConsulta() {
 
     var fechaDesde= valorCampoInterConsulta("inptBuscarInterConsultaFechaDesde");
     var fechaHasta= valorCampoInterConsulta("inptBuscarInterConsultaFechaHasta");
+    if (fechaDesde == "" && fechaHasta == "") {
+        campoRapido.value= "";
+        textoDia.textContent= "Todas";
+        textoFecha.textContent= "Todas las fechas";
+        return;
+    }
+
     if ((fechaDesde != "" || fechaHasta != "") && fechaDesde != fechaHasta) {
         textoDia.textContent= "Rango";
         textoFecha.textContent= (fechaDesde != "" ? formatearFechaCortaInterConsulta(fechaDesde) : "--/--/----")
@@ -452,7 +459,7 @@ function actualizarVistaFechaRapidaInterConsulta() {
         return;
     }
 
-    var fecha= campoRapido.value || fechaDesde || fechaHasta || obtenerFechaActualIsoInterConsulta();
+    var fecha= campoRapido.value || fechaDesde || fechaHasta;
     fecha= normalizarFechaIsoInterConsulta(fecha);
     campoRapido.value= fecha;
     textoDia.textContent= obtenerDiaTextoInterConsulta(fecha);
@@ -468,7 +475,7 @@ function inicializarFechaRapidaInterConsulta() {
     var fechaDesde= valorCampoInterConsulta("inptBuscarInterConsultaFechaDesde");
     var fechaHasta= valorCampoInterConsulta("inptBuscarInterConsultaFechaHasta");
     if (fechaDesde == "" && fechaHasta == "" && campoRapido.value == "") {
-        aplicarFechaRapidaInterConsulta(obtenerFechaActualIsoInterConsulta(), false);
+        actualizarVistaFechaRapidaInterConsulta();
         return;
     }
 
@@ -708,7 +715,7 @@ function sincronizarFiltrosInterConsultaDesdeAvanzado() {
     var fechaDesde= valorCampoInterConsulta("inptBuscarInterConsultaFechaDesde");
     var fechaHasta= valorCampoInterConsulta("inptBuscarInterConsultaFechaHasta");
     if (fechaDesde == "" && fechaHasta == "") {
-        aplicarFechaRapidaInterConsulta(obtenerFechaActualIsoInterConsulta(), false);
+        asignarValorCampoInterConsulta("inptFiltroRapidoFechaInterConsulta", "");
     } else if (fechaDesde == fechaHasta) {
         asignarValorCampoInterConsulta("inptFiltroRapidoFechaInterConsulta", fechaDesde);
     } else {
@@ -766,7 +773,7 @@ function limpiarFiltrosInterConsulta(ejecutarBusqueda= true) {
 
     localUsuarioInicializadoInterConsulta= false;
     aplicarLocalUsuarioInterConsulta(true);
-    aplicarFechaRapidaInterConsulta(obtenerFechaActualIsoInterConsulta(), false);
+    actualizarVistaFechaRapidaInterConsulta();
 
     const ocultarInactivos= document.getElementById("inptSeleccFiltroEstadoInterConsulta");
     if (ocultarInactivos) {
@@ -3969,10 +3976,605 @@ function buscarMensajes() {
 var fotoMensajeInterconsulta= "";
 var extMensajeInterconsulta= "";
 var tipoAdjuntoMensajeInterconsulta= "otro";
+var tipoAdjuntoDocumentoGasto= "otro";
+var datosAdjuntoDocumentoGasto= null;
+var nombreArchivoAdjuntoDocumentoGasto= "";
+var contextoAdjuntoDocumentoGuiado= null;
+var solicitudContextoAdjuntoDocumentoGuiado= null;
+var adjuntoDocumentoGuiadoEstado= {
+    origen: "",
+    tipo: "",
+    archivo: "",
+    extension: "",
+    nombreArchivo: "",
+    mime: "",
+    lecturaArchivo: 0,
+    guardando: false,
+    focoAnterior: null,
+    hilo: "",
+    tipoMovimiento: "Egreso"
+};
+
+function escaparHtmlAdjuntoDocumentoGuiado(valor) {
+    return String(valor === null || valor === undefined ? "" : valor)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function normalizarMontoAdjuntoDocumentoGuiado(valor) {
+    var texto= String(valor || "").replace(/Gs\.?/gi, "").replace(/\s/g, "");
+    if (texto.indexOf(",") >= 0) {
+        texto= texto.replace(/\./g, "").replace(",", ".");
+    } else if ((texto.match(/\./g) || []).length > 1 || /^\d{1,3}(\.\d{3})+$/.test(texto)) {
+        texto= texto.replace(/\./g, "");
+    }
+    texto= texto.replace(/[^0-9.-]/g, "");
+    var numero= Number(texto);
+    return Number.isFinite(numero) ? numero : 0;
+}
+
+function formatearMontoAdjuntoDocumentoGuiado(valor) {
+    var numero= normalizarMontoAdjuntoDocumentoGuiado(valor);
+    try {
+        return new Intl.NumberFormat("es-PY", {maximumFractionDigits: 2}).format(numero);
+    } catch (error) {
+        return String(numero);
+    }
+}
+
+function obtenerFechaHoyAdjuntoDocumentoGuiado() {
+    var fecha= new Date();
+    var offset= fecha.getTimezoneOffset();
+    return new Date(fecha.getTime() - (offset * 60000)).toISOString().slice(0, 10);
+}
+
+function mostrarErrorAdjuntoDocumentoGuiado(mensaje) {
+    var error= document.getElementById("errorAdjuntoDocumentoGuiado");
+    if (!error) { return; }
+    error.textContent= mensaje || "";
+    error.hidden= !mensaje;
+}
+
+function obtenerProveedorAdjuntoDocumentoGuiado() {
+    var select= document.getElementById("proveedorAdjuntoDocumento");
+    if (!select || !select.value) { return null; }
+    var opcion= select.options[select.selectedIndex];
+    return {
+        cod_proveedor: Number(select.value || 0),
+        nombre_persona: opcion ? opcion.getAttribute("data-nombre") || opcion.textContent : "",
+        rut_proveedor: opcion ? opcion.getAttribute("data-ruc") || "" : ""
+    };
+}
+
+function cargarProveedoresAdjuntoDocumentoGuiado(proveedores) {
+    var select= document.getElementById("proveedorAdjuntoDocumento");
+    if (!select) { return; }
+    var valorActual= select.value;
+    select.innerHTML= "";
+    var manual= document.createElement("option");
+    manual.value= "";
+    manual.textContent= "No está registrado / cargar manualmente";
+    select.appendChild(manual);
+    (proveedores || []).forEach(function(proveedor) {
+        var opcion= document.createElement("option");
+        opcion.value= proveedor.cod_proveedor || "";
+        opcion.textContent= proveedor.nombre_persona || "Proveedor sin nombre";
+        opcion.setAttribute("data-nombre", proveedor.nombre_persona || "");
+        opcion.setAttribute("data-ruc", proveedor.rut_proveedor || "");
+        select.appendChild(opcion);
+    });
+    if (valorActual && select.querySelector('option[value="' + String(valorActual).replace(/"/g, "") + '"]')) {
+        select.value= valorActual;
+    }
+}
+
+function cargarContextoAdjuntoDocumentoGuiado() {
+    if (contextoAdjuntoDocumentoGuiado) {
+        configurarTiposAdjuntoDocumentoGuiado();
+        cargarProveedoresAdjuntoDocumentoGuiado(contextoAdjuntoDocumentoGuiado.proveedores || []);
+        return;
+    }
+    if (solicitudContextoAdjuntoDocumentoGuiado) { return; }
+    obtener_datos_user();
+    var datos= new FormData();
+    datos.append("useru", userid);
+    datos.append("passu", passuser);
+    datos.append("navegador", navegador);
+    datos.append("accion", "contextoAdjuntoDocumento");
+    datos.append("cod_interConsulta", adjuntoDocumentoGuiadoEstado.origen == "hilo" ? adjuntoDocumentoGuiadoEstado.hilo : "");
+    solicitudContextoAdjuntoDocumentoGuiado= $.ajax({
+        data: datos,
+        url: "../php_system/abmInterConsulta.php",
+        type: "post",
+        cache: false,
+        contentType: false,
+        processData: false,
+        complete: function() {
+            solicitudContextoAdjuntoDocumentoGuiado= null;
+        },
+        error: function(jqXHR, textstatus) {
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+            configurarTiposAdjuntoDocumentoGuiado();
+        },
+        success: function(responseText) {
+            try {
+                var respuesta= $.parseJSON(responseText);
+                if (respuesta["1"] != "exito") {
+                    throw new Error(respuesta.mensaje || "No se pudo cargar el contexto documental.");
+                }
+                contextoAdjuntoDocumentoGuiado= respuesta["2"] || {};
+                cargarProveedoresAdjuntoDocumentoGuiado(contextoAdjuntoDocumentoGuiado.proveedores || []);
+                configurarTiposAdjuntoDocumentoGuiado();
+            } catch (error) {
+                mostrarErrorAdjuntoDocumentoGuiado(error.message || "No se pudo cargar la lista de proveedores.");
+            }
+        }
+    });
+}
+
+function configurarTiposAdjuntoDocumentoGuiado() {
+    var contexto= contextoAdjuntoDocumentoGuiado || {};
+    var permisos= contexto.permisos || {};
+    var origen= adjuntoDocumentoGuiadoEstado.origen;
+    var esEgreso= adjuntoDocumentoGuiadoEstado.tipoMovimiento == "Egreso";
+    var permiteFinanciero= origen == "hilo"
+        ? Number(permisos.REGISTRARFACTURAHILO || 0) == 1
+        : (esEgreso && Number(permisos.REGISTRARFACTURAMANUAL || 0) == 1);
+    document.querySelectorAll("#tiposAdjuntoDocumentoGuiado [data-tipo-adjunto]").forEach(function(boton) {
+        var tipo= boton.getAttribute("data-tipo-adjunto");
+        boton.hidden= tipo != "otro" && !permiteFinanciero;
+    });
+    var tituloOtro= document.getElementById("tituloTipoOtroAdjuntoDocumento");
+    var ayudaOtro= document.getElementById("ayudaTipoOtroAdjuntoDocumento");
+    if (origen == "gasto" && adjuntoDocumentoGuiadoEstado.tipoMovimiento == "Deposito") {
+        tituloOtro.textContent= "Comprobante de depósito";
+        ayudaOtro.textContent= "Respaldo general, sin ingreso al Centro de Facturas";
+    } else if (origen == "gasto" && adjuntoDocumentoGuiadoEstado.tipoMovimiento == "Ingreso") {
+        tituloOtro.textContent= "Comprobante o imagen";
+        ayudaOtro.textContent= "Respaldo del ingreso, sin factura recibida";
+    } else {
+        tituloOtro.textContent= "Imagen o archivo";
+        ayudaOtro.textContent= "Respaldo simple, sin datos fiscales";
+    }
+    if (adjuntoDocumentoGuiadoEstado.tipo && document.querySelector('#tiposAdjuntoDocumentoGuiado [data-tipo-adjunto="' + adjuntoDocumentoGuiadoEstado.tipo + '"][hidden]')) {
+        seleccionarTipoAdjuntoDocumentoGuiado("otro");
+    }
+}
+
+function limpiarFormularioAdjuntoDocumentoGuiado() {
+    adjuntoDocumentoGuiadoEstado.lecturaArchivo++;
+    ["razonSocialAdjuntoDocumento", "rucAdjuntoDocumento", "numeroAdjuntoDocumento", "montoAdjuntoDocumento", "descripcionAdjuntoDocumento"].forEach(function(id) {
+        var campo= document.getElementById(id);
+        if (campo) { campo.value= ""; campo.readOnly= false; }
+    });
+    var proveedor= document.getElementById("proveedorAdjuntoDocumento");
+    if (proveedor) { proveedor.value= ""; }
+    var fecha= document.getElementById("fechaAdjuntoDocumento");
+    if (fecha) { fecha.value= obtenerFechaHoyAdjuntoDocumentoGuiado(); }
+    var archivo= document.getElementById("archivoAdjuntoDocumento");
+    if (archivo) { archivo.value= ""; }
+    var nombre= document.getElementById("nombreArchivoAdjuntoDocumento");
+    if (nombre) { nombre.textContent= "Todavía no se seleccionó un archivo."; }
+    adjuntoDocumentoGuiadoEstado.tipo= "";
+    adjuntoDocumentoGuiadoEstado.archivo= "";
+    adjuntoDocumentoGuiadoEstado.extension= "";
+    adjuntoDocumentoGuiadoEstado.nombreArchivo= "";
+    adjuntoDocumentoGuiadoEstado.mime= "";
+    document.querySelectorAll("#tiposAdjuntoDocumentoGuiado [data-tipo-adjunto]").forEach(function(boton) {
+        boton.classList.remove("is-selected");
+        boton.setAttribute("aria-pressed", "false");
+    });
+    document.getElementById("pasoDatosAdjuntoDocumento").hidden= true;
+    document.getElementById("pasoArchivoAdjuntoDocumento").hidden= true;
+    document.getElementById("resumenAdjuntoDocumentoGuiado").hidden= true;
+    document.getElementById("btnConfirmarAdjuntoDocumentoGuiado").disabled= true;
+    mostrarErrorAdjuntoDocumentoGuiado("");
+}
+
+function abrirAdjuntoDocumentoGuiado(origen) {
+    var dialogo= document.getElementById("dialogoAdjuntoDocumentoGuiado");
+    if (!dialogo) { return; }
+    adjuntoDocumentoGuiadoEstado.origen= origen == "gasto" ? "gasto" : "hilo";
+    adjuntoDocumentoGuiadoEstado.hilo= String(cod_interConsulta || "");
+    adjuntoDocumentoGuiadoEstado.tipoMovimiento= adjuntoDocumentoGuiadoEstado.origen == "gasto"
+        ? normalizarTipoMovimientoFinanciero(document.getElementById("inptTipoGasto") ? document.getElementById("inptTipoGasto").value : "Egreso")
+        : "Egreso";
+    adjuntoDocumentoGuiadoEstado.focoAnterior= document.activeElement;
+    limpiarFormularioAdjuntoDocumentoGuiado();
+    var fechaMovimiento= document.getElementById("inptFechaGasto");
+    if (origen == "gasto" && fechaMovimiento && fechaMovimiento.value) {
+        document.getElementById("fechaAdjuntoDocumento").value= fechaMovimiento.value;
+    }
+    document.getElementById("etiquetaAdjuntoDocumentoGuiado").textContent= origen == "gasto" ? "Respaldo del movimiento" : "Respaldo del Hilo";
+    document.getElementById("tituloAdjuntoDocumentoGuiado").textContent= origen == "gasto" ? "Preparar comprobante" : "Adjuntar archivo o imagen";
+    document.getElementById("btnConfirmarAdjuntoDocumentoGuiado").innerHTML= origen == "gasto"
+        ? '<i class="fa-solid fa-check" aria-hidden="true"></i> Usar en el movimiento'
+        : '<i class="fa-solid fa-paperclip" aria-hidden="true"></i> Adjuntar al Hilo';
+    dialogo.hidden= false;
+    document.body.classList.add("adjunto-documento-dialog-open");
+    configurarTiposAdjuntoDocumentoGuiado();
+    cargarContextoAdjuntoDocumentoGuiado();
+    setTimeout(function() {
+        var titulo= document.getElementById("tituloAdjuntoDocumentoGuiado");
+        if (titulo) { titulo.focus(); }
+    }, 0);
+}
+
+function cerrarAdjuntoDocumentoGuiado(conservarEstado) {
+    if (adjuntoDocumentoGuiadoEstado.guardando) { return; }
+    var dialogo= document.getElementById("dialogoAdjuntoDocumentoGuiado");
+    if (dialogo) { dialogo.hidden= true; }
+    document.body.classList.remove("adjunto-documento-dialog-open");
+    var foco= adjuntoDocumentoGuiadoEstado.focoAnterior;
+    if (!conservarEstado) { limpiarFormularioAdjuntoDocumentoGuiado(); }
+    if (foco && typeof foco.focus == "function") {
+        setTimeout(function() { foco.focus(); }, 0);
+    }
+}
+
+function seleccionarTipoAdjuntoDocumentoGuiado(tipo) {
+    tipo= ["factura", "comprobante", "otro"].indexOf(tipo) >= 0 ? tipo : "otro";
+    var boton= document.querySelector('#tiposAdjuntoDocumentoGuiado [data-tipo-adjunto="' + tipo + '"]');
+    if (!boton || boton.hidden) {
+        mostrarErrorAdjuntoDocumentoGuiado("No tiene permiso para registrar este tipo de documento en el contexto actual.");
+        return;
+    }
+    if (adjuntoDocumentoGuiadoEstado.tipo && adjuntoDocumentoGuiadoEstado.tipo != tipo) {
+        adjuntoDocumentoGuiadoEstado.lecturaArchivo++;
+        if (adjuntoDocumentoGuiadoEstado.archivo || document.getElementById("archivoAdjuntoDocumento").value) {
+            adjuntoDocumentoGuiadoEstado.archivo= "";
+            adjuntoDocumentoGuiadoEstado.extension= "";
+            adjuntoDocumentoGuiadoEstado.nombreArchivo= "";
+            document.getElementById("archivoAdjuntoDocumento").value= "";
+            document.getElementById("nombreArchivoAdjuntoDocumento").textContent= "Seleccione nuevamente el archivo para el tipo elegido.";
+        }
+    }
+    adjuntoDocumentoGuiadoEstado.tipo= tipo;
+    document.querySelectorAll("#tiposAdjuntoDocumentoGuiado [data-tipo-adjunto]").forEach(function(item) {
+        var seleccionado= item.getAttribute("data-tipo-adjunto") == tipo;
+        item.classList.toggle("is-selected", seleccionado);
+        item.setAttribute("aria-pressed", seleccionado ? "true" : "false");
+    });
+    var esFinanciero= tipo == "factura" || tipo == "comprobante";
+    document.getElementById("pasoDatosAdjuntoDocumento").hidden= !esFinanciero;
+    document.getElementById("camposFacturaAdjuntoDocumento").hidden= tipo != "factura";
+    document.getElementById("camposDocumentoFiscalAdjunto").hidden= !esFinanciero;
+    document.getElementById("grupoDescripcionAdjuntoDocumento").hidden= tipo != "comprobante";
+    document.getElementById("avisoConceptoAdjuntoDocumento").hidden= !esFinanciero;
+    document.getElementById("etiquetaNumeroAdjuntoDocumento").textContent= tipo == "comprobante" ? "N.º de recibo / comprobante (opcional)" : "N.º de factura (opcional)";
+    document.getElementById("ayudaDatosAdjuntoDocumento").textContent= tipo == "factura"
+        ? "Seleccione un proveedor o ingrese su razón social y RUC."
+        : "Registre fecha, monto y una descripción breve. El número es opcional.";
+    document.getElementById("pasoArchivoAdjuntoDocumento").hidden= false;
+    document.getElementById("numeroPasoArchivoAdjuntoDocumento").textContent= esFinanciero ? "3" : "2";
+    mostrarErrorAdjuntoDocumentoGuiado("");
+    actualizarResumenAdjuntoDocumentoGuiado();
+}
+
+function cambiarProveedorAdjuntoDocumentoGuiado() {
+    var proveedor= obtenerProveedorAdjuntoDocumentoGuiado();
+    var razon= document.getElementById("razonSocialAdjuntoDocumento");
+    var ruc= document.getElementById("rucAdjuntoDocumento");
+    if (proveedor) {
+        razon.value= proveedor.nombre_persona || "";
+        ruc.value= proveedor.rut_proveedor || "";
+        razon.readOnly= true;
+        ruc.readOnly= !!proveedor.rut_proveedor;
+        if (!proveedor.rut_proveedor) {
+            setTimeout(function() { ruc.focus(); }, 0);
+        }
+    } else {
+        razon.value= "";
+        ruc.value= "";
+        razon.readOnly= false;
+        ruc.readOnly= false;
+        setTimeout(function() { razon.focus(); }, 0);
+    }
+    actualizarResumenAdjuntoDocumentoGuiado();
+}
+
+function leerArchivoAdjuntoDocumentoGuiado(input) {
+    mostrarErrorAdjuntoDocumentoGuiado("");
+    var lecturaArchivo= ++adjuntoDocumentoGuiadoEstado.lecturaArchivo;
+    adjuntoDocumentoGuiadoEstado.archivo= "";
+    adjuntoDocumentoGuiadoEstado.extension= "";
+    adjuntoDocumentoGuiadoEstado.nombreArchivo= "";
+    adjuntoDocumentoGuiadoEstado.mime= "";
+    var nombreArchivo= document.getElementById("nombreArchivoAdjuntoDocumento");
+    if (!adjuntoDocumentoGuiadoEstado.tipo) {
+        input.value= "";
+        if (nombreArchivo) { nombreArchivo.textContent= "Todavia no se selecciono un archivo."; }
+        actualizarResumenAdjuntoDocumentoGuiado();
+        mostrarErrorAdjuntoDocumentoGuiado("Seleccione primero el tipo de adjunto.");
+        return;
+    }
+    var archivo= input.files && input.files[0] ? input.files[0] : null;
+    if (!archivo) {
+        if (nombreArchivo) { nombreArchivo.textContent= "Todavia no se selecciono un archivo."; }
+        actualizarResumenAdjuntoDocumentoGuiado();
+        return;
+    }
+    if (nombreArchivo) { nombreArchivo.textContent= "Validando " + archivo.name + "..."; }
+    actualizarResumenAdjuntoDocumentoGuiado();
+    var extension= (archivo.name.split(".").pop() || "").toLowerCase();
+    var permitidas= ["jpg", "jpeg", "png", "webp", "gif", "pdf"];
+    if (permitidas.indexOf(extension) < 0) {
+        input.value= "";
+        if (nombreArchivo) { nombreArchivo.textContent= "Todavia no se selecciono un archivo."; }
+        actualizarResumenAdjuntoDocumentoGuiado();
+        mostrarErrorAdjuntoDocumentoGuiado("Seleccione una imagen JPG, PNG, WEBP, GIF o un documento PDF.");
+        return;
+    }
+    if (archivo.size > 10000000) {
+        input.value= "";
+        if (nombreArchivo) { nombreArchivo.textContent= "Todavia no se selecciono un archivo."; }
+        actualizarResumenAdjuntoDocumentoGuiado();
+        mostrarErrorAdjuntoDocumentoGuiado("El archivo supera el límite de 10 MB.");
+        return;
+    }
+    var lector= new FileReader();
+    lector.onerror= function() {
+        if (lecturaArchivo != adjuntoDocumentoGuiadoEstado.lecturaArchivo) { return; }
+        input.value= "";
+        if (nombreArchivo) { nombreArchivo.textContent= "No se pudo leer el archivo."; }
+        actualizarResumenAdjuntoDocumentoGuiado();
+        mostrarErrorAdjuntoDocumentoGuiado("No se pudo leer el archivo seleccionado.");
+    };
+    lector.onload= function(evento) {
+        if (lecturaArchivo != adjuntoDocumentoGuiadoEstado.lecturaArchivo) { return; }
+        adjuntoDocumentoGuiadoEstado.archivo= evento.target.result || "";
+        adjuntoDocumentoGuiadoEstado.extension= extension == "jpeg" ? "jpg" : extension;
+        adjuntoDocumentoGuiadoEstado.nombreArchivo= archivo.name;
+        adjuntoDocumentoGuiadoEstado.mime= archivo.type || "";
+        if (nombreArchivo) { nombreArchivo.textContent= archivo.name + " · " + Math.max(1, Math.round(archivo.size / 1024)) + " KB"; }
+        actualizarResumenAdjuntoDocumentoGuiado();
+    };
+    lector.readAsDataURL(archivo);
+}
+
+function obtenerDatosAdjuntoDocumentoGuiado() {
+    var proveedor= obtenerProveedorAdjuntoDocumentoGuiado();
+    return {
+        tipo_contraparte: proveedor ? "proveedor" : "otro",
+        cod_proveedor: proveedor ? proveedor.cod_proveedor : 0,
+        nombre_contraparte: document.getElementById("razonSocialAdjuntoDocumento").value.trim(),
+        documento_contraparte: document.getElementById("rucAdjuntoDocumento").value.trim(),
+        numero_factura: document.getElementById("numeroAdjuntoDocumento").value.trim(),
+        fecha_emision: document.getElementById("fechaAdjuntoDocumento").value,
+        importe_total: normalizarMontoAdjuntoDocumentoGuiado(document.getElementById("montoAdjuntoDocumento").value),
+        observaciones: document.getElementById("descripcionAdjuntoDocumento").value.trim()
+    };
+}
+
+function validarAdjuntoDocumentoGuiado(silencioso) {
+    var tipo= adjuntoDocumentoGuiadoEstado.tipo;
+    var datos= obtenerDatosAdjuntoDocumentoGuiado();
+    var error= "";
+    if (!tipo) {
+        error= "Seleccione el tipo de adjunto.";
+    } else if (tipo == "factura" && !datos.nombre_contraparte) {
+        error= "Seleccione un proveedor o ingrese la razón social.";
+    } else if (tipo == "factura" && !datos.documento_contraparte) {
+        error= "Ingrese el RUC de la factura.";
+    } else if ((tipo == "factura" || tipo == "comprobante") && !datos.fecha_emision) {
+        error= "Seleccione la fecha del documento.";
+    } else if ((tipo == "factura" || tipo == "comprobante") && datos.importe_total <= 0) {
+        error= "Ingrese un monto mayor a cero.";
+    } else if (tipo == "comprobante" && !datos.observaciones) {
+        error= "Ingrese una descripción breve del recibo.";
+    } else if (!adjuntoDocumentoGuiadoEstado.archivo || !adjuntoDocumentoGuiadoEstado.extension) {
+        error= "Seleccione el archivo que desea adjuntar.";
+    }
+    if (!silencioso) { mostrarErrorAdjuntoDocumentoGuiado(error); }
+    return {ok: error == "", mensaje: error, datos: datos};
+}
+
+function actualizarResumenAdjuntoDocumentoGuiado() {
+    var resumen= document.getElementById("resumenAdjuntoDocumentoGuiado");
+    var boton= document.getElementById("btnConfirmarAdjuntoDocumentoGuiado");
+    var validacion= validarAdjuntoDocumentoGuiado(true);
+    boton.disabled= !validacion.ok || adjuntoDocumentoGuiadoEstado.guardando;
+    if (!adjuntoDocumentoGuiadoEstado.tipo) {
+        resumen.hidden= true;
+        return;
+    }
+    var tipo= adjuntoDocumentoGuiadoEstado.tipo;
+    var preparado= validacion.ok;
+    var nombreTipoResumen= tipo == "factura" ? "Factura" : (tipo == "comprobante" ? "Recibo" : "Adjunto simple");
+    var titulo= nombreTipoResumen + (preparado ? " preparado" : " en preparacion");
+    var partes= [];
+    if (tipo == "factura" && validacion.datos.nombre_contraparte) { partes.push(validacion.datos.nombre_contraparte); }
+    if ((tipo == "factura" || tipo == "comprobante") && validacion.datos.numero_factura) { partes.push("N.º " + validacion.datos.numero_factura); }
+    if ((tipo == "factura" || tipo == "comprobante") && validacion.datos.importe_total > 0) { partes.push("Gs. " + formatearMontoAdjuntoDocumentoGuiado(validacion.datos.importe_total)); }
+    if (adjuntoDocumentoGuiadoEstado.nombreArchivo) { partes.push(adjuntoDocumentoGuiadoEstado.nombreArchivo); }
+    if (!preparado && validacion.mensaje) { partes.push(validacion.mensaje); }
+    resumen.classList.toggle("is-ready", preparado);
+    resumen.innerHTML= "<strong>" + escaparHtmlAdjuntoDocumentoGuiado(titulo) + "</strong>" + escaparHtmlAdjuntoDocumentoGuiado(partes.length ? partes.join(" · ") : "Complete los datos y seleccione el archivo.");
+    resumen.hidden= false;
+}
+
+function aplicarAdjuntoDocumentoGuiadoAGasto(validacion) {
+    tipoAdjuntoDocumentoGasto= adjuntoDocumentoGuiadoEstado.tipo;
+    datosAdjuntoDocumentoGasto= validacion.datos;
+    nombreArchivoAdjuntoDocumentoGasto= adjuntoDocumentoGuiadoEstado.nombreArchivo || "";
+    fotoGasto= adjuntoDocumentoGuiadoEstado.archivo;
+    extGasto= adjuntoDocumentoGuiadoEstado.extension;
+    var miniatura= document.getElementById("imgfotoGasto");
+    if (miniatura) {
+        var esImagen= ["jpg", "jpeg", "png", "webp", "gif"].indexOf(extGasto) >= 0;
+        miniatura.style.backgroundImage= esImagen
+            ? "url(" + fotoGasto + ")"
+            : "url('/GoodVentaAsisCap/iconos/informedevolucion.png')";
+        miniatura.classList.toggle("imgFotoProductoDocumento", !esImagen);
+    }
+    renderizarResumenAdjuntoMovimientoFinanciero();
+    cerrarAdjuntoDocumentoGuiado(false);
+}
+
+function renderizarResumenAdjuntoMovimientoFinanciero() {
+    var resumen= document.getElementById("resumenAdjuntoMovimientoFinanciero");
+    var titulo= document.getElementById("tituloAdjuntoMovimientoFinanciero");
+    var ayuda= document.getElementById("ayudaAdjuntoMovimientoFinanciero");
+    if (!resumen || !titulo || !ayuda) { return; }
+    if (!fotoGasto || !extGasto) {
+        resumen.hidden= true;
+        titulo.textContent= "Adjuntar comprobante";
+        var tipoMovimiento= normalizarTipoMovimientoFinanciero(document.getElementById("inptTipoGasto") ? document.getElementById("inptTipoGasto").value : "Egreso");
+        ayuda.textContent= tipoMovimiento == "Egreso"
+            ? "Identifique primero si es factura, recibo o imagen."
+            : (tipoMovimiento == "Deposito" ? "Adjunte el comprobante general del depósito." : "Adjunte un comprobante o imagen del ingreso.");
+        return;
+    }
+    var nombreTipo= tipoAdjuntoDocumentoGasto == "factura" ? "Factura" : (tipoAdjuntoDocumentoGasto == "comprobante" ? "Recibo" : "Comprobante");
+    titulo.textContent= nombreTipo + " preparado";
+    ayuda.textContent= nombreArchivoAdjuntoDocumentoGasto || ("Archivo ." + extGasto);
+    var detalle= [];
+    if (datosAdjuntoDocumentoGasto && datosAdjuntoDocumentoGasto.numero_factura) { detalle.push("N.º " + datosAdjuntoDocumentoGasto.numero_factura); }
+    if (datosAdjuntoDocumentoGasto && datosAdjuntoDocumentoGasto.importe_total) { detalle.push("Gs. " + formatearMontoAdjuntoDocumentoGuiado(datosAdjuntoDocumentoGasto.importe_total)); }
+    resumen.innerHTML= "<span><strong>" + escaparHtmlAdjuntoDocumentoGuiado(nombreTipo) + " listo para guardar</strong>" + (detalle.length ? " · " + escaparHtmlAdjuntoDocumentoGuiado(detalle.join(" · ")) : "") + ". Se registrará junto con el movimiento.</span>"
+        + '<button type="button" onclick="limpiarAdjuntoMovimientoFinancieroGuiado(true)">Quitar adjunto</button>';
+    resumen.hidden= false;
+}
+
+function limpiarAdjuntoMovimientoFinancieroGuiado(restaurarMiniatura) {
+    tipoAdjuntoDocumentoGasto= "otro";
+    datosAdjuntoDocumentoGasto= null;
+    nombreArchivoAdjuntoDocumentoGasto= "";
+    fotoGasto= "";
+    extGasto= "";
+    if (restaurarMiniatura !== false) {
+        var miniatura= document.getElementById("imgfotoGasto");
+        if (miniatura) {
+            miniatura.style.backgroundImage= "url('/GoodVentaAsisCap/iconos/imagenphoto.png')";
+            miniatura.classList.remove("imgFotoProductoDocumento");
+        }
+    }
+    renderizarResumenAdjuntoMovimientoFinanciero();
+}
+
+function manejarCambioTipoMovimientoAdjuntoGuiado() {
+    var tipoMovimiento= normalizarTipoMovimientoFinanciero(document.getElementById("inptTipoGasto") ? document.getElementById("inptTipoGasto").value : "Egreso");
+    if (tipoMovimiento != "Egreso" && (tipoAdjuntoDocumentoGasto == "factura" || tipoAdjuntoDocumentoGasto == "comprobante")) {
+        limpiarAdjuntoMovimientoFinancieroGuiado(true);
+        ver_vetana_informativa("Adjunto retirado", "Al cambiar el movimiento a " + tipoMovimiento.toLowerCase() + ", la factura o recibo dejó de ser válido. Vuelva a adjuntar un comprobante general.", "advertencia");
+    } else {
+        renderizarResumenAdjuntoMovimientoFinanciero();
+    }
+}
+
+function confirmarAdjuntoDocumentoGuiado() {
+    var validacion= validarAdjuntoDocumentoGuiado(false);
+    if (!validacion.ok || adjuntoDocumentoGuiadoEstado.guardando) { return; }
+    if (adjuntoDocumentoGuiadoEstado.origen == "gasto") {
+        aplicarAdjuntoDocumentoGuiadoAGasto(validacion);
+        return;
+    }
+    enviarAdjuntoDocumentoGuiadoHilo(validacion);
+}
+
+function enviarAdjuntoDocumentoGuiadoHilo(validacion) {
+    var hiloSolicitado= String(adjuntoDocumentoGuiadoEstado.hilo || cod_interConsulta || "");
+    var contenido= document.getElementById("inptContenidoAbmMensaje").innerHTML;
+    var codDictamen= document.getElementById("dictamenAbmMensaje").value;
+    var respuestaCitada= document.getElementById("codMensajeRespuestaInterConsulta");
+    obtener_datos_user();
+    var datos= new FormData();
+    datos.append("useru", userid);
+    datos.append("passu", passuser);
+    datos.append("navegador", navegador);
+    datos.append("accion", "nuevo mensaje con adjunto");
+    datos.append("cod_interConsulta", hiloSolicitado);
+    datos.append("contenido", contenido || "");
+    datos.append("cod_dictamenFK", codDictamen || "");
+    datos.append("cod_mensaje_respuestaFK", respuestaCitada && respuestaCitada.value ? respuestaCitada.value : "");
+    datos.append("tipo_adjunto", adjuntoDocumentoGuiadoEstado.tipo);
+    datos.append("foto", adjuntoDocumentoGuiadoEstado.archivo);
+    datos.append("ext", adjuntoDocumentoGuiadoEstado.extension);
+    datos.append("nombre_archivo", adjuntoDocumentoGuiadoEstado.nombreArchivo);
+    datos.append("datos_documento", JSON.stringify(validacion.datos || {}));
+    adjuntoDocumentoGuiadoEstado.guardando= true;
+    document.getElementById("btnConfirmarAdjuntoDocumentoGuiado").disabled= true;
+    document.getElementById("dialogoAdjuntoDocumentoGuiado").setAttribute("aria-busy", "true");
+    mostrarErrorAdjuntoDocumentoGuiado("");
+    verCerrarEfectoCargando("1");
+    $.ajax({
+        data: datos,
+        url: "../php_system/abmInterConsulta.php",
+        type: "post",
+        cache: false,
+        contentType: false,
+        processData: false,
+        error: function(jqXHR, textstatus) {
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+            mostrarErrorAdjuntoDocumentoGuiado("No se pudo enviar el adjunto. Los datos se conservaron para reintentar.");
+        },
+        success: function(responseText) {
+            try {
+                var respuesta= $.parseJSON(responseText);
+                if (respuesta["1"] != "exito") {
+                    throw new Error(mensajeRespuestaSeguimientoInterConsulta(respuesta, "Revise los datos e intente nuevamente."));
+                }
+                adjuntoDocumentoGuiadoEstado.guardando= false;
+                cerrarAdjuntoDocumentoGuiado(false);
+                if (String(cod_interConsulta) === hiloSolicitado) {
+                    limpiarCamposDetallesInterConsulta();
+                    buscarInterConsultasYContenido(hiloSolicitado);
+                    limpiarcamposMensaje();
+                }
+                var nombreDocumento= respuesta.tipo_adjunto == "factura" ? "Factura" : (respuesta.tipo_adjunto == "comprobante" ? "Recibo" : "Adjunto");
+                ver_vetana_informativa(nombreDocumento + " guardado", respuesta.centro_facturas ? "El documento también quedó registrado en el Centro de Facturas." : "El archivo quedó registrado en el Hilo.", "info");
+                if (respuesta.centro_facturas && typeof centroFacturasActualizarBadge == "function") {
+                    centroFacturasActualizarBadge();
+                }
+            } catch (error) {
+                mostrarErrorAdjuntoDocumentoGuiado(error.message || "No se pudo guardar el adjunto.");
+            }
+        },
+        complete: function() {
+            adjuntoDocumentoGuiadoEstado.guardando= false;
+            document.getElementById("dialogoAdjuntoDocumentoGuiado").removeAttribute("aria-busy");
+            actualizarResumenAdjuntoDocumentoGuiado();
+            verCerrarEfectoCargando("");
+        }
+    });
+}
+
+document.addEventListener("keydown", function(evento) {
+    var dialogo= document.getElementById("dialogoAdjuntoDocumentoGuiado");
+    if (!dialogo || dialogo.hidden) { return; }
+    if (evento.key == "Escape") {
+        evento.preventDefault();
+        cerrarAdjuntoDocumentoGuiado();
+        return;
+    }
+    if (evento.key != "Tab") { return; }
+    var elementos= Array.prototype.slice.call(dialogo.querySelectorAll('button:not([disabled]):not([hidden]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'))
+        .filter(function(elemento) { return elemento.offsetParent !== null; });
+    if (!elementos.length) { return; }
+    var primero= elementos[0];
+    var ultimo= elementos[elementos.length - 1];
+    if (elementos.indexOf(document.activeElement) < 0) {
+        evento.preventDefault();
+        (evento.shiftKey ? ultimo : primero).focus();
+        return;
+    }
+    if (evento.shiftKey && document.activeElement === primero) {
+        evento.preventDefault();
+        ultimo.focus();
+    } else if (!evento.shiftKey && document.activeElement === ultimo) {
+        evento.preventDefault();
+        primero.focus();
+    }
+});
+
 function verificarCamposMensaje() {
-    const contenido= document.getElementById('inptContenidoAbmMensaje').innerHTML;
+    const editor= document.getElementById('inptContenidoAbmMensaje');
+    const contenido= editor.innerHTML;
     const cod_dictamenFK= document.getElementById('dictamenAbmMensaje').value;
-    if (!contenido) {
+    if (!String(editor.textContent || "").replace(/\u00a0/g, " ").trim()) {
         ver_vetana_informativa("Falto ingresar un contenido");
         return false;
     }
@@ -3985,10 +4587,6 @@ function verificarCamposMensaje() {
 
 function abmMensaje(fecha, contenido, cod_dictamenFK) {
     var hiloSolicitado= String(cod_interConsulta || "");
-    var fotoSolicitada= fotoMensajeInterconsulta;
-    var extensionSolicitada= extMensajeInterconsulta;
-    var selectorTipoAdjunto= document.getElementById("tipoAdjuntoInterConsulta");
-    var tipoAdjuntoSolicitado= selectorTipoAdjunto ? selectorTipoAdjunto.value : "otro";
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
@@ -4048,7 +4646,11 @@ function abmMensaje(fecha, contenido, cod_dictamenFK) {
 				if (Respuesta == "exito") {
 					ver_vetana_informativa("Datos guardados.", "", "info");
                     marcarMensajeLeido(false, function() {
-                        subirImagenMensajeInterconsulta(datos["2"], hiloSolicitado, fotoSolicitada, extensionSolicitada, tipoAdjuntoSolicitado);
+                        if (String(cod_interConsulta) === hiloSolicitado) {
+                            limpiarCamposDetallesInterConsulta();
+                            buscarInterConsultasYContenido(hiloSolicitado);
+                            limpiarcamposMensaje();
+                        }
                     }, hiloSolicitado);
 				} else {
                     ver_vetana_informativa("No se pudo enviar", mensajeRespuestaSeguimientoInterConsulta(datos, "Revise el mensaje e intente nuevamente."), "advertencia");

@@ -6,8 +6,14 @@ var centroFacturasEstado = {
     total: 0,
     filtroRapido: "",
     seleccion: {},
+    seleccionDetalle: {},
+    vistaLegajos: "ventas",
+    seleccionLegajos: {},
+    seleccionLegajosDetalle: {},
     detalleFactura: 0,
     detalleLote: 0,
+    detalleLegajo: 0,
+    detalleLoteLegajo: 0,
     cargandoContexto: false,
     inicializado: false,
     esperaContexto: [],
@@ -118,6 +124,19 @@ function centroFacturasAlternarMetricas() {
 
 function centroFacturasPermiso(codigo) {
     return !!(centroFacturasEstado.contexto && centroFacturasEstado.contexto.permisos && centroFacturasEstado.contexto.permisos[codigo]);
+}
+
+function centroFacturasPuedeVerLegajos() {
+    return !!(centroFacturasEstado.contexto && centroFacturasEstado.contexto.legajos_disponibles
+        && (centroFacturasPermiso("VERLEGAJOSVENTA") || centroFacturasPermiso("ADMINCENTROFACTURAS")));
+}
+
+function centroFacturasPuedeGestionarLegajos() {
+    return centroFacturasPermiso("GESTIONARLEGAJOSVENTA") || centroFacturasPermiso("ADMINCENTROFACTURAS");
+}
+
+function centroFacturasPuedeGestionarLotesLegajos() {
+    return centroFacturasPermiso("GESTIONARLOTESLEGAJOS") || centroFacturasPermiso("ADMINCENTROFACTURAS");
 }
 
 function centroFacturasFormData(accion, extras) {
@@ -247,7 +266,9 @@ function centroFacturasActualizarPermisoSesion(codigo, accion) {
     var permisosCentro = [
         "VERCENTROFACTURAS", "VERCENTROFACTURASTODOSLOCALES", "REGISTRARFACTURAHILO",
         "REGISTRARFACTURAMANUAL", "VINCULARPAGOFACTURA", "ENVIARORIGINALFACTURA",
-        "RECIBIRORIGINALFACTURA", "GESTIONARLOTESFACTURAS", "ADMINCENTROFACTURAS"
+        "RECIBIRORIGINALFACTURA", "GESTIONARLOTESFACTURAS", "ADMINCENTROFACTURAS",
+        "VERLEGAJOSVENTA", "GESTIONARLEGAJOSVENTA", "GESTIONARLOTESLEGAJOS",
+        "ENVIARLOTELEGAJOS", "RECIBIRLOTELEGAJOS"
     ];
     codigo = String(codigo || "").trim().toUpperCase();
     if (permisosCentro.indexOf(codigo) < 0) { return; }
@@ -294,8 +315,14 @@ function centroFacturasPrepararContexto() {
     if (responsable) { responsable.innerHTML = '<option value="">Todos</option>' + centroFacturasOpciones(contexto.funcionarios, "cod_usuario", "nombre_persona", ""); }
     var botonManual = document.getElementById("btnCentroFacturasManual");
     var botonConfig = document.getElementById("btnCentroFacturasConfig");
+    var botonLegajos = document.getElementById("btnCentroFacturasTabLegajos");
     if (botonManual) { botonManual.hidden = !centroFacturasPermiso("REGISTRARFACTURAMANUAL"); }
     if (botonConfig) { botonConfig.hidden = !centroFacturasPermiso("ADMINCENTROFACTURAS"); }
+    if (botonLegajos) { botonLegajos.hidden = !centroFacturasPuedeVerLegajos(); }
+    if (!centroFacturasPuedeVerLegajos() && centroFacturasEstado.tab === "legajos") {
+        centroFacturasEstado.tab = "entrantes";
+        centroFacturasEstado.vistaLegajos = "ventas";
+    }
     if (!centroFacturasEstado.periodoMes) { centroFacturasAplicarPeriodoMes(centroFacturasMesActual(), false); }
     centroFacturasFijarMetricasColapsadas(centroFacturasEstado.metricasColapsadas);
 }
@@ -352,9 +379,18 @@ function centroFacturasPintarMetricas(metricas, tab) {
     if (!contenedor) { return; }
     tab = tab || centroFacturasEstado.tab;
     var resumen = document.getElementById("centroFacturasResumen");
-    if (resumen) { resumen.hidden = tab === "lotes"; }
-    if (tab === "lotes") { contenedor.innerHTML = ""; return; }
-    var items = tab === "emitidas" ? [
+    var ocultar = tab === "lotes" || (tab === "legajos" && centroFacturasEstado.vistaLegajos === "lotes");
+    if (resumen) { resumen.hidden = ocultar; }
+    if (ocultar) { contenedor.innerHTML = ""; return; }
+    var items = tab === "legajos" ? [
+        ["ventas_periodo", "Ventas del período", "fa-cart-shopping", "", ""],
+        ["legajos_completos", "Legajos completos", "fa-folder-closed", "", "completos"],
+        ["legajos_incompletos", "Legajos incompletos", "fa-folder-minus", "is-alert", "incompletos"],
+        ["listos_envio", "Listos para envío", "fa-box-open", "", "listos_envio"],
+        ["en_transito", "En tránsito", "fa-truck-fast", "", "en_transito"],
+        ["recibidos", "Recibidos", "fa-circle-check", "", "recibidos"],
+        ["observados", "Observados", "fa-triangle-exclamation", "is-danger", "observados"]
+    ] : tab === "emitidas" ? [
         ["eventos_periodo", "Cobros del período", "fa-cash-register", "", ""],
         ["ventas_contado", "Ventas al contado", "fa-money-bill-wave", "", "contado"],
         ["cuotas_cobradas", "Cuotas cobradas", "fa-calendar-check", "", "cuotas"],
@@ -379,21 +415,62 @@ function centroFacturasPintarMetricas(metricas, tab) {
 }
 
 function centroFacturasCambiarTab(tab) {
-    if (["entrantes", "emitidas", "lotes"].indexOf(tab) < 0) { return; }
+    if (["entrantes", "emitidas", "lotes", "legajos"].indexOf(tab) < 0) { return; }
+    if (tab === "legajos" && !centroFacturasPuedeVerLegajos()) {
+        centroFacturasAviso("No tiene permiso para consultar legajos de ventas.", "error");
+        return;
+    }
     centroFacturasEstado.tab = tab;
     centroFacturasEstado.offset = 0;
     centroFacturasEstado.filtroRapido = "";
     centroFacturasLimpiarSeleccion();
+    centroFacturasLimpiarSeleccionLegajos();
     Array.prototype.forEach.call(document.querySelectorAll("[data-cf-tab]"), function (boton) {
         boton.classList.toggle("is-active", boton.getAttribute("data-cf-tab") === tab);
     });
     var esEntrante = tab === "entrantes";
+    var esLegajos = tab === "legajos";
     ["centroFacturasFiltroPago", "centroFacturasFiltroOriginal"].forEach(function (id) {
         var campo = document.getElementById(id); if (campo) { campo.style.display = esEntrante ? "" : "none"; }
     });
     var manual = document.getElementById("btnCentroFacturasManual");
     if (manual) { manual.hidden = !esEntrante || !centroFacturasPermiso("REGISTRARFACTURAMANUAL"); }
+    var config = document.getElementById("btnCentroFacturasConfig");
+    if (config) { config.hidden = esLegajos || !centroFacturasPermiso("ADMINCENTROFACTURAS"); }
+    var masFiltros = document.getElementById("btnCentroFacturasMasFiltros");
+    if (masFiltros) { masFiltros.hidden = esLegajos; }
+    if (esLegajos) {
+        var filtrosExtra = document.getElementById("centroFacturasFiltrosExtra");
+        if (filtrosExtra) { filtrosExtra.hidden = true; }
+    }
+    var subtabs = document.getElementById("centroFacturasLegajosSubtabs");
+    if (subtabs) { subtabs.hidden = !esLegajos; }
+    var busqueda = document.getElementById("centroFacturasBusqueda");
+    if (busqueda) {
+        busqueda.placeholder = esLegajos
+            ? (centroFacturasEstado.vistaLegajos === "lotes" ? "Código, origen, destino o transportista" : "Paciente, cédula, venta o Legajo")
+            : "Proveedor, factura, recibo, concepto o Hilo";
+    }
+    var tabla = document.getElementById("centroFacturasTabla");
+    if (tabla) { tabla.classList.toggle("centro-facturas-table--legajos", esLegajos); }
     centroFacturasPintarMetricas({}, tab);
+    centroFacturasBuscar();
+}
+
+function centroFacturasCambiarVistaLegajos(vista) {
+    if (["ventas", "lotes"].indexOf(vista) < 0 || !centroFacturasPuedeVerLegajos()) { return; }
+    centroFacturasEstado.vistaLegajos = vista;
+    centroFacturasEstado.offset = 0;
+    centroFacturasEstado.filtroRapido = "";
+    centroFacturasLimpiarSeleccionLegajos();
+    Array.prototype.forEach.call(document.querySelectorAll("[data-cf-legajos-vista]"), function (boton) {
+        var activo = boton.getAttribute("data-cf-legajos-vista") === vista;
+        boton.classList.toggle("is-active", activo);
+        boton.setAttribute("aria-pressed", activo ? "true" : "false");
+    });
+    var busqueda = document.getElementById("centroFacturasBusqueda");
+    if (busqueda) { busqueda.placeholder = vista === "lotes" ? "Código, origen, destino o transportista" : "Paciente, cédula, venta o Legajo"; }
+    centroFacturasPintarMetricas({}, "legajos");
     centroFacturasBuscar();
 }
 
@@ -429,10 +506,15 @@ function centroFacturasRecargar() {
 
 function centroFacturasCargarListado() {
     if (!centroFacturasEstado.contexto) { return; }
-    var accion = centroFacturasEstado.tab === "emitidas" ? "listarEmitidas" : (centroFacturasEstado.tab === "lotes" ? "listarLotes" : "listarEntrantes");
+    var tabSolicitud = centroFacturasEstado.tab;
+    var vistaSolicitud = centroFacturasEstado.vistaLegajos;
+    var accion = tabSolicitud === "legajos"
+        ? (vistaSolicitud === "lotes" ? "listarLotesLegajos" : "listarLegajos")
+        : (tabSolicitud === "emitidas" ? "listarEmitidas" : (tabSolicitud === "lotes" ? "listarLotes" : "listarEntrantes"));
     centroFacturasSolicitar(accion, {
         filtros: centroFacturasFiltros(), limite: centroFacturasEstado.limite, offset: centroFacturasEstado.offset
     }).done(function (respuesta) {
+        if (tabSolicitud !== centroFacturasEstado.tab || (tabSolicitud === "legajos" && vistaSolicitud !== centroFacturasEstado.vistaLegajos)) { return; }
         if (!respuesta || !respuesta.ok) {
             centroFacturasAviso((respuesta && respuesta.mensaje) || "No se pudo cargar el listado.", "error");
             centroFacturasRenderVacio("No se pudo consultar la informacion.");
@@ -440,9 +522,11 @@ function centroFacturasCargarListado() {
         }
         centroFacturasEstado.total = Number(respuesta.total || 0);
         centroFacturasPintarMetricas(respuesta.metricas || {}, centroFacturasEstado.tab);
-        if (centroFacturasEstado.tab === "entrantes") { centroFacturasRenderEntrantes(respuesta.registros || []); }
-        else if (centroFacturasEstado.tab === "emitidas") { centroFacturasRenderEmitidas(respuesta.registros || []); }
-        else { centroFacturasRenderLotes(respuesta.registros || []); }
+        if (tabSolicitud === "entrantes") { centroFacturasRenderEntrantes(respuesta.registros || []); }
+        else if (tabSolicitud === "emitidas") { centroFacturasRenderEmitidas(respuesta.registros || []); }
+        else if (tabSolicitud === "lotes") { centroFacturasRenderLotes(respuesta.registros || []); }
+        else if (vistaSolicitud === "lotes") { centroFacturasRenderLotesLegajos(respuesta.registros || []); }
+        else { centroFacturasRenderLegajos(respuesta.registros || []); }
         centroFacturasRenderPaginacion();
     });
 }
@@ -469,7 +553,7 @@ function centroFacturasRenderEntrantes(registros) {
     var cabecera = document.getElementById("centroFacturasTablaCabecera");
     var cuerpo = document.getElementById("centroFacturasTablaCuerpo");
     var vacio = document.getElementById("centroFacturasVacio");
-    cabecera.innerHTML = "<tr><th></th><th>Gasto / origen</th><th>Contraparte</th><th>Respaldo</th><th>Importe</th><th>Estado documental</th><th>Original</th><th>Local</th><th>Acción</th></tr>";
+    cabecera.innerHTML = '<tr><th title="Seleccionar comprobante para lote">Lote</th><th>Gasto / origen</th><th>Contraparte</th><th>Respaldo</th><th>Importe</th><th>Estado documental</th><th>Original</th><th>Local</th><th>Acción</th></tr>';
     if (!registros.length) { centroFacturasRenderVacio("No hay gastos ni comprobantes recibidos con estos filtros."); return; }
     vacio.hidden = true;
     cuerpo.innerHTML = registros.map(function (fila) {
@@ -479,10 +563,13 @@ function centroFacturasRenderEntrantes(registros) {
         var visual = fila.estado_original_visual || {};
         var estadoDoc = fila.estado_documental || "sin_comprobante";
         var claseFila = estadoDoc === "consolidado" ? "cf-row--complete" : (estadoDoc === "por_vincular" ? "cf-row--pending" : (estadoDoc === "observado" ? "cf-row--observed" : "cf-row--missing"));
-        var seleccionable = id && fila.tipo_documento !== "recibo" && centroFacturasPermiso("GESTIONARLOTESFACTURAS") && !fila.id_lote_actual
-            && ["recibido", "no_requiere_original"].indexOf(fila.estado_original) < 0 && fila.estado_registro === "activo";
+        var seleccionable = id && ["factura", "recibo"].indexOf(fila.tipo_documento) >= 0 && centroFacturasPermiso("GESTIONARLOTESFACTURAS") && !fila.id_lote_actual
+            && ["recibido", "no_requiere_original"].indexOf(fila.estado_original) < 0 && ["rechazada", "anulada"].indexOf(fila.estado_validacion) < 0
+            && fila.estado_registro === "activo";
         var tipoRespaldo = fila.tipo_documento === "recibo" ? "Recibo" : (fila.tipo_documento === "factura" ? "Factura" : "Sin comprobante");
-        var fiscal = fila.numero_factura ? '<strong>' + centroFacturasEscapar(fila.numero_factura) + '</strong><small>' + (fila.tipo_documento === "recibo" ? "Recibo" : "Timbrado " + centroFacturasEscapar(fila.timbrado || "—")) + " · " + centroFacturasFecha(fila.fecha_emision) + "</small>" : '<strong>' + centroFacturasEscapar(tipoRespaldo) + '</strong><small>' + (estadoDoc === "por_vincular" ? "Adjunto específico encontrado en el Hilo" : "Todavía no se adjuntó un respaldo") + '</small>';
+        var fiscal = fila.numero_factura ? '<strong>' + centroFacturasEscapar(fila.numero_factura) + '</strong><small>' + (fila.tipo_documento === "recibo" ? "Recibo" : "Timbrado " + centroFacturasEscapar(fila.timbrado || "—")) + " · " + centroFacturasFecha(fila.fecha_emision) + "</small>"
+            : (id ? '<strong>' + centroFacturasEscapar(tipoRespaldo) + '</strong><small>Sin número · ' + centroFacturasFecha(fila.fecha_emision) + '</small>'
+                : '<strong>' + centroFacturasEscapar(tipoRespaldo) + '</strong><small>' + (estadoDoc === "por_vincular" ? "Adjunto específico encontrado en el Hilo" : "Todavía no se adjuntó un respaldo") + '</small>');
         var estadoTexto = estadoDoc === "consolidado" ? "Respaldado" : (estadoDoc === "por_vincular" ? "Pendiente de vincular" : (estadoDoc === "observado" ? "Observado" : "Falta comprobante"));
         var estadoTipo = estadoDoc === "consolidado" ? "success" : (estadoDoc === "observado" ? "danger" : "warning");
         var origen = idGasto ? '<strong>Gasto #' + idGasto + " · " + centroFacturasFecha(fila.fecha_origen || fila.gasto_fecha) + '</strong>' : '<strong>Comprobante #' + id + " · " + centroFacturasFecha(fila.fecha_registro_digital, true) + '</strong>';
@@ -491,10 +578,10 @@ function centroFacturasRenderEntrantes(registros) {
             : (idSugerida ? '<button type="button" onclick="centroFacturasAbrirDetalle(' + idSugerida + ')">Revisar adjunto</button>'
                 : (fila.cod_interConsultaFK ? '<button type="button" onclick="centroFacturasAbrirHilo(' + Number(fila.cod_interConsultaFK) + ')">Abrir Hilo</button>' : '<button type="button" onclick="centroFacturasAbrirMovimiento(\'gasto\',' + idGasto + ')">Ver gasto</button>'));
         return '<tr data-cf-id="' + id + '" class="' + claseFila + (centroFacturasEstado.seleccion[id] ? " is-selected" : "") + '"><td>'
-            + (seleccionable ? '<input type="checkbox" aria-label="Seleccionar factura" ' + (centroFacturasEstado.seleccion[id] ? "checked" : "") + ' onchange="centroFacturasSeleccionar(' + id + ',' + Number(fila.cod_localFK) + ',this.checked)">' : "")
+            + (seleccionable ? '<input type="checkbox" aria-label="Seleccionar ' + centroFacturasEscapar(tipoRespaldo.toLowerCase()) + ' para lote" ' + (centroFacturasEstado.seleccion[id] ? "checked" : "") + ' onchange="centroFacturasSeleccionar(' + id + ',' + Number(fila.cod_localFK) + ',this.checked,\'' + fila.tipo_documento + '\',' + Number(fila.importe_total || fila.importe_esperado || 0) + ')">' : "")
             + '</td><td>' + origen + '<small>' + centroFacturasEscapar(origenDetalle) + "</small></td>"
             + '<td><strong>' + centroFacturasEscapar(fila.contraparte_mostrar) + '</strong><small>' + centroFacturasEscapar(fila.documento_contraparte || fila.gasto_motivo || "") + "</small></td>"
-            + "<td>" + fiscal + '</td><td><strong>Gs. ' + centroFacturasNumero(fila.importe_total || fila.importe_esperado) + '</strong><small>' + centroFacturasEscapar(fila.concepto || fila.gasto_motivo || "Sin concepto") + "</small></td>"
+            + "<td>" + fiscal + '</td><td><strong>Gs. ' + centroFacturasNumero(fila.importe_total || fila.importe_esperado) + '</strong><small>' + centroFacturasEscapar(fila.concepto_contable || fila.concepto || fila.observaciones || fila.gasto_motivo || "Pendiente de clasificar") + "</small></td>"
             + '<td>' + centroFacturasBadge(estadoTexto, estadoTipo) + (fila.estado_pago ? '<small>Movimiento: ' + centroFacturasEscapar(fila.estado_pago) + '</small>' : '') + "</td>"
             + '<td>' + (id ? centroFacturasBadge(visual.texto, visual.clase === "danger" ? "danger" : (visual.clase === "success" ? "success" : (visual.clase === "info" ? "info" : "warning"))) + '<small>Límite ' + centroFacturasFecha(fila.fecha_limite_original) + "</small>" : centroFacturasBadge("No gestionado", "warning")) + "</td>"
             + '<td>' + centroFacturasEscapar(fila.nombre_local) + '</td><td>' + accion + '</td></tr>';
@@ -527,14 +614,157 @@ function centroFacturasRenderLotes(registros) {
     var cabecera = document.getElementById("centroFacturasTablaCabecera");
     var cuerpo = document.getElementById("centroFacturasTablaCuerpo");
     var vacio = document.getElementById("centroFacturasVacio");
-    cabecera.innerHTML = "<tr><th>Lote</th><th>Creacion</th><th>Local</th><th>Facturas</th><th>Importe</th><th>Estado</th><th>Responsable</th><th>Accion</th></tr>";
+    cabecera.innerHTML = "<tr><th>Lote</th><th>Creacion</th><th>Local</th><th>Documentos</th><th>Importes declarados</th><th>Estado</th><th>Responsable</th><th>Accion</th></tr>";
     if (!registros.length) { centroFacturasRenderVacio("Todavia no hay lotes con estos filtros."); return; }
     vacio.hidden = true;
     cuerpo.innerHTML = registros.map(function (lote) {
         var tipo = lote.estado === "recibido" ? "success" : (lote.estado === "anulado" || lote.estado === "observado" ? "danger" : (lote.estado === "borrador" ? "warning" : "info"));
+        var cantidadDocumentos = Number(lote.cantidad_documentos != null ? lote.cantidad_documentos : lote.cantidad_facturas || 0);
+        var cantidadRecibos = Number(lote.cantidad_recibos || 0);
+        var cantidadFacturas = Number(lote.cantidad_facturas_tipo != null ? lote.cantidad_facturas_tipo : Math.max(0, cantidadDocumentos - cantidadRecibos));
         return '<tr><td><strong>' + centroFacturasEscapar(lote.codigo_lote) + '</strong><small>' + centroFacturasEscapar(lote.destino) + '</small></td><td>' + centroFacturasFecha(lote.fecha_creacion, true) + '</td><td>' + centroFacturasEscapar(lote.nombre_local) + '</td>'
-            + '<td><strong>' + Number(lote.cantidad_facturas || 0) + '</strong><small>' + Number(lote.cantidad_recibidas || 0) + ' recibidas · ' + Number(lote.cantidad_observadas || 0) + ' observadas</small></td><td>Gs. ' + centroFacturasNumero(lote.importe_total) + '</td><td>' + centroFacturasBadge(String(lote.estado).replace(/_/g, " "), tipo) + '</td><td>' + centroFacturasEscapar(lote.usuario_entrega || lote.usuario_creador || "—") + '</td><td><button type="button" onclick="centroFacturasAbrirLote(' + Number(lote.id_lote) + ')">Ver lote</button></td></tr>';
+            + '<td><strong>' + cantidadDocumentos + ' originales</strong><small>' + cantidadFacturas + ' facturas · ' + cantidadRecibos + ' recibos<br>' + Number(lote.cantidad_recibidas || 0) + ' recibidos · ' + Number(lote.cantidad_observadas || 0) + ' observados</small></td>'
+            + '<td><strong>Facturas: Gs. ' + centroFacturasNumero(lote.importe_facturas || 0) + '</strong><small>Recibos: Gs. ' + centroFacturasNumero(lote.importe_recibos || 0) + '</small></td><td>' + centroFacturasBadge(String(lote.estado).replace(/_/g, " "), tipo) + '</td><td>' + centroFacturasEscapar(lote.usuario_entrega || lote.usuario_creador || "—") + '</td><td><button type="button" onclick="centroFacturasAbrirLote(' + Number(lote.id_lote) + ')">Ver lote</button></td></tr>';
     }).join("");
+}
+
+function centroFacturasDocumentosLegajo(fila) {
+    var salida = {};
+    var documentos = fila && fila.documentos ? fila.documentos : {};
+    if (Array.isArray(documentos)) {
+        documentos.forEach(function (documento) {
+            if (documento && documento.tipo_documento) { salida[documento.tipo_documento] = documento; }
+        });
+    } else {
+        Object.keys(documentos || {}).forEach(function (tipo) { salida[tipo] = documentos[tipo]; });
+    }
+    return salida;
+}
+
+function centroFacturasEstadoDocumentoLegajo(documento, tipo) {
+    documento = documento || {};
+    var nombres = { contrato: "Contrato", pagare: "Pagaré", consentimiento: "Consentimiento", cedula: "Cédula", detalle_venta: "Detalle de venta" };
+    var estado = String(documento.estado_documental || "pendiente");
+    var fisico = String(documento.estado_fisico || "pendiente");
+    var texto = "Pendiente";
+    var clase = "pendiente";
+    var icono = "fa-clock";
+    if (estado === "no_aplica" || fisico === "no_aplica" || Number(documento.es_requerido) === 0) {
+        texto = "No aplica"; clase = "no-aplica"; icono = "fa-minus";
+    } else if (estado === "observado" || ["faltante", "observado"].indexOf(fisico) >= 0) {
+        texto = fisico === "faltante" ? "Faltante" : "Observado"; clase = "observado"; icono = "fa-triangle-exclamation";
+    } else if (["disponible", "validado"].indexOf(estado) >= 0) {
+        if (fisico === "en_sucursal") { texto = "Copia lista"; clase = "completo"; icono = "fa-check"; }
+        else if (fisico === "en_lote") { texto = "En lote"; clase = "informativo"; icono = "fa-box"; }
+        else if (fisico === "pendiente_custodia") { texto = "Por entregar"; clase = "informativo"; icono = "fa-handshake"; }
+        else if (fisico === "en_transito") { texto = "En tránsito"; clase = "informativo"; icono = "fa-truck-fast"; }
+        else if (fisico === "recibido") { texto = "Recibido"; clase = "completo"; icono = "fa-circle-check"; }
+        else { texto = estado === "validado" ? "Validado" : "Disponible"; clase = "completo"; icono = "fa-check"; }
+    } else if (documento.fuente_disponible) {
+        texto = "Fuente disponible"; clase = "informativo"; icono = "fa-print";
+    }
+    return { nombre: nombres[tipo] || tipo, texto: texto, clase: clase, icono: icono };
+}
+
+function centroFacturasRenderDocumentoLegajo(documento, tipo) {
+    var visual = centroFacturasEstadoDocumentoLegajo(documento, tipo);
+    return '<span class="cf-legajo-doc cf-legajo-doc--' + visual.clase + '" title="' + centroFacturasEscapar(visual.nombre + ': ' + visual.texto) + '">'
+        + '<i class="fa-solid ' + visual.icono + '" aria-hidden="true"></i><span><strong>' + centroFacturasEscapar(visual.nombre) + '</strong><small>' + centroFacturasEscapar(visual.texto) + '</small></span></span>';
+}
+
+function centroFacturasRenderLegajos(registros) {
+    var cabecera = document.getElementById("centroFacturasTablaCabecera");
+    var cuerpo = document.getElementById("centroFacturasTablaCuerpo");
+    var vacio = document.getElementById("centroFacturasVacio");
+    var tipos = ["contrato", "pagare", "consentimiento", "cedula", "detalle_venta"];
+    cabecera.innerHTML = '<tr><th title="Seleccionar legajo completo para envío">Lote</th><th>Legajo / venta</th><th>Paciente</th><th class="cf-legajo-documents-cell">Documentos del legajo</th><th>Integridad</th><th>Ubicación y trazabilidad</th><th>Local</th><th>Acción</th></tr>';
+    if (!registros.length) { centroFacturasRenderVacio("No hay ventas para formar legajos con estos filtros."); return; }
+    vacio.hidden = true;
+    cuerpo.innerHTML = registros.map(function (fila) {
+        var codVenta = Number(fila.cod_venta || 0);
+        var documentos = centroFacturasDocumentosLegajo(fila);
+        var requeridos = Number(fila.cantidad_requerida != null ? fila.cantidad_requerida : 5);
+        var listos = Number(fila.cantidad_lista || 0);
+        var porcentaje = requeridos > 0 ? Math.min(100, Math.round((listos * 100) / requeridos)) : 100;
+        var observado = fila.estado_legajo === "observado";
+        var completo = fila.estado_legajo === "completo" || (requeridos > 0 && listos >= requeridos);
+        var claseFila = observado ? "cf-row--observed" : (completo ? "cf-row--complete" : "cf-row--pending");
+        var elegible = Number(fila.elegible_lote) === 1 && centroFacturasPuedeGestionarLotesLegajos();
+        var lote = fila.lote_actual || {};
+        var ubicacion = fila.ubicacion_actual || (lote.codigo_lote ? (lote.codigo_lote + " · " + String(lote.estado || "").replace(/_/g, " ")) : (completo ? "En sucursal, listo para preparar" : "Pendiente de completar"));
+        var custodio = fila.custodio_actual || lote.custodio_actual || lote.transportista || "";
+        var estadoVenta = Number(fila.es_anulada) ? centroFacturasBadge("Venta anulada", "danger") : centroFacturasBadge(fila.tipo_venta || fila.TipoVenta || "Venta", "info");
+        return '<tr data-cf-legajo="' + codVenta + '" class="' + claseFila + (centroFacturasEstado.seleccionLegajos[codVenta] ? " is-selected" : "") + '"><td>'
+            + (elegible ? '<input type="checkbox" aria-label="Seleccionar Legajo ' + codVenta + ' para lote" ' + (centroFacturasEstado.seleccionLegajos[codVenta] ? "checked" : "") + ' onchange="centroFacturasSeleccionarLegajo(' + codVenta + ',' + Number(fila.cod_local || fila.cod_localFK || 0) + ',this.checked,' + requeridos + ')">' : "")
+            + '</td><td><strong>Legajo #' + codVenta + '</strong><small>Venta del ' + centroFacturasFecha(fila.fecha_venta) + '</small>' + estadoVenta + '</td>'
+            + '<td><strong>' + centroFacturasEscapar(fila.titular || fila.paciente || "Sin paciente") + '</strong><small>' + centroFacturasEscapar(fila.documento || "Sin documento") + '</small><small>Gs. ' + centroFacturasNumero(fila.importe_venta || fila.total_venta || 0) + '</small></td>'
+            + '<td class="cf-legajo-documents-cell"><div class="cf-legajo-docs">' + tipos.map(function (tipo) { return centroFacturasRenderDocumentoLegajo(documentos[tipo], tipo); }).join("") + '</div></td>'
+            + '<td><div class="cf-legajo-progress ' + (observado ? "cf-legajo-progress--observado" : (completo ? "" : "cf-legajo-progress--pendiente")) + '" style="--cf-legajo-progress:' + porcentaje + '%"><div class="cf-legajo-progress__heading"><b>' + listos + ' de ' + requeridos + '</b><span>obligatorios</span></div><div class="cf-legajo-progress__track"><div class="cf-legajo-progress__bar"></div></div><small>5 documentos controlados' + (requeridos < 5 ? ' · pagaré no aplica' : '') + '</small></div></td>'
+            + '<td><strong>' + centroFacturasEscapar(ubicacion) + '</strong>' + (custodio ? '<small>Responsable: ' + centroFacturasEscapar(custodio) + '</small>' : '') + '</td>'
+            + '<td>' + centroFacturasEscapar(fila.nombre_local || "—") + '</td><td><button type="button" onclick="centroFacturasAbrirLegajo(' + codVenta + ')">Ver legajo</button></td></tr>';
+    }).join("");
+    centroFacturasActualizarSeleccionLegajos();
+}
+
+function centroFacturasRenderLotesLegajos(registros) {
+    var cabecera = document.getElementById("centroFacturasTablaCabecera");
+    var cuerpo = document.getElementById("centroFacturasTablaCuerpo");
+    var vacio = document.getElementById("centroFacturasVacio");
+    cabecera.innerHTML = '<tr><th>Envío interno</th><th>Preparación</th><th>Origen → destino</th><th>Legajos / documentos</th><th>Importe referencial</th><th>Estado</th><th>Custodia actual</th><th>Recepción</th><th>Acción</th></tr>';
+    if (!registros.length) { centroFacturasRenderVacio("Todavía no hay lotes de legajos con estos filtros."); return; }
+    vacio.hidden = true;
+    cuerpo.innerHTML = registros.map(function (lote) {
+        var estado = String(lote.estado || "borrador");
+        var tipo = estado === "recibido" ? "success" : (["observado", "anulado"].indexOf(estado) >= 0 ? "danger" : (estado === "borrador" ? "warning" : "info"));
+        var custodia = lote.custodio_actual || lote.usuario_custodia || (estado === "pendiente_custodia" ? "Pendiente de aceptación" : (lote.usuario_transportista || "Sin asignar"));
+        return '<tr><td><strong>ENVÍO INTERNO DE DOCUMENTOS</strong><small>' + centroFacturasEscapar(lote.codigo_lote) + '</small></td>'
+            + '<td>' + centroFacturasFecha(lote.fecha_creacion, true) + '<small>' + centroFacturasEscapar(lote.usuario_creador || "—") + '</small></td>'
+            + '<td><strong>' + centroFacturasEscapar(lote.nombre_local_origen || lote.nombre_origen || "—") + '</strong><small>→ ' + centroFacturasEscapar(lote.nombre_local_destino || lote.destino_snapshot || "—") + '</small></td>'
+            + '<td><strong>' + Number(lote.cantidad_legajos || 0) + ' legajos</strong><small>' + Number(lote.cantidad_documentos || 0) + ' documentos · ' + Number(lote.cantidad_recibidos || 0) + ' recibidos</small></td>'
+            + '<td><strong>Gs. ' + centroFacturasNumero(lote.importe_ventas || 0) + '</strong><small>Total referencial de ventas</small></td>'
+            + '<td>' + centroFacturasBadge(estado.replace(/_/g, " "), tipo) + '</td><td><strong>' + centroFacturasEscapar(custodia) + '</strong><small>Transportista: ' + centroFacturasEscapar(lote.usuario_transportista || "Pendiente") + '</small></td>'
+            + '<td>' + (lote.fecha_recepcion ? centroFacturasFecha(lote.fecha_recepcion, true) : "Pendiente") + '<small>' + centroFacturasEscapar(lote.usuario_recepcion || "") + '</small></td>'
+            + '<td><button type="button" onclick="centroFacturasAbrirLoteLegajo(' + Number(lote.id_lote) + ')">Ver envío</button></td></tr>';
+    }).join("");
+}
+
+function centroFacturasSeleccionarLegajo(codVenta, codLocal, seleccionado, cantidadRequerida) {
+    if (seleccionado) {
+        var existentes = Object.keys(centroFacturasEstado.seleccionLegajos);
+        if (existentes.length && Number(centroFacturasEstado.seleccionLegajos[existentes[0]]) !== Number(codLocal)) {
+            centroFacturasAviso("Un lote de legajos solo puede salir de un mismo local.", "error");
+            var checkbox = document.querySelector('tr[data-cf-legajo="' + codVenta + '"] input[type="checkbox"]');
+            if (checkbox) { checkbox.checked = false; }
+            return;
+        }
+        centroFacturasEstado.seleccionLegajos[codVenta] = Number(codLocal);
+        centroFacturasEstado.seleccionLegajosDetalle[codVenta] = { cantidad_requerida: Number(cantidadRequerida || 0) };
+    } else {
+        delete centroFacturasEstado.seleccionLegajos[codVenta];
+        delete centroFacturasEstado.seleccionLegajosDetalle[codVenta];
+    }
+    var fila = document.querySelector('tr[data-cf-legajo="' + codVenta + '"]');
+    if (fila) { fila.classList.toggle("is-selected", seleccionado); }
+    centroFacturasActualizarSeleccionLegajos();
+}
+
+function centroFacturasActualizarSeleccionLegajos() {
+    var ids = Object.keys(centroFacturasEstado.seleccionLegajos);
+    var cantidadDocumentos = ids.reduce(function (total, id) { return total + Number((centroFacturasEstado.seleccionLegajosDetalle[id] || {}).cantidad_requerida || 0); }, 0);
+    var barra = document.getElementById("centroFacturasSeleccionLegajos");
+    if (barra) { barra.hidden = centroFacturasEstado.tab !== "legajos" || centroFacturasEstado.vistaLegajos !== "ventas" || ids.length < 1; }
+    var cantidad = document.getElementById("centroFacturasSeleccionLegajosCantidad");
+    var documentos = document.getElementById("centroFacturasSeleccionLegajosDocumentos");
+    if (cantidad) { cantidad.textContent = ids.length; }
+    if (documentos) { documentos.textContent = cantidadDocumentos; }
+}
+
+function centroFacturasLimpiarSeleccionLegajos() {
+    centroFacturasEstado.seleccionLegajos = {};
+    centroFacturasEstado.seleccionLegajosDetalle = {};
+    centroFacturasActualizarSeleccionLegajos();
+    Array.prototype.forEach.call(document.querySelectorAll('#centroFacturasTablaCuerpo input[type="checkbox"]'), function (c) { c.checked = false; });
+    Array.prototype.forEach.call(document.querySelectorAll("#centroFacturasTablaCuerpo tr"), function (f) { f.classList.remove("is-selected"); });
 }
 
 function centroFacturasRenderPaginacion() {
@@ -562,16 +792,23 @@ function centroFacturasLimpiarFiltros() {
     centroFacturasAplicarPeriodoMes(centroFacturasMesActual(), true);
 }
 
-function centroFacturasSeleccionar(idFactura, codLocal, seleccionado) {
+function centroFacturasSeleccionar(idFactura, codLocal, seleccionado, tipoDocumento, importe) {
     if (seleccionado) {
         var existentes = Object.keys(centroFacturasEstado.seleccion);
         if (existentes.length && Number(centroFacturasEstado.seleccion[existentes[0]]) !== Number(codLocal)) {
-            centroFacturasAviso("Un lote solo puede incluir facturas del mismo local.", "error");
+            centroFacturasAviso("Un lote solo puede incluir comprobantes del mismo local.", "error");
             var checkbox = document.querySelector('tr[data-cf-id="' + idFactura + '"] input[type="checkbox"]'); if (checkbox) { checkbox.checked = false; }
             return;
         }
         centroFacturasEstado.seleccion[idFactura] = codLocal;
-    } else { delete centroFacturasEstado.seleccion[idFactura]; }
+        centroFacturasEstado.seleccionDetalle[idFactura] = {
+            tipo_documento: tipoDocumento === "recibo" ? "recibo" : "factura",
+            importe: Number(importe || 0)
+        };
+    } else {
+        delete centroFacturasEstado.seleccion[idFactura];
+        delete centroFacturasEstado.seleccionDetalle[idFactura];
+    }
     var fila = document.querySelector('tr[data-cf-id="' + idFactura + '"]'); if (fila) { fila.classList.toggle("is-selected", seleccionado); }
     centroFacturasActualizarSeleccion();
 }
@@ -585,6 +822,7 @@ function centroFacturasActualizarSeleccion() {
 
 function centroFacturasLimpiarSeleccion() {
     centroFacturasEstado.seleccion = {};
+    centroFacturasEstado.seleccionDetalle = {};
     centroFacturasActualizarSeleccion();
     Array.prototype.forEach.call(document.querySelectorAll('#centroFacturasTablaCuerpo input[type="checkbox"]'), function (c) { c.checked = false; });
     Array.prototype.forEach.call(document.querySelectorAll("#centroFacturasTablaCuerpo tr"), function (f) { f.classList.remove("is-selected"); });
@@ -618,34 +856,39 @@ function centroFacturasAbrirRegistroManual() {
         + '<form id="centroFacturasFormManual" class="cf-grid" onsubmit="event.preventDefault();centroFacturasGuardarManual();">'
         + '<label>Local<select id="cfManualLocal"><option value="">Seleccione</option>' + centroFacturasOpciones(c.locales, "cod_local", "Nombre", localUsuario) + '</select></label>'
         + '<label>Tipo de respaldo<select id="cfManualTipoDocumento" onchange="centroFacturasActualizarDocumentoManual()"><option value="factura">Factura recibida</option><option value="recibo">Recibo recibido</option></select></label>'
-        + '<label>Tipo de contraparte<select id="cfManualTipo" onchange="centroFacturasActualizarTipoManual()"><option value="proveedor">Proveedor</option><option value="funcionario">Funcionario</option><option value="otro">Otro</option></select></label>'
+        + '<label id="cfManualGrupoTipo">Tipo de contraparte<select id="cfManualTipo" onchange="centroFacturasActualizarTipoManual()"><option value="proveedor">Proveedor</option><option value="funcionario">Funcionario</option><option value="otro">Otro</option></select></label>'
         + '<label id="cfManualGrupoProveedor">Proveedor<select id="cfManualProveedor"><option value="">Seleccione</option>' + centroFacturasOpciones(c.proveedores, "cod_proveedor", "nombre_persona", "") + '</select></label>'
         + '<label id="cfManualGrupoFuncionario" hidden>Funcionario<select id="cfManualFuncionario"><option value="">Seleccione</option>' + centroFacturasOpciones(c.funcionarios, "cod_usuario", "nombre_persona", "") + '</select></label>'
         + '<label id="cfManualGrupoNombre" hidden>Nombre o raz&oacute;n social<input id="cfManualNombre" maxlength="255"></label>'
-        + '<label id="cfManualGrupoDocumento" hidden>RUC o documento<input id="cfManualDocumento" maxlength="45"></label>'
-        + '<label><span id="cfManualNumeroEtiqueta">N.&ordm; de factura</span><input id="cfManualNumero" maxlength="80" placeholder="Ej. 001-001-0001234"></label><label id="cfManualTimbradoGrupo">Timbrado<input id="cfManualTimbrado" maxlength="45"></label>'
+        + '<label id="cfManualGrupoDocumento">RUC o documento<input id="cfManualDocumento" maxlength="45" placeholder="Complete si no figura en el registro"></label>'
+        + '<label><span id="cfManualNumeroEtiqueta">N.&ordm; de factura (opcional)</span><input id="cfManualNumero" maxlength="80" placeholder="Ej. 001-001-0001234"></label><label id="cfManualTimbradoGrupo">Timbrado<input id="cfManualTimbrado" maxlength="45"></label>'
         + '<label>Fecha de emisi&oacute;n<input id="cfManualFecha" type="date" value="' + fecha + '"></label><label>Importe total (Gs.)<input id="cfManualImporte" inputmode="decimal" placeholder="0"></label>'
-        + '<label class="cf-span-2">Concepto<input id="cfManualConcepto" maxlength="255" placeholder="Describa brevemente el gasto"></label>'
-        + '<label class="cf-span-2">Observaciones<textarea id="cfManualObservaciones" rows="2" maxlength="3000"></textarea></label>'
+        + '<label class="cf-span-2">Concepto contable (opcional)<input id="cfManualConcepto" maxlength="255" placeholder="Puede clasificarse posteriormente"></label>'
+        + '<label class="cf-span-2"><span id="cfManualObservacionesEtiqueta">Observaciones (opcional)</span><textarea id="cfManualObservaciones" rows="2" maxlength="3000"></textarea></label>'
         + '<label class="cf-span-2"><span id="cfManualArchivoEtiqueta">Archivo de factura (PDF o imagen; hasta 10 p&aacute;ginas)</span><input id="cfManualArchivos" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.gif" multiple required></label>'
         + '<input type="hidden" id="cfManualConfirmarDuplicado" value="0"><div id="cfManualDuplicado" class="cf-span-2" hidden></div><div id="cfManualError" class="cf-form-error cf-span-2"></div></form>';
     centroFacturasAbrirDialogo("Registrar comprobante recibido", "Carga manual", html,
         '<button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasCerrarDialogo()">Cancelar</button><button type="button" class="cf-button cf-button--primary" onclick="centroFacturasGuardarManual()">Registrar comprobante</button>');
+    centroFacturasActualizarDocumentoManual();
 }
 
 function centroFacturasActualizarDocumentoManual() {
     var esRecibo = document.getElementById("cfManualTipoDocumento").value === "recibo";
-    document.getElementById("cfManualNumeroEtiqueta").textContent = esRecibo ? "N.º de recibo" : "N.º de factura";
+    document.getElementById("cfManualNumeroEtiqueta").textContent = esRecibo ? "N.º de recibo (opcional)" : "N.º de factura (opcional)";
     document.getElementById("cfManualTimbradoGrupo").hidden = esRecibo;
     document.getElementById("cfManualArchivoEtiqueta").textContent = "Archivo de " + (esRecibo ? "recibo" : "factura") + " (PDF o imagen; hasta 10 páginas)";
+    document.getElementById("cfManualObservacionesEtiqueta").textContent = esRecibo ? "Descripción del recibo" : "Observaciones (opcional)";
+    centroFacturasActualizarTipoManual();
 }
 
 function centroFacturasActualizarTipoManual() {
     var tipo = document.getElementById("cfManualTipo").value;
-    document.getElementById("cfManualGrupoProveedor").hidden = tipo !== "proveedor";
-    document.getElementById("cfManualGrupoFuncionario").hidden = tipo !== "funcionario";
-    document.getElementById("cfManualGrupoNombre").hidden = tipo !== "otro";
-    document.getElementById("cfManualGrupoDocumento").hidden = tipo !== "otro";
+    var esRecibo = document.getElementById("cfManualTipoDocumento").value === "recibo";
+    document.getElementById("cfManualGrupoTipo").hidden = esRecibo;
+    document.getElementById("cfManualGrupoProveedor").hidden = esRecibo || tipo !== "proveedor";
+    document.getElementById("cfManualGrupoFuncionario").hidden = esRecibo || tipo !== "funcionario";
+    document.getElementById("cfManualGrupoNombre").hidden = esRecibo || tipo !== "otro";
+    document.getElementById("cfManualGrupoDocumento").hidden = esRecibo;
 }
 
 function centroFacturasDatosManual() {
@@ -676,9 +919,233 @@ function centroFacturasGuardarManual() {
     });
 }
 
+function centroFacturasNombreLocal(codLocal) {
+    var locales = ((centroFacturasEstado.contexto || {}).locales_destino || (centroFacturasEstado.contexto || {}).locales || []);
+    for (var i = 0; i < locales.length; i++) {
+        if (Number(locales[i].cod_local) === Number(codLocal)) { return locales[i].Nombre || locales[i].nombre_local || "Local #" + codLocal; }
+    }
+    return "Local #" + codLocal;
+}
+
+function centroFacturasPrepararLoteLegajos() {
+    var ids = Object.keys(centroFacturasEstado.seleccionLegajos).map(Number);
+    if (!ids.length || !centroFacturasPuedeGestionarLotesLegajos()) { return; }
+    var codLocal = Number(centroFacturasEstado.seleccionLegajos[ids[0]] || 0);
+    var cantidadDocumentos = ids.reduce(function (total, id) { return total + Number((centroFacturasEstado.seleccionLegajosDetalle[id] || {}).cantidad_requerida || 0); }, 0);
+    var contexto = centroFacturasEstado.contexto || {};
+    var destinos = (contexto.locales_destino || contexto.locales || []).filter(function (local) { return Number(local.cod_local) !== codLocal; });
+    var transportistas = (contexto.funcionarios || []).filter(function (funcionario) { return Number(funcionario.puede_custodiar_legajos) === 1; });
+    var ayudaTransportista = transportistas.length
+        ? '<small>Solo se muestran funcionarios autorizados para aceptar la custodia.</small>'
+        : '<small class="cf-form-error">No hay funcionarios habilitados para custodiar legajos. Asigne ENVIARLOTELEGAJOS o ADMINCENTROFACTURAS antes de crear el lote.</small>';
+    var html = '<p class="cf-step-help"><b>Envío interno de documentos.</b> El lote será exclusivo de legajos de ventas y no se mezclará con facturas o recibos. El servidor volverá a comprobar los cinco documentos de cada venta.</p>'
+        + '<div class="cf-detail-summary"><div><span>Origen</span><b>' + centroFacturasEscapar(centroFacturasNombreLocal(codLocal)) + '</b></div><div><span>Legajos</span><b>' + ids.length + '</b></div><div><span>Documentos físicos</span><b>' + cantidadDocumentos + '</b></div></div>'
+        + '<div class="cf-grid"><label>Local de destino<select id="cfLegajoLoteDestino"><option value="">Seleccione el destino</option>' + centroFacturasOpciones(destinos, "cod_local", "Nombre", "") + '</select></label>'
+        + '<label>Transportista asignado<select id="cfLegajoLoteTransportista" ' + (transportistas.length ? '' : 'disabled') + '><option value="">' + (transportistas.length ? 'Seleccione al responsable' : 'Sin funcionarios habilitados') + '</option>' + centroFacturasOpciones(transportistas, "cod_usuario", "nombre_persona", "") + '</select>' + ayudaTransportista + '</label>'
+        + '<label class="cf-span-2">Observaciones del envío<textarea id="cfLegajoLoteObservaciones" rows="3" maxlength="3000" placeholder="Indicaciones de entrega o referencia interna"></textarea></label></div><div id="cfDialogError" class="cf-form-error"></div>';
+    centroFacturasAbrirDialogo("Preparar lote de legajos", "Paso 1 de 3 · Preparación", html,
+        '<button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasCerrarDialogo()">Cancelar</button><button type="button" class="cf-button cf-button--primary" ' + (transportistas.length ? '' : 'disabled') + ' onclick="centroFacturasConfirmarLoteLegajos(' + codLocal + ')">Crear borrador</button>');
+}
+
+function centroFacturasConfirmarLoteLegajos(codLocal) {
+    var destino = Number((document.getElementById("cfLegajoLoteDestino") || {}).value || 0);
+    var transportista = Number((document.getElementById("cfLegajoLoteTransportista") || {}).value || 0);
+    var error = document.getElementById("cfDialogError");
+    if (!destino || destino === Number(codLocal)) { if (error) { error.textContent = "Seleccione un local de destino diferente al origen."; } return; }
+    if (!transportista) { if (error) { error.textContent = "Seleccione quién transportará y deberá aceptar la custodia."; } return; }
+    var ids = Object.keys(centroFacturasEstado.seleccionLegajos).map(Number);
+    centroFacturasSolicitar("crearLoteLegajos", {
+        cod_local: codLocal,
+        ventas: ids,
+        datos: {
+            cod_local_destino: destino,
+            cod_usuario_transportista: transportista,
+            observaciones: (document.getElementById("cfLegajoLoteObservaciones") || {}).value || ""
+        }
+    }).done(function (respuesta) {
+        if (!respuesta || !respuesta.ok) { if (error) { error.textContent = (respuesta && respuesta.mensaje) || "No se pudo crear el lote de legajos."; } return; }
+        centroFacturasCerrarDialogo();
+        centroFacturasLimpiarSeleccionLegajos();
+        centroFacturasAviso("Lote " + respuesta.codigo_lote + " creado como borrador, sin mezclar documentos financieros.", "success");
+        centroFacturasCambiarVistaLegajos("lotes");
+        centroFacturasAbrirLoteLegajo(respuesta.id_lote);
+    });
+}
+
+function centroFacturasAbrirLegajo(codVenta) {
+    codVenta = Number(codVenta || 0);
+    if (!codVenta || !centroFacturasPuedeVerLegajos()) { return; }
+    centroFacturasSolicitar("detalleLegajo", { cod_venta: codVenta }).done(function (respuesta) {
+        if (!respuesta || !respuesta.ok) { centroFacturasAviso((respuesta && respuesta.mensaje) || "No se pudo abrir el legajo.", "error"); return; }
+        centroFacturasEstado.detalleLegajo = codVenta;
+        centroFacturasRenderDetalleLegajo(respuesta);
+        document.getElementById("centroFacturasDetalle").hidden = false;
+    });
+}
+
+function centroFacturasRenderDetalleLegajo(datos) {
+    var venta = datos.venta || datos.legajo || {};
+    var documentos = centroFacturasDocumentosLegajo({ documentos: datos.documentos || venta.documentos || {} });
+    var tipos = ["contrato", "pagare", "consentimiento", "cedula", "detalle_venta"];
+    var requeridos = Number(venta.cantidad_requerida != null ? venta.cantidad_requerida : datos.cantidad_requerida || 5);
+    var listos = Number(venta.cantidad_lista != null ? venta.cantidad_lista : datos.cantidad_lista || 0);
+    document.getElementById("centroFacturasDetalleTitulo").textContent = "Legajo #" + Number(venta.cod_venta || centroFacturasEstado.detalleLegajo);
+    var filas = tipos.map(function (tipo) {
+        var documento = documentos[tipo] || { tipo_documento: tipo, estado_documental: tipo === "pagare" && String(venta.tipo_venta || venta.TipoVenta).toUpperCase() === "CONTADO" ? "no_aplica" : "pendiente" };
+        var visual = centroFacturasEstadoDocumentoLegajo(documento, tipo);
+        var bloqueado = ["en_lote", "pendiente_custodia", "en_transito", "recibido"].indexOf(String(documento.estado_fisico || "")) >= 0;
+        var acciones = "";
+        if (centroFacturasPuedeGestionarLegajos() && visual.clase !== "no-aplica" && !bloqueado && !Number(venta.es_anulada)) {
+            if (["disponible", "validado"].indexOf(String(documento.estado_documental || "")) < 0 || String(documento.estado_fisico || "") !== "en_sucursal") {
+                acciones += '<button type="button" onclick="centroFacturasPrepararCambioDocumentoLegajo(' + Number(venta.cod_venta) + ',\'' + tipo + '\',\'confirmar_copia\')">Confirmar copia física</button>';
+            } else {
+                acciones += '<button type="button" onclick="centroFacturasPrepararCambioDocumentoLegajo(' + Number(venta.cod_venta) + ',\'' + tipo + '\',\'marcar_pendiente\')">Marcar pendiente</button>';
+            }
+            acciones += ' <button type="button" onclick="centroFacturasPrepararCambioDocumentoLegajo(' + Number(venta.cod_venta) + ',\'' + tipo + '\',\'observar\')">Observar</button>';
+        }
+        var fuente = documento.fuente_disponible ? '<small>Existe una fuente en el sistema para revisar o imprimir; no confirma por sí sola la copia física.</small>' : "";
+        return '<tr><td>' + centroFacturasRenderDocumentoLegajo(documento, tipo) + '</td><td>' + centroFacturasEscapar(String(documento.estado_fisico || "pendiente").replace(/_/g, " ")) + fuente + '</td><td>' + centroFacturasEscapar(documento.ubicacion_fisica || venta.nombre_local || "Pendiente") + '</td><td>' + centroFacturasEscapar(documento.usuario_confirmacion || "—") + '<small>' + centroFacturasFecha(documento.fecha_confirmacion, true) + '</small></td><td>' + acciones + '</td></tr>';
+    }).join("");
+    var lote = datos.lote_actual || venta.lote_actual || {};
+    var html = '<div class="cf-detail-summary"><div><span>Venta</span><b>#' + Number(venta.cod_venta) + ' · ' + centroFacturasFecha(venta.fecha_venta) + '</b></div><div><span>Integridad</span><b>' + listos + ' de ' + requeridos + ' obligatorios</b></div><div><span>Condición</span><b>' + centroFacturasEscapar(venta.tipo_venta || venta.TipoVenta || "—") + '</b></div></div>'
+        + '<section class="cf-card"><h4>Identificación del legajo</h4><p><b>Paciente:</b> ' + centroFacturasEscapar(venta.titular || venta.paciente || "—") + '<br><b>Documento:</b> ' + centroFacturasEscapar(venta.documento || "—") + '<br><b>Local de origen:</b> ' + centroFacturasEscapar(venta.nombre_local || "—") + '<br><b>Importe de la venta:</b> Gs. ' + centroFacturasNumero(venta.importe_venta || venta.total_venta || 0) + '</p><div class="cf-card-actions"><button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasAbrirVenta(' + Number(venta.cod_venta) + ')">Abrir venta</button></div></section>'
+        + (lote.codigo_lote ? '<section class="cf-card"><h4>Ubicación y lote actual</h4><p><b>' + centroFacturasEscapar(lote.codigo_lote) + '</b> · ' + centroFacturasEscapar(String(lote.estado || "").replace(/_/g, " ")) + '<br>' + centroFacturasEscapar(lote.nombre_local_origen || venta.nombre_local || "") + ' → ' + centroFacturasEscapar(lote.nombre_local_destino || lote.destino_snapshot || "") + '</p><div class="cf-card-actions"><button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasAbrirLoteLegajo(' + Number(lote.id_lote) + ')">Ver trazabilidad</button></div></section>' : '')
+        + '<section class="cf-card"><h4>Los cinco documentos</h4><p>Cada casilla representa la copia física de esta venta. Una foto vigente del paciente o una impresión disponible no se consideran copia confirmada hasta registrarlo aquí.</p><div class="centro-facturas-table-wrap"><table class="centro-facturas-table"><thead><tr><th>Documento</th><th>Estado físico</th><th>Ubicación</th><th>Confirmación</th><th>Acción</th></tr></thead><tbody>' + filas + '</tbody></table></div></section>';
+    document.getElementById("centroFacturasDetalleContenido").innerHTML = html;
+}
+
+function centroFacturasPrepararCambioDocumentoLegajo(codVenta, tipo, accion) {
+    var titulos = { confirmar_copia: "Confirmar copia física", marcar_pendiente: "Marcar documento pendiente", observar: "Observar documento" };
+    var ayudas = {
+        confirmar_copia: "Confirme únicamente si la copia en papel correspondiente a esta venta está físicamente en la sucursal.",
+        marcar_pendiente: "La copia dejará de estar disponible para nuevos lotes. Indique por qué debe volver a estado pendiente.",
+        observar: "La observación impedirá incluir el legajo en un envío hasta que se regularice."
+    };
+    var html = '<p class="cf-step-help">' + centroFacturasEscapar(ayudas[accion] || "Revise la acción.") + '</p><label class="cf-field-label">Observación ' + (accion === "confirmar_copia" ? "(opcional)" : "obligatoria") + '</label><textarea id="cfLegajoDocumentoObservacion" rows="3" maxlength="3000"></textarea><div id="cfDialogError" class="cf-form-error"></div>';
+    centroFacturasAbrirDialogo(titulos[accion] || "Actualizar documento", "Control del Legajo #" + codVenta, html,
+        '<button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasCerrarDialogo()">Cancelar</button><button type="button" class="cf-button cf-button--primary" onclick="centroFacturasGuardarDocumentoLegajo(' + Number(codVenta) + ',\'' + tipo + '\',\'' + accion + '\')">Confirmar</button>');
+}
+
+function centroFacturasGuardarDocumentoLegajo(codVenta, tipo, accion) {
+    var observaciones = (document.getElementById("cfLegajoDocumentoObservacion") || {}).value || "";
+    var error = document.getElementById("cfDialogError");
+    if (accion !== "confirmar_copia" && !observaciones.trim()) { if (error) { error.textContent = "Describa el motivo u observación."; } return; }
+    centroFacturasSolicitar("guardarDocumentoLegajo", { cod_venta: codVenta, tipo_documento: tipo, accion_documento: accion, observaciones: observaciones }).done(function (respuesta) {
+        if (!respuesta || !respuesta.ok) { if (error) { error.textContent = (respuesta && respuesta.mensaje) || "No se pudo actualizar el documento."; } return; }
+        centroFacturasCerrarDialogo();
+        centroFacturasAviso("Documento actualizado sin modificar la venta ni sus archivos históricos.", "success");
+        centroFacturasAbrirLegajo(codVenta);
+        centroFacturasCargarListado();
+    });
+}
+
+function centroFacturasAbrirLoteLegajo(idLote) {
+    idLote = Number(idLote || 0);
+    if (!idLote || !centroFacturasPuedeVerLegajos()) { return; }
+    centroFacturasSolicitar("detalleLoteLegajo", { id_lote: idLote }).done(function (respuesta) {
+        if (!respuesta || !respuesta.ok) { centroFacturasAviso((respuesta && respuesta.mensaje) || "No se pudo abrir el envío.", "error"); return; }
+        centroFacturasEstado.detalleLoteLegajo = idLote;
+        centroFacturasRenderDetalleLoteLegajo(respuesta);
+        document.getElementById("centroFacturasDetalle").hidden = false;
+    });
+}
+
+function centroFacturasRenderDetalleLoteLegajo(datos) {
+    var lote = datos.lote || {};
+    var documentos = datos.documentos || datos.detalles || [];
+    var eventos = datos.eventos || [];
+    document.getElementById("centroFacturasDetalleTitulo").textContent = lote.codigo_lote || "Envío interno";
+    var grupos = {};
+    documentos.forEach(function (documento) {
+        var venta = Number(documento.cod_ventaFK || documento.cod_venta || 0);
+        if (!grupos[venta]) { grupos[venta] = []; }
+        grupos[venta].push(documento);
+    });
+    var manifiesto = Object.keys(grupos).map(function (venta) {
+        var items = grupos[venta];
+        var importeVenta = Number((items[0] || {}).importe_venta || 0);
+        return '<tr><td><strong>Legajo #' + Number(venta) + '</strong><small>' + centroFacturasEscapar((items[0] || {}).titular || "") + '</small></td><td><strong>Gs. ' + centroFacturasNumero(importeVenta) + '</strong></td><td>' + items.map(function (d) { return centroFacturasRenderDocumentoLegajo(d, d.tipo_documento); }).join(" ") + '</td><td>' + items.map(function (d) { return centroFacturasBadge(String(d.estado_lote || d.estado_detalle || d.estado || "incluido").replace(/_/g, " "), ["faltante", "observado"].indexOf(d.estado_lote || d.estado_detalle || d.estado) >= 0 ? "danger" : ((d.estado_lote || d.estado_detalle || d.estado) === "recibido" ? "success" : "info")); }).join(" ") + '</td></tr>';
+    }).join("");
+    var timeline = eventos.map(function (evento) {
+        return '<li class="cf-legajo-trace__item"><span class="cf-legajo-trace__icon"><i class="fa-solid fa-circle"></i></span><span class="cf-legajo-trace__body"><b>' + centroFacturasEscapar(String(evento.tipo_evento || "evento").replace(/_/g, " ")) + '</b>' + centroFacturasEscapar(evento.detalle || evento.usuario_actor || "") + '</span><span class="cf-legajo-trace__meta">' + centroFacturasFecha(evento.fecha_hora, true) + '<br>' + centroFacturasEscapar(evento.usuario_actor || "") + '</span></li>';
+    }).join("");
+    var estado = String(lote.estado || "borrador");
+    var usuarioContexto = Number((((centroFacturasEstado.contexto || {}).usuario || {}).cod_usuario) || 0);
+    var esTransportistaAsignado = usuarioContexto > 0 && usuarioContexto === Number(lote.cod_usuario_transportistaFK || 0);
+    var html = '<section class="cf-card cf-legajo-manifest-header"><span class="centro-facturas-eyebrow">ENVÍO INTERNO DE DOCUMENTOS</span><h4>' + centroFacturasEscapar(lote.codigo_lote || "") + '</h4><p><b>Origen:</b> ' + centroFacturasEscapar(lote.nombre_local_origen || "—") + '<br><b>Destino:</b> ' + centroFacturasEscapar(lote.nombre_local_destino || lote.destino_snapshot || "—") + '<br><b>Preparado por:</b> ' + centroFacturasEscapar(lote.usuario_creador || "—") + ' · ' + centroFacturasFecha(lote.fecha_creacion, true) + '<br><b>Transportista asignado:</b> ' + centroFacturasEscapar(lote.usuario_transportista || "—") + '<br><b>Custodia aceptada por:</b> ' + centroFacturasEscapar(lote.usuario_custodia || "Pendiente") + (lote.fecha_aceptacion_custodia ? ' · ' + centroFacturasFecha(lote.fecha_aceptacion_custodia, true) : '') + '<br><b>Recibido por:</b> ' + centroFacturasEscapar(lote.usuario_recepcion || "Pendiente") + '</p><div class="cf-card-actions"><button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasImprimirLote()"><i class="fa-solid fa-print"></i> Imprimir manifiesto</button>';
+    if (estado === "borrador" && (centroFacturasPermiso("ENVIARLOTELEGAJOS") || centroFacturasPermiso("ADMINCENTROFACTURAS"))) { html += '<button type="button" class="cf-button cf-button--primary" onclick="centroFacturasPrepararEnvioLoteLegajo(' + Number(lote.id_lote) + ')">Entregar al transportista</button>'; }
+    if (estado === "pendiente_custodia" && esTransportistaAsignado && (centroFacturasPermiso("ENVIARLOTELEGAJOS") || centroFacturasPermiso("ADMINCENTROFACTURAS"))) { html += '<button type="button" class="cf-button cf-button--primary" onclick="centroFacturasAceptarCustodiaLoteLegajo(' + Number(lote.id_lote) + ')">Aceptar custodia</button>'; }
+    if (["en_transito", "recibido_parcial", "observado"].indexOf(estado) >= 0 && (centroFacturasPermiso("RECIBIRLOTELEGAJOS") || centroFacturasPermiso("ADMINCENTROFACTURAS"))) { html += '<button type="button" class="cf-button cf-button--primary" onclick="centroFacturasPrepararRecepcionLoteLegajo(' + Number(lote.id_lote) + ')">Registrar recepción</button>'; }
+    if (estado !== "anulado" && centroFacturasPuedeGestionarLotesLegajos()) { html += '<button type="button" class="cf-button cf-button--danger" onclick="centroFacturasPrepararAnulacionLoteLegajo(' + Number(lote.id_lote) + ')">Anular</button>'; }
+    html += '</div></section><section class="cf-card"><h4>Manifiesto agrupado por legajo</h4><div class="centro-facturas-table-wrap"><table class="centro-facturas-table"><thead><tr><th>Legajo</th><th>Importe de venta</th><th>Documentos</th><th>Situación</th></tr></thead><tbody>' + manifiesto + '</tbody></table></div></section>'
+        + '<section class="cf-card"><h4>Trazabilidad de custodia</h4><ul class="cf-legajo-trace">' + (timeline || '<li class="cf-legajo-trace__item"><span class="cf-legajo-trace__icon"><i class="fa-solid fa-circle"></i></span><span class="cf-legajo-trace__body"><b>Sin eventos</b></span></li>') + '</ul></section>';
+    document.getElementById("centroFacturasDetalleContenido").innerHTML = html;
+}
+
+function centroFacturasPrepararEnvioLoteLegajo(idLote) {
+    centroFacturasAbrirDialogo("Entregar lote al transportista", "Paso 2 de 3 · Entrega", '<p class="cf-step-help">El lote quedará pendiente de aceptación. No figurará “En tránsito” hasta que el transportista asignado confirme la custodia.</p><div id="cfDialogError" class="cf-form-error"></div>', '<button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasCerrarDialogo()">Cancelar</button><button type="button" class="cf-button cf-button--primary" onclick="centroFacturasEnviarLoteLegajo(' + Number(idLote) + ')">Confirmar entrega</button>');
+}
+
+function centroFacturasEnviarLoteLegajo(idLote) {
+    centroFacturasSolicitar("enviarLoteLegajo", { id_lote: idLote }).done(function (respuesta) {
+        if (!respuesta || !respuesta.ok) { document.getElementById("cfDialogError").textContent = (respuesta && respuesta.mensaje) || "No se pudo entregar el lote."; return; }
+        centroFacturasCerrarDialogo(); centroFacturasAviso("Entrega registrada. Falta la aceptación de custodia del transportista.", "success"); centroFacturasAbrirLoteLegajo(idLote); centroFacturasCargarListado();
+    });
+}
+
+function centroFacturasAceptarCustodiaLoteLegajo(idLote) {
+    centroFacturasSolicitar("aceptarCustodiaLoteLegajo", { id_lote: idLote }).done(function (respuesta) {
+        if (!respuesta || !respuesta.ok) { centroFacturasAviso((respuesta && respuesta.mensaje) || "No se pudo aceptar la custodia.", "error"); return; }
+        centroFacturasAviso("Custodia aceptada. El envío ahora figura En tránsito.", "success"); centroFacturasAbrirLoteLegajo(idLote); centroFacturasCargarListado();
+    });
+}
+
+function centroFacturasPrepararRecepcionLoteLegajo(idLote) {
+    centroFacturasSolicitar("detalleLoteLegajo", { id_lote: idLote }).done(function (respuesta) {
+        if (!respuesta || !respuesta.ok) { return; }
+        var items = (respuesta.documentos || respuesta.detalles || []).filter(function (d) { return String(d.estado_lote || d.estado_detalle || d.estado) !== "retirado"; }).map(function (d) {
+            var estado = String(d.estado_lote || d.estado_detalle || d.estado || "en_transito");
+            var seleccionado = estado === "faltante" ? "faltante" : (estado === "observado" ? "observado" : "recibido");
+            var visual = centroFacturasEstadoDocumentoLegajo(d, d.tipo_documento);
+            return '<div class="cf-reception-item" data-cf-legajo-recepcion="' + Number(d.id_documento) + '"><span><b>Legajo #' + Number(d.cod_ventaFK || d.cod_venta) + ' · ' + centroFacturasEscapar(visual.nombre) + '</b><br>' + centroFacturasEscapar(d.titular || "") + '</span><select class="cfLegajoRecepcionEstado"><option value="recibido" ' + (seleccionado === "recibido" ? "selected" : "") + '>Recibido</option><option value="faltante" ' + (seleccionado === "faltante" ? "selected" : "") + '>Faltante</option><option value="observado" ' + (seleccionado === "observado" ? "selected" : "") + '>Observado</option></select><input class="cfLegajoRecepcionObservacion" maxlength="255" placeholder="Observación si falta o tiene diferencias" value="' + centroFacturasEscapar(d.observacion_lote || "") + '"></div>';
+        }).join("");
+        var html = '<p class="cf-step-help">Revise cada copia física. Los faltantes no serán ubicados en el destino y quedarán visibles en la trazabilidad.</p><div class="cf-reception-list">' + items + '</div><label class="cf-field-label">Ubicación física de lo recibido</label><input id="cfLegajoRecepcionUbicacion" maxlength="255" placeholder="Ej. Archivo central, estante, caja o carpeta"><div id="cfDialogError" class="cf-form-error"></div>';
+        centroFacturasAbrirDialogo("Recibir " + respuesta.lote.codigo_lote, "Paso 3 de 3 · Recepción", html, '<button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasCerrarDialogo()">Cancelar</button><button type="button" class="cf-button cf-button--primary" onclick="centroFacturasRecibirLoteLegajo(' + Number(idLote) + ')">Guardar recepción</button>');
+    });
+}
+
+function centroFacturasRecibirLoteLegajo(idLote) {
+    var recepciones = Array.prototype.map.call(document.querySelectorAll("[data-cf-legajo-recepcion]"), function (fila) {
+        return { id_documento: Number(fila.getAttribute("data-cf-legajo-recepcion")), estado: fila.querySelector(".cfLegajoRecepcionEstado").value, observacion: fila.querySelector(".cfLegajoRecepcionObservacion").value };
+    });
+    var error = document.getElementById("cfDialogError");
+    for (var i = 0; i < recepciones.length; i++) {
+        if (recepciones[i].estado !== "recibido" && !String(recepciones[i].observacion || "").trim()) { if (error) { error.textContent = "Describa cada documento faltante u observado."; } return; }
+    }
+    centroFacturasSolicitar("recibirLoteLegajo", { id_lote: idLote, recepciones: recepciones, datos: { ubicacion_fisica: (document.getElementById("cfLegajoRecepcionUbicacion") || {}).value || "" } }).done(function (respuesta) {
+        if (!respuesta || !respuesta.ok) { if (error) { error.textContent = (respuesta && respuesta.mensaje) || "No se pudo guardar la recepción."; } return; }
+        centroFacturasCerrarDialogo(); centroFacturasAviso("Recepción registrada con control individual de documentos.", "success"); centroFacturasAbrirLoteLegajo(idLote); centroFacturasCargarListado();
+    });
+}
+
+function centroFacturasPrepararAnulacionLoteLegajo(idLote) {
+    centroFacturasAbrirDialogo("Anular lote de legajos", "Acción controlada", '<p class="cf-step-help">No se eliminarán ventas, documentos ni eventos de custodia.</p><label class="cf-field-label">Motivo obligatorio</label><textarea id="cfLegajoLoteMotivoAnulacion" rows="3" maxlength="255"></textarea><div id="cfDialogError" class="cf-form-error"></div>', '<button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasCerrarDialogo()">Cancelar</button><button type="button" class="cf-button cf-button--danger" onclick="centroFacturasAnularLoteLegajo(' + Number(idLote) + ')">Anular lote</button>');
+}
+
+function centroFacturasAnularLoteLegajo(idLote) {
+    var motivo = (document.getElementById("cfLegajoLoteMotivoAnulacion") || {}).value || "";
+    var error = document.getElementById("cfDialogError");
+    if (!motivo.trim()) { if (error) { error.textContent = "Ingrese el motivo de anulación."; } return; }
+    centroFacturasSolicitar("anularLoteLegajo", { id_lote: idLote, motivo: motivo }).done(function (respuesta) {
+        if (!respuesta || !respuesta.ok) { if (error) { error.textContent = (respuesta && respuesta.mensaje) || "No se pudo anular el lote."; } return; }
+        centroFacturasCerrarDialogo(); centroFacturasAviso("Lote anulado sin borrar su trazabilidad.", "success"); centroFacturasAbrirLoteLegajo(idLote); centroFacturasCargarListado();
+    });
+}
+
 function centroFacturasCerrarDetalle() {
     var detalle = document.getElementById("centroFacturasDetalle"); if (detalle) { detalle.hidden = true; }
     centroFacturasEstado.detalleFactura = 0; centroFacturasEstado.detalleLote = 0;
+    centroFacturasEstado.detalleLegajo = 0; centroFacturasEstado.detalleLoteLegajo = 0;
 }
 
 function centroFacturasAbrirDetalle(idFactura) {
@@ -706,13 +1173,13 @@ function centroFacturasRenderDetalle(datos) {
     if (f.posible_duplicado && !f.duplicado_confirmado) { html += '<div class="cf-warning-box"><b>Posible duplicado:</b> revise las coincidencias antes de validar.</div>'; }
     html += '<section class="cf-card"><h4>Datos del comprobante</h4><div class="cf-grid">'
         + '<label>Tipo de respaldo<select id="cfDetalleTipoDocumento" onchange="centroFacturasActualizarDocumentoDetalle()"><option value="factura" ' + (!esRecibo ? "selected" : "") + '>Factura</option><option value="recibo" ' + (esRecibo ? "selected" : "") + '>Recibo</option></select></label>'
-        + '<label>Tipo<select id="cfDetalleTipo"><option value="proveedor" ' + (f.tipo_contraparte === "proveedor" ? "selected" : "") + '>Proveedor</option><option value="funcionario" ' + (f.tipo_contraparte === "funcionario" ? "selected" : "") + '>Funcionario</option><option value="otro" ' + (f.tipo_contraparte === "otro" ? "selected" : "") + '>Otro</option></select></label>'
-        + '<label>Proveedor<select id="cfDetalleProveedor"><option value="">No aplica</option>' + centroFacturasOpciones(c.proveedores, "cod_proveedor", "nombre_persona", f.cod_proveedorFK) + '</select></label>'
-        + '<label>Funcionario<select id="cfDetalleFuncionario"><option value="">No aplica</option>' + centroFacturasOpciones(c.funcionarios, "cod_usuario", "nombre_persona", f.cod_funcionarioFK) + '</select></label>'
-        + '<label>Nombre / razon social<input id="cfDetalleNombre" value="' + centroFacturasEscapar(f.nombre_contraparte) + '"></label><label>RUC / documento<input id="cfDetalleDocumento" value="' + centroFacturasEscapar(f.documento_contraparte) + '"></label>'
-        + '<label><span id="cfDetalleNumeroEtiqueta">N.&ordm; ' + (esRecibo ? "recibo" : "factura") + '</span><input id="cfDetalleNumero" value="' + centroFacturasEscapar(f.numero_factura) + '"></label><label id="cfDetalleTimbradoGrupo" ' + (esRecibo ? "hidden" : "") + '>Timbrado<input id="cfDetalleTimbrado" value="' + centroFacturasEscapar(f.timbrado) + '"></label>'
+        + '<label id="cfDetalleTipoGrupo" ' + (esRecibo ? "hidden" : "") + '>Tipo<select id="cfDetalleTipo" onchange="centroFacturasActualizarTipoDetalle()"><option value="proveedor" ' + (f.tipo_contraparte === "proveedor" ? "selected" : "") + '>Proveedor</option><option value="funcionario" ' + (f.tipo_contraparte === "funcionario" ? "selected" : "") + '>Funcionario</option><option value="otro" ' + (f.tipo_contraparte === "otro" ? "selected" : "") + '>Otro</option></select></label>'
+        + '<label id="cfDetalleProveedorGrupo" ' + (esRecibo || f.tipo_contraparte !== "proveedor" ? "hidden" : "") + '>Proveedor<select id="cfDetalleProveedor"><option value="">No aplica</option>' + centroFacturasOpciones(c.proveedores, "cod_proveedor", "nombre_persona", f.cod_proveedorFK) + '</select></label>'
+        + '<label id="cfDetalleFuncionarioGrupo" ' + (esRecibo || f.tipo_contraparte !== "funcionario" ? "hidden" : "") + '>Funcionario<select id="cfDetalleFuncionario"><option value="">No aplica</option>' + centroFacturasOpciones(c.funcionarios, "cod_usuario", "nombre_persona", f.cod_funcionarioFK) + '</select></label>'
+        + '<label id="cfDetalleNombreGrupo" ' + (esRecibo || f.tipo_contraparte !== "otro" ? "hidden" : "") + '>Nombre / razon social<input id="cfDetalleNombre" value="' + centroFacturasEscapar(f.nombre_contraparte) + '"></label><label id="cfDetalleDocumentoGrupo" ' + (esRecibo ? "hidden" : "") + '>RUC / documento<input id="cfDetalleDocumento" value="' + centroFacturasEscapar(f.documento_contraparte) + '"></label>'
+        + '<label><span id="cfDetalleNumeroEtiqueta">N.&ordm; ' + (esRecibo ? "recibo" : "factura") + ' (opcional)</span><input id="cfDetalleNumero" value="' + centroFacturasEscapar(f.numero_factura) + '"></label><label id="cfDetalleTimbradoGrupo" ' + (esRecibo ? "hidden" : "") + '>Timbrado<input id="cfDetalleTimbrado" value="' + centroFacturasEscapar(f.timbrado) + '"></label>'
         + '<label>Fecha emision<input id="cfDetalleFecha" type="date" value="' + centroFacturasEscapar(f.fecha_emision) + '"></label><label>Importe<input id="cfDetalleImporte" value="' + centroFacturasEscapar(f.importe_total) + '"></label>'
-        + '<label class="cf-span-2">Concepto<input id="cfDetalleConcepto" value="' + centroFacturasEscapar(f.concepto) + '"></label><label class="cf-span-2">Observaciones<textarea id="cfDetalleObservaciones">' + centroFacturasEscapar(f.observaciones) + '</textarea></label>'
+        + '<label class="cf-span-2">Concepto contable (opcional)<input id="cfDetalleConcepto" value="' + centroFacturasEscapar(f.concepto) + '"></label><label class="cf-span-2"><span id="cfDetalleObservacionesEtiqueta">' + (esRecibo ? "Descripción del recibo" : "Observaciones (opcional)") + '</span><textarea id="cfDetalleObservaciones">' + centroFacturasEscapar(f.observaciones) + '</textarea></label>'
         + '<label>Fecha limite original<input id="cfDetalleLimite" type="date" value="' + centroFacturasEscapar(f.fecha_limite_original) + '" ' + (!centroFacturasPermiso("ADMINCENTROFACTURAS") ? "disabled" : "") + '></label><label>Responsable<select id="cfDetalleResponsable"><option value="">Usuario actual</option>' + centroFacturasOpciones(c.funcionarios, "cod_usuario", "nombre_persona", f.cod_responsable_envioFK) + '</select></label></div>'
         + (datos.puede_editar ? '<div class="cf-card-actions"><button type="button" class="cf-button cf-button--primary" onclick="centroFacturasGuardarDetalle(' + Number(f.version_registro) + ')">Guardar correcciones</button></div>' : '<p>Los datos fiscales ya no pueden editarse con su permiso actual.</p>') + '</section>';
     html += centroFacturasRenderArchivos(datos.archivos || [], f.id_factura);
@@ -723,12 +1190,25 @@ function centroFacturasRenderDetalle(datos) {
     if ((datos.duplicados || []).length) { html += '<section class="cf-card"><h4>Coincidencias del comprobante</h4><ul class="cf-timeline">' + datos.duplicados.map(function (d) { return '<li><span>Comprobante #' + Number(d.id_factura) + ' · ' + centroFacturasEscapar(d.nombre_local) + '</span><button type="button" onclick="centroFacturasAbrirDetalle(' + Number(d.id_factura) + ')">Comparar</button></li>'; }).join("") + '</ul></section>'; }
     if (centroFacturasPermiso("ADMINCENTROFACTURAS")) { html += centroFacturasRenderAuditoria(datos.auditoria || []); }
     document.getElementById("centroFacturasDetalleContenido").innerHTML = html;
+    centroFacturasActualizarDocumentoDetalle();
 }
 
 function centroFacturasActualizarDocumentoDetalle() {
     var esRecibo = document.getElementById("cfDetalleTipoDocumento").value === "recibo";
-    document.getElementById("cfDetalleNumeroEtiqueta").textContent = esRecibo ? "N.º recibo" : "N.º factura";
+    document.getElementById("cfDetalleNumeroEtiqueta").textContent = esRecibo ? "N.º recibo (opcional)" : "N.º factura (opcional)";
     document.getElementById("cfDetalleTimbradoGrupo").hidden = esRecibo;
+    document.getElementById("cfDetalleObservacionesEtiqueta").textContent = esRecibo ? "Descripción del recibo" : "Observaciones (opcional)";
+    centroFacturasActualizarTipoDetalle();
+}
+
+function centroFacturasActualizarTipoDetalle() {
+    var esRecibo = document.getElementById("cfDetalleTipoDocumento").value === "recibo";
+    var tipo = document.getElementById("cfDetalleTipo").value;
+    document.getElementById("cfDetalleTipoGrupo").hidden = esRecibo;
+    document.getElementById("cfDetalleProveedorGrupo").hidden = esRecibo || tipo !== "proveedor";
+    document.getElementById("cfDetalleFuncionarioGrupo").hidden = esRecibo || tipo !== "funcionario";
+    document.getElementById("cfDetalleNombreGrupo").hidden = esRecibo || tipo !== "otro";
+    document.getElementById("cfDetalleDocumentoGrupo").hidden = esRecibo;
 }
 
 function centroFacturasRenderArchivos(archivos, idFactura) {
@@ -900,7 +1380,20 @@ function centroFacturasCrearLoteSeleccion() {
     var ids = Object.keys(centroFacturasEstado.seleccion).map(Number);
     if (!ids.length) { return; }
     var local = centroFacturasEstado.seleccion[ids[0]];
-    var html = '<p class="cf-step-help">Se creara un borrador con <b>' + ids.length + '</b> facturas. Podra revisarlo e imprimirlo antes de marcar la entrega.</p><label class="cf-field-label">Destino</label><input id="cfLoteDestino" value="Administracion central"><label class="cf-field-label">Responsable de entrega</label><select id="cfLoteResponsable"><option value="">Usuario actual</option>' + centroFacturasOpciones((centroFacturasEstado.contexto || {}).funcionarios, "cod_usuario", "nombre_persona", "") + '</select><label class="cf-field-label">Observaciones</label><textarea id="cfLoteObservaciones" rows="3"></textarea><div id="cfDialogError" class="cf-form-error"></div>';
+    var resumen = ids.reduce(function (acumulado, id) {
+        var detalle = centroFacturasEstado.seleccionDetalle[id] || { tipo_documento: "factura", importe: 0 };
+        if (detalle.tipo_documento === "recibo") {
+            acumulado.recibos++;
+            acumulado.importeRecibos += Number(detalle.importe || 0);
+        } else {
+            acumulado.facturas++;
+            acumulado.importeFacturas += Number(detalle.importe || 0);
+        }
+        return acumulado;
+    }, { facturas: 0, recibos: 0, importeFacturas: 0, importeRecibos: 0 });
+    var html = '<p class="cf-step-help">Se creara un borrador con <b>' + ids.length + '</b> comprobantes. Podra revisarlo e imprimirlo antes de marcar la entrega.</p>'
+        + '<div class="cf-detail-summary"><div><span>Documentos</span><b>' + ids.length + ' originales</b></div><div><span>Facturas</span><b>' + resumen.facturas + ' · Gs. ' + centroFacturasNumero(resumen.importeFacturas) + '</b></div><div><span>Recibos</span><b>' + resumen.recibos + ' · Gs. ' + centroFacturasNumero(resumen.importeRecibos) + '</b></div></div>'
+        + '<label class="cf-field-label">Destino</label><input id="cfLoteDestino" value="Administracion central"><label class="cf-field-label">Responsable de entrega</label><select id="cfLoteResponsable"><option value="">Usuario actual</option>' + centroFacturasOpciones((centroFacturasEstado.contexto || {}).funcionarios, "cod_usuario", "nombre_persona", "") + '</select><label class="cf-field-label">Observaciones</label><textarea id="cfLoteObservaciones" rows="3"></textarea><div id="cfDialogError" class="cf-form-error"></div>';
     centroFacturasAbrirDialogo("Crear lote de originales", "Paso 1 de 2 · Preparar", html, '<button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasCerrarDialogo()">Cancelar</button><button type="button" class="cf-button cf-button--primary" onclick="centroFacturasConfirmarCrearLote(' + Number(local) + ')">Crear borrador</button>');
 }
 
@@ -922,17 +1415,30 @@ function centroFacturasAbrirLote(idLote) {
 function centroFacturasRenderDetalleLote(datos) {
     var lote = datos.lote;
     document.getElementById("centroFacturasDetalleTitulo").textContent = lote.codigo_lote;
-    var total = 0;
+    var cantidadFacturas = 0;
+    var cantidadRecibos = 0;
+    var totalFacturas = 0;
+    var totalRecibos = 0;
     var filas = (datos.facturas || []).map(function (f) {
-        if (f.estado_detalle_lote !== "retirada") { total += Number(f.importe_total || 0); }
-        return '<tr><td>#' + Number(f.id_factura) + '<small>' + centroFacturasEscapar(f.contraparte_mostrar) + '</small></td><td>' + centroFacturasEscapar(f.numero_factura || "Pendiente") + '</td><td>Gs. ' + centroFacturasNumero(f.importe_total) + '</td><td>' + centroFacturasBadge(String(f.estado_detalle_lote).replace(/_/g, " "), f.estado_detalle_lote === "recibida" ? "success" : (f.estado_detalle_lote === "observada" || f.estado_detalle_lote === "faltante" ? "danger" : "info")) + '</td><td><button type="button" onclick="centroFacturasAbrirDetalle(' + Number(f.id_factura) + ')">Ver</button>' + (lote.estado === "borrador" && centroFacturasPermiso("GESTIONARLOTESFACTURAS") && f.estado_detalle_lote !== "retirada" ? ' <button type="button" onclick="centroFacturasRetirarDeLote(' + Number(lote.id_lote) + ',' + Number(f.id_factura) + ')">Retirar</button>' : "") + '</td></tr>';
+        var esRecibo = f.tipo_documento === "recibo";
+        var tipoDocumento = esRecibo ? "Recibo" : "Factura";
+        if (f.estado_detalle_lote !== "retirada") {
+            if (esRecibo) {
+                cantidadRecibos++;
+                totalRecibos += Number(f.importe_total || 0);
+            } else {
+                cantidadFacturas++;
+                totalFacturas += Number(f.importe_total || 0);
+            }
+        }
+        return '<tr><td><strong>' + tipoDocumento + ' #' + Number(f.id_factura) + '</strong><small>' + centroFacturasEscapar(f.contraparte_mostrar) + '</small></td><td>' + centroFacturasEscapar(f.numero_factura || "Sin numero") + '</td><td>Gs. ' + centroFacturasNumero(f.importe_total) + '</td><td>' + centroFacturasBadge(String(f.estado_detalle_lote).replace(/_/g, " "), f.estado_detalle_lote === "recibida" ? "success" : (f.estado_detalle_lote === "observada" || f.estado_detalle_lote === "faltante" ? "danger" : "info")) + '</td><td><button type="button" onclick="centroFacturasAbrirDetalle(' + Number(f.id_factura) + ')">Ver</button>' + (lote.estado === "borrador" && centroFacturasPermiso("GESTIONARLOTESFACTURAS") && f.estado_detalle_lote !== "retirada" ? ' <button type="button" onclick="centroFacturasRetirarDeLote(' + Number(lote.id_lote) + ',' + Number(f.id_factura) + ')">Retirar</button>' : "") + '</td></tr>';
     }).join("");
-    var html = '<div class="cf-detail-summary"><div><span>Estado</span>' + centroFacturasBadge(String(lote.estado).replace(/_/g, " "), lote.estado === "recibido" ? "success" : (lote.estado === "anulado" ? "danger" : "info")) + '</div><div><span>Facturas</span><b>' + (datos.facturas || []).filter(function (f) { return f.estado_detalle_lote !== "retirada"; }).length + '</b></div><div><span>Total</span><b>Gs. ' + centroFacturasNumero(total) + '</b></div></div>'
+    var html = '<div class="cf-detail-summary"><div><span>Estado</span>' + centroFacturasBadge(String(lote.estado).replace(/_/g, " "), lote.estado === "recibido" ? "success" : (lote.estado === "anulado" ? "danger" : "info")) + '</div><div><span>Facturas</span><b>' + cantidadFacturas + ' · Gs. ' + centroFacturasNumero(totalFacturas) + '</b></div><div><span>Recibos</span><b>' + cantidadRecibos + ' · Gs. ' + centroFacturasNumero(totalRecibos) + '</b></div></div>'
         + '<section class="cf-card"><h4>Entrega</h4><p><b>Origen:</b> ' + centroFacturasEscapar(lote.nombre_local) + '<br><b>Destino:</b> ' + centroFacturasEscapar(lote.destino) + '<br><b>Responsable:</b> ' + centroFacturasEscapar(lote.usuario_entrega || "Pendiente") + '<br><b>Creado:</b> ' + centroFacturasFecha(lote.fecha_creacion, true) + (lote.fecha_envio ? '<br><b>Enviado:</b> ' + centroFacturasFecha(lote.fecha_envio, true) : "") + '</p><div class="cf-card-actions"><button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasImprimirLote()"><i class="fa-solid fa-print"></i> Imprimir resumen</button>';
     if (lote.estado === "borrador" && centroFacturasPermiso("GESTIONARLOTESFACTURAS") && centroFacturasPermiso("ENVIARORIGINALFACTURA")) { html += '<button type="button" class="cf-button cf-button--primary" onclick="centroFacturasPrepararEnvioLote(' + Number(lote.id_lote) + ')">Marcar lote enviado</button>'; }
     if (["enviado", "recibido_parcial", "observado"].indexOf(lote.estado) >= 0 && centroFacturasPermiso("RECIBIRORIGINALFACTURA")) { html += '<button type="button" class="cf-button cf-button--primary" onclick="centroFacturasPrepararRecepcionLote(' + Number(lote.id_lote) + ')">Recibir lote</button>'; }
     if (lote.estado !== "anulado" && centroFacturasPermiso("GESTIONARLOTESFACTURAS")) { html += '<button type="button" class="cf-button cf-button--danger" onclick="centroFacturasPrepararAnulacionLote(' + Number(lote.id_lote) + ')">Anular</button>'; }
-    html += '</div></section><section class="cf-card"><h4>Facturas incluidas</h4><div class="centro-facturas-table-wrap"><table class="centro-facturas-table"><thead><tr><th>Factura</th><th>Numero</th><th>Importe</th><th>Recepcion</th><th></th></tr></thead><tbody>' + filas + '</tbody></table></div></section>';
+    html += '</div></section><section class="cf-card"><h4>Documentos incluidos</h4><div class="centro-facturas-table-wrap"><table class="centro-facturas-table"><thead><tr><th>Documento</th><th>Numero</th><th>Importe</th><th>Recepcion</th><th></th></tr></thead><tbody>' + filas + '</tbody></table></div></section>';
     if (centroFacturasPermiso("ADMINCENTROFACTURAS")) { html += centroFacturasRenderAuditoria(datos.auditoria || []); }
     document.getElementById("centroFacturasDetalleContenido").innerHTML = html;
 }
@@ -945,7 +1451,7 @@ function centroFacturasRetirarDeLote(idLote, idFactura) {
 }
 
 function centroFacturasPrepararEnvioLote(idLote) {
-    centroFacturasAbrirDialogo("Confirmar entrega del lote", "Paso 2 de 2 · Enviar", '<p class="cf-step-help">Al confirmar, todas las facturas activas del lote quedaran como <b>Enviado a central</b>.</p><label class="cf-field-label">Responsable que transporta el lote</label><select id="cfEnvioLoteResponsable"><option value="">Usuario actual</option>' + centroFacturasOpciones((centroFacturasEstado.contexto || {}).funcionarios, "cod_usuario", "nombre_persona", "") + '</select><div id="cfDialogError" class="cf-form-error"></div>', '<button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasCerrarDialogo()">Cancelar</button><button type="button" class="cf-button cf-button--primary" onclick="centroFacturasEnviarLote(' + idLote + ')">Confirmar envio</button>');
+    centroFacturasAbrirDialogo("Confirmar entrega del lote", "Paso 2 de 2 · Enviar", '<p class="cf-step-help">Al confirmar, todos los originales activos del lote quedaran como <b>Enviado a central</b>.</p><label class="cf-field-label">Responsable que transporta el lote</label><select id="cfEnvioLoteResponsable"><option value="">Usuario actual</option>' + centroFacturasOpciones((centroFacturasEstado.contexto || {}).funcionarios, "cod_usuario", "nombre_persona", "") + '</select><div id="cfDialogError" class="cf-form-error"></div>', '<button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasCerrarDialogo()">Cancelar</button><button type="button" class="cf-button cf-button--primary" onclick="centroFacturasEnviarLote(' + idLote + ')">Confirmar envio</button>');
 }
 
 function centroFacturasEnviarLote(idLote) {
@@ -960,7 +1466,8 @@ function centroFacturasPrepararRecepcionLote(idLote) {
         if (!r || !r.ok) { return; }
         var items = (r.facturas || []).filter(function (f) { return f.estado_detalle_lote !== "retirada"; }).map(function (f) {
             var estadoActual = f.estado_detalle_lote === "recibida" ? "recibida" : (f.estado_detalle_lote === "faltante" ? "faltante" : (f.estado_detalle_lote === "observada" ? "observada" : "recibida"));
-            return '<div class="cf-reception-item" data-cf-recepcion="' + Number(f.id_factura) + '"><span><b>#' + Number(f.id_factura) + ' · ' + centroFacturasEscapar(f.numero_factura || "Sin numero") + '</b><br>' + centroFacturasEscapar(f.contraparte_mostrar) + '</span><select class="cfRecepcionEstado"><option value="recibida" ' + (estadoActual === "recibida" ? "selected" : "") + '>Recibida</option><option value="faltante" ' + (estadoActual === "faltante" ? "selected" : "") + '>Faltante</option><option value="observada" ' + (estadoActual === "observada" ? "selected" : "") + '>Observada</option></select><input class="cfRecepcionObservacion" placeholder="Observacion si falta o tiene diferencias" value="' + centroFacturasEscapar(f.observacion_lote) + '"></div>';
+            var tipoDocumento = f.tipo_documento === "recibo" ? "Recibo" : "Factura";
+            return '<div class="cf-reception-item" data-cf-recepcion="' + Number(f.id_factura) + '"><span><b>' + tipoDocumento + ' #' + Number(f.id_factura) + ' · ' + centroFacturasEscapar(f.numero_factura || "Sin numero") + '</b><br>' + centroFacturasEscapar(f.contraparte_mostrar) + '</span><select class="cfRecepcionEstado"><option value="recibida" ' + (estadoActual === "recibida" ? "selected" : "") + '>Original recibido</option><option value="faltante" ' + (estadoActual === "faltante" ? "selected" : "") + '>Original faltante</option><option value="observada" ' + (estadoActual === "observada" ? "selected" : "") + '>Original observado</option></select><input class="cfRecepcionObservacion" placeholder="Observacion si falta o tiene diferencias" value="' + centroFacturasEscapar(f.observacion_lote) + '"></div>';
         }).join("");
         var html = '<p class="cf-step-help">Revise cada original. Las diferencias quedaran visibles para el responsable y en la auditoria.</p><div class="cf-reception-list">' + items + '</div><h4>Ubicacion de archivo</h4><div class="cf-grid"><label>Lote / archivador<input id="cfRecepcionLote"></label><label>Carpeta<input id="cfRecepcionCarpeta"></label><label>Caja<input id="cfRecepcionCaja"></label><label>Periodo<input id="cfRecepcionPeriodo"></label><label class="cf-span-2">Ubicacion fisica<input id="cfRecepcionUbicacion"></label></div><div id="cfDialogError" class="cf-form-error"></div>';
         centroFacturasAbrirDialogo("Recibir lote " + r.lote.codigo_lote, "Recepcion central", html, '<button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasCerrarDialogo()">Cancelar</button><button type="button" class="cf-button cf-button--primary" onclick="centroFacturasRecibirLote(' + idLote + ')">Guardar recepcion</button>');
@@ -979,13 +1486,13 @@ function centroFacturasRecibirLote(idLote) {
 }
 
 function centroFacturasPrepararAnulacionLote(idLote) {
-    centroFacturasAbrirDialogo("Anular lote", "Accion controlada", '<p class="cf-step-help">No se eliminaran facturas ni archivos. El lote quedara anulado y auditado.</p><label class="cf-field-label">Motivo obligatorio</label><textarea id="cfAnularLoteMotivo" rows="3"></textarea><div id="cfDialogError" class="cf-form-error"></div>', '<button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasCerrarDialogo()">Cancelar</button><button type="button" class="cf-button cf-button--danger" onclick="centroFacturasAnularLote(' + idLote + ')">Anular lote</button>');
+    centroFacturasAbrirDialogo("Anular lote", "Accion controlada", '<p class="cf-step-help">No se eliminaran documentos ni archivos. El lote quedara anulado y auditado.</p><label class="cf-field-label">Motivo obligatorio</label><textarea id="cfAnularLoteMotivo" rows="3"></textarea><div id="cfDialogError" class="cf-form-error"></div>', '<button type="button" class="cf-button cf-button--secondary" onclick="centroFacturasCerrarDialogo()">Cancelar</button><button type="button" class="cf-button cf-button--danger" onclick="centroFacturasAnularLote(' + idLote + ')">Anular lote</button>');
 }
 
 function centroFacturasAnularLote(idLote) {
     centroFacturasSolicitar("anularLote", { id_lote: idLote, motivo: document.getElementById("cfAnularLoteMotivo").value }).done(function (r) {
         if (!r || !r.ok) { document.getElementById("cfDialogError").textContent = (r && r.mensaje) || "No se pudo anular."; return; }
-        centroFacturasCerrarDialogo(); centroFacturasAviso("Lote anulado sin eliminar sus facturas.", "success"); centroFacturasAbrirLote(idLote); centroFacturasRecargar();
+        centroFacturasCerrarDialogo(); centroFacturasAviso("Lote anulado sin eliminar sus documentos.", "success"); centroFacturasAbrirLote(idLote); centroFacturasRecargar();
     });
 }
 

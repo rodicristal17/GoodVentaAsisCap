@@ -8,6 +8,7 @@ include_once('verificar_navegador.php');
 include_once('buscar_nivel.php');
 require_once('interconsulta_seguimiento_programado_helper.php');
 require_once('centro_facturas_helper.php');
+require_once('centro_legajos_helper.php');
 
 date_default_timezone_set('America/Asuncion');
 
@@ -123,6 +124,26 @@ switch ($accion) {
             intval(centroFacturasPost('offset', 0))
         ));
         break;
+    case 'listarLegajos':
+        centroFacturasResponder(centroLegajoListar(
+            $codUsuario,
+            centroFacturasFiltrosPost(),
+            intval(centroFacturasPost('limite', 80)),
+            intval(centroFacturasPost('offset', 0))
+        ));
+        break;
+    case 'detalleLegajo':
+        centroFacturasResponder(centroLegajoDetalle(intval(centroFacturasPost('cod_venta')), $codUsuario));
+        break;
+    case 'guardarDocumentoLegajo':
+        centroFacturasResponder(centroLegajoGuardarDocumento(
+            intval(centroFacturasPost('cod_venta')),
+            centroFacturasPost('tipo_documento'),
+            centroFacturasPost('accion_documento'),
+            centroFacturasPost('observaciones'),
+            $codUsuario
+        ));
+        break;
     case 'detalle':
         centroFacturasResponder(centroFacturaObtenerDetalle(intval(centroFacturasPost('id_factura')), $codUsuario));
         break;
@@ -197,6 +218,46 @@ switch ($accion) {
             centroFacturasFiltrosPost(),
             intval(centroFacturasPost('limite', 80)),
             intval(centroFacturasPost('offset', 0))
+        ));
+        break;
+    case 'listarLotesLegajos':
+        centroFacturasResponder(centroLegajoListarLotes(
+            $codUsuario,
+            centroFacturasFiltrosPost(),
+            intval(centroFacturasPost('limite', 80)),
+            intval(centroFacturasPost('offset', 0))
+        ));
+        break;
+    case 'crearLoteLegajos':
+        centroFacturasResponder(centroLegajoCrearLote(
+            intval(centroFacturasPost('cod_local')),
+            centroFacturasJsonPost('ventas', array()),
+            centroFacturasJsonPost('datos', array()),
+            $codUsuario
+        ));
+        break;
+    case 'detalleLoteLegajo':
+        centroFacturasResponder(centroLegajoDetalleLote(intval(centroFacturasPost('id_lote')), $codUsuario));
+        break;
+    case 'enviarLoteLegajo':
+        centroFacturasResponder(centroLegajoEnviarLote(intval(centroFacturasPost('id_lote')), $codUsuario));
+        break;
+    case 'aceptarCustodiaLoteLegajo':
+        centroFacturasResponder(centroLegajoAceptarCustodia(intval(centroFacturasPost('id_lote')), $codUsuario));
+        break;
+    case 'recibirLoteLegajo':
+        centroFacturasResponder(centroLegajoRecibirLote(
+            intval(centroFacturasPost('id_lote')),
+            centroFacturasJsonPost('recepciones', array()),
+            centroFacturasJsonPost('datos', array()),
+            $codUsuario
+        ));
+        break;
+    case 'anularLoteLegajo':
+        centroFacturasResponder(centroLegajoAnularLote(
+            intval(centroFacturasPost('id_lote')),
+            centroFacturasPost('motivo'),
+            $codUsuario
         ));
         break;
     case 'crearLote':

@@ -107,7 +107,6 @@ function configurarCamposDepositoCentral(esDeposito) {
 		var fila = campo && campo.closest ? campo.closest(".form-row") : null;
 		alternarElementoDepositoCentral(fila, esDeposito);
 	});
-	alternarElementoDepositoCentral(document.querySelector("#divAbmGasto2 .movimiento-financiero-adjuntos"), esDeposito);
 	alternarElementoDepositoCentral(document.querySelector("#divAbmGasto2 .movimiento-financiero-nuevo-proyecto"), esDeposito);
 	alternarElementoDepositoCentral(document.getElementById("vistaPreviaPlanificacionGasto"), esDeposito);
 	var aviso = document.getElementById("avisoDepositoCentral");
@@ -267,6 +266,9 @@ function aplicarContextoCrearMovimientoFinanciero(contexto) {
 	document.getElementById("btnAbmGastos").value = (tipo == "Ingreso" ? "Guardar ingreso" : (esDeposito ? "Guardar deposito" : "Guardar egreso"));
 	if (esDeposito) { asegurarOpcionTipoDepositoCentral(); }
 	document.getElementById("inptTipoGasto").value = tipo;
+	if (typeof renderizarResumenAdjuntoMovimientoFinanciero == "function") {
+		renderizarResumenAdjuntoMovimientoFinanciero();
+	}
 	if (contexto.interconsultaId) {
 		cod_interConsulta = contexto.interconsultaId;
 	}
@@ -1251,6 +1253,9 @@ function alternarSubgrupoFlujoConcepto(evento, encabezado) {
 var idAbmGasto = "";
 var usuarioCreadorEgresoIngreso = "";
 function obtenerdatosabmGasto(datostr) {
+	if (typeof limpiarAdjuntoMovimientoFinancieroGuiado == "function") {
+		limpiarAdjuntoMovimientoFinancieroGuiado(false);
+	}
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''
 	});
@@ -1273,6 +1278,9 @@ function obtenerdatosabmGasto(datostr) {
 		asegurarOpcionTipoDepositoCentral();
 	}
 	document.getElementById('inptTipoGasto').value = tipoMovimientoSeleccionado;
+	if (typeof renderizarResumenAdjuntoMovimientoFinanciero == "function") {
+		renderizarResumenAdjuntoMovimientoFinanciero();
+	}
 	document.getElementById('inptArregloGasto').value = $(datostr).children('td[id="td_datos_11"]').html();
 	document.getElementById('btnAbmGastos').value = "Actualizar movimiento";
 	configurarModalMovimientoFinanciero({ modo: "editar", tipoMovimiento: tipoMovimientoSeleccionado });
@@ -1935,6 +1943,9 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	datos.append("nrocuenta", nrocuenta)
 	datos.append("foto", fotoGasto);
     datos.append("ext", extGasto);
+	datos.append("tipo_adjunto_documento", typeof tipoAdjuntoDocumentoGasto != "undefined" ? tipoAdjuntoDocumentoGasto : "otro");
+	datos.append("datos_documento", JSON.stringify(typeof datosAdjuntoDocumentoGasto != "undefined" && datosAdjuntoDocumentoGasto ? datosAdjuntoDocumentoGasto : {}));
+	datos.append("nombre_archivo_documento", typeof nombreArchivoAdjuntoDocumentoGasto != "undefined" ? (nombreArchivoAdjuntoDocumentoGasto || "") : "");
 	datos.append("foto_documento_firmado", fotoDocumentoFirmadoGasto);
     datos.append("ext_documento_firmado", extDocumentoFirmadoGasto);
 	datos.append("cod_interConsultaFK", cod_interConsulta);
@@ -1988,16 +1999,36 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
-			   if (Respuesta == true) {
+				   if (Respuesta == true) {
 					if (Number.isNaN(parseInt(datos["2"]))) {
 						ver_vetana_informativa(datos["2"]);
 						return false;
+					}
+					var documentoPendienteCentroFacturas= datos.documento && !datos.documento.ok;
+					var archivoPendienteMovimiento= datos.archivo && !datos.archivo.ok;
+					if (datos.documento && datos.documento.ok && typeof centroFacturasActualizarBadge == "function") {
+						centroFacturasActualizarBadge();
+					}
+					if (archivoPendienteMovimiento) {
+						ver_vetana_informativa(
+							"Movimiento guardado; archivo pendiente",
+							datos.archivo.mensaje || "El movimiento quedo registrado, pero debera volver a adjuntar el archivo desde la edicion.",
+							"advertencia"
+						);
+					} else if (documentoPendienteCentroFacturas) {
+						ver_vetana_informativa(
+							"Movimiento guardado; documento pendiente",
+							datos.documento.mensaje || "El movimiento quedó registrado, pero el documento deberá volver a adjuntarse desde la edición.",
+							"advertencia"
+						);
 					}
 				   if(accion=="nuevo"){
 						ImprimirTicketEgreso()
 					}
 					
-					ver_vetana_informativa("Datos guardados.", "", "info");
+					if (!documentoPendienteCentroFacturas && !archivoPendienteMovimiento) {
+						ver_vetana_informativa("Datos guardados.", "", "info");
+					}
 					limpiarcamposGasto()
 
 					idAbmGasto = "";
@@ -3450,6 +3481,9 @@ function limpiarcamposGasto() {
 	seleccionarLocalUSer()
 	fotoGasto= "";
 	extGasto= "";
+	if (typeof limpiarAdjuntoMovimientoFinancieroGuiado == "function") {
+		limpiarAdjuntoMovimientoFinancieroGuiado(false);
+	}
 	fotoDocumentoFirmadoGasto= "";
 	extDocumentoFirmadoGasto= "";
     document.getElementById('imgfotoGasto').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
