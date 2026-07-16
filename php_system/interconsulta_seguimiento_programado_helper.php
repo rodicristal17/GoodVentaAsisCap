@@ -758,8 +758,8 @@ function seguimientoProgramadoObtenerActivosPorHilos($codigosHilo)
         return array();
     }
     $mysqli = conectar_al_servidor();
-    if (!seguimientoProgramadoEstructuraDisponible($mysqli)) {
-        $mysqli->close();
+    if (!$mysqli || $mysqli->connect_errno) {
+        if ($mysqli) { $mysqli->close(); }
         return array();
     }
     $lista = implode(',', $codigos);
@@ -824,21 +824,29 @@ function seguimientoProgramadoObtenerResumenAlertas($codUsuario)
         return $resumen;
     }
     $mysqli = conectar_al_servidor();
-    if (!seguimientoProgramadoEstructuraDisponible($mysqli)) {
-        $mysqli->close();
+    if (!$mysqli || $mysqli->connect_errno) {
+        if ($mysqli) { $mysqli->close(); }
         return $resumen;
     }
     $sql = "SELECT
-              SUM(DATE(sp.fecha_programada)=CURDATE() AND sp.fecha_programada>=NOW()) AS hoy,
+              SUM(sp.fecha_programada>=NOW() AND sp.fecha_programada<CURDATE() + INTERVAL 1 DAY) AS hoy,
               SUM(sp.fecha_programada<NOW()) AS vencidos,
-              SUM(DATE(sp.fecha_programada)>CURDATE()) AS proximos,
+              SUM(sp.fecha_programada>=CURDATE() + INTERVAL 1 DAY) AS proximos,
               COUNT(*) AS total_pendientes
             FROM interconsulta_seguimiento_programado sp
             INNER JOIN interconsulta ic ON ic.cod_interConsulta=sp.cod_interConsultaFK
             WHERE sp.cod_responsableFK=? AND sp.estado='programado' AND ic.estado<>'inactivo'";
     $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        $mysqli->close();
+        return $resumen;
+    }
     $stmt->bind_param('i', $codUsuario);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        $stmt->close();
+        $mysqli->close();
+        return $resumen;
+    }
     $fila = $stmt->get_result()->fetch_assoc();
     $stmt->close();
     if ($fila) {
@@ -852,11 +860,19 @@ function seguimientoProgramadoObtenerResumenAlertas($codUsuario)
                  FROM interconsulta_seguimiento_programado sp
                  INNER JOIN interconsulta ic ON ic.cod_interConsulta=sp.cod_interConsultaFK
                  WHERE sp.cod_responsableFK=? AND sp.estado='programado' AND ic.estado<>'inactivo'
-                   AND DATE(sp.fecha_programada)<=CURDATE()
+                   AND sp.fecha_programada<CURDATE() + INTERVAL 1 DAY
                  ORDER BY sp.fecha_programada ASC,sp.id_seguimiento ASC LIMIT 8";
     $stmt = $mysqli->prepare($sqlItems);
+    if (!$stmt) {
+        $mysqli->close();
+        return $resumen;
+    }
     $stmt->bind_param('i', $codUsuario);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        $stmt->close();
+        $mysqli->close();
+        return $resumen;
+    }
     $result = $stmt->get_result();
     while ($item = $result->fetch_assoc()) {
         $resumen['items'][] = seguimientoProgramadoFilaUtf8($item);

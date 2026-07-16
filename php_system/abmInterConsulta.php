@@ -12,6 +12,31 @@
 
     date_default_timezone_set('America/Asuncion');
 
+    function registrarMedicionOperacionInterConsulta($operacion, $inicio, $umbralSegundos= 2.0) {
+        $operacion = preg_replace('/[^a-zA-Z0-9_\/-]/', '', (string)$operacion);
+        $inicio = (float)$inicio;
+        register_shutdown_function(function () use ($operacion, $inicio, $umbralSegundos) {
+            $duracion = microtime(true) - $inicio;
+            $ultimoError = error_get_last();
+            $esFatal = $ultimoError && in_array($ultimoError['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR), true);
+            if ($duracion < $umbralSegundos && !$esFatal) {
+                return;
+            }
+            $mensaje = sprintf(
+                '[InterConsultaPerformance] accion=%s duracion=%.3fs memoria_pico=%.2fMB pid=%s estado=%s',
+                $operacion !== '' ? $operacion : 'sin_accion',
+                $duracion,
+                memory_get_peak_usage(true) / 1048576,
+                function_exists('getmypid') ? getmypid() : 'n/a',
+                $esFatal ? 'fatal' : 'lenta'
+            );
+            if ($esFatal) {
+                $mensaje .= ' error_tipo='.intval($ultimoError['type']);
+            }
+            error_log($mensaje);
+        });
+    }
+
     function normalizarLimiteListadoInterConsulta($limite, $maximo=60) {
         $limite = trim((string)$limite);
         if ($limite === "" || $limite === "0") {
@@ -249,6 +274,14 @@
                 $fecha_desde= isset($_POST['fecha_desde']) ? mb_convert_encoding((string)($_POST['fecha_desde']), 'ISO-8859-1', 'UTF-8') : null;
                 $fecha_hasta= isset($_POST['fecha_hasta']) ? mb_convert_encoding((string)($_POST['fecha_hasta']), 'ISO-8859-1', 'UTF-8') : null;
                 $categoria_principal= isset($_POST['categoria_principal']) ? mb_convert_encoding((string)($_POST['categoria_principal']), 'ISO-8859-1', 'UTF-8') : 'pagos_egresos';
+                $codigos_hilos= array();
+                if (isset($_POST['codigos_hilos'])) {
+                    foreach (explode(',', (string)$_POST['codigos_hilos']) as $codigoHilo) {
+                        $codigoHilo= intval($codigoHilo);
+                        if ($codigoHilo > 0) { $codigos_hilos[$codigoHilo]= $codigoHilo; }
+                    }
+                    $codigos_hilos= array_values(array_slice($codigos_hilos, 0, 60, true));
+                }
 
                 $filtros= array(
                     'cod_interConsulta'=> $cod_interConsulta,
@@ -267,6 +300,7 @@
                     'busqueda_global'=> $busqueda_global,
                     'fecha_desde'=> $fecha_desde,
                     'fecha_hasta'=> $fecha_hasta,
+                    'codigos_hilos'=> $codigos_hilos,
                     'fecha_limite' => $fechaActual->format('Y-m-d H:i:s')
                 );
 
@@ -275,6 +309,9 @@
                 $limite= $esConsultaAuxiliar ? '60' : normalizarLimiteListadoInterConsulta($limiteSolicitado, 30);
 
                 if ($funt == 'buscarInterConsultasEnriquecidos') {
+                    if (count($codigos_hilos) > 0) {
+                        $limite= (string)count($codigos_hilos);
+                    }
                     obtenerVistaInterConsulta($filtros, $limite, $esConsultaAuxiliar ? 60 : 30, $user);
                 } else {
                     obtenerVistaInterConsultaBasica($filtros, $limite);
@@ -2712,8 +2749,10 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         $estadoRegistros= array();
         $cantMensajesNoLeidos= 0;
         $cantInterConsultasAbiertas= 0;
+        $codigosPagina= array();
 
         foreach ($registros as $value) {
+            $codigosPagina[]= intval($value['cod_interConsulta']);
             $estado= strtolower(trim((string)$value['estado']));
             if ($estado == 'pendiente' || $estado == 'proceso') {
                 $cantInterConsultasAbiertas++;
@@ -2791,12 +2830,15 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             '8' => $datalist,
             '9' => array(),
             '10' => '',
-            '11' => 'basico'
+            '11' => 'basico',
+            '12' => $codigosPagina
         ));
     }
 
     function obtenerVistaInterConsulta($filtros= array(), $limite= 0, $maximoLimite= 30, $codUsuarioSesion= 0) {
-        $cantRegistros= obtenerCantidadInterConsulta($filtros);
+        $filtrosTotales= $filtros;
+        unset($filtrosTotales['codigos_hilos']);
+        $cantRegistros= obtenerCantidadInterConsulta($filtrosTotales);
         $limite = normalizarLimiteListadoInterConsulta($limite, $maximoLimite);
         $registros= obtenerInterConsulta($filtros, $limite);
         $codigosHilosSeguimiento= array();
@@ -2806,7 +2848,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             }
         }
         $seguimientosActivosPorHilo= seguimientoProgramadoObtenerActivosPorHilos($codigosHilosSeguimiento);
-        $conteosCategorias = obtenerConteosCategoriasInterConsulta($filtros);
+        $conteosCategorias = obtenerConteosCategoriasInterConsulta($filtrosTotales);
         $categoriaActiva = isset($filtros['categoria_principal']) ? $filtros['categoria_principal'] : 'pagos_egresos';
         $mostrarColumnasSeguimiento = in_array($categoriaActiva, array('administrativo_clinico', 'judiciales'), true);
         $mostrarGestionProgramada = $mostrarColumnasSeguimiento || $categoriaActiva == 'pagos_egresos';
@@ -3712,6 +3754,16 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             }
             
             switch ($key) {
+                case 'codigos_hilos':
+                    $codigosHilos= array();
+                    foreach ((array)$value as $codigoHilo) {
+                        $codigoHilo= intval($codigoHilo);
+                        if ($codigoHilo > 0) { $codigosHilos[$codigoHilo]= $codigoHilo; }
+                    }
+                    $sqlFiltro .= count($codigosHilos) > 0
+                        ? "ic.cod_interConsulta IN (".implode(',', $codigosHilos).")"
+                        : "1=0";
+                    break;
                 case 'cod_usuarioFK':
                     $sqlFiltro .= "(ic.cod_usuarioFK_create = $value
                         OR EXISTS(select cod_mencion from menciones mc JOIN mensaje mj WHERE mc.cod_mensajeFK = mj.cod_mensaje AND mj.cod_interConsultaFK= ic.cod_interConsulta AND mc.cod_usuarioFK = $value)
@@ -3828,7 +3880,6 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
 
     function obtenerCantidadInterConsulta($filtros= array()) {
         $mysqli=conectar_al_servidor();
-        asegurarEstructuraSeguimientoPacienteInterConsulta($mysqli);
         list($sqlFiltro) = construirFiltrosInterConsulta($filtros);
         $sql= "SELECT COUNT(*) AS total FROM interconsulta ic $sqlFiltro";
 
@@ -3848,7 +3899,6 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
 
     function obtenerInterConsulta($filtros= array(), $limite= 0) {
         $mysqli=conectar_al_servidor();
-        asegurarEstructuraSeguimientoPacienteInterConsulta($mysqli);
         list($sqlFiltro, $sqlFiltroMenciones, $sqlFiltroMensaje, $sqlFiltroFechaLimite) = construirFiltrosInterConsulta($filtros);
 
         if ($limite === 0 || $limite === '0') {
@@ -3856,6 +3906,24 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         } else {
             $limite = "LIMIT $limite";
         }
+
+        $codigosResumen= array();
+        if (isset($filtros['codigos_hilos'])) {
+            foreach ((array)$filtros['codigos_hilos'] as $codigoResumen) {
+                $codigoResumen= intval($codigoResumen);
+                if ($codigoResumen > 0) { $codigosResumen[$codigoResumen]= $codigoResumen; }
+            }
+        }
+        $listaCodigosResumen= count($codigosResumen) > 0 ? implode(',', $codigosResumen) : '';
+        $filtroIpvLoc= $listaCodigosResumen !== '' ? " AND ipv_loc.cod_interConsultaFK IN (".$listaCodigosResumen.")" : '';
+        $filtroIpvCred= $listaCodigosResumen !== '' ? " AND ipv_cred.cod_interConsultaFK IN (".$listaCodigosResumen.")" : '';
+        $filtroIcCred= $listaCodigosResumen !== '' ? " AND ic_cred.cod_interConsulta IN (".$listaCodigosResumen.")" : '';
+        $filtroIpvAg= $listaCodigosResumen !== '' ? " AND ipv_ag.cod_interConsultaFK IN (".$listaCodigosResumen.")" : '';
+        $filtroIpAg= $listaCodigosResumen !== '' ? " AND ip_ag.cod_interConsultaFK IN (".$listaCodigosResumen.")" : '';
+        $filtroIcAg= $listaCodigosResumen !== '' ? " AND ic_ag.cod_interConsulta IN (".$listaCodigosResumen.")" : '';
+        $filtroIpPlan= $listaCodigosResumen !== '' ? " AND ip_plan.cod_interConsultaFK IN (".$listaCodigosResumen.")" : '';
+        $filtroIpvNew= $listaCodigosResumen !== '' ? " AND ipv_new.cod_interConsultaFK IN (".$listaCodigosResumen.")" : '';
+        $filtroIcNew= $listaCodigosResumen !== '' ? " AND ic_new.cod_interConsulta IN (".$listaCodigosResumen.")" : '';
 
         $condicionCreditoActivoResumen = condicionCreditoActivoHiloInterConsulta("cr_sum");
         $saldoCapitalCreditoResumen = "GREATEST(((IFNULL(cr_sum.Monto,0)-IFNULL(cr_sum.descuento,0))-IFNULL(pg_sum.pago_cuota,0)),0)";
@@ -3889,7 +3957,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 FROM interconsulta_paciente_venta ipv_loc
                 INNER JOIN venta vt_loc ON vt_loc.cod_venta = ipv_loc.cod_ventaFK
                 INNER JOIN local l_loc ON l_loc.cod_local = vt_loc.cod_local
-                WHERE ipv_loc.estado = 'activo'
+                WHERE ipv_loc.estado = 'activo' ".$filtroIpvLoc."
                 GROUP BY ipv_loc.cod_interConsultaFK
             ) seg_local ON seg_local.cod_interConsultaFK = ic.cod_interConsulta
             LEFT JOIN (
@@ -3903,11 +3971,11 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 FROM (
                     SELECT ipv_cred.cod_interConsultaFK, ipv_cred.cod_ventaFK
                     FROM interconsulta_paciente_venta ipv_cred
-                    WHERE ipv_cred.estado = 'activo'
+                    WHERE ipv_cred.estado = 'activo' ".$filtroIpvCred."
                     UNION
                     SELECT ic_cred.cod_interConsulta AS cod_interConsultaFK, ic_cred.cod_ventaFK
                     FROM interconsulta ic_cred
-                    WHERE IFNULL(ic_cred.cod_ventaFK,0) > 0
+                    WHERE IFNULL(ic_cred.cod_ventaFK,0) > 0 ".$filtroIcCred."
                 ) hilo_venta
                 INNER JOIN credito cr_sum ON cr_sum.cod_venta = hilo_venta.cod_ventaFK
                 LEFT JOIN (
@@ -3936,29 +4004,29 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                     SELECT ipv_ag.cod_interConsultaFK, ag_sum.id_agenda, ag_sum.fecha, ag_sum.hora_inicio, ag_sum.estado, ag_sum.motivo, ag_sum.id_profesional, ag_sum.creado_por
                     FROM interconsulta_paciente_venta ipv_ag
                     INNER JOIN agenda ag_sum ON ag_sum.cod_ventaFK = ipv_ag.cod_ventaFK
-                    WHERE ipv_ag.estado = 'activo' AND ".$condicionAgendaActivaResumen."
+                    WHERE ipv_ag.estado = 'activo' ".$filtroIpvAg." AND ".$condicionAgendaActivaResumen."
                     UNION
                     SELECT ip_ag.cod_interConsultaFK, ag_sum.id_agenda, ag_sum.fecha, ag_sum.hora_inicio, ag_sum.estado, ag_sum.motivo, ag_sum.id_profesional, ag_sum.creado_por
                     FROM interconsulta_paciente ip_ag
                     INNER JOIN agenda ag_sum ON ag_sum.id_paciente = ip_ag.cod_clienteFK_principal
-                    WHERE ip_ag.estado = 'activo' AND ".$condicionAgendaActivaResumen."
+                    WHERE ip_ag.estado = 'activo' ".$filtroIpAg." AND ".$condicionAgendaActivaResumen."
                     UNION
                     SELECT ipv_ag.cod_interConsultaFK, ag_sum.id_agenda, ag_sum.fecha, ag_sum.hora_inicio, ag_sum.estado, ag_sum.motivo, ag_sum.id_profesional, ag_sum.creado_por
                     FROM interconsulta_paciente_venta ipv_ag
                     INNER JOIN venta vt_ag ON vt_ag.cod_venta = ipv_ag.cod_ventaFK
                     INNER JOIN agenda ag_sum ON ag_sum.id_paciente = vt_ag.cod_clienteFK
-                    WHERE ipv_ag.estado = 'activo' AND ".$condicionAgendaActivaResumen."
+                    WHERE ipv_ag.estado = 'activo' ".$filtroIpvAg." AND ".$condicionAgendaActivaResumen."
                     UNION
                     SELECT ic_ag.cod_interConsulta AS cod_interConsultaFK, ag_sum.id_agenda, ag_sum.fecha, ag_sum.hora_inicio, ag_sum.estado, ag_sum.motivo, ag_sum.id_profesional, ag_sum.creado_por
                     FROM interconsulta ic_ag
                     INNER JOIN agenda ag_sum ON ag_sum.cod_ventaFK = ic_ag.cod_ventaFK
-                    WHERE IFNULL(ic_ag.cod_ventaFK,0) > 0 AND ".$condicionAgendaActivaResumen."
+                    WHERE IFNULL(ic_ag.cod_ventaFK,0) > 0 ".$filtroIcAg." AND ".$condicionAgendaActivaResumen."
                     UNION
                     SELECT ic_ag.cod_interConsulta AS cod_interConsultaFK, ag_sum.id_agenda, ag_sum.fecha, ag_sum.hora_inicio, ag_sum.estado, ag_sum.motivo, ag_sum.id_profesional, ag_sum.creado_por
                     FROM interconsulta ic_ag
                     INNER JOIN venta vt_ag ON vt_ag.cod_venta = ic_ag.cod_ventaFK
                     INNER JOIN agenda ag_sum ON ag_sum.id_paciente = vt_ag.cod_clienteFK
-                    WHERE IFNULL(ic_ag.cod_ventaFK,0) > 0 AND ".$condicionAgendaActivaResumen."
+                    WHERE IFNULL(ic_ag.cod_ventaFK,0) > 0 ".$filtroIcAg." AND ".$condicionAgendaActivaResumen."
                 ) agenda_hilo
                 LEFT JOIN persona p_prof ON p_prof.cod_persona = agenda_hilo.id_profesional
                 LEFT JOIN persona p_creador_ag ON p_creador_ag.cod_persona = agenda_hilo.creado_por
@@ -3973,6 +4041,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 INNER JOIN plan_definitivo_tratamiento pd_plan
                 LEFT JOIN cliente cl_plan ON cl_plan.cod_cliente = pd_plan.paciente_id
                 WHERE ip_plan.estado = 'activo'
+                    ".$filtroIpPlan."
                     AND pd_plan.activo = 1
                     AND (".$exprCedulaPlanResumen." = ip_plan.cedula_normalizada OR ".$exprCedulaClientePlanResumen." = ip_plan.cedula_normalizada)
                 GROUP BY ip_plan.cod_interConsultaFK
@@ -3980,12 +4049,12 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             LEFT JOIN (
                 SELECT hilo_venta_reciente.cod_interConsultaFK,
                     COUNT(DISTINCT CASE
-                        WHEN DATE(hilo_venta_reciente.fecha_venta) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                        WHEN hilo_venta_reciente.fecha_venta >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
                         THEN hilo_venta_reciente.cod_ventaFK
                         ELSE NULL
                     END) AS seguimiento_ventas_recientes,
                     IFNULL(MAX(CASE
-                        WHEN DATE(hilo_venta_reciente.fecha_venta) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                        WHEN hilo_venta_reciente.fecha_venta >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
                         THEN hilo_venta_reciente.fecha_venta
                         ELSE NULL
                     END),'') AS seguimiento_ultima_venta_reciente
@@ -3994,15 +4063,17 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                     FROM interconsulta_paciente_venta ipv_new
                     INNER JOIN venta vt_new ON vt_new.cod_venta = ipv_new.cod_ventaFK
                     WHERE ipv_new.estado = 'activo'
+                        ".$filtroIpvNew."
                         AND IFNULL(vt_new.cod_clienteFK,0) <> 7
-                        AND IFNULL((SELECT COUNT(fecha) FROM cancelaciones cn_new WHERE cn_new.cod_venta = vt_new.cod_venta LIMIT 1),0) = 0
+                        AND NOT EXISTS(SELECT 1 FROM cancelaciones cn_new WHERE cn_new.cod_venta = vt_new.cod_venta)
                     UNION
                     SELECT ic_new.cod_interConsulta AS cod_interConsultaFK, ic_new.cod_ventaFK, vt_new.fecha_venta
                     FROM interconsulta ic_new
                     INNER JOIN venta vt_new ON vt_new.cod_venta = ic_new.cod_ventaFK
                     WHERE IFNULL(ic_new.cod_ventaFK,0) > 0
+                        ".$filtroIcNew."
                         AND IFNULL(vt_new.cod_clienteFK,0) <> 7
-                        AND IFNULL((SELECT COUNT(fecha) FROM cancelaciones cn_new WHERE cn_new.cod_venta = vt_new.cod_venta LIMIT 1),0) = 0
+                        AND NOT EXISTS(SELECT 1 FROM cancelaciones cn_new WHERE cn_new.cod_venta = vt_new.cod_venta)
                 ) hilo_venta_reciente
                 GROUP BY hilo_venta_reciente.cod_interConsultaFK
             ) seg_venta_reciente ON seg_venta_reciente.cod_interConsultaFK = ic.cod_interConsulta";
@@ -4233,8 +4304,10 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
     }
 
     if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
-        $operacion = $_POST['accion'];
+        $inicioOperacionInterConsulta = microtime(true);
+        $operacion = isset($_POST['accion']) ? $_POST['accion'] : '';
         $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
+        registrarMedicionOperacionInterConsulta($operacion, $inicioOperacionInterConsulta);
         verificarOperacionInterConsulta($operacion);
     }
 ?>

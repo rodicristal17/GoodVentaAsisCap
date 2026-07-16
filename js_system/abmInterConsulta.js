@@ -24,6 +24,7 @@ var solicitudAlertasSeguimientoInterConsultaActiva= null;
 var secuenciaAlertasSeguimientoInterConsulta= 0;
 var firmaAlertasSeguimientoInterConsulta= "";
 var temporizadorAlertasSeguimientoInterConsulta= null;
+var intervaloAlertasSeguimientoInterConsultaMs= 120000;
 var manejadorTimelineSeguimientoInterConsultaInicializado= false;
 var manejadorDialogoSeguimientoInterConsultaInicializado= false;
 var elementoFocoAnteriorSeguimientoInterConsulta= null;
@@ -2728,7 +2729,7 @@ function inicializarSeguimientosProgramadosInterConsulta() {
     }
     if (!temporizadorAlertasSeguimientoInterConsulta) {
         setTimeout(cargarAlertasSeguimientoInterConsulta, 1500);
-        temporizadorAlertasSeguimientoInterConsulta= setInterval(cargarAlertasSeguimientoInterConsulta, 60000);
+        temporizadorAlertasSeguimientoInterConsulta= setInterval(cargarAlertasSeguimientoInterConsulta, intervaloAlertasSeguimientoInterConsultaMs);
     }
 }
 
@@ -2752,6 +2753,9 @@ function crearDatosSolicitudListadoInterConsulta(filtros, accion) {
     datos.append("fecha_hasta", filtros.fecha_hasta || "");
     datos.append("categoria_principal", filtros.categoria_principal || obtenerCategoriaActivaInterConsulta());
     datos.append("limite", filtros.limite !== undefined ? filtros.limite : limiteMaximoListadoInterConsulta);
+    if (Array.isArray(filtros.codigos_hilos) && filtros.codigos_hilos.length) {
+        datos.append("codigos_hilos", filtros.codigos_hilos.join(","));
+    }
     if (filtros.ocultar_inactivos) {
         datos.append("ocultar_inactivos", filtros.ocultar_inactivos);
     }
@@ -2834,9 +2838,12 @@ function marcarEnriquecimientoListadoInterConsultaNoDisponible() {
     });
 }
 
-function cargarEnriquecimientoListadoInterConsulta(filtros, token, offsetPagina) {
+function cargarEnriquecimientoListadoInterConsulta(filtros, token, offsetPagina, codigosHilos) {
     abortarSolicitudHilosInterConsulta(solicitudEnriquecimientoListadoInterConsultaActiva);
-    var datosSolicitud= crearDatosSolicitudListadoInterConsulta(filtros, "buscarInterConsultasEnriquecidos");
+    var filtrosEnriquecimiento= Object.assign({}, filtros, {
+        codigos_hilos: Array.isArray(codigosHilos) ? codigosHilos : []
+    });
+    var datosSolicitud= crearDatosSolicitudListadoInterConsulta(filtrosEnriquecimiento, "buscarInterConsultasEnriquecidos");
     var solicitud= $.ajax({
         data: datosSolicitud,
         url: "../php_system/abmInterConsulta.php",
@@ -2993,7 +3000,7 @@ function buscarPacientesConInterConsultas2(cod_interC, asunto, nombre_responsabl
                         }
                     } else {
                         aplicarPaginaListadoInterConsulta(datos, 0, false);
-                        cargarEnriquecimientoListadoInterConsulta(filtrosSolicitud, token, 0);
+                        cargarEnriquecimientoListadoInterConsulta(filtrosSolicitud, token, 0, datos["12"] || []);
                     }
 				}
 			} catch (error) {
@@ -3410,7 +3417,7 @@ function buscarMasPacientesConInterConsultas2(cod_interC, cod_usuarioFK, asunto,
                     }
 
                     aplicarPaginaListadoInterConsulta(datos, offsetPagina, false);
-                    cargarEnriquecimientoListadoInterConsulta(filtrosSolicitud, token, offsetPagina);
+                    cargarEnriquecimientoListadoInterConsulta(filtrosSolicitud, token, offsetPagina, datos["12"] || []);
 				}
 			} catch (error) {
                 document.getElementById("divProgressInformeInterConsulta").style.backgroundColor='#ff5722'
