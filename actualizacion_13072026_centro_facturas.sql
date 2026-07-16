@@ -1,36 +1,34 @@
 -- Centro de Facturas de Clinident Salud.
--- Compatible con MySQL 5.7+/8 y PHP 7.2.
+-- Compatible con MySQL 5.6+/MariaDB y PHP 7.2 en hosting compartido.
 -- Cambios aditivos: no transforma facturas, ventas, gastos, compras ni adjuntos historicos.
 -- Ejecutar con respaldo previo y antes de publicar la interfaz.
+-- Esta version no consulta information_schema porque algunos hostings bloquean ese acceso.
 
 SET NAMES latin1;
-SET SESSION lock_wait_timeout = 15;
+-- El hosting puede mantener conexiones web abiertas sobre mensaje.
+-- Se espera hasta cinco minutos por el bloqueo breve de metadatos del ALTER.
+SET SESSION lock_wait_timeout = 300;
 
--- Preflight: las tablas base deben existir antes de continuar.
-SELECT IF(COUNT(*) = 11, 'OK', 'ERROR: faltan tablas base para Centro de Facturas') AS preflight_centro_facturas
-FROM information_schema.tables
-WHERE table_schema = DATABASE()
-  AND table_name IN (
-    'interconsulta','mensaje','gastos','compra','venta','nrofactura',
-    'proveedor','usuario','persona','local','dashboard_access_catalog'
-  );
+-- Preflight para hosting: estas consultas fallan de forma clara si falta una tabla base,
+-- sin requerir acceso directo a information_schema.
+SELECT 1 AS preflight_interconsulta FROM `interconsulta` LIMIT 1;
+SELECT 1 AS preflight_mensaje FROM `mensaje` LIMIT 1;
+SELECT 1 AS preflight_gastos FROM `gastos` LIMIT 1;
+SELECT 1 AS preflight_compra FROM `compra` LIMIT 1;
+SELECT 1 AS preflight_venta FROM `venta` LIMIT 1;
+SELECT 1 AS preflight_nrofactura FROM `nrofactura` LIMIT 1;
+SELECT 1 AS preflight_proveedor FROM `proveedor` LIMIT 1;
+SELECT 1 AS preflight_usuario FROM `usuario` LIMIT 1;
+SELECT 1 AS preflight_persona FROM `persona` LIMIT 1;
+SELECT 1 AS preflight_local FROM `local` LIMIT 1;
+SELECT 1 AS preflight_dashboard FROM `dashboard_access_catalog` LIMIT 1;
 
 -- Clasificacion opcional del adjunto. Los mensajes historicos conservan NULL.
-SET @cf_existe_tipo_adjunto := (
-  SELECT COUNT(*)
-  FROM information_schema.columns
-  WHERE table_schema = DATABASE()
-    AND table_name = 'mensaje'
-    AND column_name = 'tipo_adjunto'
-);
-SET @cf_sql := IF(
-  @cf_existe_tipo_adjunto = 0,
-  'ALTER TABLE `mensaje` ADD COLUMN `tipo_adjunto` varchar(20) NULL AFTER `url`, ALGORITHM=INPLACE, LOCK=NONE',
-  'SELECT ''mensaje.tipo_adjunto ya existe'' AS info'
-);
-PREPARE cf_stmt FROM @cf_sql;
-EXECUTE cf_stmt;
-DEALLOCATE PREPARE cf_stmt;
+-- El intento anterior del archivo original se detuvo antes de ejecutar este ALTER.
+ALTER TABLE `mensaje`
+  ADD COLUMN `tipo_adjunto` varchar(20) NULL AFTER `url`,
+  ALGORITHM=INPLACE,
+  LOCK=NONE;
 
 CREATE TABLE IF NOT EXISTS `centro_factura_configuracion` (
   `id_configuracion` tinyint unsigned NOT NULL,
@@ -145,19 +143,6 @@ CREATE TABLE IF NOT EXISTS `centro_factura` (
   CONSTRAINT `fk_cf_usuario_registro` FOREIGN KEY (`cod_usuario_registroFK`) REFERENCES `usuario` (`cod_usuario`),
   CONSTRAINT `fk_cf_usuario_actualiza` FOREIGN KEY (`cod_usuario_actualizacionFK`) REFERENCES `usuario` (`cod_usuario`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
-SET @cf_existe_tipo_documento := (
-  SELECT COUNT(*) FROM information_schema.columns
-  WHERE table_schema=DATABASE() AND table_name='centro_factura' AND column_name='tipo_documento'
-);
-SET @cf_sql := IF(
-  @cf_existe_tipo_documento = 0,
-  "ALTER TABLE `centro_factura` ADD COLUMN `tipo_documento` enum('factura','recibo') NOT NULL DEFAULT 'factura' AFTER `direccion`, ALGORITHM=INPLACE, LOCK=NONE",
-  "SELECT 'centro_factura.tipo_documento ya existe' AS info"
-);
-PREPARE cf_stmt FROM @cf_sql;
-EXECUTE cf_stmt;
-DEALLOCATE PREPARE cf_stmt;
 
 CREATE TABLE IF NOT EXISTS `centro_factura_archivo` (
   `id_archivo` int NOT NULL AUTO_INCREMENT,
@@ -354,25 +339,21 @@ ON DUPLICATE KEY UPDATE
 
 COMMIT;
 
--- Firma de verificacion posterior. Debe devolver siete tablas, nueve permisos,
--- un acceso de dashboard, plazo cinco y la columna de adjuntos.
+-- Firma de verificacion posterior sin information_schema.
+-- Debe devolver nueve permisos, un acceso de dashboard y plazo cinco.
 SELECT
-  (SELECT COUNT(*) FROM information_schema.tables
-   WHERE table_schema=DATABASE() AND table_name IN (
-     'centro_factura_configuracion','centro_factura','centro_factura_archivo',
-     'centro_factura_lote','centro_factura_lote_detalle',
-     'centro_factura_ocr_sugerencia','centro_factura_auditoria'
-   )) AS tablas_centro_facturas,
   (SELECT COUNT(*) FROM listadodeacceso
    WHERE formulario='CENTRO DE FACTURAS' AND tipo='Administrativo') AS permisos_centro_facturas,
   (SELECT COUNT(*) FROM dashboard_access_catalog
    WHERE access_key='centro_facturas' AND permission_key='VERCENTROFACTURAS'
      AND is_active=1) AS acceso_dashboard_centro_facturas,
-  (SELECT dias_plazo_original FROM centro_factura_configuracion WHERE id_configuracion=1) AS plazo_dias,
-  (SELECT COUNT(*) FROM information_schema.columns
-   WHERE table_schema=DATABASE() AND table_name='mensaje' AND column_name='tipo_adjunto') AS columna_tipo_adjunto,
-  (SELECT COUNT(*) FROM information_schema.columns
-   WHERE table_schema=DATABASE() AND table_name='centro_factura' AND column_name='tipo_documento') AS columna_tipo_documento;
+  (SELECT dias_plazo_original FROM centro_factura_configuracion WHERE id_configuracion=1) AS plazo_dias;
+
+-- Verificacion visible de tablas y columnas creadas. SHOW no requiere SELECT
+-- directo sobre information_schema en los hostings compartidos habituales.
+SHOW TABLES LIKE 'centro_factura%';
+SHOW COLUMNS FROM `mensaje` LIKE 'tipo_adjunto';
+SHOW COLUMNS FROM `centro_factura` LIKE 'tipo_documento';
 
 -- Reversion controlada (no ejecutar si existen facturas o lotes que deban conservarse):
 -- 1. Ocultar primero la interfaz y exportar centro_factura_*.

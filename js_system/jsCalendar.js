@@ -8,6 +8,7 @@ var agendaSolicitudBaseActiva = null;
 var agendaSolicitudEnriquecidaActiva = null;
 var agendaSecuenciaCarga = 0;
 var agendaTimeoutSeleccion = null;
+var agendaIdsCargaIncrementalPendientes = [];
 var agendaCallbackCargaActiva = null;
 var agendaSeleccionInicialResuelta = false;
 var agendaPreferenciasPendientes = null;
@@ -452,7 +453,7 @@ function renderListaConsultoriosAgenda(){
                     + "class='check-consultorio-agenda' "
                     + "value='" + escaparAtributoListaAgenda(c.id) + "' "
                     + checked + " "
-                    + "onchange='cambiarSeleccionConsultoriosAgenda()'>"
+                    + "onchange='cambiarSeleccionConsultoriosAgenda(this)'>"
                 + "<span class='consultorio-color' style='background:" + escaparAtributoListaAgenda(c.color) + "'></span>"
                 + "<div>"
                     + "<b>" + escaparHtmlListaAgenda(nombreConsultorio) + "</b><br>"
@@ -552,7 +553,7 @@ function obtenerContenedorGrupoConsultorioAgenda(elemento){
 
 function seleccionarGrupoConsultoriosAgenda(checkGrupo){
     var grupo = obtenerContenedorGrupoConsultorioAgenda(checkGrupo);
-    var checks, i;
+    var checks, i, idsNuevos = [];
 
     if(!grupo){
         return;
@@ -560,22 +561,155 @@ function seleccionarGrupoConsultoriosAgenda(checkGrupo){
 
     checks = grupo.querySelectorAll('.check-consultorio-agenda');
     for(i = 0; i < checks.length; i++){
+        if(checkGrupo.checked && !checks[i].checked){
+            idsNuevos.push(String(checks[i].value));
+        }
         checks[i].checked = checkGrupo.checked;
     }
 
     checkGrupo.indeterminate = false;
-    cambiarSeleccionConsultoriosAgenda();
+    cambiarSeleccionConsultoriosAgenda(checkGrupo, idsNuevos);
 }
 
-function cambiarSeleccionConsultoriosAgenda(){
+function fusionarCargaIncrementalConsultoriosAgenda(datosRespuesta, idsActualizados, completo){
+    var ids = {};
+    var consultoriosRespuesta = datosRespuesta["consultorios"] || [];
+    var consultoriosActualizados = [];
+    var feriados = datosRespuesta["feriados"] || agendaConsultoriosData.feriados || [];
+
+    (idsActualizados || []).forEach(function(id){ ids[String(id)] = true; });
+    consultoriosRespuesta.forEach(function(consultorio){
+        if(ids[String(consultorio.id)]){
+            consultoriosActualizados.push(consultorio);
+        }
+    });
+
+    agendaConsultoriosData.consultorios = (agendaConsultoriosData.consultorios || []).map(function(consultorio){
+        for(var i = 0; i < consultoriosActualizados.length; i++){
+            if(String(consultoriosActualizados[i].id) == String(consultorio.id)){
+                return consultoriosActualizados[i];
+            }
+        }
+        return consultorio;
+    });
+    agendaConsultoriosData.feriados = feriados;
+    agendaConsultoriosData.eventos = (agendaConsultoriosData.eventos || []).filter(function(evento){
+        return !ids[String(evento.consultorio)];
+    }).concat(construirEventosVisualesAgenda(
+        datosRespuesta["eventos"] || [],
+        feriados,
+        consultoriosActualizados,
+        completo
+    ));
+    agendaConsultoriosData.eventosOcupacion = (agendaConsultoriosData.eventosOcupacion || []).filter(function(evento){
+        return !ids[String(evento.consultorio)];
+    }).concat(datosRespuesta["eventos_ocupacion"] || datosRespuesta["eventos"] || []);
+    resumenInsumosConsultorioSemanaCache = {};
+    cargarAgendaConsultorios();
+}
+
+function cargarConsultoriosAgendaIncremental(idsNuevos){
+    idsNuevos = (idsNuevos || []).map(String).filter(function(id, indice, lista){
+        return /^\d+$/.test(id) && lista.indexOf(id) === indice;
+    });
+    if(idsNuevos.length === 0){
+        cargarAgendaConsultorios();
+        return;
+    }
+
+    obtener_datos_user();
+    cancelarSolicitudesAgenda(true);
+    var token = agendaSecuenciaCarga;
+    var datosBase = crearDatosCargaAgenda("cargarAgendaBasica", idsNuevos);
+    var solicitudBase = $.ajax({
+        data: datosBase,
+        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        type: "post",
+        error: function(jqXHR, textstatus){
+            if(textstatus === "abort" || token !== agendaSecuenciaCarga){ return; }
+            manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+        },
+        success: function(responseText){
+            if(token !== agendaSecuenciaCarga){ return; }
+            try{
+                var respuesta = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if(respuestaJqueryAjax(respuesta["1"]) != true){ return; }
+                fusionarCargaIncrementalConsultoriosAgenda(respuesta, idsNuevos, false);
+
+                var datosCompletos = crearDatosCargaAgenda("cargarAgenda", idsNuevos);
+                datosCompletos.solo_catalogo = "0";
+                var solicitudCompleta = $.ajax({
+                    data: datosCompletos,
+                    url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+                    type: "post",
+                    success: function(responseCompleta){
+                        if(token !== agendaSecuenciaCarga){ return; }
+                        try{
+                            var completa = typeof responseCompleta === "string" ? $.parseJSON(responseCompleta) : responseCompleta;
+                            if(respuestaJqueryAjax(completa["1"]) == true){
+                                fusionarCargaIncrementalConsultoriosAgenda(completa, idsNuevos, true);
+                            }
+                        }catch(errorCompleto){
+                            GuardarArchivosLog("Error carga incremental agenda: " + errorCompleto);
+                        }
+                    },
+                    complete: function(){
+                        if(agendaSolicitudEnriquecidaActiva === solicitudCompleta){
+                            agendaSolicitudEnriquecidaActiva = null;
+                        }
+                    }
+                });
+                agendaSolicitudEnriquecidaActiva = solicitudCompleta;
+            }catch(error){
+                GuardarArchivosLog("Error carga incremental agenda: " + error + " \r\n Consola: " + responseText);
+            }
+        },
+        complete: function(){
+            if(agendaSolicitudBaseActiva === solicitudBase){
+                agendaSolicitudBaseActiva = null;
+            }
+        }
+    });
+    agendaSolicitudBaseActiva = solicitudBase;
+}
+
+function cambiarSeleccionConsultoriosAgenda(origen, idsNuevosGrupo){
     actualizarEstadoGruposConsultoriosAgenda();
     agendaSeleccionInicialResuelta = true;
     guardarPreferenciasAgendaConsultorios();
-    var idsDeseados = obtenerConsultoriosSeleccionadosAgenda().slice(0);
-    cancelarSolicitudesAgenda(true);
+    var idsSeleccionados = obtenerConsultoriosSeleccionadosAgenda().slice(0);
+    var estaMarcando = origen && origen.checked === true;
+    var idsNuevos = Array.isArray(idsNuevosGrupo)
+        ? idsNuevosGrupo
+        : (estaMarcando && origen && origen.value ? [String(origen.value)] : []);
+
+    if(idsSeleccionados.length === 0){
+        agendaIdsCargaIncrementalPendientes = [];
+        cancelarSolicitudesAgenda(true);
+        cargarAgendaConsultorios();
+        return;
+    }
+    if(!estaMarcando){
+        agendaIdsCargaIncrementalPendientes = [];
+        cancelarSolicitudesAgenda(true);
+        cargarAgendaConsultorios();
+        return;
+    }
+
+    idsNuevos.forEach(function(id){
+        id = String(id);
+        if(agendaIdsCargaIncrementalPendientes.indexOf(id) < 0){
+            agendaIdsCargaIncrementalPendientes.push(id);
+        }
+    });
+    if(agendaTimeoutSeleccion){
+        clearTimeout(agendaTimeoutSeleccion);
+    }
     agendaTimeoutSeleccion = setTimeout(function(){
+        var idsPendientes = agendaIdsCargaIncrementalPendientes.slice(0);
+        agendaIdsCargaIncrementalPendientes = [];
         agendaTimeoutSeleccion = null;
-        cargarAgendaConsultoriosDesdePHP(null, idsDeseados);
+        cargarConsultoriosAgendaIncremental(idsPendientes);
     }, 120);
 }
 
