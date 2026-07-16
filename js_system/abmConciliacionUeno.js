@@ -450,6 +450,10 @@ function uenoMostrarMovimientoTrabajo() {
 	var credito = movimiento["importe_credito_fmt"] || uenoFormatoMonto(movimiento["importe_credito"] || "0");
 	var debito = movimiento["importe_debito_fmt"] || uenoFormatoMonto(movimiento["importe_debito"] || "0");
 	var sugerenciasMigracion = Number(movimiento["sugerencias_migracion"] || 0);
+	var depositoFaraone = String(movimiento["depositos_conciliacion"] || "").trim();
+	var depositoFaraoneHtml = depositoFaraone != ""
+		? "<span class='ueno-selected-wide'><b>Depósito Faraone</b>Conciliado con " + uenoEscapeHtml(depositoFaraone) + "</span>"
+		: "";
 	var accion = "<input type='button' value='Ver trazabilidad' class='btn4 ueno-row-action ueno-row-action--trace' onclick='uenoVerAplicacionMovimiento(" + Number(movimiento["id_movimiento"] || 0) + ")'>"
 		+ "<input type='button' value='Limpiar seleccion' class='btn4 ueno-btn-secondary' onclick='uenoLimpiarMovimientoTrabajo(true)' style='width:145px'>";
 	var avisoMigracion = sugerenciasMigracion > 0
@@ -465,6 +469,7 @@ function uenoMostrarMovimientoTrabajo() {
 		+ "<span><b>Disponible</b>" + uenoEscapeHtml(disponible) + "</span>"
 		+ "<span><b>Debito</b>" + uenoEscapeHtml(debito) + "</span>"
 		+ "<span><b>Estado</b>" + uenoEscapeHtml(movimiento["estado"] || "") + "</span>"
+		+ depositoFaraoneHtml
 		+ "<span class='ueno-selected-wide'><b>Concepto</b>" + uenoEscapeHtml((movimiento["concepto"] || movimiento["descripcion"] || "")) + "</span>"
 		+ "</div>"
 		+ avisoMigracion
@@ -613,7 +618,7 @@ function uenoConfirmarConciliacionDeposito(idMovimiento, origenTipo, origenId) {
 		ver_vetana_informativa("No se pudo identificar el deposito seleccionado.", "", "error");
 		return;
 	}
-	var origenTexto = origenTipo == "gasto" ? "egreso" : "registro historico";
+	var origenTexto = origenTipo == "gasto" ? "deposito registrado" : "registro historico";
 	var mensaje = "Confirmar la conciliacion definitiva del credito Ueno con el " + origenTexto + " #" + origenId + "?\n\nEsta operacion no se puede revertir.";
 	if (!window.confirm(mensaje)) { return; }
 	verCerrarEfectoCargando("1");

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="titulo descripcion">
+  <title id="titulo">Centro de Facturas</title>
+  <desc id="descripcion">Documento fiscal con control de recepcion</desc>
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f766e"/>
+      <stop offset="1" stop-color="#14b8a6"/>
+    </linearGradient>
+  </defs>
+  <rect x="12" y="8" width="104" height="112" rx="25" fill="url(#fondo)"/>
+  <path d="M40 27h37l17 17v55a8 8 0 0 1-8 8H40a8 8 0 0 1-8-8V35a8 8 0 0 1 8-8Z" fill="#fff"/>
+  <path d="M77 27v17h17" fill="#ccfbf1" stroke="#0f766e" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M47 58h32M47 70h32M47 82h18" stroke="#0f766e" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="84" cy="88" r="18" fill="#f59e0b" stroke="#fff" stroke-width="4"/>
+  <path d="m76 88 6 6 11-13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

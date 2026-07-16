@@ -807,6 +807,27 @@ function inactivarRegistroSolicitudEliminado($mysqli, $solicitud) {
         responderInformeSolicitudEliminado(array("1" => "error", "2" => "La solicitud no tiene tabla, columna o codigo del registro a eliminar. No se puede aprobar."));
     }
 
+    $tablaDestino = strtolower((string)$solicitud['tabla_nombre']);
+    $pkDestino = strtolower((string)$solicitud['registro_pk_columna']);
+    if ($tablaDestino == 'gastos' && $pkDestino == 'idgastos') {
+        $idGasto = intval($solicitud['registro_pk_valor']);
+        $stmtDeposito = $mysqli->prepare("SELECT tipo FROM gastos WHERE idgastos=? LIMIT 1 FOR UPDATE");
+        if (!$stmtDeposito) {
+            responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo validar el movimiento antes de resolver la solicitud."));
+        }
+        $stmtDeposito->bind_param('i', $idGasto);
+        if (!$stmtDeposito->execute()) {
+            $stmtDeposito->close();
+            responderInformeSolicitudEliminado(array("1" => "error", "2" => "No se pudo validar el movimiento antes de resolver la solicitud."));
+        }
+        $resultadoDeposito = $stmtDeposito->get_result();
+        $gastoDestino = $resultadoDeposito ? $resultadoDeposito->fetch_assoc() : null;
+        $stmtDeposito->close();
+        if ($gastoDestino && strtolower(trim((string)$gastoDestino['tipo'])) == 'deposito') {
+            responderInformeSolicitudEliminado(array("1" => "error", "2" => "Los depositos a central deben inactivarse desde su flujo de caja, con validacion de apertura y conciliacion Ueno."));
+        }
+    }
+
     $idSolicitud = isset($solicitud['id_solicitud_eliminado']) ? intval($solicitud['id_solicitud_eliminado']) : 0;
     if ($idSolicitud > 0) {
         inactivarDetallesSolicitudEliminado($mysqli, $idSolicitud);

@@ -15,6 +15,231 @@ include_once("abmProyectoGasto.php");
 
 date_default_timezone_set('America/Asuncion');
 
+function esConceptoDepositoCentral($descripcion)
+{
+	return strtoupper(trim((string)$descripcion)) == 'DEPOSITO BANCARIO - FARAONE CAPITAL S.A.';
+}
+
+function esTipoDepositoCentral($tipo)
+{
+	return strtolower(trim((string)$tipo)) == 'deposito';
+}
+
+function normalizarConceptoMovimientoInterno($descripcion)
+{
+	$texto= (string)$descripcion;
+	if ($texto != '' && !mb_check_encoding($texto, 'UTF-8')) {
+		$texto= mb_convert_encoding($texto, 'UTF-8', 'ISO-8859-1');
+	}
+	$texto= mb_strtoupper(trim($texto), 'UTF-8');
+	$texto= str_replace(
+		array('Á', 'É', 'Í', 'Ó', 'Ú', 'Ü'),
+		array('A', 'E', 'I', 'O', 'U', 'U'),
+		$texto
+	);
+	return preg_replace('/\s+/u', ' ', $texto);
+}
+
+function esConceptoMigracionCaja($descripcion)
+{
+	return normalizarConceptoMovimientoInterno($descripcion) == 'MIGRACION DE CAJA';
+}
+
+function esCodigoConceptoDepositoCentral($mysqli, $codMotivo)
+{
+	$codMotivo= (int)$codMotivo;
+	if ($codMotivo <= 0) {
+		return false;
+	}
+	$stmt= $mysqli->prepare("SELECT descripcion FROM motivos_ingreso_egreso WHERE cod_motivo_ingreso_egreso=? LIMIT 1");
+	if (!$stmt) {
+		return true;
+	}
+	$stmt->bind_param('i', $codMotivo);
+	$esDeposito= false;
+	if (!$stmt->execute()) {
+		$stmt->close();
+		return true;
+	}
+	$fila= $stmt->get_result()->fetch_assoc();
+	$esDeposito= $fila && esConceptoDepositoCentral($fila['descripcion']);
+	$stmt->close();
+	return $esDeposito;
+}
+
+function obtenerClasificacionGastoActual($idgastos)
+{
+	$clasificacion= array('existe' => false, 'tipo' => '');
+	if (!is_numeric($idgastos) || intval($idgastos) <= 0) {
+		return $clasificacion;
+	}
+	$mysqli= conectar_al_servidor();
+	$stmt= $mysqli->prepare("SELECT tipo FROM gastos WHERE idgastos=? LIMIT 1");
+	if ($stmt) {
+		$id= intval($idgastos);
+		$stmt->bind_param('i', $id);
+		if ($stmt->execute()) {
+			$resultado= $stmt->get_result();
+			if ($resultado && $fila= $resultado->fetch_assoc()) {
+				$clasificacion['existe']= true;
+				$clasificacion['tipo']= (string)$fila['tipo'];
+			}
+		}
+		$stmt->close();
+	}
+	mysqli_close($mysqli);
+	return $clasificacion;
+}
+
+function validarDepositoCentralEnCaja($idgastos, $operacion, $codApertura, $codCaja, $codLocal, $nroComprobante, $monto, $fecha, $estado = 'Activo', $mysqliExistente = null, $bloquear = false)
+{
+	$conexionPropia= !($mysqliExistente instanceof mysqli);
+	$mysqli= $conexionPropia ? conectar_al_servidor() : $mysqliExistente;
+	$error= '';
+	try {
+		$codApertura= (int)$codApertura;
+		$codCaja= (int)$codCaja;
+		$codLocal= (int)$codLocal;
+		$idgastos= (int)$idgastos;
+		$montoDeposito= (float)$monto;
+		$nroComprobante= trim((string)$nroComprobante);
+		$estadoNormalizado= strtolower(trim((string)$estado));
+		$movimientoActivo= !in_array($estadoNormalizado, array('inactivo','anulado','baja'), true);
+
+		if ($codApertura <= 0 || $codCaja <= 0 || $codLocal <= 0 || $montoDeposito <= 0) {
+			throw new Exception('Los datos de caja y el monto del deposito no son validos.');
+		}
+
+		// Serializa los depositos del mismo local para evitar comprobantes duplicados
+		// cuando existen varias cajas abiertas en paralelo.
+		if ($bloquear) {
+			$stmtLocal= $mysqli->prepare("SELECT cod_local FROM local WHERE cod_local=? LIMIT 1 FOR UPDATE");
+			if (!$stmtLocal) {
+				throw new Exception('No se pudo bloquear el local del deposito.');
+			}
+			$stmtLocal->bind_param('i', $codLocal);
+			if (!$stmtLocal->execute() || $stmtLocal->get_result()->num_rows == 0) {
+				$stmtLocal->close();
+				throw new Exception('No se encontro el local del deposito.');
+			}
+			$stmtLocal->close();
+		}
+
+		$caja= caja_cierre_obtener_arqueo($mysqli, $codApertura, $bloquear);
+		if (!$caja || strtolower(trim((string)$caja['estado'])) != 'activo') {
+			throw new Exception('La caja seleccionada ya no esta activa. Actualice la pantalla antes de registrar el deposito.');
+		}
+		if ((int)$caja['cod_local'] !== $codLocal || (int)$caja['caja_idcaja'] !== $codCaja) {
+			throw new Exception('El deposito debe registrarse en el local y la caja que estan activos.');
+		}
+
+		$montoActualComputable= 0;
+		if ($operacion == 'editar') {
+			$sqlActual= "SELECT idgastos,tipo,codApertura,codCaja,cod_local,monto,fecha,estado
+				FROM gastos WHERE idgastos=? LIMIT 1".($bloquear ? " FOR UPDATE" : "");
+			$stmtActual= $mysqli->prepare($sqlActual);
+			if (!$stmtActual) {
+				throw new Exception('No se pudo validar el deposito existente.');
+			}
+			$stmtActual->bind_param('i', $idgastos);
+			if (!$stmtActual->execute()) {
+				$stmtActual->close();
+				throw new Exception('No se pudo validar el deposito existente.');
+			}
+			$resultadoActual= $stmtActual->get_result();
+			$filaActual= $resultadoActual ? $resultadoActual->fetch_assoc() : null;
+			$stmtActual->close();
+			if (!$filaActual || !esTipoDepositoCentral($filaActual['tipo'])) {
+				throw new Exception('El deposito que intenta editar ya no existe o cambio de clasificacion.');
+			}
+			if ((int)$filaActual['codApertura'] !== $codApertura
+				|| (int)$filaActual['codCaja'] !== $codCaja
+				|| (int)$filaActual['cod_local'] !== $codLocal) {
+				throw new Exception('El deposito conserva su caja original y no puede trasladarse a una apertura diferente.');
+			}
+			if (strtolower(trim((string)$filaActual['estado'])) == 'activo') {
+				$montoActualComputable= (float)$filaActual['monto'];
+			}
+
+			if (caja_cierre_tabla_existe($mysqli, 'ueno_movimiento_deposito')) {
+				$sqlUeno= "SELECT id FROM ueno_movimiento_deposito
+					WHERE origen_tipo='gasto' AND origen_id=? AND estado='activo' LIMIT 1".($bloquear ? " FOR UPDATE" : "");
+				$stmtUeno= $mysqli->prepare($sqlUeno);
+				if (!$stmtUeno) {
+					throw new Exception('No se pudo verificar la conciliacion Ueno del deposito.');
+				}
+				$stmtUeno->bind_param('i', $idgastos);
+				if (!$stmtUeno->execute()) {
+					$stmtUeno->close();
+					throw new Exception('No se pudo verificar la conciliacion Ueno del deposito.');
+				}
+				$tieneConciliacion= $stmtUeno->get_result()->num_rows > 0;
+				$stmtUeno->close();
+				if ($tieneConciliacion) {
+					throw new Exception('El deposito ya esta conciliado con Ueno y no puede editarse ni inactivarse. Solicite una reversion controlada de la conciliacion.');
+				}
+			}
+		}
+
+		$fechaDeposito= DateTime::createFromFormat('!Y-m-d', (string)$fecha);
+		if (!$fechaDeposito || $fechaDeposito->format('Y-m-d') !== (string)$fecha) {
+			throw new Exception('Ingrese una fecha valida para el deposito.');
+		}
+		$fechaApertura= substr((string)$caja['fechaapertura'], 0, 10);
+		$fechaHoy= date('Y-m-d');
+		if ((string)$fecha < $fechaApertura) {
+			throw new Exception('La fecha del deposito no puede ser anterior a la apertura de caja.');
+		}
+		if ((string)$fecha > $fechaHoy) {
+			throw new Exception('La fecha del deposito no puede ser futura.');
+		}
+
+		if ($movimientoActivo) {
+			$sql= "SELECT idgastos FROM gastos
+				WHERE LOWER(TRIM(IFNULL(tipo,'')))='deposito'
+				AND UPPER(TRIM(IFNULL(nroboleta,'')))=UPPER(TRIM(?))
+				AND cod_local=?
+				AND LOWER(TRIM(IFNULL(estado,''))) NOT IN ('inactivo','anulado','baja')";
+			if ($operacion == 'editar') {
+				$sql .= " AND idgastos<>?";
+			}
+			$sql .= " LIMIT 1".($bloquear ? " FOR UPDATE" : "");
+			$stmt= $mysqli->prepare($sql);
+			if (!$stmt) {
+				throw new Exception('No se pudo validar el comprobante del deposito.');
+			}
+			if ($operacion == 'editar') {
+				$stmt->bind_param('sii', $nroComprobante, $codLocal, $idgastos);
+			} else {
+				$stmt->bind_param('si', $nroComprobante, $codLocal);
+			}
+			if (!$stmt->execute()) {
+				$stmt->close();
+				throw new Exception('No se pudo validar el comprobante del deposito.');
+			}
+			$resultado= $stmt->get_result();
+			if ($resultado && $resultado->num_rows > 0) {
+				$filaDuplicada= $resultado->fetch_assoc();
+				$stmt->close();
+				throw new Exception('Ya existe un deposito activo con este numero de comprobante (registro #'.(int)$filaDuplicada['idgastos'].').');
+			}
+			$stmt->close();
+
+			$resumenCaja= caja_cierre_calcular_resumen_medios($mysqli, $codApertura, $caja['montoapertura']);
+			$efectivoDisponibleAntes= (float)$resumenCaja['efectivo_esperado'] + $montoActualComputable;
+			if ($montoDeposito > $efectivoDisponibleAntes) {
+				throw new Exception('El deposito supera el efectivo esperado disponible en caja (Gs. '.number_format(max(0, $efectivoDisponibleAntes), 0, ',', '.').').');
+			}
+		}
+	} catch (Exception $e) {
+		$error= $e->getMessage();
+	}
+	if ($conexionPropia) {
+		mysqli_close($mysqli);
+	}
+	return $error;
+}
+
 function verificarOperacionGasto($operacion)
 {
  $user=$_POST['useru'];
@@ -86,12 +311,63 @@ $cod_motivo= $_POST['cod_motivoFK'];
 $cod_motivo= mb_convert_encoding((string)($cod_motivo), 'ISO-8859-1', 'UTF-8');
 
 // El destino empresarial se define por el concepto, no por una persona receptora.
+$esDepositoCentral= false;
 if (is_numeric($cod_motivo) && (int)$cod_motivo > 0) {
 	$motivoSeleccionado = buscarabmmotivoingresoegreso('', 'activo', (int)$cod_motivo);
 	if (isset($motivoSeleccionado[4][0]['descripcion'])
-		&& strtoupper(trim((string)$motivoSeleccionado[4][0]['descripcion'])) == 'DEPOSITO BANCARIO - FARAONE CAPITAL S.A.') {
-		$tipo = 'Egreso';
+		&& esConceptoDepositoCentral($motivoSeleccionado[4][0]['descripcion'])) {
+		$esDepositoCentral= true;
+		$tipo = 'Deposito';
 		$motivo = 'Deposito bancario a Faraone Capital S.A.';
+		$estado = ($operacion == 'editar' && strtolower(trim((string)$estado)) == 'inactivo') ? 'Inactivo' : 'Activo';
+	}
+}
+if (esTipoDepositoCentral($tipo) && !$esDepositoCentral) {
+	$informacion = array("1" => "error", "2" => "Seleccione un concepto de deposito a central habilitado.");
+	echo json_encode($informacion);
+	exit;
+}
+if ($operacion == 'editar') {
+	$clasificacionActual= obtenerClasificacionGastoActual($idgastos);
+	if (!$clasificacionActual['existe']) {
+		$informacion= array("1" => "error", "2" => "El movimiento que intenta editar ya no existe.");
+		echo json_encode($informacion);
+		exit;
+	}
+	$eraDepositoCentral= esTipoDepositoCentral($clasificacionActual['tipo']);
+	if ($eraDepositoCentral != $esDepositoCentral) {
+		$mensajeClasificacion= $eraDepositoCentral
+			? "Un deposito a central no puede convertirse en ingreso o egreso. Inactivelo y registre la correccion de forma trazable."
+			: "Un movimiento existente no puede convertirse en deposito a central. Registre un deposito nuevo para conservar la trazabilidad.";
+		$informacion= array("1" => "error", "2" => $mensajeClasificacion);
+		echo json_encode($informacion);
+		exit;
+	}
+}
+if ($esDepositoCentral) {
+	$permisoDeposito= ($operacion == 'editar') ? 'EDITARLISTADOEGRESOINGRESO' : 'INSERTARLISTADOEGRESOINGRESO';
+	if (controldeaccesoacasas($user, $permisoDeposito, " u.accion='SI' ") != 1) {
+		$informacion= array("1" => "NI", "2" => "No tiene permiso para registrar este deposito.");
+		echo json_encode($informacion);
+		exit;
+	}
+}
+if ($esDepositoCentral && trim((string)$nroboleta) == '') {
+	$informacion = array("1" => "error", "2" => "Ingrese el numero de comprobante del deposito.");
+	echo json_encode($informacion);
+	exit;
+}
+if ($esDepositoCentral && ((float)$monto <= 0 || strlen((string)$nroboleta) > 45)) {
+	$informacion = array("1" => "error", "2" => ((float)$monto <= 0 ? "El monto del deposito debe ser mayor a cero." : "El numero de comprobante puede tener hasta 45 caracteres."));
+	echo json_encode($informacion);
+	exit;
+}
+if ($esDepositoCentral) {
+	$errorDepositoCentral= validarDepositoCentralEnCaja($idgastos, $operacion, $idaperturacierrecaja, $codcaja, $cod_local, trim((string)$nroboleta), $monto, $fecha, $estado);
+	if ($errorDepositoCentral != '') {
+		$informacion= array("1" => "error", "2" => $errorDepositoCentral);
+		echo json_encode($informacion);
+		exit;
 	}
 }
 
@@ -109,10 +385,15 @@ if (!is_numeric($cod_proyecto_gastoFK)) {
 
 	// Comprueba si esta dentro del presupuesto
 	$fechaRango= DateTime::createFromFormat('Y-m-d', $fecha);
+	if ($esDepositoCentral && (!$fechaRango || $fechaRango->format('Y-m-d') != $fecha)) {
+		$informacion = array("1" => "error", "2" => "Ingrese una fecha valida para el deposito.");
+		echo json_encode($informacion);
+		exit;
+	}
 	$primerDiaMes= $fechaRango->format('Y-m-01');
 	$ultimoDiaMes= $fechaRango->format('Y-m-t');
 
-	$monto_limite = obtenerPresupuestoMotivoGasto(array(
+	$monto_limite = $esDepositoCentral ? array() : obtenerPresupuestoMotivoGasto(array(
 		'cod_motivo_ingreso_egresoFK' => $cod_motivo,
 		'cod_localFK' => $cod_local,
 	));
@@ -131,7 +412,7 @@ if (!is_numeric($cod_proyecto_gastoFK)) {
 		}
 	}
 
-	if($operacion=="editar")
+	if($operacion=="editar" && !$esDepositoCentral)
 	{
 		registrarSolicitudEliminacionGenerica(
 			"gastos",
@@ -980,7 +1261,7 @@ function buscarResumenGastosMotivo($fecha_inicio, $fecha_fin) {
 	$mysqli=conectar_al_servidor();
 	
 	$sql= "SELECT 
-		(SELECT sum(monto) FROM gastos where cod_motivoIngresoEgresoFK = m.cod_motivo_ingreso_egreso $sqlFiltro) as monto,
+		(SELECT sum(monto) FROM gastos where cod_motivoIngresoEgresoFK = m.cod_motivo_ingreso_egreso AND LOWER(TRIM(IFNULL(tipo,'')))!='deposito' $sqlFiltro) as monto,
 		m.cod_motivo_ingreso_egreso, m.descripcion 
 	 FROM motivos_ingreso_egreso m where estado='activo'";
 	$stmt = $mysqli->prepare($sql);
@@ -1029,6 +1310,13 @@ function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngres
 	$fechaActual=date_format($fechaActual,"Y-m-d H:i:s");
 
 	$mysqli=conectar_al_servidor();
+	if (esCodigoConceptoDepositoCentral($mysqli, $cod_motivoIngresoEgreso)
+		|| esCodigoConceptoDepositoCentral($mysqli, $cod_motivoIngresoEgreso_dest)) {
+		mysqli_close($mysqli);
+		$informacion= array("1" => "error", "2" => "El concepto de depositos a central es reservado y no puede combinarse con otro concepto.");
+		echo json_encode($informacion);
+		exit;
+	}
 
 	// Se actualiza todos los registros de gastos con el motivo anterior
 	$sql= "UPDATE gastos SET cod_motivoIngresoEgresoFK= ? WHERE cod_motivoIngresoEgresoFK = ?";
@@ -1056,7 +1344,18 @@ function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngres
 
 function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 	// Obtiene los datos del gasto
-	$registroGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos)[0];
+	$registrosGasto= buscarGasto('', '', '', '', '', '', '', '', 'false', '', '', '', '','',$idgastos);
+	if (empty($registrosGasto)) {
+		$informacion= array("1" => "error", "2" => "El movimiento no existe.");
+		echo json_encode($informacion);
+		exit;
+	}
+	$registroGasto= $registrosGasto[0];
+	if (esTipoDepositoCentral(isset($registroGasto['tipo']) ? $registroGasto['tipo'] : '')) {
+		$informacion= array("1" => "error", "2" => "Los depositos a central no utilizan el flujo de aprobacion o rechazo.");
+		echo json_encode($informacion);
+		exit;
+	}
 	$cod_aperturaFK= $registroGasto['codApertura'];
 	$cod_cajaFK= $registroGasto['codCaja'];
 
@@ -1443,13 +1742,23 @@ echo json_encode($informacion);
 exit;
 }
 
-if (empty($cod_interConsultaFK)) {
+if (esTipoDepositoCentral($tipo) && $operacion == 'nuevo') {
+	$cod_interConsultaFK= NULL;
+}
+if (empty($cod_interConsultaFK) && !esTipoDepositoCentral($tipo)) {
 	$cod_interConsultaFK= crearInterConsultaParaGasto($motivo, $tipo, $cod_usuario, $cod_local);
 }
 
 $cantCuotas = isset($_POST['cantCuotas']) ? intval($_POST['cantCuotas']) : 0;
 $periodicidad = isset($_POST['periodicidad']) ? mb_convert_encoding((string)$_POST['periodicidad'], 'ISO-8859-1', 'UTF-8') : '';
 $proyectoSolicitado= trim((string)$cod_proyecto_gastoFK);
+if (esTipoDepositoCentral($tipo)) {
+	$cantCuotas= 0;
+	$periodicidad= '';
+	$proyectoSolicitado= '';
+	$cod_proyecto_gastoFK= NULL;
+	$estado= ($operacion == 'editar' && strtolower(trim((string)$estado)) == 'inactivo') ? 'Inactivo' : 'Activo';
+}
 if ($proyectoSolicitado == "0") {
 	$proyectoSolicitado= "";
 	$cod_proyecto_gastoFK= NULL;
@@ -1483,8 +1792,23 @@ $registros_motivos= buscarabmmotivoingresoegreso('', 'activo',$cod_motivo);
 $fechaGasto = DateTime::createFromFormat('!Y-m-d', substr((string)$fecha, 0, 10));
 $pasadoManana = new DateTime('today');
 $pasadoManana->modify('+1 day');
-if ($estado == 'Activo' && $registros_motivos['4'][0]['necesita_autorizacion'] == '1') {
+if (!esTipoDepositoCentral($tipo) && $estado == 'Activo' && $registros_motivos['4'][0]['necesita_autorizacion'] == '1') {
 	$estado = ($fechaGasto && ($fechaGasto > $pasadoManana)) ? 'pendiente' : 'solicitado';
+}
+
+$transaccionDeposito= false;
+if (esTipoDepositoCentral($tipo)) {
+	if (!$mysqli->begin_transaction()) {
+		mysqli_close($mysqli);
+		return array("1" => "error", "2" => "No se pudo iniciar el registro seguro del deposito.");
+	}
+	$transaccionDeposito= true;
+	$errorDepositoCentral= validarDepositoCentralEnCaja($idgastos, $operacion, $idaperturacierrecaja, $codcaja, $cod_local, trim((string)$nroboleta), $monto, $fecha, $estado, $mysqli, true);
+	if ($errorDepositoCentral != '') {
+		$mysqli->rollback();
+		mysqli_close($mysqli);
+		return array("1" => "error", "2" => $errorDepositoCentral);
+	}
 }
 
 if($operacion=="nuevo")
@@ -1513,7 +1837,9 @@ $foto_documento_firmado_edicion= isset($_POST['foto_documento_firmado']) ? trim(
 $ext_documento_firmado_edicion= isset($_POST['ext_documento_firmado']) ? trim((string)$_POST['ext_documento_firmado']) : '';
 $mantener_estado_por_documento_firmado= ($foto_documento_firmado_edicion != '' && $ext_documento_firmado_edicion != '');
 
-if ($mantener_estado_por_documento_firmado && isset($datos_gasto[0]['estado'])) {
+if (esTipoDepositoCentral($tipo)) {
+	$estado= (mb_strtolower((string)$estado, 'UTF-8') == 'inactivo') ? 'Inactivo' : 'Activo';
+} else if ($mantener_estado_por_documento_firmado && isset($datos_gasto[0]['estado'])) {
 	$estado= $datos_gasto[0]['estado'];
 } else {
 	$estado = (mb_strtolower((string)$estado, 'UTF-8') == 'inactivo' ? "Inactivo" : (($fechaGasto && ($fechaGasto > $pasadoManana)) ? 'pendiente' : 'solicitado'));
@@ -1614,6 +1940,9 @@ if (!$mantener_estado_por_documento_firmado) {
 }
 
 if ($atributos == "") {
+	if ($transaccionDeposito) {
+		$mysqli->commit();
+	}
 	return array("1" => "exito", "2" => $idgastos);
 }
 
@@ -1632,7 +1961,9 @@ call_user_func_array([$stmt, 'bind_param'], array_merge([$ss], $refs));
 }
 
 if (!$stmt->execute()) {
-	
+	if ($transaccionDeposito) {
+		$mysqli->rollback();
+	}
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
@@ -1646,7 +1977,7 @@ if($operacion=='nuevo'){
 	}
 }
 
-if($operacion=='editar' && $editar_cuotas == "true"){
+if($operacion=='editar' && $editar_cuotas == "true" && !esTipoDepositoCentral($tipo)){
 	$codProyectoSerie= obtenerProyectoGastoSerie($mysqli, $idgastos, $cod_proyecto_gastoFK);
 	if ($codProyectoSerie != '') {
 		$sql = "UPDATE gastos SET cod_proyecto_gastoFK = ? WHERE idgastos = ?";
@@ -1696,6 +2027,11 @@ if($operacion=='editar' && $editar_cuotas == "true"){
 		$stmt->close();
 	}
 	}
+
+if ($transaccionDeposito) {
+	$mysqli->commit();
+	$transaccionDeposito= false;
+}
 
 $foto=$_POST['foto'];
 $ext=$_POST['ext'];
@@ -1880,7 +2216,7 @@ function flujoGastoNormalizarCategoriaResumen($categoria) {
 	if ($categoria == '' || strtoupper($categoria) == 'NULL') {
 		return 'sinCategoria';
 	}
-	if ($categoria == 'ingreso' || $categoria == 'directo' || $categoria == 'operativo' || $categoria == 'administracion') {
+	if ($categoria == 'ingreso' || $categoria == 'directo' || $categoria == 'operativo' || $categoria == 'administracion' || $categoria == 'deposito') {
 		return $categoria;
 	}
 	return 'sinCategoria';
@@ -1896,6 +2232,8 @@ function flujoGastoTituloCategoriaResumen($categoria) {
 			return 'Gastos fijos';
 		case 'administracion':
 			return 'Administracion asignada';
+		case 'deposito':
+			return 'Depositos a central';
 		default:
 			return 'Sin categorizar';
 	}
@@ -2745,6 +3083,8 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	$totalZonaCostosDirectos= 0;
 	$totalZonaGastosOperativos= 0;
 	$totalZonaAdministracionAsignada= 0;
+	$totalZonaDepositosCentral= 0;
+	$totalZonaMigracionesCaja= 0;
 	$totalZonaSinCategorizar= 0;
 	$totalGasto=0;
 	$codLocalSeleccionadoFlujo= trim((string)$cod_local);
@@ -2817,7 +3157,9 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	// Preparamos las zonas de los motivos activos sin consultar gastos motivo por motivo.
 	foreach($registrosMotivos as $mot) {
 		// Se normaliza la categoria
-		$categoria= $mot['categoria'];
+		$categoria= esConceptoDepositoCentral($mot['descripcion'])
+			? 'deposito'
+			: (esConceptoMigracionCaja($mot['descripcion']) ? 'migracion' : $mot['categoria']);
 		if (empty($categoria) || $categoria == 'NULL' || $categoria == null) {
 			$categoria= "sinCategoria";
 		}
@@ -2835,19 +3177,34 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	}
 
 	// Una sola consulta trae los movimientos; luego se agrupan en memoria por motivo y categoria.
-	// Se conserva el comportamiento historico: el resumen solo muestra motivos activos.
+	// Los movimientos comunes conservan el filtro historico por motivo activo. Los depositos
+	// permanecen visibles aunque el concepto se inactive, porque siguen afectando su caja.
 	$registros= buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,'', $cod_interConsultaFK, $nombre_interConsulta, $motivo, $cod_gasto_padre, $idgastos, $fechaOrder);
 	$nroRegistro= count($registros);
 	foreach ($registros as $valor) {
 		$codMotivoRegistro= (string)$valor['cod_motivoIngresoEgresoFK'];
-		if (!isset($motivosActivosPorCodigo[$codMotivoRegistro])) {
+		$esDepositoRegistro= esTipoDepositoCentral($valor['tipo']);
+		$nombreConceptoRegistro= isset($motivosActivosPorCodigo[$codMotivoRegistro]['descripcion'])
+			? $motivosActivosPorCodigo[$codMotivoRegistro]['descripcion']
+			: $valor['motivo'];
+		$esMigracionRegistro= esConceptoMigracionCaja($nombreConceptoRegistro);
+		if (!isset($motivosActivosPorCodigo[$codMotivoRegistro]) && !$esDepositoRegistro && !$esMigracionRegistro) {
 			continue;
+		}
+		if (($esDepositoRegistro || $esMigracionRegistro) && !isset($motivosActivosPorCodigo[$codMotivoRegistro])) {
+			$motivosActivosPorCodigo[$codMotivoRegistro]= array(
+				'descripcion' => trim((string)$valor['motivo']) != ''
+					? $valor['motivo']
+					: ($esMigracionRegistro ? 'MIGRACION DE CAJA' : 'Deposito bancario a central')
+			);
 		}
 		if ($cod_motivoFK != '' && (string)$cod_motivoFK !== $codMotivoRegistro) {
 			continue;
 		}
 		$montoRegistro= intval($valor['monto']);
-		$categoriaRegistro= flujoGastoNormalizarCategoriaResumen($valor['categoria']);
+		$categoriaRegistro= $esDepositoRegistro
+			? 'deposito'
+			: ($esMigracionRegistro ? 'migracion' : flujoGastoNormalizarCategoriaResumen($valor['categoria']));
 		if (!isset($registrosZona[$categoriaRegistro])) {
 			$registrosZona[$categoriaRegistro]= array();
 		}
@@ -2858,7 +3215,9 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 		if (!flujoGastoEstadoComputableResumen($valor['estado'])) {
 			continue;
 		}
-		$totalGasto += $montoRegistro;
+		if ($categoriaRegistro != 'deposito' && $categoriaRegistro != 'migracion') {
+			$totalGasto += $montoRegistro;
+		}
 		switch ($categoriaRegistro) {
 			case 'ingreso':
 				$totalZonaIngresos += $montoRegistro;
@@ -2868,6 +3227,12 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				break;
 			case 'operativo':
 				$totalZonaGastosOperativos += $montoRegistro;
+				break;
+			case 'deposito':
+				$totalZonaDepositosCentral += $montoRegistro;
+				break;
+			case 'migracion':
+				$totalZonaMigracionesCaja += $montoRegistro;
 				break;
 			default:
 				$totalZonaSinCategorizar += $montoRegistro;
@@ -2898,12 +3263,15 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	}
 
 	$registrosZonaOrdenados= array();
-	foreach (array('ingreso', 'directo', 'operativo', 'administracion', 'sinCategoria') as $zonaOrdenada) {
+	foreach (array('ingreso', 'directo', 'operativo', 'administracion', 'sinCategoria', 'migracion') as $zonaOrdenada) {
 		if (isset($registrosZona[$zonaOrdenada])) {
 			$registrosZonaOrdenados[$zonaOrdenada]= $registrosZona[$zonaOrdenada];
 		}
 	}
 	foreach ($registrosZona as $zona => $cod_motivos) {
+		if ($zona == 'deposito') {
+			continue;
+		}
 		if (!isset($registrosZonaOrdenados[$zona])) {
 			$registrosZonaOrdenados[$zona]= $cod_motivos;
 		}
@@ -2946,6 +3314,13 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			$styleColor= "#3B6EA8;";
 			$styleRegistroColor= "#BFD5EE;";
 			break;
+		case 'migracion':
+			$idZona= "MigracionesCaja";
+			$titulo= "Movimientos internos de caja";
+			$totalZona= $totalZonaMigracionesCaja;
+			$styleColor= "#7A8794;";
+			$styleRegistroColor= "#D8DEE4;";
+			break;
 		default:
 			$idZona= "SinCategorizar";
 			$titulo= "Sin Categorizar";
@@ -2978,9 +3353,13 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				: "Concepto #".$cod_motivo;
 		}
 		$idMotivoCollapse= preg_replace('/[^A-Za-z0-9_-]/', '_', 'zonaMotivos'.$idZona.'_'.$cod_motivo);
-		flujoGastoAsegurarConceptoResumen($resumenComposicionFlujo, $zona, $cod_motivo, $titulo_motivo);
+		if ($zona != 'migracion') {
+			flujoGastoAsegurarConceptoResumen($resumenComposicionFlujo, $zona, $cod_motivo, $titulo_motivo);
+		}
 		foreach ($gastos as $valor) {
-			flujoGastoAgregarMovimientoResumen($resumenComposicionFlujo, $zona, $cod_motivo, $titulo_motivo, $valor);
+			if ($zona != 'migracion') {
+				flujoGastoAgregarMovimientoResumen($resumenComposicionFlujo, $zona, $cod_motivo, $titulo_motivo, $valor);
+			}
 			$esAsignacionAdministrativa= !empty($valor['es_asignacion_administrativa']);
 			$montoOriginal= isset($valor['monto']) ? intval($valor['monto']) : 0;
 			$estadoOriginal= isset($valor['estado']) ? $valor['estado'] : '';
@@ -3234,8 +3613,8 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 		}
 		$botonAgregarMovimientoContextual= "";
 		$botonConciliarConceptoUeno= "";
-		if ($cod_motivo != -1 && $zona != 'administracion') {
-			$tipoMovimientoContexto= ($zona == 'ingreso') ? "Ingreso" : "Egreso";
+		if ($cod_motivo != -1 && $zona != 'administracion' && $zona != 'migracion') {
+			$tipoMovimientoContexto= ($zona == 'ingreso') ? "Ingreso" : ($zona == 'deposito' ? "Deposito" : "Egreso");
 			$botonAgregarMovimientoContextual= "<button type='button' class='flujo-concepto-add' title='Agregar movimiento a este concepto' onclick='abrirMovimientoFinancieroDesdeBotonConcepto(event, this)'"
 				." data-tipo-movimiento='".flujoGastoTextoSeguro($tipoMovimientoContexto)."'"
 				." data-categoria-flujo='".flujoGastoTextoSeguro($titulo)."'"
@@ -3244,7 +3623,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				." data-concepto-nombre='".flujoGastoTextoSeguro($titulo_motivo)."'>"
 				."<span>+</span>"
 				."</button>";
-			if ($zona != 'ingreso') {
+			if ($zona != 'ingreso' && $zona != 'deposito') {
 				$botonConciliarConceptoUeno= "<button type='button' class='flujo-concepto-conciliar' title='Conciliar gastos pendientes de este concepto con egresos del extracto bancario' onclick='abrirConciliacionEgresoUenoDesdeConcepto(event, this)'"
 					." data-cod-motivo='".flujoGastoTextoSeguro($cod_motivo)."'"
 					." data-categoria-flujo='".flujoGastoTextoSeguro($titulo)."'"
@@ -3283,6 +3662,7 @@ $informacion =array(
 	"7" => $totalZonaGastosOperativos,
 	"8" => $totalZonaSinCategorizar,
 	"14" => $totalZonaAdministracionAsignada,
+	"15" => $totalZonaDepositosCentral,
 	"9" => $registros,
 	"10" => $totalEstado,
 	"12" => $paginaImprimir,
@@ -3367,7 +3747,7 @@ function buscarevaluacionGasto($fecha1,$fecha2,$cod_local)
 		$sql= "Select monto,motivo,fecha,estado,cod_usuario,idgastos,personales,cod_local,
 		(Select nombre_persona from persona where cod_persona=cod_usuario) as usuarionombre,
 		(Select Nombre from local l where l.cod_local=g.cod_local ) as nombrelocal
-		from gastos g where fecha>='$fecha1' and fecha<='$fecha2' and estado='activo' ".$condicionCodLocal;
+		from gastos g where fecha>='$fecha1' and fecha<='$fecha2' and estado='activo' AND LOWER(TRIM(IFNULL(tipo,'')))!='deposito' ".$condicionCodLocal;
 		
    
    
@@ -3857,6 +4237,29 @@ exit;
 
 $mysqli=conectar_al_servidor();
 
+if (esConceptoDepositoCentral($motivo)) {
+	$stmtReservado= $mysqli->prepare("SELECT cod_motivo_ingreso_egreso FROM motivos_ingreso_egreso WHERE UPPER(TRIM(descripcion))='DEPOSITO BANCARIO - FARAONE CAPITAL S.A.' LIMIT 1");
+	if (!$stmtReservado || !$stmtReservado->execute()) {
+		if ($stmtReservado) {
+			$stmtReservado->close();
+		}
+		mysqli_close($mysqli);
+		$informacion= array("1" => "error", "2" => "No se pudo validar el concepto reservado de depositos a central.");
+		echo json_encode($informacion);
+		exit;
+	}
+	if ($stmtReservado->get_result()->num_rows > 0) {
+		$stmtReservado->close();
+		mysqli_close($mysqli);
+		$informacion= array("1" => "error", "2" => "El concepto de depositos a central ya existe y debe conservarse como registro unico.");
+		echo json_encode($informacion);
+		exit;
+	}
+	if ($stmtReservado) {
+		$stmtReservado->close();
+	}
+}
+
 $consulta1="Insert into motivos_ingreso_egreso (descripcion,estado,categoria,necesita_autorizacion) values (upper(?),?, ?, ?)";
 $stmt = $mysqli->prepare($consulta1);
 $ss='ssss';
@@ -3887,6 +4290,15 @@ $fechaActual= new DateTime();
 $fechaActual=date_format($fechaActual,"Y-m-d H:i:s");
 
 $mysqli=conectar_al_servidor();
+
+$conceptoActualEsDeposito= esCodigoConceptoDepositoCentral($mysqli, $idabm);
+$conceptoNuevoEsDeposito= esConceptoDepositoCentral($motivo);
+if ($conceptoActualEsDeposito != $conceptoNuevoEsDeposito) {
+	mysqli_close($mysqli);
+	$informacion= array("1" => "error", "2" => "El nombre del concepto de depositos a central es reservado y no puede modificarse ni asignarse a otro concepto.");
+	echo json_encode($informacion);
+	exit;
+}
 
 $consulta1="update motivos_ingreso_egreso SET fecha_edit= '$fechaActual', cod_usuarioFK= $cod_usuarioFK, descripcion = upper('$motivo'), estado ='$estado', categoria= '$categoria', necesita_autorizacion='$necesita_autorizacion' WHERE cod_motivo_ingreso_egreso ='$idabm'";
 $stmt = $mysqli->prepare($consulta1);

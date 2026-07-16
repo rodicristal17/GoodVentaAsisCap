@@ -177,9 +177,10 @@ function abmAperturaCierre($idarqueocaja,$cod_local,$caja_idcaja,$montoapertura,
 
 		try {
 			caja_cierre_requerir_tablas($mysqli);
+			$mysqli->begin_transaction();
 
 			$payload = caja_cierre_obtener_payload();
-			$infoCaja = caja_cierre_obtener_arqueo($mysqli, $idarqueocaja);
+			$infoCaja = caja_cierre_obtener_arqueo($mysqli, $idarqueocaja, true);
 			if (!$infoCaja) {
 				throw new Exception("No se encontro la caja a cerrar.");
 			}
@@ -209,7 +210,6 @@ function abmAperturaCierre($idarqueocaja,$cod_local,$caja_idcaja,$montoapertura,
 			caja_cierre_validar_firma();
 
 			$archivosGuardados = array();
-			$mysqli->begin_transaction();
 
 			$consulta1="Update arqueocaja set codusuarioce=?,montocierre=?,fechacierre=?,estado='Cerrado',cant500= ?,cant1000= ?,cant2000= ?,cant5000= ?,cant10000= ?,cant20000= ?,cant50000= ?,cant100000= ? where idarqueocaja=? and estado='Activo'";
 			$stmt1 = $mysqli->prepare($consulta1);
@@ -350,11 +350,11 @@ function caja_cierre_total_denominaciones($cantidades)
 	return $total;
 }
 
-function caja_cierre_obtener_arqueo($mysqli, $idarqueocaja)
+function caja_cierre_obtener_arqueo($mysqli, $idarqueocaja, $bloquear = false)
 {
 	$consulta = "Select idarqueocaja,cod_local,caja_idcaja,montoapertura,fechaapertura,fechacierre,estado,lote,codusuarioap,
 	(Select nombre_persona from persona where cod_persona=codusuarioap) as usuarioap
-	from arqueocaja where idarqueocaja=? limit 1";
+	from arqueocaja where idarqueocaja=? limit 1".($bloquear ? " FOR UPDATE" : "");
 	$stmt = $mysqli->prepare($consulta);
 	$ss = 's';
 	$stmt->bind_param($ss, $idarqueocaja);

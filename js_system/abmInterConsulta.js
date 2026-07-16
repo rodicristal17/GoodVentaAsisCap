@@ -380,6 +380,148 @@ function asignarValorCampoInterConsulta(id, valor) {
     }
 }
 
+function dosDigitosInterConsulta(valor) {
+    valor= String(valor);
+    return valor.length < 2 ? "0" + valor : valor;
+}
+
+function obtenerFechaActualIsoInterConsulta() {
+    var hoy= new Date();
+    hoy.setHours(0, 0, 0, 0);
+    var mes= dosDigitosInterConsulta(hoy.getMonth() + 1);
+    var dia= dosDigitosInterConsulta(hoy.getDate());
+    return hoy.getFullYear() + "-" + mes + "-" + dia;
+}
+
+function esFechaIsoInterConsulta(valor) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(String(valor || ""));
+}
+
+function normalizarFechaIsoInterConsulta(valor) {
+    valor= String(valor || "").trim();
+    if (!esFechaIsoInterConsulta(valor)) {
+        return obtenerFechaActualIsoInterConsulta();
+    }
+    var fecha= new Date(valor + "T00:00:00");
+    if (isNaN(fecha.getTime())) {
+        return obtenerFechaActualIsoInterConsulta();
+    }
+    return valor;
+}
+
+function sumarDiasFechaIsoInterConsulta(valor, dias) {
+    var fecha= new Date(normalizarFechaIsoInterConsulta(valor) + "T00:00:00");
+    fecha.setDate(fecha.getDate() + (Number(dias) || 0));
+    var mes= dosDigitosInterConsulta(fecha.getMonth() + 1);
+    var dia= dosDigitosInterConsulta(fecha.getDate());
+    return fecha.getFullYear() + "-" + mes + "-" + dia;
+}
+
+function formatearFechaCortaInterConsulta(valor) {
+    valor= normalizarFechaIsoInterConsulta(valor);
+    var partes= valor.split("-");
+    return partes[2] + "/" + partes[1] + "/" + partes[0];
+}
+
+function obtenerDiaTextoInterConsulta(valor) {
+    valor= normalizarFechaIsoInterConsulta(valor);
+    if (valor == obtenerFechaActualIsoInterConsulta()) {
+        return "Hoy";
+    }
+    var fecha= new Date(valor + "T00:00:00");
+    var dias= ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
+    return dias[fecha.getDay()] || "Fecha";
+}
+
+function actualizarVistaFechaRapidaInterConsulta() {
+    var campoRapido= document.getElementById("inptFiltroRapidoFechaInterConsulta");
+    var textoDia= document.getElementById("textoDiaRapidoInterConsulta");
+    var textoFecha= document.getElementById("textoFechaRapidaInterConsulta");
+    if (!campoRapido || !textoDia || !textoFecha) {
+        return;
+    }
+
+    var fechaDesde= valorCampoInterConsulta("inptBuscarInterConsultaFechaDesde");
+    var fechaHasta= valorCampoInterConsulta("inptBuscarInterConsultaFechaHasta");
+    if ((fechaDesde != "" || fechaHasta != "") && fechaDesde != fechaHasta) {
+        textoDia.textContent= "Rango";
+        textoFecha.textContent= (fechaDesde != "" ? formatearFechaCortaInterConsulta(fechaDesde) : "--/--/----")
+            + " - "
+            + (fechaHasta != "" ? formatearFechaCortaInterConsulta(fechaHasta) : "--/--/----");
+        return;
+    }
+
+    var fecha= campoRapido.value || fechaDesde || fechaHasta || obtenerFechaActualIsoInterConsulta();
+    fecha= normalizarFechaIsoInterConsulta(fecha);
+    campoRapido.value= fecha;
+    textoDia.textContent= obtenerDiaTextoInterConsulta(fecha);
+    textoFecha.textContent= formatearFechaCortaInterConsulta(fecha);
+}
+
+function inicializarFechaRapidaInterConsulta() {
+    var campoRapido= document.getElementById("inptFiltroRapidoFechaInterConsulta");
+    if (!campoRapido) {
+        return;
+    }
+
+    var fechaDesde= valorCampoInterConsulta("inptBuscarInterConsultaFechaDesde");
+    var fechaHasta= valorCampoInterConsulta("inptBuscarInterConsultaFechaHasta");
+    if (fechaDesde == "" && fechaHasta == "" && campoRapido.value == "") {
+        aplicarFechaRapidaInterConsulta(obtenerFechaActualIsoInterConsulta(), false);
+        return;
+    }
+
+    if (fechaDesde != "" && fechaDesde == fechaHasta) {
+        campoRapido.value= normalizarFechaIsoInterConsulta(fechaDesde);
+    }
+    actualizarVistaFechaRapidaInterConsulta();
+}
+
+function aplicarFechaRapidaInterConsulta(fecha, ejecutarBusqueda) {
+    fecha= normalizarFechaIsoInterConsulta(fecha);
+    asignarValorCampoInterConsulta("inptFiltroRapidoFechaInterConsulta", fecha);
+    asignarValorCampoInterConsulta("inptBuscarInterConsultaFechaDesde", fecha);
+    asignarValorCampoInterConsulta("inptBuscarInterConsultaFechaHasta", fecha);
+    actualizarVistaFechaRapidaInterConsulta();
+    actualizarResumenControlesInterConsulta();
+    if (ejecutarBusqueda) {
+        aplicarFiltrosInterConsultaDesdeBarra();
+    }
+}
+
+function moverFechaRapidaInterConsulta(dias) {
+    var campoRapido= document.getElementById("inptFiltroRapidoFechaInterConsulta");
+    var fechaDesde= valorCampoInterConsulta("inptBuscarInterConsultaFechaDesde");
+    var fechaHasta= valorCampoInterConsulta("inptBuscarInterConsultaFechaHasta");
+    var base= campoRapido && campoRapido.value ? campoRapido.value : "";
+    if (base == "" && fechaDesde != "" && fechaDesde == fechaHasta) {
+        base= fechaDesde;
+    }
+    if (base == "" && fechaDesde != "") {
+        base= fechaDesde;
+    }
+    if (base == "" && fechaHasta != "") {
+        base= fechaHasta;
+    }
+    if (base == "") {
+        base= obtenerFechaActualIsoInterConsulta();
+    }
+    aplicarFechaRapidaInterConsulta(sumarDiasFechaIsoInterConsulta(base, dias), true);
+}
+
+function abrirCalendarioRapidoInterConsulta() {
+    var campoRapido= document.getElementById("inptFiltroRapidoFechaInterConsulta");
+    if (!campoRapido) {
+        return;
+    }
+    if (typeof campoRapido.showPicker == "function") {
+        campoRapido.showPicker();
+    } else {
+        campoRapido.focus();
+        campoRapido.click();
+    }
+}
+
 function asignarValorSelectInterConsulta(id, valor) {
     const elemento= document.getElementById(id);
     if (!elemento) {
@@ -441,8 +583,7 @@ function actualizarResumenControlesInterConsulta() {
     [
         {id: "inptFiltroRapidoEstadoInterConsulta", etiqueta: "Estado"},
         {id: "inptFiltroRapidoTipoInterConsulta", etiqueta: "Subtipo"},
-        {id: "inptFiltroRapidoLocalInterConsulta", etiqueta: "Local"},
-        {id: "inptFiltroRapidoResponsableInterConsulta", etiqueta: "Responsable"}
+        {id: "inptFiltroRapidoLocalInterConsulta", etiqueta: "Local"}
     ].forEach(function(campo) {
         var texto= textoOpcionSeleccionadaInterConsulta(campo.id);
         if (texto != "") {
@@ -450,12 +591,18 @@ function actualizarResumenControlesInterConsulta() {
         }
     });
 
+    var responsable= valorCampoInterConsulta("inptBuscarInterConsulta6").trim();
+    if (responsable != "") {
+        filtros.push("Responsable: " + (responsable.length > 32 ? responsable.substring(0, 32) + "..." : responsable));
+    }
+
     var fechaDesde= valorCampoInterConsulta("inptBuscarInterConsultaFechaDesde");
     var fechaHasta= valorCampoInterConsulta("inptBuscarInterConsultaFechaHasta");
-    if (fechaDesde != "") {
+    if (fechaDesde != "" && fechaHasta != "" && fechaDesde == fechaHasta) {
+        filtros.push("Fecha: " + formatearFechaCortaInterConsulta(fechaDesde));
+    } else if (fechaDesde != "") {
         filtros.push("Desde: " + fechaDesde);
-    }
-    if (fechaHasta != "") {
+    } else if (fechaHasta != "") {
         filtros.push("Hasta: " + fechaHasta);
     }
 
@@ -497,6 +644,7 @@ function alternarControlesInterConsulta() {
 
 function inicializarControlesInterConsulta() {
     establecerControlesInterConsultaColapsados(true);
+    inicializarFechaRapidaInterConsulta();
 }
 
 function clonarOpcionesInterConsulta(origenId, destinoId, usarTextoComoValor= false) {
@@ -532,8 +680,8 @@ function clonarOpcionesInterConsulta(origenId, destinoId, usarTextoComoValor= fa
 function sincronizarOpcionesRapidasInterConsulta() {
     actualizarOpcionesSubtipoInterConsulta();
     clonarOpcionesInterConsulta("inptBuscarInterConsulta7", "inptFiltroRapidoLocalInterConsulta");
-    clonarOpcionesInterConsulta("inptUsuariosInterConsulta", "inptFiltroRapidoResponsableInterConsulta", true);
     aplicarLocalUsuarioInterConsulta(false);
+    inicializarFechaRapidaInterConsulta();
 }
 
 function sincronizarFiltrosInterConsultaDesdeBarra() {
@@ -541,7 +689,10 @@ function sincronizarFiltrosInterConsultaDesdeBarra() {
     asignarValorCampoInterConsulta("inptBuscarInterConsulta5", valorCampoInterConsulta("inptFiltroRapidoEstadoInterConsulta"));
     asignarValorCampoInterConsulta("inptBuscarInterConsulta4", valorCampoInterConsulta("inptFiltroRapidoTipoInterConsulta"));
     asignarValorCampoInterConsulta("inptBuscarInterConsulta7", valorCampoInterConsulta("inptFiltroRapidoLocalInterConsulta"));
-    asignarValorCampoInterConsulta("inptBuscarInterConsulta6", valorCampoInterConsulta("inptFiltroRapidoResponsableInterConsulta"));
+    if (document.getElementById("inptFiltroRapidoResponsableInterConsulta")) {
+        asignarValorCampoInterConsulta("inptBuscarInterConsulta6", valorCampoInterConsulta("inptFiltroRapidoResponsableInterConsulta"));
+    }
+    actualizarVistaFechaRapidaInterConsulta();
     actualizarResumenControlesInterConsulta();
 }
 
@@ -550,7 +701,19 @@ function sincronizarFiltrosInterConsultaDesdeAvanzado() {
     asignarValorCampoInterConsulta("inptFiltroRapidoEstadoInterConsulta", valorCampoInterConsulta("inptBuscarInterConsulta5"));
     asignarValorCampoInterConsulta("inptFiltroRapidoTipoInterConsulta", valorCampoInterConsulta("inptBuscarInterConsulta4"));
     asignarValorCampoInterConsulta("inptFiltroRapidoLocalInterConsulta", valorCampoInterConsulta("inptBuscarInterConsulta7"));
-    asignarValorCampoInterConsulta("inptFiltroRapidoResponsableInterConsulta", valorCampoInterConsulta("inptBuscarInterConsulta6"));
+    if (document.getElementById("inptFiltroRapidoResponsableInterConsulta")) {
+        asignarValorCampoInterConsulta("inptFiltroRapidoResponsableInterConsulta", valorCampoInterConsulta("inptBuscarInterConsulta6"));
+    }
+    var fechaDesde= valorCampoInterConsulta("inptBuscarInterConsultaFechaDesde");
+    var fechaHasta= valorCampoInterConsulta("inptBuscarInterConsultaFechaHasta");
+    if (fechaDesde == "" && fechaHasta == "") {
+        aplicarFechaRapidaInterConsulta(obtenerFechaActualIsoInterConsulta(), false);
+    } else if (fechaDesde == fechaHasta) {
+        asignarValorCampoInterConsulta("inptFiltroRapidoFechaInterConsulta", fechaDesde);
+    } else {
+        asignarValorCampoInterConsulta("inptFiltroRapidoFechaInterConsulta", "");
+    }
+    actualizarVistaFechaRapidaInterConsulta();
     actualizarChipActivoInterConsulta();
     actualizarResumenControlesInterConsulta();
 }
@@ -594,13 +757,15 @@ function limpiarFiltrosInterConsulta(ejecutarBusqueda= true) {
         "inptFiltroRapidoEstadoInterConsulta",
         "inptFiltroRapidoTipoInterConsulta",
         "inptFiltroRapidoLocalInterConsulta",
-        "inptFiltroRapidoResponsableInterConsulta"
+        "inptFiltroRapidoResponsableInterConsulta",
+        "inptFiltroRapidoFechaInterConsulta"
     ].forEach(function(id) {
         asignarValorCampoInterConsulta(id, "");
     });
 
     localUsuarioInicializadoInterConsulta= false;
     aplicarLocalUsuarioInterConsulta(true);
+    aplicarFechaRapidaInterConsulta(obtenerFechaActualIsoInterConsulta(), false);
 
     const ocultarInactivos= document.getElementById("inptSeleccFiltroEstadoInterConsulta");
     if (ocultarInactivos) {
@@ -3796,6 +3961,7 @@ function buscarMensajes() {
 
 var fotoMensajeInterconsulta= "";
 var extMensajeInterconsulta= "";
+var tipoAdjuntoMensajeInterconsulta= "otro";
 function verificarCamposMensaje() {
     const contenido= document.getElementById('inptContenidoAbmMensaje').innerHTML;
     const cod_dictamenFK= document.getElementById('dictamenAbmMensaje').value;
@@ -3814,6 +3980,8 @@ function abmMensaje(fecha, contenido, cod_dictamenFK) {
     var hiloSolicitado= String(cod_interConsulta || "");
     var fotoSolicitada= fotoMensajeInterconsulta;
     var extensionSolicitada= extMensajeInterconsulta;
+    var selectorTipoAdjunto= document.getElementById("tipoAdjuntoInterConsulta");
+    var tipoAdjuntoSolicitado= selectorTipoAdjunto ? selectorTipoAdjunto.value : "otro";
     let datos= new FormData();
     datos.append("useru", userid);
 	datos.append("passu", passuser);
@@ -3873,7 +4041,7 @@ function abmMensaje(fecha, contenido, cod_dictamenFK) {
 				if (Respuesta == "exito") {
 					ver_vetana_informativa("Datos guardados.", "", "info");
                     marcarMensajeLeido(false, function() {
-                        subirImagenMensajeInterconsulta(datos["2"], hiloSolicitado, fotoSolicitada, extensionSolicitada);
+                        subirImagenMensajeInterconsulta(datos["2"], hiloSolicitado, fotoSolicitada, extensionSolicitada, tipoAdjuntoSolicitado);
                     }, hiloSolicitado);
 				} else {
                     ver_vetana_informativa("No se pudo enviar", mensajeRespuestaSeguimientoInterConsulta(datos, "Revise el mensaje e intente nuevamente."), "advertencia");
@@ -3981,6 +4149,11 @@ function limpiarcamposMensaje() {
     document.getElementById('imgfotoAnexoInterchat').classList.remove("imgFotoProductoDocumento");
     fotoMensajeInterconsulta = "";
     extMensajeInterconsulta = "";
+    tipoAdjuntoMensajeInterconsulta = "otro";
+    var selectorTipoAdjunto= document.getElementById("tipoAdjuntoInterConsulta");
+    if (selectorTipoAdjunto) {
+        selectorTipoAdjunto.value= "otro";
+    }
 
     contadorLongitudMensaje= 0;
     document.getElementById('limiteCaracteresMensajeInterconsulta').innerText= contadorLongitudMensaje;
@@ -3992,10 +4165,11 @@ function limpiarcamposMensaje() {
     cancelarRespuestaCitadaInterConsulta();
 }
 
-function subirImagenMensajeInterconsulta(cod_mens, codHilo, fotoCapturada, extensionCapturada) {
+function subirImagenMensajeInterconsulta(cod_mens, codHilo, fotoCapturada, extensionCapturada, tipoAdjuntoCapturado) {
     var hiloSolicitado= String(codHilo || cod_interConsulta || "");
     var fotoEnviar= fotoCapturada !== undefined ? fotoCapturada : fotoMensajeInterconsulta;
     var extensionEnviar= extensionCapturada !== undefined ? extensionCapturada : extMensajeInterconsulta;
+    var tipoAdjuntoEnviar= tipoAdjuntoCapturado || tipoAdjuntoMensajeInterconsulta || "otro";
     if (!(fotoEnviar && extensionEnviar)) {
         if (String(cod_interConsulta) === hiloSolicitado) {
             limpiarCamposDetallesInterConsulta();
@@ -4013,6 +4187,7 @@ function subirImagenMensajeInterconsulta(cod_mens, codHilo, fotoCapturada, exten
     datos.append("cod_mensaje", cod_mens);
     datos.append("foto", fotoEnviar);
     datos.append("ext", extensionEnviar);
+    datos.append("tipo_adjunto", tipoAdjuntoEnviar);
 
     var OpAjax = $.ajax({
 		data: datos,
@@ -4059,6 +4234,20 @@ function subirImagenMensajeInterconsulta(cod_mens, codHilo, fotoCapturada, exten
                 }
 				if (Respuesta != "exito") {
                     throw new Error("Error producido en subirImagenMensajeIterconsulta de JavaScript.");
+                }
+                if (datos.centro_facturas && !datos.centro_facturas.ok) {
+                    var nombreDocumentoPendiente = datos.tipo_adjunto === "comprobante" ? "recibo" : "factura";
+                    ver_vetana_informativa(
+                        "Adjunto guardado; " + nombreDocumentoPendiente + " pendiente",
+                        datos.centro_facturas.mensaje || "Puede completar el registro desde el adjunto del Hilo.",
+                        "advertencia"
+                    );
+                } else if (datos.centro_facturas && datos.centro_facturas.ok) {
+                    var nombreDocumentoRegistrado = datos.tipo_adjunto === "comprobante" ? "Recibo" : "Factura";
+                    ver_vetana_informativa(nombreDocumentoRegistrado + " registrado", "El adjunto ya esta disponible en el Centro de Facturas.", "info");
+                    if (typeof centroFacturasActualizarBadge == "function") {
+                        centroFacturasActualizarBadge();
+                    }
                 }
                 verCerrarEfectoCargando("");
                 if (String(cod_interConsulta) === hiloSolicitado) {

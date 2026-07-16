@@ -9,6 +9,7 @@
     require_once("abmDictamen.php");
     require_once("interconsulta_seguimiento_paciente_helper.php");
     require_once("interconsulta_seguimiento_programado_helper.php");
+    require_once("centro_facturas_helper.php");
 
     date_default_timezone_set('America/Asuncion');
 
@@ -614,8 +615,22 @@
                 $cod_mensaje= isset($_POST['cod_mensaje']) ? mb_convert_encoding((string)($_POST['cod_mensaje']), 'ISO-8859-1', 'UTF-8') : null;
                 $foto= isset($_POST['foto']) ? mb_convert_encoding((string)($_POST['foto']), 'ISO-8859-1', 'UTF-8') : null;
                 $ext= isset($_POST['ext']) ? mb_convert_encoding((string)($_POST['ext']), 'ISO-8859-1', 'UTF-8') : null;
-                subirImagenMensaje($cod_mensaje,$foto,$ext, 'url');
-                echo json_encode(array("1" => "exito", "2" => $cod_mensaje));
+                $tipoAdjunto= isset($_POST['tipo_adjunto']) ? mb_convert_encoding((string)($_POST['tipo_adjunto']), 'ISO-8859-1', 'UTF-8') : 'otro';
+                $validacionAdjunto= validarSubidaAdjuntoMensajeInterconsulta($cod_mensaje, $user);
+                if (empty($validacionAdjunto['ok'])) {
+                    echo json_encode(array("1" => "error", "mensaje" => $validacionAdjunto['mensaje']));
+                    break;
+                }
+                $resultadoAdjunto= subirImagenMensaje($cod_mensaje,$foto,$ext, 'url', $tipoAdjunto);
+                if (empty($resultadoAdjunto['ok'])) {
+                    echo json_encode(array("1" => "error", "mensaje" => $resultadoAdjunto['mensaje']));
+                    break;
+                }
+                $respuestaAdjunto= array("1" => "exito", "2" => $cod_mensaje, "tipo_adjunto" => $resultadoAdjunto['tipo_adjunto']);
+                if (in_array($resultadoAdjunto['tipo_adjunto'], array('factura','comprobante'), true)) {
+                    $respuestaAdjunto['centro_facturas']= centroFacturaRegistrarDesdeMensaje($cod_mensaje, $user);
+                }
+                echo json_encode(centroFacturaValorUtf8($respuestaAdjunto), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 break;
             case 'nuevo/editar mencion':
                 $cod_mencion= isset($_POST['cod_mencion']) ? mb_convert_encoding((string)($_POST['cod_mencion']), 'ISO-8859-1', 'UTF-8') : null;
@@ -2033,6 +2048,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $contenidoMensaje = nl2br($contenidoMensaje, false);
 
             $miniatura_imagen= "";
+            $accionesCentroFactura= "";
             if ($valueMens['url']) {
                 $urlAdjunto= escaparHtmlInterconsulta($valueMens['url']);
                 $extensionAdjunto= escaparHtmlInterconsulta(obtenerExtensionUrlInterconsulta($valueMens['url']));
@@ -2043,6 +2059,22 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                     <span id="imgfotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'" class="imgFotoProducto'.$claseDocumentoAdjunto.'" data-adjunto-url="'.$urlAdjunto.'" data-adjunto-ext="'.$extensionAdjunto.'" style="background-image: url('.$urlMiniaturaAdjunto.');"></span>
                     <small>Adjunto</small>
                 </button>';
+                $idFacturaAdjunto= isset($valueMens['centro_factura_id']) ? intval($valueMens['centro_factura_id']) : 0;
+                $tipoAdjuntoMensaje= isset($valueMens['tipo_adjunto']) ? strtolower(trim((string)$valueMens['tipo_adjunto'])) : '';
+                $tipoDocumentoCentro= isset($valueMens['centro_factura_tipo_documento']) ? strtolower(trim((string)$valueMens['centro_factura_tipo_documento'])) : ($tipoAdjuntoMensaje === 'comprobante' ? 'recibo' : 'factura');
+                if ($idFacturaAdjunto > 0) {
+                    $accionesCentroFactura= '<div class="interconsulta-message-invoice">'
+                        .'<span><i class="fa-solid fa-file-invoice" aria-hidden="true"></i> '.($tipoDocumentoCentro === 'recibo' ? 'Recibo registrado' : 'Factura registrada').'</span>'
+                        .'<button type="button" onclick="centroFacturasAbrirDetalle('.$idFacturaAdjunto.')">Ver en Centro de Facturas</button>'
+                        .'</div>';
+                } elseif (centroFacturaTienePermiso(isset($filtros['cod_usuarioFK']) ? $filtros['cod_usuarioFK'] : 0, 'REGISTRARFACTURAHILO')) {
+                    $esReciboAdjunto= $tipoAdjuntoMensaje === 'comprobante';
+                    $textoAccionFactura= $esReciboAdjunto ? 'Completar registro de recibo' : ($tipoAdjuntoMensaje === 'factura' ? 'Completar registro de factura' : 'Registrar como factura');
+                    $accionesCentroFactura= '<div class="interconsulta-message-invoice interconsulta-message-invoice--pending">'
+                        .(in_array($tipoAdjuntoMensaje, array('factura','comprobante'), true) ? '<span><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> '.($esReciboAdjunto ? 'Recibo' : 'Factura').' pendiente de registrar</span>' : '')
+                        .'<button type="button" onclick="centroFacturasRegistrarAdjuntoHilo('.intval($valueMens['cod_mensaje']).')">'.$textoAccionFactura.'</button>'
+                        .'</div>';
+                }
             }
             
             $contenidoPlano= mb_strtolower(strip_tags($contenidoMensaje));
@@ -2118,6 +2150,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                         <div class="interconsulta-message-body">
                             '.$respuestaCitada.'
                             '.$miniatura_imagen.'
+                            '.$accionesCentroFactura.'
                             <p>'.$contenidoMensaje.'</p>
                         </div>
                     </article>
@@ -3249,33 +3282,95 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         return strtolower(pathinfo(parse_url((string)$url, PHP_URL_PATH), PATHINFO_EXTENSION));
     }
 
-    function subirImagenMensaje($cod_mensaje, $foto, $ext, $campo) {
-        $ruta= NULL;
-
-        if (!(empty($foto) || empty($ext))) {
-            if (strpos($foto, ",") !== false) {
-                $foto = substr($foto, strpos($foto, ",") + 1);
-            }
-            $foto = base64_decode($foto);
-            $id_foto = "";
-            $donde = "../fotos/fotosMensaje/";
-            $id_foto = $cod_mensaje;
-            $id_f = subir_imagen_base64($donde, $foto, $id_foto, $ext);
-            $ruta = "/GoodVentaAsisCap/fotos/fotosMensaje/" . $cod_mensaje . $id_f . "." . $ext;
+    function validarSubidaAdjuntoMensajeInterconsulta($codMensaje, $codUsuario) {
+        $codMensaje= intval($codMensaje);
+        $codUsuario= intval($codUsuario);
+        if ($codMensaje <= 0 || $codUsuario <= 0) {
+            return array('ok' => false, 'mensaje' => 'El mensaje o el usuario no son validos.');
         }
-        
-        $mysqli=conectar_al_servidor();
-        $consulta="Update mensaje set $campo=? where cod_mensaje=? ";	
-
-        $stmt = $mysqli->prepare($consulta);
-        $ss="si";
-        $stmt->bind_param($ss,$ruta,$cod_mensaje);
-        if ( ! $stmt->execute()) {
-            echo "Error";
-            exit;
+        $mysqli= conectar_al_servidor();
+        $stmt= $mysqli->prepare("SELECT m.cod_interConsultaFK,m.cod_usuarioFK,m.estado,m.url,ic.estado AS hilo_estado
+            FROM mensaje m INNER JOIN interconsulta ic ON ic.cod_interConsulta=m.cod_interConsultaFK
+            WHERE m.cod_mensaje=? LIMIT 1");
+        $stmt->bind_param('i', $codMensaje);
+        $stmt->execute();
+        $mensaje= $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        $mysqli->close();
+        if (!$mensaje || $mensaje['estado'] !== 'activo' || $mensaje['hilo_estado'] === 'inactivo') {
+            return array('ok' => false, 'mensaje' => 'El mensaje o el Hilo ya no estan activos.');
         }
+        if (intval($mensaje['cod_usuarioFK']) !== $codUsuario) {
+            return array('ok' => false, 'mensaje' => 'Solo el autor del mensaje puede completar este adjunto.');
+        }
+        if (trim((string)$mensaje['url']) !== '') {
+            return array('ok' => false, 'mensaje' => 'El mensaje ya tiene un adjunto y no puede reemplazarse silenciosamente.');
+        }
+        if (!seguimientoProgramadoPuedeAccederHilo($mensaje['cod_interConsultaFK'], $codUsuario, true)) {
+            return array('ok' => false, 'mensaje' => 'No tiene acceso al Hilo de origen.');
+        }
+        return array('ok' => true, 'cod_interConsultaFK' => intval($mensaje['cod_interConsultaFK']));
+    }
 
-        return $cod_mensaje;
+    function subirImagenMensaje($cod_mensaje, $foto, $ext, $campo, $tipoAdjunto= 'otro') {
+        $cod_mensaje= intval($cod_mensaje);
+        $campo= $campo === 'url' ? 'url' : '';
+        $tipoAdjunto= strtolower(trim((string)$tipoAdjunto));
+        if (!in_array($tipoAdjunto, array('factura','comprobante','otro'), true)) {
+            $tipoAdjunto= 'otro';
+        }
+        $ext= strtolower(trim((string)$ext));
+        $ext= preg_replace('/[^a-z0-9]/', '', $ext);
+        $permitidas= array(
+            'jpg' => array('image/jpeg'), 'jpeg' => array('image/jpeg'), 'png' => array('image/png'),
+            'gif' => array('image/gif'), 'webp' => array('image/webp'), 'bmp' => array('image/bmp','image/x-ms-bmp'),
+            'pdf' => array('application/pdf'), 'txt' => array('text/plain'),
+            'doc' => array('application/msword','application/octet-stream'),
+            'docx' => array('application/zip','application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+            'xls' => array('application/vnd.ms-excel','application/octet-stream'),
+            'xlsx' => array('application/zip','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        );
+        if ($cod_mensaje <= 0 || $campo === '' || !isset($permitidas[$ext]) || empty($foto)) {
+            return array('ok' => false, 'mensaje' => 'El adjunto no tiene un formato permitido.');
+        }
+        if (strpos($foto, ',') !== false) {
+            $foto= substr($foto, strpos($foto, ',') + 1);
+        }
+        $contenido= base64_decode($foto, true);
+        if ($contenido === false || strlen($contenido) < 1 || strlen($contenido) > 10485760) {
+            return array('ok' => false, 'mensaje' => 'El archivo esta vacio, danado o supera el limite de 10 MB.');
+        }
+        $finfo= new finfo(FILEINFO_MIME_TYPE);
+        $mime= $finfo->buffer($contenido);
+        if (!in_array($mime, $permitidas[$ext], true)) {
+            return array('ok' => false, 'mensaje' => 'El contenido del archivo no coincide con su extension.');
+        }
+        $directorio= dirname(__DIR__).DIRECTORY_SEPARATOR.'fotos'.DIRECTORY_SEPARATOR.'fotosMensaje';
+        if (!is_dir($directorio) && !mkdir($directorio, 0775, true)) {
+            return array('ok' => false, 'mensaje' => 'No se pudo preparar la carpeta de adjuntos.');
+        }
+        try {
+            $sufijo= bin2hex(random_bytes(6));
+        } catch (Exception $e) {
+            $sufijo= str_replace('.', '', uniqid('', true));
+        }
+        $nombre= $cod_mensaje.'-'.$sufijo.'.'.$ext;
+        $rutaAbsoluta= $directorio.DIRECTORY_SEPARATOR.$nombre;
+        if (file_put_contents($rutaAbsoluta, $contenido, LOCK_EX) === false) {
+            return array('ok' => false, 'mensaje' => 'No se pudo guardar el adjunto.');
+        }
+        $ruta= '/GoodVentaAsisCap/fotos/fotosMensaje/'.$nombre;
+        $mysqli= conectar_al_servidor();
+        $stmt= $mysqli->prepare("UPDATE mensaje SET url=?,tipo_adjunto=? WHERE cod_mensaje=? AND estado='activo'");
+        $stmt->bind_param('ssi', $ruta, $tipoAdjunto, $cod_mensaje);
+        $ok= $stmt->execute() && $stmt->affected_rows > 0;
+        $stmt->close();
+        $mysqli->close();
+        if (!$ok) {
+            @unlink($rutaAbsoluta);
+            return array('ok' => false, 'mensaje' => 'No se pudo vincular el adjunto con el mensaje.');
+        }
+        return array('ok' => true, 'cod_mensaje' => $cod_mensaje, 'url' => $ruta, 'tipo_adjunto' => $tipoAdjunto);
     }
 
     function obtenerMencion($filtros, $limite) {
@@ -3478,12 +3573,24 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 LEFT JOIN mensaje mr ON mr.cod_mensaje=m.cod_mensaje_respuestaFK
                 LEFT JOIN persona pr ON pr.cod_persona=mr.cod_usuarioFK";
         }
+        $camposCentroFactura= ", NULL AS centro_factura_id, NULL AS centro_factura_tipo_documento,
+            NULL AS centro_factura_estado_validacion, NULL AS centro_factura_estado_original";
+        $joinCentroFactura= "";
+        if (centroFacturaEstructuraDisponible($mysqli)) {
+            $camposCentroFactura= ", cf.id_factura AS centro_factura_id,
+                cf.tipo_documento AS centro_factura_tipo_documento,
+                cf.estado_validacion AS centro_factura_estado_validacion,
+                cf.estado_original AS centro_factura_estado_original";
+            $joinCentroFactura= "
+                LEFT JOIN centro_factura_archivo cfa ON cfa.cod_mensajeFK=m.cod_mensaje AND cfa.estado='activo'
+                LEFT JOIN centro_factura cf ON cf.id_factura=cfa.id_facturaFK AND cf.estado_registro='activo'";
+        }
 
         $sql= "SELECT * FROM (
-                SELECT m.*, u.url AS url_usuario, p.nombre_persona AS nombre_persona".$camposRespuesta."
+                SELECT m.*, u.url AS url_usuario, p.nombre_persona AS nombre_persona".$camposRespuesta.$camposCentroFactura."
                 FROM mensaje m
                 LEFT JOIN usuario u ON u.cod_usuario=m.cod_usuarioFK
-                LEFT JOIN persona p ON p.cod_persona=m.cod_usuarioFK".$joinRespuesta."
+                LEFT JOIN persona p ON p.cod_persona=m.cod_usuarioFK".$joinRespuesta.$joinCentroFactura."
                 $sqlFiltro ORDER BY m.fecha_creacion ".$ordenFechaMensaje.", m.cod_mensaje ".$ordenFechaMensaje." $limite
             ) AS subquery ORDER BY fecha_creacion ASC, cod_mensaje ASC";
 
