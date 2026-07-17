@@ -24,6 +24,7 @@ var DASHBOARD_SHORTCUT_DEFAULT_KEYS = [
 	"cerrar_caja",
 	"hilos_interconsultas",
 	"centro_facturas",
+	"devolucion_pagare",
 	"historial_presupuestos",
 	"insumos",
 	"migrar_caja",
@@ -45,6 +46,12 @@ var DASHBOARD_ACCESS_REGISTRY = {
 	cerrar_caja: { sourceSelector: "#divMenuArqueo", permissionKey: "VERCERRARCAJA" },
 	hilos_interconsultas: { sourceSelector: "#divMenuInterConsulta" },
 	centro_facturas: { sourceSelector: "#divMenuCentroFacturas", permissionKey: "VERCENTROFACTURAS", allowHiddenTemplate: true },
+	devolucion_pagare: {
+		permissionKey: "GESTIONARLEGAJOSVENTA",
+		virtualLabel: "Devolucion de pagare",
+		virtualIcon: "/GoodVentaAsisCap/iconos/etiquetadocumento.png",
+		virtualAction: "centroFacturasAbrirDevolucionPagareDashboard()"
+	},
 	historial_presupuestos: { sourceSelector: "#divMenuPresupuestoProducto2" },
 	insumos: { sourceSelector: "#divMenuInsumos" },
 	migrar_caja: { sourceSelector: "#divMenuMigrarCaja", permissionKey: "VERMIGRARCAJA" },
@@ -454,9 +461,24 @@ function dashboardShortcutHasPermission(accessKey) {
 function dashboardShortcutGetSource(accessKey) {
 	var registry = DASHBOARD_ACCESS_REGISTRY[accessKey];
 
-	if (!registry || !registry.sourceSelector) {
+	if (!registry) {
 		return null;
 	}
+	if (!registry.sourceSelector && registry.virtualAction) {
+		var tabla = document.createElement("table");
+		tabla.className = "divMenub";
+		tabla.setAttribute("data-access-key", accessKey);
+		tabla.setAttribute("onclick", registry.virtualAction);
+		tabla.setAttribute("title", registry.virtualLabel || accessKey);
+		tabla.style.width = "20%";
+		tabla.style.textAlign = "center";
+		tabla.innerHTML = "<tbody><tr><td><img class='imgIconoMenu' src='" +
+			dashboardShortcutEscape(registry.virtualIcon || "/GoodVentaAsisCap/iconos/home.png") +
+			"' alt=''><p class='pTitulo4'>" + dashboardShortcutEscape(registry.virtualLabel || accessKey) +
+			"</p></td></tr></tbody>";
+		return tabla;
+	}
+	if (!registry.sourceSelector) { return null; }
 
 	return document.querySelector(registry.sourceSelector);
 }

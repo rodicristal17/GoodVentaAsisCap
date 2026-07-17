@@ -5841,7 +5841,19 @@ function calcularAvanceRealJornada(fechaIso, registros, datosProgramados, ahora)
 				ultimaMarcacion = { tipo: "entrada", hora: entrada };
 				continue;
 			}
-			if (fin < inicio) {
+			var diasHastaSalida = 0;
+			var fechaEntradaRegistro = normalizarFechaMarcacionJornada(registro.fecha);
+			var fechaSalidaRegistro = normalizarFechaMarcacionJornada(registro.fecha_salida);
+			if (fechaEntradaRegistro && fechaSalidaRegistro && fechaSalidaRegistro > fechaEntradaRegistro) {
+				var partesEntrada = fechaEntradaRegistro.split("-");
+				var partesSalida = fechaSalidaRegistro.split("-");
+				var diaEntradaUtc = Date.UTC(parseInt(partesEntrada[0], 10), parseInt(partesEntrada[1], 10) - 1, parseInt(partesEntrada[2], 10));
+				var diaSalidaUtc = Date.UTC(parseInt(partesSalida[0], 10), parseInt(partesSalida[1], 10) - 1, parseInt(partesSalida[2], 10));
+				diasHastaSalida = Math.max(0, Math.round((diaSalidaUtc - diaEntradaUtc) / 86400000));
+			}
+			if (diasHastaSalida > 0) {
+				fin += diasHastaSalida * 1440;
+			} else if (fin < inicio) {
 				if (tipoProgramado == "noche") {
 					fin += 1440;
 				} else {
@@ -6078,17 +6090,21 @@ function mostrarCargaProgresoJornadaTopbarUsuario(titulo, detalle) {
 		"perfil-widget__progreso-jornada--extra",
 		"perfil-widget__progreso-jornada--observado",
 		"perfil-widget__progreso-jornada--finalizada",
-		"perfil-widget__progreso-jornada--cargando"
+		"perfil-widget__progreso-jornada--cargando",
+		"perfil-widget__progreso-jornada--presencia-activa",
+		"perfil-widget__progreso-jornada--presencia-inactiva",
+		"perfil-widget__progreso-jornada--presencia-verificando",
+		"perfil-widget__progreso-jornada--justificacion-pendiente"
 	];
 
 	for (var i = 0; i < clases.length; i++) {
 		contenedor.classList.remove(clases[i]);
 	}
 
-	contenedor.classList.add("perfil-widget__progreso-jornada--cargando");
-	contenedor.title = "Cargando horario esperado y marcaciones de la jornada";
-	if (estadoTexto) { estadoTexto.innerHTML = escaparHtmlFuncionario(titulo || "Cargando horario esperado..."); }
-	if (detalleTexto) { detalleTexto.innerHTML = escaparHtmlFuncionario(detalle || "Consultando jornada y marcaciones..."); }
+	contenedor.classList.add("perfil-widget__progreso-jornada--presencia-verificando");
+	contenedor.title = "Verificando el estado de presencia";
+	if (estadoTexto) { estadoTexto.innerHTML = "Verificando presencia"; }
+	if (detalleTexto) { detalleTexto.innerHTML = "Consultando la ultima marcacion guardada"; }
 	if (barra) { barra.style.width = "100%"; }
 }
 
@@ -6098,8 +6114,6 @@ function actualizarProgresoJornadaTopbarUsuario() {
 	var estadoTexto = document.getElementById("estadoProgresoJornadaTopbar");
 	var detalleTexto = document.getElementById("textoProgresoJornadaTopbar");
 	var barra = document.getElementById("barraProgresoJornadaTopbar");
-	var datos = obtenerJornadaProgramadaHoyTopbarUsuario();
-	var avance = calcularAvanceTopbarJornadaUsuario(datos);
 	var clases = [
 		"perfil-widget__progreso-jornada--sin-jornada",
 		"perfil-widget__progreso-jornada--pendiente",
@@ -6111,18 +6125,42 @@ function actualizarProgresoJornadaTopbarUsuario() {
 		"perfil-widget__progreso-jornada--extra",
 		"perfil-widget__progreso-jornada--observado",
 		"perfil-widget__progreso-jornada--finalizada",
-		"perfil-widget__progreso-jornada--cargando"
+		"perfil-widget__progreso-jornada--cargando",
+		"perfil-widget__progreso-jornada--presencia-activa",
+		"perfil-widget__progreso-jornada--presencia-inactiva",
+		"perfil-widget__progreso-jornada--presencia-verificando",
+		"perfil-widget__progreso-jornada--justificacion-pendiente"
 	];
 
 	for (var i = 0; i < clases.length; i++) {
 		contenedor.classList.remove(clases[i]);
 	}
-	contenedor.classList.add("perfil-widget__progreso-jornada--" + avance.clase);
-	contenedor.title = datos ? ("Jornada programada: " + (datos.horario || "-") + " | Presencia real segun marcaciones") : "Hoy sin jornada programada";
+	var verificada = typeof asistenciaUsuarioVerificada != "undefined" && asistenciaUsuarioVerificada === true;
+	var abierta = typeof cod_asistencia != "undefined" && String(cod_asistencia || "") !== "";
+	var pendiente = typeof asistenciaUsuarioJustificacionPendiente != "undefined" && String(asistenciaUsuarioJustificacionPendiente || "") !== "";
+	var horaEntrada = "";
+	var registros = (typeof asistenciaUsuarioRegistrosHoy != "undefined" && Array.isArray(asistenciaUsuarioRegistrosHoy)) ? asistenciaUsuarioRegistrosHoy : [];
+	for (var r = 0; r < registros.length; r++) {
+		if (abierta && String(registros[r].cod_asistencia || "") === String(cod_asistencia) && !registros[r].hora_salida) {
+			horaEntrada = normalizarHoraTopbarUsuario(registros[r].hora_entrada);
+			break;
+		}
+	}
 
-	if (estadoTexto) { estadoTexto.innerHTML = escaparHtmlFuncionario(avance.estado); }
-	if (detalleTexto) { detalleTexto.innerHTML = avance.detalle; }
-	if (barra) { barra.style.width = (avance.mostrar_barra ? (avance.porcentaje_visual !== undefined ? avance.porcentaje_visual : avance.porcentaje) : 0) + "%"; }
+	var clasePresencia = !verificada ? "presencia-verificando" : (abierta ? "presencia-activa" : "presencia-inactiva");
+	var titulo = !verificada ? "Verificando presencia" : (abierta ? "Jornada activa" : "Jornada inactiva");
+	var detalle = !verificada
+		? "Consultando la ultima marcacion guardada"
+		: (abierta ? (horaEntrada ? "Presencia activa desde " + horaEntrada : "Presencia activa") : "Sin presencia activa");
+	if (pendiente) {
+		contenedor.classList.add("perfil-widget__progreso-jornada--justificacion-pendiente");
+		detalle = "Justificacion pendiente";
+	}
+	contenedor.classList.add("perfil-widget__progreso-jornada--" + clasePresencia);
+	contenedor.title = detalle;
+	if (estadoTexto) { estadoTexto.innerHTML = escaparHtmlFuncionario(titulo); }
+	if (detalleTexto) { detalleTexto.innerHTML = escaparHtmlFuncionario(detalle); }
+	if (barra) { barra.style.width = "100%"; }
 	evaluarRecordatorioEntradaPendiente();
 }
 
@@ -7521,12 +7559,13 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
  Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					var datos_buscados1 = datos[2];
-             	   document.getElementById("table_abm_accesos_Abm").innerHTML =datos[2]
-             	   document.getElementById("inpt_nivel_selecc").value = datos[3]
-             	   actualizarPorcentajeAccesosUsuario();
-             	   actualizarEstadosAccesosCargados();
-             	   actualizarContadorAccesosVisibles("");
-					
+					document.getElementById("table_abm_accesos_Abm").innerHTML =datos[2]
+					document.getElementById("inpt_nivel_selecc").value = datos[3]
+					actualizarPorcentajeAccesosUsuario();
+					actualizarEstadosAccesosCargados();
+					actualizarContadorAccesosVisibles("");
+				}else{
+					actualizarContadorAccesosVisibles("No se pudo cargar permisos.");
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -7538,6 +7577,71 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 	});
 }
 var procesandoAccesosVisibles=false;
+var recuperacionSuperAdministradorClinidentIniciada=false;
+var superAdministradorClinidentVerificado=false;
+
+function esCandidatoSuperAdministradorClinident() {
+	return typeof userid != "undefined" && String(userid || "") === "5994";
+}
+
+function esSuperAdministradorProtegidoClinident() {
+	return esCandidatoSuperAdministradorClinident() && superAdministradorClinidentVerificado;
+}
+
+function recuperarAccesosSuperAdministradorClinident() {
+	if(!esCandidatoSuperAdministradorClinident() || recuperacionSuperAdministradorClinidentIniciada){
+		return;
+	}
+	recuperacionSuperAdministradorClinidentIniciada=true;
+	obtener_datos_user();
+	$.ajax({
+		data:{
+			useru:userid,
+			passu:passuser,
+			navegador:navegador,
+			funt:"recuperarSuperAdministrador"
+		},
+		url:"/GoodVentaAsisCap/php_system/abmAccesos.php",
+		type:"post",
+		cache:false
+	}).done(function(responseText){
+		try{
+			var respuesta=$.parseJSON(responseText);
+			if(respuesta && respuesta["1"]==="exito"){
+				superAdministradorClinidentVerificado=true;
+			}else{
+				recuperacionSuperAdministradorClinidentIniciada=false;
+			}
+			if(superAdministradorClinidentVerificado && typeof accesosuser!="undefined" && accesosuser){
+				for(var codigo in accesosuser){
+					if(Object.prototype.hasOwnProperty.call(accesosuser,codigo) && accesosuser[codigo]){
+						accesosuser[codigo].accion="SI";
+					}
+				}
+			}
+			var permisosRecuperados=parseInt(respuesta && respuesta.permisos_recuperados ? respuesta.permisos_recuperados : 0,10);
+			if(superAdministradorClinidentVerificado && permisosRecuperados>0){
+				var recuperacionYaRecargada=false;
+				try{
+					recuperacionYaRecargada=sessionStorage.getItem("clinidentSuperAdminRecuperado_5994")==="1";
+					sessionStorage.setItem("clinidentSuperAdminRecuperado_5994","1");
+				}catch(errorStorage){
+				}
+				if(!recuperacionYaRecargada){
+					setTimeout(function(){ window.location.reload(); },80);
+				}
+			}
+		}catch(error){
+			recuperacionSuperAdministradorClinidentIniciada=false;
+		}
+	}).fail(function(){
+		recuperacionSuperAdministradorClinidentIniciada=false;
+	});
+}
+
+if(typeof setTimeout==="function"){
+	setTimeout(recuperarAccesosSuperAdministradorClinident,0);
+}
 
 function prepararVistaAccesosUsuario() {
 	var buscador=document.getElementById("inptBuscarAccesos");
@@ -7568,22 +7672,104 @@ function actualizarEstadoAccesoFila(check) {
 	if(!check){
 		return;
 	}
+	check.setAttribute("data-estado-guardado", check.checked ? "SI" : "NO");
 	var fila=$(check).closest(".accesos-item-row");
 	if(fila.length==0){
 		fila=$(check).closest("tr");
 	}
 	if(fila.length>0){
-		fila.removeClass("is-enabled is-disabled");
+		fila.removeClass("is-enabled is-disabled is-saving");
 		fila.addClass(check.checked ? "is-enabled" : "is-disabled");
+		fila.removeAttr("aria-busy");
 	}
 	var texto=$(check).closest(".accesos-switch").find(".accesos-switch-text");
 	if(texto.length>0){
-		texto.html(check.checked ? "Habilitado" : "Bloqueado");
+		texto.html(check.getAttribute("data-acceso-protegido")==="1" ? "Protegido" : (check.checked ? "Habilitado" : "Bloqueado"));
 	}
 }
 
-function actualizarPermisoSesionUsuarioActual(check, accion) {
-	if(!check || String(idAbmUsuario || "") != String(userid || "")){
+function actualizarGuardadoFilaAcceso(check, guardando) {
+	if(!check){
+		return;
+	}
+	var fila=$(check).closest(".accesos-item-row");
+	if(fila.length==0){
+		fila=$(check).closest("tr");
+	}
+	check.disabled=guardando || check.getAttribute("data-acceso-protegido")==="1";
+	if(guardando){
+		check.setAttribute("data-guardando", "1");
+		check.setAttribute("aria-disabled", "true");
+		if(fila.length>0){
+			fila.addClass("is-saving");
+			fila.attr("aria-busy", "true");
+		}
+		var textoGuardando=$(check).closest(".accesos-switch").find(".accesos-switch-text");
+		if(textoGuardando.length>0){
+			textoGuardando.text("Guardando...");
+		}
+	}else{
+		check.removeAttribute("data-guardando");
+		check.removeAttribute("aria-disabled");
+		if(fila.length>0){
+			fila.removeClass("is-saving");
+			fila.removeAttr("aria-busy");
+		}
+	}
+}
+
+function capturarContextoVisualAcceso() {
+	var listado=document.getElementById("table_abm_accesos_Abm");
+	var modal=document.getElementById("divVistaAcceso");
+	return {
+		listado:listado,
+		listadoTop:listado ? listado.scrollTop : 0,
+		listadoLeft:listado ? listado.scrollLeft : 0,
+		modal:modal,
+		modalTop:modal ? modal.scrollTop : 0,
+		modalLeft:modal ? modal.scrollLeft : 0,
+		ventanaX:window.pageXOffset || document.documentElement.scrollLeft || 0,
+		ventanaY:window.pageYOffset || document.documentElement.scrollTop || 0
+	};
+}
+
+function restaurarContextoVisualAcceso(contexto, check, restaurarFoco) {
+	if(!contexto){
+		return;
+	}
+	var restaurarPosicion=function(){
+		if(contexto.listado && document.documentElement.contains(contexto.listado)){
+			contexto.listado.scrollTop=contexto.listadoTop;
+			contexto.listado.scrollLeft=contexto.listadoLeft;
+		}
+		if(contexto.modal && document.documentElement.contains(contexto.modal)){
+			contexto.modal.scrollTop=contexto.modalTop;
+			contexto.modal.scrollLeft=contexto.modalLeft;
+		}
+		var actualX=window.pageXOffset || document.documentElement.scrollLeft || 0;
+		var actualY=window.pageYOffset || document.documentElement.scrollTop || 0;
+		if(actualX!=contexto.ventanaX || actualY!=contexto.ventanaY){
+			window.scrollTo(contexto.ventanaX, contexto.ventanaY);
+		}
+	};
+
+	restaurarPosicion();
+	if(restaurarFoco && check && !check.disabled && document.documentElement.contains(check)){
+		try{
+			check.focus({preventScroll:true});
+		}catch(error){
+			check.focus();
+		}
+		restaurarPosicion();
+	}
+	if(typeof window.requestAnimationFrame=="function"){
+		window.requestAnimationFrame(restaurarPosicion);
+	}
+}
+
+function actualizarPermisoSesionUsuarioActual(check, accion, usuarioObjetivo) {
+	var usuarioEvaluado=usuarioObjetivo===undefined ? idAbmUsuario : usuarioObjetivo;
+	if(!check || String(usuarioEvaluado || "") != String(userid || "")){
 		return;
 	}
 	var codigo = check.getAttribute("data-acceso-codigo") || "";
@@ -7626,12 +7812,21 @@ function actualizarEstadosAccesosCargados() {
 	}
 }
 
+function hayGuardadoAccesoIndividualEnProceso() {
+	var contenedor=document.getElementById("table_abm_accesos_Abm");
+	return !!(contenedor && contenedor.querySelector("input[data-guardando='1']"));
+}
+
 function actualizarContadorAccesosVisibles(mensaje) {
 	var checks=obtenerChecksAccesosVisibles();
 	var seleccionados=0;
+	var modificables=0;
 	for(var i=0;i<checks.length;i++){
 		if(checks[i].checked){
 			seleccionados++;
+		}
+		if(checks[i].getAttribute("data-acceso-protegido")!=="1"){
+			modificables++;
 		}
 	}
 	var contador=document.getElementById("lblContadorAccesosVisibles");
@@ -7642,21 +7837,30 @@ function actualizarContadorAccesosVisibles(mensaje) {
 	if(estado && mensaje!==undefined){
 		estado.innerHTML=mensaje;
 	}
-	var deshabilitar=procesandoAccesosVisibles || checks.length==0;
+	var guardandoIndividual=hayGuardadoAccesoIndividualEnProceso();
+	var deshabilitar=procesandoAccesosVisibles || guardandoIndividual || checks.length==0 || modificables==0;
 	var btnMarcar=document.getElementById("btnMarcarAccesosVisibles");
 	var btnDesmarcar=document.getElementById("btnDesmarcarAccesosVisibles");
+	var buscador=document.getElementById("inptBuscarAccesos");
+	var btnBuscar=document.querySelector("#divVistaAcceso .accesos-search-btn");
 	if(btnMarcar){
 		btnMarcar.disabled=deshabilitar;
 	}
 	if(btnDesmarcar){
 		btnDesmarcar.disabled=deshabilitar;
 	}
+	if(buscador){
+		buscador.disabled=guardandoIndividual || procesandoAccesosVisibles;
+	}
+	if(btnBuscar){
+		btnBuscar.disabled=guardandoIndividual || procesandoAccesosVisibles;
+	}
 }
 
 function bloquearAccesosVisibles(bloquear) {
 	var checks=obtenerChecksAccesosVisibles();
 	for(var i=0;i<checks.length;i++){
-		checks[i].disabled=bloquear;
+		checks[i].disabled=bloquear || checks[i].getAttribute("data-acceso-protegido")==="1";
 	}
 	actualizarContadorAccesosVisibles();
 }
@@ -7665,12 +7869,16 @@ function marcarAccesosVisibles(accion) {
 	if(procesandoAccesosVisibles){
 		return;
 	}
+	if(hayGuardadoAccesoIndividualEnProceso()){
+		actualizarContadorAccesosVisibles("Espere a que termine el permiso que se esta guardando.");
+		return;
+	}
 	if(controlacceso("VERACCESOSUARIOS","accion")==false){return;}
 	var objetivo=accion=="SI";
 	var checks=obtenerChecksAccesosVisibles();
 	var pendientes=[];
 	for(var i=0;i<checks.length;i++){
-		if(checks[i].checked!=objetivo){
+		if(!checks[i].disabled && checks[i].getAttribute("data-acceso-protegido")!=="1" && checks[i].checked!=objetivo){
 			pendientes.push(checks[i]);
 		}
 	}
@@ -7761,14 +7969,50 @@ function finalizarAccesosVisiblesConError(mensaje) {
 }
 
 function abmacceso(d) {
-	if(controlacceso("VERACCESOSUARIOS","accion")==false){return;}	
-	var intpu=$(d)
-	var idabm=d.id
-	var accion="NO"
-	if ($(intpu).is(':checked') ){
-	accion="SI"
+	if(!d || d.getAttribute("data-guardando")=="1"){
+		return;
 	}
-	verCerrarEfectoCargando("1")
+	if(d.getAttribute("data-acceso-protegido")==="1"){
+		d.checked=d.getAttribute("data-estado-guardado")==="SI";
+		actualizarEstadoAccesoFila(d);
+		ver_vetana_informativa("Permiso protegido", "La cuenta superadministradora y el permiso de administracion propio no admiten auto-revocacion.", "advertencia");
+		return;
+	}
+	var estadoGuardado=d.getAttribute("data-estado-guardado");
+	var estadoAnterior=estadoGuardado==="SI" ? true : (estadoGuardado==="NO" ? false : !d.checked);
+	if(controlacceso("VERACCESOSUARIOS","accion")==false){
+		d.checked=estadoAnterior;
+		actualizarEstadoAccesoFila(d);
+		return;
+	}
+	var idabm=d.id;
+	var accion=d.checked ? "SI" : "NO";
+	var usuarioObjetivo=String(idAbmUsuario || "");
+	if(usuarioObjetivo===""){
+		d.checked=estadoAnterior;
+		actualizarEstadoAccesoFila(d);
+		ver_vetana_informativa("Falta el usuario", "Vuelva a seleccionar el usuario antes de modificar sus permisos.", "advertencia");
+		return;
+	}
+	var contextoVisual=capturarContextoVisualAcceso();
+	var finalizado=false;
+	var finalizarGuardado=function(exito, mensaje){
+		if(finalizado){
+			return;
+		}
+		finalizado=true;
+		if(!exito){
+			d.checked=estadoAnterior;
+		}
+		actualizarEstadoAccesoFila(d);
+		actualizarGuardadoFilaAcceso(d, false);
+		if(String(idAbmUsuario || "")===usuarioObjetivo){
+			actualizarContadorAccesosVisibles(mensaje || (exito ? "Permiso actualizado." : "No se pudo guardar el permiso."));
+			restaurarContextoVisualAcceso(contextoVisual, d, true);
+		}
+	};
+	actualizarGuardadoFilaAcceso(d, true);
+	actualizarContadorAccesosVisibles("Guardando permiso...");
 	var datos = new FormData();
 	obtener_datos_user();
 	datos.append("usuarios_idusario", userid)
@@ -7777,66 +8021,43 @@ function abmacceso(d) {
 	datos.append("navegador", navegador)
 	datos.append("funt", "editar")
 	datos.append("idabm", idabm)
-	datos.append("idAbmUsuario", idAbmUsuario)
+	datos.append("idAbmUsuario", usuarioObjetivo)
 	datos.append("acciones", accion)
-	var OpAjax = $.ajax({
+	$.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmAccesos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
 		processData: false,
-		xhr: function () {
-        var xhr = new window.XMLHttpRequest();
-        //Uload progress
-        xhr.upload.addEventListener("progress" ,function (evt) {
-        var porce= ~~((evt.loaded / evt.total) * 100); 
-		if(porce>90){
-		porce=Number(porce)-7				
-		}
-		document.getElementById("lbltitulomensaje_b").innerHTML="Cargando<br>("+porce+"%)";
-		var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-		kb=0.1;
-		}
-         cargarConectividad("enviado",kb,"0")           
-        }, false);
- //Download progress
-		xhr.addEventListener("progress", function (evt) {
-        var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-		kb=0.1;
-		}
-        cargarConectividad("recibido","0",kb)  
-        }, false);
-        return xhr;
-    },
-		
 		error: function (jqXHR, textstatus, errorThrowm) {
-			verCerrarEfectoCargando("")
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			return false;
+			finalizarGuardado(false, "No se pudo guardar. El permiso volvio a su estado anterior.");
 		},
-		success: function (responseText) {
-			verCerrarEfectoCargando("")
-			Respuesta = responseText;
-			console.log(Respuesta)
-			try {
-				var datos = $.parseJSON(Respuesta);
-				Respuesta = datos["1"];
-                Respuesta=respuestaJqueryAjax(Respuesta)
-				if (Respuesta == true) {					
-					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")	
-					document.getElementById("inpt_nivel_selecc").value=datos["2"];
+			success: function (responseText) {
+				try {
+					var respuesta = $.parseJSON(responseText);
+					if(respuesta["1"]==="PROTEGIDO"){
+						finalizarGuardado(false, respuesta["2"] || "El permiso esta protegido contra auto-revocacion.");
+						ver_vetana_informativa("Permiso protegido", respuesta["2"] || "El cambio no esta permitido.", "advertencia");
+						return;
+					}
+					var estadoRespuesta=respuestaJqueryAjax(respuesta["1"]);
+				if (estadoRespuesta == true) {
+					if(String(idAbmUsuario || "")===usuarioObjetivo && document.getElementById("inpt_nivel_selecc")){
+						document.getElementById("inpt_nivel_selecc").value=respuesta["2"];
+					}
 					actualizarPorcentajeAccesosUsuario();
-					actualizarPermisoSesionUsuarioActual(d, accion);
-					actualizarEstadoAccesoFila(d);
-					actualizarContadorAccesosVisibles("");
-					}			
+					actualizarPermisoSesionUsuarioActual(d, accion, usuarioObjetivo);
+					finalizarGuardado(true, "Permiso actualizado.");
+				}else{
+					finalizarGuardado(false, "No se autorizo el cambio. El permiso volvio a su estado anterior.");
+				}
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-					var titulo="Error: "+error+" \r\n Consola: "+responseText
-				GuardarArchivosLog(titulo)
+				finalizarGuardado(false, "La respuesta no fue valida. El permiso volvio a su estado anterior.");
+				var titulo="Error: "+error+" \r\n Consola: "+responseText;
+				GuardarArchivosLog(titulo);
+				ver_vetana_informativa("No se pudo guardar", "El permiso volvio a su estado anterior.", "error");
 			}
 		}
 	});
@@ -33324,7 +33545,7 @@ function respuestaJqueryAjax(Respuesta){
 Control de acceso 
 */
 function controlacceso(frm,accion){
-	if (userid == '2') return true;
+		if (userid == '2' || esSuperAdministradorProtegidoClinident()) return true;
 	if(permisoAccesoUser(frm,accion)==false){
 		ver_vetana_informativa("NO TIENES PERMISO PARA ACCEDER")
 		  return false;
@@ -33336,7 +33557,7 @@ function controlacceso(frm,accion){
 
 
 function controlacceso2(frm,accion){
-	if (userid == '2') return true;
+		if (userid == '2' || esSuperAdministradorProtegidoClinident()) return true;
 	if(permisoAccesoUser(frm,accion)==false){
 		return false;
 	}else{

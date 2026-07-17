@@ -24,54 +24,44 @@
 
         asegurarEstructuraAsistencia();
         $horaActual= date('H:i:s');
-        switch ($funt) {
-            case "nuevo":
-                $cod_usuario= $user;
-                $hora_entrada= $horaActual;
-                $ip_publica = $_SERVER['REMOTE_ADDR'];
-                $asistencia_abierta = obtenerAsistenciaAbiertaUsuario($cod_usuario);
-                if ($asistencia_abierta != null) {
-                    echo json_encode(array("1" => "red", "2" => "Ya existe una entrada abierta para hoy.", "cod_asistencia" => $asistencia_abierta['cod_asistencia']));
-                    break;
-                }
+	        switch ($funt) {
+	            case "nuevo":
+	                $cod_usuario= $user;
+	                $hora_entrada= $horaActual;
+	                $ip_publica = $_SERVER['REMOTE_ADDR'];
 
-                $cod_asistencia = abmAsistencia($cod_usuario, $hora_entrada, null, $ip_publica, null, null);
-                registrarAuditoriaAsistencia($cod_asistencia, $cod_usuario, "entrada", null, obtenerAsistenciaPorId($cod_asistencia), $ip_publica);
+	                // Obtiene la hora esperada antes de abrir la transaccion. La
+	                // insercion, el bloqueo por usuario y la auditoria se guardan
+	                // luego como una sola unidad atomica.
+	                $diasSemana= array("domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado");
+	                $diaActual= $diasSemana[intval(date('w'))];
 
-                // Obtiene la hora de entrada del usuario
-                $diaActual= getdate()['wday'];
-                switch ($diaActual) {
-                    case 0:
-                        $diaActual= "domingo";
-                        break;
-                    case 1:
-                        $diaActual= "lunes";
-                        break;
-                    case 2:
-                        $diaActual= "martes";
-                        break;
-                    case 3:
-                        $diaActual= "miercoles";
-                        break;
-                    case 4:
-                        $diaActual= "jueves";
-                        break;
-                    case 5:
-                        $diaActual= "viernes";
-                        break;
-                    case 6:
-                        $diaActual= "sabado";
-                        break;
-                }
-                
-                $horarios_usuario = buscarHorariosUsuario(null, $cod_usuario);
-                $hora_entrada_usuario = obtenerHoraEntradaUsuarioMasCercana($horarios_usuario, $diaActual, $hora_entrada);
+	                $horarios_usuario = buscarHorariosUsuario(null, $cod_usuario);
+	                $hora_entrada_usuario = obtenerHoraEntradaUsuarioMasCercana($horarios_usuario, $diaActual, $hora_entrada);
 
-                // Compara si la hora_entrada_usuario es mayor que la hora_entrada por 10 min.
-                $llegada_tardia = ($hora_entrada_usuario && (strtotime($hora_entrada) - strtotime($hora_entrada_usuario)) > 660) ? 1 : 0;
+	                // Compara si la hora_entrada_usuario es mayor que la hora_entrada por 10 min.
+	                $llegada_tardia = ($hora_entrada_usuario && (strtotime($hora_entrada) - strtotime($hora_entrada_usuario)) > 660) ? 1 : 0;
+	                $resultadoEntrada=registrarEntradaAsistenciaSegura($cod_usuario, $hora_entrada, $ip_publica, $llegada_tardia == 1);
+	                if (!$resultadoEntrada['ok']) {
+	                    echo json_encode(array(
+	                        "1" => "red",
+	                        "2" => $resultadoEntrada['mensaje'],
+	                        "cod_asistencia" => isset($resultadoEntrada['cod_asistencia']) ? $resultadoEntrada['cod_asistencia'] : "",
+	                        "reconciliar" => 1
+	                    ));
+	                    break;
+	                }
 
-                echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia, "llegada_tardia" => $llegada_tardia, 'hora_entrada' => $hora_entrada, 'hora_entrada_usuario' => $hora_entrada_usuario));
-                break;
+	                echo json_encode(array(
+	                    "1" => "exito",
+	                    "cod_asistencia" => $resultadoEntrada['cod_asistencia'],
+	                    "llegada_tardia" => $llegada_tardia,
+	                    "justificacion_pendiente" => $llegada_tardia,
+	                    'fecha' => $resultadoEntrada['fecha'],
+	                    'hora_entrada' => $hora_entrada,
+	                    'hora_entrada_usuario' => $hora_entrada_usuario
+	                ));
+	                break;
             case "editar";
                 $cod_asistencia= $_POST['cod_asistencia'];
                 $cod_asistencia = mb_convert_encoding((string)($cod_asistencia), 'ISO-8859-1', 'UTF-8');
@@ -88,28 +78,29 @@
                 registrarAuditoriaAsistencia($cod_asistencia, $cod_usuario, "edicion", $asistencia_anterior, obtenerAsistenciaPorId($cod_asistencia), $_SERVER['REMOTE_ADDR']);
                 echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia));
                 break;
-            case 'registrarJustificacion':
-                $cod_asistencia= $_POST['cod_asistencia'];
-                $cod_asistencia = mb_convert_encoding((string)($cod_asistencia), 'ISO-8859-1', 'UTF-8');
-                $justificacion = mb_convert_encoding((string)($_POST['justificacion']), 'ISO-8859-1', 'UTF-8');
-                $asistencia_anterior = obtenerAsistenciaPorId($cod_asistencia);
-                if (!asistenciaPerteneceAUsuario($asistencia_anterior, $user)) {
-                    echo json_encode(array("1" => "red", "2" => "No se puede justificar un registro de asistencia que no pertenece al usuario actual."));
-                    break;
-                }
-                $cod_asistencia = abmAsistencia(null, null, null, null, $justificacion, $cod_asistencia);
-                registrarAuditoriaAsistencia($cod_asistencia, $user, "justificacion", $asistencia_anterior, obtenerAsistenciaPorId($cod_asistencia), $_SERVER['REMOTE_ADDR']);
-                echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia));
-                break;                
+	            case 'registrarJustificacion':
+	                $cod_asistencia= $_POST['cod_asistencia'];
+	                $cod_asistencia = mb_convert_encoding((string)($cod_asistencia), 'ISO-8859-1', 'UTF-8');
+	                $justificacion = mb_convert_encoding((string)($_POST['justificacion']), 'ISO-8859-1', 'UTF-8');
+	                $resultadoJustificacion= registrarJustificacionAsistenciaSegura($cod_asistencia, $user, $justificacion, $_SERVER['REMOTE_ADDR']);
+	                if (!$resultadoJustificacion['ok']) {
+	                    echo json_encode(array("1" => "red", "2" => $resultadoJustificacion['mensaje']));
+	                    break;
+	                }
+	                echo json_encode(array("1" => "exito", "cod_asistencia" => $cod_asistencia, "justificacion_pendiente" => 0));
+	                break;
             case 'registrarRecordatorioEntrada':
                 registrarRecordatorioEntrada($user, $navegador);
                 break;
-            case "registrarSalida":
-                $cod_asistencia= isset($_POST['cod_asistencia']) ? mb_convert_encoding((string)($_POST['cod_asistencia']), 'ISO-8859-1', 'UTF-8') : null;
-                $cod_local= isset($_POST['cod_local']) ? mb_convert_encoding((string)($_POST['cod_local']), 'ISO-8859-1', 'UTF-8') : null;
-                $fechaActual= date('Y-m-d');
-                registrarSalida($user, $horaActual, $cod_asistencia, $cod_local, $fechaActual);
-                break;
+	            case "registrarSalida":
+	                $cod_asistencia= isset($_POST['cod_asistencia']) ? mb_convert_encoding((string)($_POST['cod_asistencia']), 'ISO-8859-1', 'UTF-8') : null;
+	                $cod_local= isset($_POST['cod_local']) ? mb_convert_encoding((string)($_POST['cod_local']), 'ISO-8859-1', 'UTF-8') : null;
+	                $fechaActual= date('Y-m-d');
+	                registrarSalida($user, $horaActual, $cod_asistencia, $cod_local, $fechaActual);
+	                break;
+	            case "buscarEstadoUsuario":
+	                obtenerEstadoActualAsistenciaUsuario($user);
+	                break;
             case "buscar":
                 $hora_entrada = isset($_POST['hora_entrada']) ? mb_convert_encoding((string)($_POST['hora_entrada']), 'ISO-8859-1', 'UTF-8') : null;
                 $hora_salida= isset($_POST['hora_salida']) ? mb_convert_encoding((string)($_POST['hora_salida']), 'ISO-8859-1', 'UTF-8') : null;
@@ -263,21 +254,97 @@
         $mysqli->query($sql);
     }
 
-    function obtenerAsistenciaPorId($cod_asistencia) {
-        $registros= obtenerAsistencias(array('cod_asistencia' => $cod_asistencia), 1);
-        return count($registros) > 0 ? $registros[0] : null;
-    }
+	    function obtenerAsistenciaPorId($cod_asistencia) {
+	        $registros= obtenerAsistencias(array('cod_asistencia' => $cod_asistencia), 1);
+	        return count($registros) > 0 ? $registros[0] : null;
+	    }
 
-    function obtenerAsistenciaAbiertaUsuario($cod_usuarioFK) {
-        $registros= obtenerAsistencias(array(
-            'cod_usuarioFK' => $cod_usuarioFK,
-            'fecha_desde' => date('Y-m-d'),
-            'fecha_hasta' => date('Y-m-d'),
-            'sinSalida' => true,
-        ), 1);
+	    function asistenciaTieneFechaSalida($mysqli) {
+	        static $tieneColumna = null;
+	        if ($tieneColumna !== null) {
+	            return $tieneColumna;
+	        }
+	        $sql= "SELECT 1
+	            FROM information_schema.COLUMNS
+	            WHERE TABLE_SCHEMA = DATABASE()
+	                AND TABLE_NAME = 'asistencia'
+	                AND COLUMN_NAME = 'fecha_salida'
+	            LIMIT 1";
+	        $result= $mysqli->query($sql);
+	        $tieneColumna= $result && $result->num_rows > 0;
+	        return $tieneColumna;
+	    }
 
-        return count($registros) > 0 ? $registros[0] : null;
-    }
+	    function obtenerAsistenciaPorIdConexion($mysqli, $cod_asistencia, $bloquear = false) {
+	        $sql= "SELECT a.* FROM asistencia a WHERE a.cod_asistencia = ? LIMIT 1";
+	        if ($bloquear) {
+	            $sql .= " FOR UPDATE";
+	        }
+	        $stmt= $mysqli->prepare($sql);
+	        if (!$stmt) {
+	            return null;
+	        }
+	        $cod_asistencia= intval($cod_asistencia);
+	        $stmt->bind_param('i', $cod_asistencia);
+	        if (!$stmt->execute()) {
+	            $stmt->close();
+	            return null;
+	        }
+	        $result= $stmt->get_result();
+	        $fila= $result ? $result->fetch_assoc() : null;
+	        $stmt->close();
+	        return $fila;
+	    }
+
+	    function bloquearUsuarioParaMarcacionAsistencia($mysqli, $cod_usuarioFK) {
+	        $stmt= $mysqli->prepare("SELECT cod_usuario FROM usuario WHERE cod_usuario = ? LIMIT 1 FOR UPDATE");
+	        if (!$stmt) {
+	            return false;
+	        }
+	        $cod_usuarioFK= intval($cod_usuarioFK);
+	        $stmt->bind_param('i', $cod_usuarioFK);
+	        $ok= $stmt->execute();
+	        $result= $ok ? $stmt->get_result() : null;
+	        $existe= $result && $result->num_rows === 1;
+	        $stmt->close();
+	        return $existe;
+	    }
+
+	    function obtenerAsistenciaAbiertaUsuarioConexion($mysqli, $cod_usuarioFK, $bloquear = false) {
+	        // La ventana de 36 horas permite recuperar una jornada nocturna tras
+	        // medianoche sin reactivar indefinidamente marcaciones historicas.
+	        $sql= "SELECT a.*
+	            FROM asistencia a
+	            WHERE a.cod_usuarioFK = ?
+	                AND a.hora_salida IS NULL
+	                AND a.fecha >= DATE_SUB(NOW(), INTERVAL 36 HOUR)
+	            ORDER BY a.fecha DESC, a.cod_asistencia DESC
+	            LIMIT 1";
+	        if ($bloquear) {
+	            $sql .= " FOR UPDATE";
+	        }
+	        $stmt= $mysqli->prepare($sql);
+	        if (!$stmt) {
+	            return null;
+	        }
+	        $cod_usuarioFK= intval($cod_usuarioFK);
+	        $stmt->bind_param('i', $cod_usuarioFK);
+	        if (!$stmt->execute()) {
+	            $stmt->close();
+	            return null;
+	        }
+	        $result= $stmt->get_result();
+	        $fila= $result ? $result->fetch_assoc() : null;
+	        $stmt->close();
+	        return $fila;
+	    }
+
+	    function obtenerAsistenciaAbiertaUsuario($cod_usuarioFK) {
+	        $mysqli= conectar_al_servidor();
+	        $registro= obtenerAsistenciaAbiertaUsuarioConexion($mysqli, $cod_usuarioFK, false);
+	        mysqli_close($mysqli);
+	        return $registro;
+	    }
 
     function asistenciaPerteneceAUsuario($asistencia, $cod_usuarioFK) {
         return $asistencia != null && (string)$asistencia['cod_usuarioFK'] === (string)$cod_usuarioFK;
@@ -291,15 +358,14 @@
         return controldeaccesoacasas($cod_usuarioFK, "VERLISTADOASISTENCIA", " u.accion='SI' ") == 1;
     }
 
-    function registrarAuditoriaAsistencia($cod_asistencia, $cod_usuario_accion, $accion, $datos_anteriores, $datos_nuevos, $ip_accion) {
-        $mysqli= conectar_al_servidor();
-        $sql= "INSERT INTO asistencia_auditoria
-            (cod_asistenciaFK, cod_usuarioFK_accion, accion, ip_accion, datos_anteriores, datos_nuevos)
-            VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt= $mysqli->prepare($sql);
-        if (!$stmt) {
-            return;
-        }
+	    function registrarAuditoriaAsistenciaConexion($mysqli, $cod_asistencia, $cod_usuario_accion, $accion, $datos_anteriores, $datos_nuevos, $ip_accion) {
+	        $sql= "INSERT INTO asistencia_auditoria
+	            (cod_asistenciaFK, cod_usuarioFK_accion, accion, ip_accion, datos_anteriores, datos_nuevos)
+	            VALUES (?, ?, ?, ?, ?, ?)";
+	        $stmt= $mysqli->prepare($sql);
+	        if (!$stmt) {
+	            return false;
+	        }
 
         $accion= mb_convert_encoding((string)$accion, 'ISO-8859-1', 'UTF-8');
         $ip_accion= mb_convert_encoding((string)$ip_accion, 'ISO-8859-1', 'UTF-8');
@@ -307,9 +373,181 @@
         $datos_nuevos= $datos_nuevos == null ? null : mb_convert_encoding(json_encode($datos_nuevos, JSON_UNESCAPED_UNICODE), 'ISO-8859-1', 'UTF-8');
 
         $stmt->bind_param('iissss', $cod_asistencia, $cod_usuario_accion, $accion, $ip_accion, $datos_anteriores, $datos_nuevos);
-        $stmt->execute();
-        $stmt->close();
-    }
+	        $ok= $stmt->execute();
+	        $stmt->close();
+	        return $ok;
+	    }
+
+	    function registrarAuditoriaAsistencia($cod_asistencia, $cod_usuario_accion, $accion, $datos_anteriores, $datos_nuevos, $ip_accion) {
+	        $mysqli= conectar_al_servidor();
+	        $ok= registrarAuditoriaAsistenciaConexion($mysqli, $cod_asistencia, $cod_usuario_accion, $accion, $datos_anteriores, $datos_nuevos, $ip_accion);
+	        mysqli_close($mysqli);
+	        return $ok;
+	    }
+
+	    function registrarEntradaAsistenciaSegura($cod_usuario, $hora_entrada, $ip_publica, $justificacionPendiente) {
+	        $mysqli= conectar_al_servidor();
+	        $mysqli->begin_transaction();
+	        try {
+	            if (!bloquearUsuarioParaMarcacionAsistencia($mysqli, $cod_usuario)) {
+	                throw new Exception("No se encontro el usuario de la marcacion.");
+	            }
+	            $abierta= obtenerAsistenciaAbiertaUsuarioConexion($mysqli, $cod_usuario, true);
+	            if ($abierta != null) {
+	                $mysqli->rollback();
+	                mysqli_close($mysqli);
+	                return array(
+	                    "ok" => false,
+	                    "mensaje" => "Ya existe una entrada abierta. Se actualizara el estado de la jornada.",
+	                    "cod_asistencia" => $abierta['cod_asistencia']
+	                );
+	            }
+
+	            $stmt= $mysqli->prepare("INSERT INTO asistencia (cod_usuarioFK, hora_entrada, direccion_ip) VALUES (?, ?, ?)");
+	            if (!$stmt) {
+	                throw new Exception("No se pudo preparar la entrada.");
+	            }
+	            $cod_usuario= intval($cod_usuario);
+	            $stmt->bind_param('iss', $cod_usuario, $hora_entrada, $ip_publica);
+	            if (!$stmt->execute()) {
+	                $stmt->close();
+	                throw new Exception("No se pudo registrar la entrada.");
+	            }
+	            $cod_asistencia= intval($stmt->insert_id);
+	            $stmt->close();
+	            $registroNuevo= obtenerAsistenciaPorIdConexion($mysqli, $cod_asistencia, false);
+	            $accionAuditoria= $justificacionPendiente ? "entrada_justificacion_pendiente" : "entrada";
+	            if (!registrarAuditoriaAsistenciaConexion($mysqli, $cod_asistencia, $cod_usuario, $accionAuditoria, null, $registroNuevo, $ip_publica)) {
+	                throw new Exception("No se pudo auditar la entrada.");
+	            }
+	            $mysqli->commit();
+	            $fecha= isset($registroNuevo['fecha']) ? $registroNuevo['fecha'] : date('Y-m-d H:i:s');
+	            mysqli_close($mysqli);
+	            return array("ok" => true, "cod_asistencia" => $cod_asistencia, "fecha" => $fecha);
+	        } catch (Exception $error) {
+	            $mysqli->rollback();
+	            mysqli_close($mysqli);
+	            return array("ok" => false, "mensaje" => $error->getMessage());
+	        }
+	    }
+
+	    function registrarJustificacionAsistenciaSegura($cod_asistencia, $cod_usuario, $justificacion, $ip_accion) {
+	        $justificacion= trim((string)$justificacion);
+	        if ($justificacion === '') {
+	            return array("ok" => false, "mensaje" => "Debe ingresar una justificacion.");
+	        }
+	        $mysqli= conectar_al_servidor();
+	        $mysqli->begin_transaction();
+	        try {
+	            if (!bloquearUsuarioParaMarcacionAsistencia($mysqli, $cod_usuario)) {
+	                throw new Exception("No se encontro el usuario de la marcacion.");
+	            }
+	            $registroAnterior= obtenerAsistenciaPorIdConexion($mysqli, $cod_asistencia, true);
+	            if (!asistenciaPerteneceAUsuario($registroAnterior, $cod_usuario)) {
+	                throw new Exception("No se puede justificar un registro que no pertenece al usuario actual.");
+	            }
+	            $stmt= $mysqli->prepare("UPDATE asistencia SET justificacion = ? WHERE cod_asistencia = ? AND cod_usuarioFK = ?");
+	            if (!$stmt) {
+	                throw new Exception("No se pudo preparar la justificacion.");
+	            }
+	            $cod_asistencia= intval($cod_asistencia);
+	            $cod_usuario= intval($cod_usuario);
+	            $stmt->bind_param('sii', $justificacion, $cod_asistencia, $cod_usuario);
+	            if (!$stmt->execute()) {
+	                $stmt->close();
+	                throw new Exception("No se pudo guardar la justificacion.");
+	            }
+	            $stmt->close();
+	            $registroNuevo= obtenerAsistenciaPorIdConexion($mysqli, $cod_asistencia, false);
+	            if (!registrarAuditoriaAsistenciaConexion($mysqli, $cod_asistencia, $cod_usuario, "justificacion", $registroAnterior, $registroNuevo, $ip_accion)) {
+	                throw new Exception("No se pudo auditar la justificacion.");
+	            }
+	            $mysqli->commit();
+	            mysqli_close($mysqli);
+	            return array("ok" => true);
+	        } catch (Exception $error) {
+	            $mysqli->rollback();
+	            mysqli_close($mysqli);
+	            return array("ok" => false, "mensaje" => $error->getMessage());
+	        }
+	    }
+
+	    function obtenerJustificacionPendienteUsuarioAsistencia($mysqli, $cod_usuario) {
+	        $sql= "SELECT aa.cod_asistenciaFK, aa.accion
+	            FROM asistencia_auditoria aa
+	            INNER JOIN asistencia a ON a.cod_asistencia = aa.cod_asistenciaFK
+	            WHERE a.cod_usuarioFK = ?
+	                AND aa.accion IN ('entrada_justificacion_pendiente', 'salida_justificacion_pendiente')
+	                AND NOT EXISTS (
+	                    SELECT 1
+	                    FROM asistencia_auditoria aa2
+	                    WHERE aa2.cod_asistenciaFK = aa.cod_asistenciaFK
+	                        AND aa2.accion = 'justificacion'
+	                        AND aa2.cod_asistencia_auditoria > aa.cod_asistencia_auditoria
+	                )
+	            ORDER BY aa.cod_asistencia_auditoria DESC
+	            LIMIT 1";
+	        $stmt= $mysqli->prepare($sql);
+	        if (!$stmt) {
+	            return array("tipo" => "", "cod_asistencia" => "");
+	        }
+	        $cod_usuario= intval($cod_usuario);
+	        $stmt->bind_param('i', $cod_usuario);
+	        if (!$stmt->execute()) {
+	            $stmt->close();
+	            return array("tipo" => "", "cod_asistencia" => "");
+	        }
+	        $result= $stmt->get_result();
+	        $fila= $result ? $result->fetch_assoc() : null;
+	        $stmt->close();
+	        if (!$fila) {
+	            return array("tipo" => "", "cod_asistencia" => "");
+	        }
+	        return array(
+	            "tipo" => $fila['accion'] === "entrada_justificacion_pendiente" ? "entrada_tardia" : "salida_ubicacion",
+	            "cod_asistencia" => $fila['cod_asistenciaFK']
+	        );
+	    }
+
+	    function normalizarRegistroAsistenciaRespuesta($registro) {
+	        if (!is_array($registro)) {
+	            return null;
+	        }
+	        $salida= array();
+	        foreach ($registro as $clave => $valor) {
+	            $salida[$clave]= mb_convert_encoding((string)$valor, 'UTF-8', 'ISO-8859-1');
+	        }
+	        return $salida;
+	    }
+
+	    function obtenerEstadoActualAsistenciaUsuario($cod_usuario) {
+	        $registros= obtenerAsistencias(array(
+	            'cod_usuarioFK' => $cod_usuario,
+	            'fecha_desde' => date('Y-m-d', strtotime('-1 day')),
+	            'fecha_hasta' => date('Y-m-d')
+	        ), 20);
+	        $mysqli= conectar_al_servidor();
+	        $abierta= obtenerAsistenciaAbiertaUsuarioConexion($mysqli, $cod_usuario, false);
+	        $codigos= array();
+	        foreach ($registros as $registro) {
+	            $codigos[(string)$registro['cod_asistencia']]= true;
+	        }
+	        if ($abierta != null && !isset($codigos[(string)$abierta['cod_asistencia']])) {
+	            $registros[]= normalizarRegistroAsistenciaRespuesta($abierta);
+	        }
+
+	        $pendiente= obtenerJustificacionPendienteUsuarioAsistencia($mysqli, $cod_usuario);
+	        mysqli_close($mysqli);
+
+	        echo json_encode(array(
+	            "1" => "exito",
+	            "registros" => $registros,
+	            "registro_abierto" => normalizarRegistroAsistenciaRespuesta($abierta),
+	            "justificacion_pendiente" => $pendiente['tipo'],
+	            "cod_asistencia_justificacion" => $pendiente['cod_asistencia'],
+	            "hora_servidor" => date('Y-m-d H:i:s')
+	        ), JSON_UNESCAPED_UNICODE);
+	    }
 
     function registrarRecordatorioEntrada($cod_usuario, $navegador) {
         $mysqli= conectar_al_servidor();
@@ -365,34 +603,76 @@
         echo json_encode(array("1" => "exito"));
     }
 
-    function registrarSalida($cod_usuarioFK, $hora_salida, $cod_asistencia, $cod_local, $fecha) {
-        $ip_salida = $_SERVER['REMOTE_ADDR'];
-        $asistencia_actual = obtenerAsistenciaAbiertaUsuario($cod_usuarioFK);
-        if ($asistencia_actual == null) {
-            echo json_encode(array("1" => "red", "2" => "No se encontro una entrada abierta para marcar salida."));
-            return;
-        }
+	    function registrarSalida($cod_usuarioFK, $hora_salida, $cod_asistencia, $cod_local, $fecha) {
+	        $ip_salida = $_SERVER['REMOTE_ADDR'];
+	        $mysqli= conectar_al_servidor();
+	        $mysqli->begin_transaction();
+	        try {
+	            if (!bloquearUsuarioParaMarcacionAsistencia($mysqli, $cod_usuarioFK)) {
+	                throw new Exception("No se encontro el usuario de la marcacion.");
+	            }
+	            $asistencia_actual= obtenerAsistenciaAbiertaUsuarioConexion($mysqli, $cod_usuarioFK, true);
+	            if ($asistencia_actual == null) {
+	                $mysqli->rollback();
+	                mysqli_close($mysqli);
+	                echo json_encode(array(
+	                    "1" => "red",
+	                    "2" => "La jornada ya no tiene una entrada abierta. Se actualizara el estado.",
+	                    "reconciliar" => 1
+	                ));
+	                return;
+	            }
 
-        $cod_asistencia= $asistencia_actual['cod_asistencia'];
-        $ip_entrada = isset($asistencia_actual['direccion_ip']) ? trim($asistencia_actual['direccion_ip']) : '';
-        $hora_entrada = isset($asistencia_actual['hora_entrada']) ? $asistencia_actual['hora_entrada'] : '';
+	            $cod_asistencia= intval($asistencia_actual['cod_asistencia']);
+	            $ip_entrada = isset($asistencia_actual['direccion_ip']) ? trim($asistencia_actual['direccion_ip']) : '';
+	            $hora_entrada = isset($asistencia_actual['hora_entrada']) ? $asistencia_actual['hora_entrada'] : '';
+	            $ip_valida = ($ip_entrada == '' || strcmp($ip_entrada, $ip_salida) == 0);
+	            if (asistenciaTieneFechaSalida($mysqli)) {
+	                $stmt= $mysqli->prepare("UPDATE asistencia
+	                    SET hora_salida = ?, fecha_salida = NOW()
+	                    WHERE cod_asistencia = ? AND cod_usuarioFK = ? AND hora_salida IS NULL");
+	            } else {
+	                $stmt= $mysqli->prepare("UPDATE asistencia
+	                    SET hora_salida = ?
+	                    WHERE cod_asistencia = ? AND cod_usuarioFK = ? AND hora_salida IS NULL");
+	            }
+	            if (!$stmt) {
+	                throw new Exception("No se pudo preparar la salida.");
+	            }
+	            $cod_usuarioFK= intval($cod_usuarioFK);
+	            $stmt->bind_param('sii', $hora_salida, $cod_asistencia, $cod_usuarioFK);
+	            if (!$stmt->execute() || $stmt->affected_rows !== 1) {
+	                $stmt->close();
+	                throw new Exception("La salida fue modificada desde otra sesion. Se actualizara el estado.");
+	            }
+	            $stmt->close();
 
-        // Si no existe IP de entrada, no se puede confirmar una diferencia de ubicacion.
-        $ip_valida = ($ip_entrada == '' || strcmp($ip_entrada, $ip_salida) == 0);
-        $cod_asistencia= abmAsistencia($cod_usuarioFK, null, $hora_salida, null, null, $cod_asistencia);
-        registrarAuditoriaAsistencia($cod_asistencia, $cod_usuarioFK, "salida", $asistencia_actual, obtenerAsistenciaPorId($cod_asistencia), $ip_salida);
-        
-        echo json_encode(array(
-            "1" => "exito",
-            "cod_asistencia" => $cod_asistencia,
-            "llegada_tardia" => 0,
-            'ip_valida' => ($ip_valida ? 1 : 0),
-            'hora_entrada' => $hora_entrada,
-            'hora_salida' => $hora_salida,
-            'ip_entrada' => $ip_entrada,
-            'ip_salida' => $ip_salida
-        ));
-    }
+	            $registroNuevo= obtenerAsistenciaPorIdConexion($mysqli, $cod_asistencia, false);
+	            $accionAuditoria= $ip_valida ? "salida" : "salida_justificacion_pendiente";
+	            if (!registrarAuditoriaAsistenciaConexion($mysqli, $cod_asistencia, $cod_usuarioFK, $accionAuditoria, $asistencia_actual, $registroNuevo, $ip_salida)) {
+	                throw new Exception("No se pudo auditar la salida.");
+	            }
+	            $mysqli->commit();
+	            mysqli_close($mysqli);
+
+	            echo json_encode(array(
+	                "1" => "exito",
+	                "cod_asistencia" => $cod_asistencia,
+	                "llegada_tardia" => 0,
+	                'ip_valida' => ($ip_valida ? 1 : 0),
+	                'justificacion_pendiente' => ($ip_valida ? 0 : 1),
+	                'hora_entrada' => $hora_entrada,
+	                'hora_salida' => $hora_salida,
+	                'fecha_salida' => isset($registroNuevo['fecha_salida']) ? $registroNuevo['fecha_salida'] : date('Y-m-d H:i:s'),
+	                'ip_entrada' => $ip_entrada,
+	                'ip_salida' => $ip_salida
+	            ));
+	        } catch (Exception $error) {
+	            $mysqli->rollback();
+	            mysqli_close($mysqli);
+	            echo json_encode(array("1" => "red", "2" => $error->getMessage(), "reconciliar" => 1));
+	        }
+	    }
 
     function obtenerVistaAsistencia($filtros, $limite= "0") {
         $rango= obtenerRangoInformeAsistencia($filtros);
@@ -1027,7 +1307,10 @@
                 continue;
             }
 
-            $minutosRegistro= minutosEntreHorasAsistencia($entrada, $salida);
+	            $tieneFechaSalidaReal= isset($registro['fecha_salida']) && trim((string)$registro['fecha_salida']) !== '';
+	            $minutosRegistro= $tieneFechaSalidaReal && isset($registro['diferencia_minutos'])
+	                ? intval($registro['diferencia_minutos'])
+	                : minutosEntreHorasAsistencia($entrada, $salida);
             if ($minutosRegistro === null) {
                 agregarIncidenciaAsistencia($incidencias, "registro_revisar", "Registro a revisar");
                 continue;
@@ -1509,13 +1792,16 @@
         $sqlFiltro= count($condiciones) > 0 ? "WHERE ".implode(" AND ", $condiciones) : "";
         $limite= normalizarLimiteAsistencia($limite);
 
-        $sql= "SELECT a.*, u.*, u.url AS url_usuario,
-            IF(hora_salida IS NOT NULL,TIMESTAMPDIFF(MINUTE, hora_entrada, hora_salida),NULL) AS diferencia_minutos,
-            IFNULL((SELECT nombre_persona FROM persona WHERE cod_persona = cod_usuarioFK),'') AS nombre_persona
-            FROM asistencia a JOIN usuario u ON u.cod_usuario = a.cod_usuarioFK $sqlFiltro ORDER BY a.fecha DESC, a.cod_asistencia DESC $limite";
+	        $mysqli=conectar_al_servidor();
+	        $expresionDiferencia= asistenciaTieneFechaSalida($mysqli)
+	            ? "IF(a.fecha_salida IS NOT NULL, TIMESTAMPDIFF(MINUTE, a.fecha, a.fecha_salida), IF(a.hora_salida IS NOT NULL, TIMESTAMPDIFF(MINUTE, a.hora_entrada, a.hora_salida), NULL))"
+	            : "IF(a.hora_salida IS NOT NULL, TIMESTAMPDIFF(MINUTE, a.hora_entrada, a.hora_salida), NULL)";
+	        $sql= "SELECT a.*, u.*, u.url AS url_usuario,
+	            ".$expresionDiferencia." AS diferencia_minutos,
+	            IFNULL((SELECT nombre_persona FROM persona WHERE cod_persona = cod_usuarioFK),'') AS nombre_persona
+	            FROM asistencia a JOIN usuario u ON u.cod_usuario = a.cod_usuarioFK $sqlFiltro ORDER BY a.fecha DESC, a.cod_asistencia DESC $limite";
 
-        $mysqli=conectar_al_servidor();
-        $stmt = $mysqli->prepare($sql);
+	        $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
             $informacion =array("1" => "error", "mensaje" => "Error al preparar la consulta de asistencia: " . $mysqli->error, "sql" => $sql);
             echo json_encode($informacion);	

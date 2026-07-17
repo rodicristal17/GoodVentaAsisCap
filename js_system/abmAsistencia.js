@@ -3,6 +3,10 @@ var asistenciaUsuarioVerificada = false;
 var asistenciaUsuarioTieneEntradaHoy = false;
 var asistenciaUsuarioRegistrosHoy = [];
 var asistenciaUsuarioUltimoEstadoReal = null;
+var asistenciaUsuarioJustificacionPendiente = "";
+var cod_asistenciaJustificacion = "";
+var asistenciaUsuarioSolicitudEnCurso = false;
+var asistenciaUsuarioConfirmacionTimer = null;
 
 function formatearFechaLocalAsistencia(fecha) {
 	var anio = fecha.getFullYear();
@@ -30,73 +34,116 @@ function actualizarEstadoVisualAsistencia(estado, detalle) {
 	var estadoVisual = document.getElementById("estadoAsistenciaUsuario");
 	var textoEstado = document.getElementById("textoEstadoAsistencia");
 	var jornada = obtenerContenedorJornadaAsistencia(estadoVisual || boton);
-	if (estado === "procesando" && typeof mostrarCargaProgresoJornadaTopbarUsuario == "function") {
-		var textoCarga = (detalle && String(detalle).toLowerCase().indexOf("registrando") >= 0)
-			? "Actualizando jornada..."
-			: "Cargando horario esperado...";
-		var detalleCarga = (detalle && String(detalle).toLowerCase().indexOf("registrando") >= 0)
-			? "Guardando marcacion y recalculando avance..."
-			: "Consultando jornada y marcaciones...";
-		setTimeout(function () {
-			mostrarCargaProgresoJornadaTopbarUsuario(textoCarga, detalleCarga);
-		}, 0);
-	} else if (typeof actualizarProgresoJornadaTopbarUsuario == "function") {
-		setTimeout(actualizarProgresoJornadaTopbarUsuario, 0);
-	}
-	if (typeof evaluarRecordatorioEntradaPendiente == "function") {
-		setTimeout(evaluarRecordatorioEntradaPendiente, 80);
-	}
+	var presenciaActiva = estado === "abierta"
+		|| estado === "registrando-salida"
+		|| (estado === "error" && String(cod_asistencia || "") !== "");
+	var pendiente = detalle && typeof detalle === "object" ? !!detalle.justificacion_pendiente : false;
 
 	if (jornada) {
 		var clasesEstado = [
 			"perfil-widget__jornada--abierta",
 			"perfil-widget__jornada--cerrada",
 			"perfil-widget__jornada--procesando",
+			"perfil-widget__jornada--registrando-entrada",
+			"perfil-widget__jornada--registrando-salida",
+			"perfil-widget__jornada--verificando",
+			"perfil-widget__jornada--justificacion-pendiente",
 			"perfil-widget__jornada--error"
 		];
 		for (var i = 0; i < clasesEstado.length; i++) {
 			jornada.classList.remove(clasesEstado[i]);
 		}
-		jornada.classList.add("perfil-widget__jornada--" + estado);
+		jornada.classList.add(presenciaActiva ? "perfil-widget__jornada--abierta" : "perfil-widget__jornada--cerrada");
+		if (estado !== "abierta" && estado !== "cerrada") {
+			jornada.classList.add("perfil-widget__jornada--" + estado);
+		}
+		if (pendiente) {
+			jornada.classList.add("perfil-widget__jornada--justificacion-pendiente");
+		}
 	}
 
 	if (estado === "abierta") {
 		if (boton) {
 			boton.value = "Marcar salida";
 			boton.title = "Registrar salida de la jornada";
+			boton.setAttribute("aria-busy", "false");
 		}
 		if (textoEstado) {
-			var horaEntrada = normalizarHoraAsistencia(detalle);
-			textoEstado.innerHTML = horaEntrada ? "En jornada" : "Jornada abierta";
+			var horaEntrada = normalizarHoraAsistencia(detalle && typeof detalle === "object" ? detalle.hora_entrada : detalle);
+			textoEstado.innerHTML = pendiente ? "Justificacion pendiente" : (horaEntrada ? "En jornada" : "Jornada abierta");
 			if (estadoVisual) { estadoVisual.title = horaEntrada ? "Entrada registrada " + horaEntrada : ""; }
 		}
-		return;
-	}
-
-	if (estado === "cerrada") {
+	} else if (estado === "cerrada") {
 		if (boton) {
 			boton.value = "Marcar entrada";
 			boton.title = "Registrar entrada de la jornada";
+			boton.setAttribute("aria-busy", "false");
 		}
-		var textoCerrado = asistenciaUsuarioTieneEntradaHoy ? "Salida registrada" : "Sin entrada registrada";
+		var textoCerrado = pendiente ? "Justificacion pendiente" : (asistenciaUsuarioTieneEntradaHoy ? "Salida registrada" : "Sin entrada registrada");
 		var tituloCerrado = "";
 		if (detalle && typeof detalle == "object") {
-			textoCerrado = detalle.estado || textoCerrado;
+			textoCerrado = pendiente ? "Justificacion pendiente" : (detalle.estado || textoCerrado);
 			tituloCerrado = detalle.ultima_marcacion || detalle.detalle || "";
 		}
 		if (estadoVisual) { estadoVisual.title = tituloCerrado; }
 		if (textoEstado) textoEstado.innerHTML = textoCerrado;
-		return;
-	}
-
-	if (estado === "procesando") {
-		if (textoEstado) textoEstado.innerHTML = detalle || "Procesando";
-		return;
-	}
-
-	if (estado === "error") {
+	} else if (estado === "registrando-entrada" || estado === "registrando-salida" || estado === "verificando" || estado === "procesando") {
+		if (boton) {
+			boton.value = estado === "registrando-salida" ? "Registrando salida..." : (estado === "registrando-entrada" ? "Registrando entrada..." : boton.value);
+			boton.setAttribute("aria-busy", "true");
+		}
+		if (textoEstado) textoEstado.innerHTML = detalle || (estado === "verificando" ? "Verificando jornada" : "Procesando");
+	} else if (estado === "error") {
 		if (textoEstado) textoEstado.innerHTML = detalle || "No verificado";
 	}
+
+	if (typeof actualizarProgresoJornadaTopbarUsuario == "function") {
+		setTimeout(actualizarProgresoJornadaTopbarUsuario, 0);
+	}
+	if (typeof evaluarRecordatorioEntradaPendiente == "function") {
+		setTimeout(evaluarRecordatorioEntradaPendiente, 80);
+	}
+}
+
+function mostrarConfirmacionBotonAsistencia(tipo, hora, alFinalizar) {
+	var boton = document.getElementById("btnRegistrarAsistencia");
+	if (!boton) {
+		if (typeof alFinalizar === "function") alFinalizar();
+		return;
+	}
+	if (asistenciaUsuarioConfirmacionTimer) {
+		clearTimeout(asistenciaUsuarioConfirmacionTimer);
+	}
+	boton.disabled = true;
+	boton.setAttribute("aria-busy", "false");
+	boton.classList.add("perfil-widget__btn--confirmado");
+	boton.value = tipo === "entrada" ? "\u2713 Entrada registrada" : "\u2713 Salida registrada";
+	boton.title = (tipo === "entrada" ? "Entrada registrada " : "Salida registrada ") + normalizarHoraAsistencia(hora);
+	asistenciaUsuarioConfirmacionTimer = setTimeout(function () {
+		boton.classList.remove("perfil-widget__btn--confirmado");
+		boton.disabled = false;
+		if (typeof alFinalizar === "function") alFinalizar();
+	}, 850);
+}
+
+function notificarCambioAsistenciaOtrasPestanas() {
+	try {
+		localStorage.setItem("clinidentAsistenciaCambio_" + String(userid || "0"), String(Date.now()));
+	} catch (error) {
+	}
+}
+
+if (window.addEventListener) {
+	window.addEventListener("storage", function (evento) {
+		if (evento && evento.key === "clinidentAsistenciaCambio_" + String(userid || "0") && !asistenciaUsuarioSolicitudEnCurso) {
+			obtenerAsistenciaUsuario({ silencioso: true });
+		}
+	});
+	document.addEventListener("visibilitychange", function () {
+		if (!document.hidden && asistenciaUsuarioVerificada && !asistenciaUsuarioSolicitudEnCurso) {
+			obtenerAsistenciaUsuario({ silencioso: true });
+		}
+	});
 }
 
 function mostrarJustificacionAsistencia(tipo, datos) {
@@ -113,6 +160,8 @@ function mostrarJustificacionAsistencia(tipo, datos) {
 	var justificacion = document.getElementById('inptJustificacionJustificacionAsistencia');
 
 	if (!divJustificacion) return;
+	cod_asistenciaJustificacion = datos && datos.cod_asistencia ? String(datos.cod_asistencia) : String(cod_asistencia || "");
+	asistenciaUsuarioJustificacionPendiente = tipo;
 
 	divJustificacion.style.display = "";
 	if (nombreUsuario) nombreUsuario.value = document.getElementById('nombrePerfilUsuario').innerHTML;
@@ -154,138 +203,121 @@ function mostrarJustificacionAsistencia(tipo, datos) {
 }
 
 function registrarAsistencia() {
-    // Obtiene la hora actual
-    const fechaActual = new Date();
-    const hora= fechaActual.toLocaleTimeString('es-PY', { hour12: false });
-	
-	// Deshabilita temporalmente el boton para marcar asistencia
-	document.getElementById("btnRegistrarAsistencia").disabled = true;
-	if (cod_asistencia === "" && typeof pausarRecordatorioEntradaPendienteMarcacion == "function") {
+	if (asistenciaUsuarioSolicitudEnCurso) {
+		return;
+	}
+	var esEntrada = cod_asistencia === "";
+	var asistenciaSolicitada = cod_asistencia;
+	var boton = document.getElementById("btnRegistrarAsistencia");
+	asistenciaUsuarioSolicitudEnCurso = true;
+	if (boton) boton.disabled = true;
+	if (esEntrada && typeof pausarRecordatorioEntradaPendienteMarcacion == "function") {
 		pausarRecordatorioEntradaPendienteMarcacion();
 	}
-	actualizarEstadoVisualAsistencia("procesando", cod_asistencia === "" ? "Registrando entrada" : "Registrando salida");
+	actualizarEstadoVisualAsistencia(esEntrada ? "registrando-entrada" : "registrando-salida", esEntrada ? "Registrando entrada" : "Registrando salida");
 
-    obtener_datos_user()
-	var datos = new FormData();
-	datos.append("useru", userid)
-	datos.append("passu", passuser)
-	datos.append("navegador", navegador)
-	
-    if (cod_asistencia === "") {
-        // Registrar entrada
-        datos.append("accion", "nuevo");
-    } else {
-        // Registrar salida
-        datos.append("accion", "registrarSalida");
-		datos.append("cod_local", cod_localFKUSer);
-        datos.append("cod_asistencia", cod_asistencia);
-    }
+	obtener_datos_user();
+	var formulario = new FormData();
+	formulario.append("useru", userid);
+	formulario.append("passu", passuser);
+	formulario.append("navegador", navegador);
+	formulario.append("accion", esEntrada ? "nuevo" : "registrarSalida");
+	if (!esEntrada) {
+		formulario.append("cod_local", cod_localFKUSer);
+		formulario.append("cod_asistencia", asistenciaSolicitada);
+	}
 
-	verCerrarEfectoCargando("1")
-    var OpAjax = $.ajax({
-		data: datos,
+	$.ajax({
+		data: formulario,
 		url: "/GoodVentaAsisCap/php_system/abmAsistencia.php",
 		type: "post",
 		cache: false,
 		contentType: false,
 		processData: false,
-		 xhr: function () {
-        var xhr = new window.XMLHttpRequest();
-        //Uload progress
-        xhr.upload.addEventListener("progress" ,function (evt) {
-         var kb=((evt.loaded*1)/1000).toFixed(1)
-		
-		 if(kb=="0.0"){
-			kb=0.1;
-		}
-                     
-        }, false);
- //Download progress
-		xhr.addEventListener("progress", function (evt) {
-        var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-			kb=0.1;
-		}
-                    
-        }, false);
-        return xhr;
-    },
-		error: function (jqXHR, textstatus, errorThrowm) {
-	        verCerrarEfectoCargando("");
-            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+		error: function (jqXHR, textstatus) {
+			asistenciaUsuarioSolicitudEnCurso = false;
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
 			ver_vetana_informativa("Error de conexion al registrar asistencia");
 			actualizarEstadoVisualAsistencia("error", "No se registro");
-			if (typeof liberarRecordatorioEntradaPendienteMarcacion == "function") {
-				liberarRecordatorioEntradaPendienteMarcacion();
-			}
-			document.getElementById("btnRegistrarAsistencia").disabled = false;
+			if (boton) boton.disabled = false;
+			if (typeof liberarRecordatorioEntradaPendienteMarcacion == "function") liberarRecordatorioEntradaPendienteMarcacion();
+			obtenerAsistenciaUsuario({ silencioso: true });
 		},
 		success: function (responseText) {
-			Respuesta = responseText;
-			console.log(Respuesta)
+			asistenciaUsuarioSolicitudEnCurso = false;
 			try {
-				var datos = $.parseJSON(Respuesta);
-				Respuesta = datos["1"];
-				console.log(datos);
-				if (Respuesta == "exito") {
-					// Se evalua si es entrada y si esta en hora para pedir justificacion
-					if (!cod_asistencia) {
-						if (datos['llegada_tardia'] == 1) {
-							cod_asistencia= datos['cod_asistencia'];
-							asistenciaUsuarioVerificada = true;
-							asistenciaUsuarioTieneEntradaHoy = true;
-							asistenciaUsuarioRegistrosHoy = [{
-								cod_asistencia: datos['cod_asistencia'],
-								fecha: formatearFechaLocalAsistencia(new Date()),
-								hora_entrada: datos['hora_entrada'],
-								hora_salida: ""
-							}];
-							actualizarEstadoVisualAsistencia("abierta", datos['hora_entrada']);
-							mostrarJustificacionAsistencia('entrada_tardia', datos);
-						} else {
-							//obtenerAsistenciaUsuario();
-							location.reload();
-							document.getElementById("btnRegistrarAsistencia").disabled = false;
-						}
-					} else {
-						if (datos['ip_valida'] == 1) {
-							//obtenerAsistenciaUsuario();
-							location.reload();
-							document.getElementById("btnRegistrarAsistencia").disabled = false;
-						} else {
-							actualizarEstadoVisualAsistencia("procesando", "Justificar salida");
-							mostrarJustificacionAsistencia('salida_ubicacion', datos);
-						}
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] !== "exito") {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo registrar la marcacion.");
+					if (boton) boton.disabled = false;
+					if (typeof liberarRecordatorioEntradaPendienteMarcacion == "function") liberarRecordatorioEntradaPendienteMarcacion();
+					obtenerAsistenciaUsuario({ silencioso: true });
+					return;
+				}
+
+				asistenciaUsuarioVerificada = true;
+				if (esEntrada) {
+					cod_asistencia = String(respuesta.cod_asistencia || "");
+					asistenciaUsuarioTieneEntradaHoy = true;
+					asistenciaUsuarioJustificacionPendiente = respuesta.justificacion_pendiente == 1 ? "entrada_tardia" : "";
+					var registroEntrada = {
+						cod_asistencia: cod_asistencia,
+						fecha: respuesta.fecha || (formatearFechaLocalAsistencia(new Date()) + " " + respuesta.hora_entrada),
+						hora_entrada: respuesta.hora_entrada,
+						hora_salida: "",
+						fecha_salida: ""
+					};
+					asistenciaUsuarioRegistrosHoy.unshift(registroEntrada);
+					actualizarEstadoVisualAsistencia("abierta", {
+						hora_entrada: respuesta.hora_entrada,
+						justificacion_pendiente: asistenciaUsuarioJustificacionPendiente !== ""
+					});
+					mostrarConfirmacionBotonAsistencia("entrada", respuesta.hora_entrada, function () {
+						actualizarEstadoVisualAsistencia("abierta", {
+							hora_entrada: respuesta.hora_entrada,
+							justificacion_pendiente: asistenciaUsuarioJustificacionPendiente !== ""
+						});
+					});
+					if (asistenciaUsuarioJustificacionPendiente !== "") {
+						mostrarJustificacionAsistencia("entrada_tardia", respuesta);
 					}
 				} else {
-					let mensaje= datos["2"];
-					mensaje += (datos["3"] !== undefined) ? "<br><br>"+datos["3"] : "";
-					ver_vetana_informativa(mensaje);
-					if (Respuesta == 'red') {
-						if (typeof liberarRecordatorioEntradaPendienteMarcacion == "function") {
-							liberarRecordatorioEntradaPendienteMarcacion();
+					var asistenciaCerrada = String(respuesta.cod_asistencia || asistenciaSolicitada);
+					for (var i = 0; i < asistenciaUsuarioRegistrosHoy.length; i++) {
+						if (String(asistenciaUsuarioRegistrosHoy[i].cod_asistencia || "") === asistenciaCerrada) {
+							asistenciaUsuarioRegistrosHoy[i].hora_salida = respuesta.hora_salida || "";
+							asistenciaUsuarioRegistrosHoy[i].fecha_salida = respuesta.fecha_salida || "";
 						}
-						obtenerAsistenciaUsuario();
-					} else {
-						actualizarEstadoVisualAsistencia("error", "No se registro");
-						if (typeof liberarRecordatorioEntradaPendienteMarcacion == "function") {
-							liberarRecordatorioEntradaPendienteMarcacion();
-						}
-						document.getElementById("btnRegistrarAsistencia").disabled = false;
+					}
+					cod_asistencia = "";
+					cod_asistenciaJustificacion = respuesta.justificacion_pendiente == 1 ? asistenciaCerrada : "";
+					asistenciaUsuarioJustificacionPendiente = respuesta.justificacion_pendiente == 1 ? "salida_ubicacion" : "";
+					actualizarEstadoVisualAsistencia("cerrada", {
+						estado: asistenciaUsuarioJustificacionPendiente !== "" ? "Justificacion pendiente" : "Salida registrada",
+						ultima_marcacion: "Salida " + normalizarHoraAsistencia(respuesta.hora_salida),
+						justificacion_pendiente: asistenciaUsuarioJustificacionPendiente !== ""
+					});
+					mostrarConfirmacionBotonAsistencia("salida", respuesta.hora_salida, function () {
+						actualizarEstadoVisualAsistencia("cerrada", {
+							estado: asistenciaUsuarioJustificacionPendiente !== "" ? "Justificacion pendiente" : "Salida registrada",
+							ultima_marcacion: "Salida " + normalizarHoraAsistencia(respuesta.hora_salida),
+							justificacion_pendiente: asistenciaUsuarioJustificacionPendiente !== ""
+						});
+					});
+					if (asistenciaUsuarioJustificacionPendiente !== "") {
+						mostrarJustificacionAsistencia("salida_ubicacion", respuesta);
 					}
 				}
+				notificarCambioAsistenciaOtrasPestanas();
+				if (typeof liberarRecordatorioEntradaPendienteMarcacion == "function") liberarRecordatorioEntradaPendienteMarcacion();
+				setTimeout(function () { obtenerAsistenciaUsuario({ silencioso: true }); }, 1100);
 			} catch (error) {
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-                var titulo="Error: "+error+" \r\n Consola: "+responseText
-				GuardarArchivosLog(titulo);
+				if (boton) boton.disabled = false;
+				if (typeof liberarRecordatorioEntradaPendienteMarcacion == "function") liberarRecordatorioEntradaPendienteMarcacion();
 				actualizarEstadoVisualAsistencia("error", "Error de estado");
-				if (typeof liberarRecordatorioEntradaPendienteMarcacion == "function") {
-					liberarRecordatorioEntradaPendienteMarcacion();
-				}
-				document.getElementById("btnRegistrarAsistencia").disabled = false;
-			} finally {
-                verCerrarEfectoCargando("");
-            }
+				GuardarArchivosLog("Error: " + error + " \r\n Consola: " + responseText);
+				obtenerAsistenciaUsuario({ silencioso: true });
+			}
 		}
 	});
 }
@@ -304,7 +336,7 @@ function justificarAsistencia() {
 	datos.append("navegador", navegador)
 	datos.append("accion", "registrarJustificacion");
 	datos.append("justificacion", inptJustificacionJustificacionAsistencia);
-	datos.append("cod_asistencia", cod_asistencia);
+	datos.append("cod_asistencia", cod_asistenciaJustificacion || cod_asistencia);
 
 	verCerrarEfectoCargando("1")
     var OpAjax = $.ajax({
@@ -349,11 +381,13 @@ function justificarAsistencia() {
 				Respuesta = datos["1"];
 				console.log(datos);
 				if (Respuesta == "exito") {
-					//obtenerAsistenciaUsuario();
-					ver_vetana_informativa("Datos guardados correctamente");
-					setTimeout(() => {
-						location.reload();
-					}, 1000);
+					asistenciaUsuarioJustificacionPendiente = "";
+					cod_asistenciaJustificacion = "";
+					var modalJustificacion=document.getElementById("divJustificacionAsistencia");
+					if(modalJustificacion) modalJustificacion.style.display="none";
+					ver_vetana_informativa("Justificacion guardada correctamente");
+					notificarCambioAsistenciaOtrasPestanas();
+					obtenerAsistenciaUsuario({ silencioso: true });
 				} else {
 					let mensaje= datos["2"];
 					mensaje += (datos["3"] !== undefined) ? "<br><br>"+datos["3"] : "";
@@ -790,116 +824,92 @@ function obtenermasVistaInformeAsistencia() {
 	});
 }
 
-function obtenerAsistenciaUsuario() {
-	// Bloquea el boton para evitar multiples marcas
-	document.getElementById("btnRegistrarAsistencia").disabled = true;
-	asistenciaUsuarioVerificada = false;
-	asistenciaUsuarioTieneEntradaHoy = false;
-	asistenciaUsuarioRegistrosHoy = [];
-	asistenciaUsuarioUltimoEstadoReal = null;
-	actualizarEstadoVisualAsistencia("procesando", "Verificando jornada");
-	let fechaActual= new Date();
-	
-	obtener_datos_user()
-	let datos = new FormData();
-	datos.append("useru", userid)
-	datos.append("passu", passuser)
-	datos.append("navegador", navegador)
-	datos.append("accion", "buscar");
-	datos.append("cod_usuario", userid);
-	fechaActual = formatearFechaLocalAsistencia(fechaActual);
-	datos.append("fecha_desde", fechaActual);
-	datos.append("fecha_hasta", fechaActual);
-	datos.append("limite", 20);
+function obtenerAsistenciaUsuario(opciones) {
+	opciones = opciones || {};
+	var silencioso = opciones.silencioso === true;
+	if (asistenciaUsuarioSolicitudEnCurso) return;
+	var boton = document.getElementById("btnRegistrarAsistencia");
+	var fechaActual = formatearFechaLocalAsistencia(new Date());
+	if (!silencioso) {
+		if (boton) boton.disabled = true;
+		asistenciaUsuarioVerificada = false;
+		actualizarEstadoVisualAsistencia("verificando", "Verificando jornada");
+	}
 
-	verCerrarEfectoCargando("1")
-    var OpAjax = $.ajax({
-		data: datos,
+	obtener_datos_user();
+	var formulario = new FormData();
+	formulario.append("useru", userid);
+	formulario.append("passu", passuser);
+	formulario.append("navegador", navegador);
+	formulario.append("accion", "buscarEstadoUsuario");
+
+	$.ajax({
+		data: formulario,
 		url: "/GoodVentaAsisCap/php_system/abmAsistencia.php",
 		type: "post",
 		cache: false,
 		contentType: false,
 		processData: false,
-		 xhr: function () {
-        var xhr = new window.XMLHttpRequest();
-        //Uload progress
-        xhr.upload.addEventListener("progress" ,function (evt) {
-         var kb=((evt.loaded*1)/1000).toFixed(1)
-		
-		 if(kb=="0.0"){
-			kb=0.1;
-		}
-                     
-        }, false);
- //Download progress
-		xhr.addEventListener("progress", function (evt) {
-        var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-			kb=0.1;
-		}
-                    
-        }, false);
-        return xhr;
-    },
-		error: function (jqXHR, textstatus, errorThrowm) {
-	        verCerrarEfectoCargando("");
-            manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
-            ver_vetana_informativa("Error de conexion al registrar asistencia");
-			actualizarEstadoVisualAsistencia("error", "No verificado");
-			document.getElementById("btnRegistrarAsistencia").disabled = false;
+		error: function (jqXHR, textstatus) {
+			if (!silencioso) {
+				manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+				actualizarEstadoVisualAsistencia("error", "No verificado");
+				if (boton) boton.disabled = false;
+			}
 		},
 		success: function (responseText) {
-			Respuesta = responseText;
-			console.log(Respuesta)
 			try {
-				var datos = $.parseJSON(Respuesta);
-				Respuesta = datos["1"];
-				if (Respuesta == "exito") {
-					let registros= Array.isArray(datos["registros"]) ? datos["registros"] : [];
-					asistenciaUsuarioRegistrosHoy = registros;
-					asistenciaUsuarioUltimoEstadoReal = (typeof calcularAvanceRealJornada == "function")
-						? calcularAvanceRealJornada(fechaActual, asistenciaUsuarioRegistrosHoy, (typeof obtenerJornadaProgramadaHoyTopbarUsuario == "function" ? obtenerJornadaProgramadaHoyTopbarUsuario() : null), new Date())
-						: null;
-					tablaRegistros= document.getElementById("tableRegistroEntrada");
-					document.getElementById("btnRegistrarAsistencia").disabled = false;
-					asistenciaUsuarioVerificada = true;
-					asistenciaUsuarioTieneEntradaHoy = false;
-					var registroAbierto = null;
-					for (var i = 0; i < registros.length; i++) {
-						if (registros[i]['hora_entrada']) {
-							asistenciaUsuarioTieneEntradaHoy = true;
-						}
-						if (!registroAbierto && registros[i]['hora_entrada'] && !registros[i]['hora_salida']) {
-							registroAbierto = registros[i];
-						}
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] !== "exito") throw new Error("Estado de asistencia no disponible");
+				var registros = Array.isArray(respuesta.registros) ? respuesta.registros : [];
+				var registroAbierto = respuesta.registro_abierto && respuesta.registro_abierto.cod_asistencia ? respuesta.registro_abierto : null;
+				asistenciaUsuarioRegistrosHoy = registros;
+				asistenciaUsuarioVerificada = true;
+				asistenciaUsuarioTieneEntradaHoy = false;
+				for (var i = 0; i < registros.length; i++) {
+					if (registros[i].hora_entrada && String(registros[i].fecha || "").substring(0, 10) === fechaActual) {
+						asistenciaUsuarioTieneEntradaHoy = true;
 					}
-					if (registroAbierto) {
-						cod_asistencia= registroAbierto['cod_asistencia'];
-						actualizarEstadoVisualAsistencia("abierta", registroAbierto['hora_entrada']);
-						tablaRegistros.style.display= '';
-						let fila= $(tablaRegistros).children('tbody');
-						fila= $(fila).children('tr')[0];
-						fila.innerHTML = "<td>"+registroAbierto['fecha'].substring(0, 10)+"</td>"
-      						+"<td>"+registroAbierto['hora_entrada']+"</td>";
-					} else {
-						cod_asistencia= "";
-						tablaRegistros.style.display= 'none';
-						actualizarEstadoVisualAsistencia("cerrada", asistenciaUsuarioUltimoEstadoReal);
+				}
+				asistenciaUsuarioUltimoEstadoReal = (typeof calcularAvanceRealJornada == "function")
+					? calcularAvanceRealJornada(fechaActual, registros, (typeof obtenerJornadaProgramadaHoyTopbarUsuario == "function" ? obtenerJornadaProgramadaHoyTopbarUsuario() : null), new Date())
+					: null;
+				asistenciaUsuarioJustificacionPendiente = respuesta.justificacion_pendiente || "";
+				var codJustificacionPendiente = String(respuesta.cod_asistencia_justificacion || "");
+				var tablaRegistros = document.getElementById("tableRegistroEntrada");
+				if (registroAbierto) {
+					cod_asistencia = String(registroAbierto.cod_asistencia);
+					cod_asistenciaJustificacion = asistenciaUsuarioJustificacionPendiente !== "" ? codJustificacionPendiente : "";
+					actualizarEstadoVisualAsistencia("abierta", {
+						hora_entrada: registroAbierto.hora_entrada,
+						justificacion_pendiente: asistenciaUsuarioJustificacionPendiente !== ""
+					});
+					if (tablaRegistros) {
+						tablaRegistros.style.display = "";
+						var fila = $(tablaRegistros).children("tbody").children("tr")[0];
+						if (fila) fila.innerHTML = "<td>" + String(registroAbierto.fecha || "").substring(0, 10) + "</td><td>" + registroAbierto.hora_entrada + "</td>";
 					}
 				} else {
+					cod_asistencia = "";
+					cod_asistenciaJustificacion = asistenciaUsuarioJustificacionPendiente !== "" ? codJustificacionPendiente : "";
+					if (tablaRegistros) tablaRegistros.style.display = "none";
+					var estadoCerrado = asistenciaUsuarioUltimoEstadoReal || {};
+					if (registros[0] && registros[0].hora_salida) {
+						estadoCerrado.estado = "Salida registrada";
+						estadoCerrado.ultima_marcacion = "Salida " + normalizarHoraAsistencia(registros[0].hora_salida);
+					}
+					estadoCerrado.justificacion_pendiente = asistenciaUsuarioJustificacionPendiente !== "";
+					actualizarEstadoVisualAsistencia("cerrada", estadoCerrado);
+				}
+				if (boton) boton.disabled = false;
+			} catch (error) {
+				if (!silencioso) {
+					GuardarArchivosLog("Error: " + error + " \r\n Consola: " + responseText);
 					asistenciaUsuarioVerificada = false;
 					actualizarEstadoVisualAsistencia("error", "No verificado");
-					document.getElementById("btnRegistrarAsistencia").disabled = false;
+					if (boton) boton.disabled = false;
 				}
-			} catch (error) {
-                ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-                var titulo="Error: "+error+" \r\n Consola: "+responseText
-				GuardarArchivosLog(titulo)
-				asistenciaUsuarioVerificada = false;
-				actualizarEstadoVisualAsistencia("error", "No verificado");
-			} finally {
-                verCerrarEfectoCargando("");
-            }
+			}
 		}
 	});
 }

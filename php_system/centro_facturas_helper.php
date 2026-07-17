@@ -44,6 +44,107 @@ function centroFacturaColumnaExiste($mysqli, $tabla, $columna)
     return $cache[$clave];
 }
 
+function centroFacturaPlazoTransitoDisponible($mysqli, $tabla)
+{
+    return centroFacturaColumnaExiste($mysqli, $tabla, 'dias_plazo_transito')
+        && centroFacturaColumnaExiste($mysqli, $tabla, 'fecha_limite_recepcion')
+        && centroFacturaColumnaExiste($mysqli, $tabla, 'cod_usuario_plazo_transitoFK')
+        && centroFacturaColumnaExiste($mysqli, $tabla, 'fecha_asignacion_plazo');
+}
+
+function centroFacturaNormalizarDiasPlazoTransito($dias)
+{
+    $dias = intval($dias);
+    if ($dias < 1 || $dias > 10) {
+        throw new Exception('El plazo de entrega debe ser de 1 a 10 dias.');
+    }
+    return $dias;
+}
+
+function centroFacturaCalcularFechaLimiteTransito($fechaInicio, $dias)
+{
+    $dias = centroFacturaNormalizarDiasPlazoTransito($dias);
+    try {
+        $inicio = trim((string)$fechaInicio) !== '' ? new DateTime((string)$fechaInicio) : new DateTime();
+    } catch (Exception $e) {
+        $inicio = new DateTime();
+    }
+    $inicio->modify('+'.$dias.' days');
+    return $inicio->format('Y-m-d H:i:s');
+}
+
+function centroFacturaDecorarPlazoTransito($fila)
+{
+    $fila = (array)$fila;
+    $estado = isset($fila['estado']) ? (string)$fila['estado'] : '';
+    $fechaLimiteTexto = isset($fila['fecha_limite_recepcion']) ? trim((string)$fila['fecha_limite_recepcion']) : '';
+    $diasConfigurados = isset($fila['dias_plazo_transito']) ? intval($fila['dias_plazo_transito']) : 0;
+    $plazo = array(
+        'estado' => 'sin_plazo',
+        'texto' => $estado === 'borrador' ? 'Se define al enviar' : 'Sin plazo historico',
+        'detalle' => '',
+        'clase' => 'muted',
+        'dias_restantes' => null,
+        'dias_configurados' => $diasConfigurados,
+        'fecha_limite' => $fechaLimiteTexto
+    );
+    if ($estado === 'anulado') {
+        $plazo['estado'] = 'anulado';
+        $plazo['texto'] = 'Anulado';
+        $fila['plazo_transito'] = $plazo;
+        return $fila;
+    }
+    if ($fechaLimiteTexto === '') {
+        $fila['plazo_transito'] = $plazo;
+        return $fila;
+    }
+    try {
+        $fechaLimite = new DateTime($fechaLimiteTexto);
+    } catch (Exception $e) {
+        $fila['plazo_transito'] = $plazo;
+        return $fila;
+    }
+    $plazo['detalle'] = 'Limite: '.$fechaLimite->format('d/m/Y H:i');
+    $fechaRecepcionTexto = isset($fila['fecha_recepcion']) ? trim((string)$fila['fecha_recepcion']) : '';
+    if ($estado === 'recibido' && $fechaRecepcionTexto !== '') {
+        try {
+            $fechaRecepcion = new DateTime($fechaRecepcionTexto);
+            $enPlazo = $fechaRecepcion->getTimestamp() <= $fechaLimite->getTimestamp();
+            $plazo['estado'] = $enPlazo ? 'recibido_en_plazo' : 'recibido_fuera_plazo';
+            $plazo['texto'] = $enPlazo ? 'Recibido en plazo' : 'Recibido fuera de plazo';
+            $plazo['clase'] = $enPlazo ? 'success' : 'danger';
+            $plazo['detalle'] .= ' · Recibido: '.$fechaRecepcion->format('d/m/Y H:i');
+            $fila['plazo_transito'] = $plazo;
+            return $fila;
+        } catch (Exception $e) {
+            // Si la fecha historica es invalida, se conserva el calculo contra el limite.
+        }
+    }
+    $hoy = new DateTime(date('Y-m-d'));
+    $diaLimite = new DateTime($fechaLimite->format('Y-m-d'));
+    $diasRestantes = intval($hoy->diff($diaLimite)->format('%r%a'));
+    $plazo['dias_restantes'] = $diasRestantes;
+    if ($diasRestantes > 1) {
+        $plazo['estado'] = 'en_plazo';
+        $plazo['texto'] = 'Faltan '.$diasRestantes.' dias';
+        $plazo['clase'] = 'info';
+    } elseif ($diasRestantes === 1) {
+        $plazo['estado'] = 'proximo_vencer';
+        $plazo['texto'] = 'Falta 1 dia';
+        $plazo['clase'] = 'warning';
+    } elseif ($diasRestantes === 0) {
+        $plazo['estado'] = 'vence_hoy';
+        $plazo['texto'] = 'Vence hoy';
+        $plazo['clase'] = 'warning';
+    } else {
+        $plazo['estado'] = 'vencido';
+        $plazo['texto'] = 'Vencido hace '.abs($diasRestantes).' '.(abs($diasRestantes) === 1 ? 'dia' : 'dias');
+        $plazo['clase'] = 'danger';
+    }
+    $fila['plazo_transito'] = $plazo;
+    return $fila;
+}
+
 function centroFacturaEstructuraDisponible($mysqli = null)
 {
     $cerrar = false;
@@ -390,6 +491,44 @@ function centroFacturaDecorarFila($fila)
         && in_array($fila['estado_original'], array('en_proceso','enviado_central'), true)
         && $fila['estado_registro'] === 'activo'
         && !in_array($fila['estado_validacion'], array('rechazada','anulada'), true)) ? 1 : 0;
+    $tieneDocumento = !empty($fila['id_factura']);
+    $estadoOriginal = isset($fila['estado_original']) ? (string)$fila['estado_original'] : 'en_proceso';
+    $responsable = '';
+    $rol = 'Responsable actual';
+    if (!$tieneDocumento) {
+        $responsable = isset($fila['responsable_gasto_nombre']) ? (string)$fila['responsable_gasto_nombre'] : '';
+        $rol = 'Responsable del gasto';
+    } elseif ($estadoOriginal === 'recibido') {
+        $responsable = isset($fila['usuario_recepcion_nombre']) ? (string)$fila['usuario_recepcion_nombre'] : '';
+        $rol = 'Custodia en destino';
+    } elseif ($estadoOriginal === 'observado') {
+        $responsable = isset($fila['responsable_observacion_nombre']) ? (string)$fila['responsable_observacion_nombre'] : '';
+        $rol = 'Responsable de regularización';
+    } elseif ($estadoOriginal === 'enviado_central') {
+        $responsable = isset($fila['responsable_envio_nombre']) ? (string)$fila['responsable_envio_nombre'] : '';
+        $rol = 'Custodia durante el traslado';
+    } elseif ($estadoOriginal === 'no_requiere_original') {
+        $responsable = isset($fila['ultima_accion_usuario']) ? (string)$fila['ultima_accion_usuario'] : '';
+        $rol = 'Responsable documental';
+    } else {
+        $responsable = isset($fila['responsable_envio_nombre']) ? (string)$fila['responsable_envio_nombre'] : '';
+        $rol = 'Responsable de preparación';
+    }
+    if ($responsable === '' && $tieneDocumento && !empty($fila['ultima_accion_usuario'])) {
+        $responsable = (string)$fila['ultima_accion_usuario'];
+    }
+    $fila['responsable_actual'] = $responsable !== '' ? $responsable : 'Sin asignar';
+    $fila['responsable_actual_rol'] = $rol;
+    if (empty($fila['ultima_accion_usuario']) && !empty($fila['responsable_gasto_nombre'])) {
+        $fila['ultima_accion_usuario'] = $fila['responsable_gasto_nombre'];
+    }
+    if (empty($fila['ultima_accion_fecha'])) {
+        $fila['ultima_accion_fecha'] = !empty($fila['fecha_actualizacion']) ? $fila['fecha_actualizacion']
+            : (!empty($fila['fecha_creacion']) ? $fila['fecha_creacion'] : (!empty($fila['fecha_origen']) ? $fila['fecha_origen'] : null));
+    }
+    if (empty($fila['ultima_accion_tipo'])) {
+        $fila['ultima_accion_tipo'] = $tieneDocumento ? 'actualizacion_documental' : 'registro_gasto';
+    }
     return $fila;
 }
 
@@ -404,6 +543,9 @@ function centroFacturaBaseSelect()
             CASE WHEN cf.tipo_documento='recibo' THEN 'Sin contraparte requerida' ELSE 'Pendiente de completar' END) AS contraparte_mostrar,
         presp.nombre_persona AS responsable_envio_nombre,
         prec.nombre_persona AS usuario_recepcion_nombre,
+        pob.nombre_persona AS responsable_observacion_nombre,
+        pact.nombre_persona AS ultima_accion_usuario,
+        COALESCE(cf.fecha_actualizacion,cf.fecha_creacion) AS ultima_accion_fecha,
         g.estado AS gasto_estado,g.fecha AS gasto_fecha,g.fecha_autoriz AS gasto_fecha_autoriz,g.motivo AS gasto_motivo,
         mie.descripcion AS concepto_contable,
         cp.estado AS compra_estado,cp.num_comprobante AS compra_comprobante,
@@ -441,6 +583,8 @@ function centroFacturaBaseSelect()
       LEFT JOIN persona presp ON presp.cod_persona=uresp.cod_usuario
       LEFT JOIN usuario urec ON urec.cod_usuario=cf.cod_usuario_recepcionFK
       LEFT JOIN persona prec ON prec.cod_persona=urec.cod_usuario
+      LEFT JOIN persona pob ON pob.cod_persona=cf.cod_responsable_observacionFK
+      LEFT JOIN persona pact ON pact.cod_persona=COALESCE(cf.cod_usuario_actualizacionFK,cf.cod_usuario_registroFK)
       LEFT JOIN gastos g ON g.idgastos=cf.idgastosFK
       LEFT JOIN motivos_ingreso_egreso mie ON mie.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
       LEFT JOIN compra cp ON cp.cod_compra=cf.cod_compraFK";
@@ -481,7 +625,6 @@ function centroFacturaConstruirConsultaEntrantes($codUsuario, $filtros, $contar 
     $filtrosSimples = array(
         'cod_proveedor' => array('q.cod_proveedorFK','i'),
         'cod_funcionario' => array('q.cod_funcionarioFK','i'),
-        'cod_responsable' => array('q.cod_responsable_envioFK','i'),
         'cod_hilo' => array('q.cod_interConsultaFK','i'),
         'estado_validacion' => array('q.estado_validacion','s'),
         'estado_pago' => array('q.estado_pago','s')
@@ -492,6 +635,14 @@ function centroFacturaConstruirConsultaEntrantes($codUsuario, $filtros, $contar 
             $tipos .= $definicion[1];
             $parametros[] = $definicion[1] === 'i' ? intval($filtros[$clave]) : centroFacturaTextoBaseDatos($filtros[$clave], 40);
         }
+    }
+    if (!empty($filtros['cod_responsable'])) {
+        $externas[] = '(q.cod_responsable_envioFK=? OR q.cod_usuario_recepcionFK=? OR q.cod_responsable_observacionFK=?)';
+        $responsable = intval($filtros['cod_responsable']);
+        $tipos .= 'iii';
+        $parametros[] = $responsable;
+        $parametros[] = $responsable;
+        $parametros[] = $responsable;
     }
     if (!empty($filtros['estado_original'])) {
         $estadoOriginal = centroFacturaTextoBaseDatos($filtros['estado_original'], 40);
@@ -517,6 +668,8 @@ function centroFacturaConstruirConsultaEntrantes($codUsuario, $filtros, $contar 
             $externas[] = "q.estado_original IN ('en_proceso','enviado_central') AND q.fecha_limite_original<CURDATE() AND q.estado_validacion NOT IN ('rechazada','anulada')";
         } elseif ($rapido === 'vence_hoy') {
             $externas[] = "q.estado_original IN ('en_proceso','enviado_central') AND q.fecha_limite_original=CURDATE() AND q.estado_validacion NOT IN ('rechazada','anulada')";
+        } elseif ($rapido === 'vence_manana') {
+            $externas[] = "q.estado_original IN ('en_proceso','enviado_central') AND q.fecha_limite_original=DATE_ADD(CURDATE(),INTERVAL 1 DAY) AND q.estado_validacion NOT IN ('rechazada','anulada')";
         } elseif ($rapido === 'observadas') {
             $externas[] = "q.estado_original='observado'";
         } elseif ($rapido === 'recibidos') {
@@ -597,7 +750,13 @@ function centroFacturaCargarGastosEsperados($mysqli, $codUsuario, $filtros)
         cf.fecha_limite_original,cf.estado_registro,cf.idgastosFK,cf.cod_compraFK,
         cf.fecha_recepcion_fisica,cf.fecha_observacion,cf.posible_duplicado,cf.duplicado_confirmado,
         cf.lote_archivo,cf.carpeta_archivo,cf.caja_archivo,cf.periodo_archivo,cf.ubicacion_fisica,
-        cf.version_registro,cf.cod_responsable_envioFK,
+        cf.version_registro,cf.cod_responsable_envioFK,cf.cod_usuario_recepcionFK,cf.cod_responsable_observacionFK,
+        presp.nombre_persona AS responsable_envio_nombre,prec.nombre_persona AS usuario_recepcion_nombre,
+        pob.nombre_persona AS responsable_observacion_nombre,
+        COALESCE(pact.nombre_persona,pgasto.nombre_persona) AS ultima_accion_usuario,
+        COALESCE(cf.fecha_actualizacion,cf.fecha_creacion,g.fecha_autoriz,CONCAT(g.fecha,' 00:00:00')) AS ultima_accion_fecha,
+        pgasto.nombre_persona AS responsable_gasto_nombre,
+        COALESCE(g.cod_usuarioFK_edit,g.cod_usuario_autoriz,g.cod_usuario) AS responsable_gasto_id,
         g.idgastos AS id_gasto_esperado,g.fecha AS fecha_origen,g.monto AS importe_esperado,
         g.motivo AS gasto_motivo,g.personales AS gasto_contraparte,g.estado AS gasto_estado,
         COALESCE(cf.cod_interConsultaFK,g.cod_interConsultaFK) AS cod_interConsultaFK,
@@ -650,6 +809,11 @@ function centroFacturaCargarGastosEsperados($mysqli, $codUsuario, $filtros)
       INNER JOIN local l ON l.cod_local=g.cod_local
       LEFT JOIN interconsulta ic ON ic.cod_interConsulta=g.cod_interConsultaFK
       LEFT JOIN centro_factura cf ON cf.idgastosFK=g.idgastos AND cf.direccion='entrante' AND cf.estado_registro='activo'
+      LEFT JOIN persona presp ON presp.cod_persona=cf.cod_responsable_envioFK
+      LEFT JOIN persona prec ON prec.cod_persona=cf.cod_usuario_recepcionFK
+      LEFT JOIN persona pob ON pob.cod_persona=cf.cod_responsable_observacionFK
+      LEFT JOIN persona pact ON pact.cod_persona=COALESCE(cf.cod_usuario_actualizacionFK,cf.cod_usuario_registroFK)
+      LEFT JOIN persona pgasto ON pgasto.cod_persona=COALESCE(g.cod_usuarioFK_edit,g.cod_usuario_autoriz,g.cod_usuario)
       WHERE ".implode(' AND ', $condiciones)."
       ORDER BY g.fecha DESC,g.idgastos DESC";
     $stmt = $mysqli->prepare($sql);
@@ -745,6 +909,16 @@ function centroFacturaCoincideFiltrosEsperados($fila, $filtros, $omitirRapido = 
     if (!empty($filtros['cod_funcionario']) && intval($fila['cod_funcionarioFK']) !== intval($filtros['cod_funcionario'])) {
         return false;
     }
+    if (!empty($filtros['cod_responsable'])) {
+        $responsable = intval($filtros['cod_responsable']);
+        $idsResponsables = array(
+            isset($fila['cod_responsable_envioFK']) ? intval($fila['cod_responsable_envioFK']) : 0,
+            isset($fila['cod_usuario_recepcionFK']) ? intval($fila['cod_usuario_recepcionFK']) : 0,
+            isset($fila['cod_responsable_observacionFK']) ? intval($fila['cod_responsable_observacionFK']) : 0,
+            isset($fila['responsable_gasto_id']) ? intval($fila['responsable_gasto_id']) : 0
+        );
+        if (!in_array($responsable, $idsResponsables, true)) return false;
+    }
     if (!empty($filtros['estado_validacion'])) {
         if (empty($fila['id_factura']) || (string)$fila['estado_validacion'] !== (string)$filtros['estado_validacion']) return false;
     }
@@ -774,6 +948,12 @@ function centroFacturaCoincideFiltrosEsperados($fila, $filtros, $omitirRapido = 
         if ($rapido === 'sin_comprobante' && $fila['estado_documental'] !== 'sin_comprobante') return false;
         if ($rapido === 'observadas' && $fila['estado_documental'] !== 'observado') return false;
         if ($rapido === 'recibidos' && $fila['estado_original'] !== 'recibido') return false;
+        if ($rapido === 'pagadas_sin_original' && empty($fila['pagada_sin_original'])) return false;
+        if ($rapido === 'vencidas' && (!isset($fila['estado_original_visual']['codigo']) || $fila['estado_original_visual']['codigo'] !== 'vencido')) return false;
+        if ($rapido === 'vence_hoy' && (!isset($fila['estado_original_visual']['codigo']) || $fila['estado_original_visual']['codigo'] !== 'vence_hoy')) return false;
+        if ($rapido === 'vence_manana' && (!isset($fila['estado_original_visual']['codigo']) || $fila['estado_original_visual']['codigo'] !== 'vence_manana')) return false;
+        if ($rapido === 'pendientes_revision' && !in_array($fila['estado_validacion'], array('pendiente','en_revision'), true)) return false;
+        if ($rapido === 'pendientes_pago' && !in_array($fila['estado_pago'], array('Pendiente','En revision'), true)) return false;
     }
     return true;
 }
@@ -2606,7 +2786,9 @@ function centroFacturaListarEmitidas($codUsuario, $filtros, $limite = 80, $offse
         $parametrosBase[] = intval($filtros['cod_local']);
     }
     $condicionLocal = count($condicionesLocal) ? ' AND '.implode(' AND ', $condicionesLocal) : '';
-    $condicionActiva = empty($filtros['incluir_anuladas'])
+    $mostrarAnuladas = !empty($filtros['incluir_anuladas'])
+        || (!empty($filtros['filtro_rapido']) && $filtros['filtro_rapido'] === 'anuladas');
+    $condicionActiva = !$mostrarAnuladas
         ? " AND LOWER(TRIM(IFNULL(v.estado,''))) NOT IN ('inactivo','anulado') AND LOWER(TRIM(IFNULL(v.anulado,''))) NOT IN ('si','anulado','activo')"
         : '';
     $registros = array();
@@ -2645,7 +2827,7 @@ function centroFacturaListarEmitidas($codUsuario, $filtros, $limite = 80, $offse
         $stmt->close();
     }
 
-    $condicionPagoActivo = empty($filtros['incluir_anuladas'])
+    $condicionPagoActivo = !$mostrarAnuladas
         ? " AND LOWER(TRIM(IFNULL(pg.anulado,''))) NOT IN ('si','anulado','activo')"
         : '';
     $sqlCuotas = "SELECT v.cod_venta,ev.fecha_evento,'cuota' AS tipo_evento,ev.id_pago,ev.recibo_interno,
@@ -2691,6 +2873,15 @@ function centroFacturaListarEmitidas($codUsuario, $filtros, $limite = 80, $offse
         $stmt->close();
     }
     $mysqli->close();
+
+    foreach ($registros as $indice => $fila) {
+        $esCuota = isset($fila['tipo_evento']) && $fila['tipo_evento'] === 'cuota';
+        $registros[$indice]['responsable_actual'] = !empty($fila['usuario_responsable']) ? $fila['usuario_responsable'] : 'Sin asignar';
+        $registros[$indice]['responsable_actual_rol'] = $esCuota ? 'Cobrador del pago' : 'Responsable de la venta';
+        $registros[$indice]['ultima_accion_usuario'] = !empty($fila['usuario_responsable']) ? $fila['usuario_responsable'] : '';
+        $registros[$indice]['ultima_accion_fecha'] = isset($fila['fecha_evento']) ? $fila['fecha_evento'] : null;
+        $registros[$indice]['ultima_accion_tipo'] = $esCuota ? 'cobro_cuota' : 'registro_venta';
+    }
 
     $base = array();
     foreach ($registros as $fila) {
@@ -2763,7 +2954,8 @@ function centroFacturaListarLotes($codUsuario, $filtros, $limite = 80, $offset =
         $parametros[] = $patron;
     }
     $base = "SELECT lo.*,l.Nombre AS nombre_local,pc.nombre_persona AS usuario_creador,
-        pe.nombre_persona AS usuario_entrega,pr.nombre_persona AS usuario_recepcion,
+        pe.nombre_persona AS usuario_entrega,ps.nombre_persona AS usuario_envio,pr.nombre_persona AS usuario_recepcion,
+        pu.nombre_persona AS usuario_ultima_accion,
         SUM(CASE WHEN ld.estado<>'retirada' THEN 1 ELSE 0 END) AS cantidad_facturas,
         SUM(CASE WHEN ld.estado<>'retirada' THEN 1 ELSE 0 END) AS cantidad_documentos,
         SUM(CASE WHEN ld.estado<>'retirada' AND cf.tipo_documento='factura' THEN 1 ELSE 0 END) AS cantidad_facturas_tipo,
@@ -2777,7 +2969,9 @@ function centroFacturaListarLotes($codUsuario, $filtros, $limite = 80, $offset =
       INNER JOIN local l ON l.cod_local=lo.cod_local_origenFK
       LEFT JOIN persona pc ON pc.cod_persona=lo.cod_usuarioFK_create
       LEFT JOIN persona pe ON pe.cod_persona=lo.cod_usuario_entregaFK
+      LEFT JOIN persona ps ON ps.cod_persona=lo.cod_usuario_envioFK
       LEFT JOIN persona pr ON pr.cod_persona=lo.cod_usuario_recepcionFK
+      LEFT JOIN persona pu ON pu.cod_persona=COALESCE(lo.cod_usuarioFK_update,lo.cod_usuarioFK_create)
       LEFT JOIN centro_factura_lote_detalle ld ON ld.id_loteFK=lo.id_lote
       LEFT JOIN centro_factura cf ON cf.id_factura=ld.id_facturaFK
       WHERE ".implode(' AND ', $condiciones)." GROUP BY lo.id_lote";
@@ -2787,6 +2981,22 @@ function centroFacturaListarLotes($codUsuario, $filtros, $limite = 80, $offset =
     $registros = array();
     $resultado = $stmt->get_result();
     while ($fila = $resultado->fetch_assoc()) {
+        $estadoLote = isset($fila['estado']) ? (string)$fila['estado'] : 'borrador';
+        if (in_array($estadoLote, array('recibido','recibido_parcial','observado'), true)) {
+            $fila['responsable_actual'] = !empty($fila['usuario_recepcion']) ? $fila['usuario_recepcion'] : $fila['usuario_entrega'];
+            $fila['responsable_actual_rol'] = 'Custodia en destino';
+        } elseif ($estadoLote === 'anulado') {
+            $fila['responsable_actual'] = !empty($fila['usuario_ultima_accion']) ? $fila['usuario_ultima_accion'] : $fila['usuario_creador'];
+            $fila['responsable_actual_rol'] = 'Responsable del cierre';
+        } else {
+            $fila['responsable_actual'] = !empty($fila['usuario_entrega']) ? $fila['usuario_entrega'] : $fila['usuario_creador'];
+            $fila['responsable_actual_rol'] = $estadoLote === 'enviado' ? 'Custodia durante el traslado' : 'Responsable de preparación';
+        }
+        if (empty($fila['responsable_actual'])) $fila['responsable_actual'] = 'Sin asignar';
+        $fila['ultima_accion_usuario'] = isset($fila['usuario_ultima_accion']) ? $fila['usuario_ultima_accion'] : '';
+        $fila['ultima_accion_fecha'] = !empty($fila['fecha_actualizacion']) ? $fila['fecha_actualizacion'] : $fila['fecha_creacion'];
+        $fila['ultima_accion_tipo'] = 'estado_'.$estadoLote;
+        $fila = centroFacturaDecorarPlazoTransito($fila);
         $registros[] = centroFacturaFilaUtf8($fila);
     }
     $stmt->close();
@@ -2908,23 +3118,40 @@ function centroFacturaObtenerDetalleLote($idLote, $codUsuario)
         return array('ok' => false, 'codigo' => 'NI_LOCAL', 'mensaje' => 'El lote no existe o pertenece a otro local.');
     }
     $stmt = $mysqli->prepare("SELECT lo.*,l.Nombre AS nombre_local,pc.nombre_persona AS usuario_creador,
-        pe.nombre_persona AS usuario_entrega,ps.nombre_persona AS usuario_envio,pr.nombre_persona AS usuario_recepcion
+        pe.nombre_persona AS usuario_entrega,ps.nombre_persona AS usuario_envio,pr.nombre_persona AS usuario_recepcion,
+        pu.nombre_persona AS usuario_ultima_accion
       FROM centro_factura_lote lo INNER JOIN local l ON l.cod_local=lo.cod_local_origenFK
       LEFT JOIN persona pc ON pc.cod_persona=lo.cod_usuarioFK_create
-      LEFT JOIN persona pe ON pe.cod_persona=lo.cod_usuario_entregaFK
-      LEFT JOIN persona ps ON ps.cod_persona=lo.cod_usuario_envioFK
-      LEFT JOIN persona pr ON pr.cod_persona=lo.cod_usuario_recepcionFK
+       LEFT JOIN persona pe ON pe.cod_persona=lo.cod_usuario_entregaFK
+       LEFT JOIN persona ps ON ps.cod_persona=lo.cod_usuario_envioFK
+       LEFT JOIN persona pr ON pr.cod_persona=lo.cod_usuario_recepcionFK
+       LEFT JOIN persona pu ON pu.cod_persona=COALESCE(lo.cod_usuarioFK_update,lo.cod_usuarioFK_create)
       WHERE lo.id_lote=? LIMIT 1");
     $idLote = intval($idLote);
     $stmt->bind_param('i', $idLote);
     $stmt->execute();
     $lote = centroFacturaFilaUtf8($stmt->get_result()->fetch_assoc());
     $stmt->close();
+    $estadoLote = isset($lote['estado']) ? (string)$lote['estado'] : 'borrador';
+    if (in_array($estadoLote, array('recibido','recibido_parcial','observado'), true)) {
+        $lote['responsable_actual'] = !empty($lote['usuario_recepcion']) ? $lote['usuario_recepcion'] : $lote['usuario_entrega'];
+        $lote['responsable_actual_rol'] = 'Custodia en destino';
+    } else {
+        $lote['responsable_actual'] = !empty($lote['usuario_entrega']) ? $lote['usuario_entrega'] : $lote['usuario_creador'];
+        $lote['responsable_actual_rol'] = $estadoLote === 'enviado' ? 'Custodia durante el traslado' : 'Responsable de preparación';
+    }
+    if (empty($lote['responsable_actual'])) $lote['responsable_actual'] = 'Sin asignar';
+    $lote['ultima_accion_usuario'] = isset($lote['usuario_ultima_accion']) ? $lote['usuario_ultima_accion'] : '';
+    $lote['ultima_accion_fecha'] = !empty($lote['fecha_actualizacion']) ? $lote['fecha_actualizacion'] : $lote['fecha_creacion'];
+    $lote['ultima_accion_tipo'] = 'estado_'.$estadoLote;
+    $lote = centroFacturaDecorarPlazoTransito($lote);
     $facturas = array();
     $base = centroFacturaBaseSelect();
     $stmt = $mysqli->prepare("SELECT ld.id_lote_detalle,ld.estado AS estado_detalle_lote,ld.observacion AS observacion_lote,
-        ld.fecha_estado,ld.cod_usuario_estadoFK,q.* FROM centro_factura_lote_detalle ld
+        ld.fecha_estado,ld.cod_usuario_estadoFK,q.*,pde.nombre_persona AS ultima_accion_usuario,
+        ld.fecha_estado AS ultima_accion_fecha,'estado_lote_documento' AS ultima_accion_tipo FROM centro_factura_lote_detalle ld
         INNER JOIN (".$base.") q ON q.id_factura=ld.id_facturaFK
+        LEFT JOIN persona pde ON pde.cod_persona=ld.cod_usuario_estadoFK
         WHERE ld.id_loteFK=? ORDER BY ld.id_lote_detalle");
     $stmt->bind_param('i', $idLote);
     $stmt->execute();
@@ -3021,13 +3248,22 @@ function centroFacturaRetirarFacturaLote($idLote, $idFactura, $motivo, $codUsuar
     }
 }
 
-function centroFacturaEnviarLote($idLote, $codResponsable, $codUsuario)
+function centroFacturaEnviarLote($idLote, $codResponsable, $codUsuario, $diasPlazoTransito = 10)
 {
     if (!centroFacturaTienePermiso($codUsuario, 'GESTIONARLOTESFACTURAS')
         || !centroFacturaTienePermiso($codUsuario, 'ENVIARORIGINALFACTURA')) {
         return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permisos para enviar el lote.');
     }
+    try {
+        $diasPlazoTransito = centroFacturaNormalizarDiasPlazoTransito($diasPlazoTransito);
+    } catch (Exception $e) {
+        return array('ok' => false, 'codigo' => 'datos', 'mensaje' => $e->getMessage());
+    }
     $mysqli = conectar_al_servidor();
+    if (!centroFacturaPlazoTransitoDisponible($mysqli, 'centro_factura_lote')) {
+        $mysqli->close();
+        return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'Falta instalar la actualizacion del plazo de transito antes de enviar el lote.');
+    }
     $mysqli->begin_transaction();
     try {
         $lote = centroFacturaObtenerLoteRaw($mysqli, $idLote, true);
@@ -3050,10 +3286,13 @@ function centroFacturaEnviarLote($idLote, $codResponsable, $codUsuario)
             }
         }
         $ahora = date('Y-m-d H:i:s');
+        $fechaLimite = centroFacturaCalcularFechaLimiteTransito($ahora, $diasPlazoTransito);
         $responsable = intval($codResponsable) > 0 ? intval($codResponsable) : intval($codUsuario);
         $stmt = $mysqli->prepare("UPDATE centro_factura_lote SET estado='enviado',cod_usuario_entregaFK=?,fecha_envio=?,
-            cod_usuario_envioFK=?,cod_usuarioFK_update=?,fecha_actualizacion=? WHERE id_lote=?");
-        $stmt->bind_param('isiisi', $responsable, $ahora, $codUsuario, $codUsuario, $ahora, $idLote);
+            cod_usuario_envioFK=?,cod_usuarioFK_update=?,fecha_actualizacion=?,dias_plazo_transito=?,fecha_limite_recepcion=?,
+            cod_usuario_plazo_transitoFK=?,fecha_asignacion_plazo=? WHERE id_lote=?");
+        $stmt->bind_param('isiisisisi', $responsable, $ahora, $codUsuario, $codUsuario, $ahora, $diasPlazoTransito,
+            $fechaLimite, $codUsuario, $ahora, $idLote);
         if (!$stmt->execute()) {
             throw new Exception('No se pudo marcar el lote como enviado.');
         }
@@ -3074,10 +3313,14 @@ function centroFacturaEnviarLote($idLote, $codResponsable, $codUsuario)
             centroFacturaAuditar($mysqli, 'factura', $idFactura, $idFactura, 'enviar_original_por_lote', array(), array('estado_original' => 'enviado_central', 'id_lote' => $idLote), '', $codUsuario);
         }
         $stmt->close();
-        centroFacturaAuditar($mysqli, 'lote', $idLote, null, 'enviar_lote', array('estado' => 'borrador'), array('estado' => 'enviado', 'facturas' => $ids), '', $codUsuario);
+        centroFacturaAuditar($mysqli, 'lote', $idLote, null, 'enviar_lote', array('estado' => 'borrador'), array(
+            'estado' => 'enviado', 'facturas' => $ids, 'dias_plazo_transito' => $diasPlazoTransito,
+            'fecha_limite_recepcion' => $fechaLimite
+        ), '', $codUsuario);
         $mysqli->commit();
         $mysqli->close();
-        return array('ok' => true, 'id_lote' => $idLote, 'cantidad' => count($ids));
+        return array('ok' => true, 'id_lote' => $idLote, 'cantidad' => count($ids),
+            'dias_plazo_transito' => $diasPlazoTransito, 'fecha_limite_recepcion' => $fechaLimite);
     } catch (Exception $e) {
         $mysqli->rollback();
         $mysqli->close();

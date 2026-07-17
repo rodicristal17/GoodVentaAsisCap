@@ -22,10 +22,10 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=adjuntos-guiados-20260716-2" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=interconsulta-enviar-arriba-derecha-20260716" />
-<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=reply-20260716-1" />
-<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=legajos-pagare-20260716-5" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=hilos-asistencia-20260717-2" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=hilos-asistencia-20260717-2" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=operativa-hilos-20260717-2" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=devolucion-plazos-20260717-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-horizontal-ios-20260713" />
@@ -47,8 +47,8 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=consulta-modal-scroll-tablet-20260716"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=adjuntos-guiados-temas-20260716-2"></script>
-<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=centro-facturas-permisos-20260713-5"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=superadmin-presencia-20260717-2"></script>
+<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=devolucion-pagare-20260717-1"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
@@ -60,13 +60,13 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js?x=adjuntos-guiados-20260716-2"></script>
-<script src="../js_system/abmAsistencia.js?x=jornada-cargando-topbar-20260619"></script>
+<script src="../js_system/abmAsistencia.js?x=presencia-segura-20260717-1"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=20260603a"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
-<script src="../js_system/abmInterConsulta.js?x=reply-20260716-1"></script>
-<script src="../js_system/abmCentroFacturas.js?x=legajos-pagare-20260716-5"></script>
+<script src="../js_system/abmInterConsulta.js?x=hilos-lecturas-fusion-20260717-2"></script>
+<script src="../js_system/abmCentroFacturas.js?x=devolucion-plazos-20260717-1"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
@@ -7633,13 +7633,12 @@ style='background-color:#5bc572'>
               </select>
             </label>
 
-            <label class="interconsulta-filter-field" for="inptFiltroRapidoTipoInterConsulta" id="campoFiltroRapidoSubtipoInterConsulta">
-              <span>Subtipo</span>
-              <select id="inptFiltroRapidoTipoInterConsulta" onchange="aplicarFiltrosInterConsultaDesdeBarra()">
-                <option value="">Todos</option>
-                <option value="compras">Compras</option>
-                <option value="pagos">Pagos</option>
-                <option value="egresos">Egresos</option>
+            <label class="interconsulta-filter-field interconsulta-filter-field--mentions" for="inptFiltroMencionesInterConsulta">
+              <span>Menciones para m&iacute;</span>
+              <select id="inptFiltroMencionesInterConsulta" onchange="aplicarFiltrosInterConsultaDesdeBarra()">
+                <option value="">Todos los hilos autorizados</option>
+                <option value="pendientes">Pendientes de leer</option>
+                <option value="todas">Todas mis menciones</option>
               </select>
             </label>
 
@@ -7649,23 +7648,6 @@ style='background-color:#5bc572'>
                 <option value="">Todos</option>
               </select>
             </label>
-
-            <div class="interconsulta-filter-field interconsulta-day-filter">
-              <span>Fecha</span>
-              <div class="interconsulta-day-selector">
-                <button type="button" class="interconsulta-day-selector__nav" onclick="moverFechaRapidaInterConsulta(-1)" aria-label="Dia anterior" title="Dia anterior">
-                  <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-                </button>
-                <button type="button" class="interconsulta-day-selector__current" onclick="abrirCalendarioRapidoInterConsulta()" aria-label="Cambiar fecha" title="Cambiar fecha">
-                  <strong id="textoDiaRapidoInterConsulta">Todas</strong>
-                  <small id="textoFechaRapidaInterConsulta">Todas las fechas</small>
-                </button>
-                <button type="button" class="interconsulta-day-selector__nav" onclick="moverFechaRapidaInterConsulta(1)" aria-label="Dia siguiente" title="Dia siguiente">
-                  <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
-                </button>
-                <input type="date" id="inptFiltroRapidoFechaInterConsulta" onchange="aplicarFechaRapidaInterConsulta(this.value, true)" aria-label="Seleccionar fecha">
-              </div>
-            </div>
 
             <button type="button" class="interconsulta-toolbar-btn interconsulta-toolbar-btn--secondary" onclick="abrirFiltrosAvanzadosInterConsulta()">
               <i class="fa-solid fa-sliders"></i>
@@ -7701,7 +7683,7 @@ style='background-color:#5bc572'>
                 <td class="td_registro" style="width:15%;">Gesti&oacute;n programada</td>
                 <td class="td_registro" style="width:10%;">Local</td>
                 <td class="td_registro" style="width:10%;">Estado</td>
-                <td class="td_registro" style="width:10%;">Tipo</td>
+                <td class="td_registro" style="width:10%;">Participantes</td>
                 <td class="td_registro" style="width:10%;">Fecha creaci&oacute;n</td>
                 <td class="td_registro" style="width:15%;">Responsable</td>
               </tr>
@@ -7711,7 +7693,7 @@ style='background-color:#5bc572'>
                 <td class="td_registro" style="width:13%;">Gesti&oacute;n programada</td>
                 <td class="td_registro" style="width:9%;">Local</td>
                 <td class="td_registro" style="width:8%;">Estado</td>
-                <td class="td_registro" style="width:8%;">Tipo</td>
+                <td class="td_registro" style="width:8%;">Participantes</td>
                 <td class="td_registro" style="width:10%;">Cita</td>
                 <td class="td_registro" style="width:11%;">Pago/Mora</td>
                 <td class="td_registro" style="width:7%;">Fecha</td>
@@ -7814,7 +7796,7 @@ style='background-color:#5bc572'>
             </div>
           </div>
           <div class="interconsulta-daily-activity">
-            <span class="interconsulta-daily-activity__label">Gestiones hoy</span>
+            <span class="interconsulta-daily-activity__label" id="etiquetaActividadDiariaInterConsulta">Gestiones hoy</span>
             <div class="interconsulta-daily-activity__users" id="panelActividadDiariaInterConsulta" aria-live="polite">
               <div class="interconsulta-daily-activity__empty">Sin gestiones hoy</div>
             </div>
@@ -7857,16 +7839,6 @@ style='background-color:#5bc572'>
           </div>
 
           <div class="filtro-grupo">
-            <label for="inptBuscarInterConsultaFechaDesde">Fecha desde</label>
-            <input class="catalogo-selectBuscador input-filtro-pro" type="date" id="inptBuscarInterConsultaFechaDesde" onchange="sincronizarFiltrosInterConsultaDesdeAvanzado()">
-          </div>
-
-          <div class="filtro-grupo">
-            <label for="inptBuscarInterConsultaFechaHasta">Fecha hasta</label>
-            <input class="catalogo-selectBuscador input-filtro-pro" type="date" id="inptBuscarInterConsultaFechaHasta" onchange="sincronizarFiltrosInterConsultaDesdeAvanzado()">
-          </div>
-
-          <div class="filtro-grupo">
             <label for="inptBuscarInterConsulta7">Local</label>
             <select class="catalogo-selectBuscador select-filtro-pro" id="inptBuscarInterConsulta7" style="width:100%;max-width:100%;box-sizing:border-box;"></select>
           </div>
@@ -7886,16 +7858,6 @@ style='background-color:#5bc572'>
             </p>
           </div>
 
-          <div class="filtro-grupo" id="campoFiltroAvanzadoSubtipoInterConsulta">
-            <label for="inptBuscarInterConsulta4">Subtipo</label>
-            <select class="catalogo-selectBuscador select-filtro-pro" id="inptBuscarInterConsulta4" style="width:100%;max-width:100%;box-sizing:border-box;">
-              <option value="">Todos</option>
-              <option value="compras">Compras</option>
-              <option value="pagos">Pagos</option>
-              <option value="egresos">Egresos</option>
-            </select>
-          </div>
-
           <div class="filtro-grupo">
             <label for="inptBuscarInterConsulta6">Responsable</label>
             <input placeholder="Parecido a" class="catalogo-selectBuscador input-filtro-pro" type="text" id="inptBuscarInterConsulta6" onkeyup="if(event.keyCode == 13){buscarPacientesConInterConsultas()}">
@@ -7905,6 +7867,7 @@ style='background-color:#5bc572'>
             <label for="inptUsuariosInterConsulta">Participante</label>
             <select class="catalogo-selectBuscador select-filtro-pro" id="inptUsuariosInterConsulta" style="width:100%;max-width:100%;box-sizing:border-box;"></select>
           </div>
+
         </div>
 
         <div class="modal-filtros-footer">
@@ -8121,6 +8084,10 @@ style='background-color:#5bc572'>
             </div>
           </div>
           <div class="interconsulta-detail-actions">
+            <button type="button" class="interconsulta-detail-action interconsulta-detail-action--promissory" id="btnDevolucionPagareDesdeHilo" style="display:none;" title="Solicitar devolucion de pagare para una venta saldada" onclick="if(typeof centroFacturasAbrirDevolucionPagareDesdeHilo==='function'){centroFacturasAbrirDevolucionPagareDesdeHilo(cod_interConsulta);}">
+              <i class="fa-solid fa-file-signature" aria-hidden="true"></i>
+              <span>Devoluci&oacute;n de pagar&eacute;</span>
+            </button>
             <button type="button" class="interconsulta-detail-action" id="btnUnificarSeguimientoPaciente" title="Unificar hilos vinculados a ventas de la misma cedula" onclick="previsualizarUnificacionSeguimientoPaciente()">
               <i class="fa-solid fa-people-arrows" aria-hidden="true"></i>
               <span>Unificar seguimiento</span>
@@ -8171,6 +8138,7 @@ style='background-color:#5bc572'>
                 <div id="contenedorEncabezadoInterConsulta" class="card my-3 interconsulta-thread-summary" style="border-left: 5px solid '.$colorTarjeta.';">
                   <div class="card-body">
                     <div class="interconsulta-detail-card-label">Datos del hilo</div>
+                    <section id="credencialColaboradorDetalleInterConsulta" class="interconsulta-employee-detail-card" hidden aria-label="Credencial del colaborador"></section>
                     <h5 class="card-title">
                         <span id="tituloInterConsultas2">Cargando...</span>
                         <img src="../iconos/editar.png" alt="Editar hilo" onclick="verCerrarVentanaInterConsulta(true, 'divAbmDetallesInterConsulta');buscarInterConsultasAsociadasPaciente(cod_clienteConsulta);">
@@ -36188,15 +36156,6 @@ id='vantana_info_001' style='display:none'>
       <button type="button" id="btnCentroFacturasSolicitudesPagare" data-cf-legajos-vista="solicitudes" onclick="centroFacturasCambiarVistaLegajos('solicitudes')" aria-pressed="false" hidden><i class="fa-solid fa-file-signature" aria-hidden="true"></i> Solicitudes de pagar&eacute;s</button>
     </nav>
 
-    <section class="centro-facturas-summary is-collapsed" id="centroFacturasResumen">
-      <button type="button" class="centro-facturas-summary__toggle" id="centroFacturasResumenToggle" onclick="centroFacturasAlternarMetricas()" aria-expanded="false" aria-controls="centroFacturasMetricas">
-        <span><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Indicadores del per&iacute;odo</span>
-        <span class="centro-facturas-summary__hint" id="centroFacturasResumenTexto">Resumen del mes seleccionado</span>
-        <i class="fa-solid fa-chevron-up centro-facturas-summary__chevron" aria-hidden="true"></i>
-      </button>
-      <div class="centro-facturas-metrics" id="centroFacturasMetricas" aria-label="Resumen de indicadores"></div>
-    </section>
-
     <section class="centro-facturas-toolbar">
       <div class="centro-facturas-period" aria-label="Per&iacute;odo visualizado">
         <button type="button" class="cf-icon-button centro-facturas-period__arrow" onclick="centroFacturasCambiarMes(-1)" title="Mes anterior" aria-label="Mes anterior"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
@@ -36212,6 +36171,9 @@ id='vantana_info_001' style='display:none'>
         <input type="search" id="centroFacturasBusqueda" placeholder="Proveedor, factura, recibo, concepto o Hilo" onkeydown="if(event.key==='Enter'){centroFacturasBuscar();}">
       </div>
       <select id="centroFacturasFiltroLocal" aria-label="Filtrar por local" onchange="centroFacturasBuscar()"></select>
+      <select id="centroFacturasFiltroEstadoCompacto" aria-label="Filtrar por estado o alerta" onchange="centroFacturasAplicarFiltroCompacto(this.value)">
+        <option value="">Todos los estados</option>
+      </select>
       <select id="centroFacturasFiltroPago" aria-label="Filtrar por estado de pago" onchange="centroFacturasBuscar()">
         <option value="">Todos los pagos</option><option value="Pendiente">Pago pendiente</option><option value="En revision">Pago en revisi&oacute;n</option><option value="Pagado">Pagado</option><option value="Rechazado">Rechazado</option>
       </select>
@@ -36227,7 +36189,7 @@ id='vantana_info_001' style='display:none'>
       <label>Validaci&oacute;n<select id="centroFacturasFiltroValidacion" onchange="centroFacturasBuscar()"><option value="">Todas</option><option value="pendiente">Pendiente</option><option value="en_revision">En revisi&oacute;n</option><option value="validada">Validada</option><option value="rechazada">Rechazada</option></select></label>
       <label>Proveedor<select id="centroFacturasFiltroProveedor" onchange="centroFacturasBuscar()"><option value="">Todos</option></select></label>
       <label>Funcionario<select id="centroFacturasFiltroFuncionario" onchange="centroFacturasBuscar()"><option value="">Todos</option></select></label>
-      <label>Responsable<select id="centroFacturasFiltroResponsable" onchange="centroFacturasBuscar()"><option value="">Todos</option></select></label>
+      <label id="centroFacturasFiltroResponsableGrupo">Responsable<select id="centroFacturasFiltroResponsable" onchange="centroFacturasBuscar()"><option value="">Todos</option></select></label>
       <label>Hilo<input type="number" min="1" id="centroFacturasFiltroHilo" placeholder="N.&ordm;" onchange="centroFacturasBuscar()"></label>
       <label>Importe desde<input inputmode="decimal" id="centroFacturasImporteDesde" placeholder="0" onchange="centroFacturasBuscar()"></label>
       <label>Importe hasta<input inputmode="decimal" id="centroFacturasImporteHasta" placeholder="0" onchange="centroFacturasBuscar()"></label>

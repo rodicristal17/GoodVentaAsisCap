@@ -13,6 +13,32 @@ body.interconsulta-followup-dialog-open {
   overflow: hidden !important;
 }
 
+/* Permite reutilizar el diálogo desde el listado sin abrir visualmente el hilo. */
+body.interconsulta-followup-from-list #divAbmDetallesInterConsulta {
+  display: block !important;
+  pointer-events: none;
+  background: transparent !important;
+}
+
+body.interconsulta-followup-from-list #divAbmDetallesInterConsulta > center,
+body.interconsulta-followup-from-list #divAbmDetallesInterConsulta .interconsulta-detail-modal,
+body.interconsulta-followup-from-list #divAbmDetallesInterConsulta .divMenuf,
+body.interconsulta-followup-from-list #contenedorDetalleInterConsultaInferior,
+body.interconsulta-followup-from-list #panelMensajeInterConsulta {
+  display: contents !important;
+}
+
+body.interconsulta-followup-from-list #divAbmDetallesInterConsulta .interconsulta-detail-modal > :not(.divMenuf),
+body.interconsulta-followup-from-list #divAbmDetallesInterConsulta .divMenuf > :not(#contenedorDetalleInterConsultaInferior),
+body.interconsulta-followup-from-list #contenedorDetalleInterConsultaInferior > :not(#panelMensajeInterConsulta),
+body.interconsulta-followup-from-list #panelMensajeInterConsulta > :not(#panelProgramarSeguimientoInterConsulta) {
+  display: none !important;
+}
+
+body.interconsulta-followup-from-list #panelProgramarSeguimientoInterConsulta {
+  pointer-events: auto;
+}
+
 #panelMensajeInterConsulta,
 #panelMensajeInterConsulta:hover {
   transform: none !important;
@@ -125,6 +151,31 @@ body.interconsulta-followup-dialog-open {
 #divListadoInterConsulta .interconsulta-management-summary--para_hoy {
   border-color: #ead185;
   background: #fffaf0;
+}
+
+#divListadoInterConsulta .interconsulta-management-summary__body .interconsulta-followup-remaining,
+#table_abm_InterConsulta .interconsulta-followup-remaining {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 2px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #7a5200;
+  background: #fff3c4;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+#divListadoInterConsulta .interconsulta-management-summary__body .interconsulta-followup-remaining.is-overdue,
+#table_abm_InterConsulta .interconsulta-followup-remaining.is-overdue {
+  color: #a61b2b;
+  background: #ffe5e8;
+}
+
+#divListadoInterConsulta .interconsulta-management-summary.is-countdown-overdue {
+  border-color: #e79ca4;
+  background: #fff5f6;
 }
 
 #divListadoInterConsulta .interconsulta-thread-row--followup-overdue {
@@ -742,6 +793,20 @@ body.interconsulta-followup-dialog-open {
   background: #f8fafc;
 }
 
+#table_abm_InterConsulta .interconsulta-appointment-timeline-card {
+  border-left-color: #2563a6;
+  background: #f7fbff;
+  cursor: pointer;
+}
+
+#table_abm_InterConsulta .interconsulta-appointment-timeline-card:hover,
+#table_abm_InterConsulta .interconsulta-appointment-timeline-card:focus-visible {
+  border-color: #8db9df;
+  border-left-color: #2563a6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 166, 0.12);
+}
+
 #table_abm_InterConsulta .interconsulta-followup-card__avatar {
   grid-area: avatar;
   width: 34px;
@@ -831,6 +896,11 @@ body.interconsulta-followup-dialog-open {
 #table_abm_InterConsulta .interconsulta-followup-status--cancelado {
   color: #5c6775;
   background: #e9edf2;
+}
+
+#table_abm_InterConsulta .interconsulta-followup-status--cita {
+  color: #1e4f82;
+  background: #e2f0fc;
 }
 
 #table_abm_InterConsulta .interconsulta-followup-card__details {

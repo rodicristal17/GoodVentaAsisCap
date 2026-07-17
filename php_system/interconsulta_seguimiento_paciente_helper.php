@@ -1222,51 +1222,26 @@ function seguimientoPacienteMoverHiloUnificacion($mysqli, $hiloOrigen, $codDesti
         return array("ok" => false, "motivo" => "ids_invalidos");
     }
 
-    $participantes = seguimientoPacienteObtenerParticipantesHilo($mysqli, $codOrigen);
-    $asuntoOrigen = isset($hiloOrigen["asunto"]) ? trim((string)$hiloOrigen["asunto"]) : "";
-    $contenido = "Unificacion automatica de seguimiento por CI ".$cedulaNormalizada
-        .": el hilo #".$codOrigen
-        .($asuntoOrigen != "" ? " (".$asuntoOrigen.")" : "")
-        ." fue unido a este hilo maestro por @{".$usuario."}.";
-
-    $consultas = array(
-        array("UPDATE mensaje SET cod_interConsultaFK = ? WHERE cod_interConsultaFK = ?", "ii", array($codDestino, $codOrigen)),
-        array("UPDATE gastos SET cod_interConsultaFK = ? WHERE cod_interConsultaFK = ?", "ii", array($codDestino, $codOrigen)),
-        array("UPDATE dictamenes SET cod_interConsultaFK = ? WHERE cod_interConsultaFK = ?", "ii", array($codDestino, $codOrigen)),
-        array("UPDATE interconsulta_paciente_venta SET cod_interConsultaFK = ?, estado = 'activo', fecha_actualizacion = NOW(), cod_usuarioFK_update = NULLIF(?,0) WHERE cod_interConsultaFK = ?", "iii", array($codDestino, $usuario, $codOrigen))
-    );
-    if (seguimientoPacienteTablaExiste($mysqli, "interconsulta_seguimiento_programado")) {
-        $consultas[] = array(
-            "UPDATE interconsulta_seguimiento_programado SET cod_interConsultaFK = ?, cod_usuarioFK_update = NULLIF(?,0), fecha_actualizacion = NOW() WHERE cod_interConsultaFK = ?",
-            "iii",
-            array($codDestino, $usuario, $codOrigen)
-        );
-    }
-    $consultas[] = array(
-        "UPDATE interconsulta SET estado = 'inactivo', cod_usuarioFK_edit = NULLIF(?,0), fecha_edit = NOW() WHERE cod_interConsulta = ?",
-        "ii",
-        array($usuario, $codOrigen)
-    );
-
-    foreach ($consultas as $consulta) {
-        $stmt = $mysqli->prepare($consulta[0]);
-        if (!$stmt) {
-            return array("ok" => false, "motivo" => "prepare", "mensaje" => $mysqli->error);
+    if (function_exists('interconsultaFusionEjecutarEnConexion')) {
+        try {
+            $resultadoFusion = interconsultaFusionEjecutarEnConexion($mysqli, $codOrigen, $codDestino, $usuario);
+            return array(
+                "ok" => isset($resultadoFusion['1']) && $resultadoFusion['1'] === 'exito',
+                "fusion" => isset($resultadoFusion['4']) ? $resultadoFusion['4'] : array()
+            );
+        } catch (Exception $e) {
+            return array("ok" => false, "motivo" => "fusion_segura", "mensaje" => $e->getMessage());
         }
-        $params = $consulta[2];
-        $refs = array();
-        foreach ($params as $k => $v) { $refs[$k] = &$params[$k]; }
-        call_user_func_array(array($stmt, "bind_param"), array_merge(array($consulta[1]), $refs));
-        if (!$stmt->execute()) {
-            $mensaje = $stmt->error;
-            $stmt->close();
-            return array("ok" => false, "motivo" => "execute", "mensaje" => $mensaje);
-        }
-        $stmt->close();
     }
 
-    seguimientoPacienteInsertarMensajeSistemaUnificacion($mysqli, $codDestino, $usuario, $contenido, $participantes);
-    return array("ok" => true);
+    // No se permite volver silenciosamente al traslado parcial legacy: sin el
+    // nucleo seguro se detiene la operacion para no dejar datos en el hilo archivado.
+    return array(
+        "ok" => false,
+        "motivo" => "fusion_segura_no_disponible",
+        "mensaje" => "La fusion segura no esta disponible; no se movio ningun dato."
+    );
+
 }
 
 function seguimientoPacienteEjecutarUnificacionContexto($mysqli, $contexto, $usuario = 0, $confirmarConflicto = false) {

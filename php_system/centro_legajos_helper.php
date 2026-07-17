@@ -250,21 +250,70 @@ function centroLegajoAsegurarDocumentosVenta($mysqli, $venta, $codUsuario)
     return true;
 }
 
+function centroLegajoAplicarResponsabilidadDocumento($documento)
+{
+    $estadoLote = isset($documento['estado_lote_actual']) ? (string)$documento['estado_lote_actual'] : '';
+    $estadoFisico = isset($documento['estado_fisico']) ? (string)$documento['estado_fisico'] : 'pendiente';
+    $responsable = '';
+    $rol = 'Responsable documental';
+    if ($estadoLote === 'pendiente_custodia') {
+        $responsable = isset($documento['usuario_transportista_lote']) ? $documento['usuario_transportista_lote'] : '';
+        $rol = 'Transportista asignado · custodia pendiente';
+    } elseif ($estadoLote === 'en_transito') {
+        $responsable = !empty($documento['usuario_custodia_lote']) ? $documento['usuario_custodia_lote']
+            : (isset($documento['usuario_transportista_lote']) ? $documento['usuario_transportista_lote'] : '');
+        $rol = 'Custodia durante el traslado';
+    } elseif (in_array($estadoLote, array('recibido','recibido_parcial','observado'), true)) {
+        $responsable = isset($documento['usuario_recepcion_lote']) ? $documento['usuario_recepcion_lote'] : '';
+        $rol = 'Custodia en destino';
+    } elseif ($estadoLote === 'borrador') {
+        $responsable = isset($documento['usuario_creador_lote']) ? $documento['usuario_creador_lote'] : '';
+        $rol = 'Responsable de preparación';
+    } else {
+        $responsable = isset($documento['ultima_accion_usuario']) ? $documento['ultima_accion_usuario'] : '';
+        if ($estadoFisico === 'en_sucursal') $rol = 'Responsable en sucursal';
+        elseif ($estadoFisico === 'devuelto_cliente') $rol = 'Responsable de entrega al cliente';
+    }
+    $documento['responsable_actual'] = $responsable !== '' ? $responsable : 'Sin asignar';
+    $documento['responsable_actual_rol'] = $rol;
+    if (empty($documento['ultima_accion_fecha'])) {
+        $documento['ultima_accion_fecha'] = !empty($documento['fecha_actualizacion']) ? $documento['fecha_actualizacion']
+            : (!empty($documento['fecha_confirmacion']) ? $documento['fecha_confirmacion'] : (!empty($documento['fecha_creacion']) ? $documento['fecha_creacion'] : null));
+    }
+    if (empty($documento['ultima_accion_tipo'])) $documento['ultima_accion_tipo'] = 'actualizacion_documental';
+    return $documento;
+}
+
 function centroLegajoDocumentosPorVentas($mysqli, $ventas)
 {
     $ids = array_values(array_unique(array_filter(array_map('intval', (array)$ventas))));
     $salida = array();
     if (count($ids) < 1) return $salida;
-    $resultado = $mysqli->query("SELECT d.*,pc.nombre_persona AS usuario_confirmacion
+    $resultado = $mysqli->query("SELECT d.*,pc.nombre_persona AS usuario_confirmacion,
+        pu.nombre_persona AS ultima_accion_usuario,COALESCE(d.fecha_actualizacion,d.fecha_confirmacion,d.fecha_creacion) AS ultima_accion_fecha,
+        lo.id_lote AS id_lote_actual,lo.estado AS estado_lote_actual,
+        plc.nombre_persona AS usuario_creador_lote,plt.nombre_persona AS usuario_transportista_lote,
+        plct.nombre_persona AS usuario_custodia_lote,plr.nombre_persona AS usuario_recepcion_lote
         FROM centro_legajo_documento d
         LEFT JOIN persona pc ON pc.cod_persona=d.cod_usuario_confirmacionFK
+        LEFT JOIN persona pu ON pu.cod_persona=COALESCE(d.cod_usuarioFK_update,d.cod_usuario_confirmacionFK,d.cod_usuarioFK_create)
+        LEFT JOIN centro_legajo_lote_detalle ld ON ld.id_lote_detalle=(
+            SELECT ld2.id_lote_detalle FROM centro_legajo_lote_detalle ld2
+            INNER JOIN centro_legajo_lote lo2 ON lo2.id_lote=ld2.id_loteFK
+            WHERE ld2.id_documentoFK=d.id_documento AND ld2.estado<>'retirado' AND lo2.estado<>'anulado'
+            ORDER BY ld2.id_lote_detalle DESC LIMIT 1)
+        LEFT JOIN centro_legajo_lote lo ON lo.id_lote=ld.id_loteFK
+        LEFT JOIN persona plc ON plc.cod_persona=lo.cod_usuarioFK_create
+        LEFT JOIN persona plt ON plt.cod_persona=lo.cod_usuario_transportistaFK
+        LEFT JOIN persona plct ON plct.cod_persona=lo.cod_usuario_custodiaFK
+        LEFT JOIN persona plr ON plr.cod_persona=lo.cod_usuario_recepcionFK
         WHERE d.cod_ventaFK IN (".implode(',', $ids).")
         ORDER BY d.cod_ventaFK,d.id_documento");
     if ($resultado) {
         while ($fila = $resultado->fetch_assoc()) {
             $venta = intval($fila['cod_ventaFK']);
             if (!isset($salida[$venta])) $salida[$venta] = array();
-            $fila = centroFacturaFilaUtf8($fila);
+            $fila = centroLegajoAplicarResponsabilidadDocumento(centroFacturaFilaUtf8($fila));
             $fila['codigo_documento'] = centroLegajoCodigoDocumento($venta, $fila['tipo_documento']);
             $salida[$venta][$fila['tipo_documento']] = $fila;
         }
@@ -343,6 +392,9 @@ function centroLegajoDecorarVenta($venta, $existentes, $loteActual)
     $elegibles = 0;
     $enviables = 0;
     $observado = false;
+    $responsables = array();
+    $rolesResponsable = array();
+    $ultimaAccion = array('fecha' => '', 'usuario' => '', 'tipo' => '');
     foreach ($documentos as $documento) {
         $estadoDocumento = (string)$documento['estado_documental'];
         $estadoFisico = (string)$documento['estado_fisico'];
@@ -356,6 +408,16 @@ function centroLegajoDecorarVenta($venta, $existentes, $loteActual)
         }
         if ($documentoConfirmado && $estadoFisico === 'en_sucursal') $elegibles++;
         if ($estadoDocumento === 'observado' || in_array($estadoFisico, array('faltante','observado'), true)) $observado = true;
+        $nombreResponsable = isset($documento['responsable_actual']) ? trim((string)$documento['responsable_actual']) : '';
+        if ($nombreResponsable !== '') $responsables[$nombreResponsable] = true;
+        $rolResponsable = isset($documento['responsable_actual_rol']) ? trim((string)$documento['responsable_actual_rol']) : '';
+        if ($rolResponsable !== '') $rolesResponsable[$rolResponsable] = true;
+        $fechaAccion = isset($documento['ultima_accion_fecha']) ? (string)$documento['ultima_accion_fecha'] : '';
+        if ($fechaAccion !== '' && ($ultimaAccion['fecha'] === '' || strcmp($fechaAccion, $ultimaAccion['fecha']) > 0)) {
+            $ultimaAccion['fecha'] = $fechaAccion;
+            $ultimaAccion['usuario'] = isset($documento['ultima_accion_usuario']) ? (string)$documento['ultima_accion_usuario'] : '';
+            $ultimaAccion['tipo'] = isset($documento['ultima_accion_tipo']) ? (string)$documento['ultima_accion_tipo'] : 'actualizacion_documental';
+        }
     }
     $completo = $requeridos > 0 && $listos === $requeridos;
     $venta['documentos'] = $documentos;
@@ -376,6 +438,15 @@ function centroLegajoDecorarVenta($venta, $existentes, $loteActual)
         else $venta['custodio_actual'] = $loteActual['transportista'];
         $venta['ubicacion_actual'] = $loteActual['codigo_lote'].' · '.str_replace('_', ' ', $estado);
     }
+    $nombresResponsables = array_keys($responsables);
+    $rolesResponsables = array_keys($rolesResponsable);
+    $venta['responsable_actual'] = count($nombresResponsables) === 1 ? $nombresResponsables[0]
+        : (count($nombresResponsables) > 1 ? 'Varios responsables' : 'Sin asignar');
+    $venta['responsable_actual_rol'] = count($rolesResponsables) === 1 ? $rolesResponsables[0]
+        : (count($rolesResponsables) > 1 ? 'Responsables según cada documento' : 'Responsable documental');
+    $venta['ultima_accion_usuario'] = $ultimaAccion['usuario'];
+    $venta['ultima_accion_fecha'] = $ultimaAccion['fecha'];
+    $venta['ultima_accion_tipo'] = $ultimaAccion['tipo'];
     return centroFacturaFilaUtf8($venta);
 }
 
@@ -681,6 +752,7 @@ function centroLegajoListarLotes($codUsuario, $filtros, $limite = 80, $offset = 
     $sql = "SELECT lo.*,lor.Nombre AS nombre_local_origen,lde.Nombre AS nombre_local_destino,
         pc.nombre_persona AS usuario_creador,pt.nombre_persona AS usuario_transportista,
         pe.nombre_persona AS usuario_envio,pct.nombre_persona AS usuario_custodia,pr.nombre_persona AS usuario_recepcion,
+        pu.nombre_persona AS usuario_ultima_accion,
         (SELECT COALESCE(SUM(GREATEST(0,IFNULL(vr.total_venta,0)-IFNULL(vr.descuento,0))),0)
          FROM venta vr WHERE EXISTS (
              SELECT 1 FROM centro_legajo_lote_detalle ldr
@@ -698,6 +770,7 @@ function centroLegajoListarLotes($codUsuario, $filtros, $limite = 80, $offset = 
       LEFT JOIN persona pe ON pe.cod_persona=lo.cod_usuario_envioFK
       LEFT JOIN persona pct ON pct.cod_persona=lo.cod_usuario_custodiaFK
       LEFT JOIN persona pr ON pr.cod_persona=lo.cod_usuario_recepcionFK
+      LEFT JOIN persona pu ON pu.cod_persona=COALESCE(lo.cod_usuarioFK_update,lo.cod_usuarioFK_create)
       LEFT JOIN centro_legajo_lote_detalle ld ON ld.id_loteFK=lo.id_lote
       WHERE ".implode(' AND ', $condiciones)." GROUP BY lo.id_lote ORDER BY lo.fecha_creacion DESC,lo.id_lote DESC";
     $stmt = $mysqli->prepare($sql);
@@ -711,6 +784,27 @@ function centroLegajoListarLotes($codUsuario, $filtros, $limite = 80, $offset = 
         elseif (in_array($fila['estado'], array('recibido','recibido_parcial','observado'), true)) $fila['custodio_actual'] = $fila['usuario_recepcion'];
         elseif ($fila['estado'] === 'pendiente_custodia') $fila['custodio_actual'] = 'Pendiente de aceptacion';
         else $fila['custodio_actual'] = $fila['usuario_creador'];
+        if ($fila['estado'] === 'pendiente_custodia') {
+            $fila['responsable_actual'] = $fila['usuario_transportista'];
+            $fila['responsable_actual_rol'] = 'Transportista asignado · custodia pendiente';
+        } elseif ($fila['estado'] === 'en_transito') {
+            $fila['responsable_actual'] = $fila['usuario_custodia'] ? $fila['usuario_custodia'] : $fila['usuario_transportista'];
+            $fila['responsable_actual_rol'] = 'Custodia durante el traslado';
+        } elseif (in_array($fila['estado'], array('recibido','recibido_parcial','observado'), true)) {
+            $fila['responsable_actual'] = $fila['usuario_recepcion'];
+            $fila['responsable_actual_rol'] = 'Custodia en destino';
+        } elseif ($fila['estado'] === 'anulado') {
+            $fila['responsable_actual'] = $fila['usuario_ultima_accion'];
+            $fila['responsable_actual_rol'] = 'Responsable del cierre';
+        } else {
+            $fila['responsable_actual'] = $fila['usuario_creador'];
+            $fila['responsable_actual_rol'] = 'Responsable de preparación';
+        }
+        if (empty($fila['responsable_actual'])) $fila['responsable_actual'] = 'Sin asignar';
+        $fila['ultima_accion_usuario'] = $fila['usuario_ultima_accion'];
+        $fila['ultima_accion_fecha'] = !empty($fila['fecha_actualizacion']) ? $fila['fecha_actualizacion'] : $fila['fecha_creacion'];
+        $fila['ultima_accion_tipo'] = 'estado_'.$fila['estado'];
+        $fila = centroFacturaDecorarPlazoTransito($fila);
         $registros[] = centroFacturaFilaUtf8($fila);
     }
     $stmt->close();
@@ -917,7 +1011,8 @@ function centroLegajoDetalleLote($idLote, $codUsuario)
     $idLote = intval($idLote);
     $stmt = $mysqli->prepare("SELECT lo.*,lor.Nombre AS nombre_local_origen,lde.Nombre AS nombre_local_destino,
         pc.nombre_persona AS usuario_creador,pt.nombre_persona AS usuario_transportista,
-        pe.nombre_persona AS usuario_envio,pct.nombre_persona AS usuario_custodia,pr.nombre_persona AS usuario_recepcion
+        pe.nombre_persona AS usuario_envio,pct.nombre_persona AS usuario_custodia,pr.nombre_persona AS usuario_recepcion,
+        pu.nombre_persona AS usuario_ultima_accion
       FROM centro_legajo_lote lo
       INNER JOIN local lor ON lor.cod_local=lo.cod_local_origenFK
       INNER JOIN local lde ON lde.cod_local=lo.cod_local_destinoFK
@@ -926,10 +1021,33 @@ function centroLegajoDetalleLote($idLote, $codUsuario)
       LEFT JOIN persona pe ON pe.cod_persona=lo.cod_usuario_envioFK
       LEFT JOIN persona pct ON pct.cod_persona=lo.cod_usuario_custodiaFK
       LEFT JOIN persona pr ON pr.cod_persona=lo.cod_usuario_recepcionFK
+      LEFT JOIN persona pu ON pu.cod_persona=COALESCE(lo.cod_usuarioFK_update,lo.cod_usuarioFK_create)
       WHERE lo.id_lote=? LIMIT 1");
     $stmt->bind_param('i', $idLote); $stmt->execute(); $lote = centroFacturaFilaUtf8($stmt->get_result()->fetch_assoc()); $stmt->close();
+    if ($lote['estado'] === 'pendiente_custodia') {
+        $lote['responsable_actual'] = $lote['usuario_transportista'];
+        $lote['responsable_actual_rol'] = 'Transportista asignado · custodia pendiente';
+    } elseif ($lote['estado'] === 'en_transito') {
+        $lote['responsable_actual'] = $lote['usuario_custodia'] ? $lote['usuario_custodia'] : $lote['usuario_transportista'];
+        $lote['responsable_actual_rol'] = 'Custodia durante el traslado';
+    } elseif (in_array($lote['estado'], array('recibido','recibido_parcial','observado'), true)) {
+        $lote['responsable_actual'] = $lote['usuario_recepcion'];
+        $lote['responsable_actual_rol'] = 'Custodia en destino';
+    } elseif ($lote['estado'] === 'anulado') {
+        $lote['responsable_actual'] = $lote['usuario_ultima_accion'];
+        $lote['responsable_actual_rol'] = 'Responsable del cierre';
+    } else {
+        $lote['responsable_actual'] = $lote['usuario_creador'];
+        $lote['responsable_actual_rol'] = 'Responsable de preparación';
+    }
+    if (empty($lote['responsable_actual'])) $lote['responsable_actual'] = 'Sin asignar';
+    $lote['ultima_accion_usuario'] = $lote['usuario_ultima_accion'];
+    $lote['ultima_accion_fecha'] = !empty($lote['fecha_actualizacion']) ? $lote['fecha_actualizacion'] : $lote['fecha_creacion'];
+    $lote['ultima_accion_tipo'] = 'estado_'.$lote['estado'];
+    $lote = centroFacturaDecorarPlazoTransito($lote);
     $documentos = array();
     $stmt = $mysqli->prepare("SELECT ld.id_lote_detalle,ld.estado AS estado_lote,ld.observacion AS observacion_lote,ld.fecha_estado,
+        ld.cod_usuario_estadoFK,pde.nombre_persona AS ultima_accion_usuario,
         d.*,v.fecha_venta,v.TipoVenta AS tipo_venta,GREATEST(0,IFNULL(v.total_venta,0)-IFNULL(v.descuento,0)) AS importe_venta,p.nombre_persona AS titular,
         COALESCE(NULLIF(TRIM(c.rut_cliente),''),NULLIF(TRIM(c.ci_cliente),''),'') AS documento_paciente
       FROM centro_legajo_lote_detalle ld
@@ -937,11 +1055,20 @@ function centroLegajoDetalleLote($idLote, $codUsuario)
       LEFT JOIN venta v ON v.cod_venta=ld.cod_ventaFK
       LEFT JOIN cliente c ON c.cod_cliente=v.cod_clienteFK
       LEFT JOIN persona p ON p.cod_persona=c.cod_cliente
+      LEFT JOIN persona pde ON pde.cod_persona=ld.cod_usuario_estadoFK
       WHERE ld.id_loteFK=? ORDER BY ld.cod_ventaFK,
         FIELD(d.tipo_documento,'contrato','pagare','cedula','consentimiento','detalle_venta'),d.id_documento");
     $stmt->bind_param('i', $idLote); $stmt->execute(); $resultado = $stmt->get_result();
     while ($fila = $resultado->fetch_assoc()) {
         $fila = centroFacturaFilaUtf8($fila);
+        $fila['estado_lote_actual'] = $lote['estado'];
+        $fila['usuario_creador_lote'] = $lote['usuario_creador'];
+        $fila['usuario_transportista_lote'] = $lote['usuario_transportista'];
+        $fila['usuario_custodia_lote'] = $lote['usuario_custodia'];
+        $fila['usuario_recepcion_lote'] = $lote['usuario_recepcion'];
+        $fila['ultima_accion_fecha'] = $fila['fecha_estado'];
+        $fila['ultima_accion_tipo'] = 'estado_'.$fila['estado_lote'];
+        $fila = centroLegajoAplicarResponsabilidadDocumento($fila);
         $fila['codigo_documento'] = centroLegajoCodigoDocumento($fila['cod_ventaFK'], $fila['tipo_documento']);
         $documentos[] = $fila;
     }
@@ -973,10 +1100,20 @@ function centroLegajoDocumentosLoteBloqueados($mysqli, $idLote)
     return $documentos;
 }
 
-function centroLegajoEnviarLote($idLote, $codUsuario)
+function centroLegajoEnviarLote($idLote, $codUsuario, $diasPlazoTransito = 10)
 {
     if (!centroLegajoTienePermiso($codUsuario, 'ENVIARLOTELEGAJOS')) return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permiso para entregar lotes de legajos.');
-    $mysqli = conectar_al_servidor(); $mysqli->begin_transaction();
+    try {
+        $diasPlazoTransito = centroFacturaNormalizarDiasPlazoTransito($diasPlazoTransito);
+    } catch (Exception $e) {
+        return array('ok' => false, 'codigo' => 'datos', 'mensaje' => $e->getMessage());
+    }
+    $mysqli = conectar_al_servidor();
+    if (!centroFacturaPlazoTransitoDisponible($mysqli, 'centro_legajo_lote')) {
+        $mysqli->close();
+        return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'Falta instalar la actualizacion del plazo de transito antes de entregar el lote.');
+    }
+    $mysqli->begin_transaction();
     try {
         $lote = centroLegajoLoteRaw($mysqli, $idLote, true);
         if (!$lote || $lote['estado'] !== 'borrador' || !centroLegajoPuedeOperarOrigen($codUsuario, $lote, $mysqli)) throw new Exception('El lote no esta disponible como borrador en su local.');
@@ -994,9 +1131,12 @@ function centroLegajoEnviarLote($idLote, $codUsuario)
                 || $documento['estado_fisico'] !== 'en_lote') throw new Exception('Un documento ya no esta disponible para entregar.');
         }
         $idLote = intval($idLote); $ahora = date('Y-m-d H:i:s');
+        $fechaLimite = centroFacturaCalcularFechaLimiteTransito($ahora, $diasPlazoTransito);
         $stmt = centroLegajoPrepararEscritura($mysqli, "UPDATE centro_legajo_lote SET estado='pendiente_custodia',cod_usuario_envioFK=?,fecha_envio=?,
-            cod_usuarioFK_update=?,fecha_actualizacion=? WHERE id_lote=?");
-        $stmt->bind_param('isisi', $codUsuario, $ahora, $codUsuario, $ahora, $idLote);
+            cod_usuarioFK_update=?,fecha_actualizacion=?,dias_plazo_transito=?,fecha_limite_recepcion=?,
+            cod_usuario_plazo_transitoFK=?,fecha_asignacion_plazo=? WHERE id_lote=?");
+        $stmt->bind_param('isisisisi', $codUsuario, $ahora, $codUsuario, $ahora, $diasPlazoTransito,
+            $fechaLimite, $codUsuario, $ahora, $idLote);
         if (!$stmt->execute() || $stmt->affected_rows !== 1) { $stmt->close(); throw new Exception('No se pudo registrar la entrega.'); }
         $stmt->close();
         $stmt = centroLegajoPrepararEscritura($mysqli, "UPDATE centro_legajo_lote_detalle SET estado='pendiente_custodia',fecha_estado=?,cod_usuario_estadoFK=?
@@ -1015,9 +1155,11 @@ function centroLegajoEnviarLote($idLote, $codUsuario)
         }
         $stmt->close();
         if (!centroLegajoRegistrarEventoLote($mysqli, $idLote, 'entregar_transportista', 'borrador', 'pendiente_custodia',
-            'Entrega declarada; pendiente de aceptacion del transportista asignado.', $codUsuario, intval($lote['cod_usuario_transportistaFK']))) throw new Exception('No se pudo auditar la entrega.');
+            'Entrega declarada; plazo de '.$diasPlazoTransito.' dias hasta '.$fechaLimite.'; pendiente de aceptacion del transportista asignado.',
+            $codUsuario, intval($lote['cod_usuario_transportistaFK']))) throw new Exception('No se pudo auditar la entrega.');
         $mysqli->commit(); $mysqli->close();
-        return array('ok' => true, 'id_lote' => $idLote, 'estado' => 'pendiente_custodia');
+        return array('ok' => true, 'id_lote' => $idLote, 'estado' => 'pendiente_custodia',
+            'dias_plazo_transito' => $diasPlazoTransito, 'fecha_limite_recepcion' => $fechaLimite);
     } catch (Exception $e) {
         $mysqli->rollback(); $mysqli->close();
         return array('ok' => false, 'codigo' => 'lote_legajo', 'mensaje' => $e->getMessage());

@@ -6,6 +6,7 @@ ini_set('display_errors', '0');
 require_once('conexion.php');
 include_once('verificar_navegador.php');
 include_once('buscar_nivel.php');
+require_once('interconsulta_acceso_helper.php');
 require_once('interconsulta_seguimiento_programado_helper.php');
 require_once('centro_facturas_helper.php');
 require_once('centro_legajos_helper.php');
@@ -144,6 +145,9 @@ switch ($accion) {
             $detalleLegajo['solicitudes_pagare_disponibles'] = centroLegajoPagareEstructuraDisponible() ? 1 : 0;
             $detalleLegajo['solicitud_pagare_activa'] = $detalleLegajo['solicitudes_pagare_disponibles']
                 ? centroLegajoPagareSolicitudActivaVenta($codVentaLegajo, $codUsuario) : array();
+            $estadoFinancieroPagare = centroLegajoPagareEstadoFinancieroConsulta($codVentaLegajo);
+            $detalleLegajo['estado_financiero_pagare'] = $estadoFinancieroPagare['estado'];
+            $detalleLegajo['cuenta_saldada_pagare'] = !empty($estadoFinancieroPagare['estado']['saldada']) ? 1 : 0;
         }
         centroFacturasResponder($detalleLegajo);
         break;
@@ -167,9 +171,17 @@ switch ($accion) {
     case 'detalleSolicitudPagare':
         centroFacturasResponder(centroLegajoPagareDetalle(intval(centroFacturasPost('id_solicitud')), $codUsuario));
         break;
+    case 'buscarPagaresElegibles':
+        centroFacturasResponder(centroLegajoPagareBuscarElegibles(
+            $codUsuario,
+            centroFacturasPost('busqueda'),
+            intval(centroFacturasPost('limite', 30)),
+            intval(centroFacturasPost('cod_interConsulta', 0))
+        ));
+        break;
     case 'crearSolicitudPagare':
         $datosSolicitudPagare = centroFacturasJsonPost('datos', array());
-        foreach (array('solicitante_nombre','solicitante_documento','motivo_solicitud') as $campoSolicitudPagare) {
+        foreach (array('solicitante_nombre','solicitante_documento','motivo_solicitud','cod_interConsulta') as $campoSolicitudPagare) {
             if (isset($_POST[$campoSolicitudPagare])) {
                 $datosSolicitudPagare[$campoSolicitudPagare] = $_POST[$campoSolicitudPagare];
             }
@@ -319,7 +331,11 @@ switch ($accion) {
         centroFacturasResponder(centroLegajoDetalleLote(intval(centroFacturasPost('id_lote')), $codUsuario));
         break;
     case 'enviarLoteLegajo':
-        centroFacturasResponder(centroLegajoEnviarLote(intval(centroFacturasPost('id_lote')), $codUsuario));
+        centroFacturasResponder(centroLegajoEnviarLote(
+            intval(centroFacturasPost('id_lote')),
+            $codUsuario,
+            intval(centroFacturasPost('dias_plazo_transito', 10))
+        ));
         break;
     case 'aceptarCustodiaLoteLegajo':
         centroFacturasResponder(centroLegajoAceptarCustodia(intval(centroFacturasPost('id_lote')), $codUsuario));
@@ -369,7 +385,8 @@ switch ($accion) {
         centroFacturasResponder(centroFacturaEnviarLote(
             intval(centroFacturasPost('id_lote')),
             intval(centroFacturasPost('cod_responsable')),
-            $codUsuario
+            $codUsuario,
+            intval(centroFacturasPost('dias_plazo_transito', 10))
         ));
         break;
     case 'recibirLote':

@@ -146,73 +146,110 @@ function seguimientoProgramadoFechaValida($fecha, $exigirFutura = true)
     return array('ok' => true, 'fecha' => $objeto->format('Y-m-d H:i:s'));
 }
 
-function seguimientoProgramadoPuedeAccederHilo($codInterConsulta, $codUsuario, $exigirActivo = false)
+function seguimientoProgramadoCondicionAccesoLocalSql($codUsuario, $alias = 'ic', $mysqli = null)
+{
+    $alias = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$alias);
+    if ($alias === '') {
+        $alias = 'ic';
+    }
+    $codUsuario = intval($codUsuario);
+    if ($codUsuario <= 0) {
+        return '1=0';
+    }
+    if (function_exists('interconsultaAccesoCondicionLocalSql')) {
+        return interconsultaAccesoCondicionLocalSql($codUsuario, $alias, $mysqli);
+    }
+
+    // Compatibilidad para consumidores antiguos que incluyan solo este helper.
+    // El permiso del Centro de Facturas nunca amplia el alcance de Hilos.
+    $puedeTodos = function_exists('controldeaccesoacasas')
+        && controldeaccesoacasas($codUsuario, 'CAMBIARLOCAL', " u.accion='SI' ") == 1;
+    if ($puedeTodos) {
+        return '1=1';
+    }
+
+    $cerrar = false;
+    if (!($mysqli instanceof mysqli)) {
+        $mysqli = conectar_al_servidor();
+        $cerrar = true;
+    }
+    $codLocal = 0;
+    $stmt = $mysqli->prepare("SELECT cod_localFK FROM usuario WHERE cod_usuario=? AND estado='Activo' LIMIT 1");
+    if ($stmt) {
+        $stmt->bind_param('i', $codUsuario);
+        if ($stmt->execute()) {
+            $fila = $stmt->get_result()->fetch_assoc();
+            $codLocal = $fila ? intval($fila['cod_localFK']) : 0;
+        }
+        $stmt->close();
+    }
+    if ($cerrar) {
+        $mysqli->close();
+    }
+    if ($codLocal <= 0) {
+        return '1=0';
+    }
+
+    return "(".$alias.".cod_localFK=".$codLocal."
+        OR EXISTS(
+            SELECT 1
+            FROM interconsulta_paciente_venta isp_ipv
+            INNER JOIN venta isp_vt ON isp_vt.cod_venta=isp_ipv.cod_ventaFK
+            WHERE isp_ipv.cod_interConsultaFK=".$alias.".cod_interConsulta
+              AND isp_ipv.estado='activo'
+              AND isp_vt.cod_local=".$codLocal."
+            LIMIT 1
+        )
+        OR EXISTS(
+            SELECT 1
+            FROM venta isp_vtd
+            WHERE isp_vtd.cod_venta=".$alias.".cod_ventaFK
+              AND isp_vtd.cod_local=".$codLocal."
+            LIMIT 1
+        )
+        OR ((IFNULL(".$alias.".cod_localFK,0)=0)
+            AND EXISTS(
+                SELECT 1
+                FROM usuario isp_uc
+                WHERE isp_uc.cod_usuario=".$alias.".cod_usuarioFK_create
+                  AND isp_uc.cod_localFK=".$codLocal."
+                LIMIT 1
+            )))";
+}
+
+function seguimientoProgramadoPuedeAccederHilo($codInterConsulta, $codUsuario, $exigirActivo = false, $mysqli = null)
 {
     $codInterConsulta = intval($codInterConsulta);
     $codUsuario = intval($codUsuario);
     if ($codInterConsulta <= 0 || $codUsuario <= 0) {
         return false;
     }
-    $mysqli = conectar_al_servidor();
-    $condicionResponsable = "";
-    $tipos = 'iii';
-    $parametros = array($codInterConsulta, $codUsuario, $codUsuario);
-    if (seguimientoProgramadoTablaExiste($mysqli, 'interconsulta_seguimiento_programado')) {
-        $condicionResponsable = "
-                OR EXISTS(
-                    SELECT 1
-                    FROM interconsulta_seguimiento_programado sp
-                    WHERE sp.cod_interConsultaFK=ic.cod_interConsulta
-                      AND sp.cod_responsableFK=?
-                      AND sp.estado='programado'
-                    LIMIT 1
-                )";
-        $tipos .= 'i';
-        $parametros[] = $codUsuario;
+    if (function_exists('interconsultaAccesoUsuarioPuedeAccederHilo')) {
+        return interconsultaAccesoUsuarioPuedeAccederHilo($codInterConsulta, $codUsuario, $exigirActivo, $mysqli);
+    }
+
+    // Compatibilidad para consumidores antiguos que incluyan solo este helper.
+    $cerrar = false;
+    if (!($mysqli instanceof mysqli)) {
+        $mysqli = conectar_al_servidor();
+        $cerrar = true;
     }
     $condicionEstado = $exigirActivo ? " AND ic.estado<>'inactivo'" : "";
-    $sql = "SELECT 1
-            FROM interconsulta ic
-            WHERE ic.cod_interConsulta=?
-              ".$condicionEstado."
-              AND (
-                ic.cod_usuarioFK_create=?
-                OR EXISTS(
-                    SELECT 1
-                    FROM menciones mc
-                    INNER JOIN mensaje mj ON mj.cod_mensaje=mc.cod_mensajeFK
-                    WHERE mj.cod_interConsultaFK=ic.cod_interConsulta
-                      AND mc.cod_usuarioFK=?
-                      AND mc.estado='activo'
-                    LIMIT 1
-                )
-                OR EXISTS(
-                    SELECT 1
-                    FROM interconsulta_paciente ip
-                    WHERE ip.cod_interConsultaFK=ic.cod_interConsulta
-                      AND ip.estado='activo'
-                    LIMIT 1
-                )".$condicionResponsable."
-              )
-            LIMIT 1";
+    $condicionLocal = seguimientoProgramadoCondicionAccesoLocalSql($codUsuario, 'ic', $mysqli);
+    $sql = "SELECT 1 FROM interconsulta ic WHERE ic.cod_interConsulta=?".$condicionEstado." AND ".$condicionLocal." LIMIT 1";
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
-        $mysqli->close();
+        if ($cerrar) {
+            $mysqli->close();
+        }
         return false;
     }
-    $referencias = array();
-    foreach ($parametros as $indice => $parametro) {
-        $referencias[$indice] = &$parametros[$indice];
-    }
-    call_user_func_array(array($stmt, 'bind_param'), array_merge(array($tipos), $referencias));
-    if (!$stmt->execute()) {
-        $stmt->close();
-        $mysqli->close();
-        return false;
-    }
-    $permitido = $stmt->get_result()->num_rows > 0;
+    $stmt->bind_param('i', $codInterConsulta);
+    $permitido = $stmt->execute() && $stmt->get_result()->num_rows > 0;
     $stmt->close();
-    $mysqli->close();
+    if ($cerrar) {
+        $mysqli->close();
+    }
     return $permitido;
 }
 
@@ -264,6 +301,10 @@ function seguimientoProgramadoObtenerResponsables($codInterConsulta, $codUsuario
         return array();
     }
     $mysqli = conectar_al_servidor();
+    if (!seguimientoProgramadoPuedeAccederHilo($codInterConsulta, $codUsuarioActual, true, $mysqli)) {
+        $mysqli->close();
+        return array();
+    }
     $condicionResponsable = "";
     if (seguimientoProgramadoTablaExiste($mysqli, 'interconsulta_seguimiento_programado')) {
         $condicionResponsable = "
@@ -307,7 +348,9 @@ function seguimientoProgramadoObtenerResponsables($codInterConsulta, $codUsuario
     $registros = array();
     $result = $stmt->get_result();
     while ($fila = $result->fetch_assoc()) {
-        $registros[] = seguimientoProgramadoFilaUtf8($fila);
+        if (seguimientoProgramadoPuedeAccederHilo($codInterConsulta, intval($fila['cod_usuario']), true, $mysqli)) {
+            $registros[] = seguimientoProgramadoFilaUtf8($fila);
+        }
     }
     $stmt->close();
     $mysqli->close();
@@ -573,10 +616,9 @@ function seguimientoProgramadoCrear($datos, $codUsuario)
                 throw new Exception('El seguimiento original ya no puede reprogramarse.');
             }
             $puedeReprogramar = intval($origen['cod_responsableFK']) === intval($codUsuario)
-                || intval($origen['cod_usuarioFK_create']) === intval($codUsuario)
-                || seguimientoProgramadoPuedeAdministrarPlantillas($codUsuario);
+                || intval($origen['cod_usuarioFK_create']) === intval($codUsuario);
             if (!$puedeReprogramar) {
-                throw new Exception('Solo el responsable o un usuario autorizado puede reprogramar este seguimiento.');
+                throw new Exception('Solo el responsable o el creador puede reprogramar este seguimiento.');
             }
             $resultadoOrigen = 'Reprogramado para '.$fechaValidada['fecha'].'.';
             $sqlCerrar = "UPDATE interconsulta_seguimiento_programado
@@ -677,10 +719,9 @@ function seguimientoProgramadoCompletar($idSeguimiento, $resultado, $codUsuario)
             throw new Exception('No tiene acceso al hilo indicado.');
         }
         $puedeCompletar = intval($seguimiento['cod_responsableFK']) === intval($codUsuario)
-            || intval($seguimiento['cod_usuarioFK_create']) === intval($codUsuario)
-            || seguimientoProgramadoPuedeAdministrarPlantillas($codUsuario);
+            || intval($seguimiento['cod_usuarioFK_create']) === intval($codUsuario);
         if (!$puedeCompletar) {
-            throw new Exception('Solo el responsable o un usuario autorizado puede completar el seguimiento.');
+            throw new Exception('Solo el responsable o el creador puede completar el seguimiento.');
         }
         $sqlUpdate = "UPDATE interconsulta_seguimiento_programado
                       SET estado='completado',resultado=?,fecha_cierre=NOW(),
@@ -828,6 +869,7 @@ function seguimientoProgramadoObtenerResumenAlertas($codUsuario)
         if ($mysqli) { $mysqli->close(); }
         return $resumen;
     }
+    $condicionAccesoLocal = seguimientoProgramadoCondicionAccesoLocalSql($codUsuario, 'ic', $mysqli);
     $sql = "SELECT
               SUM(sp.fecha_programada>=NOW() AND sp.fecha_programada<CURDATE() + INTERVAL 1 DAY) AS hoy,
               SUM(sp.fecha_programada<NOW()) AS vencidos,
@@ -835,7 +877,8 @@ function seguimientoProgramadoObtenerResumenAlertas($codUsuario)
               COUNT(*) AS total_pendientes
             FROM interconsulta_seguimiento_programado sp
             INNER JOIN interconsulta ic ON ic.cod_interConsulta=sp.cod_interConsultaFK
-            WHERE sp.cod_responsableFK=? AND sp.estado='programado' AND ic.estado<>'inactivo'";
+            WHERE sp.cod_responsableFK=? AND sp.estado='programado' AND ic.estado<>'inactivo'
+              AND ".$condicionAccesoLocal;
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
         $mysqli->close();
@@ -860,6 +903,7 @@ function seguimientoProgramadoObtenerResumenAlertas($codUsuario)
                  FROM interconsulta_seguimiento_programado sp
                  INNER JOIN interconsulta ic ON ic.cod_interConsulta=sp.cod_interConsultaFK
                  WHERE sp.cod_responsableFK=? AND sp.estado='programado' AND ic.estado<>'inactivo'
+                   AND ".$condicionAccesoLocal."
                    AND sp.fecha_programada<CURDATE() + INTERVAL 1 DAY
                  ORDER BY sp.fecha_programada ASC,sp.id_seguimiento ASC LIMIT 8";
     $stmt = $mysqli->prepare($sqlItems);

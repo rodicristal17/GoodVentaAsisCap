@@ -83,9 +83,17 @@ function centroLegajoPagareLoteDocumento($mysqli, $idDocumento)
 {
     $idDocumento = intval($idDocumento);
     $stmt = $mysqli->prepare("SELECT lo.id_lote,lo.codigo_lote,lo.estado,lo.cod_local_origenFK,lo.cod_local_destinoFK,
-        lo.cod_usuario_transportistaFK,ld.estado AS estado_detalle_lote,ld.fecha_estado
+        lo.cod_usuario_transportistaFK,ld.estado AS estado_detalle_lote,ld.fecha_estado,
+        pc.nombre_persona AS usuario_creador,pt.nombre_persona AS usuario_transportista,
+        pct.nombre_persona AS usuario_custodia,pr.nombre_persona AS usuario_recepcion,
+        pu.nombre_persona AS usuario_ultima_accion,COALESCE(lo.fecha_actualizacion,lo.fecha_creacion) AS ultima_accion_fecha
       FROM centro_legajo_lote_detalle ld
       INNER JOIN centro_legajo_lote lo ON lo.id_lote=ld.id_loteFK
+      LEFT JOIN persona pc ON pc.cod_persona=lo.cod_usuarioFK_create
+      LEFT JOIN persona pt ON pt.cod_persona=lo.cod_usuario_transportistaFK
+      LEFT JOIN persona pct ON pct.cod_persona=lo.cod_usuario_custodiaFK
+      LEFT JOIN persona pr ON pr.cod_persona=lo.cod_usuario_recepcionFK
+      LEFT JOIN persona pu ON pu.cod_persona=COALESCE(lo.cod_usuarioFK_update,lo.cod_usuarioFK_create)
       WHERE ld.id_documentoFK=? AND ld.estado<>'retirado' AND lo.estado<>'anulado'
       ORDER BY ld.id_lote_detalle DESC LIMIT 1");
     if (!$stmt) return array();
@@ -149,6 +157,107 @@ function centroLegajoPagareVentaValida($venta, $documento, $admitirDevuelto = fa
         return 'El pagare ya fue devuelto al cliente.';
     }
     return '';
+}
+
+function centroLegajoPagareEstadoFinancieroVenta($mysqli, $codVenta, $bloquear = false)
+{
+    $codVenta = intval($codVenta);
+    $sql = "SELECT idcredito,Monto,descuento,totalinteres,deudaInteres
+        FROM credito
+        WHERE cod_venta=? AND UPPER(TRIM(IFNULL(Esado,'')))<>'INACTIVO'
+        ORDER BY idcredito".($bloquear ? ' FOR UPDATE' : '');
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        throw new Exception('No se pudo verificar el saldo de la venta.');
+    }
+    $stmt->bind_param('i', $codVenta);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        throw new Exception('No se pudo consultar el saldo de la venta.');
+    }
+    $creditos = array();
+    $resultado = $stmt->get_result();
+    while ($fila = $resultado->fetch_assoc()) {
+        $creditos[] = $fila;
+    }
+    $stmt->close();
+
+    $saldo = 0.0;
+    $stmtPagos = $mysqli->prepare("SELECT tipo,Monto FROM pago
+        WHERE cod_creditoFK=? AND tipo IN ('Pago Cuota','Interes')".($bloquear ? ' FOR UPDATE' : ''));
+    if (!$stmtPagos) {
+        throw new Exception('No se pudieron verificar los pagos aplicados.');
+    }
+    foreach ($creditos as $credito) {
+        $capitalPagado = 0.0;
+        $interesPagado = 0.0;
+        $idCredito = intval($credito['idcredito']);
+        $stmtPagos->bind_param('i', $idCredito);
+        if (!$stmtPagos->execute()) {
+            $stmtPagos->close();
+            throw new Exception('No se pudieron consultar los pagos aplicados.');
+        }
+        $pagos = $stmtPagos->get_result();
+        while ($pago = $pagos->fetch_assoc()) {
+            if ((string)$pago['tipo'] === 'Pago Cuota') {
+                $capitalPagado += floatval($pago['Monto']);
+            } elseif ((string)$pago['tipo'] === 'Interes') {
+                $interesPagado += floatval($pago['Monto']);
+            }
+        }
+        $capital = max(0, (floatval($credito['Monto']) - floatval($credito['descuento'])) - $capitalPagado);
+        $interes = max(0, (floatval($credito['totalinteres']) + floatval($credito['deudaInteres'])) - $interesPagado);
+        $saldo += $capital + $interes;
+    }
+    $stmtPagos->close();
+    $saldo = round($saldo, 2);
+    return array(
+        'creditos' => count($creditos),
+        'saldo' => $saldo,
+        'saldada' => count($creditos) > 0 && $saldo <= 0.01
+    );
+}
+
+function centroLegajoPagareExigirCuentaSaldada($mysqli, $codVenta, $etapa)
+{
+    $finanzas = centroLegajoPagareEstadoFinancieroVenta($mysqli, intval($codVenta), true);
+    if (empty($finanzas['saldada'])) {
+        $saldo = isset($finanzas['saldo']) ? max(0, floatval($finanzas['saldo'])) : 0;
+        throw new Exception(
+            'La cuenta ya no figura saldada y no se puede '.$etapa.' la devolucion del pagare. '.
+            'Saldo pendiente: Gs. '.number_format($saldo, 0, ',', '.').'.'
+        );
+    }
+    return $finanzas;
+}
+
+function centroLegajoPagareValidarHiloVenta($mysqli, $codInterConsulta, $codVenta)
+{
+    $codInterConsulta = intval($codInterConsulta);
+    $codVenta = intval($codVenta);
+    if ($codInterConsulta <= 0) return 0;
+    if (!centroFacturaColumnaExiste($mysqli, 'centro_legajo_pagare_solicitud', 'cod_interConsultaFK')) {
+        throw new Exception('Instale la migracion de devolucion desde Hilos antes de usar esta opcion.');
+    }
+    $stmt = $mysqli->prepare("SELECT ic.cod_interConsulta
+        FROM interconsulta ic
+        WHERE ic.cod_interConsulta=? AND ic.estado<>'inactivo'
+          AND (ic.cod_ventaFK=? OR EXISTS(
+              SELECT 1 FROM interconsulta_paciente_venta ipv
+              WHERE ipv.cod_interConsultaFK=ic.cod_interConsulta
+                AND ipv.cod_ventaFK=? AND ipv.estado='activo'
+          ))
+        LIMIT 1");
+    if (!$stmt) throw new Exception('No se pudo validar el Hilo de la solicitud.');
+    $stmt->bind_param('iii', $codInterConsulta, $codVenta, $codVenta);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        throw new Exception('No se pudo consultar el Hilo de la solicitud.');
+    }
+    $valido = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$valido) throw new Exception('El Hilo indicado no corresponde a la venta del pagare.');
+    return $codInterConsulta;
 }
 
 function centroLegajoPagareBloquearOperacion($mysqli, $idSolicitud)
@@ -232,6 +341,48 @@ function centroLegajoPagareDecorarSolicitud($fila, $mysqli, $codUsuario)
         }
     }
     $estado = (string)$fila['estado'];
+    $actoresEstado = array(
+        'solicitada' => array('usuario_solicita', 'fecha_solicitud', 'registro_solicitud', 'Responsable de la solicitud'),
+        'aprobada' => array('usuario_aprueba', 'fecha_aprobacion', 'aprobacion_solicitud', 'Responsable administrativo'),
+        'esperando_recepcion' => array('usuario_aprueba', 'fecha_esperando_recepcion', 'espera_recepcion', 'Responsable administrativo'),
+        'preparada' => array('usuario_prepara', 'fecha_preparacion', 'preparacion_entrega', 'Responsable de preparación'),
+        'entregada' => array('usuario_entrega', 'fecha_entrega', 'entrega_cliente', 'Responsable de entrega al cliente'),
+        'rechazada' => array('usuario_rechaza', 'fecha_rechazo', 'rechazo_solicitud', 'Responsable del cierre'),
+        'cancelada' => array('usuario_cancela', 'fecha_cancelacion', 'cancelacion_solicitud', 'Responsable del cierre')
+    );
+    $definicionActor = isset($actoresEstado[$estado]) ? $actoresEstado[$estado] : $actoresEstado['solicitada'];
+    $actorSolicitud = !empty($fila[$definicionActor[0]]) ? (string)$fila[$definicionActor[0]] : '';
+    $fechaSolicitud = !empty($fila[$definicionActor[1]]) ? (string)$fila[$definicionActor[1]]
+        : (!empty($fila['fecha_actualizacion']) ? (string)$fila['fecha_actualizacion'] : (isset($fila['fecha_solicitud']) ? (string)$fila['fecha_solicitud'] : ''));
+    $responsableActual = $actorSolicitud;
+    $rolResponsable = $definicionActor[3];
+    if (!empty($loteUtf8)) {
+        $estadoLote = isset($loteUtf8['estado']) ? (string)$loteUtf8['estado'] : '';
+        if ($estadoLote === 'pendiente_custodia') {
+            $responsableActual = isset($loteUtf8['usuario_transportista']) ? $loteUtf8['usuario_transportista'] : '';
+            $rolResponsable = 'Transportista asignado · custodia pendiente';
+        } elseif ($estadoLote === 'en_transito') {
+            $responsableActual = !empty($loteUtf8['usuario_custodia']) ? $loteUtf8['usuario_custodia']
+                : (isset($loteUtf8['usuario_transportista']) ? $loteUtf8['usuario_transportista'] : '');
+            $rolResponsable = 'Custodia durante el traslado';
+        } elseif (in_array($estadoLote, array('recibido','recibido_parcial','observado'), true)) {
+            $responsableActual = isset($loteUtf8['usuario_recepcion']) ? $loteUtf8['usuario_recepcion'] : '';
+            $rolResponsable = 'Custodia en destino';
+        } elseif ($estadoLote === 'borrador') {
+            $responsableActual = isset($loteUtf8['usuario_creador']) ? $loteUtf8['usuario_creador'] : '';
+            $rolResponsable = 'Responsable de preparación';
+        }
+    }
+    $fila['responsable_actual'] = $responsableActual !== '' ? $responsableActual : 'Sin asignar';
+    $fila['responsable_actual_rol'] = $rolResponsable;
+    $fila['ultima_accion_usuario'] = $actorSolicitud;
+    $fila['ultima_accion_fecha'] = $fechaSolicitud;
+    $fila['ultima_accion_tipo'] = $definicionActor[2];
+    if (!empty($loteUtf8['ultima_accion_fecha']) && ($fechaSolicitud === '' || strcmp((string)$loteUtf8['ultima_accion_fecha'], $fechaSolicitud) > 0)) {
+        $fila['ultima_accion_usuario'] = isset($loteUtf8['usuario_ultima_accion']) ? $loteUtf8['usuario_ultima_accion'] : '';
+        $fila['ultima_accion_fecha'] = $loteUtf8['ultima_accion_fecha'];
+        $fila['ultima_accion_tipo'] = 'actualizacion_custodia';
+    }
     $gestiona = centroLegajoPagarePuedeGestionar($codUsuario);
     $admin = centroLegajoPagarePuedeAprobar($codUsuario);
     $documentoDisponible = in_array($fila['estado_documental'], array('disponible','validado'), true);
@@ -397,6 +548,132 @@ function centroLegajoPagareSolicitudActivaVenta($codVenta, $codUsuario, $mysqli 
     return $fila ? $fila : array();
 }
 
+function centroLegajoPagareEstadoFinancieroConsulta($codVenta)
+{
+    $mysqli = conectar_al_servidor();
+    try {
+        $estado = centroLegajoPagareEstadoFinancieroVenta($mysqli, intval($codVenta), false);
+        $mysqli->close();
+        return array('ok' => true, 'estado' => $estado);
+    } catch (Exception $e) {
+        $mysqli->close();
+        return array('ok' => false, 'estado' => array('creditos' => 0, 'saldo' => 0, 'saldada' => false), 'mensaje' => $e->getMessage());
+    }
+}
+
+function centroLegajoPagareBuscarElegibles($codUsuario, $busqueda, $limite = 30, $codInterConsulta = 0)
+{
+    if (!centroLegajoPagarePuedeGestionar($codUsuario)) {
+        return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permiso para solicitar devoluciones de pagares.');
+    }
+    if (!centroLegajoPagareEstructuraDisponible()) return centroLegajoPagareErrorEstructura();
+    $limite = max(1, min(60, intval($limite)));
+    $codInterConsulta = intval($codInterConsulta);
+    $busqueda = trim((string)$busqueda);
+    if (function_exists('mb_substr')) $busqueda = mb_substr($busqueda, 0, 100, 'UTF-8');
+    else $busqueda = substr($busqueda, 0, 100);
+    $busquedaDb = centroFacturaTextoBaseDatos($busqueda, 100);
+    $mysqli = conectar_al_servidor();
+    $anulada = centroLegajoVentaAnuladaSql('v');
+    $sql = "SELECT v.cod_venta,v.fecha_venta,v.total_venta,v.descuento,v.TipoVenta AS tipo_venta,
+        v.cod_clienteFK,v.cod_local,v.cod_usuarioFK,v.estado,v.anulado,v.estadocuenta,
+        p.nombre_persona AS titular,COALESCE(NULLIF(TRIM(c.rut_cliente),''),NULLIF(TRIM(c.ci_cliente),''),'') AS documento,
+        l.Nombre AS nombre_local,d.id_documento,d.tipo_documento,d.estado_documental,d.estado_fisico,d.cod_local_ubicacionFK,d.ubicacion_fisica,
+        COALESCE(
+          (SELECT ic.cod_interConsulta FROM interconsulta ic
+           WHERE ic.cod_ventaFK=v.cod_venta AND ic.estado<>'inactivo'
+           ORDER BY ic.cod_interConsulta DESC LIMIT 1),
+          (SELECT ipv.cod_interConsultaFK FROM interconsulta_paciente_venta ipv
+           INNER JOIN interconsulta ic2 ON ic2.cod_interConsulta=ipv.cod_interConsultaFK AND ic2.estado<>'inactivo'
+           WHERE ipv.cod_ventaFK=v.cod_venta AND ipv.estado='activo'
+           ORDER BY ipv.cod_interConsultaFK DESC LIMIT 1)
+        ) AS cod_interConsulta,
+        CASE WHEN ".$anulada." THEN 1 ELSE 0 END AS es_anulada
+      FROM centro_legajo_documento d
+      INNER JOIN venta v ON v.cod_venta=d.cod_ventaFK
+      INNER JOIN cliente c ON c.cod_cliente=v.cod_clienteFK
+      INNER JOIN persona p ON p.cod_persona=c.cod_cliente
+      INNER JOIN local l ON l.cod_local=v.cod_local
+      WHERE d.tipo_documento='pagare' AND UPPER(TRIM(IFNULL(v.TipoVenta,'')))='CREDITO'
+        AND NOT ".$anulada;
+    $tipos = '';
+    $parametros = array();
+    if ($codInterConsulta > 0) {
+        $sql .= " AND (EXISTS(
+              SELECT 1 FROM interconsulta ich
+              WHERE ich.cod_interConsulta=? AND ich.estado<>'inactivo' AND ich.cod_ventaFK=v.cod_venta
+            ) OR EXISTS(
+              SELECT 1 FROM interconsulta_paciente_venta ipvh
+              INNER JOIN interconsulta ich2 ON ich2.cod_interConsulta=ipvh.cod_interConsultaFK AND ich2.estado<>'inactivo'
+              WHERE ipvh.cod_interConsultaFK=? AND ipvh.cod_ventaFK=v.cod_venta AND ipvh.estado='activo'
+            ))";
+        $tipos .= 'ii';
+        $parametros[] = $codInterConsulta;
+        $parametros[] = $codInterConsulta;
+    }
+    if ($busquedaDb !== '') {
+        $sql .= " AND (CAST(v.cod_venta AS CHAR)=? OR CAST(COALESCE(
+              (SELECT icb.cod_interConsulta FROM interconsulta icb
+               WHERE icb.cod_ventaFK=v.cod_venta AND icb.estado<>'inactivo'
+               ORDER BY icb.cod_interConsulta DESC LIMIT 1),
+              (SELECT ipvb.cod_interConsultaFK FROM interconsulta_paciente_venta ipvb
+               INNER JOIN interconsulta icb2 ON icb2.cod_interConsulta=ipvb.cod_interConsultaFK AND icb2.estado<>'inactivo'
+               WHERE ipvb.cod_ventaFK=v.cod_venta AND ipvb.estado='activo'
+               ORDER BY ipvb.cod_interConsultaFK DESC LIMIT 1),0
+            ) AS CHAR)=? OR p.nombre_persona LIKE ? OR c.rut_cliente LIKE ? OR c.ci_cliente LIKE ?)";
+        $like = '%'.$busquedaDb.'%';
+        $tipos .= 'sssss';
+        $parametros[] = $busquedaDb;
+        $parametros[] = $busquedaDb;
+        $parametros[] = $like;
+        $parametros[] = $like;
+        $parametros[] = $like;
+    }
+    $sql .= ' ORDER BY v.fecha_venta DESC,v.cod_venta DESC LIMIT 120';
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        $error = $mysqli->error;
+        $mysqli->close();
+        return array('ok' => false, 'codigo' => 'sql', 'mensaje' => 'No se pudo preparar la busqueda de pagares: '.$error);
+    }
+    if ($tipos !== '') centroFacturaBind($stmt, $tipos, $parametros);
+    if (!$stmt->execute()) {
+        $stmt->close(); $mysqli->close();
+        return array('ok' => false, 'codigo' => 'sql', 'mensaje' => 'No se pudo buscar ventas con pagare.');
+    }
+    $candidatos = array();
+    $resultado = $stmt->get_result();
+    while ($fila = $resultado->fetch_assoc()) $candidatos[] = $fila;
+    $stmt->close();
+    $registros = array();
+    foreach ($candidatos as $fila) {
+        if (count($registros) >= $limite) break;
+        $venta = $fila;
+        $venta['importe_venta'] = max(0, floatval($fila['total_venta']) - floatval($fila['descuento']));
+        if (!centroLegajoPuedeUsarVenta($codUsuario, $venta, $mysqli)) continue;
+        $errorVenta = centroLegajoPagareVentaValida($venta, $fila, false);
+        if ($errorVenta !== '') continue;
+        if (!in_array($fila['estado_documental'], array('disponible','validado'), true)
+            || !in_array($fila['estado_fisico'], array('en_sucursal','en_lote','pendiente_custodia','en_transito','recibido'), true)) continue;
+        try {
+            $finanzas = centroLegajoPagareEstadoFinancieroVenta($mysqli, intval($fila['cod_venta']), false);
+        } catch (Exception $e) {
+            continue;
+        }
+        $activa = centroLegajoPagareSolicitudActivaVenta(intval($fila['cod_venta']), $codUsuario, $mysqli);
+        if (!$finanzas['saldada'] && empty($activa)) continue;
+        $fila = centroFacturaFilaUtf8($fila);
+        if ($codInterConsulta > 0) $fila['cod_interConsulta'] = $codInterConsulta;
+        $fila['saldo_pendiente'] = $finanzas['saldo'];
+        $fila['cuenta_saldada'] = $finanzas['saldada'] ? 1 : 0;
+        $fila['solicitud_activa'] = $activa;
+        $fila['codigo_documento'] = centroLegajoCodigoDocumento($fila['cod_venta'], 'pagare');
+        $registros[] = $fila;
+    }
+    $mysqli->close();
+    return array('ok' => true, 'registros' => $registros, 'total' => count($registros));
+}
+
 function centroLegajoPagareCrear($codVenta, $datos, $codUsuario)
 {
     if (!centroLegajoPagarePuedeGestionar($codUsuario)) {
@@ -407,6 +684,7 @@ function centroLegajoPagareCrear($codVenta, $datos, $codUsuario)
     $solicitante = centroFacturaTextoBaseDatos(isset($datos['solicitante_nombre']) ? $datos['solicitante_nombre'] : '', 255);
     $documentoSolicitante = centroFacturaTextoBaseDatos(isset($datos['solicitante_documento']) ? $datos['solicitante_documento'] : '', 45);
     $motivo = centroFacturaTextoBaseDatos(isset($datos['motivo_solicitud']) ? $datos['motivo_solicitud'] : '', 3000, true);
+    $codInterConsulta = isset($datos['cod_interConsulta']) ? intval($datos['cod_interConsulta']) : 0;
     if ($solicitante === '' || $documentoSolicitante === '' || $motivo === '') {
         return array('ok' => false, 'codigo' => 'datos', 'mensaje' => 'Identifique al solicitante con nombre y documento, e indique el motivo.');
     }
@@ -420,6 +698,14 @@ function centroLegajoPagareCrear($codVenta, $datos, $codUsuario)
         $stmt->close();
         $venta = centroLegajoVentaRaw($mysqli, $codVenta);
         if (!$venta || !centroLegajoPuedeUsarVenta($codUsuario, $venta, $mysqli)) throw new Exception('No puede solicitar el pagare de otro local.');
+        $codInterConsulta = centroLegajoPagareValidarHiloVenta($mysqli, $codInterConsulta, $codVenta);
+        $estadoFinanciero = centroLegajoPagareEstadoFinancieroVenta($mysqli, $codVenta, true);
+        if (!$estadoFinanciero['saldada']) {
+            if (intval($estadoFinanciero['creditos']) < 1) {
+                throw new Exception('La venta no tiene una cuenta de credito activa para solicitar el pagare.');
+            }
+            throw new Exception('La venta aun no esta saldada. Saldo pendiente: Gs. '.number_format($estadoFinanciero['saldo'], 0, ',', '.').'.');
+        }
         if (!centroLegajoAsegurarDocumentosVenta($mysqli, $venta, $codUsuario)) throw new Exception('No se pudo preparar el legajo documental.');
         $stmt = centroLegajoPrepararEscritura($mysqli, "SELECT * FROM centro_legajo_documento
             WHERE cod_ventaFK=? AND tipo_documento='pagare' LIMIT 1 FOR UPDATE");
@@ -452,15 +738,29 @@ function centroLegajoPagareCrear($codVenta, $datos, $codUsuario)
         $codigoLote = $snapshot['codigo_lote'] === null ? null : centroFacturaTextoBaseDatos($snapshot['codigo_lote'], 40);
         $estadoLote = $snapshot['estado_lote'] === null ? null : centroFacturaTextoBaseDatos($snapshot['estado_lote'], 30);
         $documentoSolicitanteDb = $documentoSolicitante === '' ? null : $documentoSolicitante;
-        $stmt = centroLegajoPrepararEscritura($mysqli, "INSERT INTO centro_legajo_pagare_solicitud
-            (codigo_solicitud,id_documentoFK,cod_ventaFK,estado,solicitante_nombre,solicitante_documento,motivo_solicitud,
-             estado_fisico_snapshot,cod_local_ubicacion_snapshotFK,ubicacion_fisica_snapshot,id_lote_snapshotFK,
-             codigo_lote_snapshot,estado_lote_snapshot,cod_usuario_solicitaFK,cod_usuarioFK_update,fecha_actualizacion)
-            VALUES (?,?,?,'solicitada',?,?,?,?,?,?,?,?,?,?,?,?)");
-        $parametros = array($temporal, $idDocumento, $codVenta, $solicitante, $documentoSolicitanteDb, $motivo,
-            $snapshot['estado_fisico'], $snapshot['cod_local'], $ubicacion, $snapshot['id_lote'], $codigoLote, $estadoLote,
-            intval($codUsuario), intval($codUsuario), $ahora);
-        centroFacturaBind($stmt, 'siissssisissiis', $parametros);
+        $tieneColumnaHilo = centroFacturaColumnaExiste($mysqli, 'centro_legajo_pagare_solicitud', 'cod_interConsultaFK');
+        if ($tieneColumnaHilo) {
+            $stmt = centroLegajoPrepararEscritura($mysqli, "INSERT INTO centro_legajo_pagare_solicitud
+                (codigo_solicitud,id_documentoFK,cod_ventaFK,cod_interConsultaFK,estado,solicitante_nombre,solicitante_documento,motivo_solicitud,
+                 estado_fisico_snapshot,cod_local_ubicacion_snapshotFK,ubicacion_fisica_snapshot,id_lote_snapshotFK,
+                 codigo_lote_snapshot,estado_lote_snapshot,cod_usuario_solicitaFK,cod_usuarioFK_update,fecha_actualizacion)
+                VALUES (?,?,?,?,'solicitada',?,?,?,?,?,?,?,?,?,?,?,?)");
+            $hiloDb = $codInterConsulta > 0 ? $codInterConsulta : null;
+            $parametros = array($temporal, $idDocumento, $codVenta, $hiloDb, $solicitante, $documentoSolicitanteDb, $motivo,
+                $snapshot['estado_fisico'], $snapshot['cod_local'], $ubicacion, $snapshot['id_lote'], $codigoLote, $estadoLote,
+                intval($codUsuario), intval($codUsuario), $ahora);
+            centroFacturaBind($stmt, 'siiissssisissiis', $parametros);
+        } else {
+            $stmt = centroLegajoPrepararEscritura($mysqli, "INSERT INTO centro_legajo_pagare_solicitud
+                (codigo_solicitud,id_documentoFK,cod_ventaFK,estado,solicitante_nombre,solicitante_documento,motivo_solicitud,
+                 estado_fisico_snapshot,cod_local_ubicacion_snapshotFK,ubicacion_fisica_snapshot,id_lote_snapshotFK,
+                 codigo_lote_snapshot,estado_lote_snapshot,cod_usuario_solicitaFK,cod_usuarioFK_update,fecha_actualizacion)
+                VALUES (?,?,?,'solicitada',?,?,?,?,?,?,?,?,?,?,?,?)");
+            $parametros = array($temporal, $idDocumento, $codVenta, $solicitante, $documentoSolicitanteDb, $motivo,
+                $snapshot['estado_fisico'], $snapshot['cod_local'], $ubicacion, $snapshot['id_lote'], $codigoLote, $estadoLote,
+                intval($codUsuario), intval($codUsuario), $ahora);
+            centroFacturaBind($stmt, 'siissssisissiis', $parametros);
+        }
         if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudo crear la solicitud; verifique que no exista otra activa.'); }
         $idSolicitud = intval($stmt->insert_id); $stmt->close();
         $codigo = 'SPG-'.date('Ymd').'-'.str_pad((string)$idSolicitud, 6, '0', STR_PAD_LEFT);
@@ -498,6 +798,9 @@ function centroLegajoPagareResolver($idSolicitud, $aprobar, $observacion, $codUs
         if ($solicitud['estado'] !== 'solicitada') throw new Exception('La solicitud ya fue resuelta o cambio de estado.');
         $error = centroLegajoPagareVentaValida($venta, $documento, !$aprobar);
         if ($aprobar && $error !== '') throw new Exception($error);
+        if ($aprobar) {
+            centroLegajoPagareExigirCuentaSaldada($mysqli, intval($solicitud['cod_ventaFK']), 'aprobar');
+        }
         $idSolicitud = intval($solicitud['id_solicitud']);
         $ahora = date('Y-m-d H:i:s');
         if ($aprobar) {
@@ -560,6 +863,7 @@ function centroLegajoPagarePreparar($idSolicitud, $codUsuario)
         if (!in_array($solicitud['estado'], array('aprobada','esperando_recepcion'), true)) throw new Exception('La solicitud no esta aprobada para preparacion.');
         $error = centroLegajoPagareVentaValida($venta, $documento, false);
         if ($error !== '') throw new Exception($error);
+        centroLegajoPagareExigirCuentaSaldada($mysqli, intval($solicitud['cod_ventaFK']), 'preparar');
         if (!in_array($documento['estado_documental'], array('disponible','validado'), true)) {
             throw new Exception('El pagare ya no tiene un estado documental habilitado para preparacion.');
         }
@@ -710,6 +1014,7 @@ function centroLegajoPagareEntregar($idSolicitud, $datos, $archivos, $codUsuario
         if ($solicitud['estado'] !== 'preparada') throw new Exception('La solicitud debe estar preparada antes de entregar el pagare.');
         $error = centroLegajoPagareVentaValida($venta, $documento, false);
         if ($error !== '') throw new Exception($error);
+        centroLegajoPagareExigirCuentaSaldada($mysqli, intval($solicitud['cod_ventaFK']), 'entregar');
         if (!in_array($documento['estado_documental'], array('disponible','validado'), true)) {
             throw new Exception('El pagare ya no tiene un estado documental habilitado para entrega.');
         }

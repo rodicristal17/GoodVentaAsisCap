@@ -2567,6 +2567,11 @@ function guardarVinculoSeguimientoFuncionarioInterno($mysqli,$cod_usuario,$cod_i
 	$userInt=(int)$user;
 	$observacion=substr(trim((string)$observacion),0,500);
 	$motivo=substr(trim((string)$motivo),0,500);
+	$stmtBloqueo=$mysqli->prepare("SELECT cod_usuario FROM usuario WHERE cod_usuario=? FOR UPDATE");
+	if(!$stmtBloqueo){throw new Exception("No se pudo bloquear el colaborador para evitar hilos duplicados.");}
+	$stmtBloqueo->bind_param('i',$codUsuarioInt);
+	if(!$stmtBloqueo->execute() || $stmtBloqueo->get_result()->num_rows<1){$stmtBloqueo->close();throw new Exception("El colaborador indicado no existe.");}
+	$stmtBloqueo->close();
 	$actual=obtenerHiloPrincipalActivoFuncionario($mysqli,$codUsuarioInt);
 	if($actual && (int)$actual['cod_interConsultaFK']==$codInterInt){
 		$sql="UPDATE funcionario_hilo_principal
@@ -2630,6 +2635,13 @@ function vincularSeguimientoFuncionario($cod_usuario,$cod_interConsulta,$observa
 		$mysqli=conectar_al_servidor();
 		if(method_exists($mysqli,'begin_transaction')){$mysqli->begin_transaction();}else{$mysqli->autocommit(false);}
 		validarInterConsultaSeguimientoFuncionario($mysqli,$cod_interConsulta);
+		$codInterNormalizar=(int)$cod_interConsulta;
+		$stmtTipo=$mysqli->prepare("UPDATE interconsulta SET tipo='colaborador',cod_usuarioFK_edit=?,fecha_edit=NOW() WHERE cod_interConsulta=?");
+		if(!$stmtTipo){throw new Exception("No se pudo ubicar el hilo en Pagos y Egresos.");}
+		$userTipo=(int)$user;
+		$stmtTipo->bind_param('ii',$userTipo,$codInterNormalizar);
+		if(!$stmtTipo->execute()){$stmtTipo->close();throw new Exception("No se pudo ubicar el hilo en Pagos y Egresos.");}
+		$stmtTipo->close();
 		$resumen=guardarVinculoSeguimientoFuncionarioInterno($mysqli,$cod_usuario,$cod_interConsulta,$observacion,$motivo,$user);
 		asegurarParticipacionSeguimientoFuncionario($mysqli,$cod_usuario,$cod_interConsulta,$user,$motivo);
 		$resumen=obtenerResumenSeguimientoFuncionario($mysqli,$cod_usuario);
@@ -2659,18 +2671,39 @@ function crearSeguimientoFuncionario($cod_usuario,$asunto,$observacion,$motivo,$
 			throw new Exception("El modulo de hilos no esta disponible.");
 		}
 		if(method_exists($mysqli,'begin_transaction')){$mysqli->begin_transaction();}else{$mysqli->autocommit(false);}
+		$codUsuarioBloqueo=(int)$cod_usuario;
+		$stmtBloqueo=$mysqli->prepare("SELECT cod_usuario FROM usuario WHERE cod_usuario=? AND estado='Activo' FOR UPDATE");
+		if(!$stmtBloqueo){throw new Exception("No se pudo bloquear el colaborador.");}
+		$stmtBloqueo->bind_param('i',$codUsuarioBloqueo);
+		if(!$stmtBloqueo->execute() || $stmtBloqueo->get_result()->num_rows<1){$stmtBloqueo->close();throw new Exception("El colaborador no esta activo.");}
+		$stmtBloqueo->close();
+		$hiloExistente=obtenerHiloPrincipalActivoFuncionario($mysqli,$cod_usuario);
+		if($hiloExistente && (int)$hiloExistente['cod_interConsultaFK']>0 && strtolower(trim((string)$hiloExistente['hilo_estado']))!='inactivo'){
+			$codExistente=(int)$hiloExistente['cod_interConsultaFK'];
+			$stmtTipo=$mysqli->prepare("UPDATE interconsulta SET tipo='colaborador',cod_usuarioFK_edit=?,fecha_edit=NOW() WHERE cod_interConsulta=?");
+			if(!$stmtTipo){throw new Exception("No se pudo normalizar el hilo existente.");}
+			$userTipo=(int)$user;
+			$stmtTipo->bind_param('ii',$userTipo,$codExistente);
+			if(!$stmtTipo->execute()){$stmtTipo->close();throw new Exception("No se pudo normalizar el hilo existente.");}
+			$stmtTipo->close();
+			$resumen=obtenerResumenSeguimientoFuncionario($mysqli,$cod_usuario);
+			$mysqli->commit();
+			mysqli_close($mysqli);
+			echo json_encode(array("1"=>"exito","2"=>"El colaborador ya tiene un hilo principal; no se creo un duplicado.","3"=>$resumen));
+			exit;
+		}
 		$datosFuncionario=obtenerDatosFuncionarioSeguimiento($mysqli,$cod_usuario);
 		$nombreFuncionario=$datosFuncionario['nombre_persona'] ?? "Funcionario";
 		$asunto=substr(trim((string)$asunto),0,180);
 		if($asunto==""){
-			$asunto="Seguimiento administrativo - ".$nombreFuncionario;
+			$asunto="Colaborador - ".$nombreFuncionario;
 		}
 		$observacion=substr(trim((string)$observacion),0,500);
 		if($observacion==""){
 			$observacion="Hilo principal de seguimiento administrativo del funcionario.";
 		}
 		$estado="proceso";
-		$tipo="rrhh";
+		$tipo="colaborador";
 		$userInt=(int)$user;
 		$codLocal=isset($datosFuncionario['cod_localFK']) && (int)$datosFuncionario['cod_localFK']>0 ? (int)$datosFuncionario['cod_localFK'] : null;
 		if($codLocal){
