@@ -1060,6 +1060,20 @@ function ri_guardar_accion($user, $modo)
     $mysqli->begin_transaction();
 
     try {
+        $hiloContexto= $contexto["hilo_id"] !== "" ? (int)$contexto["hilo_id"] : 0;
+        if ($hiloContexto > 0) {
+            $stmtHilo= $mysqli->prepare("SELECT estado FROM interconsulta WHERE cod_interConsulta=? LIMIT 1 FOR UPDATE");
+            if (!$stmtHilo) {
+                throw new Exception("No se pudo validar el Hilo del documento.");
+            }
+            $stmtHilo->bind_param("i", $hiloContexto);
+            $stmtHilo->execute();
+            $hiloVigente= $stmtHilo->get_result()->fetch_assoc();
+            $stmtHilo->close();
+            if (!$hiloVigente || strtolower(trim((string)$hiloVigente["estado"])) === "inactivo") {
+                throw new Exception("El Hilo fue archivado y ya no admite recetas o indicaciones nuevas.");
+            }
+        }
         if ($id !== "") {
             $existente = ri_obtener_documento_simple($mysqli, $id);
             if (!$existente) {

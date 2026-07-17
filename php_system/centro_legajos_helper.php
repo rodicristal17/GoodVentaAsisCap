@@ -168,9 +168,12 @@ function centroLegajoPuedeAccederLote($codUsuario, $lote, $mysqli)
     if (centroFacturaPuedeVerTodosLocales($codUsuario)) return true;
     $contexto = centroFacturaContextoUsuario($codUsuario, $mysqli);
     $local = isset($contexto['cod_localFK']) ? intval($contexto['cod_localFK']) : 0;
+    $estadoLote = strtolower(trim((string)(isset($lote['estado']) ? $lote['estado'] : '')));
+    $custodiaTransportistaVigente = intval($lote['cod_usuario_transportistaFK']) === intval($codUsuario)
+        && in_array($estadoLote, array('pendiente_custodia','en_transito','recibido_parcial','observado'), true);
     return $local === intval($lote['cod_local_origenFK'])
         || $local === intval($lote['cod_local_destinoFK'])
-        || intval($lote['cod_usuario_transportistaFK']) === intval($codUsuario);
+        || $custodiaTransportistaVigente;
 }
 
 function centroLegajoPuedeOperarOrigen($codUsuario, $lote, $mysqli)

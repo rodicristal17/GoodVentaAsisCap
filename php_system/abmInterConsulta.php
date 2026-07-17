@@ -5022,7 +5022,45 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             exit;
         }
 
-        if (empty($cod_mensaje)) {
+        $transaccionHiloMensaje= false;
+        $hiloBloqueoMensaje= intval($cod_interConsulta);
+        if ($hiloBloqueoMensaje <= 0 && intval($cod_mensaje) > 0) {
+            $stmtHiloMensaje= $mysqli->prepare("SELECT cod_interConsultaFK FROM mensaje WHERE cod_mensaje=? LIMIT 1");
+            if ($stmtHiloMensaje) {
+                $codMensajeBloqueo= intval($cod_mensaje);
+                $stmtHiloMensaje->bind_param('i', $codMensajeBloqueo);
+                $stmtHiloMensaje->execute();
+                $filaHiloMensaje= $stmtHiloMensaje->get_result()->fetch_assoc();
+                $stmtHiloMensaje->close();
+                $hiloBloqueoMensaje= $filaHiloMensaje ? intval($filaHiloMensaje['cod_interConsultaFK']) : 0;
+            }
+        }
+        if ($hiloBloqueoMensaje <= 0 || !$mysqli->begin_transaction()) {
+            echo json_encode(array("1" => "error", "mensaje" => "No se pudo validar el hilo del mensaje."));
+            $mysqli->close();
+            exit;
+        }
+        $stmtHiloMensaje= $mysqli->prepare("SELECT estado FROM interconsulta WHERE cod_interConsulta=? LIMIT 1 FOR UPDATE");
+        if (!$stmtHiloMensaje) {
+            $mysqli->rollback();
+            echo json_encode(array("1" => "error", "mensaje" => "No se pudo bloquear el hilo del mensaje."));
+            $mysqli->close();
+            exit;
+        }
+        $stmtHiloMensaje->bind_param('i', $hiloBloqueoMensaje);
+        $stmtHiloMensaje->execute();
+        $hiloMensaje= $stmtHiloMensaje->get_result()->fetch_assoc();
+        $stmtHiloMensaje->close();
+        if (!$hiloMensaje || strtolower(trim((string)$hiloMensaje['estado'])) === 'inactivo') {
+            $mysqli->rollback();
+            echo json_encode(array("1" => "error", "mensaje" => "El hilo fue archivado y ya no admite nuevos mensajes."));
+            $mysqli->close();
+            exit;
+        }
+        $transaccionHiloMensaje= true;
+
+        $esMensajeNuevo= empty($cod_mensaje);
+        if ($esMensajeNuevo) {
             if (seguimientoProgramadoRespuestaCitadaDisponible($mysqli)) {
                 $sql = "INSERT INTO mensaje (contenido, fecha_creacion, cod_interConsultaFK, cod_usuarioFK, cod_dictamenFK, cod_mensaje_respuestaFK) VALUES (?, ?, ?, ?, ?, ?)";
                 $stmt = $mysqli->prepare($sql);
@@ -5073,6 +5111,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         }
         
         if (!$stmt || !$stmt->execute()) {
+            if ($transaccionHiloMensaje) { $mysqli->rollback(); }
             $informacion = array("1" => "error", "mensaje" => "No se pudo guardar el mensaje. Intente nuevamente.");
             echo json_encode($informacion);
             if ($stmt) { $stmt->close(); }
@@ -5080,9 +5119,19 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             exit;
         }
         
-        if (empty($cod_mensaje)) {
+        if ($esMensajeNuevo) {
             $cod_mensaje = $stmt->insert_id;
-            
+        }
+        if ($transaccionHiloMensaje && !$mysqli->commit()) {
+            $mysqli->rollback();
+            echo json_encode(array("1" => "error", "mensaje" => "No se pudo confirmar el mensaje."));
+            $stmt->close();
+            $mysqli->close();
+            exit;
+        }
+        $transaccionHiloMensaje= false;
+
+        if ($esMensajeNuevo && isset($ids_menciones)) {
             $ids_menciones[] = $user;
             // Obtiene todas las menciones anteriores asociadas a esta interconsulta
             $fechaActual= new DateTime();

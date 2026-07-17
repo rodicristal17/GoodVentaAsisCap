@@ -247,7 +247,7 @@ function centroLegajoPagareValidarHiloVenta($mysqli, $codInterConsulta, $codVent
               WHERE ipv.cod_interConsultaFK=ic.cod_interConsulta
                 AND ipv.cod_ventaFK=? AND ipv.estado='activo'
           ))
-        LIMIT 1");
+        LIMIT 1 FOR UPDATE");
     if (!$stmt) throw new Exception('No se pudo validar el Hilo de la solicitud.');
     $stmt->bind_param('iii', $codInterConsulta, $codVenta, $codVenta);
     if (!$stmt->execute()) {
@@ -421,7 +421,8 @@ function centroLegajoPagareListar($codUsuario, $filtros, $limite = 80, $offset =
             SELECT 1 FROM centro_legajo_lote_detalle lda
             INNER JOIN centro_legajo_lote loa ON loa.id_lote=lda.id_loteFK
             WHERE lda.id_documentoFK=d.id_documento AND lda.estado<>'retirado' AND loa.estado<>'anulado'
-              AND (loa.cod_local_origenFK=? OR loa.cod_local_destinoFK=? OR loa.cod_usuario_transportistaFK=?)))";
+              AND (loa.cod_local_origenFK=? OR loa.cod_local_destinoFK=?
+                OR (loa.cod_usuario_transportistaFK=? AND loa.estado IN ('pendiente_custodia','en_transito','recibido_parcial','observado')))))";
         $tipos .= 'iiiiii';
         $parametros[] = $local; $parametros[] = $local; $parametros[] = $local;
         $parametros[] = $local; $parametros[] = $local; $parametros[] = intval($codUsuario);
@@ -1084,7 +1085,7 @@ function centroLegajoPagareDescargarEvidencia($idSolicitud, $codUsuario)
     $fila = centroLegajoPagareSolicitudCompleta($mysqli, $idSolicitud);
     if (!$fila) { $mysqli->close(); return array('ok' => false, 'codigo' => 'solicitud', 'mensaje' => 'La solicitud no existe.'); }
     $venta = centroLegajoVentaRaw($mysqli, intval($fila['cod_ventaFK']));
-    if (!$venta || !centroLegajoPuedeUsarVenta($codUsuario, $venta, $mysqli)) {
+    if (!$venta || !centroFacturaPuedeUsarLocal($codUsuario, intval($venta['cod_local']), $mysqli)) {
         $mysqli->close(); return array('ok' => false, 'codigo' => 'NI_LOCAL', 'mensaje' => 'La solicitud pertenece a otro local.');
     }
     $mysqli->close();

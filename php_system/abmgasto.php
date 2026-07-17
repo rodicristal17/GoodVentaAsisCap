@@ -2039,6 +2039,39 @@ if ($cod_interConsultaFK) {
 $modalidad= (($cantCuotas > 1) ? 'credito' : 'contado');
 
 $mysqli=conectar_al_servidor();
+$transaccionHiloGasto= false;
+$hiloBloqueoGasto= intval($cod_interConsultaFK);
+if ($operacion == 'editar' && $hiloBloqueoGasto <= 0 && intval($idgastos) > 0) {
+	$stmtHiloActualGasto= $mysqli->prepare("SELECT cod_interConsultaFK FROM gastos WHERE idgastos=? LIMIT 1");
+	if ($stmtHiloActualGasto) {
+		$idGastoBloqueo= intval($idgastos);
+		$stmtHiloActualGasto->bind_param('i', $idGastoBloqueo);
+		$stmtHiloActualGasto->execute();
+		$filaHiloActualGasto= $stmtHiloActualGasto->get_result()->fetch_assoc();
+		$stmtHiloActualGasto->close();
+		$hiloBloqueoGasto= $filaHiloActualGasto ? intval($filaHiloActualGasto['cod_interConsultaFK']) : 0;
+	}
+}
+if ($hiloBloqueoGasto > 0) {
+	if (!$mysqli->begin_transaction()) {
+		$mysqli->close();
+		return array("1" => "error", "2" => "No se pudo validar el hilo del movimiento.");
+	}
+	$stmtBloqueoHiloGasto= $mysqli->prepare("SELECT estado FROM interconsulta WHERE cod_interConsulta=? LIMIT 1 FOR UPDATE");
+	if (!$stmtBloqueoHiloGasto) {
+		$mysqli->rollback(); $mysqli->close();
+		return array("1" => "error", "2" => "No se pudo bloquear el hilo del movimiento.");
+	}
+	$stmtBloqueoHiloGasto->bind_param('i', $hiloBloqueoGasto);
+	$stmtBloqueoHiloGasto->execute();
+	$hiloGasto= $stmtBloqueoHiloGasto->get_result()->fetch_assoc();
+	$stmtBloqueoHiloGasto->close();
+	if (!$hiloGasto || strtolower(trim((string)$hiloGasto['estado'])) === 'inactivo') {
+		$mysqli->rollback(); $mysqli->close();
+		return array("1" => "error", "2" => "El hilo fue archivado y ya no admite movimientos.");
+	}
+	$transaccionHiloGasto= true;
+}
 
 // Identifica si el motivo necesita autorizacion
 $registros_motivos= buscarabmmotivoingresoegreso('', 'activo',$cod_motivo);
@@ -2216,12 +2249,19 @@ call_user_func_array([$stmt, 'bind_param'], array_merge([$ss], $refs));
 }
 
 if (!$stmt->execute()) {
-	if ($transaccionDeposito) {
+	if ($transaccionDeposito || $transaccionHiloGasto) {
 		$mysqli->rollback();
 	}
 echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
+}
+
+// La relacion principal queda confirmada mientras el Hilo sigue bloqueado. A
+// partir de aqui una fusion posterior ya encontrara y trasladara este movimiento.
+if ($transaccionHiloGasto) {
+	$mysqli->commit();
+	$transaccionHiloGasto= false;
 }
 
 
