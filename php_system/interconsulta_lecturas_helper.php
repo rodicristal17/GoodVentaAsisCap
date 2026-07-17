@@ -262,6 +262,26 @@ function interconsultaLecturasAsegurarUsuariosHilo($mysqli, $codHilo, $participa
     return true;
 }
 
+/**
+ * Inicio comun del contador instalado. Permite que un usuario que abre Hilos
+ * por primera vez vea los mensajes recibidos desde la activacion del modulo,
+ * sin convertir todo el historial anterior en pendiente.
+ */
+function interconsultaLecturasFechaBaseConteo($mysqli)
+{
+    $fecha = '';
+    if ($mysqli instanceof mysqli) {
+        $resultado = $mysqli->query("SELECT MIN(fecha_inicio_conteo) AS fecha_base
+            FROM interconsulta_lectura_usuario");
+        if ($resultado) {
+            $fila = $resultado->fetch_assoc();
+            $fecha = $fila && !empty($fila['fecha_base']) ? trim((string)$fila['fecha_base']) : '';
+            $resultado->free();
+        }
+    }
+    return $fecha !== '' && strtotime($fecha) !== false ? $fecha : date('Y-m-d H:i:s');
+}
+
 function interconsultaLecturasSincronizarParticipantesHilo($mysqli, $codHilo, $fechaInicio = '')
 {
     $mapa = interconsultaParticipantesActualesHilos(array($codHilo), $mysqli);
@@ -346,27 +366,33 @@ function interconsultaLecturasNoLeidosHilos($idsHilos, $codUsuario, $mysqli = nu
         if ($cerrar) { $mysqli->close(); }
         return $salida;
     }
-    $participantes = interconsultaParticipantesActualesHilos($idsHilos, $mysqli);
-    $hilosParticipante = array();
-    foreach ($idsHilos as $codHilo) {
-        if (isset($participantes[$codHilo][$codUsuario])) {
-            $hilosParticipante[] = $codHilo;
-            interconsultaLecturasAsegurarUsuariosHilo($mysqli, $codHilo, array($participantes[$codHilo][$codUsuario]), date('Y-m-d H:i:s'));
-        }
-    }
-    if (count($hilosParticipante) === 0) {
-        if ($cerrar) { $mysqli->close(); }
-        return $salida;
-    }
-    $lista = implode(',', array_map('intval', $hilosParticipante));
-    $sql = "SELECT m.cod_interConsultaFK,COUNT(*) AS total
+
+    // Todos los usuarios que pueden ver un hilo necesitan su propio contador,
+    // aunque no sean el creador ni figuren en la ultima mencion. Los ids que
+    // llegan a esta funcion ya fueron limitados por los locales autorizados.
+    $lista = implode(',', array_map('intval', $idsHilos));
+    $fechaBase = $mysqli->real_escape_string(interconsultaLecturasFechaBaseConteo($mysqli));
+    $mysqli->query("INSERT IGNORE INTO interconsulta_lectura_usuario
+        (cod_interConsultaFK,cod_usuarioFK,fecha_inicio_conteo,fecha_ultima_apertura,estado)
+        SELECT ic.cod_interConsulta,".$codUsuario.",
+          GREATEST(IFNULL(ic.fecha_creacion,'".$fechaBase."'),'".$fechaBase."'),NULL,'activo'
+        FROM interconsulta ic WHERE ic.cod_interConsulta IN (".$lista.")");
+
+    $sql = "SELECT m.cod_interConsultaFK,COUNT(DISTINCT m.cod_mensaje) AS total
             FROM mensaje m
             INNER JOIN interconsulta_lectura_usuario lu
               ON lu.cod_interConsultaFK=m.cod_interConsultaFK AND lu.cod_usuarioFK=".$codUsuario." AND lu.estado='activo'
             LEFT JOIN interconsulta_mensaje_lectura ml
               ON ml.cod_mensajeFK=m.cod_mensaje AND ml.cod_usuarioFK=".$codUsuario."
+            LEFT JOIN menciones mn_legacy
+              ON mn_legacy.cod_mensajeFK=m.cod_mensaje AND mn_legacy.cod_usuarioFK=".$codUsuario."
+              AND mn_legacy.estado='activo' AND mn_legacy.isLeido=0
             WHERE m.cod_interConsultaFK IN (".$lista.") AND m.estado='activo' AND m.fecha_creacion<=NOW()
-              AND m.fecha_creacion>=lu.fecha_inicio_conteo AND IFNULL(m.cod_usuarioFK,0)>0
+              AND (
+                m.fecha_creacion>=lu.fecha_inicio_conteo
+                OR mn_legacy.cod_mencion IS NOT NULL
+              )
+              AND IFNULL(m.cod_usuarioFK,0)>0
               AND m.cod_usuarioFK<>".$codUsuario." AND ml.id IS NULL
             GROUP BY m.cod_interConsultaFK";
     $resultado = $mysqli->query($sql);
@@ -389,21 +415,34 @@ function interconsultaLecturasTotalUsuario($codUsuario)
     }
     $condicionLocal = function_exists('interconsultaAccesoCondicionLocalSql')
         ? interconsultaAccesoCondicionLocalSql($codUsuario, 'ic', $mysqli) : '1=0';
-    $resultado = $mysqli->query("SELECT ic.cod_interConsulta FROM interconsulta ic
-        WHERE ic.estado<>'inactivo' AND ".$condicionLocal." ORDER BY ic.cod_interConsulta DESC");
-    $total = 0;
-    $lote = array();
-    while ($resultado && $fila = $resultado->fetch_assoc()) {
-        $lote[] = intval($fila['cod_interConsulta']);
-        if (count($lote) >= 100) {
-            $total += array_sum(interconsultaLecturasNoLeidosHilos($lote, $codUsuario, $mysqli));
-            $lote = array();
-        }
-    }
+    $fechaBase = $mysqli->real_escape_string(interconsultaLecturasFechaBaseConteo($mysqli));
+
+    $mysqli->query("INSERT IGNORE INTO interconsulta_lectura_usuario
+        (cod_interConsultaFK,cod_usuarioFK,fecha_inicio_conteo,fecha_ultima_apertura,estado)
+        SELECT ic.cod_interConsulta,".$codUsuario.",
+          GREATEST(IFNULL(ic.fecha_creacion,'".$fechaBase."'),'".$fechaBase."'),NULL,'activo'
+        FROM interconsulta ic
+        WHERE ic.estado<>'inactivo' AND ".$condicionLocal);
+
+    $sql = "SELECT COUNT(DISTINCT m.cod_mensaje) AS total
+        FROM interconsulta ic
+        INNER JOIN interconsulta_lectura_usuario lu
+          ON lu.cod_interConsultaFK=ic.cod_interConsulta AND lu.cod_usuarioFK=".$codUsuario." AND lu.estado='activo'
+        INNER JOIN mensaje m
+          ON m.cod_interConsultaFK=ic.cod_interConsulta AND m.estado='activo' AND m.fecha_creacion<=NOW()
+        LEFT JOIN interconsulta_mensaje_lectura ml
+          ON ml.cod_mensajeFK=m.cod_mensaje AND ml.cod_usuarioFK=".$codUsuario."
+        LEFT JOIN menciones mn_legacy
+          ON mn_legacy.cod_mensajeFK=m.cod_mensaje AND mn_legacy.cod_usuarioFK=".$codUsuario."
+          AND mn_legacy.estado='activo' AND mn_legacy.isLeido=0
+        WHERE ic.estado<>'inactivo' AND ".$condicionLocal."
+          AND (m.fecha_creacion>=lu.fecha_inicio_conteo OR mn_legacy.cod_mencion IS NOT NULL)
+          AND IFNULL(m.cod_usuarioFK,0)>0 AND m.cod_usuarioFK<>".$codUsuario."
+          AND ml.id IS NULL";
+    $resultado = $mysqli->query($sql);
+    $fila = $resultado ? $resultado->fetch_assoc() : null;
+    $total = $fila ? intval($fila['total']) : 0;
     if ($resultado) { $resultado->free(); }
-    if (count($lote) > 0) {
-        $total += array_sum(interconsultaLecturasNoLeidosHilos($lote, $codUsuario, $mysqli));
-    }
     $mysqli->close();
     return $total;
 }

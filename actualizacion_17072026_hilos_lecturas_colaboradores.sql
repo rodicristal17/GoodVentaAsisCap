@@ -28,18 +28,18 @@ CREATE TABLE IF NOT EXISTS interconsulta_mensaje_lectura (
   KEY idx_interconsulta_mensaje_lectura_usuario (cod_usuarioFK,fecha_lectura)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- El historial existente comienza en cero. Solo los mensajes disponibles a
--- partir de esta instalacion podran incrementar el contador de no leidos.
+-- El contador general comienza en esta instalacion. Las menciones legacy que
+-- continuen con isLeido=0 se conservan como pendientes mediante el helper PHP.
 INSERT IGNORE INTO interconsulta_lectura_usuario
   (cod_interConsultaFK,cod_usuarioFK,fecha_inicio_conteo,fecha_ultima_apertura,estado)
-SELECT ic.cod_interConsulta,ic.cod_usuarioFK_create,NOW(),NOW(),'activo'
+SELECT ic.cod_interConsulta,ic.cod_usuarioFK_create,NOW(),NULL,'activo'
 FROM interconsulta ic
 INNER JOIN usuario u ON u.cod_usuario=ic.cod_usuarioFK_create
 WHERE ic.estado<>'inactivo' AND IFNULL(ic.cod_usuarioFK_create,0)>0;
 
 INSERT IGNORE INTO interconsulta_lectura_usuario
   (cod_interConsultaFK,cod_usuarioFK,fecha_inicio_conteo,fecha_ultima_apertura,estado)
-SELECT ic.cod_interConsulta,mn.cod_usuarioFK,NOW(),NOW(),'activo'
+SELECT ic.cod_interConsulta,mn.cod_usuarioFK,NOW(),NULL,'activo'
 FROM interconsulta ic
 INNER JOIN mensaje ultimo ON ultimo.cod_mensaje=(
   SELECT m2.cod_mensaje
@@ -52,4 +52,3 @@ INNER JOIN mensaje ultimo ON ultimo.cod_mensaje=(
 INNER JOIN menciones mn ON mn.cod_mensajeFK=ultimo.cod_mensaje AND mn.estado='activo'
 INNER JOIN usuario u ON u.cod_usuario=mn.cod_usuarioFK
 WHERE ic.estado<>'inactivo' AND IFNULL(mn.cod_usuarioFK,0)>0;
-

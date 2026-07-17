@@ -2082,10 +2082,9 @@ function actualizarVistaInterConsultaLeida() {
         const cantidadNoLeida= filaSeleccionada.querySelector("#td_datos_14");
         const totalFilaAntes= cantidadNoLeida ? Math.max(0, Number(cantidadNoLeida.textContent) || 0) : 0;
         filaSeleccionada.classList.remove("interconsulta-thread-row--pending");
-        const badgeFila= filaSeleccionada.querySelector(".interconsulta-pending-badge");
-        if (badgeFila) {
+        filaSeleccionada.querySelectorAll(".interconsulta-pending-badge").forEach(function(badgeFila) {
             badgeFila.remove();
-        }
+        });
         if (cantidadNoLeida) {
             cantidadNoLeida.textContent= "0";
         }
