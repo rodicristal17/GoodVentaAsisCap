@@ -2007,7 +2007,6 @@ function actualizarCabeceraDetalleHilo(datosHilo, opcionesDictamen= "") {
     document.getElementById("badgeEstadoDetalle").textContent= estado;
     document.getElementById("badgeTipoDetalle").textContent= tipo;
     document.getElementById("badgeLocalDetalle").textContent= local;
-    mostrarBadgeDetalleHilo("badgePendienteDetalle", pendiente, "Sin responder");
     mostrarBadgeDetalleHilo("badgeVinculadoDetalle", vinculado, "Hilo vinculado");
     mostrarBadgeDetalleHilo("badgeDictamenDetalle", tieneDictamen, "Dictamen registrado");
     var btnUnificarSeguimiento= document.getElementById("btnUnificarSeguimientoPaciente");
@@ -2053,20 +2052,16 @@ var ultimoCodInterConsultaLectura= "";
 var ultimoMomentoInterConsultaLectura= 0;
 
 function tieneIndicadorLecturaPendienteInterConsulta() {
-    const badgePendiente= document.getElementById("badgePendienteDetalle");
     const avisoPendiente= document.getElementById("avisoMensajesPendientesInterConsulta");
     const resumen= document.getElementById("contenedorEncabezadoInterConsulta");
     const filaSeleccionada= document.querySelector("#table_frm_VistaInterConsulta .interconsulta-thread-row--selected");
 
-    return (badgePendiente && badgePendiente.style.display != "none")
-        || (avisoPendiente && avisoPendiente.style.display != "none")
+    return (avisoPendiente && avisoPendiente.style.display != "none")
         || (resumen && resumen.classList.contains("is-pending"))
         || (filaSeleccionada && filaSeleccionada.classList.contains("interconsulta-thread-row--pending"));
 }
 
 function actualizarVistaInterConsultaLeida() {
-    mostrarBadgeDetalleHilo("badgePendienteDetalle", false);
-
     const avisoPendiente= document.getElementById("avisoMensajesPendientesInterConsulta");
     if (avisoPendiente) {
         avisoPendiente.style.display= "none";

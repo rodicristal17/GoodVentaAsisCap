@@ -3747,11 +3747,9 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 .($esSeguimiento ? ' interconsulta-thread-row--patient-master' : '')
                 .(!empty($value['esHiloColaborador']) ? ' interconsulta-thread-row--employee' : '');
             $badgePendiente= $esPendiente ? '<span class="interconsulta-pending-badge interconsulta-unread-count" title="'.intval($value['cantMensajesNoLeidos']).' mensaje(s) sin leer" aria-label="'.intval($value['cantMensajesNoLeidos']).' mensaje(s) sin leer">'.intval($value['cantMensajesNoLeidos']).'</span>' : '';
-            $badgeSinResponder= $esPendiente ? '<span class="interconsulta-pending-badge" title="Tiene mensajes pendientes de lectura">Sin responder</span>' : '';
             $iconoVinculado= $esVinculado ? ' <i class="fa-solid fa-link interconsulta-linked-icon" title="Hilo vinculado" aria-hidden="true"></i>' : '';
             $credencialColaborador= renderCredencialColaboradorListadoInterConsulta($value);
-            $lineaPendiente= $badgeSinResponder !== '' ? '<div class="interconsulta-follow-strip">'.$badgeSinResponder.'</div>' : '';
-            $formatAsunto= '<div class="interconsulta-thread-main">'.$credencialColaborador.'<div class="interconsulta-subject-wrap"><div class="interconsulta-subject-line"><p class="interconsulta-subject-text interconsulta-subject-title">'.htmlspecialchars($asuntoVista, ENT_QUOTES, 'UTF-8').$iconoVinculado.'</p>'.$badgePendiente.'</div>'.$lineaPendiente.'</div></div>';
+            $formatAsunto= '<div class="interconsulta-thread-main">'.$credencialColaborador.'<div class="interconsulta-subject-wrap"><div class="interconsulta-subject-line"><p class="interconsulta-subject-text interconsulta-subject-title">'.htmlspecialchars($asuntoVista, ENT_QUOTES, 'UTF-8').$iconoVinculado.'</p>'.$badgePendiente.'</div></div></div>';
             $participantesHtml= isset($value['participantes_html']) ? $value['participantes_html'] : interconsultaRenderGrupoParticipantes(array(), 5);
             $placeholder= renderResumenSeguimientoInterConsulta('muted','Cargando','Información complementaria');
 
@@ -4146,10 +4144,9 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $contenidoAsuntoPendienteInicio = $esHiloPendienteRespuesta ? '<b>' : '';
             $contenidoAsuntoPendienteFin = $esHiloPendienteRespuesta ? '</b>' : '';
             $badgePendienteRespuesta = $esHiloPendienteRespuesta ? '<span class="interconsulta-pending-badge interconsulta-unread-count" title="'.intval($value['cantMensajesNoLeidos']).' mensaje(s) sin leer" aria-label="'.intval($value['cantMensajesNoLeidos']).' mensaje(s) sin leer">'.intval($value['cantMensajesNoLeidos']).'</span>' : '';
-            $badgeSinResponder = $esHiloPendienteRespuesta ? '<span class="interconsulta-pending-badge" title="Tiene mensajes pendientes de lectura">Sin responder</span>' : '';
             $tooltipFila = $esHiloPendienteRespuesta ? ' title="'.intval($value['cantMensajesNoLeidos']).' mensaje(s) sin leer"' : '';
-            $lineaSeguimientoPaciente = ($badgeSinResponder != "" || $badgesSeguimientoPaciente != "")
-                ? '<div class="interconsulta-follow-strip">'.$badgeSinResponder.$badgesSeguimientoPaciente.'</div>'
+            $lineaSeguimientoPaciente = ($badgesSeguimientoPaciente != "")
+                ? '<div class="interconsulta-follow-strip">'.$badgesSeguimientoPaciente.'</div>'
                 : '';
             $credencialColaborador= renderCredencialColaboradorListadoInterConsulta($value);
             $participantesHtml= isset($value['participantes_html']) ? $value['participantes_html'] : interconsultaRenderGrupoParticipantes(array(), 5);
