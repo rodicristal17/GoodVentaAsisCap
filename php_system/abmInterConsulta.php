@@ -434,6 +434,27 @@
 
         $fechaActual= new DateTime();
         switch ($funt) {
+            case 'buscarResumenHilos':
+                // Resumen liviano para la actualizacion periodica. No renderiza
+                // filas ni ejecuta el enriquecimiento completo del listado.
+                $filtrosResumenHilos= array(
+                    'cod_usuarioFK' => intval($user),
+                    'ocultar_inactivos' => true,
+                    'fecha_limite' => $fechaActual->format('Y-m-d H:i:s')
+                );
+                $conteosResumenHilos= obtenerConteosCategoriasInterConsulta($filtrosResumenHilos);
+                $noLeidosResumenHilos= interconsultaLecturasEstructuraDisponible()
+                    ? interconsultaLecturasTotalUsuario(intval($user)) : 0;
+                $alertasResumenHilos= seguimientoProgramadoObtenerResumenAlertas(intval($user));
+                echo json_encode(array(
+                    '1' => 'exito',
+                    '2' => array(
+                        'conteos' => $conteosResumenHilos,
+                        'no_leidos' => $noLeidosResumenHilos,
+                        'alertas' => $alertasResumenHilos
+                    )
+                ));
+                break;
             case 'buscarInterConsultaPorPaciente':
                 $paciente= isset($_POST['paciente']) ? mb_convert_encoding((string)($_POST['paciente']), 'ISO-8859-1', 'UTF-8') : null;
                 $filtros= array(

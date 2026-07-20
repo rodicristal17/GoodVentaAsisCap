@@ -2317,6 +2317,7 @@ document.getElementById('btn_flotante_consulta').style.display= 'none'
 verCerrarAbmDetalleConsulta(false);
 verCerrarAbmVistaConsulta("consulta");
 }else{		
+	if (typeof cargarCatalogoMedicosSistema == "function") { cargarCatalogoMedicosSistema(); }
 	document.getElementById('btn_flotante_consulta').style.display= ''
 	document.getElementById("divAbmConsulta").style.display=""
     document.getElementById("tdEfectoAbmConsulta").className="magictime slideDownReturn"
@@ -2878,7 +2879,7 @@ function buscarobtenermedicos(){
 			 "cod_venta": cod_localFKUSer, 
 			"funt": "obtenermedicos"
 			};
-	 $.ajax({
+	 return $.ajax({
 			
 			data: datos,
 			url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
@@ -2952,7 +2953,7 @@ function buscarobtenertodosmedicos() {
 		"cod_venta": "",
 		"funt": "obtenermedicos"
 	};
-	$.ajax({
+	return $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",

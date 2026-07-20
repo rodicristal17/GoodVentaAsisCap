@@ -142,6 +142,12 @@ function interconsultaFusionConjuntosCompatibles($a, $b)
     return count(array_intersect($a, $b)) > 0;
 }
 
+function interconsultaFusionEsTipoFinanciero($tipo)
+{
+    $tipo = strtolower(trim((string)$tipo));
+    return in_array($tipo, array('pagos', 'pago', 'compras', 'compra', 'egresos', 'egreso'), true);
+}
+
 function interconsultaFusionValidar($mysqli, $origen, $destino, $usuario, $bloquear)
 {
     $origen = intval($origen); $destino = intval($destino); $usuario = intval($usuario);
@@ -165,10 +171,17 @@ function interconsultaFusionValidar($mysqli, $origen, $destino, $usuario, $bloqu
     $tipoDestino = strtolower(trim((string)$hilos[$destino]['tipo']));
     $esColaboradorOrigen = $tipoOrigen === 'colaborador' || count($identidades[$origen]['colaboradores']) > 0;
     $esColaboradorDestino = $tipoDestino === 'colaborador' || count($identidades[$destino]['colaboradores']) > 0;
+    $reemplazarColaborador = false;
     if ($esColaboradorOrigen || $esColaboradorDestino) {
         if (!$esColaboradorOrigen || !$esColaboradorDestino
             || !interconsultaFusionConjuntosCompatibles($identidades[$origen]['colaboradores'], $identidades[$destino]['colaboradores'])) {
-            return array('ok' => false, 'mensaje' => 'Un hilo de colaborador solo puede fusionarse con otro hilo del mismo colaborador.');
+            $fusionFinancieraHaciaColaborador = interconsultaFusionEsTipoFinanciero($tipoOrigen)
+                && $esColaboradorDestino
+                && count($identidades[$destino]['colaboradores']) > 0;
+            if (!$fusionFinancieraHaciaColaborador) {
+                return array('ok' => false, 'mensaje' => 'Un hilo de colaborador solo puede fusionarse con otro hilo del mismo colaborador, salvo un hilo financiero cuyo maestro sea el hilo formal del colaborador.');
+            }
+            $reemplazarColaborador = true;
         }
     } else {
         if (!interconsultaFusionConjuntosCompatibles($identidades[$origen]['cedulas'], $identidades[$destino]['cedulas'])) {
@@ -178,7 +191,12 @@ function interconsultaFusionValidar($mysqli, $origen, $destino, $usuario, $bloqu
             return array('ok' => false, 'mensaje' => 'Los hilos pertenecen a pacientes diferentes.');
         }
     }
-    return array('ok' => true, 'hilos' => $hilos, 'identidades' => $identidades);
+    return array(
+        'ok' => true,
+        'hilos' => $hilos,
+        'identidades' => $identidades,
+        'reemplazar_colaborador' => $reemplazarColaborador
+    );
 }
 
 function interconsultaFusionContar($mysqli, $tabla, $columna, $origen)
@@ -216,12 +234,24 @@ function interconsultaFusionPrevisualizar($origen, $destino, $usuario)
     $resumen = interconsultaFusionResumen($mysqli, intval($origen));
     $hiloOrigen = $validacion['hilos'][intval($origen)];
     $hiloDestino = $validacion['hilos'][intval($destino)];
+    $reemplazarColaborador = !empty($validacion['reemplazar_colaborador']);
+    $colaboradoresOrigen = array_keys((array)$validacion['identidades'][intval($origen)]['colaboradores']);
+    $colaboradoresDestino = array_keys((array)$validacion['identidades'][intval($destino)]['colaboradores']);
     $mysqli->close();
     return array('ok' => true, 'origen' => array(
         'cod_interConsulta' => intval($origen), 'asunto' => interconsultaFusionTextoSalida($hiloOrigen['asunto'])
     ), 'destino' => array(
         'cod_interConsulta' => intval($destino), 'asunto' => interconsultaFusionTextoSalida($hiloDestino['asunto'])
-    ), 'resumen' => $resumen, 'mensaje' => 'El hilo origen quedara archivado; no se eliminara ningun registro.');
+    ),
+        'resumen' => $resumen,
+        'reemplazar_colaborador' => $reemplazarColaborador,
+        'colaboradores_origen' => $colaboradoresOrigen,
+        'colaboradores_destino' => $colaboradoresDestino,
+        'advertencia_colaborador' => $reemplazarColaborador
+            ? 'El hilo financiero quedara asociado exclusivamente al colaborador del hilo maestro; cualquier vinculo de colaborador del hilo origen sera archivado.'
+            : '',
+        'mensaje' => 'El hilo origen quedara archivado; no se eliminara ningun registro.'
+    );
 }
 
 function interconsultaFusionMoverSimple($mysqli, $tabla, $columna, $origen, $destino)
@@ -321,7 +351,7 @@ function interconsultaFusionMoverProyectos($mysqli, $origen, $destino)
     return $movidos;
 }
 
-function interconsultaFusionMoverColaborador($mysqli, $origen, $destino, $usuario)
+function interconsultaFusionMoverColaborador($mysqli, $origen, $destino, $usuario, $reemplazarPorDestino)
 {
     if (!interconsultaFusionTablaExiste($mysqli, 'funcionario_hilo_principal')) return 0;
     $stmt = $mysqli->prepare("SELECT id,cod_usuarioFK FROM funcionario_hilo_principal WHERE cod_interConsultaFK=? AND estado='activo' FOR UPDATE");
@@ -332,6 +362,15 @@ function interconsultaFusionMoverColaborador($mysqli, $origen, $destino, $usuari
     $stmt->close(); $movidos = 0;
     foreach ($filas as $fila) {
         $id = intval($fila['id']); $colaborador = intval($fila['cod_usuarioFK']);
+        if ($reemplazarPorDestino) {
+            $motivo = 'Archivado por fusion financiera; prevalece el colaborador del hilo maestro #'.$destino;
+            $stmt = $mysqli->prepare("UPDATE funcionario_hilo_principal SET estado='inactivo',motivo_cambio=?,cod_usuarioFK_edit=?,fecha_edit=NOW() WHERE id=?");
+            if (!$stmt) throw new Exception('No se pudo preparar el reemplazo del colaborador.');
+            $stmt->bind_param('sii', $motivo, $usuario, $id);
+            if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudo archivar el vinculo anterior del colaborador.'); }
+            $stmt->close();
+            continue;
+        }
         $stmt = $mysqli->prepare("SELECT id FROM funcionario_hilo_principal WHERE cod_interConsultaFK=? AND cod_usuarioFK=? AND estado='activo' LIMIT 1 FOR UPDATE");
         $stmt->bind_param('ii', $destino, $colaborador); $stmt->execute();
         $existente = $stmt->get_result()->fetch_assoc(); $stmt->close();
@@ -389,6 +428,12 @@ function interconsultaFusionEjecutarEnConexion($mysqli, $origen, $destino, $usua
         if ($fusionAnterior) throw new Exception('El hilo origen ya fue fusionado anteriormente.');
 
         $hilos = $validacion['hilos'];
+        $reemplazarColaborador = !empty($validacion['reemplazar_colaborador']);
+        $cambioColaborador = array(
+            'aplicado' => $reemplazarColaborador,
+            'origen' => array_keys((array)$validacion['identidades'][$origen]['colaboradores']),
+            'destino' => array_keys((array)$validacion['identidades'][$destino]['colaboradores'])
+        );
         $participantes = interconsultaFusionParticipantes($mysqli, $origen, $destino, $hilos);
         $resumenAntes = interconsultaFusionResumen($mysqli, $origen);
         interconsultaFusionVincularVentaDirecta($mysqli, $hilos[$origen], $hilos[$destino], $usuario);
@@ -403,7 +448,7 @@ function interconsultaFusionEjecutarEnConexion($mysqli, $origen, $destino, $usua
         $movidos['documentos_pagare'] = interconsultaFusionMoverSimple($mysqli, 'centro_legajo_pagare_solicitud', 'cod_interConsultaFK', $origen, $destino);
         $movidos['recetas_indicaciones'] = interconsultaFusionMoverSimple($mysqli, 'recetarios_indicaciones', 'hilo_id', $origen, $destino);
         $movidos['proyectos'] = interconsultaFusionMoverProyectos($mysqli, $origen, $destino);
-        $movidos['colaborador'] = interconsultaFusionMoverColaborador($mysqli, $origen, $destino, $usuario);
+        $movidos['colaborador'] = interconsultaFusionMoverColaborador($mysqli, $origen, $destino, $usuario, $reemplazarColaborador);
         interconsultaFusionCopiarLecturas($mysqli, $origen, $destino);
 
         if (interconsultaFusionTablaExiste($mysqli, 'centro_factura')) {
@@ -419,6 +464,9 @@ function interconsultaFusionEjecutarEnConexion($mysqli, $origen, $destino, $usua
         $asuntoOrigen = trim((string)$hilos[$origen]['asunto']);
         $contenido = 'Fusion segura: se incorporo el hilo #'.$origen.($asuntoOrigen !== '' ? ' ('.$asuntoOrigen.')' : '').
             ' a este hilo maestro. La operacion fue realizada por @{'.$usuario.'}; se conservaron los registros y su orden por fecha y hora de guardado.';
+        if ($reemplazarColaborador) {
+            $contenido .= ' Por tratarse de una fusion financiera, prevalece como unico propietario el colaborador formal del hilo maestro.';
+        }
         $usuarioSistema = null; $dictamenSistema = null;
         $stmt = $mysqli->prepare("INSERT INTO mensaje
             (contenido,fecha_creacion,cod_interConsultaFK,cod_usuarioFK,cod_dictamenFK) VALUES (?,?,?,?,?)");
@@ -441,7 +489,12 @@ function interconsultaFusionEjecutarEnConexion($mysqli, $origen, $destino, $usua
         if (function_exists('interconsultaLecturasAsegurarUsuariosHilo')) {
             interconsultaLecturasAsegurarUsuariosHilo($mysqli, $destino, $participantes, $fechaFusion);
         }
-        $resumenAuditoria = json_encode(array('antes' => $resumenAntes, 'movidos' => $movidos, 'mensaje_fusion' => $mensajeFusion));
+        $resumenAuditoria = json_encode(array(
+            'antes' => $resumenAntes,
+            'movidos' => $movidos,
+            'mensaje_fusion' => $mensajeFusion,
+            'cambio_colaborador' => $cambioColaborador
+        ));
         if ($resumenAuditoria === false) $resumenAuditoria = '{}';
         $stmt = $mysqli->prepare("INSERT INTO interconsulta_fusion
             (cod_interConsulta_origenFK,cod_interConsulta_destinoFK,cod_usuarioFK,fecha_fusion,resumen_movimientos,estado)

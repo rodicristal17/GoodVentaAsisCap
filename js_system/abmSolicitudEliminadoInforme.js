@@ -1,5 +1,15 @@
 var PERMISO_SOLICITUD_ELIMINADO = "VERINFORMESOLICITUDELIMINADO";
 var PERMISO_RESOLVER_SOLICITUD_ELIMINADO = "APROBARSOLICITUDELIMINADO";
+var solicitudEliminadoPendienteActiva = null;
+
+function moduloSolicitudEliminadoVisible() {
+	if (document.visibilityState && document.visibilityState !== "visible") { return false; }
+	var contenedor = document.getElementById("contenedorSolicitudEliminadoPendiente");
+	var informe = document.getElementById("divInformeSolicitudEliminado");
+	var contenedorVisible = contenedor && window.getComputedStyle(contenedor).display !== "none" && contenedor.getClientRects().length > 0;
+	var informeVisible = informe && window.getComputedStyle(informe).display !== "none" && informe.getClientRects().length > 0;
+	return !!(contenedorVisible || informeVisible);
+}
 
 function usuarioTieneAccesoSolicitudEliminado() {
 	if (typeof userid !== "undefined" && userid == "2") {
@@ -215,6 +225,8 @@ function cargarSolicitudesEliminacionPendientes() {
 	actualizarVisibilidadSolicitudEliminado();
 	if (!usuarioTieneAccesoSolicitudEliminado()) { return; }
 	if (!document.getElementById("listaSolicitudEliminadoPendiente")) { return; }
+	if (!moduloSolicitudEliminadoVisible()) { return; }
+	if (solicitudEliminadoPendienteActiva && solicitudEliminadoPendienteActiva.readyState !== 4) { return; }
 
 	obtener_datos_user();
 
@@ -224,7 +236,7 @@ function cargarSolicitudesEliminacionPendientes() {
 	datos.append("navegador", navegador);
 	datos.append("accion", "pendientes");
 
-	$.ajax({
+	solicitudEliminadoPendienteActiva = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmSolicitudEliminadoInforme.php",
 		type: "post",
@@ -244,6 +256,9 @@ function cargarSolicitudesEliminacionPendientes() {
 			} catch (error) {
 				GuardarArchivosLog("Error solicitudes eliminacion pendientes: " + error + " \r\n Consola: " + responseText);
 			}
+		},
+		complete: function () {
+			solicitudEliminadoPendienteActiva = null;
 		}
 	});
 }
@@ -437,4 +452,8 @@ window.addEventListener("load", function () {
 	actualizarVisibilidadSolicitudEliminado();
 	cargarSolicitudesEliminacionPendientes();
 	setInterval(cargarSolicitudesEliminacionPendientes, 60000);
+});
+
+document.addEventListener("visibilitychange", function () {
+	if (!document.hidden) { cargarSolicitudesEliminacionPendientes(); }
 });

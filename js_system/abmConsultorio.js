@@ -12,6 +12,7 @@ function verCerrarAbmConsultorio(){
 	
 	}else{			
 		if(controlacceso("VERFORMULARIOCONSULTORIO","accion")==false){return;}
+		if (typeof cargarCatalogoTodosMedicosSistema == "function") { cargarCatalogoTodosMedicosSistema(); }
 		
 		document.getElementById("inptColorConsultorioHex").value =document.getElementById("inptColorConsultorio").value;
 		document.getElementById("divAbmConsultorio").style.display="" 
@@ -50,6 +51,7 @@ function minimizarConsultorio(){
 }
 function verCerrarVentanaAbmConsultorio(d, l) {
 	if (d == "1") {
+		if (typeof cargarCatalogoTodosMedicosSistema == "function") { cargarCatalogoTodosMedicosSistema(); }
 		if (l == "1") {
 			if(controlacceso("INSERTARFORMULARIOCONSULTORIO","accion")==false){return;}
 			limpiarcamposConsultorio()
