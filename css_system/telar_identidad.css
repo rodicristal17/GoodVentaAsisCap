@@ -184,6 +184,96 @@
   font-weight: 700;
 }
 
+/* Pantalla institucional mostrada cuando la interfaz requiere actualizarse. */
+#divActualizarSistema.telar-update-screen {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #17120d url("/GoodVentaAsisCap/iconos/fondo-actualizacion-telar.png?v=20260720") center / cover no-repeat;
+}
+
+#divActualizarSistema.telar-update-screen > .telar-update-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  filter: none;
+  user-select: none;
+}
+
+#divActualizarSistema.telar-update-screen > .telar-update-layer {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-collapse: collapse;
+}
+
+#divActualizarSistema .telar-update-layer > tbody > tr > td {
+  position: relative;
+  padding: 0;
+  pointer-events: none;
+}
+
+#divActualizarSistema .telar-update-actions {
+  position: absolute;
+  top: clamp(16px, 3vw, 34px);
+  right: clamp(16px, 3vw, 40px);
+  pointer-events: auto;
+}
+
+#divActualizarSistema .telar-update-remind {
+  min-height: 42px;
+  padding: 10px 18px;
+  border: 1px solid rgba(221, 174, 104, 0.66);
+  border-radius: 999px;
+  background: rgba(20, 15, 10, 0.66);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  color: #f4e9dc;
+  cursor: pointer;
+  font-family: "Merriweather Sans", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+#divActualizarSistema .telar-update-remind:hover,
+#divActualizarSistema .telar-update-remind:focus-visible {
+  border-color: #e4b46f;
+  background: rgba(38, 27, 17, 0.88);
+  outline: 2px solid rgba(239, 190, 119, 0.54);
+  outline-offset: 3px;
+  transform: translateY(-1px);
+}
+
+#divActualizarSistema .telar-update-accessible {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (min-aspect-ratio: 19 / 10) {
+  #divActualizarSistema.telar-update-screen > .telar-update-background {
+    object-fit: contain;
+    box-shadow: 0 0 70px rgba(0, 0, 0, 0.48);
+  }
+}
+
 /* Inicio institucional: fondo comun y accesos principales de Sistema Telar. */
 #imgFondoSytem1.telar-home-background {
   position: fixed;
@@ -366,6 +456,17 @@
 
   .telar-update-heading__message {
     font-size: 15px;
+  }
+
+  #divActualizarSistema .telar-update-actions {
+    top: 14px;
+    right: 14px;
+  }
+
+  #divActualizarSistema .telar-update-remind {
+    min-height: 40px;
+    padding: 9px 14px;
+    font-size: 12px;
   }
 }
 

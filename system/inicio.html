@@ -32,7 +32,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=telar-marca-20260720" />
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=telar-marca-20260720" />
-<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-3" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-4" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=operativa-hilos-20260717-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=devolucion-plazos-20260717-2" />
@@ -36273,44 +36273,20 @@ id='vantana_info_001' style='display:none'>
 </div>
 
 
-<div  id='divActualizarSistema' style=' z-index: 1;display:none' class='principal '>
+<div id='divActualizarSistema' style='z-index:1;display:none' class='principal telar-update-screen'>
 
-<img src='/GoodVentaAsisCap/iconos/fondo_actualizacion.jpg'
-style='width:100%;height:100%;position:absolute;left:0px;top:0px;filter: blur(20px) brightness(0.3);' id='imgFondoSytem2' />
+<img src='/GoodVentaAsisCap/iconos/fondo-actualizacion-telar.png?v=20260720'
+class='telar-update-background' id='imgFondoActualizacionTelar' alt='' aria-hidden='true' draggable='false' loading='lazy' decoding='async' />
 
-<table id='tdEfectoActualizarSistema' style='height:100%;width:100%;' id='tdEfectoActualizarSistema' ><tr><td>
-<center>
-<div class='telar-update-heading' role='alert'>
-<img src='/GoodVentaAsisCap/iconos/telar-isotipo.png?v=20260720' alt='' aria-hidden='true' />
-<div class='telar-update-heading__content'>
-<div class='telar-update-heading__brand' aria-label='Sistema Telar'>
-<small>Sistema</small>
-<strong>Telar</strong>
+<table id='tdEfectoActualizarSistema' class='telar-update-layer'><tr><td>
+<div class='telar-update-accessible' role='alert' aria-live='assertive'>
+<strong>Sistema Telar. Actualización requerida.</strong>
+<span>Por favor, actualizá el sistema y borrá la caché para continuar. Presioná Control, Mayúsculas y R.</span>
+<span>Disculpá las molestias. Estamos mejorando para vos.</span>
 </div>
-<span class='telar-update-heading__message'>Requiere una actualización</span>
+<div class='telar-update-actions'>
+<button type='button' class='telar-update-remind' onclick='vercerrarventanactualizacion("2")'>Recordarme más tarde</button>
 </div>
-</div>
-<br>
-<br>
-<br>
-<table style='width:60%'>
-<tr>
-<td style='width:50%;'>
-<center>
-<p class='pTituloActualizacion' onclick='' style='width: 346px;'>Para actualizar presione Ctrl+Shift+R</p>
-</center>
-</td>
-<td style='width:50%;'>
-<center>
-<p class='pTituloActualizacion' onclick='vercerrarventanactualizacion("2")' >Recordarme más tarde</p>
-</center>
-</td>
-</tr>
-</table>
-<br>
-<br>
-<br>
-</center>
 </td></tr></table>
 
 
