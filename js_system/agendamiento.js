@@ -14,6 +14,8 @@ if(document.getElementById("divAbmAgendamiento").style.display==""){
 	$("div[id=divAbmAgendamiento]").fadeOut(500);	
 	
 }else{
+	if (typeof cargarCatalogoMedicosSistema == "function") { cargarCatalogoMedicosSistema(); }
+	if (typeof cargarCatalogoPacientesSistema == "function") { cargarCatalogoPacientesSistema(); }
 	LimpiarCamposAgendamiento()
 	buscardatosdeAgendamientoBuscador();
 	document.getElementById("divAbmAgendamiento").style.display="" 
@@ -963,7 +965,7 @@ function buscarobtenerPacientes(){
 		 "navegador": navegador, 
 		"funt": "obtenerPacientes"
 			};
-	 $.ajax({
+	 return $.ajax({
 			
 			data: datos,
 			url: "/GoodVentaAsisCap/php_system/ABMAgendamiento.php",

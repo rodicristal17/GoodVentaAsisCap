@@ -5,6 +5,7 @@ function verCerrarVentanaTrabajoMecanicoDental(mostrar, mostrarAbm) {
     if(controlacceso("VERLISTADOTRABAJOMECANICODENTAL","accion")==false){ return;}
     document.getElementById('divMinimizadoTrabajoMecanicoDental').style.display= 'none';
     if (mostrar) {
+        if (typeof cargarCatalogoMedicosSistema == "function") { cargarCatalogoMedicosSistema(); }
         $("div[id=divAbmTrabajoMecanicoDental]").fadeIn(250);
         if (mostrarAbm) {
             buscarTiposTrabajo();

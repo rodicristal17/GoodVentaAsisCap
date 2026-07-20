@@ -1,6 +1,40 @@
 
 
 var controlMenuWd=1;
+var estadoCatalogosDiferidosSistema = {};
+
+function cargarCatalogoDiferidoSistema(clave, cargador) {
+	var estado = estadoCatalogosDiferidosSistema[clave];
+	if (estado === "cargando" || estado === "cargado") { return; }
+	estadoCatalogosDiferidosSistema[clave] = "cargando";
+	try {
+		var solicitud = cargador();
+		if (solicitud && typeof solicitud.done === "function") {
+			solicitud.done(function () { estadoCatalogosDiferidosSistema[clave] = "cargado"; });
+			solicitud.fail(function () { estadoCatalogosDiferidosSistema[clave] = ""; });
+		} else {
+			estadoCatalogosDiferidosSistema[clave] = "cargado";
+		}
+	} catch (error) {
+		estadoCatalogosDiferidosSistema[clave] = "";
+	}
+}
+
+function cargarCatalogoMedicosSistema() {
+	cargarCatalogoDiferidoSistema("medicos_local", function () { return buscarobtenermedicos(); });
+}
+
+function cargarCatalogoTodosMedicosSistema() {
+	cargarCatalogoDiferidoSistema("medicos_todos", function () { return buscarobtenertodosmedicos(); });
+}
+
+function cargarCatalogoPacientesSistema() {
+	cargarCatalogoDiferidoSistema("pacientes", function () { return buscarobtenerPacientes(); });
+}
+
+function cargarCatalogoUsuariosMigrarCajaSistema() {
+	cargarCatalogoDiferidoSistema("usuarios_migrar_caja", function () { return BuscarOptionUsuario(); });
+}
 
 if (typeof $ !== "undefined" && $.parseJSON && !$.parseJSON.aceptaObjetoAjax) {
 	var parseJSONOriginalGoodVenta = $.parseJSON;
@@ -410,6 +444,8 @@ window.onload = function () {
 	var controlMensaje = 0;
 	var counter = setInterval(timer, 1000);
 	function timer() {
+		// Una pestaña en segundo plano no debe generar trabajo en PHP/MySQL.
+		if (document.visibilityState && document.visibilityState !== "visible") { return; }
 		if (controlactualizacion == 60) {
 			controlactualizacion = 0;
 			var codigopc = localStorage.getItem("codpc");
@@ -429,10 +465,6 @@ window.onload = function () {
 		if (controlMensaje == 30) {
 			controlMensaje = 0;
 			buscarSugerencias();
-			// Busca las interconsultas donde el usuario fue mencionado
-			buscarPacientesConInterConsultas2("", "", "", "", "", "", "", userid, 0, true, "");
-			// Busca todas las interconsultas existentes con estado pendiente o proceso
-        	buscarPacientesConInterConsultas2("", "", "", "", "pendiente' OR estado = 'proceso", "", "", "",0, true, "");
 			// buscarproductosDescuento()
 
 		}
@@ -4593,10 +4625,9 @@ buscarproductosDescuento()
 buscaroptionBanco()
 BuscarSelecProductos()
 buscarDataListCliente()
-buscarobtenermedicos()
-buscarobtenertodosmedicos()
-BuscarOptionUsuario()
-buscarobtenerPacientes()
+
+// Los catálogos grandes se solicitan cuando se abre su formulario y se
+// reutilizan durante toda la vida de la sesión/página.
 obtenerAsistenciaUsuario();
 buscarOpcionesMecanicoDental();
 buscarSugerencias();
@@ -4604,11 +4635,6 @@ buscarSugerencias();
 
         cargarTareasPendientesAdministrador();
 
-
-
-buscarPacientesConInterConsultas2("", "", "", "", "", "", "", userid,0, true, "");
-// Busca todas las interconsultas existentes con estado pendiente o proceso
-buscarPacientesConInterConsultas2("", "", "", "", "pendiente' OR estado = 'proceso", "", "", "",0, true, "");
 
 
 var saludo=localStorage.getItem("saludo"+userid);
@@ -4680,7 +4706,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 	
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.88";
+var codigodeactualizacion="X-GT-1-JMTG-V1.89";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -7951,7 +7977,7 @@ function guardarAccesoVisible(check,accion) {
 	datos.append("idabm", check.id);
 	datos.append("idAbmUsuario", idAbmUsuario);
 	datos.append("acciones", accion);
-	return $.ajax({
+	$.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmAccesos.php",
 		type: "post",
@@ -47972,6 +47998,7 @@ function verCerrarAbmMigrarCaja(){
 	
 	}else{			
 		if(controlacceso("VERMIGRARCAJA","accion")==false){return;}
+		cargarCatalogoUsuariosMigrarCajaSistema();
 		
 		// mostrarSoloUno("divAbmMigrarCaja")	
 		document.getElementById("divAbmMigrarCaja").style.display=""
@@ -48214,7 +48241,7 @@ function BuscarOptionUsuario() {
 		"navegador": navegador,
 		"funt": "buscaroptionUsu"
 	};
-	$.ajax({
+	return $.ajax({
 		data: datos,
         url: "/GoodVentaAsisCap/php_system/abmMigrarCaja.php",
 		type: "post",
