@@ -235,35 +235,12 @@ window.onload = function () {
 		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/iniciogrisazul.css?X-IOSV.03")
 	}
 
-	FondoActual = localStorage.getItem("fondo" + userid);
-	if (FondoActual == "undefined" || FondoActual == "" || FondoActual == "Null" || FondoActual == null) {
-		FondoActual = "fondo";
-	}
-
-	if (FondoActual == "fondo") {
-		document.getElementById("imgFondoSytem1").src = "/GoodVentaAsisCap/iconos/fondo.jpg"
-		document.getElementById("imgFondoSytem2").src = "/GoodVentaAsisCap/iconos/fondo.jpg"
-
-	}
-	if (FondoActual == "fondo2") {
-
-		document.getElementById("imgFondoSytem1").src = "/GoodVentaAsisCap/iconos/fondo2.jpg"
-		document.getElementById("imgFondoSytem2").src = "/GoodVentaAsisCap/iconos/fondo2.jpg"
-	}
-	if (FondoActual == "fondo3") {
-
-		document.getElementById("imgFondoSytem1").src = "/GoodVentaAsisCap/iconos/fondo3.jpg"
-		document.getElementById("imgFondoSytem2").src = "/GoodVentaAsisCap/iconos/fondo3.jpg"
-	}
-
 	var FondoUrl = localStorage.getItem("fondourl" + userid);
 	if (FondoUrl == "undefined" || FondoUrl == "" || FondoUrl == "Null" || FondoUrl == null) {
 		FondoUrl = "";
 	}
 	if (FondoUrl != "") {
 		document.getElementById("inptUrlFondo").value = FondoUrl;
-		document.getElementById("imgFondoSytem1").src = FondoUrl
-		document.getElementById("imgFondoSytem2").src = FondoUrl
 	}
 
 	if (typeof history.pushState === "function") {
@@ -4896,36 +4873,11 @@ if(d=="iniciogrisazul"){
 }
 ver_vetana_informativa("SE HA CAMBIADO EL TEMA")
 }
-var FondoActual="";
 function CambiarFondo(d){
-	obtener_datos_user();
-	 localStorage.setItem("fondo"+userid, d);	 
-	  localStorage.setItem("fondourl"+userid, "");	
-	  document.getElementById("inptUrlFondo").value=""
-if(d=="fondo"){
-document.getElementById("imgFondoSytem1").src="/GoodVentaAsisCap/iconos/fondo.jpg"
-document.getElementById("imgFondoSytem2").src="/GoodVentaAsisCap/iconos/fondo.jpg"
-	
-}
-if(d=="fondo2"){
-	
-	document.getElementById("imgFondoSytem1").src="/GoodVentaAsisCap/iconos/fondo2.jpg"
-document.getElementById("imgFondoSytem2").src="/GoodVentaAsisCap/iconos/fondo2.jpg"
-}
-if(d=="fondo3"){
-	
-document.getElementById("imgFondoSytem1").src="/GoodVentaAsisCap/iconos/fondo3.jpg"
-document.getElementById("imgFondoSytem2").src="/GoodVentaAsisCap/iconos/fondo3.jpg"
-}
-ver_vetana_informativa("SE HA CAMBIADO EL FONDO")
+	ver_vetana_informativa("EL FONDO INSTITUCIONAL TELAR PERMANECE ACTIVO")
 }	
 function guardarFondoPerzonalizado(){
-	
-	var fondo=document.getElementById("inptUrlFondo").value
-	 localStorage.setItem("fondourl"+userid, fondo);	
-	 document.getElementById("imgFondoSytem1").src=fondo
-document.getElementById("imgFondoSytem2").src=fondo
-ver_vetana_informativa("SE HA CAMBIADO EL FONDO")
+	ver_vetana_informativa("EL FONDO INSTITUCIONAL TELAR PERMANECE ACTIVO")
 }
 		/*
 CERRAR SESION 

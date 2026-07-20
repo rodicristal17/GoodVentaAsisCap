@@ -84,3 +84,15 @@ Un cambio no está terminado hasta que:
 - No expone información sensible.
 - La documentación relacionada quedó actualizada.
 - Se informó qué cambió, cómo probarlo y qué sigue pendiente.
+
+## Filosofía de Sistema Telar
+
+En una organización, cada conversación, tarea, decisión, paciente y proceso es un hilo. Por separado, esos hilos pueden perderse, quedar inconclusos o generar desorden. En Sistema Telar, cada hilo tiene un origen, un responsable, un recorrido y un resultado.
+
+La filosofía de Sistema Telar es transformar información dispersa en una estructura clara, conectada y trazable. Cuando los hilos se ordenan, se relacionan y avanzan con propósito, forman una tela sólida: la organización.
+
+Telar no busca acumular información; busca convertirla en coordinación, conocimiento y acción.
+
+Frase central: **Cada hilo cuenta. Juntos construyen el Telar.**
+
+Aplicar esta filosofía también al diseño funcional: los procesos deben mostrar, cuando corresponda, origen, responsable, recorrido, estado y resultado. Mantener la identidad visual dentro de la gama azul oscuro, azul, turquesa y violeta inspirada en los hilos de Telar, con contraste y legibilidad suficientes y sin depender únicamente del color.

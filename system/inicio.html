@@ -6,24 +6,34 @@
 <meta name="msapplicaction-navbutton-color" content="#fff" />
 <meta name="viewport"
 content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,maximun-scalable=1" />
-<title>GoodVenta</title>
-<link rel="icon" type="image/png" href="/GoodVentaAsisCap/iconos/logoApp.png" />
-<link rel="shortcut icon" href="/GoodVentaAsisCap/favicon.ico" />
+<title>Sistema Telar</title>
+<link rel="icon" type="image/png" href="/GoodVentaAsisCap/iconos/telar-favicon.png?v=20260720" />
+<link rel="shortcut icon" type="image/png" href="/GoodVentaAsisCap/iconos/telar-favicon.png?v=20260720" />
 
 <div  id='divPresentacion' style=' z-index: 1; position: fixed; top: 0px; left: 0px; width: 100%;  background-color: #f4f5f6; height: 100%;'>
 <table style='height:100%;width:100%;' id='tdEfectoDivPresentacion'><tr><td>
 <center>
-<h1 style='font-family: fantasy;font-size: 48px;'><span style='color:#ff9f00'>Good - Technology Py</span><span
-style='color:#2682ff'> esta</span><span
-style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
-<img style='width: 462px;' src='/GoodVentaAsisCap/iconos/recarga.gif'></center>
+<div class='telar-loading-card'>
+<div class='telar-loading-mark'>
+<img class='telar-loading-logo' src='/GoodVentaAsisCap/iconos/telar-isotipo.png?v=20260720' alt='' aria-hidden='true' draggable='false' />
+</div>
+<div class='telar-loading-wordmark' aria-label='Sistema Telar'>
+<p class='telar-loading-system'>Sistema</p>
+<p class='telar-loading-brand'>Telar</p>
+</div>
+<p class='telar-loading-status' id='btitulocargarinicio' role='status' aria-live='polite' aria-atomic='true'>Cargando...</p>
+<p class='telar-loading-credit'>Desarrollado por Faraone Capital SA</p>
+</div>
+</center>
 </td></tr></table>
 </div>
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=hilos-asistencia-20260717-2" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=hilos-asistencia-20260717-2" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=telar-marca-20260720" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=telar-marca-20260720" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-3" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=operativa-hilos-20260717-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=devolucion-plazos-20260717-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
@@ -47,7 +57,7 @@ style='color:#673ab7' id='btitulocargarinicio' > Cargando</span></h1>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=consulta-modal-scroll-tablet-20260716"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=superadmin-presencia-20260717-2"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=superadmin-presencia-20260717-2-telar-dashboard-20260720"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=devolucion-pagare-20260717-1"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -743,11 +753,11 @@ function minimizarAbmInsumos(){
 <body id='divdody'>
 
   
-<img  src='/GoodVentaAsisCap/iconos/fondo.jpg'
-style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoSytem1' />
+<img src='/GoodVentaAsisCap/iconos/fondo-telar-inicio.png?v=20260720'
+class='telar-home-background' id='imgFondoSytem1' alt='' aria-hidden='true' draggable='false' />
 
 
-<div class='principal'>
+<div class='principal telar-home' id='pantallaInicioTelar'>
 <center>
 <div class='divCabecera_b' style='display:none'>
 <table style="width: 90%;height: 100%">
@@ -763,11 +773,9 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 </table>
 </div>
 </center>
-<table style='width:100%;height:70%;text-align:center'>
+<table class='telar-home-brand-area' style='width:100%;height:70%;text-align:center'>
 <tr>
 <td>
-<img src='/GoodVentaAsisCap/iconos/Logo.jpg' style='width:250px; border-radius:25px' />
-
 <center>
 <div id='divTiempo' style='backdrop-filter: blur(10px); width: 559px;  padding: 5px; border-radius: 11px;display:none'>
 
@@ -780,11 +788,9 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoS
 </tr>
 </table>
 <center>
-<table style='width:65%;height:20%;text-align:center'>
+<table class='telar-home-menu-shell' aria-label='Accesos principales'>
 <tr>
-<td style="    background: #b1b1b1a1;
-    border-radius: 50px;
-    border: solid 2px #ededed;">
+<td class='telar-home-menu-surface'>
 <center>
 <div id='divMenuWindowsB'>
 <div class='divMenu' id='divComodin1'>
@@ -807,7 +813,7 @@ onmouseover='verMenusWindows("ptituloCerrarSesion")' onclick='cerrarSesion()'>
 <p class='pTitulo1' id='ptituloCerrarSesion'>Cerrar Sesión</p>
 </div>
 <div class='divMenu' id='divWindows' onclick='verCerrarMenub(1)'>
-<img src='/GoodVentaAsisCap/iconos/Inicio.png' class='iconomenuz' />
+<img src='/GoodVentaAsisCap/iconos/Logo.jpg' class='telar-clinident-app-logo' alt='Clinident Salud' />
 <p class='pTitulo1' id='lblTituloInicio'>Aplicaciones</p>
 </div>
 <div class='divMenu' id='divAcercade' onclick='verCerrarMenub(2)'
@@ -875,8 +881,8 @@ onmouseover='verMenusWindows("ptituloReporte")' style='display:none'>
   <div class="dashboard-topbar__jornada" id="dashboardTopbarJornada"></div>
 </div>
 
-<img src='/GoodVentaAsisCap/iconos/fondo.jpg'
-style='width:100%;height:100%;position:absolute;left:0px;top:0px;' id='imgFondoSytem2' />
+<img src='/GoodVentaAsisCap/iconos/fondo-telar-inicio.png?v=20260720'
+class='telar-dashboard-background' id='imgFondoSytem2' alt='' aria-hidden='true' draggable='false' />
 <div class='principalMenu2 divScrollolcutar' id='divscrollefecto'>
 <table style='width:100%;height:100%;'>
 <tr style='width:100%;height:90%'>
@@ -4703,7 +4709,7 @@ setTimeout(actualizarContadorSistema, 1800);
 <table class='tableMenupane2' id='divEncabezadofixed' style='display:none !important'>
 <tr>
 <td>
-<p class='pTituloPanel3'   >Good - Technology Py - Ventas -  <b style='font-size: 30px;' >ASISCAP</b></p>
+<p class='pTituloPanel3'>Sistema Telar - Ventas - <b style='font-size: 30px;'>ASISCAP</b></p>
 <p class='pTituloPanel3' style='font-size:14px'  id='pUsuarioCabecera' >Cargando...</p>
 </td>
 </tr>
@@ -4715,21 +4721,25 @@ style='display:none;display: none; width: 587px; height: 454px; position: relati
 <div style='width:90%;text-align:left'>
 
 <center>
-<p class='h2Titulo'><span style='color:#ff9f00'>Good</span><span
-style='color:#2682ff'>Venta</span><span
-style='color:#673ab7'>Soft</span></p>
+<div class='telar-about-brand' aria-label='Sistema Telar'>
+<img src='/GoodVentaAsisCap/iconos/telar-isotipo.png?v=20260720' alt='' aria-hidden='true' />
+<span class='telar-about-brand__wordmark'>
+<span class='telar-about-brand__system'>Sistema</span>
+<span class='telar-about-brand__name'>Telar</span>
+</span>
+</div>
 </center>
 <table style='width:100%'>
 <tr>
 <td style='width:65%'>
-<p class='pTituloC'>GoodVentaSoft :</p>
+<p class='pTituloC'>Sistema Telar :</p>
 <p class='pTituloC'>Sistema web de Ventas Contados y Creditos</p>
 <br>
 <p class='pTituloC'>Versión del Soft. :</p>
 <p class='pTituloC'>X-IOS 10 </p>
 <br>
-<p class='pTituloC'>Copyright :</p>
-<p class='pTituloC'>Good-Technology © 2023</p>
+<p class='pTituloC'>Desarrollo :</p>
+<p class='pTituloC'>Desarrollado por Faraone Capital SA</p>
 <br>
 <br>
 </td>
@@ -4841,7 +4851,8 @@ style='color:#673ab7'>Soft</span></p>
 <input class='btnTemas'  type='button' value=""  style='background-color: #607d8b;' onclick='CambiarTema("iniciogrisazul")'>
 </div>
 <br>
-<p class='pTituloC'  >Fondo</p>
+<div class='telar-dashboard-background-settings' style='display:none' aria-hidden='true'>
+<p class='pTituloC'  >Fondo del centro de aplicaciones</p>
 <div style='overflow:auto'>
 <div class='btnTemas' value=""  style="background-image:url(/GoodVentaAsisCap/iconos/fondo.jpg);" onclick='CambiarFondo("fondo")'></div>
 <div class='btnTemas' value=""  style="background-image:url(/GoodVentaAsisCap/iconos/fondo2.jpg);" onclick='CambiarFondo("fondo2")'></div>
@@ -4851,7 +4862,7 @@ style='color:#673ab7'>Soft</span></p>
 <table style='width:100%'>
 <tr>
 <td>
-<p class='pTituloC' >Fondo Perzonalizado (Url de la Foto):</p>
+<p class='pTituloC' >Fondo personalizado del centro de aplicaciones (URL de la foto):</p>
 <input class='inputText' type='text' placeholder=''
 id='inptUrlFondo' style='width:250px' />
 <input type='button' value='Guardar' class='btn5'
@@ -4860,6 +4871,7 @@ style='width: 70px;'>
 </td>
 </tr>
 </table>
+</div>
 
 
 <br>
@@ -27369,7 +27381,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <div class='ueno-section-head'>
 <div>
 <p class='ueno-section-title'>3. Control diario de tesoreria</p>
-<p class='ueno-section-help'>Compara el total acreditado por Ueno contra las transferencias registradas en GoodVenta para la fecha seleccionada.</p>
+<p class='ueno-section-help'>Compara el total acreditado por Ueno contra las transferencias registradas en Telar para la fecha seleccionada.</p>
 </div>
 </div>
 <table style='width:98%'>
@@ -36268,9 +36280,16 @@ style='width:100%;height:100%;position:absolute;left:0px;top:0px;filter: blur(20
 
 <table id='tdEfectoActualizarSistema' style='height:100%;width:100%;' id='tdEfectoActualizarSistema' ><tr><td>
 <center>
-<h1 style='font-family: fantasy;font-size: 48px;'><span style='color:#ff9f00'>Good - Technology Py</span><span
-style='color:#2682ff'> Requiere una </span><span
-style='color:#673ab7'  > Actualización</span></h1>
+<div class='telar-update-heading' role='alert'>
+<img src='/GoodVentaAsisCap/iconos/telar-isotipo.png?v=20260720' alt='' aria-hidden='true' />
+<div class='telar-update-heading__content'>
+<div class='telar-update-heading__brand' aria-label='Sistema Telar'>
+<small>Sistema</small>
+<strong>Telar</strong>
+</div>
+<span class='telar-update-heading__message'>Requiere una actualización</span>
+</div>
+</div>
 <br>
 <br>
 <br>

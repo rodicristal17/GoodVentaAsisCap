@@ -956,7 +956,7 @@ function ueno_asignar_movimiento_manual($usuario)
 			throw new Exception("El monto a aplicar debe ser mayor a cero");
 		}
 		if ($monto_aplicar > $saldo_pago) {
-			throw new Exception("El monto supera el saldo pendiente de la cuota GoodVenta");
+			throw new Exception("El monto supera el saldo pendiente de la cuota Telar");
 		}
 		$comprobanteDiferente = (string)$pago["nro_comprobante_informado"] != (string)$movimiento["nro_comprobante"];
 		$montoDiferente = (int)$monto_aplicar != (int)$pago["monto_pago"] || (int)$movimiento["importe_credito"] != (int)$pago["monto_pago"];
@@ -965,7 +965,7 @@ function ueno_asignar_movimiento_manual($usuario)
 		}
 
 		$obsExtra = $observacion_usuario != "" ? " - " . $observacion_usuario : "";
-		$observacion_link = "Asignacion manual asistida por cuota GoodVenta" . $obsExtra;
+		$observacion_link = "Asignacion manual asistida por cuota Telar" . $obsExtra;
 		$observacion_pago = ($monto_aplicar >= $saldo_pago ? "Conciliado" : "Aplicado parcialmente") . " manualmente con movimiento Ueno #" . $movimiento["id_movimiento"] . $obsExtra;
 		if (!ueno_conciliar_pago_con_movimiento($mysqli, $pago, $movimiento, $usuario, $observacion_link, $observacion_pago, $monto_aplicar)) {
 			throw new Exception("No se pudo asignar el movimiento al pago");

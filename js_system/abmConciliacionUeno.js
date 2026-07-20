@@ -747,7 +747,7 @@ function uenoMostrarCuotaGoodVentaSeleccionada() {
 		sugerido = disponible > 0 ? Math.min(disponible, saldo) : saldo;
 	}
 	contenedor.innerHTML = "<div class='ueno-selected-card ueno-selected-card--quota'>"
-		+ "<div class='ueno-selected-title'>Cuota GoodVenta seleccionada</div>"
+		+ "<div class='ueno-selected-title'>Cuota Telar seleccionada</div>"
 		+ "<div class='ueno-selected-grid ueno-selected-grid--quota'>"
 		+ "<span><b>Cliente</b>" + uenoEscapeHtml(cuota["cliente"] || "") + "</span>"
 		+ "<span><b>Cedula</b>" + uenoEscapeHtml(cuota["cedula"] || "") + "</span>"
@@ -861,7 +861,7 @@ function uenoAplicarCreditoACuota() {
 		return;
 	}
 	if (!uenoCuotaGoodVentaSeleccionada || uenoIdConciliacionManual == "") {
-		ver_vetana_informativa("Primero selecciona una cuota de GoodVenta");
+		ver_vetana_informativa("Primero selecciona una cuota de Telar");
 		return;
 	}
 	if (!uenoValidarAplicacionCuota()) {
@@ -2226,11 +2226,11 @@ function uenoAsignarMovimientoManual(idMovimiento) {
 		return;
 	}
 	if (uenoIdConciliacionManual == "") {
-		ver_vetana_informativa("Primero selecciona una cuota de GoodVenta");
+		ver_vetana_informativa("Primero selecciona una cuota de Telar");
 		return;
 	}
 	var montoAplicar = document.getElementById("inptUenoMontoAplicarCuota") ? document.getElementById("inptUenoMontoAplicarCuota").value : "";
-	if (!confirm("Confirmas aplicar este credito Ueno a la cuota GoodVenta seleccionada?")) {
+	if (!confirm("Confirmas aplicar este credito Ueno a la cuota Telar seleccionada?")) {
 		return;
 	}
 

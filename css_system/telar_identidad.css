@@ -1,0 +1,377 @@
+@font-face {
+  font-family: "Merriweather Sans";
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url("/GoodVentaAsisCap/css/MerriweatherSans-VariableFont_wght.ttf") format("woff2");
+}
+
+/* Identidad visual persistente: no depende del tema elegido por el usuario. */
+.telar-loading-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(360px, calc(100vw - 32px));
+  padding: 30px 28px 24px;
+  border: 1px solid rgba(10, 119, 201, 0.12);
+  border-radius: 22px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 22px 60px rgba(5, 35, 69, 0.12);
+  color: #052345;
+  font-family: "Merriweather Sans", Arial, sans-serif;
+}
+
+.telar-loading-mark {
+  position: relative;
+  display: grid;
+  width: 144px;
+  height: 144px;
+  place-items: center;
+}
+
+.telar-loading-mark::before {
+  position: absolute;
+  inset: 3px;
+  border: 2px solid rgba(10, 119, 201, 0.14);
+  border-top-color: #0cb5a4;
+  border-radius: 50%;
+  content: "";
+  animation: telar-ring-spin 3.2s linear infinite;
+}
+
+.telar-loading-logo {
+  display: block;
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  animation: telar-logo-pulse 2.4s ease-in-out infinite;
+}
+
+.telar-loading-wordmark {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 7px;
+  line-height: 1;
+}
+
+.telar-loading-system,
+.telar-loading-brand,
+.telar-loading-status,
+.telar-loading-credit {
+  margin: 0;
+}
+
+.telar-loading-system {
+  margin: 0 0 2px 2px;
+  color: #052345;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+  line-height: 1;
+}
+
+.telar-loading-brand {
+  color: #052345;
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 0.86;
+}
+
+.telar-loading-status {
+  min-height: 22px;
+  margin-top: 15px;
+  color: #31506e;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.telar-loading-credit {
+  margin-top: 18px;
+  color: #718096;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.telar-about-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 18px;
+  color: #052345;
+  font-family: "Merriweather Sans", Arial, sans-serif;
+}
+
+.telar-about-brand img {
+  width: 66px;
+  height: 66px;
+  object-fit: contain;
+}
+
+.telar-about-brand__wordmark {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.telar-about-brand__system {
+  margin: 0 0 1px 1px;
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.telar-about-brand__name {
+  font-size: 48px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 0.86;
+}
+
+.telar-update-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  max-width: calc(100vw - 32px);
+  padding: 20px 26px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 18px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+  color: #052345;
+  font-family: "Merriweather Sans", Arial, sans-serif;
+  text-align: left;
+}
+
+.telar-update-heading img {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+}
+
+.telar-update-heading__content,
+.telar-update-heading__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.telar-update-heading__content {
+  gap: 7px;
+}
+
+.telar-update-heading__brand small {
+  margin: 0 0 1px 1px;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.telar-update-heading__brand strong {
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 0.86;
+}
+
+.telar-update-heading__message {
+  color: #31506e;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* Inicio institucional: fondo comun y accesos principales de Sistema Telar. */
+#imgFondoSytem1.telar-home-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  object-fit: cover;
+  object-position: center center;
+  user-select: none;
+}
+
+#pantallaInicioTelar.telar-home {
+  z-index: 1;
+  overflow: hidden;
+  background-color: transparent;
+  background-image: linear-gradient(180deg, rgba(2, 14, 35, 0.02), rgba(2, 14, 35, 0.14));
+}
+
+#pantallaInicioTelar .telar-home-menu-shell {
+  position: absolute;
+  left: 50%;
+  bottom: 7%;
+  z-index: 2;
+  width: min(66%, 1240px);
+  min-height: 164px;
+  border-collapse: separate;
+  border-spacing: 0;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+#pantallaInicioTelar .telar-home-menu-surface {
+  padding: 12px 18px;
+  border: 1px solid rgba(12, 181, 164, 0.5);
+  border-radius: 32px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, rgba(3, 20, 48, 0.78), rgba(5, 39, 75, 0.64));
+  box-shadow: 0 20px 48px rgba(0, 7, 25, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+#pantallaInicioTelar #divMenuWindowsB {
+  min-height: 126px;
+}
+
+#pantallaInicioTelar #divMenuWindowsB .divMenu {
+  min-height: 112px;
+  border-radius: 20px;
+  box-sizing: border-box;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+#pantallaInicioTelar #divMenuWindowsB .divMenu:not(#divComodin1):not(#divComodin2):hover {
+  background: rgba(10, 119, 201, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(12, 181, 164, 0.3);
+  transform: translateY(-3px);
+}
+
+#pantallaInicioTelar .iconomenuz {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 20px rgba(0, 8, 28, 0.2);
+}
+
+#pantallaInicioTelar .telar-clinident-app-logo {
+  display: inline-block;
+  width: 78px;
+  height: 78px;
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 18px;
+  box-sizing: border-box;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(0, 8, 28, 0.28);
+  object-fit: contain;
+}
+
+#pantallaInicioTelar .pTitulo1 {
+  margin: 0;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 7, 25, 0.8);
+}
+
+@media (max-width: 1100px) {
+  #imgFondoSytem1.telar-home-background {
+    object-position: 84% center;
+  }
+
+  #pantallaInicioTelar .telar-home-menu-shell {
+    bottom: 6%;
+    width: 86%;
+  }
+}
+
+@media (max-width: 720px), (max-height: 700px) {
+  #pantallaInicioTelar .telar-home-menu-shell {
+    bottom: 4%;
+    width: 94%;
+    min-height: 132px;
+  }
+
+  #pantallaInicioTelar .telar-home-menu-surface {
+    padding: 8px 10px;
+    border-radius: 24px;
+  }
+
+  #pantallaInicioTelar #divMenuWindowsB {
+    min-height: 108px;
+  }
+
+  #pantallaInicioTelar #divMenuWindowsB .divMenu {
+    min-height: 100px;
+  }
+
+  #pantallaInicioTelar .telar-clinident-app-logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 15px;
+  }
+
+  #pantallaInicioTelar .pTitulo1 {
+    padding: 6px 2px;
+    font-size: 12px;
+  }
+}
+
+@keyframes telar-ring-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes telar-logo-pulse {
+  0%, 100% { transform: scale(0.97); opacity: 0.9; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+
+@media (max-width: 560px) {
+  .telar-loading-card {
+    padding: 24px 20px 22px;
+    border-radius: 18px;
+  }
+
+  .telar-loading-mark {
+    width: 124px;
+    height: 124px;
+  }
+
+  .telar-loading-logo {
+    width: 94px;
+    height: 94px;
+  }
+
+  .telar-loading-system {
+    font-size: 14px;
+  }
+
+  .telar-loading-brand {
+    font-size: 36px;
+  }
+
+  .telar-update-heading {
+    gap: 12px;
+    padding: 16px 18px;
+  }
+
+  .telar-update-heading img {
+    width: 62px;
+    height: 62px;
+  }
+
+  .telar-update-heading__brand small {
+    font-size: 13px;
+  }
+
+  .telar-update-heading__brand strong {
+    font-size: 30px;
+  }
+
+  .telar-update-heading__message {
+    font-size: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .telar-loading-mark::before,
+  .telar-loading-logo {
+    animation: none;
+  }
+}

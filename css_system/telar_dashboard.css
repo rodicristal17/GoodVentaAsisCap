@@ -1,0 +1,571 @@
+/*
+ * Dashboard institucional de Sistema Telar.
+ * Permanece fuera de cssTema para conservar la misma identidad en todos los temas.
+ */
+
+html body #principalMenub {
+  --telar-dashboard-glass: rgba(239, 247, 253, 0.76);
+  --telar-dashboard-glass-strong: rgba(247, 251, 255, 0.84);
+  --telar-dashboard-glass-soft: rgba(237, 247, 253, 0.56);
+  --telar-dashboard-glass-hover: rgba(255, 255, 255, 0.68);
+  --telar-dashboard-border: rgba(20, 172, 181, 0.36);
+  --telar-dashboard-border-soft: rgba(93, 148, 180, 0.3);
+  --telar-dashboard-text: #102b46;
+  --telar-dashboard-muted: #526b82;
+  --telar-dashboard-blue: #0879c9;
+  --telar-dashboard-teal: #08a99e;
+  --telar-dashboard-shadow: 0 14px 34px rgba(0, 14, 38, 0.18);
+  background: transparent !important;
+  color: var(--telar-dashboard-text);
+  font-family: "Merriweather Sans", Arial, sans-serif;
+}
+
+html body #principalMenub > .telar-dashboard-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  object-fit: cover;
+  object-position: center center;
+  user-select: none;
+}
+
+html body #principalMenub > #divscrollefecto.principalMenu2 {
+  background: linear-gradient(180deg, rgba(1, 13, 34, 0.08), rgba(1, 18, 42, 0.18)) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html body #principalMenub .dashboard-contenedor,
+html body #principalMenub .dashboard-principal,
+html body #principalMenub .dashboard-left-column {
+  background: transparent !important;
+}
+
+html body #principalMenub .dashboard-contenedor {
+  width: 100%;
+  padding: 14px 18px 0;
+  box-sizing: border-box;
+}
+
+html body #principalMenub .dashboard-principal {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+  margin: 0 0 14px;
+}
+
+html body #principalMenub .dashboard-left-column {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 14px;
+  align-content: stretch;
+}
+
+/* Barra superior */
+html body #principalMenub .dashboard-home-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 46px;
+  padding: 0 16px;
+  border: 1px solid var(--telar-dashboard-border-soft);
+  border-radius: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
+html body #principalMenub .dashboard-home-button img {
+  width: 16px !important;
+  height: 16px !important;
+  padding: 0 !important;
+  object-fit: contain;
+}
+
+html body #principalMenub .dashboard-topbar {
+  border-bottom: 1px solid var(--telar-dashboard-border) !important;
+  background: var(--telar-dashboard-glass-strong) !important;
+  box-shadow: 0 12px 30px rgba(0, 14, 38, 0.18) !important;
+  backdrop-filter: blur(18px) saturate(1.12) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.12) !important;
+}
+
+html body #principalMenub .dashboard-home-button,
+html body #principalMenub .dashboard-topbar-user,
+html body #principalMenub .dashboard-topbar__jornada .perfil-widget__jornada,
+html body #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box input,
+html body #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box button {
+  border-color: var(--telar-dashboard-border-soft) !important;
+  background: rgba(255, 255, 255, 0.52) !important;
+  color: var(--telar-dashboard-text) !important;
+  box-shadow: 0 7px 18px rgba(0, 23, 52, 0.1) !important;
+}
+
+html body #principalMenub .dashboard-home-button:hover,
+html body #principalMenub .dashboard-topbar-user:hover,
+html body #principalMenub .dashboard-access-search--topbar .dashboard-access-search__box button:hover {
+  border-color: rgba(8, 169, 158, 0.5) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+}
+
+html body #principalMenub .dashboard-topbar__jornada .perfil-widget__progreso-jornada,
+html body #principalMenub .dashboard-topbar__jornada .perfil-widget__registro .tableCabeceraRegistro td,
+html body #principalMenub .dashboard-topbar__jornada .perfil-widget__registro .tableRegistroSelec td {
+  border-color: rgba(93, 148, 180, 0.24) !important;
+  background: rgba(239, 248, 253, 0.5) !important;
+}
+
+html body #principalMenub .dashboard-access-search--topbar .dashboard-access-search__results,
+html body #principalMenub .dashboard-topbar-user-menu,
+html body #principalMenub .header-asistencia-popover {
+  border-color: var(--telar-dashboard-border-soft) !important;
+  background: rgba(249, 252, 255, 0.94) !important;
+  box-shadow: 0 18px 38px rgba(0, 14, 38, 0.24) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+}
+
+/* Superficies principales */
+html body #principalMenub .dashboard-card,
+html body #principalMenub .dashboard-section-card,
+html body #principalMenub #dashboardComparativaVentasCobranzas,
+html body #principalMenub #dashboardFlujoFinanciero {
+  border-color: var(--telar-dashboard-border) !important;
+  background: var(--telar-dashboard-glass) !important;
+  box-shadow: var(--telar-dashboard-shadow) !important;
+  backdrop-filter: blur(15px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(15px) saturate(1.08) !important;
+}
+
+html body #principalMenub .dashboard-card {
+  min-width: 0;
+  padding: 12px;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+html body #principalMenub .dashboard-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+}
+
+html body #principalMenub .dashboard-card__header,
+html body #principalMenub .dashboard-section-header {
+  border-bottom-color: rgba(77, 132, 164, 0.24) !important;
+}
+
+html body #principalMenub .dashboard-card__title,
+html body #principalMenub .dashboard-section-title,
+html body #principalMenub #dashboardComparativaVentasCobranzas .dashboard-card__title,
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-card__title {
+  color: var(--telar-dashboard-text) !important;
+  font-family: inherit !important;
+}
+
+html body #principalMenub .dashboard-card__title,
+html body #principalMenub .dashboard-section-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+html body #principalMenub .dashboard-card__subtitle,
+html body #principalMenub .dashboard-card__eyebrow,
+html body #principalMenub .dashboard-section-eyebrow,
+html body #principalMenub #dashboardComparativaVentasCobranzas .dashboard-card__subtitle,
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-card__subtitle,
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-flujo-legend {
+  color: var(--telar-dashboard-muted) !important;
+}
+
+html body #principalMenub .dashboard-card__subtitle {
+  margin: 3px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+/* Controles del dashboard */
+html body #principalMenub .dashboard-comparativa-permission,
+html body #principalMenub .dashboard-comparativa-detail-button,
+html body #principalMenub .dashboard-flujo-permission,
+html body #principalMenub .dashboard-flujo-refresh,
+html body #principalMenub .dashboard-flujo-period-selector,
+html body #principalMenub .dashboard-flujo-period-arrow,
+html body #principalMenub .quick-access-edit-button {
+  border-color: rgba(58, 133, 166, 0.3) !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 6px 16px rgba(0, 23, 52, 0.09) !important;
+}
+
+html body #principalMenub .quick-access-edit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 7px 11px;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 999px;
+  color: var(--telar-dashboard-text) !important;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+html body #principalMenub .quick-access-edit-button img {
+  width: 15px !important;
+  height: 15px !important;
+  padding: 0 !important;
+  object-fit: contain;
+}
+
+html body #principalMenub .dashboard-comparativa-detail-button,
+html body #principalMenub .dashboard-flujo-refresh {
+  border-color: rgba(8, 169, 158, 0.62) !important;
+  color: #087c70 !important;
+}
+
+html body #principalMenub .dashboard-comparativa-detail-button:hover,
+html body #principalMenub .dashboard-flujo-refresh:hover,
+html body #principalMenub .quick-access-edit-button:hover,
+html body #principalMenub .dashboard-flujo-period-arrow:hover:not(:disabled) {
+  border-color: rgba(8, 169, 158, 0.72) !important;
+  background: rgba(232, 252, 249, 0.74) !important;
+}
+
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-flujo-period-text {
+  border-color: rgba(93, 148, 180, 0.24) !important;
+  color: var(--telar-dashboard-text) !important;
+}
+
+/* Comparativa de ventas y cobranzas */
+html body #principalMenub #dashboardComparativaVentasCobranzas .dashboard-comparativa-stat,
+html body #principalMenub #dashboardComparativaVentasCobranzas .dashboard-comparativa-table-wrap {
+  border-color: rgba(93, 148, 180, 0.28) !important;
+  background: rgba(255, 255, 255, 0.48) !important;
+  box-shadow: 0 7px 18px rgba(0, 23, 52, 0.07) !important;
+}
+
+html body #principalMenub #dashboardComparativaVentasCobranzas .dashboard-comparativa-table {
+  background: transparent !important;
+}
+
+html body #principalMenub #dashboardComparativaVentasCobranzas .dashboard-comparativa-table th {
+  border-bottom-color: rgba(93, 148, 180, 0.26) !important;
+  background: rgba(218, 235, 246, 0.64) !important;
+  color: #38536b !important;
+}
+
+html body #principalMenub #dashboardComparativaVentasCobranzas .dashboard-comparativa-table td {
+  border-bottom-color: rgba(93, 148, 180, 0.18) !important;
+  background: rgba(255, 255, 255, 0.24) !important;
+  color: #29445d !important;
+}
+
+html body #principalMenub #dashboardComparativaVentasCobranzas .dashboard-comparativa-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.62) !important;
+}
+
+/* Composicion economica */
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-flujo-local {
+  border-color: rgba(58, 133, 166, 0.3) !important;
+  background: rgba(255, 255, 255, 0.52) !important;
+  box-shadow: 0 7px 18px rgba(0, 23, 52, 0.07) !important;
+}
+
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-flujo-local:hover,
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-flujo-local:focus {
+  border-color: rgba(8, 169, 158, 0.62) !important;
+  background: rgba(255, 255, 255, 0.66) !important;
+  box-shadow: 0 11px 24px rgba(0, 23, 52, 0.12) !important;
+}
+
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-flujo-local--deficit {
+  border-color: rgba(220, 38, 38, 0.34) !important;
+  background: rgba(255, 240, 240, 0.58) !important;
+}
+
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-flujo-local__head strong {
+  color: var(--telar-dashboard-text) !important;
+}
+
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-flujo-chart {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.46) 0,
+    rgba(255, 255, 255, 0.46) 41px,
+    rgba(104, 151, 180, 0.26) 42px
+  ) !important;
+}
+
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-flujo-income-line::after {
+  background: rgba(240, 248, 253, 0.76) !important;
+}
+
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-flujo-resultado {
+  background: rgba(218, 246, 229, 0.64) !important;
+}
+
+html body #principalMenub #dashboardFlujoFinanciero .dashboard-flujo-resultado--deficit {
+  background: rgba(255, 226, 226, 0.64) !important;
+}
+
+/* Buscador y resumenes secundarios */
+html body #principalMenub .dashboard-access-search__box input,
+html body #principalMenub .dashboard-access-search__box button,
+html body #principalMenub .dashboard-access-search__result,
+html body #principalMenub .appointments-summary-item {
+  border-color: rgba(93, 148, 180, 0.28) !important;
+  background: rgba(255, 255, 255, 0.48) !important;
+  color: var(--telar-dashboard-text) !important;
+}
+
+html body #principalMenub .dashboard-access-search__box,
+html body #principalMenub .dashboard-comparativa-actions,
+html body #principalMenub .dashboard-flujo-actions {
+  display: flex;
+  align-items: center;
+}
+
+html body #principalMenub .dashboard-access-search__box input,
+html body #principalMenub .dashboard-access-search__box button,
+html body #principalMenub .quick-access-edit-button,
+html body #principalMenub .dashboard-comparativa-detail-button,
+html body #principalMenub .dashboard-flujo-refresh {
+  font-family: inherit !important;
+}
+
+html body #principalMenub .dashboard-access-search__result:hover {
+  background: rgba(255, 255, 255, 0.68) !important;
+}
+
+/* Accesos rapidos y agendamientos: icono circular, texto visible y sin bloque blanco. */
+html body #principalMenub .dashboard-section-card {
+  clear: both;
+  padding: 12px;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+html body #principalMenub .quick-access-section.dashboard-section-card {
+  width: 100%;
+  margin: 0;
+}
+
+html body #principalMenub #divMenuConsultas.appointments-section.dashboard-section-card {
+  width: calc(100% - 36px);
+  margin: 14px 18px 16px;
+  padding: 10px 12px;
+}
+
+html body #principalMenub .dashboard-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  font-family: inherit;
+}
+
+html body #principalMenub .dashboard-section-eyebrow {
+  margin: 0 0 3px;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+html body #principalMenub .quick-access-section .dashboard-menu-table,
+html body #principalMenub .quick-access-section .dashboard-menu-table > tbody,
+html body #principalMenub .quick-access-section .dashboard-menu-table > tbody > tr {
+  display: block;
+  width: 100% !important;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+html body #principalMenub .quick-access-section .dashboard-menu-cell {
+  display: block;
+  width: 100% !important;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html body #principalMenub .quick-access-section .perfil-app {
+  display: none !important;
+}
+
+html body #principalMenub .quick-access-section .dashboard-access-grid,
+html body #principalMenub .appointments-section__grid.dashboard-section-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, 104px);
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html body #principalMenub .quick-access-section .dashboard-access-grid > .divMenub,
+html body #principalMenub .appointments-section__grid > .divMenub {
+  width: 104px !important;
+  min-width: 104px !important;
+  max-width: 104px !important;
+  height: 96px !important;
+  min-height: 96px !important;
+  margin: 0 !important;
+  float: none !important;
+  border-color: transparent !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--telar-dashboard-text) !important;
+  table-layout: fixed;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+html body #principalMenub .quick-access-section .dashboard-access-grid > .divMenub:hover,
+html body #principalMenub .appointments-section__grid > .divMenub:hover {
+  border-color: rgba(8, 169, 158, 0.3) !important;
+  background: rgba(255, 255, 255, 0.26) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 10px 22px rgba(0, 23, 52, 0.1) !important;
+}
+
+html body #principalMenub .quick-access-section .dashboard-access-grid > .divMenub .imgIconoMenu,
+html body #principalMenub .appointments-section__grid > .divMenub .imgIconoMenu {
+  width: 44px !important;
+  height: 44px !important;
+  flex: 0 0 44px !important;
+  margin: 0 auto 6px !important;
+  padding: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.62) !important;
+  border-radius: 50% !important;
+  box-sizing: border-box !important;
+  background: rgba(238, 248, 255, 0.58) !important;
+  box-shadow: 0 8px 18px rgba(0, 23, 52, 0.15) !important;
+}
+
+html body #principalMenub .quick-access-section .dashboard-access-grid > .divMenub td,
+html body #principalMenub .appointments-section__grid > .divMenub td {
+  display: flex;
+  width: 100%;
+  height: 96px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 6px !important;
+  box-sizing: border-box;
+  text-align: center;
+  vertical-align: middle;
+}
+
+html body #principalMenub .quick-access-section .dashboard-access-grid > .divMenub .pTitulo4,
+html body #principalMenub .appointments-section__grid > .divMenub .pTitulo4 {
+  width: 100%;
+  height: 31px;
+  margin: 0 !important;
+  padding: 0 2px !important;
+  color: var(--telar-dashboard-text) !important;
+  font-family: inherit !important;
+  font-size: 10.5px !important;
+  font-weight: 800;
+  line-height: 1.18;
+  text-align: center;
+  white-space: normal;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-shadow: 0 1px 6px rgba(255, 255, 255, 0.58);
+}
+
+html body #principalMenub .telar-dashboard-background-settings {
+  display: none !important;
+}
+
+@media (max-width: 1100px) {
+  html body #principalMenub > .telar-dashboard-background {
+    object-position: 84% center;
+  }
+
+  html body #principalMenub {
+    --telar-dashboard-glass: rgba(239, 247, 253, 0.8);
+    --telar-dashboard-glass-strong: rgba(247, 251, 255, 0.88);
+  }
+}
+
+@media (max-width: 720px), (max-height: 700px) {
+  html body #principalMenub .dashboard-card,
+  html body #principalMenub .dashboard-section-card,
+  html body #principalMenub #dashboardComparativaVentasCobranzas,
+  html body #principalMenub #dashboardFlujoFinanciero {
+    backdrop-filter: blur(11px) !important;
+    -webkit-backdrop-filter: blur(11px) !important;
+  }
+
+  html body #principalMenub .quick-access-section .dashboard-access-grid > .divMenub .imgIconoMenu,
+  html body #principalMenub .appointments-section__grid > .divMenub .imgIconoMenu {
+    width: 40px !important;
+    height: 40px !important;
+    flex-basis: 40px !important;
+    padding: 7px !important;
+  }
+
+  html body #principalMenub .quick-access-section .dashboard-access-grid,
+  html body #principalMenub .appointments-section__grid.dashboard-section-grid {
+    grid-template-columns: repeat(auto-fill, 96px);
+    gap: 10px;
+  }
+
+  html body #principalMenub .quick-access-section .dashboard-access-grid > .divMenub,
+  html body #principalMenub .appointments-section__grid > .divMenub {
+    width: 96px !important;
+    min-width: 96px !important;
+    max-width: 96px !important;
+    height: 92px !important;
+    min-height: 92px !important;
+  }
+
+  html body #principalMenub .quick-access-section .dashboard-access-grid > .divMenub td,
+  html body #principalMenub .appointments-section__grid > .divMenub td {
+    height: 92px;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html body #principalMenub {
+    --telar-dashboard-glass: rgba(247, 251, 255, 0.94);
+    --telar-dashboard-glass-strong: rgba(249, 252, 255, 0.97);
+  }
+}
