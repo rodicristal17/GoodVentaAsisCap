@@ -9,13 +9,15 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <title>Sistema Telar</title>
 <link rel="icon" type="image/png" href="/GoodVentaAsisCap/iconos/telar-favicon.png?v=20260720" />
 <link rel="shortcut icon" type="image/png" href="/GoodVentaAsisCap/iconos/telar-favicon.png?v=20260720" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_loader.css?x=20260721-2" />
+<script src="/GoodVentaAsisCap/js_system/telar_loader.js?x=20260721-2"></script>
 
 <div  id='divPresentacion' style=' z-index: 1; position: fixed; top: 0px; left: 0px; width: 100%;  background-color: #f4f5f6; height: 100%;'>
 <table style='height:100%;width:100%;' id='tdEfectoDivPresentacion'><tr><td>
 <center>
 <div class='telar-loading-card'>
 <div class='telar-loading-mark'>
-<img class='telar-loading-logo' src='/GoodVentaAsisCap/iconos/telar-isotipo.png?v=20260720' alt='' aria-hidden='true' draggable='false' />
+<img class='telar-loader__mark telar-loader__mark--page' src='/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2' width='110' height='110' alt='' aria-hidden='true' draggable='false' />
 </div>
 <div class='telar-loading-wordmark' aria-label='Sistema Telar'>
 <p class='telar-loading-system'>Sistema</p>
@@ -57,7 +59,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=performance-polling-20260718"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=performance-polling-20260718-telar-dashboard-20260720"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=performance-polling-20260718-telar-dashboard-20260720-telar-loader-20260721-2"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=devolucion-pagare-20260717-1"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -75,7 +77,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=performance-polling-20260718"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js?x=performance-polling-20260718"></script>
 <script src="../js_system/abmMecanicoDental.js"></script>
-<script src="../js_system/abmInterConsulta.js?x=centro-facturas-documentos-20260721"></script>
+<script src="../js_system/abmInterConsulta.js?x=centro-facturas-documentos-20260721-telar-loader-2"></script>
 <script src="../js_system/abmCentroFacturas.js?x=nomenclatura-legajos-20260721-1"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
@@ -1964,20 +1966,6 @@ class='telar-dashboard-background' id='imgFondoSytem2' alt='' aria-hidden='true'
                         display: flex !important;
                         align-items: center !important;
                         justify-content: center !important;
-                        gap: 8px !important;
-                      }
-                      #dashboardFlujoFinanciero .dashboard-flujo-loading span {
-                        width: 10px !important;
-                        height: 10px !important;
-                        border-radius: 50% !important;
-                        background: #168a68 !important;
-                        animation: dashboardFlujoPulse 1s infinite ease-in-out !important;
-                      }
-                      #dashboardFlujoFinanciero .dashboard-flujo-loading span:nth-child(2) {
-                        animation-delay: .12s !important;
-                      }
-                      #dashboardFlujoFinanciero .dashboard-flujo-loading span:nth-child(3) {
-                        animation-delay: .24s !important;
                       }
                       #dashboardFlujoFinanciero .dashboard-flujo-state {
                         min-height: 136px !important;
@@ -2378,10 +2366,6 @@ class='telar-dashboard-background' id='imgFondoSytem2' alt='' aria-hidden='true'
                         font-size: 12px !important;
                         font-weight: 900 !important;
                       }
-                      @keyframes dashboardFlujoPulse {
-                        0%, 80%, 100% { transform: scale(.72); opacity: .55; }
-                        40% { transform: scale(1); opacity: 1; }
-                      }
                       @media (max-width: 980px) {
                         #dashboardFlujoFinanciero .dashboard-flujo-grid {
                           grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -2453,7 +2437,10 @@ class='telar-dashboard-background' id='imgFondoSytem2' alt='' aria-hidden='true'
                       </div>
                       <div   class="dashboard-card__body dashboard-flujo-body" id="dashboardFlujoFinancieroBody">
                         <div class="dashboard-flujo-loading">
-                          <span></span><span></span><span></span>
+                          <div class="telar-loader telar-loader--content" role="status" aria-live="polite" aria-atomic="true">
+                            <img class="telar-loader__mark" src="/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2" width="58" height="58" alt="" aria-hidden="true" draggable="false" />
+                            <span class="telar-loader__label">Cargando flujo financiero...</span>
+                          </div>
                         </div>
                       </div>
                     </section>
@@ -2476,7 +2463,10 @@ class='telar-dashboard-background' id='imgFondoSytem2' alt='' aria-hidden='true'
                         </div>
                         <div class="dashboard-flujo-detalle-modal__body" id="dashboardFlujoDetalleBody">
                           <div class="dashboard-flujo-loading">
-                            <span></span><span></span><span></span>
+                            <div class="telar-loader telar-loader--content" role="status" aria-live="polite" aria-atomic="true">
+                              <img class="telar-loader__mark" src="/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2" width="58" height="58" alt="" aria-hidden="true" draggable="false" />
+                              <span class="telar-loader__label">Cargando detalle...</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -35760,12 +35750,10 @@ style='display:none;background-color: #0000008f;z-index: 1000100;'>
 <tr>
 <td>
 <center>
-<img src='/GoodVentaAsisCap/iconos/cargando.gif'
-style='width:30px' />
-<br>
-<br>
-<label id='lbltitulomensaje_b'
-style='font-size: 20px; font-family: arial;color:#f9f9f9'>Cargando...</label>
+<div class='telar-loader telar-loader--overlay telar-loader--inverse'>
+<img class='telar-loader__mark' src='/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2' width='76' height='76' alt='' aria-hidden='true' draggable='false' />
+<label class='telar-loader__label' id='lbltitulomensaje_b' style='font-size:20px'>Cargando...</label>
+</div>
 </center>
 </td>
 </tr>
@@ -36247,7 +36235,12 @@ id='vantana_info_001' style='display:none'>
     <section class="cf-legajo-summary" id="centroFacturasLegajosResumen" hidden aria-live="polite"></section>
 
     <main class="centro-facturas-results">
-      <div class="centro-facturas-loading" id="centroFacturasCargando" hidden><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Cargando informaci&oacute;n...</div>
+      <div class="centro-facturas-loading" id="centroFacturasCargando" hidden>
+        <div class="telar-loader telar-loader--compact" role="status" aria-live="polite" aria-atomic="true">
+          <img class="telar-loader__mark" src="/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2" width="30" height="30" alt="" aria-hidden="true" draggable="false" />
+          <span class="telar-loader__label">Cargando informaci&oacute;n...</span>
+        </div>
+      </div>
       <div class="centro-facturas-table-wrap">
         <table class="centro-facturas-table" id="centroFacturasTabla">
           <thead id="centroFacturasTablaCabecera"></thead>

@@ -1,0 +1,78 @@
+/* Loader reutilizable de Sistema Telar. No controla la logica de carga. */
+.telar-loader {
+  --telar-loader-size: 48px;
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #31506e;
+  font-family: "Merriweather Sans", Arial, sans-serif;
+  text-align: center;
+}
+
+.telar-loader__mark {
+  display: block;
+  width: var(--telar-loader-size);
+  height: var(--telar-loader-size);
+  flex: 0 0 var(--telar-loader-size);
+  object-fit: contain;
+}
+
+.telar-loader__label {
+  margin: 0;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.telar-loader--content {
+  --telar-loader-size: 58px;
+  display: flex;
+  width: 100%;
+  min-height: 96px;
+  flex-direction: column;
+}
+
+.telar-loader--compact {
+  --telar-loader-size: 30px;
+}
+
+.telar-loader--inline {
+  --telar-loader-size: 28px;
+  flex-direction: row;
+}
+
+.telar-loader--overlay {
+  --telar-loader-size: 76px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.telar-loader--page {
+  --telar-loader-size: 110px;
+}
+
+.telar-loader--inverse {
+  color: #ffffff;
+}
+
+.telar-loader__mark--page {
+  width: 110px;
+  height: 110px;
+}
+
+@media (max-width: 560px) {
+  .telar-loader--overlay {
+    --telar-loader-size: 64px;
+  }
+
+  .telar-loader--page,
+  .telar-loader__mark--page {
+    --telar-loader-size: 94px;
+    width: 94px;
+    height: 94px;
+  }
+}

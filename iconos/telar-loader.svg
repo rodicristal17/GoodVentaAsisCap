@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="telarTeal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#06b6a7" />
+      <stop offset="1" stop-color="#05b4a5" />
+    </linearGradient>
+    <linearGradient id="telarBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#026fc1" />
+      <stop offset="1" stop-color="#0370c3" />
+    </linearGradient>
+    <linearGradient id="telarBlueDeep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#025cac" />
+      <stop offset="1" stop-color="#035eae" />
+    </linearGradient>
+    <linearGradient id="telarNavy" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0255a0" />
+      <stop offset="1" stop-color="#0257a1" />
+    </linearGradient>
+  </defs>
+  <style>
+    .telar-thread {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation-duration: 3.2s;
+      animation-timing-function: cubic-bezier(.22, .61, .36, 1);
+      animation-iteration-count: infinite;
+      animation-fill-mode: both;
+    }
+
+    .telar-thread--top {
+      animation-name: telar-from-left;
+    }
+
+    .telar-thread--v-left {
+      animation-name: telar-from-top;
+      animation-delay: .12s;
+    }
+
+    .telar-thread--middle {
+      animation-name: telar-from-right;
+      animation-delay: .24s;
+    }
+
+    .telar-thread--v-right {
+      animation-name: telar-from-bottom;
+      animation-delay: .36s;
+    }
+
+    .telar-thread--bottom {
+      animation-name: telar-from-left;
+      animation-delay: .48s;
+    }
+
+    @keyframes telar-from-left {
+      0%, 100% { opacity: .22; transform: translateX(-22px) scaleX(.9); }
+      32%, 70% { opacity: 1; transform: translateX(0) scaleX(1); }
+    }
+
+    @keyframes telar-from-right {
+      0%, 100% { opacity: .22; transform: translateX(22px) scaleX(.9); }
+      32%, 70% { opacity: 1; transform: translateX(0) scaleX(1); }
+    }
+
+    @keyframes telar-from-top {
+      0%, 100% { opacity: .22; transform: translateY(-22px) scaleY(.9); }
+      32%, 70% { opacity: 1; transform: translateY(0) scaleY(1); }
+    }
+
+    @keyframes telar-from-bottom {
+      0%, 100% { opacity: .22; transform: translateY(22px) scaleY(.9); }
+      32%, 70% { opacity: 1; transform: translateY(0) scaleY(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .telar-thread {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
+  </style>
+
+  <g class="telar-thread telar-thread--top" fill="url(#telarTeal)">
+    <path d="M79 121h223v41H121c-22 0-40-18-42-41Z" />
+    <path d="M353 121h102v49c0 23-19 42-42 42h-1v-41c0-5-4-9-9-9h-50Z" />
+  </g>
+
+  <g class="telar-thread telar-thread--v-left" fill="url(#telarBlue)">
+    <path d="M172 41c23 0 41 18 41 41v34h-41Z" />
+    <path d="M172 166h41v229c0 23-18 41-41 41Z" />
+  </g>
+
+  <g class="telar-thread telar-thread--middle" fill="url(#telarNavy)">
+    <path d="M75 259c0-23 18-42 41-42h51v42Z" />
+    <path d="M218 217h237c0 23-19 42-42 42H218Z" />
+  </g>
+
+  <g class="telar-thread telar-thread--v-right" fill="url(#telarBlueDeep)">
+    <path d="M348 41c-23 0-41 18-41 41v130h41Z" />
+    <path d="M307 263h41v50h-41Z" />
+    <path d="M307 359h41v77c-23 0-41-18-41-41Z" />
+  </g>
+
+  <g class="telar-thread telar-thread--bottom" fill="url(#telarTeal)">
+    <path d="M75 284c0-12 9-21 21-21h20v38c0 7 6 13 13 13h38v40H75Z" />
+    <path d="M218 313h194c23 0 39 18 43 41H218Z" />
+  </g>
+</svg>

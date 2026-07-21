@@ -2749,7 +2749,10 @@ function mostrarLecturasMensajeInterConsulta(codMensaje, boton) {
     var hiloSolicitado= String(cod_interConsulta || "");
     var dialogo= obtenerDialogoLecturasMensajeInterConsulta();
     var contenido= document.getElementById("contenidoLecturasMensajeInterConsulta");
-    contenido.innerHTML= '<div class="interconsulta-read-dialog__state"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Consultando lecturas...</div>';
+    var loaderLecturas= window.TelarLoader && window.TelarLoader.html
+        ? window.TelarLoader.html("Consultando lecturas...", "compact")
+        : '<span role="status">Consultando lecturas...</span>';
+    contenido.innerHTML= '<div class="interconsulta-read-dialog__state">' + loaderLecturas + '</div>';
     dialogo.hidden= false;
     document.body.classList.add("interconsulta-read-dialog-open");
     obtener_datos_user();

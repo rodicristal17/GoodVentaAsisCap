@@ -9,6 +9,7 @@
 	<link rel="icon" type="image/png" href="/GoodVentaAsisCap/iconos/telar-favicon.png?v=20260720" />
 	<link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
 	<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/login.css?x=20260721fondo-telar" />
+	<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_loader.css?x=20260721-2" />
 
 	
 
@@ -17,6 +18,7 @@
    <!--scrips!-->
   
   	 <script src="/GoodVentaAsisCap/js/jquery.js"></script>  
+	 <script src="/GoodVentaAsisCap/js_system/telar_loader.js?x=20260721-2"></script>
   	 <script src="/GoodVentaAsisCap/js_system/login.js?x=20260703login"></script>  
 	
 
@@ -139,8 +141,10 @@
 <tr>
 <td >
 <center>
-<img src='/GoodVentaAsisCap/iconos/cargando.gif' style='width:30px' />
-<label id='lbltitulomensaje_b' style='font-size: 14px; font-family: arial;' >Cargando...</label>
+<div class='telar-loader telar-loader--overlay' role='status' aria-live='polite' aria-atomic='true'>
+<img class='telar-loader__mark' src='/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2' width='76' height='76' alt='' aria-hidden='true' draggable='false' />
+<label class='telar-loader__label' id='lbltitulomensaje_b' style='font-size:14px'>Cargando...</label>
+</div>
 </center>
 </td>
 </tr>

@@ -34035,11 +34035,14 @@ function inicializarDashboardFlujoFinanciero(){
 
 function renderCargandoDashboardFlujoFinanciero(){
 	var body = document.getElementById("dashboardFlujoFinancieroBody");
+	var loader = window.TelarLoader && window.TelarLoader.html
+		? window.TelarLoader.html("Cargando flujo financiero...", "content")
+		: paginacargando;
 	if(!body){
 		return;
 	}
 	body.innerHTML = "<div class='dashboard-flujo-loading'>"
-		+ "<span></span><span></span><span></span>"
+		+ loader
 		+ "</div>";
 }
 
@@ -34383,11 +34386,14 @@ function renderDashboardFlujoFinanciero(datos){
 
 function renderCargandoDashboardFlujoFinancieroDetalle(){
 	var body = document.getElementById("dashboardFlujoDetalleBody");
+	var loader = window.TelarLoader && window.TelarLoader.html
+		? window.TelarLoader.html("Cargando detalle...", "content")
+		: paginacargando;
 	if(!body){
 		return;
 	}
 	body.innerHTML = "<div class='dashboard-flujo-loading'>"
-		+ "<span></span><span></span><span></span>"
+		+ loader
 		+ "</div>";
 }
 
@@ -37661,7 +37667,9 @@ function copiarAlPortapapeles() {
 }
 
 
-var paginacargando = "<center><br><br><img src='/GoodVentaAsisCap/iconos/cargando.gif' style='    width: 10%;' /></center>";
+var paginacargando = window.TelarLoader && window.TelarLoader.html
+	? window.TelarLoader.html("Cargando...", "content")
+	: "<div class=\"telar-loader telar-loader--content\" role=\"status\" aria-live=\"polite\" aria-atomic=\"true\"><img class=\"telar-loader__mark\" src=\"/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2\" width=\"58\" height=\"58\" alt=\"\" aria-hidden=\"true\" draggable=\"false\"><span class=\"telar-loader__label\">Cargando...</span></div>";
 
 
 
