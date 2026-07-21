@@ -52,20 +52,85 @@ function centroLegajoNumerosDocumento()
     );
 }
 
-function centroLegajoCodigoDocumento($codVenta, $tipoDocumento)
+function centroLegajoSiglaLocal($codLocal, $nombreLocal = '')
+{
+    $siglas = array(
+        1 => 'ADM',
+        3 => 'CC',
+        5 => 'VI',
+        6 => 'PM',
+        7 => 'SL',
+        8 => 'CQ',
+        9 => 'VM'
+    );
+    $codLocal = intval($codLocal);
+    if (isset($siglas[$codLocal])) return $siglas[$codLocal];
+
+    $nombre = strtoupper(trim((string)$nombreLocal));
+    $nombre = strtr($nombre, array('Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ñ' => 'N'));
+    $nombre = preg_replace('/\b(CLINIDENT|ADMINISTRACION|COMPARTIDOS|LOCAL|SUCURSAL)\b/', ' ', $nombre);
+    $palabras = preg_split('/[^A-Z0-9]+/', trim($nombre), -1, PREG_SPLIT_NO_EMPTY);
+    $sigla = '';
+    foreach ((array)$palabras as $palabra) {
+        $sigla .= substr($palabra, 0, 1);
+        if (strlen($sigla) >= 3) break;
+    }
+    if ($sigla !== '') return $sigla;
+    return $codLocal > 0 ? 'L'.$codLocal : 'LOC';
+}
+
+function centroLegajoNumeroVenta($venta)
+{
+    if (is_array($venta)) {
+        $numero = isset($venta['num_factura']) ? trim((string)$venta['num_factura']) : '';
+        $punto = isset($venta['puntoexpedicion']) ? trim((string)$venta['puntoexpedicion']) : '';
+        if ($numero !== '') {
+            $numero = preg_replace('/\s+/', '', $numero);
+            $punto = preg_replace('/\s+/', '', $punto);
+            if ($punto !== '' && stripos($numero, $punto.'-') !== 0) return $punto.'-'.$numero;
+            return $numero;
+        }
+        return isset($venta['cod_venta']) ? (string)intval($venta['cod_venta']) : '0';
+    }
+    $numero = trim((string)$venta);
+    return $numero !== '' ? preg_replace('/\s+/', '', $numero) : '0';
+}
+
+function centroLegajoCodigoLegajo($venta)
+{
+    $numero = centroLegajoNumeroVenta($venta);
+    if (!is_array($venta)) return $numero;
+    $sigla = centroLegajoSiglaLocal(
+        isset($venta['cod_local']) ? $venta['cod_local'] : (isset($venta['cod_localFK']) ? $venta['cod_localFK'] : 0),
+        isset($venta['nombre_local']) ? $venta['nombre_local'] : (isset($venta['nombre_local_origen']) ? $venta['nombre_local_origen'] : '')
+    );
+    if (preg_match('/-'.preg_quote($sigla, '/').'$/i', $numero)) return strtoupper($numero);
+    return $numero.'-'.$sigla;
+}
+
+function centroLegajoCodigoDocumento($venta, $tipoDocumento)
 {
     $numeros = centroLegajoNumerosDocumento();
     $tipoDocumento = (string)$tipoDocumento;
     if (!isset($numeros[$tipoDocumento])) return '';
-    return 'Legajo #'.intval($codVenta).'-'.$numeros[$tipoDocumento];
+    return centroLegajoCodigoLegajo($venta).'-'.$numeros[$tipoDocumento];
 }
 
 function centroLegajoTipoEsRequerido($venta, $tipoDocumento)
 {
     if (!in_array($tipoDocumento, centroLegajoTipos(), true)) return false;
     $tipoVenta = isset($venta['tipo_venta']) ? strtoupper(trim((string)$venta['tipo_venta'])) : '';
-    if ($tipoVenta === 'CONTADO') return $tipoDocumento === 'consentimiento';
+    if ($tipoVenta === 'CONTADO') return in_array($tipoDocumento, array('consentimiento','detalle_venta'), true);
     return true;
+}
+
+function centroLegajoDocumentoConservaAntecedente($documento)
+{
+    $documento = (array)$documento;
+    $estadoDocumental = isset($documento['estado_documental']) ? (string)$documento['estado_documental'] : '';
+    $estadoFisico = isset($documento['estado_fisico']) ? (string)$documento['estado_fisico'] : '';
+    return in_array($estadoDocumental, array('disponible','validado','observado'), true)
+        || in_array($estadoFisico, array('en_sucursal','en_lote','pendiente_custodia','en_transito','recibido','faltante','observado','devuelto_cliente'), true);
 }
 
 function centroLegajoSolicitudPagareAbiertaDocumento($mysqli, $idDocumento, $bloquear = false)
@@ -113,9 +178,9 @@ function centroLegajoVentaRaw($mysqli, $codVenta)
 {
     $codVenta = intval($codVenta);
     $anulada = centroLegajoVentaAnuladaSql('v');
-    $stmt = $mysqli->prepare("SELECT v.cod_venta,v.fecha_venta,v.total_venta,v.descuento,v.TipoVenta AS tipo_venta,
+    $stmt = $mysqli->prepare("SELECT v.cod_venta,v.puntoexpedicion,v.num_factura,v.fecha_venta,v.total_venta,v.descuento,v.TipoVenta AS tipo_venta,
         v.cod_clienteFK,v.cod_local,v.cod_usuarioFK,v.estado,v.anulado,v.estadocuenta,
-        p.nombre_persona AS titular,COALESCE(NULLIF(TRIM(c.rut_cliente),''),NULLIF(TRIM(c.ci_cliente),''),'') AS documento,
+        p.nombre_persona AS titular,TRIM(IFNULL(c.ci_cliente,'')) AS documento,TRIM(IFNULL(c.rut_cliente,'')) AS ruc_cliente,
         l.Nombre AS nombre_local,pu.nombre_persona AS usuario_venta,
         CASE WHEN TRIM(IFNULL(c.foto1,''))<>'' OR TRIM(IFNULL(c.foto2,''))<>'' THEN 1 ELSE 0 END AS fuente_cedula,
         CASE WHEN EXISTS (SELECT 1 FROM detalle_venta dv WHERE dv.cod_ventaFK=v.cod_venta) THEN 1 ELSE 0 END AS fuente_detalle_venta,
@@ -292,12 +357,14 @@ function centroLegajoDocumentosPorVentas($mysqli, $ventas)
     $ids = array_values(array_unique(array_filter(array_map('intval', (array)$ventas))));
     $salida = array();
     if (count($ids) < 1) return $salida;
-    $resultado = $mysqli->query("SELECT d.*,pc.nombre_persona AS usuario_confirmacion,
+    $resultado = $mysqli->query("SELECT d.*,v.puntoexpedicion,v.num_factura,v.cod_local,l.Nombre AS nombre_local,pc.nombre_persona AS usuario_confirmacion,
         pu.nombre_persona AS ultima_accion_usuario,COALESCE(d.fecha_actualizacion,d.fecha_confirmacion,d.fecha_creacion) AS ultima_accion_fecha,
         lo.id_lote AS id_lote_actual,lo.estado AS estado_lote_actual,
         plc.nombre_persona AS usuario_creador_lote,plt.nombre_persona AS usuario_transportista_lote,
         plct.nombre_persona AS usuario_custodia_lote,plr.nombre_persona AS usuario_recepcion_lote
         FROM centro_legajo_documento d
+        INNER JOIN venta v ON v.cod_venta=d.cod_ventaFK
+        INNER JOIN local l ON l.cod_local=v.cod_local
         LEFT JOIN persona pc ON pc.cod_persona=d.cod_usuario_confirmacionFK
         LEFT JOIN persona pu ON pu.cod_persona=COALESCE(d.cod_usuarioFK_update,d.cod_usuario_confirmacionFK,d.cod_usuarioFK_create)
         LEFT JOIN centro_legajo_lote_detalle ld ON ld.id_lote_detalle=(
@@ -317,7 +384,8 @@ function centroLegajoDocumentosPorVentas($mysqli, $ventas)
             $venta = intval($fila['cod_ventaFK']);
             if (!isset($salida[$venta])) $salida[$venta] = array();
             $fila = centroLegajoAplicarResponsabilidadDocumento(centroFacturaFilaUtf8($fila));
-            $fila['codigo_documento'] = centroLegajoCodigoDocumento($venta, $fila['tipo_documento']);
+            $fila['codigo_legajo'] = centroLegajoCodigoLegajo($fila);
+            $fila['codigo_documento'] = centroLegajoCodigoDocumento($fila, $fila['tipo_documento']);
             $salida[$venta][$fila['tipo_documento']] = $fila;
         }
     }
@@ -329,8 +397,11 @@ function centroLegajoLotesActivosPorVentas($mysqli, $ventas)
     $ids = array_values(array_unique(array_filter(array_map('intval', (array)$ventas))));
     $salida = array();
     if (count($ids) < 1) return $salida;
+    $camposPlazo = centroFacturaPlazoTransitoDisponible($mysqli, 'centro_legajo_lote')
+        ? ',lo.dias_plazo_transito,lo.fecha_limite_recepcion,lo.cod_usuario_plazo_transitoFK,lo.fecha_asignacion_plazo'
+        : ',NULL AS dias_plazo_transito,NULL AS fecha_limite_recepcion,NULL AS cod_usuario_plazo_transitoFK,NULL AS fecha_asignacion_plazo';
     $sql = "SELECT d.cod_ventaFK,lo.id_lote,lo.codigo_lote,lo.estado,lo.cod_local_origenFK,lo.cod_local_destinoFK,
-        lo.destino_snapshot,lor.Nombre AS nombre_local_origen,lde.Nombre AS nombre_local_destino,
+        lo.destino_snapshot,lo.fecha_envio,lo.fecha_recepcion".$camposPlazo.",lor.Nombre AS nombre_local_origen,lde.Nombre AS nombre_local_destino,
         pt.nombre_persona AS transportista,pc.nombre_persona AS custodio_actual,pr.nombre_persona AS receptor
       FROM centro_legajo_lote_detalle ld
       INNER JOIN centro_legajo_documento d ON d.id_documento=ld.id_documentoFK
@@ -348,7 +419,7 @@ function centroLegajoLotesActivosPorVentas($mysqli, $ventas)
             $venta = intval($fila['cod_ventaFK']);
             if (!isset($salida[$venta])) {
                 $fila['cantidad_documentos_lote'] = 1;
-                $salida[$venta] = centroFacturaFilaUtf8($fila);
+                $salida[$venta] = centroFacturaFilaUtf8(centroFacturaDecorarPlazoTransito($fila));
             } elseif (intval($salida[$venta]['id_lote']) === intval($fila['id_lote'])) {
                 $salida[$venta]['cantidad_documentos_lote'] = intval($salida[$venta]['cantidad_documentos_lote']) + 1;
             }
@@ -376,7 +447,11 @@ function centroLegajoConstruirDocumentos($venta, $existentes)
             'observaciones' => ''
         );
         $documento['es_requerido'] = $requerido ? 1 : 0;
-        $documento['codigo_documento'] = centroLegajoCodigoDocumento($venta['cod_venta'], $tipo);
+        if ($requerido) {
+            if ((string)$documento['estado_documental'] === 'no_aplica') $documento['estado_documental'] = 'pendiente';
+            if ((string)$documento['estado_fisico'] === 'no_aplica') $documento['estado_fisico'] = 'pendiente';
+        }
+        $documento['codigo_documento'] = centroLegajoCodigoDocumento($venta, $tipo);
         $fuente = 0;
         if ($tipo === 'cedula') $fuente = intval($venta['fuente_cedula']);
         if ($tipo === 'detalle_venta') $fuente = intval($venta['fuente_detalle_venta']);
@@ -389,6 +464,9 @@ function centroLegajoConstruirDocumentos($venta, $existentes)
 
 function centroLegajoDecorarVenta($venta, $existentes, $loteActual)
 {
+    $venta['numero_venta'] = centroLegajoNumeroVenta($venta);
+    $venta['sigla_local'] = centroLegajoSiglaLocal($venta['cod_local'], $venta['nombre_local']);
+    $venta['codigo_legajo'] = centroLegajoCodigoLegajo($venta);
     $documentos = centroLegajoConstruirDocumentos($venta, $existentes);
     $requeridos = 0;
     $listos = 0;
@@ -402,8 +480,9 @@ function centroLegajoDecorarVenta($venta, $existentes, $loteActual)
         $estadoDocumento = (string)$documento['estado_documental'];
         $estadoFisico = (string)$documento['estado_fisico'];
         $documentoConfirmado = in_array($estadoDocumento, array('disponible','validado'), true);
-        if ($documentoConfirmado && $estadoFisico === 'en_sucursal') $enviables++;
-        if (!intval($documento['es_requerido'])) continue;
+        $requerido = intval($documento['es_requerido']) === 1;
+        if ($requerido && $documentoConfirmado && $estadoFisico === 'en_sucursal') $enviables++;
+        if (!$requerido) continue;
         $requeridos++;
         if ($documentoConfirmado
             && in_array($estadoFisico, array('en_sucursal','en_lote','pendiente_custodia','en_transito','recibido','devuelto_cliente'), true)) {
@@ -458,10 +537,15 @@ function centroLegajoCoincideFiltro($fila, $filtros, $omitirRapido)
     if (!empty($filtros['busqueda'])) {
         $aguja = mb_strtolower(trim((string)$filtros['busqueda']), 'UTF-8');
         $texto = mb_strtolower(implode(' ', array(
-            $fila['cod_venta'], $fila['titular'], $fila['documento'], $fila['nombre_local'],
+            $fila['cod_venta'], isset($fila['num_factura']) ? $fila['num_factura'] : '',
+            isset($fila['codigo_legajo']) ? $fila['codigo_legajo'] : '', $fila['titular'], $fila['documento'], $fila['nombre_local'],
             isset($fila['lote_actual']['codigo_lote']) ? $fila['lote_actual']['codigo_lote'] : ''
         )), 'UTF-8');
-        if (mb_strpos($texto, $aguja, 0, 'UTF-8') === false) return false;
+        $agujaDocumento = preg_replace('/[\.\-\s]+/', '', $aguja);
+        $documentoNormalizado = preg_replace('/[\.\-\s]+/', '', mb_strtolower((string)$fila['documento'], 'UTF-8'));
+        $coincideTexto = mb_strpos($texto, $aguja, 0, 'UTF-8') !== false;
+        $coincideDocumento = $agujaDocumento !== '' && mb_strpos($documentoNormalizado, $agujaDocumento, 0, 'UTF-8') !== false;
+        if (!$coincideTexto && !$coincideDocumento) return false;
     }
     if ($omitirRapido) return true;
     $rapido = isset($filtros['filtro_rapido']) ? trim((string)$filtros['filtro_rapido']) : '';
@@ -473,6 +557,59 @@ function centroLegajoCoincideFiltro($fila, $filtros, $omitirRapido)
     if ($rapido === 'en_transito' && !in_array($estadoLote, array('pendiente_custodia','en_transito'), true)) return false;
     if ($rapido === 'recibidos' && $estadoLote !== 'recibido') return false;
     return true;
+}
+
+function centroLegajoCedulaNormalizadaSql($aliasCliente = 'c')
+{
+    $aliasCliente = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$aliasCliente);
+    if ($aliasCliente === '') $aliasCliente = 'c';
+    return "REPLACE(REPLACE(REPLACE(TRIM(IFNULL(".$aliasCliente.".ci_cliente,'')),'.',''),'-',''),' ','')";
+}
+
+function centroLegajoAlcanceListado($filtros)
+{
+    $filtros = (array)$filtros;
+    list($desde, $hasta) = centroFacturaRangoPeriodo($filtros);
+    $busqueda = isset($filtros['busqueda']) ? trim((string)$filtros['busqueda']) : '';
+    $historico = $busqueda !== '';
+    return array(
+        'tipo' => $historico ? 'historico_busqueda' : 'periodo',
+        'historico' => $historico ? 1 : 0,
+        'fecha_desde' => $historico ? null : $desde,
+        'fecha_hasta' => $historico ? null : $hasta
+    );
+}
+
+function centroLegajoAgregarBusquedaSql($busqueda, &$condiciones, &$tipos, &$parametros)
+{
+    $busqueda = trim((string)$busqueda);
+    if ($busqueda === '') return;
+    $busquedaBase = centroFacturaTextoBaseDatos($busqueda, 100);
+    $patron = '%'.$busquedaBase.'%';
+    $partes = array(
+        'CAST(v.cod_venta AS CHAR) LIKE ?',
+        "TRIM(IFNULL(v.num_factura,'')) LIKE ?",
+        "CONCAT(CASE WHEN TRIM(IFNULL(v.puntoexpedicion,''))<>'' THEN CONCAT(TRIM(v.puntoexpedicion),'-') ELSE '' END,TRIM(IFNULL(v.num_factura,''))) LIKE ?",
+        'p.nombre_persona LIKE ?',
+        "TRIM(IFNULL(c.ci_cliente,'')) LIKE ?",
+        'l.Nombre LIKE ?',
+        "EXISTS (SELECT 1 FROM centro_legajo_documento db
+          INNER JOIN centro_legajo_lote_detalle ldb ON ldb.id_documentoFK=db.id_documento
+          INNER JOIN centro_legajo_lote lob ON lob.id_lote=ldb.id_loteFK
+          WHERE db.cod_ventaFK=v.cod_venta AND ldb.estado<>'retirado' AND lob.estado<>'anulado'
+            AND lob.codigo_lote LIKE ?)"
+    );
+    for ($i = 0; $i < 7; $i++) {
+        $tipos .= 's';
+        $parametros[] = $patron;
+    }
+    $documento = preg_replace('/[\.\-\s]+/', '', $busquedaBase);
+    if ($documento !== '') {
+        $partes[] = centroLegajoCedulaNormalizadaSql('c').' LIKE ?';
+        $tipos .= 's';
+        $parametros[] = '%'.$documento.'%';
+    }
+    $condiciones[] = '('.implode(' OR ', $partes).')';
 }
 
 function centroLegajoMetricas($registros)
@@ -495,16 +632,27 @@ function centroLegajoListar($codUsuario, $filtros, $limite = 80, $offset = 0)
 {
     if (!centroLegajoPuedeVer($codUsuario)) return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permiso para consultar legajos de ventas.');
     if (!centroLegajoEstructuraDisponible()) return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura de legajos de ventas no esta instalada.');
-    $limite = max(1, min(150, intval($limite)));
-    $offset = max(0, intval($offset));
+    $limiteSolicitado = max(1, min(150, intval($limite)));
+    $offsetSolicitado = max(0, intval($offset));
     $filtros = (array)$filtros;
     list($desde, $hasta) = centroFacturaRangoPeriodo($filtros);
+    $alcance = centroLegajoAlcanceListado($filtros);
+    $busquedaHistorica = intval($alcance['historico']) === 1;
+    $limiteRespuesta = $busquedaHistorica ? $limiteSolicitado : 0;
+    $offsetRespuesta = $busquedaHistorica ? $offsetSolicitado : 0;
     $mysqli = conectar_al_servidor();
     $contexto = centroFacturaContextoUsuario($codUsuario, $mysqli);
     if (empty($contexto)) { $mysqli->close(); return array('ok' => false, 'codigo' => 'contexto', 'mensaje' => 'No se pudo determinar el local del usuario.'); }
-    $condiciones = array('v.fecha_venta>=?', 'v.fecha_venta<=?');
-    $tipos = 'ss';
-    $parametros = array($desde, $hasta);
+    $condiciones = array();
+    $tipos = '';
+    $parametros = array();
+    if (!$busquedaHistorica) {
+        $condiciones[] = 'v.fecha_venta>=?';
+        $condiciones[] = 'v.fecha_venta<=?';
+        $tipos .= 'ss';
+        $parametros[] = $desde;
+        $parametros[] = $hasta;
+    }
     if (!centroFacturaPuedeVerTodosLocales($codUsuario)) {
         $condiciones[] = "(v.cod_local=? OR EXISTS (
             SELECT 1 FROM centro_legajo_documento da
@@ -519,10 +667,11 @@ function centroLegajoListar($codUsuario, $filtros, $limite = 80, $offset = 0)
         $condiciones[] = 'v.cod_local=?'; $tipos .= 'i'; $parametros[] = intval($filtros['cod_local']);
     }
     if (empty($filtros['incluir_anuladas'])) $condiciones[] = 'NOT '.centroLegajoVentaAnuladaSql('v');
+    if ($busquedaHistorica) centroLegajoAgregarBusquedaSql($filtros['busqueda'], $condiciones, $tipos, $parametros);
     $anulada = centroLegajoVentaAnuladaSql('v');
-    $sql = "SELECT v.cod_venta,v.fecha_venta,v.total_venta,v.descuento,v.TipoVenta AS tipo_venta,
+    $sqlBase = "SELECT v.cod_venta,v.puntoexpedicion,v.num_factura,v.fecha_venta,v.total_venta,v.descuento,v.TipoVenta AS tipo_venta,
         v.cod_clienteFK,v.cod_local,v.cod_usuarioFK,v.estado,v.anulado,v.estadocuenta,
-        p.nombre_persona AS titular,COALESCE(NULLIF(TRIM(c.rut_cliente),''),NULLIF(TRIM(c.ci_cliente),''),'') AS documento,
+        p.nombre_persona AS titular,TRIM(IFNULL(c.ci_cliente,'')) AS documento,TRIM(IFNULL(c.rut_cliente,'')) AS ruc_cliente,
         l.Nombre AS nombre_local,pu.nombre_persona AS usuario_venta,
         CASE WHEN TRIM(IFNULL(c.foto1,''))<>'' OR TRIM(IFNULL(c.foto2,''))<>'' THEN 1 ELSE 0 END AS fuente_cedula,
         CASE WHEN EXISTS (SELECT 1 FROM detalle_venta dv WHERE dv.cod_ventaFK=v.cod_venta) THEN 1 ELSE 0 END AS fuente_detalle_venta,
@@ -531,11 +680,48 @@ function centroLegajoListar($codUsuario, $filtros, $limite = 80, $offset = 0)
       INNER JOIN persona p ON p.cod_persona=c.cod_cliente
       INNER JOIN local l ON l.cod_local=v.cod_local
       LEFT JOIN persona pu ON pu.cod_persona=v.cod_usuarioFK
-      WHERE ".implode(' AND ', $condiciones)." ORDER BY v.fecha_venta DESC,v.cod_venta DESC";
+      WHERE ".implode(' AND ', $condiciones);
+    $rapido = isset($filtros['filtro_rapido']) ? trim((string)$filtros['filtro_rapido']) : '';
+    $requiereFiltroDerivado = in_array($rapido, array('completos','incompletos','observados','listos_envio','en_transito','recibidos'), true);
+    $cedulaConteoSql = centroLegajoCedulaNormalizadaSql('c');
+    $cedulaRealConteoSql = "(".$cedulaConteoSql."<>'' AND ".$cedulaConteoSql."<>'0' AND ".$cedulaConteoSql." REGEXP '^[0-9]+$')";
+    $sqlConteo = "SELECT COUNT(*) AS total,
+        COUNT(DISTINCT CASE WHEN ".$cedulaRealConteoSql." THEN ".$cedulaConteoSql." END) AS cedulas_unicas,
+        SUM(CASE WHEN ".$cedulaRealConteoSql." THEN 0 ELSE 1 END) AS registros_sin_cedula,
+        COUNT(DISTINCT v.cod_local) AS cantidad_locales,
+        COALESCE(SUM(GREATEST(0,IFNULL(v.total_venta,0)-IFNULL(v.descuento,0))),0) AS importe_total
+      FROM venta v INNER JOIN cliente c ON c.cod_cliente=v.cod_clienteFK
+      INNER JOIN persona p ON p.cod_persona=c.cod_cliente
+      INNER JOIN local l ON l.cod_local=v.cod_local
+      WHERE ".implode(' AND ', $condiciones);
+    $stmtConteo = $mysqli->prepare($sqlConteo);
+    if (!$stmtConteo) { $error = $mysqli->error; $mysqli->close(); return array('ok' => false, 'codigo' => 'sql', 'mensaje' => 'No se pudo contar el listado de legajos: '.$error); }
+    $parametrosConteo = $parametros;
+    centroFacturaBind($stmtConteo, $tipos, $parametrosConteo);
+    if (!$stmtConteo->execute()) { $error = $stmtConteo->error; $stmtConteo->close(); $mysqli->close(); return array('ok' => false, 'codigo' => 'sql', 'mensaje' => 'No se pudo contar el listado de legajos: '.$error); }
+    $filaConteo = $stmtConteo->get_result()->fetch_assoc();
+    $totalBase = $filaConteo ? intval($filaConteo['total']) : 0;
+    $stmtConteo->close();
+    $sinCedula = $filaConteo ? intval($filaConteo['registros_sin_cedula']) : 0;
+    $totales = array(
+        'cedulas_unicas' => $filaConteo ? intval($filaConteo['cedulas_unicas']) : 0,
+        'cantidad_locales' => $filaConteo ? intval($filaConteo['cantidad_locales']) : 0,
+        'legajos_con_cedula' => max(0, $totalBase - $sinCedula),
+        'registros_sin_cedula' => $sinCedula,
+        'legajos_sin_cedula' => $sinCedula,
+        'cantidad_ventas' => $totalBase,
+        'cantidad_legajos' => $totalBase,
+        'importe_total' => $filaConteo ? floatval($filaConteo['importe_total']) : 0
+    );
+
+    if (!$busquedaHistorica) $limiteRespuesta = $totalBase;
+    $limiteConsulta = $requiereFiltroDerivado ? max(1, $totalBase) : max(1, $limiteRespuesta);
+    $offsetConsulta = $requiereFiltroDerivado ? 0 : $offsetRespuesta;
+    $sql = $sqlBase." ORDER BY v.fecha_venta DESC,v.cod_venta DESC LIMIT ".$limiteConsulta.' OFFSET '.$offsetConsulta;
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) { $error = $mysqli->error; $mysqli->close(); return array('ok' => false, 'codigo' => 'sql', 'mensaje' => 'No se pudo preparar el listado de legajos: '.$error); }
     centroFacturaBind($stmt, $tipos, $parametros);
-    $stmt->execute();
+    if (!$stmt->execute()) { $error = $stmt->error; $stmt->close(); $mysqli->close(); return array('ok' => false, 'codigo' => 'sql', 'mensaje' => 'No se pudo consultar el listado de legajos: '.$error); }
     $ventas = array();
     $ids = array();
     $resultado = $stmt->get_result();
@@ -552,13 +738,203 @@ function centroLegajoListar($codUsuario, $filtros, $limite = 80, $offset = 0)
     foreach ($ventas as $venta) {
         $id = intval($venta['cod_venta']);
         $decorada = centroLegajoDecorarVenta($venta, isset($documentos[$id]) ? $documentos[$id] : array(), isset($lotes[$id]) ? $lotes[$id] : array());
-        if (centroLegajoCoincideFiltro($decorada, $filtros, true)) $base[] = $decorada;
+        $base[] = $decorada;
     }
+
+    $coberturaCompleta = $offsetConsulta === 0 && $totalBase <= $limiteConsulta;
     $metricas = centroLegajoMetricas($base);
-    $filtrados = array();
-    foreach ($base as $fila) if (centroLegajoCoincideFiltro($fila, $filtros, false)) $filtrados[] = $fila;
-    return array('ok' => true, 'registros' => array_slice($filtrados, $offset, $limite), 'total' => count($filtrados),
-        'limite' => $limite, 'offset' => $offset, 'metricas' => $metricas);
+    $metricas['ventas_periodo'] = $totalBase;
+    $metricas['ventas_alcance'] = $totalBase;
+    if (!$coberturaCompleta) $metricas['estados_sobre_pagina'] = 1;
+
+    if ($requiereFiltroDerivado) {
+        $filtrados = array();
+        foreach ($base as $fila) if (centroLegajoCoincideFiltro($fila, $filtros, false)) $filtrados[] = $fila;
+        $registros = $busquedaHistorica
+            ? array_slice($filtrados, $offsetSolicitado, $limiteSolicitado)
+            : $filtrados;
+        $totalRespuesta = count($filtrados);
+    } else {
+        $registros = $base;
+        $totalRespuesta = $totalBase;
+    }
+    return array('ok' => true, 'registros' => $registros, 'total' => $totalRespuesta,
+        'total_base' => $totalBase, 'limite' => $limiteRespuesta, 'offset' => $offsetRespuesta,
+        'metricas' => $metricas, 'totales' => $totales, 'alcance' => $alcance,
+        'busqueda_historica' => $busquedaHistorica ? 1 : 0,
+        'truncado' => 0, 'total_incompleto' => 0);
+}
+
+function centroLegajoListarPorCedula($codUsuario, $filtros, $limite = 80, $offset = 0)
+{
+    if (!centroLegajoPuedeVer($codUsuario)) return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permiso para consultar legajos por cedula.');
+    if (!centroLegajoEstructuraDisponible()) return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura de legajos de ventas no esta instalada.');
+    $filtros = (array)$filtros;
+    list($desde, $hasta) = centroFacturaRangoPeriodo($filtros);
+    $alcance = centroLegajoAlcanceListado($filtros);
+    $busquedaHistorica = intval($alcance['historico']) === 1;
+    $limiteSolicitado = $busquedaHistorica
+        ? max(1, min(150, intval($limite)))
+        : max(1, min(500, intval($limite)));
+    $offset = $busquedaHistorica ? max(0, intval($offset)) : 0;
+    $mysqli = conectar_al_servidor();
+    $contexto = centroFacturaContextoUsuario($codUsuario, $mysqli);
+    if (empty($contexto)) { $mysqli->close(); return array('ok' => false, 'codigo' => 'contexto', 'mensaje' => 'No se pudo determinar el local del usuario.'); }
+
+    $condiciones = array();
+    $tipos = '';
+    $parametros = array();
+    if (!$busquedaHistorica) {
+        $condiciones[] = 'v.fecha_venta>=?';
+        $condiciones[] = 'v.fecha_venta<=?';
+        $tipos .= 'ss';
+        $parametros[] = $desde;
+        $parametros[] = $hasta;
+    }
+    if (!centroFacturaPuedeVerTodosLocales($codUsuario)) {
+        $condiciones[] = "(v.cod_local=? OR EXISTS (
+            SELECT 1 FROM centro_legajo_documento da
+            INNER JOIN centro_legajo_lote_detalle lda ON lda.id_documentoFK=da.id_documento
+            INNER JOIN centro_legajo_lote loa ON loa.id_lote=lda.id_loteFK
+            WHERE da.cod_ventaFK=v.cod_venta AND lda.estado<>'retirado' AND loa.estado<>'anulado'
+              AND (loa.cod_local_destinoFK=? OR loa.cod_usuario_transportistaFK=?)))";
+        $tipos .= 'iii';
+        $localUsuario = intval($contexto['cod_localFK']);
+        $parametros[] = $localUsuario;
+        $parametros[] = $localUsuario;
+        $parametros[] = intval($codUsuario);
+    } elseif (!empty($filtros['cod_local'])) {
+        $condiciones[] = 'v.cod_local=?';
+        $tipos .= 'i';
+        $parametros[] = intval($filtros['cod_local']);
+    }
+    if (empty($filtros['incluir_anuladas'])) $condiciones[] = 'NOT '.centroLegajoVentaAnuladaSql('v');
+
+    $cedulaSql = centroLegajoCedulaNormalizadaSql('c');
+    $cedulaRealSql = "(".$cedulaSql."<>'' AND ".$cedulaSql."<>'0' AND ".$cedulaSql." REGEXP '^[0-9]+$')";
+    $condicionesAgrupadas = $condiciones;
+    $condicionesAgrupadas[] = $cedulaRealSql;
+    $tiposAgrupados = $tipos;
+    $parametrosAgrupados = $parametros;
+    $having = '';
+    if ($busquedaHistorica) {
+        $busquedaBase = centroFacturaTextoBaseDatos($filtros['busqueda'], 100);
+        $patron = '%'.$busquedaBase.'%';
+        $partesBusqueda = array(
+            'CAST(v.cod_venta AS CHAR) LIKE ?',
+            "TRIM(IFNULL(v.num_factura,'')) LIKE ?",
+            "CONCAT(CASE WHEN TRIM(IFNULL(v.puntoexpedicion,''))<>'' THEN CONCAT(TRIM(v.puntoexpedicion),'-') ELSE '' END,TRIM(IFNULL(v.num_factura,''))) LIKE ?",
+            'p.nombre_persona LIKE ?',
+            "TRIM(IFNULL(c.ci_cliente,'')) LIKE ?",
+            'l.Nombre LIKE ?'
+        );
+        for ($i = 0; $i < 6; $i++) {
+            $tiposAgrupados .= 's';
+            $parametrosAgrupados[] = $patron;
+        }
+        $documento = preg_replace('/[\.\-\s]+/', '', $busquedaBase);
+        if ($documento !== '') {
+            $partesBusqueda[] = $cedulaSql.' LIKE ?';
+            $tiposAgrupados .= 's';
+            $parametrosAgrupados[] = '%'.$documento.'%';
+        }
+        $having = ' HAVING MAX(CASE WHEN ('.implode(' OR ', $partesBusqueda).') THEN 1 ELSE 0 END)=1';
+    }
+
+    $sqlAgrupado = "SELECT ".$cedulaSql." AS cedula,v.cod_local,l.Nombre AS nombre_local,
+        SUBSTRING_INDEX(GROUP_CONCAT(p.nombre_persona ORDER BY v.fecha_venta DESC,v.cod_venta DESC SEPARATOR '|||'),'|||',1) AS titular,
+        COUNT(DISTINCT v.cod_clienteFK) AS cantidad_fichas,
+        COUNT(DISTINCT v.cod_venta) AS cantidad_ventas,
+        COUNT(DISTINCT v.cod_venta) AS cantidad_legajos,
+        MIN(v.fecha_venta) AS primera_fecha_venta,MAX(v.fecha_venta) AS ultima_fecha_venta,
+        CAST(SUBSTRING_INDEX(GROUP_CONCAT(v.cod_venta ORDER BY v.fecha_venta DESC,v.cod_venta DESC),',',1) AS UNSIGNED) AS ultima_venta,
+        SUBSTRING_INDEX(GROUP_CONCAT(CONCAT(CASE WHEN TRIM(IFNULL(v.puntoexpedicion,''))<>'' THEN CONCAT(TRIM(v.puntoexpedicion),'-') ELSE '' END,
+          TRIM(IFNULL(v.num_factura,''))) ORDER BY v.fecha_venta DESC,v.cod_venta DESC SEPARATOR '|||'),'|||',1) AS ultima_numero_venta,
+        COALESCE(SUM(GREATEST(0,IFNULL(v.total_venta,0)-IFNULL(v.descuento,0))),0) AS importe_total,
+        SUM(CASE WHEN UPPER(TRIM(IFNULL(v.TipoVenta,'')))='CONTADO' THEN 1 ELSE 0 END) AS ventas_contado,
+        SUM(CASE WHEN UPPER(TRIM(IFNULL(v.TipoVenta,'')))<>'CONTADO' THEN 1 ELSE 0 END) AS ventas_credito
+      FROM venta v INNER JOIN cliente c ON c.cod_cliente=v.cod_clienteFK
+      INNER JOIN persona p ON p.cod_persona=c.cod_cliente
+      INNER JOIN local l ON l.cod_local=v.cod_local
+      WHERE ".implode(' AND ', $condicionesAgrupadas)."
+      GROUP BY v.cod_local,l.Nombre,".$cedulaSql.$having;
+
+    $sqlTotales = "SELECT COUNT(*) AS grupos_cedula_local,COUNT(DISTINCT q.cedula) AS cedulas_unicas,
+        COALESCE(SUM(q.cantidad_ventas),0) AS legajos_con_cedula,
+        COALESCE(SUM(q.importe_total),0) AS importe_con_cedula,
+        COUNT(DISTINCT q.cod_local) AS cantidad_locales
+      FROM (".$sqlAgrupado.") q";
+    $stmtTotales = $mysqli->prepare($sqlTotales);
+    if (!$stmtTotales) { $error = $mysqli->error; $mysqli->close(); return array('ok' => false, 'codigo' => 'sql', 'mensaje' => 'No se pudieron preparar los totales por cedula: '.$error); }
+    $parametrosTotales = $parametrosAgrupados;
+    centroFacturaBind($stmtTotales, $tiposAgrupados, $parametrosTotales);
+    if (!$stmtTotales->execute()) { $error = $stmtTotales->error; $stmtTotales->close(); $mysqli->close(); return array('ok' => false, 'codigo' => 'sql', 'mensaje' => 'No se pudieron calcular los totales por cedula: '.$error); }
+    $totalesRaw = $stmtTotales->get_result()->fetch_assoc();
+    $stmtTotales->close();
+
+    $condicionesSinCedula = $condiciones;
+    $condicionesSinCedula[] = 'NOT '.$cedulaRealSql;
+    $tiposSinCedula = $tipos;
+    $parametrosSinCedula = $parametros;
+    if ($busquedaHistorica) centroLegajoAgregarBusquedaSql($filtros['busqueda'], $condicionesSinCedula, $tiposSinCedula, $parametrosSinCedula);
+    $sqlSinCedula = "SELECT COUNT(DISTINCT v.cod_venta) AS registros_sin_cedula,
+        COALESCE(SUM(GREATEST(0,IFNULL(v.total_venta,0)-IFNULL(v.descuento,0))),0) AS importe_sin_cedula
+      FROM venta v INNER JOIN cliente c ON c.cod_cliente=v.cod_clienteFK
+      INNER JOIN persona p ON p.cod_persona=c.cod_cliente
+      INNER JOIN local l ON l.cod_local=v.cod_local
+      WHERE ".implode(' AND ', $condicionesSinCedula);
+    $stmtSinCedula = $mysqli->prepare($sqlSinCedula);
+    if (!$stmtSinCedula) { $error = $mysqli->error; $mysqli->close(); return array('ok' => false, 'codigo' => 'sql', 'mensaje' => 'No se pudieron preparar los totales sin cedula: '.$error); }
+    centroFacturaBind($stmtSinCedula, $tiposSinCedula, $parametrosSinCedula);
+    if (!$stmtSinCedula->execute()) { $error = $stmtSinCedula->error; $stmtSinCedula->close(); $mysqli->close(); return array('ok' => false, 'codigo' => 'sql', 'mensaje' => 'No se pudieron calcular los totales sin cedula: '.$error); }
+    $sinCedulaRaw = $stmtSinCedula->get_result()->fetch_assoc();
+    $stmtSinCedula->close();
+
+    $grupos = $totalesRaw ? intval($totalesRaw['grupos_cedula_local']) : 0;
+    $limiteRespuesta = $busquedaHistorica ? $limiteSolicitado : $grupos;
+    $limiteConsulta = max(1, $limiteRespuesta);
+    $sqlPagina = $sqlAgrupado.' ORDER BY ultima_fecha_venta DESC,ultima_venta DESC LIMIT '.$limiteConsulta.' OFFSET '.$offset;
+    $stmtPagina = $mysqli->prepare($sqlPagina);
+    if (!$stmtPagina) { $error = $mysqli->error; $mysqli->close(); return array('ok' => false, 'codigo' => 'sql', 'mensaje' => 'No se pudo preparar el listado por cedula: '.$error); }
+    centroFacturaBind($stmtPagina, $tiposAgrupados, $parametrosAgrupados);
+    if (!$stmtPagina->execute()) { $error = $stmtPagina->error; $stmtPagina->close(); $mysqli->close(); return array('ok' => false, 'codigo' => 'sql', 'mensaje' => 'No se pudo consultar el listado por cedula: '.$error); }
+    $registros = array();
+    $resultado = $stmtPagina->get_result();
+    while ($fila = $resultado->fetch_assoc()) {
+        $fila['cod_local'] = intval($fila['cod_local']);
+        $fila['cantidad_fichas'] = intval($fila['cantidad_fichas']);
+        $fila['cantidad_ventas'] = intval($fila['cantidad_ventas']);
+        $fila['cantidad_legajos'] = intval($fila['cantidad_legajos']);
+        $fila['ultima_venta'] = intval($fila['ultima_venta']);
+        $fila['ultima_numero_venta'] = trim((string)$fila['ultima_numero_venta']);
+        $fila['importe_total'] = floatval($fila['importe_total']);
+        $fila['ventas_contado'] = intval($fila['ventas_contado']);
+        $fila['ventas_credito'] = intval($fila['ventas_credito']);
+        $fila['documento'] = $fila['cedula'];
+        $registros[] = centroFacturaFilaUtf8($fila);
+    }
+    $stmtPagina->close();
+    $mysqli->close();
+
+    $legajosConCedula = $totalesRaw ? intval($totalesRaw['legajos_con_cedula']) : 0;
+    $sinCedula = $sinCedulaRaw ? intval($sinCedulaRaw['registros_sin_cedula']) : 0;
+    $importeConCedula = $totalesRaw ? floatval($totalesRaw['importe_con_cedula']) : 0;
+    $importeSinCedula = $sinCedulaRaw ? floatval($sinCedulaRaw['importe_sin_cedula']) : 0;
+    $totales = array(
+        'grupos_cedula_local' => $grupos,
+        'cedulas_unicas' => $totalesRaw ? intval($totalesRaw['cedulas_unicas']) : 0,
+        'cantidad_locales' => $totalesRaw ? intval($totalesRaw['cantidad_locales']) : 0,
+        'legajos_con_cedula' => $legajosConCedula,
+        'registros_sin_cedula' => $sinCedula,
+        'legajos_sin_cedula' => $sinCedula,
+        'cantidad_ventas' => $legajosConCedula + $sinCedula,
+        'cantidad_legajos' => $legajosConCedula + $sinCedula,
+        'importe_total' => $importeConCedula + $importeSinCedula
+    );
+    return array('ok' => true, 'registros' => $registros, 'total' => $grupos,
+        'limite' => $limiteRespuesta, 'offset' => $offset, 'totales' => $totales,
+        'metricas' => $totales, 'alcance' => $alcance,
+        'busqueda_historica' => $busquedaHistorica ? 1 : 0, 'truncado' => 0);
 }
 
 function centroLegajoDetalle($codVenta, $codUsuario)
@@ -583,7 +959,8 @@ function centroLegajoDetalle($codVenta, $codUsuario)
     $resultado = $stmt->get_result();
     while ($fila = $resultado->fetch_assoc()) {
         $fila = centroFacturaFilaUtf8($fila);
-        $fila['codigo_documento'] = centroLegajoCodigoDocumento($id, $fila['tipo_documento']);
+        $fila['codigo_documento'] = centroLegajoCodigoDocumento($venta, $fila['tipo_documento']);
+        $fila['codigo_legajo'] = $venta['codigo_legajo'];
         $eventos[] = $fila;
     }
     $stmt->close();
@@ -631,11 +1008,30 @@ function centroLegajoGuardarDocumento($codVenta, $tipoDocumento, $accion, $obser
         $venta = centroLegajoVentaRaw($mysqli, $codVenta);
         if (!$venta || !centroLegajoPuedeUsarVenta($codUsuario, $venta, $mysqli)) throw new Exception('No puede actualizar el legajo de otro local.');
         if (intval($venta['es_anulada'])) throw new Exception('Una venta anulada se conserva solo para consulta.');
-        if (!centroLegajoAsegurarDocumentosVenta($mysqli, $venta, $codUsuario)) throw new Exception('No se pudieron preparar los cinco documentos del legajo.');
-        $stmt = centroLegajoPrepararEscritura($mysqli, 'SELECT * FROM centro_legajo_documento WHERE cod_ventaFK=? AND tipo_documento=? LIMIT 1 FOR UPDATE');
-        $stmt->bind_param('is', $codVenta, $tipoDocumento);
-        if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudo preparar el documento.'); }
-        $documento = $stmt->get_result()->fetch_assoc(); $stmt->close();
+        $requerido = centroLegajoTipoEsRequerido($venta, $tipoDocumento);
+        $documentoPreexistente = array();
+        if (!$requerido) {
+            if ($accion === 'confirmar_copia') {
+                throw new Exception('Este documento no es obligatorio para el tipo de venta y no admite nuevas confirmaciones.');
+            }
+            $stmt = centroLegajoPrepararEscritura($mysqli, 'SELECT * FROM centro_legajo_documento WHERE cod_ventaFK=? AND tipo_documento=? LIMIT 1 FOR UPDATE');
+            $stmt->bind_param('is', $codVenta, $tipoDocumento);
+            if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudo validar el antecedente documental.'); }
+            $documentoPreexistente = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            if (!$documentoPreexistente || !centroLegajoDocumentoConservaAntecedente($documentoPreexistente)) {
+                throw new Exception('El documento no es obligatorio y no existe una copia historica que permita registrar esta accion.');
+            }
+        }
+        if ($requerido && !centroLegajoAsegurarDocumentosVenta($mysqli, $venta, $codUsuario)) throw new Exception('No se pudieron preparar los documentos del legajo.');
+        if ($documentoPreexistente) {
+            $documento = $documentoPreexistente;
+        } else {
+            $stmt = centroLegajoPrepararEscritura($mysqli, 'SELECT * FROM centro_legajo_documento WHERE cod_ventaFK=? AND tipo_documento=? LIMIT 1 FOR UPDATE');
+            $stmt->bind_param('is', $codVenta, $tipoDocumento);
+            if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudo preparar el documento.'); }
+            $documento = $stmt->get_result()->fetch_assoc(); $stmt->close();
+        }
         if (!$documento) throw new Exception('El documento no existe en el legajo.');
         if ($documento['estado_fisico'] === 'devuelto_cliente') throw new Exception('Un documento devuelto al cliente solo puede modificarse mediante su flujo de devolucion.');
         $idDocumento = intval($documento['id_documento']);
@@ -676,7 +1072,7 @@ function centroLegajoGuardarDocumento($codVenta, $tipoDocumento, $accion, $obser
             $anteriorFisico, $nuevoFisico, $observaciones, $codUsuario)) throw new Exception('No se pudo auditar el cambio documental.');
         $mysqli->commit(); $mysqli->close();
         return array('ok' => true, 'cod_venta' => $codVenta, 'id_documento' => $idDocumento,
-            'codigo_documento' => centroLegajoCodigoDocumento($codVenta, $tipoDocumento),
+            'codigo_documento' => centroLegajoCodigoDocumento($venta, $tipoDocumento),
             'estado_documental' => $nuevoDocumento, 'estado_fisico' => $nuevoFisico);
     } catch (Exception $e) {
         $mysqli->rollback(); $mysqli->close();
@@ -830,8 +1226,9 @@ function centroLegajoValidarVentaParaLote($mysqli, $codVenta, $codLocal, $codUsu
     $stmt->get_result(); $stmt->close();
     $venta = centroLegajoVentaRaw($mysqli, $codVenta);
     if (!$venta || intval($venta['cod_local']) !== intval($codLocal)) return array('ok' => false, 'mensaje' => 'Todos los legajos deben pertenecer al mismo local de origen.');
+    $codigoLegajo = centroLegajoCodigoLegajo($venta);
     if (intval($venta['es_anulada'])) return array('ok' => false, 'mensaje' => 'Una venta anulada no puede enviarse.');
-    if (!centroLegajoAsegurarDocumentosVenta($mysqli, $venta, $codUsuario)) return array('ok' => false, 'mensaje' => 'No se pudieron preparar los cinco documentos de una venta.');
+    if (!centroLegajoAsegurarDocumentosVenta($mysqli, $venta, $codUsuario)) return array('ok' => false, 'mensaje' => 'No se pudieron preparar los documentos del legajo.');
     $stmt = centroLegajoPrepararEscritura($mysqli, "SELECT lo.codigo_lote FROM centro_legajo_lote_detalle ld
         INNER JOIN centro_legajo_documento d ON d.id_documento=ld.id_documentoFK
         INNER JOIN centro_legajo_lote lo ON lo.id_lote=ld.id_loteFK
@@ -839,7 +1236,7 @@ function centroLegajoValidarVentaParaLote($mysqli, $codVenta, $codLocal, $codUsu
     $stmt->bind_param('i', $codVenta);
     if (!$stmt->execute()) { $stmt->close(); return array('ok' => false, 'mensaje' => 'No se pudo validar si el legajo ya pertenece a otro lote.'); }
     $ocupado = $stmt->get_result()->fetch_assoc(); $stmt->close();
-    if ($ocupado) return array('ok' => false, 'mensaje' => 'El Legajo #'.$codVenta.' ya pertenece al lote '.centroFacturaValorUtf8($ocupado['codigo_lote']).'.');
+    if ($ocupado) return array('ok' => false, 'mensaje' => 'El Legajo '.$codigoLegajo.' ya pertenece al lote '.centroFacturaValorUtf8($ocupado['codigo_lote']).'.');
     $stmt = centroLegajoPrepararEscritura($mysqli, 'SELECT * FROM centro_legajo_documento WHERE cod_ventaFK=? ORDER BY id_documento FOR UPDATE');
     $stmt->bind_param('i', $codVenta);
     if (!$stmt->execute()) { $stmt->close(); return array('ok' => false, 'mensaje' => 'No se pudieron validar los documentos del legajo.'); }
@@ -854,10 +1251,10 @@ function centroLegajoValidarVentaParaLote($mysqli, $codVenta, $codLocal, $codUsu
             && $fila['estado_fisico'] === 'en_sucursal';
         if ($requerido && !$confirmadoEnSucursal) {
             $stmt->close();
-            return array('ok' => false, 'mensaje' => 'El Legajo #'.$codVenta.' no esta completo o tiene copias fisicas pendientes.');
+            return array('ok' => false, 'mensaje' => 'El Legajo '.$codigoLegajo.' no esta completo o tiene copias fisicas pendientes.');
         }
         if ($requerido) $tiposEncontrados[] = $tipo;
-        if ($confirmadoEnSucursal) {
+        if ($requerido && $confirmadoEnSucursal) {
             $documentos[] = $fila;
             if ($tipo === 'pagare') $idPagareConfirmado = intval($fila['id_documento']);
         }
@@ -866,12 +1263,12 @@ function centroLegajoValidarVentaParaLote($mysqli, $codVenta, $codLocal, $codUsu
     if ($idPagareConfirmado > 0) {
         $solicitudPagare = centroLegajoSolicitudPagareAbiertaDocumento($mysqli, $idPagareConfirmado, true);
         if ($solicitudPagare) {
-            return array('ok' => false, 'mensaje' => 'El Legajo #'.$codVenta.' tiene una solicitud activa de devolucion de pagare. Resuelvala o cancelela antes de formar un lote.');
+            return array('ok' => false, 'mensaje' => 'El Legajo '.$codigoLegajo.' tiene una solicitud activa de devolucion de pagare. Resuelvala o cancelela antes de formar un lote.');
         }
     }
     $tiposRequeridos = centroLegajoTiposRequeridosVenta($venta);
     sort($tiposEncontrados); sort($tiposRequeridos);
-    if ($tiposEncontrados !== $tiposRequeridos) return array('ok' => false, 'mensaje' => 'El Legajo #'.$codVenta.' no contiene todas sus copias obligatorias.');
+    if ($tiposEncontrados !== $tiposRequeridos) return array('ok' => false, 'mensaje' => 'El Legajo '.$codigoLegajo.' no contiene todas sus copias obligatorias.');
     return array('ok' => true, 'venta' => $venta, 'documentos' => $documentos);
 }
 
@@ -893,7 +1290,8 @@ function centroLegajoRevalidarLoteAntesEnvio($mysqli, $documentos)
         if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudo validar la vigencia de una venta.'); }
         $stmt->get_result(); $stmt->close();
         $venta = centroLegajoVentaRaw($mysqli, $codVenta);
-        if (!$venta || intval($venta['es_anulada'])) throw new Exception('El Legajo #'.$codVenta.' pertenece a una venta anulada o inactiva. Retire el lote antes de enviarlo.');
+        $codigoLegajo = $venta ? centroLegajoCodigoLegajo($venta) : (string)$codVenta;
+        if (!$venta || intval($venta['es_anulada'])) throw new Exception('El Legajo '.$codigoLegajo.' pertenece a una venta anulada o inactiva. Retire el lote antes de enviarlo.');
         $requeridos = centroLegajoTiposRequeridosVenta($venta);
         $presentes = array();
         $incluidos = array();
@@ -903,6 +1301,9 @@ function centroLegajoRevalidarLoteAntesEnvio($mysqli, $documentos)
                 throw new Exception('El tipo de venta del Legajo #'.$codVenta.' cambio despues de preparar el lote. Anule el borrador y vuelva a formarlo.');
             }
             $requeridoActual = in_array($tipo, $requeridos, true) ? 1 : 0;
+            if (!$requeridoActual) {
+                throw new Exception('El Legajo #'.$codVenta.' contiene una copia que ya no es obligatoria. Anule el borrador y vuelva a formarlo.');
+            }
             if (intval($documento['es_requerido']) !== $requeridoActual) {
                 throw new Exception('El tipo de venta del Legajo #'.$codVenta.' cambio despues de preparar el lote. Anule el borrador y vuelva a formarlo.');
             }
@@ -979,7 +1380,8 @@ function centroLegajoCrearLote($codLocal, $ventas, $datos, $codUsuario)
         $stmtDetalle = centroLegajoPrepararEscritura($mysqli, "INSERT INTO centro_legajo_lote_detalle
             (id_loteFK,id_documentoFK,cod_ventaFK,estado,cod_usuario_estadoFK) VALUES (?,?,?,'incluido',?)");
         $stmtDocumento = centroLegajoPrepararEscritura($mysqli, "UPDATE centro_legajo_documento SET estado_fisico='en_lote',cod_local_ubicacionFK=?,
-            ubicacion_fisica=?,cod_usuarioFK_update=?,fecha_actualizacion=?,version_registro=version_registro+1 WHERE id_documento=? AND estado_fisico='en_sucursal'");
+            ubicacion_fisica=?,cod_usuarioFK_update=?,fecha_actualizacion=?,version_registro=version_registro+1
+            WHERE id_documento=? AND es_requerido=1 AND estado_fisico='en_sucursal'");
         $origenNombre = centroFacturaTextoBaseDatos(centroLegajoVentaRaw($mysqli, $ids[0])['nombre_local'], 255);
         foreach ($documentos as $documento) {
             $idDocumento = intval($documento['id_documento']);
@@ -1051,13 +1453,14 @@ function centroLegajoDetalleLote($idLote, $codUsuario)
     $documentos = array();
     $stmt = $mysqli->prepare("SELECT ld.id_lote_detalle,ld.estado AS estado_lote,ld.observacion AS observacion_lote,ld.fecha_estado,
         ld.cod_usuario_estadoFK,pde.nombre_persona AS ultima_accion_usuario,
-        d.*,v.fecha_venta,v.TipoVenta AS tipo_venta,GREATEST(0,IFNULL(v.total_venta,0)-IFNULL(v.descuento,0)) AS importe_venta,p.nombre_persona AS titular,
-        COALESCE(NULLIF(TRIM(c.rut_cliente),''),NULLIF(TRIM(c.ci_cliente),''),'') AS documento_paciente
+        d.*,v.puntoexpedicion,v.num_factura,v.cod_local,v.fecha_venta,v.TipoVenta AS tipo_venta,GREATEST(0,IFNULL(v.total_venta,0)-IFNULL(v.descuento,0)) AS importe_venta,p.nombre_persona AS titular,
+        TRIM(IFNULL(c.ci_cliente,'')) AS documento_paciente,TRIM(IFNULL(c.rut_cliente,'')) AS ruc_paciente,l.Nombre AS nombre_local
       FROM centro_legajo_lote_detalle ld
       INNER JOIN centro_legajo_documento d ON d.id_documento=ld.id_documentoFK
       LEFT JOIN venta v ON v.cod_venta=ld.cod_ventaFK
       LEFT JOIN cliente c ON c.cod_cliente=v.cod_clienteFK
       LEFT JOIN persona p ON p.cod_persona=c.cod_cliente
+      LEFT JOIN local l ON l.cod_local=v.cod_local
       LEFT JOIN persona pde ON pde.cod_persona=ld.cod_usuario_estadoFK
       WHERE ld.id_loteFK=? ORDER BY ld.cod_ventaFK,
         FIELD(d.tipo_documento,'contrato','pagare','cedula','consentimiento','detalle_venta'),d.id_documento");
@@ -1072,7 +1475,8 @@ function centroLegajoDetalleLote($idLote, $codUsuario)
         $fila['ultima_accion_fecha'] = $fila['fecha_estado'];
         $fila['ultima_accion_tipo'] = 'estado_'.$fila['estado_lote'];
         $fila = centroLegajoAplicarResponsabilidadDocumento($fila);
-        $fila['codigo_documento'] = centroLegajoCodigoDocumento($fila['cod_ventaFK'], $fila['tipo_documento']);
+        $fila['codigo_legajo'] = centroLegajoCodigoLegajo($fila);
+        $fila['codigo_documento'] = centroLegajoCodigoDocumento($fila, $fila['tipo_documento']);
         $documentos[] = $fila;
     }
     $stmt->close();

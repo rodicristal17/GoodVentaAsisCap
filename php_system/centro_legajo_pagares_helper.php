@@ -285,7 +285,7 @@ function centroLegajoPagareSolicitudCompleta($mysqli, $idSolicitud)
 {
     $idSolicitud = intval($idSolicitud);
     $stmt = $mysqli->prepare("SELECT s.*,d.tipo_documento,d.estado_documental,d.estado_fisico,d.cod_local_ubicacionFK,
-        d.ubicacion_fisica,d.version_registro AS version_documento,v.fecha_venta,v.TipoVenta AS tipo_venta,v.cod_local,
+        d.ubicacion_fisica,d.version_registro AS version_documento,v.puntoexpedicion,v.num_factura,v.fecha_venta,v.TipoVenta AS tipo_venta,v.cod_local,
         GREATEST(0,IFNULL(v.total_venta,0)-IFNULL(v.descuento,0)) AS importe_venta,
         p.nombre_persona AS titular,COALESCE(NULLIF(TRIM(c.rut_cliente),''),NULLIF(TRIM(c.ci_cliente),''),'') AS documento_cliente,
         lo.Nombre AS nombre_local_origen,lu.Nombre AS nombre_local_ubicacion,
@@ -318,7 +318,8 @@ function centroLegajoPagareDecorarSolicitud($fila, $mysqli, $codUsuario)
     $fila = centroFacturaFilaUtf8($fila);
     $lote = centroLegajoPagareLoteDocumento($mysqli, intval($fila['id_documentoFK']));
     $loteUtf8 = centroFacturaFilaUtf8($lote);
-    $fila['codigo_documento'] = centroLegajoCodigoDocumento($fila['cod_ventaFK'], 'pagare');
+    $fila['codigo_legajo'] = centroLegajoCodigoLegajo($fila);
+    $fila['codigo_documento'] = centroLegajoCodigoDocumento($fila, 'pagare');
     $fila['lote_actual'] = $loteUtf8;
     $fila['estado_fisico_actual'] = isset($fila['estado_fisico']) ? $fila['estado_fisico'] : '';
     $fila['ubicacion_fisica_actual'] = isset($fila['ubicacion_fisica']) ? $fila['ubicacion_fisica'] : '';
@@ -562,6 +563,83 @@ function centroLegajoPagareEstadoFinancieroConsulta($codVenta)
     }
 }
 
+function centroLegajoPagareNumeroVentaVisible($fila)
+{
+    $numero = isset($fila['num_factura']) ? trim((string)$fila['num_factura']) : '';
+    $punto = isset($fila['puntoexpedicion']) ? trim((string)$fila['puntoexpedicion']) : '';
+    if ($numero === '') return isset($fila['cod_venta']) ? (string)intval($fila['cod_venta']) : '';
+    return $punto !== '' ? $punto.'-'.$numero : $numero;
+}
+
+function centroLegajoPagareSoloDigitos($valor)
+{
+    return preg_replace('/[^0-9]/', '', (string)$valor);
+}
+
+function centroLegajoPagareAgregarMotivo(&$motivos, $codigo, $mensaje)
+{
+    $motivos[] = array('codigo' => (string)$codigo, 'mensaje' => (string)$mensaje);
+}
+
+function centroLegajoPagareEvaluarBusqueda($fila, $finanzas, $finanzasDisponibles, $solicitudActiva)
+{
+    $motivos = array();
+    $esAnulada = !empty($fila['es_anulada']);
+    $esCredito = strtoupper(trim((string)$fila['tipo_venta'])) === 'CREDITO';
+    $idDocumento = isset($fila['id_documento']) ? intval($fila['id_documento']) : 0;
+
+    if ($esAnulada) {
+        centroLegajoPagareAgregarMotivo($motivos, 'venta_anulada', 'La venta está anulada.');
+    } elseif (!$esCredito) {
+        centroLegajoPagareAgregarMotivo($motivos, 'venta_contado', 'Venta contado: no corresponde pagaré.');
+    } else {
+        if ($idDocumento <= 0) {
+            centroLegajoPagareAgregarMotivo($motivos, 'pagare_sin_registro', 'El pagaré todavía no fue confirmado en el legajo.');
+        } else {
+            $estadoDocumental = isset($fila['estado_documental']) ? (string)$fila['estado_documental'] : '';
+            $estadoFisico = isset($fila['estado_fisico']) ? (string)$fila['estado_fisico'] : '';
+            if (!in_array($estadoDocumental, array('disponible','validado'), true)) {
+                centroLegajoPagareAgregarMotivo($motivos, 'pagare_no_confirmado',
+                    $estadoDocumental === 'observado' ? 'El pagaré está observado.' : 'El pagaré está pendiente de confirmación.');
+            }
+            if ($estadoFisico === 'devuelto_cliente') {
+                centroLegajoPagareAgregarMotivo($motivos, 'pagare_devuelto', 'El pagaré ya fue devuelto al cliente.');
+            } elseif (!in_array($estadoFisico, array('en_sucursal','en_lote','pendiente_custodia','en_transito','recibido'), true)) {
+                centroLegajoPagareAgregarMotivo($motivos, 'pagare_sin_ubicacion', 'El pagaré no tiene una ubicación física confirmada.');
+            }
+        }
+
+        if (!$finanzasDisponibles) {
+            centroLegajoPagareAgregarMotivo($motivos, 'saldo_no_verificado', 'No se pudo verificar el saldo de la venta.');
+        } elseif (intval($finanzas['creditos']) <= 0) {
+            centroLegajoPagareAgregarMotivo($motivos, 'sin_creditos_activos', 'La venta no tiene créditos activos para comprobar su cancelación.');
+        } elseif (empty($finanzas['saldada'])) {
+            centroLegajoPagareAgregarMotivo($motivos, 'saldo_pendiente',
+                'Cuenta con saldo pendiente de Gs. '.number_format(max(0, floatval($finanzas['saldo'])), 0, ',', '.').'.');
+        }
+    }
+
+    $tieneSolicitud = !empty($solicitudActiva) && !empty($solicitudActiva['id_solicitud']);
+    $elegible = !$tieneSolicitud && count($motivos) === 0;
+    if ($tieneSolicitud) {
+        $estado = 'solicitud_activa';
+        $descripcion = 'Esta venta ya tiene una solicitud de devolución activa.';
+    } elseif ($elegible) {
+        $estado = 'elegible';
+        $descripcion = 'Pagaré localizado y cuenta saldada: puede solicitar la devolución.';
+    } else {
+        $estado = 'no_elegible';
+        $descripcion = isset($motivos[0]['mensaje']) ? $motivos[0]['mensaje'] : 'La venta no está habilitada para devolución.';
+    }
+
+    return array(
+        'elegible' => $elegible ? 1 : 0,
+        'estado_elegibilidad' => $estado,
+        'descripcion_elegibilidad' => $descripcion,
+        'motivos_no_elegible' => $motivos
+    );
+}
+
 function centroLegajoPagareBuscarElegibles($codUsuario, $busqueda, $limite = 30, $codInterConsulta = 0)
 {
     if (!centroLegajoPagarePuedeGestionar($codUsuario)) {
@@ -574,29 +652,36 @@ function centroLegajoPagareBuscarElegibles($codUsuario, $busqueda, $limite = 30,
     if (function_exists('mb_substr')) $busqueda = mb_substr($busqueda, 0, 100, 'UTF-8');
     else $busqueda = substr($busqueda, 0, 100);
     $busquedaDb = centroFacturaTextoBaseDatos($busqueda, 100);
+    $busquedaDigitos = preg_replace('/[^0-9]/', '', $busqueda);
+    $modoLocalizacion = $busquedaDb !== '' || $codInterConsulta > 0;
     $mysqli = conectar_al_servidor();
     $anulada = centroLegajoVentaAnuladaSql('v');
-    $sql = "SELECT v.cod_venta,v.fecha_venta,v.total_venta,v.descuento,v.TipoVenta AS tipo_venta,
-        v.cod_clienteFK,v.cod_local,v.cod_usuarioFK,v.estado,v.anulado,v.estadocuenta,
-        p.nombre_persona AS titular,COALESCE(NULLIF(TRIM(c.rut_cliente),''),NULLIF(TRIM(c.ci_cliente),''),'') AS documento,
-        l.Nombre AS nombre_local,d.id_documento,d.tipo_documento,d.estado_documental,d.estado_fisico,d.cod_local_ubicacionFK,d.ubicacion_fisica,
-        COALESCE(
+    $hiloSql = "COALESCE(
           (SELECT ic.cod_interConsulta FROM interconsulta ic
            WHERE ic.cod_ventaFK=v.cod_venta AND ic.estado<>'inactivo'
            ORDER BY ic.cod_interConsulta DESC LIMIT 1),
           (SELECT ipv.cod_interConsultaFK FROM interconsulta_paciente_venta ipv
            INNER JOIN interconsulta ic2 ON ic2.cod_interConsulta=ipv.cod_interConsultaFK AND ic2.estado<>'inactivo'
            WHERE ipv.cod_ventaFK=v.cod_venta AND ipv.estado='activo'
-           ORDER BY ipv.cod_interConsultaFK DESC LIMIT 1)
-        ) AS cod_interConsulta,
+           ORDER BY ipv.cod_interConsultaFK DESC LIMIT 1),0
+        )";
+    $numeroVisibleSql = "CONCAT(CASE WHEN TRIM(IFNULL(v.puntoexpedicion,''))<>''
+        THEN CONCAT(TRIM(v.puntoexpedicion),'-') ELSE '' END,TRIM(IFNULL(v.num_factura,'')))";
+    $sql = "SELECT v.cod_venta,v.fecha_venta,v.total_venta,v.descuento,v.TipoVenta AS tipo_venta,
+        v.tipo_comprobante,v.puntoexpedicion,v.num_factura,
+        v.cod_clienteFK,v.cod_local,v.cod_usuarioFK,v.estado,v.anulado,v.estadocuenta,
+        p.nombre_persona AS titular,COALESCE(NULLIF(TRIM(c.ci_cliente),''),NULLIF(TRIM(c.rut_cliente),''),'') AS documento,
+        TRIM(IFNULL(c.ci_cliente,'')) AS ci_cliente_busqueda,TRIM(IFNULL(c.rut_cliente,'')) AS rut_cliente_busqueda,
+        TRIM(IFNULL(p.telefono,'')) AS telefono,
+        l.Nombre AS nombre_local,d.id_documento,d.tipo_documento,d.estado_documental,d.estado_fisico,d.cod_local_ubicacionFK,d.ubicacion_fisica,
+        ".$hiloSql." AS cod_interConsulta,
         CASE WHEN ".$anulada." THEN 1 ELSE 0 END AS es_anulada
-      FROM centro_legajo_documento d
-      INNER JOIN venta v ON v.cod_venta=d.cod_ventaFK
+      FROM venta v
+      LEFT JOIN centro_legajo_documento d ON d.cod_ventaFK=v.cod_venta AND d.tipo_documento='pagare'
       INNER JOIN cliente c ON c.cod_cliente=v.cod_clienteFK
       INNER JOIN persona p ON p.cod_persona=c.cod_cliente
       INNER JOIN local l ON l.cod_local=v.cod_local
-      WHERE d.tipo_documento='pagare' AND UPPER(TRIM(IFNULL(v.TipoVenta,'')))='CREDITO'
-        AND NOT ".$anulada;
+      WHERE v.cod_venta<>0";
     $tipos = '';
     $parametros = array();
     if ($codInterConsulta > 0) {
@@ -613,22 +698,42 @@ function centroLegajoPagareBuscarElegibles($codUsuario, $busqueda, $limite = 30,
         $parametros[] = $codInterConsulta;
     }
     if ($busquedaDb !== '') {
-        $sql .= " AND (CAST(v.cod_venta AS CHAR)=? OR CAST(COALESCE(
-              (SELECT icb.cod_interConsulta FROM interconsulta icb
-               WHERE icb.cod_ventaFK=v.cod_venta AND icb.estado<>'inactivo'
-               ORDER BY icb.cod_interConsulta DESC LIMIT 1),
-              (SELECT ipvb.cod_interConsultaFK FROM interconsulta_paciente_venta ipvb
-               INNER JOIN interconsulta icb2 ON icb2.cod_interConsulta=ipvb.cod_interConsultaFK AND icb2.estado<>'inactivo'
-               WHERE ipvb.cod_ventaFK=v.cod_venta AND ipvb.estado='activo'
-               ORDER BY ipvb.cod_interConsultaFK DESC LIMIT 1),0
-            ) AS CHAR)=? OR p.nombre_persona LIKE ? OR c.rut_cliente LIKE ? OR c.ci_cliente LIKE ?)";
+        $partesBusqueda = array(
+            'CAST(v.cod_venta AS CHAR)=?',
+            'CAST('.$hiloSql.' AS CHAR)=?',
+            'p.nombre_persona LIKE ?',
+            'c.rut_cliente LIKE ?',
+            'c.ci_cliente LIKE ?',
+            'p.telefono LIKE ?',
+            'v.num_factura LIKE ?',
+            $numeroVisibleSql.' LIKE ?'
+        );
         $like = '%'.$busquedaDb.'%';
-        $tipos .= 'sssss';
+        $tipos .= 'ssssssss';
         $parametros[] = $busquedaDb;
         $parametros[] = $busquedaDb;
         $parametros[] = $like;
         $parametros[] = $like;
         $parametros[] = $like;
+        $parametros[] = $like;
+        $parametros[] = $like;
+        $parametros[] = $like;
+        if ($busquedaDigitos !== '' && strlen($busquedaDigitos) >= 3) {
+            $normalizado = '%'.$busquedaDigitos.'%';
+            $partesBusqueda[] = "REPLACE(REPLACE(REPLACE(REPLACE(IFNULL(c.ci_cliente,''),'.',''),'-',''),' ',''),'/','') LIKE ?";
+            $partesBusqueda[] = "REPLACE(REPLACE(REPLACE(REPLACE(IFNULL(c.rut_cliente,''),'.',''),'-',''),' ',''),'/','') LIKE ?";
+            $partesBusqueda[] = "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(IFNULL(p.telefono,''),' ',''),'.',''),'-',''),'(',''),')',''),'+','') LIKE ?";
+            $partesBusqueda[] = "REPLACE(REPLACE(".$numeroVisibleSql.",'-',''),' ','') LIKE ?";
+            $tipos .= 'ssss';
+            $parametros[] = $normalizado;
+            $parametros[] = $normalizado;
+            $parametros[] = $normalizado;
+            $parametros[] = $normalizado;
+        }
+        $sql .= ' AND ('.implode(' OR ', $partesBusqueda).')';
+    } elseif ($codInterConsulta <= 0) {
+        $sql .= " AND UPPER(TRIM(IFNULL(v.TipoVenta,'')))='CREDITO'
+            AND NOT ".$anulada." AND d.id_documento IS NOT NULL";
     }
     $sql .= ' ORDER BY v.fecha_venta DESC,v.cod_venta DESC LIMIT 120';
     $stmt = $mysqli->prepare($sql);
@@ -646,33 +751,120 @@ function centroLegajoPagareBuscarElegibles($codUsuario, $busqueda, $limite = 30,
     $resultado = $stmt->get_result();
     while ($fila = $resultado->fetch_assoc()) $candidatos[] = $fila;
     $stmt->close();
+    $tipoCoincidencia = 'general';
+    if ($busqueda !== '') {
+        $clientesExactos = array();
+        if (strlen($busquedaDigitos) >= 5) {
+            foreach ($candidatos as $filaCandidata) {
+                $cedulaExacta = centroLegajoPagareSoloDigitos(isset($filaCandidata['ci_cliente_busqueda']) ? $filaCandidata['ci_cliente_busqueda'] : '');
+                $rucExacto = centroLegajoPagareSoloDigitos(isset($filaCandidata['rut_cliente_busqueda']) ? $filaCandidata['rut_cliente_busqueda'] : '');
+                $telefonoExacto = centroLegajoPagareSoloDigitos(isset($filaCandidata['telefono']) ? $filaCandidata['telefono'] : '');
+                if ($cedulaExacta === $busquedaDigitos || $rucExacto === $busquedaDigitos || $telefonoExacto === $busquedaDigitos) {
+                    $clientesExactos[intval($filaCandidata['cod_clienteFK'])] = true;
+                }
+            }
+        }
+        if (count($clientesExactos) > 0) {
+            $filtrados = array();
+            foreach ($candidatos as $filaCandidata) {
+                if (isset($clientesExactos[intval($filaCandidata['cod_clienteFK'])])) $filtrados[] = $filaCandidata;
+            }
+            $candidatos = $filtrados;
+            $tipoCoincidencia = 'cliente_exacto';
+        } else {
+            $ventasVisibles = array();
+            $busquedaComparable = strtolower(trim((string)$busqueda));
+            foreach ($candidatos as $filaCandidata) {
+                $visible = centroLegajoPagareNumeroVentaVisible($filaCandidata);
+                $visibleComparable = strtolower(trim((string)$visible));
+                $visibleDigitos = centroLegajoPagareSoloDigitos($visible);
+                if ($visibleComparable === $busquedaComparable
+                    || ($busquedaDigitos !== '' && $visibleDigitos === $busquedaDigitos)) {
+                    $ventasVisibles[] = $filaCandidata;
+                }
+            }
+            if (count($ventasVisibles) > 0) {
+                $candidatos = $ventasVisibles;
+                $tipoCoincidencia = 'venta_visible';
+            } elseif (ctype_digit($busquedaDigitos) && $busquedaDigitos !== '') {
+                $ventasInternas = array();
+                foreach ($candidatos as $filaCandidata) {
+                    if (intval($filaCandidata['cod_venta']) === intval($busquedaDigitos)) $ventasInternas[] = $filaCandidata;
+                }
+                if (count($ventasInternas) > 0) {
+                    $candidatos = $ventasInternas;
+                    $tipoCoincidencia = 'venta_interna';
+                }
+            }
+        }
+    }
     $registros = array();
+    $totalCoincidencias = 0;
+    $totalElegibles = 0;
+    $totalSolicitudes = 0;
+    $totalAnuladas = 0;
+    $totalCredito = 0;
+    $totalContado = 0;
     foreach ($candidatos as $fila) {
-        if (count($registros) >= $limite) break;
         $venta = $fila;
         $venta['importe_venta'] = max(0, floatval($fila['total_venta']) - floatval($fila['descuento']));
         if (!centroLegajoPuedeUsarVenta($codUsuario, $venta, $mysqli)) continue;
-        $errorVenta = centroLegajoPagareVentaValida($venta, $fila, false);
-        if ($errorVenta !== '') continue;
-        if (!in_array($fila['estado_documental'], array('disponible','validado'), true)
-            || !in_array($fila['estado_fisico'], array('en_sucursal','en_lote','pendiente_custodia','en_transito','recibido'), true)) continue;
-        try {
-            $finanzas = centroLegajoPagareEstadoFinancieroVenta($mysqli, intval($fila['cod_venta']), false);
-        } catch (Exception $e) {
-            continue;
+
+        $finanzas = array('creditos' => 0, 'saldo' => 0, 'saldada' => false);
+        $finanzasDisponibles = true;
+        if (strtoupper(trim((string)$fila['tipo_venta'])) === 'CREDITO' && empty($fila['es_anulada'])) {
+            try {
+                $finanzas = centroLegajoPagareEstadoFinancieroVenta($mysqli, intval($fila['cod_venta']), false);
+            } catch (Exception $e) {
+                $finanzasDisponibles = false;
+            }
         }
-        $activa = centroLegajoPagareSolicitudActivaVenta(intval($fila['cod_venta']), $codUsuario, $mysqli);
-        if (!$finanzas['saldada'] && empty($activa)) continue;
+        $activa = intval($fila['id_documento']) > 0
+            ? centroLegajoPagareSolicitudActivaVenta(intval($fila['cod_venta']), $codUsuario, $mysqli) : array();
+        $evaluacion = centroLegajoPagareEvaluarBusqueda($fila, $finanzas, $finanzasDisponibles, $activa);
+        if (!$modoLocalizacion && empty($evaluacion['elegible']) && empty($activa)) continue;
+
+        $totalCoincidencias++;
+        if (!empty($evaluacion['elegible'])) $totalElegibles++;
+        if (!empty($activa)) $totalSolicitudes++;
+        if (!empty($fila['es_anulada'])) {
+            $totalAnuladas++;
+        } elseif (strtoupper(trim((string)$fila['tipo_venta'])) === 'CONTADO') {
+            $totalContado++;
+        } else {
+            $totalCredito++;
+        }
+
+        if (count($registros) >= $limite) continue;
+        $numeroVisible = centroLegajoPagareNumeroVentaVisible($fila);
+        unset($fila['ci_cliente_busqueda'], $fila['rut_cliente_busqueda']);
         $fila = centroFacturaFilaUtf8($fila);
         if ($codInterConsulta > 0) $fila['cod_interConsulta'] = $codInterConsulta;
         $fila['saldo_pendiente'] = $finanzas['saldo'];
         $fila['cuenta_saldada'] = $finanzas['saldada'] ? 1 : 0;
+        $fila['cantidad_creditos'] = intval($finanzas['creditos']);
         $fila['solicitud_activa'] = $activa;
-        $fila['codigo_documento'] = centroLegajoCodigoDocumento($fila['cod_venta'], 'pagare');
+        $fila['codigo_legajo'] = centroLegajoCodigoLegajo($fila);
+        $fila['codigo_documento'] = centroLegajoCodigoDocumento($fila, 'pagare');
+        $fila['numero_venta_visible'] = centroFacturaValorUtf8($numeroVisible);
+        $fila['importe_venta'] = max(0, floatval($fila['total_venta']) - floatval($fila['descuento']));
+        $fila = array_merge($fila, $evaluacion);
         $registros[] = $fila;
     }
     $mysqli->close();
-    return array('ok' => true, 'registros' => $registros, 'total' => count($registros));
+    return array(
+        'ok' => true,
+        'registros' => $registros,
+        'total' => $totalCoincidencias,
+        'total_elegibles' => $totalElegibles,
+        'total_solicitudes_activas' => $totalSolicitudes,
+        'total_anuladas' => $totalAnuladas,
+        'total_credito' => $totalCredito,
+        'total_contado' => $totalContado,
+        'modo_localizacion' => $modoLocalizacion ? 1 : 0,
+        'tipo_coincidencia' => $tipoCoincidencia,
+        'truncado' => $totalCoincidencias > $limite || count($candidatos) >= 120 ? 1 : 0
+    );
 }
 
 function centroLegajoPagareCrear($codVenta, $datos, $codUsuario)
@@ -776,7 +968,7 @@ function centroLegajoPagareCrear($codVenta, $datos, $codUsuario)
         if (!$mysqli->commit()) throw new Exception('No se pudo confirmar la solicitud.');
         $mysqli->close();
         return array('ok' => true, 'id_solicitud' => $idSolicitud, 'codigo_solicitud' => $codigo,
-            'codigo_documento' => centroLegajoCodigoDocumento($codVenta, 'pagare'), 'estado' => 'solicitada');
+            'codigo_documento' => centroLegajoCodigoDocumento($venta, 'pagare'), 'estado' => 'solicitada');
     } catch (Exception $e) {
         $mysqli->rollback(); $mysqli->close();
         return array('ok' => false, 'codigo' => 'solicitud_pagare', 'mensaje' => $e->getMessage());
@@ -1067,7 +1259,7 @@ function centroLegajoPagareEntregar($idSolicitud, $datos, $archivos, $codUsuario
         if (!$mysqli->commit()) throw new Exception('No se pudo confirmar la entrega.');
         $mysqli->close();
         return array('ok' => true, 'id_solicitud' => $idSolicitud, 'estado' => 'entregada',
-            'codigo_documento' => centroLegajoCodigoDocumento($venta['cod_venta'], 'pagare'), 'evidencia_disponible' => 1);
+            'codigo_documento' => centroLegajoCodigoDocumento($venta, 'pagare'), 'evidencia_disponible' => 1);
     } catch (Exception $e) {
         $mysqli->rollback(); $mysqli->close();
         if ($rutaGuardada !== '' && is_file($rutaGuardada)) @unlink($rutaGuardada);

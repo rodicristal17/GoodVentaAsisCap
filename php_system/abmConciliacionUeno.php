@@ -84,7 +84,9 @@ function ueno_tablas_requeridas_ok($mysqli)
 
 function ueno_tablas_egreso_requeridas_ok($mysqli)
 {
-	return ueno_tablas_requeridas_ok($mysqli) && ueno_tabla_existe($mysqli, "ueno_movimiento_gasto");
+	return ueno_tablas_requeridas_ok($mysqli)
+		&& ueno_tabla_existe($mysqli, "ueno_movimiento_gasto")
+		&& ueno_tabla_existe($mysqli, "ueno_auditoria_conciliacion");
 }
 
 function ueno_tablas_migracion_requeridas_ok($mysqli)
@@ -372,9 +374,9 @@ function ueno_permisos_equivalentes($codigo)
 {
 	$codigo = strtoupper(trim((string)$codigo));
 	$mapa = array(
-		"VERCONCILIACIONEGRESOUENO" => array("VERCONCILIACIONEGRESOUENO", "VERCONCILIACIONUENO", "VEREXTRACTOSUENO", "VERLISTADOEGRESOINGRESO"),
-		"CONCILIAREGRESOUENO" => array("CONCILIAREGRESOUENO", "ASIGNARMANUALUENO", "EDITARLISTADOEGRESOINGRESO"),
-		"REVERTIRCONCILIACIONEGRESOUENO" => array("REVERTIRCONCILIACIONEGRESOUENO", "ASIGNARMANUALUENO", "EDITARLISTADOEGRESOINGRESO"),
+		"VERCONCILIACIONEGRESOUENO" => array("VERCONCILIACIONEGRESOUENO", "VERCONCILIACIONUENO"),
+		"CONCILIAREGRESOUENO" => array("CONCILIAREGRESOUENO", "ASIGNARMANUALUENO"),
+		"REVERTIRCONCILIACIONEGRESOUENO" => array("REVERTIRCONCILIACIONEGRESOUENO", "ASIGNARMANUALUENO"),
 		"VERMIGRACIONUENO" => array("VERMIGRACIONUENO", "VERCONCILIACIONUENO", "VEREXTRACTOSUENO"),
 		"CONCILIARMIGRACIONUENO" => array("CONCILIARMIGRACIONUENO", "ASIGNARMANUALUENO", "EDITARLISTADOEGRESOINGRESO")
 	);
@@ -414,6 +416,75 @@ function ueno_requerir_algun_permiso($usuario, $codigos)
 		}
 	}
 	ueno_json(array("1" => "NI", "2" => "No tiene permiso para esta accion"));
+}
+
+function ueno_estado_debito_disponible_para_egreso($estado)
+{
+	$estado = strtolower(trim((string)$estado));
+	return in_array($estado, array("registrado", "disponible", "asignado_parcial"), true);
+}
+
+function ueno_local_usuario($mysqli, $usuario)
+{
+	$codUsuario = (int)$usuario;
+	$stmt = $mysqli->prepare("SELECT cod_localFK FROM usuario WHERE cod_usuario=? LIMIT 1");
+	if (!$stmt) {
+		throw new Exception("No se pudo validar el local del usuario");
+	}
+	$stmt->bind_param("i", $codUsuario);
+	$stmt->execute();
+	$fila = $stmt->get_result()->fetch_assoc();
+	$stmt->close();
+	$codLocal = $fila ? (int)$fila["cod_localFK"] : 0;
+	if ($codLocal <= 0) {
+		throw new Exception("El usuario no tiene un local operativo asignado");
+	}
+	return $codLocal;
+}
+
+function ueno_local_activo($mysqli, $codLocal)
+{
+	$codLocal = (int)$codLocal;
+	if ($codLocal <= 0) {
+		return false;
+	}
+	$result = $mysqli->query("SELECT cod_local FROM local WHERE cod_local=$codLocal AND LOWER(TRIM(estado))='activo' LIMIT 1");
+	return $result && $result->num_rows > 0;
+}
+
+function ueno_usuario_puede_gestionar_local($mysqli, $usuario, $codLocal)
+{
+	$codLocal = (int)$codLocal;
+	if ($codLocal <= 0 || !ueno_local_activo($mysqli, $codLocal)) {
+		return false;
+	}
+	if ((string)$usuario === "2" || ueno_usuario_tiene_permiso($usuario, "CAMBIARLOCAL")) {
+		return true;
+	}
+	return ueno_local_usuario($mysqli, $usuario) === $codLocal;
+}
+
+function ueno_requerir_local_gasto($mysqli, $usuario, $codLocal)
+{
+	if (!ueno_usuario_puede_gestionar_local($mysqli, $usuario, $codLocal)) {
+		throw new Exception("No administra el local de origen del gasto seleccionado");
+	}
+}
+
+function ueno_resolver_filtro_local($mysqli, $usuario, $codLocalSolicitado)
+{
+	$tieneCambioLocal = ((string)$usuario === "2" || ueno_usuario_tiene_permiso($usuario, "CAMBIARLOCAL"));
+	$valor = trim((string)$codLocalSolicitado);
+	if (!$tieneCambioLocal) {
+		return ueno_local_usuario($mysqli, $usuario);
+	}
+	if ($valor === "") {
+		return 0;
+	}
+	if (!ctype_digit($valor) || (int)$valor <= 0 || !ueno_local_activo($mysqli, (int)$valor)) {
+		throw new Exception("El local solicitado no existe o no esta activo");
+	}
+	return (int)$valor;
 }
 
 function ueno_auditar_conciliacion($mysqli, $accion, $tabla, $registro_id, $cod_pagoFK, $id_movimiento, $estado_anterior, $estado_nuevo, $monto, $usuario, $observacion, $datos = "")
@@ -1299,7 +1370,7 @@ function ueno_insertar_importacion($usuario)
 	if ($resDupArchivo && $resDupArchivo->num_rows > 0) {
 		$rowDup = $resDupArchivo->fetch_assoc();
 		$id_importacion_existente = $rowDup["id_importacion"];
-		$tabla = ueno_tabla_movimientos($mysqli, $id_importacion_existente, "", "", "", "");
+		$tabla = ueno_tabla_movimientos($mysqli, $id_importacion_existente, "", "", "", "", "todos", 0, "todos", $usuario);
 		mysqli_close($mysqli);
 		ueno_json(array(
 			"1" => "exito",
@@ -1533,7 +1604,7 @@ function ueno_insertar_importacion($usuario)
 		}
 	}
 
-	$tabla = ueno_tabla_movimientos($mysqli, $id_importacion, "", "", "", "");
+	$tabla = ueno_tabla_movimientos($mysqli, $id_importacion, "", "", "", "", "todos", 0, "todos", $usuario);
 	mysqli_close($mysqli);
 
 	ueno_json(array(
@@ -1552,7 +1623,7 @@ function ueno_insertar_importacion($usuario)
 	));
 }
 
-function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_hasta, $comprobante, $estado, $filtro_rapido = "todos", $monto = 0, $origen_probable = "todos")
+function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_hasta, $comprobante, $estado, $filtro_rapido = "todos", $monto = 0, $origen_probable = "todos", $usuario = 0)
 {
 	$tieneConciliacionEgresos = ueno_tabla_existe($mysqli, "ueno_movimiento_gasto");
 	$tieneConciliacionMigracion = ueno_tabla_existe($mysqli, "ueno_movimiento_migracion_caja") && ueno_tabla_existe($mysqli, "migrar_caja");
@@ -1643,7 +1714,7 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		) AS sugerencias_deposito"
 		: ", 0 AS sugerencias_deposito";
 
-	$sql = "SELECT mv.id_movimiento, mv.id_importacion, mv.fecha_confirmacion, mv.fecha_transaccion, mv.nro_comprobante, mv.descripcion,
+	$sql = "SELECT mv.id_movimiento, mv.id_importacion, mv.fecha_confirmacion, mv.fecha_transaccion, mv.nro_comprobante, mv.descripcion, mv.cuenta,
 		mv.concepto, mv.importe_debito, mv.importe_credito, mv.monto_disponible, mv.estado, imp.nombre_archivo_original,
 		IFNULL((SELECT GROUP_CONCAT(DISTINCT IFNULL(per.nombre_persona, CONCAT('Usuario ', ump.usuario_asocio)) ORDER BY ump.fecha_hora_asociacion ASC SEPARATOR ', ')
 			FROM ueno_movimiento_pago ump
@@ -1688,6 +1759,7 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		"saldo_disponible_fmt" => "0"
 	);
 	$styleName = "tableRegistroSearch";
+	$puedeGestionarEgresos = ueno_usuario_tiene_permiso($usuario, "CONCILIAREGRESOUENO");
 
 	while ($row = mysqli_fetch_assoc($result)) {
 		$credito = (int)$row["importe_credito"];
@@ -1743,6 +1815,7 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 			"fecha_confirmacion" => ueno_from_db($row["fecha_confirmacion"]),
 			"fecha_transaccion" => ueno_from_db($row["fecha_transaccion"]),
 			"nro_comprobante" => ueno_from_db($row["nro_comprobante"]),
+			"cuenta" => ueno_from_db($row["cuenta"]),
 			"descripcion" => ueno_from_db($row["descripcion"]),
 			"concepto" => ueno_from_db($row["concepto"]),
 			"importe_credito" => $credito,
@@ -1753,6 +1826,8 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 			"monto_aplicado_fmt" => number_format($aplicado, 0, ",", "."),
 			"monto_disponible" => $disponible,
 			"monto_disponible_fmt" => number_format($disponible, 0, ",", "."),
+			"saldo_disponible" => $disponible,
+			"saldo_disponible_fmt" => number_format($disponible, 0, ",", "."),
 			"monto_asignado_gasto" => $aplicadoDebito,
 			"monto_asignado_gasto_fmt" => number_format($aplicadoDebito, 0, ",", "."),
 			"monto_asignado_migracion" => $aplicadoMigracion,
@@ -1760,10 +1835,15 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 			"sugerencias_migracion" => $sugerenciasMigracion,
 			"sugerencias_deposito" => $sugerenciasDeposito,
 			"depositos_conciliacion" => $depositosConciliacion,
+			"estado_bancario" => strtolower(trim((string)$row["estado"])),
 			"estado" => $estado_visual,
 			"estado_clave" => $estado_clave
 		);
 		$datos_js = htmlspecialchars(json_encode($datos_movimiento), ENT_QUOTES, 'UTF-8');
+		$asignacionesVisiblesDebito = 0;
+		$aplicacion_contable_html = ($debito > 0 && $aplicado > 0)
+			? ueno_html_aplicacion_contable_debito($mysqli, (int)$row["id_movimiento"], $usuario, $asignacionesVisiblesDebito)
+			: "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
 		if ($clasificacionOrigen == "deposito_conciliado") {
 			$etiquetaOrigen = "Depósito Faraone conciliado";
 			$claseOrigen = "deposito-conciliado";
@@ -1797,9 +1877,15 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		} elseif ($credito > 0) {
 			$accion = "<input type='button' value='Ver aplicacion' class='btn4 ueno-row-action ueno-row-action--view' onclick='uenoVerAplicacionMovimiento(" . (int)$row["id_movimiento"] . ")'>";
 		} elseif ($debito > 0) {
-			$accion = $aplicado > 0
-				? "<input type='button' value='Ver asignaciones' class='btn4 ueno-row-action ueno-row-action--trace' onclick='conciliarEgresoUenoVerAsignacionesBanco(" . (int)$row["id_movimiento"] . ")'>"
-				: "<input type='button' value='Ver detalle' class='btn4 ueno-row-action ueno-row-action--detail' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")'>";
+			$accion = "";
+			if ($puedeGestionarEgresos && $disponible > 0 && ueno_estado_debito_disponible_para_egreso($row["estado"])) {
+				$accion .= "<input type='button' value='Registrar gasto' class='btn4 ueno-row-action ueno-row-action--available' onclick='uenoRegistrarGastoDesdeDebito(" . $datos_js . ")'>";
+			}
+			if ($aplicado > 0 && $asignacionesVisiblesDebito > 0) {
+				$accion .= "<input type='button' value='Ver asignaciones' class='btn4 ueno-row-action ueno-row-action--trace' onclick='conciliarEgresoUenoVerAsignacionesBanco(" . (int)$row["id_movimiento"] . ")'>";
+			} else if ($accion == "") {
+				$accion .= "<input type='button' value='Ver detalle' class='btn4 ueno-row-action ueno-row-action--detail' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")'>";
+			}
 		} else {
 			$accion = "<span class='ueno-row-note ueno-row-note--muted'>Sin accion</span>";
 		}
@@ -1829,9 +1915,6 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		}
 		$clientes_html = $clientes_conciliacion != ""
 			? "<span class='ueno-client-cell' title='" . ueno_escape_html($clientes_conciliacion) . "'>" . ueno_escape_html($clientes_conciliacion) . "</span>"
-			: "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
-		$aplicacion_contable_html = ($debito > 0 && $aplicado > 0)
-			? ueno_html_aplicacion_contable_debito($mysqli, (int)$row["id_movimiento"])
 			: "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
 		$styleName = function_exists("CargarStyleTable") ? CargarStyleTable($styleName) : $styleName;
 		$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro' class='ueno-movimiento-row ueno-movimiento-row--" . $estado_clave . "' data-ueno-estado='" . $estado_clave . "' data-ueno-disponible='" . $disponible . "' data-ueno-aplicado='" . $aplicado . "'>"
@@ -1865,8 +1948,9 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 	);
 }
 
-function ueno_buscar_movimientos()
+function ueno_buscar_movimientos($usuario)
 {
+	ueno_requerir_permiso($usuario, "VERCONCILIACIONUENO");
 	$mysqli = conectar_al_servidor();
 	if (!ueno_tablas_requeridas_ok($mysqli)) {
 		mysqli_close($mysqli);
@@ -1882,7 +1966,7 @@ function ueno_buscar_movimientos()
 	$filtro_rapido = ueno_post("filtro_rapido");
 	$origen_probable = ueno_post("origen_probable");
 
-	$tabla = ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_hasta, $comprobante, $estado, $filtro_rapido, $monto, $origen_probable);
+	$tabla = ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_hasta, $comprobante, $estado, $filtro_rapido, $monto, $origen_probable, $usuario);
 	mysqli_close($mysqli);
 
 	ueno_json(array(
@@ -2605,9 +2689,10 @@ function ueno_local_aplicacion_texto($codLocal, $localNombre)
 	return trim($localNombre) != "" ? trim($localNombre) : "Sin local";
 }
 
-function ueno_html_aplicacion_contable_debito($mysqli, $idMovimiento)
+function ueno_html_aplicacion_contable_debito($mysqli, $idMovimiento, $usuario, &$totalVisible = 0)
 {
 	$idMovimiento = (int)$idMovimiento;
+	$totalVisible = 0;
 	static $tablaMovimientoGastoExiste = null;
 	if ($tablaMovimientoGastoExiste === null) {
 		$tablaMovimientoGastoExiste = ueno_tabla_existe($mysqli, "ueno_movimiento_gasto");
@@ -2615,15 +2700,25 @@ function ueno_html_aplicacion_contable_debito($mysqli, $idMovimiento)
 	if ($idMovimiento <= 0 || !$tablaMovimientoGastoExiste) {
 		return "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
 	}
+	$filtroLocal= "";
+	$filtroLocalTotal= "";
+	if ((string)$usuario !== "2" && !ueno_usuario_tiene_permiso($usuario, "CAMBIARLOCAL")) {
+		$codLocalUsuario= ueno_local_usuario($mysqli, $usuario);
+		if ($codLocalUsuario <= 0) {
+			return "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
+		}
+		$filtroLocal= " AND g.cod_local=".(int)$codLocalUsuario;
+		$filtroLocalTotal= " AND g_total.cod_local=".(int)$codLocalUsuario;
+	}
 	$sql = "SELECT umg.id, umg.monto_aplicado,
 		g.idgastos, g.motivo AS descripcion, g.cod_local,
-		IFNULL(m.descripcion,'') AS concepto, IFNULL(m.categoria,'') AS categoria, IFNULL(l.Nombre,'') AS local_nombre,
-		(SELECT COUNT(*) FROM ueno_movimiento_gasto umg_total WHERE umg_total.id_movimiento=$idMovimiento AND umg_total.estado='activo') AS total_asignaciones
+		IFNULL(m.descripcion,'') AS concepto, IFNULL(m.categoria,'') AS categoria, LOWER(TRIM(IFNULL(m.estado,''))) AS estado_concepto, IFNULL(l.Nombre,'') AS local_nombre,
+		(SELECT COUNT(*) FROM ueno_movimiento_gasto umg_total INNER JOIN gastos g_total ON g_total.idgastos=umg_total.idgastos WHERE umg_total.id_movimiento=$idMovimiento AND umg_total.estado='activo'$filtroLocalTotal) AS total_asignaciones
 		FROM ueno_movimiento_gasto umg
 		INNER JOIN gastos g ON g.idgastos=umg.idgastos
 		LEFT JOIN motivos_ingreso_egreso m ON m.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
 		LEFT JOIN local l ON l.cod_local=g.cod_local
-		WHERE umg.id_movimiento=$idMovimiento AND umg.estado='activo'
+		WHERE umg.id_movimiento=$idMovimiento AND umg.estado='activo'$filtroLocal
 		ORDER BY umg.id DESC
 		LIMIT 2";
 	$result = $mysqli->query($sql);
@@ -2634,6 +2729,7 @@ function ueno_html_aplicacion_contable_debito($mysqli, $idMovimiento)
 	$totalAsignaciones = 0;
 	while ($row = mysqli_fetch_assoc($result)) {
 		$totalAsignaciones = (int)$row["total_asignaciones"];
+		$totalVisible++;
 		$clase = ueno_categoria_aplicacion_clave($row["categoria"], $row["cod_local"], $row["local_nombre"]);
 		$categoria = ueno_categoria_aplicacion_texto($row["categoria"], $row["cod_local"], $row["local_nombre"]);
 		$concepto = trim((string)$row["concepto"]);
@@ -2679,7 +2775,7 @@ function ueno_estado_conciliacion_visual($estado)
 	return "Sin conciliar";
 }
 
-function ueno_buscar_gasto_egreso_por_id($mysqli, $idgastos, $bloquear = false)
+function ueno_buscar_gasto_egreso_por_id($mysqli, $idgastos, $bloquear = false, $validarConciliable = true)
 {
 	$idgastos = (int)$idgastos;
 	if ($idgastos <= 0) {
@@ -2688,7 +2784,7 @@ function ueno_buscar_gasto_egreso_por_id($mysqli, $idgastos, $bloquear = false)
 	$forUpdate = $bloquear ? " FOR UPDATE" : "";
 	$sql = "SELECT g.idgastos, g.monto, g.motivo AS descripcion, g.fecha, g.estado, g.tipo, g.cod_local,
 		g.cod_motivoIngresoEgresoFK, g.cod_proyecto_gastoFK, g.cod_gasto_padre, g.banco, g.nrocuenta, g.nroboleta,
-		IFNULL(m.descripcion,'') AS concepto, IFNULL(m.categoria,'') AS categoria, IFNULL(l.Nombre,'') AS local_nombre,
+		IFNULL(m.descripcion,'') AS concepto, IFNULL(m.categoria,'') AS categoria, LOWER(TRIM(IFNULL(m.estado,''))) AS estado_concepto, IFNULL(l.Nombre,'') AS local_nombre,
 		IFNULL((SELECT SUM(umg.monto_aplicado) FROM ueno_movimiento_gasto umg WHERE umg.idgastos=g.idgastos AND umg.estado='activo'),0) AS monto_conciliado_ueno
 		FROM gastos g
 		LEFT JOIN motivos_ingreso_egreso m ON m.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
@@ -2705,6 +2801,16 @@ function ueno_buscar_gasto_egreso_por_id($mysqli, $idgastos, $bloquear = false)
 	$row = $result->fetch_assoc();
 	if (strtolower(trim((string)$row["tipo"])) != "egreso") {
 		throw new Exception("La conciliacion bancaria de egresos solo admite movimientos de tipo EGRESO");
+	}
+	if ((int)$row["monto"] <= 0) {
+		throw new Exception("El gasto seleccionado no tiene un monto positivo conciliable");
+	}
+	$estadoGasto = strtolower(trim((string)$row["estado"]));
+	if ($validarConciliable && !in_array($estadoGasto, array("activo", "pendiente", "solicitado"), true)) {
+		throw new Exception("El gasto seleccionado ya no se encuentra activo o pendiente de conciliacion");
+	}
+	if ($validarConciliable && $row["estado_concepto"] !== "activo") {
+		throw new Exception("El concepto financiero es historico y el gasto es de solo lectura");
 	}
 	return $row;
 }
@@ -2755,7 +2861,7 @@ function ueno_tabla_asignaciones_gasto($mysqli, $idgastos, $usuario)
 	$styleName = "tableRegistroSearch";
 	while ($row = mysqli_fetch_assoc($result)) {
 		$accion = "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
-		if ($row["estado"] == "activo") {
+		if ($row["estado"] == "activo" && ueno_usuario_tiene_permiso($usuario, "REVERTIRCONCILIACIONEGRESOUENO")) {
 			$accion = "<button type='button' class='btn4 ueno-row-action ueno-row-action--trace' onclick='conciliarEgresoUenoRevertirAsignacion(" . (int)$row["id"] . ")'>Revertir</button>";
 		}
 		$styleName = function_exists("CargarStyleTable") ? CargarStyleTable($styleName) : $styleName;
@@ -2828,7 +2934,7 @@ function ueno_marcar_gasto_si_conciliado($mysqli, $idgastos, $movimiento)
 
 function ueno_restaurar_gasto_si_reversion($mysqli, $idgastos)
 {
-	$gasto = ueno_buscar_gasto_egreso_por_id($mysqli, $idgastos, false);
+	$gasto = ueno_buscar_gasto_egreso_por_id($mysqli, $idgastos, false, false);
 	$monto = (int)$gasto["monto"];
 	$conciliado = (int)$gasto["monto_conciliado_ueno"];
 	$banco = strtolower(trim((string)$gasto["banco"]));
@@ -2852,6 +2958,7 @@ function ueno_buscar_contexto_gasto_egreso($usuario)
 	}
 	try {
 		$gasto = ueno_buscar_gasto_egreso_por_id($mysqli, ueno_post("idgastos"));
+		ueno_requerir_local_gasto($mysqli, $usuario, $gasto["cod_local"]);
 		$gastoJson = ueno_gasto_egreso_json($gasto);
 		$asignaciones = ueno_tabla_asignaciones_gasto($mysqli, $gasto["idgastos"], $usuario);
 		mysqli_close($mysqli);
@@ -2864,7 +2971,8 @@ function ueno_buscar_contexto_gasto_egreso($usuario)
 
 function ueno_tabla_egresos_bancarios_disponibles($mysqli, $filtros)
 {
-	$condicion = " AND mv.tipo_movimiento='debito' AND mv.importe_debito>0";
+	$condicion = " AND mv.tipo_movimiento='debito' AND mv.importe_debito>0
+		AND LOWER(TRIM(IFNULL(mv.estado,''))) IN ('registrado','disponible','asignado_parcial')";
 	if ($filtros["fecha_desde"] != "") {
 		$condicion .= " AND mv.fecha_confirmacion>='" . $mysqli->real_escape_string($filtros["fecha_desde"]) . "'";
 	}
@@ -2990,8 +3098,8 @@ function ueno_buscar_gastos_pendientes_egreso($usuario)
 	try {
 		$texto = ueno_post("texto");
 		$cod_motivo = ueno_post("cod_motivo");
-		$cod_local = ueno_post("cod_local");
-		$condicion = " AND LOWER(g.tipo)='egreso' AND g.estado!='Inactivo'";
+		$cod_local = ueno_resolver_filtro_local($mysqli, $usuario, ueno_post("cod_local"));
+		$condicion = " AND LOWER(TRIM(g.tipo))='egreso' AND g.monto>0 AND LOWER(TRIM(IFNULL(g.estado,''))) IN ('activo','pendiente','solicitado') AND LOWER(TRIM(IFNULL(m.estado,'')))='activo'";
 		if ($texto != "") {
 			$textoSql = $mysqli->real_escape_string($texto);
 			$condicion .= " AND (g.motivo LIKE '%$textoSql%' OR m.descripcion LIKE '%$textoSql%' OR g.idgastos='$textoSql')";
@@ -2999,8 +3107,8 @@ function ueno_buscar_gastos_pendientes_egreso($usuario)
 		if ($cod_motivo != "" && is_numeric($cod_motivo)) {
 			$condicion .= " AND g.cod_motivoIngresoEgresoFK=" . intval($cod_motivo);
 		}
-		if ($cod_local != "" && is_numeric($cod_local)) {
-			$condicion .= " AND g.cod_local=" . intval($cod_local);
+		if ((int)$cod_local > 0) {
+			$condicion .= " AND g.cod_local=" . (int)$cod_local;
 		}
 		$sql = "SELECT g.idgastos, g.monto, g.motivo AS descripcion, g.fecha, g.estado, g.tipo, g.cod_local,
 			g.cod_motivoIngresoEgresoFK, g.cod_proyecto_gastoFK, g.cod_gasto_padre,
@@ -3039,10 +3147,10 @@ function ueno_buscar_gastos_pendientes_egreso($usuario)
 				. "</tr></table>";
 		}
 		if ($html == "") {
-			$mensaje = $cod_local != ""
+			$mensaje = (int)$cod_local > 0
 				? "No existen movimientos pendientes para conciliar en este concepto dentro del local seleccionado. Puede buscar en todos los locales o registrar primero el gasto utilizando el boton +."
 				: "No existen movimientos pendientes para conciliar en este concepto. Registre primero el gasto utilizando el boton +.";
-			$accionTodosLocales = $cod_local != ""
+			$accionTodosLocales = ((int)$cod_local > 0 && ((string)$usuario === "2" || ueno_usuario_tiene_permiso($usuario, "CAMBIARLOCAL")))
 				? " <button type='button' class='btn4 ueno-btn-secondary' onclick='conciliarEgresoUenoBuscarGastosTodosLocales()'>Buscar en todos los locales</button>"
 				: "";
 			$html = "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5'><tr><td style='width:100%;text-align:center'>" . ueno_escape_html($mensaje) . $accionTodosLocales . "</td></tr></table>";
@@ -3070,6 +3178,10 @@ function ueno_guardar_conciliacion_egreso($usuario)
 		mysqli_close($mysqli);
 		ueno_json(array("1" => "error", "2" => "Agregue al menos un gasto a la distribucion"));
 	}
+	if ($id_movimiento <= 0) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => "Seleccione un egreso bancario valido"));
+	}
 	$items = array();
 	foreach ($distribucion as $item) {
 		$idgastos = isset($item["idgastos"]) ? (int)$item["idgastos"] : 0;
@@ -3084,7 +3196,11 @@ function ueno_guardar_conciliacion_egreso($usuario)
 		$items[$idgastos] += $monto;
 	}
 	ksort($items, SORT_NUMERIC);
-	$mysqli->begin_transaction();
+	$mysqli->query("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
+	if (!$mysqli->begin_transaction()) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => "No se pudo iniciar la conciliacion segura"));
+	}
 	try {
 		$resultMov = $mysqli->query("SELECT id_movimiento, cuenta, nro_comprobante, tipo_movimiento, importe_debito, importe_credito, descripcion, estado
 			FROM ueno_movimiento_bancario
@@ -3097,7 +3213,25 @@ function ueno_guardar_conciliacion_egreso($usuario)
 		if ($movimiento["tipo_movimiento"] != "debito" || (int)$movimiento["importe_debito"] <= 0 || (int)$movimiento["importe_credito"] > 0) {
 			throw new Exception("La conciliacion de egresos solo admite movimientos bancarios de tipo debito");
 		}
+		if (!ueno_estado_debito_disponible_para_egreso($movimiento["estado"])) {
+			throw new Exception("El egreso bancario ya no se encuentra disponible para nuevas asignaciones");
+		}
 		$debito = (int)$movimiento["importe_debito"];
+		// Orden global: movimiento bancario -> gastos por id -> vinculos. Primero se
+		// fijan todos los gastos; ningun INSERT se ejecuta con la lista incompleta.
+		$gastosBloqueados = array();
+		foreach ($items as $idgastos => $montoAplicar) {
+			$gasto = ueno_buscar_gasto_egreso_por_id($mysqli, $idgastos, true);
+			ueno_requerir_local_gasto($mysqli, $usuario, $gasto["cod_local"]);
+			$gastosBloqueados[$idgastos] = $gasto;
+		}
+		$idsGastosSql = implode(",", array_keys($gastosBloqueados));
+		$resultLinks = $mysqli->query("SELECT id FROM ueno_movimiento_gasto
+			WHERE estado='activo' AND (id_movimiento=$id_movimiento OR idgastos IN ($idsGastosSql))
+			ORDER BY id FOR UPDATE");
+		if (!$resultLinks) {
+			throw new Exception("No se pudieron bloquear las asignaciones Ueno existentes");
+		}
 		$aplicadoBanco = ueno_scalar($mysqli, "SELECT IFNULL(SUM(monto_aplicado),0) FROM ueno_movimiento_gasto WHERE id_movimiento=$id_movimiento AND estado='activo'");
 		$saldoBanco = $debito - $aplicadoBanco;
 		$totalAsignar = array_sum($items);
@@ -3105,8 +3239,10 @@ function ueno_guardar_conciliacion_egreso($usuario)
 			throw new Exception("El monto a asignar supera el saldo disponible del egreso bancario");
 		}
 		$resumenGastos = array();
+		$saldoBancoRestanteAuditoria = $saldoBanco;
 		foreach ($items as $idgastos => $montoAplicar) {
-			$gasto = ueno_buscar_gasto_egreso_por_id($mysqli, $idgastos, true);
+			$gasto = $gastosBloqueados[$idgastos];
+			$gasto["monto_conciliado_ueno"] = ueno_scalar($mysqli, "SELECT IFNULL(SUM(monto_aplicado),0) FROM ueno_movimiento_gasto WHERE idgastos=" . (int)$idgastos . " AND estado='activo'");
 			$saldoGasto = (int)$gasto["monto"] - (int)$gasto["monto_conciliado_ueno"];
 			if ($saldoGasto <= 0) {
 				throw new Exception("El gasto #" . $idgastos . " ya no tiene saldo pendiente");
@@ -3133,13 +3269,16 @@ function ueno_guardar_conciliacion_egreso($usuario)
 				$montoAplicar,
 				$usuario,
 				$observacion,
-				array("idgastos" => $idgastos, "saldo_gasto_anterior" => $saldoGasto, "saldo_banco_anterior" => $saldoBanco)
+				array("idgastos" => $idgastos, "saldo_gasto_anterior" => $saldoGasto, "saldo_banco_anterior" => $saldoBancoRestanteAuditoria)
 			);
+			$saldoBancoRestanteAuditoria -= $montoAplicar;
 			$gastoActualizado = ueno_marcar_gasto_si_conciliado($mysqli, $idgastos, $movimiento);
 			$resumenGastos[] = ueno_gasto_egreso_json($gastoActualizado);
 		}
 		$estadoBanco = ueno_actualizar_estado_movimiento_debito($mysqli, $id_movimiento);
-		$mysqli->commit();
+		if (!$mysqli->commit()) {
+			throw new Exception("No se pudo confirmar la conciliacion de egresos");
+		}
 		mysqli_close($mysqli);
 		ueno_json(array(
 			"1" => "exito",
@@ -3171,18 +3310,37 @@ function ueno_revertir_conciliacion_egreso($usuario)
 		mysqli_close($mysqli);
 		ueno_json(array("1" => "error", "2" => "Indique la asignacion y el motivo de reversion"));
 	}
-	$mysqli->begin_transaction();
+	$resultPre = $mysqli->query("SELECT id_movimiento,idgastos FROM ueno_movimiento_gasto WHERE id=$id LIMIT 1");
+	$pre = $resultPre ? $resultPre->fetch_assoc() : null;
+	if (!$pre) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => "No se encontro la asignacion seleccionada"));
+	}
+	$idMovimientoPre = (int)$pre["id_movimiento"];
+	$idGastoPre = (int)$pre["idgastos"];
+	$mysqli->query("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
+	if (!$mysqli->begin_transaction()) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => "No se pudo iniciar la reversion segura"));
+	}
 	try {
-		$result = $mysqli->query("SELECT umg.*, mv.nro_comprobante, mv.cuenta, g.monto AS monto_gasto
-			FROM ueno_movimiento_gasto umg
-			INNER JOIN ueno_movimiento_bancario mv ON mv.id_movimiento=umg.id_movimiento
-			INNER JOIN gastos g ON g.idgastos=umg.idgastos
-			WHERE umg.id=$id AND umg.estado='activo'
+		// Mismo orden que la conciliacion manual: banco -> gasto -> vinculo.
+		$resultMov = $mysqli->query("SELECT id_movimiento,nro_comprobante,cuenta FROM ueno_movimiento_bancario WHERE id_movimiento=$idMovimientoPre LIMIT 1 FOR UPDATE");
+		$movimiento = $resultMov ? $resultMov->fetch_assoc() : null;
+		if (!$movimiento) {
+			throw new Exception("No se encontro el movimiento bancario de la asignacion");
+		}
+		$gasto = ueno_buscar_gasto_egreso_por_id($mysqli, $idGastoPre, true, false);
+		ueno_requerir_local_gasto($mysqli, $usuario, $gasto["cod_local"]);
+		$result = $mysqli->query("SELECT * FROM ueno_movimiento_gasto
+			WHERE id=$id AND id_movimiento=$idMovimientoPre AND idgastos=$idGastoPre AND estado='activo'
 			LIMIT 1 FOR UPDATE");
 		if (!$result || $result->num_rows == 0) {
 			throw new Exception("No se encontro una asignacion activa para revertir");
 		}
 		$row = $result->fetch_assoc();
+		$row["nro_comprobante"] = $movimiento["nro_comprobante"];
+		$row["cuenta"] = $movimiento["cuenta"];
 		$stmt = $mysqli->prepare("UPDATE ueno_movimiento_gasto SET estado='revertido', usuario_reversion=?, fecha_hora_reversion=NOW(), motivo_reversion=? WHERE id=? AND estado='activo'");
 		$stmt->bind_param("isi", $usuario, $motivo, $id);
 		if (!$stmt->execute()) {
@@ -3204,7 +3362,9 @@ function ueno_revertir_conciliacion_egreso($usuario)
 			$motivo,
 			array("idgastos" => $row["idgastos"], "nro_comprobante" => ueno_from_db($row["nro_comprobante"]))
 		);
-		$mysqli->commit();
+		if (!$mysqli->commit()) {
+			throw new Exception("No se pudo confirmar la reversion de la asignacion");
+		}
 		mysqli_close($mysqli);
 		ueno_json(array("1" => "exito", "2" => "Asignacion revertida correctamente."));
 	} catch (Exception $e) {
@@ -3223,13 +3383,24 @@ function ueno_buscar_asignaciones_egreso_banco($usuario)
 		ueno_json(array("1" => "tablasfaltantes", "2" => "Falta ejecutar actualizacion_24062026_conciliacion_egresos_ueno.sql"));
 	}
 	$id_movimiento = (int)ueno_post("id_movimiento");
+	if ($id_movimiento <= 0) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => "Seleccione un egreso bancario valido"));
+	}
+	try {
+		$codLocalFiltro = ueno_resolver_filtro_local($mysqli, $usuario, "");
+	} catch (Exception $e) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "error", "2" => $e->getMessage()));
+	}
+	$condicionLocal = $codLocalFiltro > 0 ? " AND g.cod_local=" . (int)$codLocalFiltro : "";
 	$sql = "SELECT umg.id, umg.monto_aplicado, umg.fecha_hora_asociacion, umg.estado, umg.usuario_asocio,
 		g.idgastos, g.motivo AS descripcion, IFNULL(m.descripcion,'') AS concepto, IFNULL(l.Nombre,'') AS local_nombre
 		FROM ueno_movimiento_gasto umg
 		INNER JOIN gastos g ON g.idgastos=umg.idgastos
 		LEFT JOIN motivos_ingreso_egreso m ON m.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
 		LEFT JOIN local l ON l.cod_local=g.cod_local
-		WHERE umg.id_movimiento=$id_movimiento
+		WHERE umg.id_movimiento=$id_movimiento $condicionLocal
 		ORDER BY umg.estado ASC, umg.id DESC";
 	$result = $mysqli->query($sql);
 	if (!$result) {
@@ -3988,7 +4159,7 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
 		ueno_detalle_importacion();
 	}
 	if ($operacion == "buscar_movimientos") {
-		ueno_buscar_movimientos();
+		ueno_buscar_movimientos($usuario);
 	}
 	if ($operacion == "buscar_movimientos_cobro") {
 		ueno_buscar_movimientos_cobro($usuario);

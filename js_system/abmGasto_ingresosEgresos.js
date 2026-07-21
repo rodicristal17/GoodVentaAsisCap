@@ -61,6 +61,433 @@ var movimientoFinancieroContextoActual = {
 	modo: "general"
 };
 
+var gastoDistribucionEstado = {
+	modo: "local",
+	valores: {},
+	persistida: false,
+	bloqueada: false,
+	cargando: false
+};
+
+var gastoUenoMovimientoOrigen = null;
+var gastoDistribucionLocalesGraficos = [3, 5, 6, 7, 9];
+var gastoDistribucionSolicitudEdicion = null;
+var gastoDistribucionSecuenciaEdicion = 0;
+var gastoProyectoSolicitudEdicion = null;
+var gastoProyectoSecuenciaEdicion = 0;
+var gastoAsociadosSolicitudEdicion = null;
+var gastoAsociadosSecuenciaEdicion = 0;
+var gastoGuardadoEnCurso = false;
+var conciliacionEgresoUenoGuardadoEnCurso = false;
+var gastoCargaEdicionActual = { token: 0, id: "", distribucion: true, proyecto: true, asociados: true, error: false };
+
+function gastoIniciarCargaEdicion(idgastos) {
+	gastoCargaEdicionActual = {
+		token: gastoCargaEdicionActual.token + 1,
+		id: String(idgastos || ""),
+		distribucion: false,
+		proyecto: false,
+		asociados: false,
+		error: false
+	};
+	gastoActualizarEstadoBotonGuardar();
+	return gastoCargaEdicionActual.token;
+}
+
+function gastoMarcarCargaEdicion(componente, token, idgastos, ok) {
+	if (!token || token != gastoCargaEdicionActual.token || String(idgastos || "") != gastoCargaEdicionActual.id || String(idAbmGasto || "") != gastoCargaEdicionActual.id) {
+		return;
+	}
+	gastoCargaEdicionActual[componente] = !!ok;
+	if (!ok) { gastoCargaEdicionActual.error = true; }
+	gastoActualizarEstadoBotonGuardar();
+}
+
+function gastoActualizarEstadoBotonGuardar() {
+	var boton = document.getElementById("btnAbmGastos");
+	if (!boton) { return; }
+	var edicionCargando = String(idAbmGasto || "") != ""
+		&& gastoCargaEdicionActual.id == String(idAbmGasto)
+		&& (!gastoCargaEdicionActual.distribucion || !gastoCargaEdicionActual.proyecto || !gastoCargaEdicionActual.asociados || gastoCargaEdicionActual.error);
+	boton.disabled = !!gastoGuardadoEnCurso || !!edicionCargando || !!gastoDistribucionEstado.cargando;
+	gastoActualizarEstadoBotonImprimir();
+}
+
+function gastoActualizarEstadoBotonImprimir() {
+	var boton = document.getElementById("btnImprimirRegistroGastos");
+	if (!boton) { return; }
+	var idActual = String(typeof idAbmGasto == "undefined" ? "" : (idAbmGasto || ""));
+	var distribucionVigente = idActual != ""
+		&& gastoCargaEdicionActual.id == idActual
+		&& gastoCargaEdicionActual.distribucion
+		&& !gastoCargaEdicionActual.error
+		&& !gastoDistribucionEstado.cargando;
+	boton.disabled = !distribucionVigente;
+	boton.setAttribute("aria-busy", distribucionVigente ? "false" : "true");
+}
+
+function gastoDistribucionNumero(valor) {
+	valor = String(valor == null ? "" : valor).replace(/Gs\.?/gi, "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+	return Math.round(Number(valor) || 0);
+}
+
+function gastoDistribucionFormato(valor) {
+	var numero = gastoDistribucionNumero(valor);
+	if (typeof separadordemilesnumero == "function") {
+		return separadordemilesnumero(String(numero));
+	}
+	return String(numero).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function gastoDistribucionTextoImpresion() {
+	if (normalizarTipoMovimientoFinanciero(document.getElementById("inptTipoGasto").value) != "Egreso") { return "No aplica"; }
+	if (gastoDistribucionEstado.legacyNoMaterializable) { return "Distribucion historica no materializable"; }
+	var asignaciones = gastoDistribucionAsignacionesActuales();
+	if (!asignaciones.length) { return "Sin distribucion informada"; }
+	return asignaciones.map(function (item) {
+		return gastoDistribucionNombreLocal(item.cod_local) + ": " + gastoDistribucionFormato(item.monto) + " Gs.";
+	}).join(" | ");
+}
+
+function gastoDistribucionNombreLocal(codLocal) {
+	var select = document.getElementById("inptlocalMisGastos");
+	if (select) {
+		for (var i = 0; i < select.options.length; i++) {
+			if (String(select.options[i].value) == String(codLocal)) {
+				return select.options[i].text || ("Sucursal " + codLocal);
+			}
+		}
+	}
+	var nombres = {
+		3: "Clinident Cerro Cora (Villarrica)",
+		5: "Clinident Villa Industrial (San Lorenzo)",
+		6: "Clinident Padre Molas (Oviedo)",
+		7: "Clinident Santa Librada (Villarrica)",
+		9: "Clinident Villa Morra"
+	};
+	return nombres[Number(codLocal)] || ("Sucursal " + codLocal);
+}
+
+function gastoDistribucionTotalMovimiento() {
+	var input = document.getElementById("inptMontoGasto");
+	return input ? gastoDistribucionNumero(input.value) : 0;
+}
+
+function gastoDistribucionLocalPago() {
+	var select = document.getElementById("inptlocalMisGastos");
+	return select ? Number(select.value || 0) : 0;
+}
+
+function gastoDistribucionEquitativa(monto, locales) {
+	locales = (locales || []).slice().map(Number).filter(function (codigo) { return codigo > 0; });
+	locales.sort(function (a, b) { return a - b; });
+	var salida = {};
+	if (monto <= 0 || locales.length == 0) { return salida; }
+	var base = Math.floor(monto / locales.length);
+	var residuo = monto % locales.length;
+	for (var i = 0; i < locales.length; i++) {
+		salida[locales[i]] = base + (i < residuo ? 1 : 0);
+	}
+	return salida;
+}
+
+function gastoDistribucionAsignacionesActuales() {
+	var monto = gastoDistribucionTotalMovimiento();
+	var modo = gastoDistribucionEstado.modo;
+	var salida = [];
+	if (modo == "local") {
+		var localPago = gastoDistribucionLocalPago();
+		if (localPago > 0 && monto > 0) {
+			salida.push({ cod_local: localPago, monto: monto });
+		}
+		return salida;
+	}
+	if (modo == "compartido") {
+		var iguales = gastoDistribucionEquitativa(monto, gastoDistribucionLocalesGraficos);
+		for (var i = 0; i < gastoDistribucionLocalesGraficos.length; i++) {
+			var codCompartido = gastoDistribucionLocalesGraficos[i];
+			salida.push({ cod_local: codCompartido, monto: iguales[codCompartido] || 0 });
+		}
+		return salida;
+	}
+	for (var j = 0; j < gastoDistribucionLocalesGraficos.length; j++) {
+		var codigo = gastoDistribucionLocalesGraficos[j];
+		var check = document.getElementById("chkDistribucionGastoLocal" + codigo);
+		if (check && check.checked) {
+			var input = document.getElementById("inptDistribucionGastoLocal" + codigo);
+			salida.push({ cod_local: codigo, monto: gastoDistribucionNumero(input ? input.value : (gastoDistribucionEstado.valores[codigo] || 0)) });
+		}
+	}
+	return salida;
+}
+
+function validarDistribucionGasto(mostrarMensaje) {
+	if (normalizarTipoMovimientoFinanciero(document.getElementById("inptTipoGasto").value) != "Egreso") {
+		return { ok: true, modo: "", asignaciones: [] };
+	}
+	if (gastoDistribucionEstado.cargando) {
+		if (mostrarMensaje) { ver_vetana_informativa("Espere a que termine de cargarse la distribucion del gasto."); }
+		return { ok: false };
+	}
+	if (gastoDistribucionEstado.legacyNoMaterializable) {
+		return { ok: true, modo: "legacy_no_materializable", asignaciones: [], conservarLegacy: true };
+	}
+	var asignaciones = gastoDistribucionAsignacionesActuales();
+	var total = gastoDistribucionTotalMovimiento();
+	var suma = 0;
+	for (var i = 0; i < asignaciones.length; i++) {
+		if (asignaciones[i].monto <= 0) {
+			if (mostrarMensaje) { ver_vetana_informativa("Cada sucursal seleccionada debe tener un monto mayor a cero."); }
+			return { ok: false };
+		}
+		suma += asignaciones[i].monto;
+	}
+	if (gastoDistribucionEstado.modo == "personalizado" && asignaciones.length < 2) {
+		if (mostrarMensaje) { ver_vetana_informativa("La distribucion personalizada requiere por lo menos dos sucursales."); }
+		return { ok: false };
+	}
+	if (gastoDistribucionEstado.modo == "local" && gastoDistribucionLocalPago() == 1) {
+		if (mostrarMensaje) { ver_vetana_informativa("Los egresos pagados por Administracion deben usar Administracion compartida o Personalizado para verse en los graficos de sucursales."); }
+		return { ok: false };
+	}
+	if (asignaciones.length == 0 || suma != total) {
+		if (mostrarMensaje) { ver_vetana_informativa("La suma distribuida debe coincidir exactamente con el monto total del gasto."); }
+		return { ok: false };
+	}
+	return { ok: true, modo: gastoDistribucionEstado.modo, asignaciones: asignaciones, suma: suma };
+}
+
+function actualizarResumenDistribucionGasto() {
+	var resumen = document.getElementById("resumenDistribucionLocalGasto");
+	if (!resumen) { return; }
+	var asignaciones = gastoDistribucionAsignacionesActuales();
+	var total = gastoDistribucionTotalMovimiento();
+	var suma = 0;
+	var partes = [];
+	for (var i = 0; i < asignaciones.length; i++) {
+		suma += asignaciones[i].monto;
+		partes.push(gastoDistribucionNombreLocal(asignaciones[i].cod_local) + ": " + gastoDistribucionFormato(asignaciones[i].monto) + " Gs.");
+	}
+	var correcto = total > 0 && suma == total && (gastoDistribucionEstado.modo != "personalizado" || asignaciones.length >= 2);
+	resumen.className = "movimiento-distribucion-resumen " + (correcto ? "is-ok" : "is-error");
+	resumen.innerHTML = "Asignado: <b>" + gastoDistribucionFormato(suma) + " de " + gastoDistribucionFormato(total) + " Gs.</b>"
+		+ (partes.length ? "<br>" + partes.map(function (parte) { return "<span>" + planificacionGastoEscape(parte) + "</span>"; }).join(" | ") : "<br>Seleccione las sucursales de destino.");
+}
+
+function renderizarDistribucionLocalGasto() {
+	var contenedor = document.getElementById("listaDistribucionLocalGasto");
+	if (!contenedor) { return; }
+	var modo = gastoDistribucionEstado.modo;
+	var asignaciones = {};
+	var actuales = gastoDistribucionAsignacionesActuales();
+	for (var i = 0; i < actuales.length; i++) {
+		asignaciones[actuales[i].cod_local] = actuales[i].monto;
+	}
+	var html = "";
+	var locales = modo == "local" ? [gastoDistribucionLocalPago()] : gastoDistribucionLocalesGraficos.slice();
+	for (var j = 0; j < locales.length; j++) {
+		var codLocal = Number(locales[j] || 0);
+		if (!codLocal) { continue; }
+		var seleccionado = modo != "personalizado" || Object.prototype.hasOwnProperty.call(gastoDistribucionEstado.valores, codLocal);
+		var montoLocal = Object.prototype.hasOwnProperty.call(gastoDistribucionEstado.valores, codLocal) ? gastoDistribucionEstado.valores[codLocal] : (asignaciones[codLocal] || 0);
+		html += "<div class='movimiento-distribucion-local'>"
+			+ "<label>" + (modo == "personalizado" ? "<input type='checkbox' id='chkDistribucionGastoLocal" + codLocal + "' " + (seleccionado ? "checked" : "") + " onchange='alternarLocalDistribucionGasto(" + codLocal + ", this.checked)' " + (gastoDistribucionEstado.bloqueada ? "disabled" : "") + ">" : "<i class='fa-solid fa-location-dot' aria-hidden='true'></i>")
+			+ "<span>" + planificacionGastoEscape(gastoDistribucionNombreLocal(codLocal)) + "</span></label>"
+			+ "<input type='text' inputmode='numeric' class='inputText' id='inptDistribucionGastoLocal" + codLocal + "' value='" + gastoDistribucionFormato(montoLocal) + "' "
+			+ ((modo != "personalizado" || !seleccionado || gastoDistribucionEstado.bloqueada) ? "disabled" : "")
+			+ " onkeyup='cambiarMontoLocalDistribucionGasto(" + codLocal + ", this);separadordemiles(this)'>"
+			+ "</div>";
+	}
+	contenedor.innerHTML = html;
+	var radios = document.querySelectorAll("input[name='modoDistribucionGasto']");
+	for (var k = 0; k < radios.length; k++) {
+		radios[k].checked = radios[k].value == modo;
+		var localAdministracionNoDisponible = radios[k].value == "local" && gastoDistribucionLocalPago() == 1;
+		radios[k].disabled = gastoDistribucionEstado.bloqueada || localAdministracionNoDisponible;
+		radios[k].title = localAdministracionNoDisponible ? "Administracion debe distribuir el egreso entre sucursales." : "";
+		if (radios[k].parentElement) {
+			radios[k].parentElement.classList.toggle("is-active", radios[k].checked);
+			radios[k].parentElement.classList.toggle("is-disabled", radios[k].disabled);
+		}
+	}
+	var botonRepartir = document.getElementById("btnRepartirEquitativoGasto");
+	if (botonRepartir) {
+		botonRepartir.style.display = modo == "personalizado" ? "" : "none";
+		botonRepartir.disabled = gastoDistribucionEstado.bloqueada;
+	}
+	var aviso = document.getElementById("avisoDistribucionConciliadaGasto");
+	if (aviso) { aviso.hidden = !gastoDistribucionEstado.bloqueada; }
+	actualizarResumenDistribucionGasto();
+}
+
+function cambiarModoDistribucionGasto(modo) {
+	if (gastoDistribucionEstado.bloqueada) {
+		renderizarDistribucionLocalGasto();
+		return;
+	}
+	if (["local", "compartido", "personalizado"].indexOf(modo) < 0) { return; }
+	gastoDistribucionEstado.legacyNoMaterializable = false;
+	if (modo == "local" && gastoDistribucionLocalPago() == 1) {
+		gastoDistribucionEstado.modo = "compartido";
+		gastoDistribucionEstado.valores = gastoDistribucionEquitativa(gastoDistribucionTotalMovimiento(), gastoDistribucionLocalesGraficos);
+		ver_vetana_informativa("Administracion debe distribuir el egreso como compartido o personalizado para que impacte en los graficos de sucursales.");
+		renderizarDistribucionLocalGasto();
+		return;
+	}
+	gastoDistribucionEstado.modo = modo;
+	if (modo == "local") {
+		gastoDistribucionEstado.valores = {};
+		gastoDistribucionEstado.valores[gastoDistribucionLocalPago()] = gastoDistribucionTotalMovimiento();
+	} else if (modo == "compartido") {
+		gastoDistribucionEstado.valores = gastoDistribucionEquitativa(gastoDistribucionTotalMovimiento(), gastoDistribucionLocalesGraficos);
+	} else if (Object.keys(gastoDistribucionEstado.valores).length < 2) {
+		gastoDistribucionEstado.valores = {};
+	}
+	renderizarDistribucionLocalGasto();
+}
+
+function alternarLocalDistribucionGasto(codLocal, seleccionado) {
+	if (seleccionado) {
+		gastoDistribucionEstado.valores[codLocal] = gastoDistribucionEstado.valores[codLocal] || 0;
+	} else {
+		delete gastoDistribucionEstado.valores[codLocal];
+	}
+	renderizarDistribucionLocalGasto();
+}
+
+function cambiarMontoLocalDistribucionGasto(codLocal, input) {
+	gastoDistribucionEstado.valores[codLocal] = gastoDistribucionNumero(input ? input.value : 0);
+	actualizarResumenDistribucionGasto();
+}
+
+function repartirEquitativamenteDistribucionGasto() {
+	if (gastoDistribucionEstado.bloqueada) { return; }
+	var seleccionados = [];
+	for (var i = 0; i < gastoDistribucionLocalesGraficos.length; i++) {
+		var codigo = gastoDistribucionLocalesGraficos[i];
+		var check = document.getElementById("chkDistribucionGastoLocal" + codigo);
+		if (check && check.checked) { seleccionados.push(codigo); }
+	}
+	if (seleccionados.length < 2) {
+		ver_vetana_informativa("Seleccione por lo menos dos sucursales antes de repartir.");
+		return;
+	}
+	gastoDistribucionEstado.valores = gastoDistribucionEquitativa(gastoDistribucionTotalMovimiento(), seleccionados);
+	renderizarDistribucionLocalGasto();
+}
+
+function manejarCambioLocalPagoGasto() {
+	if (!idAbmGasto && !gastoDistribucionEstado.bloqueada) {
+		cambiarModoDistribucionGasto(gastoDistribucionLocalPago() == 1 ? "compartido" : "local");
+	} else {
+		renderizarDistribucionLocalGasto();
+	}
+}
+
+function actualizarDistribucionPorMontoGasto() {
+	if (gastoDistribucionEstado.bloqueada) {
+		actualizarResumenDistribucionGasto();
+		return;
+	}
+	gastoDistribucionEstado.legacyNoMaterializable = false;
+	if (gastoDistribucionEstado.modo == "local") {
+		gastoDistribucionEstado.valores = {};
+		gastoDistribucionEstado.valores[gastoDistribucionLocalPago()] = gastoDistribucionTotalMovimiento();
+	} else if (gastoDistribucionEstado.modo == "compartido") {
+		gastoDistribucionEstado.valores = gastoDistribucionEquitativa(gastoDistribucionTotalMovimiento(), gastoDistribucionLocalesGraficos);
+	}
+	renderizarDistribucionLocalGasto();
+}
+
+function actualizarVisibilidadDistribucionGasto() {
+	var panel = document.getElementById("panelDistribucionLocalGasto");
+	if (!panel) { return; }
+	var esEgreso = normalizarTipoMovimientoFinanciero(document.getElementById("inptTipoGasto").value) == "Egreso";
+	panel.style.display = esEgreso ? "" : "none";
+	if (esEgreso) { renderizarDistribucionLocalGasto(); }
+}
+
+function reiniciarDistribucionGasto() {
+	gastoDistribucionEstado = { modo: gastoDistribucionLocalPago() == 1 ? "compartido" : "local", valores: {}, persistida: false, bloqueada: false, cargando: false };
+	if (gastoDistribucionEstado.modo == "compartido") {
+		gastoDistribucionEstado.valores = gastoDistribucionEquitativa(gastoDistribucionTotalMovimiento(), gastoDistribucionLocalesGraficos);
+	} else if (gastoDistribucionLocalPago() > 0) {
+		gastoDistribucionEstado.valores[gastoDistribucionLocalPago()] = gastoDistribucionTotalMovimiento();
+	}
+	actualizarVisibilidadDistribucionGasto();
+}
+
+function cargarDistribucionGastoParaEdicion(idgastos) {
+	if (!idgastos) { return; }
+	var tokenCargaEdicion = (gastoCargaEdicionActual.id == String(idgastos)) ? gastoCargaEdicionActual.token : 0;
+	gastoDistribucionSecuenciaEdicion++;
+	var secuenciaSolicitud = gastoDistribucionSecuenciaEdicion;
+	var idSolicitado = String(idgastos);
+	if (gastoDistribucionSolicitudEdicion && gastoDistribucionSolicitudEdicion.readyState != 4) {
+		gastoDistribucionSolicitudEdicion.abort();
+	}
+	gastoDistribucionEstado.cargando = true;
+	gastoActualizarEstadoBotonGuardar();
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "obtener_distribucion_gasto");
+	datos.append("idgastos", idgastos);
+	gastoDistribucionSolicitudEdicion = $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		success: function (responseText) {
+			if (secuenciaSolicitud != gastoDistribucionSecuenciaEdicion || String(idAbmGasto || "") != idSolicitado) { return; }
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") { throw new Error(respuesta["2"] || "No se pudo cargar la distribucion."); }
+				var esLegacyNoMaterializable = respuesta.modo == "legacy_no_materializable";
+				gastoDistribucionEstado.modo = esLegacyNoMaterializable
+					? (Number(respuesta.cod_local_pago || 0) == 1 ? "compartido" : "local")
+					: (respuesta.modo || "local");
+				gastoDistribucionEstado.valores = {};
+				var asignaciones = respuesta.asignaciones || [];
+				for (var i = 0; i < asignaciones.length; i++) {
+					gastoDistribucionEstado.valores[Number(asignaciones[i].cod_local)] = gastoDistribucionNumero(asignaciones[i].monto);
+				}
+				gastoDistribucionEstado.persistida = Number(respuesta.persistida || 0) == 1;
+				gastoDistribucionEstado.bloqueada = Number(respuesta.bloqueada_por_conciliacion || 0) == 1;
+				gastoDistribucionEstado.legacyNoMaterializable = esLegacyNoMaterializable;
+				if (esLegacyNoMaterializable) {
+					var montoLegacy = gastoDistribucionNumero(respuesta.monto_total || 0);
+					if (gastoDistribucionEstado.modo == "compartido") {
+						gastoDistribucionEstado.valores = gastoDistribucionEquitativa(montoLegacy, gastoDistribucionLocalesGraficos);
+					} else if (Number(respuesta.cod_local_pago || 0) > 0) {
+						gastoDistribucionEstado.valores[Number(respuesta.cod_local_pago)] = montoLegacy;
+					}
+					ver_vetana_informativa("Este egreso historico tiene un monto que no puede distribuirse sin crear asignaciones de cero. Para actualizarlo, corrija el monto y confirme un modo de distribucion valido.");
+				}
+				gastoDistribucionEstado.cargando = false;
+				renderizarDistribucionLocalGasto();
+				gastoMarcarCargaEdicion("distribucion", tokenCargaEdicion, idSolicitado, true);
+			} catch (error) {
+				gastoDistribucionEstado.cargando = true;
+				gastoMarcarCargaEdicion("distribucion", tokenCargaEdicion, idSolicitado, false);
+				ver_vetana_informativa("No se puede editar el gasto hasta cargar su distribucion.", String(error), "error");
+			}
+			gastoActualizarEstadoBotonGuardar();
+		},
+		error: function (jqXHR, textStatus) {
+			if (textStatus == "abort" || secuenciaSolicitud != gastoDistribucionSecuenciaEdicion) { return; }
+			gastoDistribucionEstado.cargando = true;
+			gastoMarcarCargaEdicion("distribucion", tokenCargaEdicion, idSolicitado, false);
+			gastoActualizarEstadoBotonGuardar();
+			ver_vetana_informativa("No se pudo consultar la distribucion del gasto.", "", "error");
+		}
+	});
+}
+
 function normalizarTipoMovimientoFinanciero(tipoMovimiento) {
 	var tipo = ((tipoMovimiento || "") + "").toLowerCase();
 	if (tipo == "ingreso") { return "Ingreso"; }
@@ -158,6 +585,7 @@ function configurarModalMovimientoFinanciero(contexto) {
 		modal.classList.remove("movimiento-financiero-modal--ingreso", "movimiento-financiero-modal--egreso", "movimiento-financiero-modal--deposito", "movimiento-financiero-modal--editar");
 	}
 	configurarCamposDepositoCentral(esDeposito);
+	actualizarVisibilidadDistribucionGasto();
 	if (!titulo) { return; }
 	if (contexto.modo == "editar") {
 		titulo.textContent = esDeposito ? "Editar deposito a central" : "Editar movimiento financiero";
@@ -288,6 +716,27 @@ function aplicarContextoCrearMovimientoFinanciero(contexto) {
 	if (localFiltrado && document.getElementById("inptlocalMisGastos")) {
 		document.getElementById("inptlocalMisGastos").value = localFiltrado;
 	}
+	if (contexto.uenoMovimiento && contexto.uenoMovimiento.id_movimiento) {
+		gastoUenoMovimientoOrigen = contexto.uenoMovimiento;
+		var valorSaldoUeno = contexto.uenoMovimiento.saldo_disponible;
+		if (valorSaldoUeno == null || valorSaldoUeno === "") { valorSaldoUeno = contexto.uenoMovimiento.monto_disponible; }
+		if (valorSaldoUeno == null || valorSaldoUeno === "") { valorSaldoUeno = contexto.uenoMovimiento.importe_debito; }
+		var saldoUeno = gastoDistribucionNumero(valorSaldoUeno || 0);
+		document.getElementById("inptMontoGasto").value = gastoDistribucionFormato(saldoUeno);
+		document.getElementById("inptDescripcionGasto").value = contexto.uenoMovimiento.descripcion || contexto.uenoMovimiento.concepto || "Debito Ueno";
+		document.getElementById("inptFechaGasto").value = String(contexto.uenoMovimiento.fecha_confirmacion || "").substring(0, 10);
+		document.getElementById("inptNroBoletaGasto").value = contexto.uenoMovimiento.nro_comprobante || "";
+		document.getElementById("inptBancoGasto").value = "Ueno";
+		document.getElementById("inptCuentaGasto").value = contexto.uenoMovimiento.cuenta || "";
+		document.getElementById("inptEstadoGasto").value = "Activo";
+		document.getElementById("btnAbmGastos").value = "Guardar y conciliar con Ueno";
+		var chipUeno = document.getElementById("chipContextoMovimientoFinanciero");
+		if (chipUeno) {
+			chipUeno.textContent = "Debito Ueno #" + contexto.uenoMovimiento.id_movimiento + " | Disponible: " + gastoDistribucionFormato(saldoUeno) + " Gs. | Se registrara un solo gasto padre";
+			chipUeno.style.display = "";
+		}
+		actualizarVisibilidadCantidadCuotasGasto();
+	}
 	if (document.getElementById("inptFechaGasto") && document.getElementById("inptFechaGasto").value == "") {
 		document.getElementById("inptFechaGasto").value = obtenerFechaDefaultMovimientoFinanciero();
 	}
@@ -310,9 +759,25 @@ function aplicarContextoCrearMovimientoFinanciero(contexto) {
 		buscarProyectosVistaSelecc();
 	}
 	inicializarVistaPreviaPlanificacionGasto();
+	reiniciarDistribucionGasto();
 	if (contexto.focoPlanificacion && !contexto.proyectoId) {
 		enfocarPagoYPlanificacionMovimientoFinanciero();
 	}
+}
+
+function abrirMovimientoFinancieroDesdeDebitoUeno(movimiento) {
+	if (!movimiento || !movimiento.id_movimiento || gastoDistribucionNumero(movimiento.importe_debito || 0) <= 0) {
+		ver_vetana_informativa("No se pudo identificar el debito Ueno.");
+		return;
+	}
+	if (controlacceso("INSERTARLISTADOEGRESOINGRESO", "accion") == false) { return; }
+	abrirMovimientoFinanciero({
+		modo: "crear",
+		tipoMovimiento: "Egreso",
+		categoriaFlujo: "Debito Ueno pendiente de aplicacion",
+		uenoMovimiento: movimiento,
+		focoPlanificacion: true
+	});
 }
 
 function abrirMovimientoFinanciero(contexto) {
@@ -499,6 +964,16 @@ function planificacionGastoProyectoTexto(cantidadCuotas) {
 function actualizarVisibilidadCantidadCuotasGasto() {
 	var filaCantidad = document.getElementById("tablePeriodicidad");
 	if (!filaCantidad) { return; }
+	var inputCantidad = document.getElementById("inptCantCuotaGasto");
+	var inputPeriodicidad = document.getElementById("inptPeriodicidadGasto");
+	if (gastoUenoMovimientoOrigen) {
+		filaCantidad.style.display = "none";
+		if (inputCantidad) { inputCantidad.value = "1"; inputCantidad.disabled = true; }
+		if (inputPeriodicidad) { inputPeriodicidad.value = ""; inputPeriodicidad.disabled = true; }
+		return;
+	}
+	if (inputCantidad) { inputCantidad.disabled = false; }
+	if (inputPeriodicidad) { inputPeriodicidad.disabled = false; }
 	var proyecto = planificacionGastoValor("inptProyectoGasto");
 	var esEdicion = (typeof idAbmGasto != "undefined" && idAbmGasto != "");
 	var esCredito = (typeof gastoSeleccionadoTieneCuotasAsociadas == "function" && gastoSeleccionadoTieneCuotasAsociadas());
@@ -599,7 +1074,7 @@ function conciliarEgresoUenoEscape(valor) {
 	});
 }
 
-function conciliarEgresoUenoAjax(funt, extras, alExito) {
+function conciliarEgresoUenoAjax(funt, extras, alExito, alCompletar) {
 	obtener_datos_user();
 	var datos = new FormData();
 	datos.append("useru", userid);
@@ -612,7 +1087,7 @@ function conciliarEgresoUenoAjax(funt, extras, alExito) {
 			datos.append(clave, extras[clave]);
 		}
 	}
-	$.ajax({
+	return $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmConciliacionUeno.php",
 		type: "post",
@@ -648,6 +1123,11 @@ function conciliarEgresoUenoAjax(funt, extras, alExito) {
 				}
 			} catch (error) {
 				ver_vetana_informativa("Error inesperado en conciliacion de egresos Ueno", String(error), "error");
+			}
+		},
+		complete: function () {
+			if (typeof alCompletar == "function") {
+				alCompletar();
 			}
 		}
 	});
@@ -1025,6 +1505,9 @@ function conciliarEgresoUenoTextoConfirmacion(distribucion, total, disponible) {
 }
 
 function conciliarEgresoUenoGuardar() {
+	if (conciliacionEgresoUenoGuardadoEnCurso) {
+		return;
+	}
 	var banco = conciliacionEgresoUenoContexto.movimientoBanco;
 	if (!banco || !banco.id_movimiento) {
 		ver_vetana_informativa("Seleccione un egreso bancario disponible.");
@@ -1058,6 +1541,8 @@ function conciliarEgresoUenoGuardar() {
 	if (!confirm(conciliarEgresoUenoTextoConfirmacion(distribucion, total, disponible))) {
 		return;
 	}
+	conciliacionEgresoUenoGuardadoEnCurso = true;
+	conciliarEgresoUenoActualizarBotonGuardar();
 	verCerrarEfectoCargando("1");
 	conciliarEgresoUenoAjax("guardar_conciliacion_egreso", {
 		id_movimiento: banco.id_movimiento,
@@ -1078,6 +1563,9 @@ function conciliarEgresoUenoGuardar() {
 		if (typeof uenoBuscarMovimientos == "function") {
 			uenoBuscarMovimientos();
 		}
+	}, function () {
+		conciliacionEgresoUenoGuardadoEnCurso = false;
+		conciliarEgresoUenoActualizarBotonGuardar();
 	});
 }
 
@@ -1290,6 +1778,8 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById('btnInterConsultaGastos').style.backgroundColor= "";
 	idAbmGasto = $(datostr).children('td[id="td_id"]').html();
 	usuarioCreadorEgresoIngreso = $(datostr).children('td[id="td_datos_21"]').html() || "";
+	gastoIniciarCargaEdicion(idAbmGasto);
+	cargarDistribucionGastoParaEdicion(idAbmGasto);
 
 	cod_interConsulta= $(datostr).children('td[id="td_datos_15"]').html();
 	document.getElementById("inptAbmInterConsultaGasto").value= $(datostr).children('td[id="td_datos_16"]').html();
@@ -1500,8 +1990,16 @@ function existeOpcionSelectProyecto(selectProyecto, valor) {
 }
 
 function buscarProyectosVistaSelecc(valorSeleccionar= "", alFinalizar) {
+	gastoProyectoSecuenciaEdicion++;
+	var secuenciaProyecto = gastoProyectoSecuenciaEdicion;
+	var idEdicionProyecto = String(idAbmGasto || "");
+	var tokenCargaEdicion = (gastoCargaEdicionActual.id == idEdicionProyecto) ? gastoCargaEdicionActual.token : 0;
+	if (gastoProyectoSolicitudEdicion && gastoProyectoSolicitudEdicion.readyState != 4) {
+		gastoProyectoSolicitudEdicion.abort();
+	}
 	const selectProyecto= document.getElementById('inptProyectoGasto');
 	if (!selectProyecto) {
+		gastoMarcarCargaEdicion("proyecto", tokenCargaEdicion, idEdicionProyecto, true);
 		if (typeof alFinalizar == "function") { alFinalizar(false); }
 		return;
 	}
@@ -1514,6 +2012,7 @@ function buscarProyectosVistaSelecc(valorSeleccionar= "", alFinalizar) {
 		selectProyecto.setAttribute("data-proyecto-hilo-bloqueado", "true");
 		selectProyecto.setAttribute("data-valor-anterior", "0");
 		actualizarVistaPreviaPlanificacionGasto();
+		gastoMarcarCargaEdicion("proyecto", tokenCargaEdicion, idEdicionProyecto, true);
 		if (typeof alFinalizar == "function") { alFinalizar(false); }
 		return;
 	}
@@ -1527,7 +2026,7 @@ function buscarProyectosVistaSelecc(valorSeleccionar= "", alFinalizar) {
 		datos.append("cod_interConsultaFK", codInterConsultaActual)
 	}
 	
-	var OpAjax = $.ajax({
+	gastoProyectoSolicitudEdicion = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmProyectoGasto.php",
 		type: "post",
@@ -1561,12 +2060,15 @@ function buscarProyectosVistaSelecc(valorSeleccionar= "", alFinalizar) {
     },
 		
 		error: function (jqXHR, textstatus, errorThrowm) {
+			if (textstatus == "abort" || secuenciaProyecto != gastoProyectoSecuenciaEdicion) { return; }
 			verCerrarEfectoCargando("")
 		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			gastoMarcarCargaEdicion("proyecto", tokenCargaEdicion, idEdicionProyecto, false);
 			if (typeof alFinalizar == "function") { alFinalizar(false); }
 			return false;
 		},
 		success: function (responseText) {
+			if (secuenciaProyecto != gastoProyectoSecuenciaEdicion || String(idAbmGasto || "") != idEdicionProyecto) { return; }
 			Respuesta = responseText;
 			verCerrarEfectoCargando("")
 			console.log(Respuesta)
@@ -1591,9 +2093,11 @@ function buscarProyectosVistaSelecc(valorSeleccionar= "", alFinalizar) {
 				   selectProyecto.setAttribute("data-valor-anterior", selectProyecto.value);
 				   actualizarVisibilidadCantidadCuotasGasto();
 				   actualizarVistaPreviaPlanificacionGasto();
+				   gastoMarcarCargaEdicion("proyecto", tokenCargaEdicion, idEdicionProyecto, true);
 				   if (typeof alFinalizar == "function") { alFinalizar(true); }
 				}				
 			} catch (error) {
+				gastoMarcarCargaEdicion("proyecto", tokenCargaEdicion, idEdicionProyecto, false);
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 					var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
@@ -1844,6 +2348,10 @@ function crearProyectoGastoDesdeBotonHilo(evento, boton) {
 }
 
 function verificarcamposGasto() {
+	if (gastoGuardadoEnCurso) {
+		ver_vetana_informativa("El movimiento ya se esta guardando. Espere la confirmacion.");
+		return false;
+	}
 	var inptMontoGasto = document.getElementById('inptMontoGasto').value
 	var inptDescripcionGasto = document.getElementById('inptDescripcionGasto').value
 	var inptFechaGasto = document.getElementById('inptFechaGasto').value
@@ -1886,6 +2394,14 @@ function verificarcamposGasto() {
 		ver_vetana_informativa("FALTO SELECCIONAR LA PERIODICIDAD DEL GASTO")
 		return false;
 	}
+	if (inptCantCuotaGasto > 120) {
+		ver_vetana_informativa("LA CANTIDAD MAXIMA ES DE 120 CUOTAS")
+		return false;
+	}
+	var distribucionValidada = validarDistribucionGasto(true);
+	if (!distribucionValidada.ok) {
+		return false;
+	}
 
 	// Se evalua si ya existen gastos asociados
 	if (gastoSeleccionadoTieneCuotasAsociadas()) {
@@ -1906,16 +2422,19 @@ function verificarcamposGasto() {
 		if(controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false){return;}	
 		accion = "nuevo";
 	}
-	abmgastos(inptArregloGasto,inptNroBoletaGasto, inptBancoGasto , inptCuentaGasto ,inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos,accion, inptCantCuotaGasto, inptPeriodicidadGasto, inptProyectoGasto);
+	abmgastos(inptArregloGasto,inptNroBoletaGasto, inptBancoGasto , inptCuentaGasto ,inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos,accion, inptCantCuotaGasto, inptPeriodicidadGasto, inptProyectoGasto, distribucionValidada);
 }
 
 function gastoSeleccionadoTieneCuotasAsociadas() {
 	return document.getElementById('divGastoAsociadosGastos').getAttribute('data-es-credito') == 'true';
 }
 
-function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion, cantCuotas= 0, periodicidad= "", proyecto_gasto="") {
+function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion, cantCuotas= 0, periodicidad= "", proyecto_gasto="", distribucionValidada) {
+	if (gastoGuardadoEnCurso) { return false; }
+	gastoGuardadoEnCurso = true;
+	gastoActualizarEstadoBotonGuardar();
 	verCerrarEfectoCargando("1")
-	let editar_cuotas= true;
+	let editar_cuotas= false;
 	
 	if (accion == "editar" && gastoSeleccionadoTieneCuotasAsociadas()) {
 		editar_cuotas= confirm("¿Modificar tambien las cuotas asociadas?");
@@ -1952,6 +2471,11 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	datos.append("cantCuotas", cantCuotas);
 	datos.append("periodicidad", periodicidad);
 	datos.append("editar_cuotas", (editar_cuotas ? "true" : "false"));
+	distribucionValidada = distribucionValidada || { modo: "local", asignaciones: [] };
+	datos.append("modo_distribucion", distribucionValidada.modo || "local");
+	datos.append("distribucion_locales", JSON.stringify(distribucionValidada.asignaciones || []));
+	datos.append("conservar_distribucion_legacy", distribucionValidada.conservarLegacy ? "1" : "0");
+	datos.append("id_movimiento_ueno", accion == "nuevo" && gastoUenoMovimientoOrigen ? (gastoUenoMovimientoOrigen.id_movimiento || "") : "");
 	
 	var OpAjax = $.ajax({
 		data: datos,
@@ -1960,6 +2484,10 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 		cache: false,
 		contentType: false,
 		processData: false,
+		complete: function () {
+			gastoGuardadoEnCurso = false;
+			gastoActualizarEstadoBotonGuardar();
+		},
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
         //Uload progress
@@ -2022,8 +2550,11 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 							"advertencia"
 						);
 					}
-				   if(accion=="nuevo"){
+					if(accion=="nuevo"){
 						ImprimirTicketEgreso()
+					}
+					if (gastoUenoMovimientoOrigen && typeof uenoBuscarMovimientos == "function") {
+						uenoBuscarMovimientos();
 					}
 					
 					if (!documentoPendienteCentroFacturas && !archivoPendienteMovimiento) {
@@ -2042,7 +2573,7 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 							verCerrarVentanaAbmGasto(false, false);
 							break;
 					}
-					comprobarLimiteMotivo(cod_motivoFK, cod_local);
+					comprobarLimiteMotivo(cod_motivoFK, cod_local, datos["2"]);
 				} else {
 					ver_vetana_informativa(datos["2"]);
 				}				
@@ -2056,6 +2587,13 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 }
 
 function obtenerGastosAsociados(id_gasto) {
+	gastoAsociadosSecuenciaEdicion++;
+	var secuenciaAsociados = gastoAsociadosSecuenciaEdicion;
+	var idSolicitadoAsociados = String(id_gasto || "");
+	var tokenCargaEdicion = (gastoCargaEdicionActual.id == idSolicitadoAsociados) ? gastoCargaEdicionActual.token : 0;
+	if (gastoAsociadosSolicitudEdicion && gastoAsociadosSolicitudEdicion.readyState != 4) {
+		gastoAsociadosSolicitudEdicion.abort();
+	}
 	var datos = new FormData();
 	obtener_datos_user();
 	datos.append("useru", userid);
@@ -2067,7 +2605,7 @@ function obtenerGastosAsociados(id_gasto) {
 	document.getElementById('divGastoAsociadosGastos').style.display= "none";
 	document.getElementById('divTableProyecto').innerHTML= "";
 	
-	var OpAjax = $.ajax({
+	gastoAsociadosSolicitudEdicion = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
 		type: "post",
@@ -2101,11 +2639,14 @@ function obtenerGastosAsociados(id_gasto) {
     },
 		
 		error: function (jqXHR, textstatus, errorThrowm) {
+			if (textstatus == "abort" || secuenciaAsociados != gastoAsociadosSecuenciaEdicion) { return; }
 			verCerrarEfectoCargando("")
 		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			gastoMarcarCargaEdicion("asociados", tokenCargaEdicion, idSolicitadoAsociados, false);
 			return false;
 		},
 		success: function (responseText) {
+			if (secuenciaAsociados != gastoAsociadosSecuenciaEdicion || String(idAbmGasto || "") != idSolicitadoAsociados) { return; }
 			Respuesta = responseText;
 			verCerrarEfectoCargando("")
 			console.log(Respuesta)
@@ -2114,11 +2655,7 @@ function obtenerGastosAsociados(id_gasto) {
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
-					var gastoPrincipal = datos["3"] || {};
-					var modalidad = ((gastoPrincipal["modalidad"] || "") + "").toLowerCase();
-					var codProyecto = ((gastoPrincipal["cod_proyecto_gastoFK"] || "") + "");
-					var cantidadGastos = parseInt(datos["6"] || "0");
-					var esCredito = (modalidad == "credito" || (codProyecto != "" && codProyecto != "0") || cantidadGastos > 1);
+					var esCredito = String(datos["7"] || "0") == "1";
 
 					if (datos["2"] && esCredito) {
 						document.getElementById('divGastoAsociadosGastos').setAttribute('data-es-credito', 'true');
@@ -2132,8 +2669,12 @@ function obtenerGastosAsociados(id_gasto) {
 						document.getElementById('divTableProyecto').innerHTML= "";
 					}
 					actualizarVisibilidadCantidadCuotasGasto();
+					gastoMarcarCargaEdicion("asociados", tokenCargaEdicion, idSolicitadoAsociados, true);
+				} else {
+					gastoMarcarCargaEdicion("asociados", tokenCargaEdicion, idSolicitadoAsociados, false);
 				}				
 			} catch (error) {
+				gastoMarcarCargaEdicion("asociados", tokenCargaEdicion, idSolicitadoAsociados, false);
 				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 				var titulo="Error: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
@@ -2279,79 +2820,67 @@ function mostrarExtractoGasto(id_gastos) {
 	});
 }
 
-function comprobarLimiteMotivo(cod_motivo, cod_local) {
+function comprobarLimiteMotivo(cod_motivo, cod_local, idgastos) {
+	if (!idgastos) { return; }
 	var datos = new FormData();
 	obtener_datos_user();
 	datos.append("useru", userid)
 	datos.append("passu", passuser)
 	datos.append("navegador", navegador)
-	datos.append("funt", 'verficiarLimiteMotivo')
-    datos.append("cod_motivo", cod_motivo)
-    datos.append("cod_local", cod_local)
+	datos.append("funt", "estado_presupuesto_distribucion")
+	datos.append("idgastos", idgastos)
 	
-	var OpAjax = $.ajax({
+	return $.ajax({
 		data: datos,
-		url: "/GoodVentaAsisCap/php_system/abmPresupuestoMotivoGasto.php",
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
 		type: "post",
 		cache: false,
 		contentType: false,
 		processData: false,
-			xhr: function () {
-        var xhr = new window.XMLHttpRequest();
-        //Uload progress
-        xhr.upload.addEventListener("progress" ,function (evt) {
-        var porce= ~~((evt.loaded / evt.total) * 100); 
-		if(porce>90){
-		porce=Number(porce)-7				
-		}
-		document.getElementById("lbltitulomensaje_b").innerHTML="Cargando<br>("+porce+"%)";
-		var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-		kb=0.1;
-		}
-         cargarConectividad("enviado",kb,"0")           
-        }, false);
- //Download progress
-		xhr.addEventListener("progress", function (evt) {
-        var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-		kb=0.1;
-		}
-        cargarConectividad("recibido","0",kb)  
-        }, false);
-        return xhr;
-    },
-		
+		complete: function () {
+			if (typeof alCompletar == "function") {
+				alCompletar();
+			}
+		},
 		error: function (jqXHR, textstatus, errorThrowm) {
-			verCerrarEfectoCargando("")
-		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			return false;
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 		},
 		success: function (responseText) {
-			Respuesta = responseText;
-			verCerrarEfectoCargando("")
-			console.log(Respuesta)
 			try {
-				var datos = $.parseJSON(Respuesta);
-				Respuesta = datos["1"];
-				Respuesta=respuestaJqueryAjax(Respuesta)
-			   if (Respuesta == true) {
-				   const limite = parseInt(datos["2"]);
-				   const total = parseInt(datos["3"].toString().replace('.',''));
-
-				   if (!(Number.isNaN(limite)) && total >= limite && limite > 0) {
-					   ver_vetana_informativa("Ha llegado al limite permitido para el "+datos[4]+" motivo de gasto.");
-				   } else if (total >= (limite * 0.9)) {
-					   ver_vetana_informativa("Esta llegando al limite presupuestado para el "+datos[4]+" motivo de gasto.");
-				   }
-				}				
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") { return; }
+				var excedidos = [];
+				var proximos = [];
+				(respuesta.destinos || []).forEach(function (destino) {
+					var limite = gastoDistribucionNumero(destino.limite);
+					var utilizado = gastoDistribucionNumero(destino.utilizado);
+					if (!destino.computable || limite <= 0) { return; }
+					var texto = (destino.nombre || ("Sucursal " + destino.cod_local))
+						+ " (" + gastoDistribucionFormato(utilizado) + " de " + gastoDistribucionFormato(limite) + " Gs.)";
+					if (utilizado >= limite) {
+						excedidos.push(texto);
+					} else if (utilizado >= limite * 0.9) {
+						proximos.push(texto);
+					}
+				});
+				if (excedidos.length) {
+					ver_vetana_informativa("Presupuesto alcanzado en: " + excedidos.join("; "));
+				} else if (proximos.length) {
+					ver_vetana_informativa("Presupuesto proximo al limite en: " + proximos.join("; "));
+				}
 			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-					var titulo="Error: "+error+" \r\n Consola: "+responseText
+				var titulo="Error al consultar presupuesto distribuido: "+error+" \r\n Consola: "+responseText
 				GuardarArchivosLog(titulo)
 			}
 		}
 	});
+}
+
+function conciliarEgresoUenoActualizarBotonGuardar() {
+	var boton = document.getElementById("btnGuardarConciliacionEgresoUeno");
+	if (!boton) { return; }
+	boton.disabled = !!conciliacionEgresoUenoGuardadoEnCurso;
+	boton.setAttribute("aria-busy", conciliacionEgresoUenoGuardadoEnCurso ? "true" : "false");
 }
 
 var fotoGasto= "";
@@ -2469,8 +2998,14 @@ pagina="<div  style='background-color:#fff;'>"
 +"</table>"
 +"<table class='tableTicket'>"
 +"<tr>"
-+"<td style='width:60px'><b>Local:</b></td>"
++"<td style='width:100px'><b>Local de pago:</b></td>"
 +"<td style=''>"+ $("select[id=inptlocalMisGastos]").children(":selected").text() +"</td>"
++"</tr>"
++"</table>"
++"<table class='tableTicket'>"
++"<tr>"
++"<td style='width:100px'><b>Distribucion:</b></td>"
++"<td style=''>"+ textoSeguroImpresion(gastoDistribucionTextoImpresion()) +"</td>"
 +"</tr>"
 +"</table>"
 +"<br>"
@@ -2576,6 +3111,14 @@ function imprimirRegistroEgresoIngreso() {
 		ver_vetana_informativa("FALTO SELECCIONAR UN REGISTRO");
 		return;
 	}
+	var idImpresion = String(idAbmGasto || "");
+	if (gastoDistribucionEstado.cargando
+		|| gastoCargaEdicionActual.id != idImpresion
+		|| !gastoCargaEdicionActual.distribucion
+		|| gastoCargaEdicionActual.error) {
+		ver_vetana_informativa("Espere a que termine de cargar la distribucion del movimiento seleccionado.");
+		return;
+	}
 
 	var concepto = $("select[id=inptMotivoMisGastos]").children(":selected").text();
 	var local = $("select[id=inptlocalMisGastos]").children(":selected").text();
@@ -2617,7 +3160,8 @@ function imprimirRegistroEgresoIngreso() {
 		+ filaDatoImpresionEgresoIngreso("Fecha del movimiento", document.getElementById("inptFechaGasto").value)
 		+ filaDatoImpresionEgresoIngreso("Concepto contable", concepto)
 		+ filaDatoImpresionEgresoIngreso("Descripcion", document.getElementById("inptDescripcionGasto").value)
-		+ filaDatoImpresionEgresoIngreso("Local", local)
+		+ filaDatoImpresionEgresoIngreso("Local de pago", local)
+		+ filaDatoImpresionEgresoIngreso("Distribucion contable", gastoDistribucionTextoImpresion())
 		+ filaDatoImpresionEgresoIngreso("Usuario", usuario)
 		+ filaDatoImpresionEgresoIngreso("Nro de boleta", document.getElementById("inptNroBoletaGasto").value)
 		+ filaDatoImpresionEgresoIngreso("Banco", document.getElementById("inptBancoGasto").value)
@@ -3444,6 +3988,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 	});
 }
 function limpiarcamposGasto() {
+	gastoUenoMovimientoOrigen = null;
 	document.getElementById('inptMontoGasto').value = "";
 	document.getElementById('inptRegistroSeleccGasto').value = "";
 	document.getElementById('inptDescripcionGasto').value = "";
@@ -3478,6 +4023,14 @@ function limpiarcamposGasto() {
 	cod_interConsulta= "";
 	usuarioCreadorEgresoIngreso = "";
 	idAbmGasto = "";
+	gastoProyectoSecuenciaEdicion++;
+	gastoAsociadosSecuenciaEdicion++;
+	gastoDistribucionSecuenciaEdicion++;
+	if (gastoProyectoSolicitudEdicion && gastoProyectoSolicitudEdicion.readyState != 4) { gastoProyectoSolicitudEdicion.abort(); }
+	if (gastoAsociadosSolicitudEdicion && gastoAsociadosSolicitudEdicion.readyState != 4) { gastoAsociadosSolicitudEdicion.abort(); }
+	if (gastoDistribucionSolicitudEdicion && gastoDistribucionSolicitudEdicion.readyState != 4) { gastoDistribucionSolicitudEdicion.abort(); }
+	gastoCargaEdicionActual = { token: gastoCargaEdicionActual.token + 1, id: "", distribucion: true, proyecto: true, asociados: true, error: false };
+	gastoActualizarEstadoBotonImprimir();
 	seleccionarLocalUSer()
 	fotoGasto= "";
 	extGasto= "";
@@ -3486,6 +4039,8 @@ function limpiarcamposGasto() {
 	}
 	fotoDocumentoFirmadoGasto= "";
 	extDocumentoFirmadoGasto= "";
+	reiniciarDistribucionGasto();
+	gastoActualizarEstadoBotonGuardar();
     document.getElementById('imgfotoGasto').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
     document.getElementById('imgdocumentoFirmadoGasto').style.backgroundImage= "url("+ '/GoodVentaAsisCap/iconos/imagenphoto.png' +")";
 	inicializarVistaPreviaPlanificacionGasto();

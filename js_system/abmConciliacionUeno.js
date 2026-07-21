@@ -449,12 +449,20 @@ function uenoMostrarMovimientoTrabajo() {
 	var disponible = movimiento["monto_disponible_fmt"] || uenoFormatoMonto(movimiento["monto_disponible"] || "0");
 	var credito = movimiento["importe_credito_fmt"] || uenoFormatoMonto(movimiento["importe_credito"] || "0");
 	var debito = movimiento["importe_debito_fmt"] || uenoFormatoMonto(movimiento["importe_debito"] || "0");
+	var saldoDebito = uenoNumeroMonto(movimiento["saldo_disponible"] || movimiento["monto_disponible"] || 0);
 	var sugerenciasMigracion = Number(movimiento["sugerencias_migracion"] || 0);
 	var depositoFaraone = String(movimiento["depositos_conciliacion"] || "").trim();
 	var depositoFaraoneHtml = depositoFaraone != ""
 		? "<span class='ueno-selected-wide'><b>Depósito Faraone</b>Conciliado con " + uenoEscapeHtml(depositoFaraone) + "</span>"
 		: "";
-	var accion = "<input type='button' value='Ver trazabilidad' class='btn4 ueno-row-action ueno-row-action--trace' onclick='uenoVerAplicacionMovimiento(" + Number(movimiento["id_movimiento"] || 0) + ")'>"
+	var puedeConciliarEgreso = uenoTienePermiso("CONCILIAREGRESOUENO") || uenoTienePermiso("ASIGNARMANUALUENO");
+	var estadoDebito = String(movimiento["estado_bancario"] || "").toLowerCase().trim();
+	var estadoDebitoDisponible = ["registrado", "disponible", "asignado_parcial"].indexOf(estadoDebito) >= 0;
+	var accionGasto = puedeConciliarEgreso && estadoDebitoDisponible && uenoNumeroMonto(movimiento["importe_debito"] || 0) > 0 && saldoDebito > 0
+		? "<input type='button' value='Registrar gasto distribuido' class='btn4 ueno-row-action ueno-row-action--available' onclick='uenoRegistrarGastoDesdeDebito(uenoMovimientoTrabajo)' style='width:190px'>"
+		: "";
+	var accion = accionGasto
+		+ "<input type='button' value='Ver trazabilidad' class='btn4 ueno-row-action ueno-row-action--trace' onclick='uenoVerAplicacionMovimiento(" + Number(movimiento["id_movimiento"] || 0) + ")'>"
 		+ "<input type='button' value='Limpiar seleccion' class='btn4 ueno-btn-secondary' onclick='uenoLimpiarMovimientoTrabajo(true)' style='width:145px'>";
 	var avisoMigracion = sugerenciasMigracion > 0
 		? "<div class='ueno-migration-hint'><b>Coincidencia sugerida</b><span>Hay " + sugerenciasMigracion + " deposito/s pendiente/s con este mismo importe exacto.</span></div>"
@@ -476,6 +484,33 @@ function uenoMostrarMovimientoTrabajo() {
 		+ "<div id='divUenoMigracionSugerida' class='ueno-migration-suggestions'></div>"
 		+ "<div class='ueno-selected-actions'>" + accion + "</div>"
 		+ "</div>";
+}
+
+function uenoRegistrarGastoDesdeDebito(movimiento) {
+	if (!uenoTienePermiso("CONCILIAREGRESOUENO") && !uenoTienePermiso("ASIGNARMANUALUENO")) {
+		ver_vetana_informativa("No tiene permiso para conciliar egresos Ueno.", "", "error");
+		return;
+	}
+	if (!uenoTienePermiso("INSERTARLISTADOEGRESOINGRESO")) {
+		ver_vetana_informativa("No tiene permiso para crear movimientos financieros.", "", "error");
+		return;
+	}
+	movimiento = movimiento || uenoMovimientoTrabajo;
+	var saldo = movimiento ? uenoNumeroMonto(movimiento["saldo_disponible"] || movimiento["monto_disponible"] || 0) : 0;
+	if (!movimiento || !movimiento["id_movimiento"] || uenoNumeroMonto(movimiento["importe_debito"] || 0) <= 0 || saldo <= 0) {
+		ver_vetana_informativa("El debito seleccionado ya no tiene saldo disponible para registrar un gasto.", "", "error");
+		return;
+	}
+	if (typeof abrirMovimientoFinancieroDesdeDebitoUeno != "function") {
+		ver_vetana_informativa("El formulario de movimientos financieros no esta disponible.", "", "error");
+		return;
+	}
+	var moduloGastos = document.getElementById("divAbmGastos");
+	if (moduloGastos && window.getComputedStyle(moduloGastos).display == "none" && typeof verCerrarAbmGasto == "function") {
+		verCerrarAbmGasto();
+	}
+	uenoCerrarDetalleMesaTrabajo();
+	abrirMovimientoFinancieroDesdeDebitoUeno(movimiento);
 }
 
 function uenoLimpiarMovimientoTrabajo(limpiarFiltros) {

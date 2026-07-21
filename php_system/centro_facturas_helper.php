@@ -80,7 +80,7 @@ function centroFacturaDecorarPlazoTransito($fila)
     $fechaLimiteTexto = isset($fila['fecha_limite_recepcion']) ? trim((string)$fila['fecha_limite_recepcion']) : '';
     $diasConfigurados = isset($fila['dias_plazo_transito']) ? intval($fila['dias_plazo_transito']) : 0;
     $plazo = array(
-        'estado' => 'sin_plazo',
+        'estado' => $estado === 'borrador' ? 'borrador' : 'sin_plazo_historico',
         'texto' => $estado === 'borrador' ? 'Se define al enviar' : 'Sin plazo historico',
         'detalle' => '',
         'clase' => 'muted',
@@ -88,6 +88,12 @@ function centroFacturaDecorarPlazoTransito($fila)
         'dias_configurados' => $diasConfigurados,
         'fecha_limite' => $fechaLimiteTexto
     );
+    if ($estado === 'sin_lote') {
+        $plazo['estado'] = 'sin_lote';
+        $plazo['texto'] = 'Sin lote';
+        $fila['plazo_transito'] = $plazo;
+        return $fila;
+    }
     if ($estado === 'anulado') {
         $plazo['estado'] = 'anulado';
         $plazo['texto'] = 'Anulado';
@@ -95,6 +101,12 @@ function centroFacturaDecorarPlazoTransito($fila)
         return $fila;
     }
     if ($fechaLimiteTexto === '') {
+        if ($estado === 'recibido') {
+            $plazo['estado'] = 'recibido_sin_plazo_historico';
+            $plazo['texto'] = 'Recibido';
+            $plazo['detalle'] = 'Sin plazo historico';
+            $plazo['clase'] = 'success';
+        }
         $fila['plazo_transito'] = $plazo;
         return $fila;
     }
@@ -120,6 +132,14 @@ function centroFacturaDecorarPlazoTransito($fila)
             // Si la fecha historica es invalida, se conserva el calculo contra el limite.
         }
     }
+    if ($estado === 'recibido') {
+        $plazo['estado'] = 'recibido_sin_fecha';
+        $plazo['texto'] = 'Recibido';
+        $plazo['clase'] = 'success';
+        $plazo['detalle'] .= ' · Sin fecha de recepcion';
+        $fila['plazo_transito'] = $plazo;
+        return $fila;
+    }
     $hoy = new DateTime(date('Y-m-d'));
     $diaLimite = new DateTime($fechaLimite->format('Y-m-d'));
     $diasRestantes = intval($hoy->diff($diaLimite)->format('%r%a'));
@@ -143,6 +163,70 @@ function centroFacturaDecorarPlazoTransito($fila)
     }
     $fila['plazo_transito'] = $plazo;
     return $fila;
+}
+
+function centroFacturaEnriquecerPlazoLoteActual($mysqli, $registros)
+{
+    $registros = array_values((array)$registros);
+    $idsLote = array();
+    foreach ($registros as $fila) {
+        $idLote = isset($fila['id_lote_actual']) ? intval($fila['id_lote_actual']) : 0;
+        if ($idLote > 0) {
+            $idsLote[$idLote] = $idLote;
+        }
+    }
+
+    $lotes = array();
+    if (count($idsLote) > 0) {
+        $plazoDisponible = centroFacturaPlazoTransitoDisponible($mysqli, 'centro_factura_lote');
+        $camposPlazo = $plazoDisponible
+            ? 'dias_plazo_transito,fecha_limite_recepcion'
+            : 'NULL AS dias_plazo_transito,NULL AS fecha_limite_recepcion';
+        foreach (array_chunk(array_values($idsLote), 500) as $bloque) {
+            $sql = 'SELECT id_lote,estado,fecha_recepcion,'.$camposPlazo
+                .' FROM centro_factura_lote WHERE id_lote IN ('.implode(',', $bloque).')';
+            $resultado = $mysqli->query($sql);
+            if (!$resultado) {
+                continue;
+            }
+            while ($lote = $resultado->fetch_assoc()) {
+                $lotes[intval($lote['id_lote'])] = $lote;
+            }
+        }
+    }
+
+    $sinLote = centroFacturaDecorarPlazoTransito(array('estado' => 'sin_lote'));
+    foreach ($registros as $indice => $fila) {
+        $registros[$indice]['dias_plazo_transito_lote_actual'] = null;
+        $registros[$indice]['fecha_limite_recepcion_lote_actual'] = null;
+        $registros[$indice]['fecha_recepcion_lote_actual'] = null;
+        $registros[$indice]['plazo_transito_lote_actual'] = $sinLote['plazo_transito'];
+
+        $idLote = isset($fila['id_lote_actual']) ? intval($fila['id_lote_actual']) : 0;
+        if ($idLote < 1) {
+            continue;
+        }
+        $lote = isset($lotes[$idLote]) ? $lotes[$idLote] : array();
+        $estadoLote = isset($fila['estado_lote_actual']) ? (string)$fila['estado_lote_actual']
+            : (isset($lote['estado']) ? (string)$lote['estado'] : '');
+        $diasPlazo = isset($lote['dias_plazo_transito']) && $lote['dias_plazo_transito'] !== null
+            ? intval($lote['dias_plazo_transito']) : null;
+        $fechaLimite = isset($lote['fecha_limite_recepcion']) ? $lote['fecha_limite_recepcion'] : null;
+        $fechaRecepcion = isset($lote['fecha_recepcion']) ? $lote['fecha_recepcion'] : null;
+        $loteDecorado = centroFacturaDecorarPlazoTransito(array(
+            'estado' => $estadoLote,
+            'dias_plazo_transito' => $diasPlazo,
+            'fecha_limite_recepcion' => $fechaLimite,
+            'fecha_recepcion' => $fechaRecepcion
+        ));
+
+        $registros[$indice]['dias_plazo_transito_lote_actual'] = $diasPlazo;
+        $registros[$indice]['fecha_limite_recepcion_lote_actual'] = $fechaLimite;
+        $registros[$indice]['fecha_recepcion_lote_actual'] = $fechaRecepcion;
+        $registros[$indice]['plazo_transito_lote_actual'] = isset($loteDecorado['plazo_transito'])
+            ? $loteDecorado['plazo_transito'] : null;
+    }
+    return $registros;
 }
 
 function centroFacturaEstructuraDisponible($mysqli = null)
@@ -980,7 +1064,7 @@ function centroFacturaMetricasEsperadas($registros)
 function centroFacturaListarEntrantes($codUsuario, $filtros, $limite = 80, $offset = 0)
 {
     if (!centroFacturaTienePermiso($codUsuario, 'VERCENTROFACTURAS')) {
-        return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permiso para ver el Centro de Facturas.');
+        return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permiso para ver el Centro de Facturas y Documentos.');
     }
     $limite = max(1, min(150, intval($limite)));
     $offset = max(0, intval($offset));
@@ -988,13 +1072,14 @@ function centroFacturaListarEntrantes($codUsuario, $filtros, $limite = 80, $offs
     $filtros = (array)$filtros;
     $gastos = centroFacturaCargarGastosEsperados($mysqli, $codUsuario, $filtros);
     $documentos = centroFacturaCargarDocumentosSinGasto($mysqli, $codUsuario, $filtros);
-    $mysqli->close();
     $base = array();
     foreach (array_merge($gastos, $documentos) as $fila) {
         if (centroFacturaCoincideFiltrosEsperados($fila, $filtros, true)) {
             $base[] = $fila;
         }
     }
+    $base = centroFacturaEnriquecerPlazoLoteActual($mysqli, $base);
+    $mysqli->close();
     $metricas = centroFacturaMetricasEsperadas($base);
     $registros = array();
     foreach ($base as $fila) {
@@ -1079,7 +1164,7 @@ function centroFacturaMetricas($codUsuario)
 function centroFacturaCatalogos($codUsuario)
 {
     if (!centroFacturaTienePermiso($codUsuario, 'VERCENTROFACTURAS')) {
-        return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permiso para ver el Centro de Facturas.');
+        return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permiso para ver el Centro de Facturas y Documentos.');
     }
     $mysqli = conectar_al_servidor();
     $contexto = centroFacturaContextoUsuario($codUsuario, $mysqli);
@@ -1306,7 +1391,7 @@ function centroFacturaInsertarDesdeMensajeEnTransaccion($mysqli, $mensaje, $vali
     if (!empty($existente)) {
         if (strtolower((string)$existente['estado_registro']) !== 'activo'
             || strtolower((string)$existente['archivo_estado']) !== 'activo') {
-            return array('ok' => false, 'mensaje' => 'El documento anterior de este mensaje esta anulado o inactivo y requiere revision en el Centro de Facturas.');
+            return array('ok' => false, 'mensaje' => 'El documento anterior de este mensaje esta anulado o inactivo y requiere revision en el Centro de Facturas y Documentos.');
         }
         return array('ok' => true, 'id_factura' => intval($existente['id_factura']), 'tipo_documento' => $existente['tipo_documento'], 'idempotente' => 1);
     }
@@ -1369,7 +1454,7 @@ function centroFacturaInsertarDesdeMensajeEnTransaccion($mysqli, $mensaje, $vali
     }
     $stmt->bind_param('isissssi', $idFactura, $tipoOrigen, $codMensaje, $nombreArchivo, $extension, $mime, $hash, $codUsuario);
     if (!$stmt->execute()) {
-        $mensajeError = $stmt->errno == 1062 ? 'REGISTRO_DUPLICADO_ADJUNTO' : 'No se pudo vincular el archivo con el Centro de Facturas.';
+        $mensajeError = $stmt->errno == 1062 ? 'REGISTRO_DUPLICADO_ADJUNTO' : 'No se pudo vincular el archivo con el Centro de Facturas y Documentos.';
         $stmt->close();
         return array('ok' => false, 'mensaje' => $mensajeError);
     }
@@ -1416,7 +1501,7 @@ function centroFacturaRegistrarDesdeMensaje($codMensaje, $codUsuario, $datos = a
     $mysqli = conectar_al_servidor();
     if (!centroFacturaEstructuraDisponible($mysqli)) {
         $mysqli->close();
-        return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura del Centro de Facturas no esta instalada.');
+        return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura del Centro de Facturas y Documentos no esta instalada.');
     }
     $stmt = $mysqli->prepare("SELECT m.cod_mensaje,m.url,m.contenido,m.tipo_adjunto,m.estado,m.cod_usuarioFK,m.cod_interConsultaFK,
             ic.estado AS hilo_estado,ic.cod_localFK,p.nombre_persona,u.rut_usuario
@@ -1455,7 +1540,7 @@ function centroFacturaRegistrarDesdeMensaje($codMensaje, $codUsuario, $datos = a
         if (strtolower((string)$existente['estado_registro']) !== 'activo'
             || strtolower((string)$existente['archivo_estado']) !== 'activo') {
             $mysqli->close();
-            return array('ok' => false, 'codigo' => 'anulado', 'mensaje' => 'El documento anterior de este mensaje esta anulado o inactivo. Revise su historial en el Centro de Facturas.');
+            return array('ok' => false, 'codigo' => 'anulado', 'mensaje' => 'El documento anterior de este mensaje esta anulado o inactivo. Revise su historial en el Centro de Facturas y Documentos.');
         }
         $mysqli->close();
         return array('ok' => true, 'id_factura' => intval($existente['id_factura']), 'tipo_documento' => $existente['tipo_documento'], 'idempotente' => 1);
@@ -1530,7 +1615,7 @@ function centroFacturaRegistrarDesdeGasto($idGasto, $codUsuario, $datos, $archiv
     $mysqli = conectar_al_servidor();
     if (!centroFacturaEstructuraDisponible($mysqli)) {
         $mysqli->close();
-        return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura del Centro de Facturas no esta instalada.');
+        return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura del Centro de Facturas y Documentos no esta instalada.');
     }
     if (!$mysqli->begin_transaction()) {
         $mysqli->close();

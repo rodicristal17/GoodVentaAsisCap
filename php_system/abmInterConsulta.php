@@ -2984,7 +2984,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                     .'<span id="imgfotoMensajeInterconsulta'.$valueMens["cod_mensaje"].'" class="imgFotoProducto'.$claseDocumentoAdjunto.'" data-adjunto-url="'.$urlAdjunto.'" data-adjunto-ext="'.$extensionAdjunto.'" style="display:none;background-image:url('.$urlMiniaturaAdjunto.');"></span>'
                     .'<i class="fa-solid fa-paperclip" aria-hidden="true"></i> Ver archivo</button>';
                 if ($idFacturaAdjunto > 0) {
-                    $accionesDocumento.= '<button type="button" onclick="centroFacturasAbrirDetalle('.$idFacturaAdjunto.')"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Ver en Centro de Facturas</button>';
+                    $accionesDocumento.= '<button type="button" onclick="centroFacturasAbrirDetalle('.$idFacturaAdjunto.')"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Ver en Centro de Facturas y Documentos</button>';
                 } elseif (($esFacturaAdjunto || $esReciboAdjunto)
                     && centroFacturaTienePermiso(isset($filtros['cod_usuarioFK']) ? $filtros['cod_usuarioFK'] : 0, 'REGISTRARFACTURAHILO')) {
                     $textoAccionFactura= $esReciboAdjunto ? 'Completar registro de recibo' : ($tipoAdjuntoMensaje === 'factura' ? 'Completar registro de factura' : 'Registrar como factura');
@@ -4487,7 +4487,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         $mysqli= conectar_al_servidor();
         if (in_array($tipoAdjunto, array('factura','comprobante'), true) && !centroFacturaEstructuraDisponible($mysqli)) {
             $mysqli->close();
-            return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura del Centro de Facturas no esta instalada.');
+            return array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura del Centro de Facturas y Documentos no esta instalada.');
         }
         $rutaAbsoluta= '';
         if (!$mysqli->begin_transaction()) {

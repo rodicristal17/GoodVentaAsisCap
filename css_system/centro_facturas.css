@@ -151,6 +151,22 @@
 .centro-facturas-loading { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; background: rgba(255,255,255,.82); color: #0f766e; font-weight: 700; }
 .centro-facturas-empty { display: grid; min-height: 240px; place-items: center; padding: 30px; color: #657d7b; text-align: center; }
 .centro-facturas-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 45px; padding: 7px 12px; border-top: 1px solid #e4edec; color: #657d7b; font-size: 11px; }
+.centro-facturas-pagination .cf-month-page-label { display: grid; min-width: 180px; margin-right: auto; text-align: center; }
+.centro-facturas-pagination .cf-month-page-label b { color: #173b39; font-size: 11px; }
+.centro-facturas-pagination .cf-month-page-label small { margin-top: 2px; color: #718584; font-size: 9px; }
+
+.cf-legajo-summary { display: grid; flex: 0 0 auto; grid-template-columns: minmax(280px, 2fr) repeat(3, minmax(105px, .7fr)); gap: 8px; margin: 0 26px 9px; }
+.cf-legajo-summary[hidden] { display: none; }
+.cf-legajo-scope,
+.cf-legajo-metric { min-width: 0; padding: 8px 11px; border: 1px solid #dbe7e6; border-radius: 10px; background: #f8fbfa; }
+.cf-legajo-scope { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: center; gap: 8px; }
+.cf-legajo-scope > i { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 8px; background: #e6f4f2; color: #0f766e; }
+.cf-legajo-scope span,
+.cf-legajo-metric { display: grid; }
+.cf-legajo-scope b { overflow: hidden; color: #173b39; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.cf-legajo-scope small,
+.cf-legajo-metric span { margin-top: 2px; color: #6d817f; font-size: 9px; line-height: 1.3; }
+.cf-legajo-metric b { color: #0f766e; font-size: 17px; }
 
 .cf-badge { display: inline-flex; align-items: center; max-width: 160px; padding: 4px 7px; border-radius: 999px; background: #eef2f2; color: #506564; font-size: 10px; font-weight: 750; line-height: 1.25; white-space: normal; }
 .cf-badge--success { background: #dcfce7; color: #166534; }
@@ -290,11 +306,33 @@
 .cf-form-error { margin: 8px 0; color: #b42318; font-size: 11px; font-weight: 700; }
 .cf-pagare-search { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; margin-bottom: 12px; }
 .cf-pagare-eligible-results { display: grid; gap: 8px; }
+.cf-pagare-search-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid #cfe3df; border-radius: 10px; background: #f0fdfa; }
+.cf-pagare-search-summary > div { display: grid; gap: 2px; }
+.cf-pagare-search-summary b { color: #173b39; font-size: 12px; }
+.cf-pagare-search-summary small { color: #657d7a; font-size: 10px; }
+.cf-pagare-search-summary > span { color: #0f766e; font-size: 10.5px; font-weight: 800; text-align: right; }
 .cf-pagare-eligible-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid #cfe3df; border-radius: 11px; background: #f8fcfb; }
+.cf-pagare-eligible-card.is-elegible { border-color: #86d5b3; background: #f2fbf6; }
+.cf-pagare-eligible-card.is-bloqueada { border-color: #f1d3aa; background: #fffbf5; }
+.cf-pagare-eligible-card.is-solicitud { border-color: #b9cdf6; background: #f5f8ff; }
 .cf-pagare-eligible-card > div { display: grid; gap: 2px; min-width: 0; }
 .cf-pagare-eligible-card span { color: #0f766e; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .cf-pagare-eligible-card b { overflow: hidden; color: #173b39; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .cf-pagare-eligible-card small { color: #657d7a; font-size: 10.5px; }
+.cf-pagare-eligible-card small strong { color: #173b39; }
+.cf-pagare-eligible-card__action { min-width: 150px; justify-items: stretch; }
+.cf-pagare-result-state { width: max-content; margin-bottom: 2px; padding: 3px 6px; border-radius: 999px; background: #e6f4f2; }
+.is-bloqueada .cf-pagare-result-state { background: #ffedd5; color: #9a3412; }
+.is-solicitud .cf-pagare-result-state { background: #dbeafe; color: #1d4ed8; }
+.cf-pagare-reasons { display: grid; gap: 3px; margin: 6px 0 2px; padding: 0; list-style: none; }
+.cf-pagare-reasons li,
+.cf-pagare-eligibility-message { display: flex; align-items: flex-start; gap: 6px; margin: 0; color: #5f5141; font-size: 10.5px; line-height: 1.35; }
+.cf-pagare-reasons i { margin-top: 2px; color: #d97706; }
+.cf-pagare-reasons span { color: inherit; font-size: inherit; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.cf-pagare-eligibility-message { margin-top: 6px; color: #166534; font-weight: 700; }
+.cf-pagare-eligibility-message i { margin-top: 2px; }
+.cf-pagare-no-action { display: block; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f3f4f6; color: #6b7280 !important; font-size: 10px !important; text-align: center; text-transform: none !important; }
+.cf-pagare-internal-reference { margin-top: 3px; color: #879795 !important; font-size: 9px !important; }
 .cf-button--request:disabled { cursor: not-allowed; opacity: .66; }
 .cf-reception-list { display: grid; gap: 8px; }
 .cf-reception-item { display: grid; grid-template-columns: minmax(170px,1fr) 130px minmax(180px,1fr); gap: 8px; align-items: center; padding: 9px; border: 1px solid #dce8e6; border-radius: 9px; }
@@ -314,6 +352,7 @@
   .centro-facturas-table--legajos { min-width: 1180px; }
   .centro-facturas-table--legajos .cf-legajo-documents-cell { min-width: 390px; }
   .cf-legajo-docs { grid-template-columns: repeat(3, minmax(100px, 1fr)); }
+  .cf-legajo-summary { grid-template-columns: minmax(260px, 1.5fr) repeat(3, minmax(90px, .7fr)); }
   .centro-facturas-drawer.is-legajo-detail { width: 100vw; }
   .cf-legajo-document-row { grid-template-columns: 28px minmax(125px, 1fr) minmax(90px, .65fr) minmax(110px, .8fr) minmax(165px, 1.15fr) minmax(195px, 1.35fr); gap: 6px; }
 }
@@ -334,6 +373,10 @@
   .centro-facturas-selection--legajos small { width: 100%; margin-left: 0; }
   .centro-facturas-selection--legajos small::before { display: none; }
   .centro-facturas-results { margin-left: 12px; margin-right: 12px; }
+  .cf-legajo-summary { grid-template-columns: repeat(3, minmax(90px, 1fr)); margin-left: 12px; margin-right: 12px; }
+  .cf-legajo-scope { grid-column: 1 / -1; }
+  .centro-facturas-pagination { flex-wrap: wrap; justify-content: center; }
+  .centro-facturas-pagination .cf-month-page-label { order: -1; width: 100%; margin-right: 0; }
   .centro-facturas-table--legajos { min-width: 1080px; }
   .centro-facturas-table--legajos .cf-legajo-documents-cell { min-width: 310px; }
   .cf-legajo-docs { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
@@ -355,7 +398,11 @@
   .cf-reception-item { grid-template-columns: 1fr; }
   .cf-pagare-search,
   .cf-pagare-eligible-card { grid-template-columns: 1fr; }
+  .cf-pagare-search-summary { align-items: flex-start; flex-direction: column; }
+  .cf-pagare-search-summary > span { text-align: left; }
+  .cf-pagare-eligible-card__action { min-width: 0; }
   .cf-pagare-eligible-card .cf-button { width: 100%; }
+  .cf-pagare-no-action { width: 100%; }
   .interconsulta-attachment-type { min-width: 120px; }
 }
 

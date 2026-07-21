@@ -47,22 +47,26 @@ form {
   margin: 0;
 }
 
-form > img:first-child {
+.login-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
-  opacity: 0.08;
-  filter: grayscale(1);
+  object-position: center;
+  pointer-events: none;
 }
 
 .principal {
   position: absolute;
   inset: 0;
+  z-index: 1;
   width: 100%;
   min-height: 100vh;
   overflow: auto;
   padding: 32px 16px;
-  background: rgba(247, 248, 251, 0.94);
+  background: rgba(247, 248, 251, 0.72);
 }
 
 .principal > table {

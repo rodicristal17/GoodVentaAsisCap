@@ -97,7 +97,7 @@ if ($accion === '') {
     centroFacturasResponder(array('ok' => false, 'codigo' => 'accion', 'mensaje' => 'No se indico la operacion.'));
 }
 if (!centroFacturaEstructuraDisponible()) {
-    centroFacturasResponder(array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura del Centro de Facturas no esta instalada.'));
+    centroFacturasResponder(array('ok' => false, 'codigo' => 'estructura', 'mensaje' => 'La estructura del Centro de Facturas y Documentos no esta instalada.'));
 }
 
 switch ($accion) {
@@ -132,6 +132,14 @@ switch ($accion) {
         break;
     case 'listarLegajos':
         centroFacturasResponder(centroLegajoListar(
+            $codUsuario,
+            centroFacturasFiltrosPost(),
+            intval(centroFacturasPost('limite', 80)),
+            intval(centroFacturasPost('offset', 0))
+        ));
+        break;
+    case 'listarLegajosPorCedula':
+        centroFacturasResponder(centroLegajoListarPorCedula(
             $codUsuario,
             centroFacturasFiltrosPost(),
             intval(centroFacturasPost('limite', 80)),

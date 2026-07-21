@@ -5189,7 +5189,7 @@ function configurarTiposAdjuntoDocumentoGuiado() {
     var ayudaOtro= document.getElementById("ayudaTipoOtroAdjuntoDocumento");
     if (origen == "gasto" && adjuntoDocumentoGuiadoEstado.tipoMovimiento == "Deposito") {
         tituloOtro.textContent= "Comprobante de depósito";
-        ayudaOtro.textContent= "Respaldo general, sin ingreso al Centro de Facturas";
+        ayudaOtro.textContent= "Respaldo general, sin ingreso al Centro de Facturas y Documentos";
     } else if (origen == "gasto" && adjuntoDocumentoGuiadoEstado.tipoMovimiento == "Ingreso") {
         tituloOtro.textContent= "Comprobante o imagen";
         ayudaOtro.textContent= "Respaldo del ingreso, sin factura recibida";
@@ -5583,7 +5583,7 @@ function enviarAdjuntoDocumentoGuiadoHilo(validacion) {
                     limpiarcamposMensaje();
                 }
                 var nombreDocumento= respuesta.tipo_adjunto == "factura" ? "Factura" : (respuesta.tipo_adjunto == "comprobante" ? "Recibo" : "Adjunto");
-                ver_vetana_informativa(nombreDocumento + " guardado", respuesta.centro_facturas ? "El documento también quedó registrado en el Centro de Facturas." : "El archivo quedó registrado en el Hilo.", "info");
+                ver_vetana_informativa(nombreDocumento + " guardado", respuesta.centro_facturas ? "El documento también quedó registrado en el Centro de Facturas y Documentos." : "El archivo quedó registrado en el Hilo.", "info");
                 if (respuesta.centro_facturas && typeof centroFacturasActualizarBadge == "function") {
                     centroFacturasActualizarBadge();
                 }
@@ -5911,7 +5911,7 @@ function subirImagenMensajeInterconsulta(cod_mens, codHilo, fotoCapturada, exten
                     );
                 } else if (datos.centro_facturas && datos.centro_facturas.ok) {
                     var nombreDocumentoRegistrado = datos.tipo_adjunto === "comprobante" ? "Recibo" : "Factura";
-                    ver_vetana_informativa(nombreDocumentoRegistrado + " registrado", "El adjunto ya esta disponible en el Centro de Facturas.", "info");
+                    ver_vetana_informativa(nombreDocumentoRegistrado + " registrado", "El adjunto ya esta disponible en el Centro de Facturas y Documentos.", "info");
                     if (typeof centroFacturasActualizarBadge == "function") {
                         centroFacturasActualizarBadge();
                     }

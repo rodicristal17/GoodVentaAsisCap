@@ -13,6 +13,13 @@ define('FLUJO_DASHBOARD_PERMISO', 'VERDASHBOARDFLUJOFINANCIERO');
 define('FLUJO_DASHBOARD_LOCAL_ADMIN', 1);
 define('FLUJO_DASHBOARD_PERIODO_MINIMO', '2026-05');
 
+function flujo_dashboard_tabla_existe($mysqli, $tabla)
+{
+    $tabla = $mysqli->real_escape_string($tabla);
+    $resultado = $mysqli->query("SHOW TABLES LIKE '$tabla'");
+    return $resultado && $resultado->num_rows > 0;
+}
+
 function flujo_dashboard_json($datos)
 {
     while (ob_get_level() > 0) {
@@ -317,7 +324,7 @@ function flujo_dashboard_categoria($categoria, $tipo = '')
 		return 'deposito';
 	}
     $categoria = strtolower(trim((string)$categoria));
-    if ($categoria == 'ingreso' || $categoria == 'directo' || $categoria == 'operativo' || $categoria == 'deposito') {
+    if ($categoria == 'ingreso' || $categoria == 'directo' || $categoria == 'operativo' || $categoria == 'deposito' || $categoria == 'administracion') {
         return $categoria;
     }
     return 'sinCategoria';
@@ -333,17 +340,47 @@ function flujo_dashboard_sumar_movimientos($mysqli, $ids, $desde, $hasta)
 
     $desdeSql = $mysqli->real_escape_string($desde);
     $hastaSql = $mysqli->real_escape_string($hasta);
-    $sql = "SELECT g.cod_local, IFNULL(g.tipo,'') AS tipo,
-            IFNULL(m.descripcion,'') AS concepto,
-            IFNULL(m.categoria,'') AS categoria,
-            IFNULL(SUM(g.monto),0) AS total
-            FROM gastos g
-            LEFT JOIN motivos_ingreso_egreso m ON m.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
-            WHERE g.fecha>='$desdeSql'
-            AND g.fecha<='$hastaSql'
-            AND g.cod_local IN ($idsSql)
-            AND LOWER(TRIM(IFNULL(g.estado,''))) IN ('activo','pendiente','solicitado')
-            GROUP BY g.cod_local, IFNULL(g.tipo,''), IFNULL(m.descripcion,''), IFNULL(m.categoria,'')";
+    if (flujo_dashboard_tabla_existe($mysqli, 'gasto_distribucion_local')) {
+        $sql = "SELECT mov.cod_local, mov.tipo, mov.concepto, mov.categoria, IFNULL(SUM(mov.monto),0) AS total
+            FROM (
+                SELECT d.cod_localFK AS cod_local, IFNULL(g.tipo,'') AS tipo,
+                    IFNULL(m.descripcion,'') AS concepto,
+                    IF(g.cod_local=".(int)FLUJO_DASHBOARD_LOCAL_ADMIN.", 'administracion', IFNULL(m.categoria,'')) AS categoria,
+                    d.monto_asignado AS monto
+                FROM gasto_distribucion_local d
+                INNER JOIN gastos g ON g.idgastos=d.idgastosFK
+                LEFT JOIN motivos_ingreso_egreso m ON m.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
+                WHERE g.fecha>='$desdeSql' AND g.fecha<='$hastaSql'
+                    AND d.cod_localFK IN ($idsSql)
+                    AND LOWER(TRIM(IFNULL(g.tipo,'')))='egreso'
+                    AND LOWER(TRIM(IFNULL(g.estado,''))) IN ('activo','pendiente','solicitado')
+                UNION ALL
+                SELECT g.cod_local, IFNULL(g.tipo,'') AS tipo,
+                    IFNULL(m.descripcion,'') AS concepto,
+                    IFNULL(m.categoria,'') AS categoria,
+                    g.monto
+                FROM gastos g
+                LEFT JOIN motivos_ingreso_egreso m ON m.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
+                WHERE g.fecha>='$desdeSql' AND g.fecha<='$hastaSql'
+                    AND g.cod_local IN ($idsSql)
+                    AND LOWER(TRIM(IFNULL(g.estado,''))) IN ('activo','pendiente','solicitado')
+                    AND (LOWER(TRIM(IFNULL(g.tipo,'')))!='egreso'
+                        OR NOT EXISTS (SELECT 1 FROM gasto_distribucion_local dx WHERE dx.idgastosFK=g.idgastos))
+            ) mov
+            GROUP BY mov.cod_local, mov.tipo, mov.concepto, mov.categoria";
+    } else {
+        $sql = "SELECT g.cod_local, IFNULL(g.tipo,'') AS tipo,
+                IFNULL(m.descripcion,'') AS concepto,
+                IFNULL(m.categoria,'') AS categoria,
+                IFNULL(SUM(g.monto),0) AS total
+                FROM gastos g
+                LEFT JOIN motivos_ingreso_egreso m ON m.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
+                WHERE g.fecha>='$desdeSql'
+                AND g.fecha<='$hastaSql'
+                AND g.cod_local IN ($idsSql)
+                AND LOWER(TRIM(IFNULL(g.estado,''))) IN ('activo','pendiente','solicitado')
+                GROUP BY g.cod_local, IFNULL(g.tipo,''), IFNULL(m.descripcion,''), IFNULL(m.categoria,'')";
+    }
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt || !$stmt->execute()) {
@@ -374,6 +411,9 @@ function flujo_dashboard_total_admin($mysqli, $desde, $hasta)
     $desdeSql = $mysqli->real_escape_string($desde);
     $hastaSql = $mysqli->real_escape_string($hasta);
     $codAdmin = (int)FLUJO_DASHBOARD_LOCAL_ADMIN;
+    $soloHistoricosSinDistribucion = flujo_dashboard_tabla_existe($mysqli, 'gasto_distribucion_local')
+        ? " AND NOT EXISTS (SELECT 1 FROM gasto_distribucion_local d WHERE d.idgastosFK=g.idgastos)"
+        : "";
 
     $sql = "SELECT IFNULL(SUM(g.monto),0) AS total
             FROM gastos g
@@ -383,7 +423,8 @@ function flujo_dashboard_total_admin($mysqli, $desde, $hasta)
             AND g.cod_local=$codAdmin
             AND g.tipo='Egreso'
             AND LOWER(TRIM(IFNULL(g.estado,''))) IN ('activo','pendiente','solicitado')
-            AND IFNULL(m.categoria,'')!='ingreso'";
+            AND IFNULL(m.categoria,'')!='ingreso'
+            $soloHistoricosSinDistribucion";
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt || !$stmt->execute()) {
@@ -565,7 +606,7 @@ function flujo_dashboard_movimiento_gasto($row, $montoAsignado = null, $localDes
 
     if ($localDestino != '') {
         $movimiento['localDestino'] = $localDestino;
-        $movimiento['descripcion'] = $descripcion . ' | Asignacion administrativa desde ' . $movimiento['localOrigen'];
+        $movimiento['descripcion'] = $descripcion . ' | Asignacion contable a ' . $localDestino . ' desde ' . $movimiento['localOrigen'];
     }
 
     return $movimiento;
@@ -615,19 +656,31 @@ function flujo_dashboard_detalle_gastos_local($mysqli, &$categorias, $codLocal, 
     $desdeSql = $mysqli->real_escape_string($desde);
     $hastaSql = $mysqli->real_escape_string($hasta);
 
-    $sql = "SELECT g.idgastos, g.monto, g.motivo AS descripcion, g.fecha, g.estado, g.tipo,
-            g.cod_motivoIngresoEgresoFK, g.nroboleta,
+    $tieneDistribucion = flujo_dashboard_tabla_existe($mysqli, 'gasto_distribucion_local');
+    $campoMonto = $tieneDistribucion ? "IFNULL(d.monto_asignado,g.monto) AS monto_asignado," : "g.monto AS monto_asignado,";
+    $joinDistribucion = $tieneDistribucion
+        ? " LEFT JOIN gasto_distribucion_local d ON d.idgastosFK=g.idgastos AND d.cod_localFK=$codLocal"
+        : "";
+    $filtroLocal = $tieneDistribucion
+        ? " AND ((LOWER(TRIM(IFNULL(g.tipo,'')))='egreso' AND (d.id_distribucion IS NOT NULL OR (g.cod_local=$codLocal AND NOT EXISTS (SELECT 1 FROM gasto_distribucion_local dx WHERE dx.idgastosFK=g.idgastos)))) OR (LOWER(TRIM(IFNULL(g.tipo,'')))!='egreso' AND g.cod_local=$codLocal))"
+        : " AND g.cod_local=$codLocal";
+
+    $sql = "SELECT g.idgastos, g.monto, $campoMonto g.motivo AS descripcion, g.fecha, g.estado, g.tipo,
+            g.cod_local AS cod_local_origen, g.cod_motivoIngresoEgresoFK, g.nroboleta,
             IFNULL(m.descripcion,'') AS concepto,
-            IFNULL(m.categoria,'') AS categoria,
+            IF(g.cod_local=".(int)FLUJO_DASHBOARD_LOCAL_ADMIN." AND LOWER(TRIM(IFNULL(g.tipo,'')))='egreso'".($tieneDistribucion ? " AND d.id_distribucion IS NOT NULL" : " AND 1=0").", 'administracion', IFNULL(m.categoria,'')) AS categoria,
             IFNULL((SELECT nombre_persona FROM persona WHERE cod_persona=g.cod_usuario LIMIT 1),'') AS usuario_nombre,
-            IFNULL((SELECT Nombre FROM local l WHERE l.cod_local=g.cod_local LIMIT 1),'') AS nombrelocal
+            IFNULL((SELECT Nombre FROM local l WHERE l.cod_local=g.cod_local LIMIT 1),'') AS nombrelocal,
+            IFNULL((SELECT Nombre FROM local ld WHERE ld.cod_local=$codLocal LIMIT 1),'') AS nombrelocal_destino,
+            ".($tieneDistribucion ? "IF(d.id_distribucion IS NULL,0,1)" : "0")." AS es_asignacion
             FROM gastos g
             LEFT JOIN motivos_ingreso_egreso m ON m.cod_motivo_ingreso_egreso=g.cod_motivoIngresoEgresoFK
+            $joinDistribucion
             WHERE g.fecha>='$desdeSql'
             AND g.fecha<='$hastaSql'
-            AND g.cod_local=$codLocal
+            $filtroLocal
             AND LOWER(TRIM(IFNULL(g.estado,''))) IN ('activo','pendiente','solicitado')
-            ORDER BY FIELD(IFNULL(m.categoria,''), 'ingreso', 'directo', 'operativo'), m.categoria IS NULL, m.descripcion ASC, g.fecha DESC, g.idgastos DESC";
+            ORDER BY FIELD(categoria, 'ingreso', 'directo', 'operativo', 'administracion'), categoria IS NULL, concepto ASC, g.fecha DESC, g.idgastos DESC";
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt || !$stmt->execute()) {
@@ -642,14 +695,40 @@ function flujo_dashboard_detalle_gastos_local($mysqli, &$categorias, $codLocal, 
         $categoria = flujo_dashboard_nombre_categoria($row['categoria'], $row['tipo']);
         $conceptoCodigo = trim((string)$row['cod_motivoIngresoEgresoFK']);
         $conceptoNombre = flujo_dashboard_to_utf8($row['concepto']);
+		$montoAsignado = !empty($row['es_asignacion']) ? (int)round($row['monto_asignado']) : null;
+		$localDestino = !empty($row['es_asignacion']) ? flujo_dashboard_to_utf8($row['nombrelocal_destino']) : '';
         flujo_dashboard_agregar_movimiento(
             $categorias,
             $categoria,
             $conceptoCodigo,
             $conceptoNombre,
-            flujo_dashboard_movimiento_gasto($row)
+            flujo_dashboard_movimiento_gasto($row, $montoAsignado, $localDestino)
         );
     }
+}
+
+function flujo_dashboard_distribuir_admin_registros($registros)
+{
+    $locales = flujo_dashboard_locales_fijos();
+    $cantidad = count($locales);
+    $distribucion = array();
+    foreach ($locales as $codigo => $nombre) {
+        $distribucion[$codigo] = 0;
+    }
+    if ($cantidad <= 0) {
+        return $distribucion;
+    }
+    foreach ($registros as $row) {
+        $monto = max(0, (int)round($row['monto']));
+        $base = intdiv($monto, $cantidad);
+        $residuo = $monto % $cantidad;
+        $indice = 0;
+        foreach ($locales as $codigo => $nombre) {
+            $distribucion[$codigo] += $base + ($indice < $residuo ? 1 : 0);
+            $indice++;
+        }
+    }
+    return $distribucion;
 }
 
 function flujo_dashboard_gastos_admin_origen($mysqli, $desde, $hasta)
@@ -657,6 +736,9 @@ function flujo_dashboard_gastos_admin_origen($mysqli, $desde, $hasta)
     $desdeSql = $mysqli->real_escape_string($desde);
     $hastaSql = $mysqli->real_escape_string($hasta);
     $codAdmin = (int)FLUJO_DASHBOARD_LOCAL_ADMIN;
+	$soloHistoricosSinDistribucion = flujo_dashboard_tabla_existe($mysqli, 'gasto_distribucion_local')
+		? " AND NOT EXISTS (SELECT 1 FROM gasto_distribucion_local d WHERE d.idgastosFK=g.idgastos)"
+		: "";
 
     $sql = "SELECT g.idgastos, g.monto, g.motivo AS descripcion, g.fecha, g.estado, g.tipo,
             g.cod_motivoIngresoEgresoFK, g.nroboleta,
@@ -672,6 +754,7 @@ function flujo_dashboard_gastos_admin_origen($mysqli, $desde, $hasta)
             AND g.tipo='Egreso'
             AND LOWER(TRIM(IFNULL(g.estado,''))) IN ('activo','pendiente','solicitado')
             AND IFNULL(m.categoria,'')!='ingreso'
+			$soloHistoricosSinDistribucion
             ORDER BY FIELD(IFNULL(m.categoria,''), 'directo', 'operativo'), m.categoria IS NULL, m.descripcion ASC, g.fecha DESC, g.idgastos DESC";
 
     $stmt = $mysqli->prepare($sql);
@@ -695,33 +778,22 @@ function flujo_dashboard_detalle_admin_asignado($mysqli, &$categorias, $codLocal
     }
 
     $registros = flujo_dashboard_gastos_admin_origen($mysqli, $desde, $hasta);
-    $totalOrigen = 0;
-    foreach ($registros as $row) {
-        $totalOrigen += (int)round($row['monto']);
-    }
-
-    $distribucion = flujo_dashboard_distribuir_admin($totalOrigen);
+    $distribucion = flujo_dashboard_distribuir_admin_registros($registros);
     $montoObjetivoLocal = isset($distribucion[$codLocal]) ? (int)$distribucion[$codLocal] : 0;
     if ($montoObjetivoLocal <= 0 || count($registros) == 0) {
         return;
     }
 
     $cantidadLocales = count(flujo_dashboard_locales_fijos());
-    $bases = array();
-    $totalBaseLocal = 0;
+	$codigosLocales = array_keys(flujo_dashboard_locales_fijos());
+	$indiceLocal = array_search((int)$codLocal, $codigosLocales, true);
     foreach ($registros as $indice => $row) {
-        $montoBase = $cantidadLocales > 0 ? intdiv((int)round($row['monto']), $cantidadLocales) : 0;
-        $bases[$indice] = $montoBase;
-        $totalBaseLocal += $montoBase;
-    }
-
-    $diferencia = $montoObjetivoLocal - $totalBaseLocal;
-    foreach ($registros as $indice => $row) {
-        $montoAsignado = isset($bases[$indice]) ? (int)$bases[$indice] : 0;
-        if ($diferencia > 0) {
-            $montoAsignado += 1;
-            $diferencia--;
-        }
+		$montoRegistro = max(0, (int)round($row['monto']));
+		$montoAsignado = $cantidadLocales > 0 ? intdiv($montoRegistro, $cantidadLocales) : 0;
+		$residuoRegistro = $cantidadLocales > 0 ? $montoRegistro % $cantidadLocales : 0;
+		if ($indiceLocal !== false && $indiceLocal < $residuoRegistro) {
+			$montoAsignado++;
+		}
         if ($montoAsignado <= 0) {
             continue;
         }
@@ -834,8 +906,12 @@ function flujo_dashboard_responder($user)
     $nombres = flujo_dashboard_nombres_locales($mysqli);
     $pagos = flujo_dashboard_sumar_pagos($mysqli, $idsAutorizados, $desde, $hasta);
     $movimientos = flujo_dashboard_sumar_movimientos($mysqli, $idsAutorizados, $desde, $hasta);
-    $totalAdmin = flujo_dashboard_total_admin($mysqli, $desde, $hasta);
-    $adminPorLocal = flujo_dashboard_distribuir_admin($totalAdmin);
+    $registrosAdmin = flujo_dashboard_gastos_admin_origen($mysqli, $desde, $hasta);
+    $adminPorLocal = flujo_dashboard_distribuir_admin_registros($registrosAdmin);
+	$totalAdmin = 0;
+	foreach ($registrosAdmin as $registroAdmin) {
+		$totalAdmin += max(0, (int)round($registroAdmin['monto']));
+	}
 
     $locales = array();
     $totalIngresos = 0;
@@ -857,7 +933,9 @@ function flujo_dashboard_responder($user)
         $costosVariables = isset($mov['directo']) ? (int)$mov['directo'] : 0;
         $gastosFijos = isset($mov['operativo']) ? (int)$mov['operativo'] : 0;
         $sinCategorizar = isset($mov['sinCategoria']) ? (int)$mov['sinCategoria'] : 0;
-        $administracion = isset($adminPorLocal[$codigo]) ? (int)$adminPorLocal[$codigo] : 0;
+        $administracionPersistida = isset($mov['administracion']) ? (int)$mov['administracion'] : 0;
+        $administracionHistorica = isset($adminPorLocal[$codigo]) ? (int)$adminPorLocal[$codigo] : 0;
+        $administracion = $administracionPersistida + $administracionHistorica;
         $egresos = $costosVariables + $gastosFijos + $administracion + $sinCategorizar;
         $resultado = $ingresos - $egresos;
 
