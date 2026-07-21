@@ -2,8 +2,9 @@
 require_once("conexion.php");
 include_once("verificar_navegador.php");
 include_once("producto_riesgo_financiero_helper.php");
+require_once("trabajo_laboratorio_helper.php");
 
-date_default_timezone_set('America/Asuncion');
+date_default_timezone_set('Etc/GMT+3');
 
 function odontoPost($key, $default = "")
 {
@@ -406,12 +407,21 @@ function odontoObtenerAlcanceProducto($mysqli, $productoId)
     if (!$row) {
         odontoResponder("error", array("mensaje" => "Tratamiento no encontrado."));
     }
+	$configuracionLaboratorio = function_exists("trabajoLaboratorioObtenerConfiguracionProducto")
+		? trabajoLaboratorioObtenerConfiguracionProducto($mysqli, $row["cod_producto"])
+		: array("ok" => false);
+	$requiereLaboratorio = !empty($configuracionLaboratorio["ok"]) ? (int)$configuracionLaboratorio["requiere_laboratorio"] : 0;
+	$modoIndividualizacion = !empty($configuracionLaboratorio["ok"]) ? (string)$configuracionLaboratorio["modo_individualizacion"] : "cantidad_libre";
     odontoResponder("exito", array(
         "producto" => array(
             "cod_producto" => odontoUtf8($row["cod_producto"]),
             "nombre_producto" => odontoUtf8($row["nombre_producto"]),
             "alcance_odontologico" => odontoAlcanceSeguroProducto($row["alcance_odontologico"], $row["nombre_producto"], odontoForzarUnidadPiezaPresupuesto()),
-            "nivel_riesgo_financiero" => odontoObtenerRiesgoProducto($mysqli, $row["cod_producto"])
+            "nivel_riesgo_financiero" => odontoObtenerRiesgoProducto($mysqli, $row["cod_producto"]),
+			"requiere_laboratorio" => $requiereLaboratorio,
+			"modo_individualizacion" => $modoIndividualizacion,
+			"origen_requiere_laboratorio" => !empty($configuracionLaboratorio["ok"]) ? $configuracionLaboratorio["origen_requiere_laboratorio"] : "predeterminado",
+			"origen_modo_individualizacion" => !empty($configuracionLaboratorio["ok"]) ? $configuracionLaboratorio["origen_modo_individualizacion"] : "predeterminado"
         )
     ));
 }
@@ -766,10 +776,20 @@ function odontoTratamientosSinUbicacion($mysqli, $ctx, $odontogramaId)
         return array();
     }
     $selectRiesgo = ProductoRiesgoFinancieroSelectSql($mysqli, "pr");
-    $stmt = $mysqli->prepare("SELECT dtv.cod_detalle, dtv.cod_ventaFK, dtv.cod_productoFK, pr.nombre_producto, pr.alcance_odontologico, IFNULL(dtv.progreso_porcentaje,0) AS progreso_porcentaje, IFNULL(dtv.estado_tratamiento,'') AS estado_tratamiento, ".$selectRiesgo."
+    $configuracionLaboratorioDisponible = function_exists("trabajoLaboratorioConfiguracionDisponible")
+        && trabajoLaboratorioConfiguracionDisponible($mysqli);
+    $selectLaboratorio = $configuracionLaboratorioDisponible
+        ? ", COALESCE(pr.requiere_laboratorio,ca.requiere_laboratorio,0) AS requiere_laboratorio_efectivo,
+            COALESCE(NULLIF(pr.modo_individualizacion,''),NULLIF(ca.modo_individualizacion,''),'cantidad_libre') AS modo_individualizacion_efectivo"
+        : ", 0 AS requiere_laboratorio_efectivo, 'cantidad_libre' AS modo_individualizacion_efectivo";
+    $joinCategoriaLaboratorio = $configuracionLaboratorioDisponible
+        ? " LEFT JOIN categoria ca ON ca.cod_categoria=pr.cod_categoriaFK "
+        : "";
+    $stmt = $mysqli->prepare("SELECT dtv.cod_detalle, dtv.cod_ventaFK, dtv.cod_productoFK, pr.nombre_producto, pr.alcance_odontologico, IFNULL(dtv.progreso_porcentaje,0) AS progreso_porcentaje, IFNULL(dtv.estado_tratamiento,'') AS estado_tratamiento, ".$selectRiesgo.$selectLaboratorio."
         FROM detalle_venta dtv
         INNER JOIN venta vt ON vt.cod_venta = dtv.cod_ventaFK
         INNER JOIN producto pr ON pr.cod_producto = dtv.cod_productoFK
+        ".$joinCategoriaLaboratorio."
         LEFT JOIN odontograma_tratamiento_links l ON l.detalle_venta_id = dtv.cod_detalle AND l.activo = 1
         WHERE vt.cod_clienteFK = ?
           AND l.id IS NULL
@@ -793,6 +813,8 @@ function odontoTratamientosSinUbicacion($mysqli, $ctx, $odontogramaId)
             "producto_id" => odontoUtf8($row["cod_productoFK"]),
             "nombre_tratamiento" => odontoUtf8($row["nombre_producto"]),
             "alcance_odontologico" => odontoNormalizarAlcance($row["alcance_odontologico"]),
+            "requiere_laboratorio" => isset($row["requiere_laboratorio_efectivo"]) ? (int)$row["requiere_laboratorio_efectivo"] : 0,
+            "modo_individualizacion" => isset($row["modo_individualizacion_efectivo"]) ? odontoUtf8($row["modo_individualizacion_efectivo"]) : "cantidad_libre",
             "nivel_riesgo_financiero" => isset($row["nivel_riesgo_financiero"]) ? (int)$row["nivel_riesgo_financiero"] : 1,
             "progreso" => (int)$row["progreso_porcentaje"],
             "estado_tratamiento" => odontoUtf8($row["estado_tratamiento"])

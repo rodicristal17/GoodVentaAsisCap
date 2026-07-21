@@ -5,6 +5,7 @@ include("buscar_nivel.php");
 include("classTable.php");
 include_once("producto_riesgo_financiero_helper.php");
 require_once("interconsulta_seguimiento_paciente_helper.php");
+require_once("tratamiento_laboratorio_integracion_helper.php");
 
 $operacion = $_POST['funt'];
 $operacion = mb_convert_encoding((string)($operacion), 'ISO-8859-1', 'UTF-8');
@@ -843,6 +844,10 @@ function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje,$
 	$porcentaje = (int)round((float)$porcentaje);
 	if ($porcentaje < 0) { $porcentaje = 0; }
 	if ($porcentaje > 100) { $porcentaje = 100; }
+	if (!$mysqli->begin_transaction()) {
+		mysqli_close($mysqli);
+		responderConsultaJson("error","No se pudo iniciar el guardado seguro de la evolucion.");
+	}
 
 	$sqlDetalle = "SELECT dtv.cod_detalle, dtv.cod_ventaFK, dtv.progreso_porcentaje, dtv.estado, dtv.estado_tratamiento, pr.nombre_producto
 		FROM detalle_venta dtv
@@ -851,9 +856,11 @@ function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje,$
 	if ($cod_venta != "") {
 		$sqlDetalle .= " AND dtv.cod_ventaFK = ?";
 	}
-	$sqlDetalle .= " LIMIT 1";
+	$sqlDetalle .= " LIMIT 1 FOR UPDATE";
 	$stmtDetalle = $mysqli->prepare($sqlDetalle);
 	if (!$stmtDetalle) {
+		$mysqli->rollback();
+		mysqli_close($mysqli);
 		responderConsultaJson("error","No se pudo preparar la validacion del tratamiento.");
 	}
 	if ($cod_venta != "") {
@@ -862,23 +869,34 @@ function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje,$
 		$stmtDetalle->bind_param("s", $id_detalle_tratamientoConsulta);
 	}
 	if (!$stmtDetalle->execute()) {
+		$mysqli->rollback();
+		mysqli_close($mysqli);
 		responderConsultaJson("error","No se pudo validar el tratamiento.");
 	}
 	$resultDetalle = $stmtDetalle->get_result();
 	if (!($detalle = mysqli_fetch_assoc($resultDetalle))) {
+		$stmtDetalle->close();
+		$mysqli->rollback();
+		mysqli_close($mysqli);
 		responderConsultaJson("error","El tratamiento no pertenece a la venta o paciente activo.");
 	}
+	$stmtDetalle->close();
 	$porcentajeAnterior = normalizarPorcentajePlanTratamientoConsulta($detalle["progreso_porcentaje"]);
 
 	$stmtUpdate = $mysqli->prepare("UPDATE detalle_venta SET progreso_porcentaje = ? WHERE cod_detalle = ? LIMIT 1");
 	if (!$stmtUpdate) {
+		$mysqli->rollback();
+		mysqli_close($mysqli);
 		responderConsultaJson("error","No se pudo preparar el guardado del progreso.");
 	}
 	$stmtUpdate->bind_param("is", $porcentaje, $id_detalle_tratamientoConsulta);
 	if (!$stmtUpdate->execute()) {
-		echo trigger_error('The query execution failed; MySQL said ('.$stmtUpdate->errno.') '.$stmtUpdate->error, E_USER_ERROR);
-		exit;
+		$stmtUpdate->close();
+		$mysqli->rollback();
+		mysqli_close($mysqli);
+		responderConsultaJson("error","No se pudo guardar el progreso del tratamiento.");
 	}
+	$stmtUpdate->close();
 
 	$tienePorcentajeAnterior = columnaExisteConsulta($mysqli,"evoluciontratamiento","porcentaje_anterior");
 	$tieneObservacion = columnaExisteConsulta($mysqli,"evoluciontratamiento","observacion");
@@ -887,20 +905,41 @@ function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje,$
 	if ($tienePorcentajeAnterior && $tieneObservacion) {
 		$stmtEvolucion = $mysqli->prepare("INSERT INTO evoluciontratamiento (cod_detalle_venta,cod_usuraioFK,nro,fecha,cod_agendaFK,porcentaje_anterior,observacion) VALUES (?,?,?,NOW(),?,?,?)");
 		if (!$stmtEvolucion) {
+			$mysqli->rollback();
+			mysqli_close($mysqli);
 			responderConsultaJson("error","No se pudo preparar el historial de evolucion.");
 		}
 		$stmtEvolucion->bind_param("ssiiis", $id_detalle_tratamientoConsulta, $user, $porcentaje, $codAgendaValor, $porcentajeAnterior, $observacion);
 	} else {
 		$stmtEvolucion = $mysqli->prepare("INSERT INTO evoluciontratamiento (cod_detalle_venta,cod_usuraioFK,nro,fecha,cod_agendaFK) VALUES (?,?,?,NOW(),?)");
 		if (!$stmtEvolucion) {
+			$mysqli->rollback();
+			mysqli_close($mysqli);
 			responderConsultaJson("error","No se pudo preparar el historial de evolucion.");
 		}
 		$stmtEvolucion->bind_param("ssii", $id_detalle_tratamientoConsulta, $user, $porcentaje, $codAgendaValor);
 	}
 	if (!$stmtEvolucion->execute()) {
-		echo trigger_error('The query execution failed; MySQL said ('.$stmtEvolucion->errno.') '.$stmtEvolucion->error, E_USER_ERROR);
-		exit;
+		$stmtEvolucion->close();
+		$mysqli->rollback();
+		mysqli_close($mysqli);
+		responderConsultaJson("error","No se pudo registrar el historial de evolucion.");
 	}
+	$codEvolucion = intval($stmtEvolucion->insert_id);
+	$stmtEvolucion->close();
+	if (!$mysqli->commit()) {
+		$mysqli->rollback();
+		mysqli_close($mysqli);
+		responderConsultaJson("error","No se pudo confirmar la evolucion del tratamiento.");
+	}
+	$contextoLaboratorio = tratamientoLaboratorioContextoEvolucion(
+		$mysqli,
+		$id_detalle_tratamientoConsulta,
+		isset($detalle["cod_ventaFK"]) ? $detalle["cod_ventaFK"] : $cod_venta,
+		"evolucion_rapida",
+		null,
+		$codEvolucion
+	);
 
 	$estadoClase = normalizarEstadoPlanTratamientoConsulta($detalle["estado"], $detalle["estado_tratamiento"], $porcentaje);
 	$estadoTexto = textoEstadoPlanTratamientoConsulta($estadoClase);
@@ -909,7 +948,9 @@ function guardarPorcentajeProgreso($id_detalle_tratamientoConsulta,$porcentaje,$
 		"porcentaje_anterior" => $porcentajeAnterior,
 		"porcentaje_nuevo" => $porcentaje,
 		"estado_clase" => $estadoClase,
-		"estado_texto" => $estadoTexto
+		"estado_texto" => $estadoTexto,
+		"cod_evolucion" => $codEvolucion,
+		"laboratorio" => $contextoLaboratorio
 	);
     mysqli_close($mysqli);
     echo json_encode($informacion);
@@ -1006,7 +1047,9 @@ function registrarEvolucionTratamientoConsultaRegistro($mysqli,$detalle,$user,$p
 	if (!$stmtEvolucion->execute()) {
 		return array("ok" => false, "mensaje" => "No se pudo registrar la evolucion del tratamiento.");
 	}
-	return array("ok" => true, "porcentaje_anterior" => $porcentajeAnterior, "porcentaje_nuevo" => $porcentaje);
+	$codEvolucion = intval($stmtEvolucion->insert_id);
+	$stmtEvolucion->close();
+	return array("ok" => true, "porcentaje_anterior" => $porcentajeAnterior, "porcentaje_nuevo" => $porcentaje, "cod_evolucion" => $codEvolucion);
 }
 
 
@@ -1099,6 +1142,7 @@ function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha
 	$evaluacionAgenda = evaluarTratamientoAgendaConsulta($mysqli,$cod_agendamiento,$cod_detalle_tratamiento);
 	$avance_tratamiento = normalizarPorcentajePlanTratamientoConsulta($avance_tratamiento);
 	$mysqli->autocommit(false);
+	$codEvolucion = null;
 
     if ($operacion == "nuevo") {
         $consulta1 = "INSERT INTO consulta (
@@ -1173,6 +1217,7 @@ function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha
 			mysqli_close($mysqli);
 			responderConsultaJson("error",$evolucion["mensaje"]);
 		}
+		$codEvolucion = isset($evolucion["cod_evolucion"]) ? intval($evolucion["cod_evolucion"]) : null;
     } else {
 		$imprevisto = array("ok" => true, "id_agenda" => "", "creado" => false);
     }
@@ -1189,15 +1234,28 @@ function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha
 		mysqli_close($mysqli);
         responderConsultaJson("error","No se pudo actualizar el beneficiario de la venta.");
     }
-	
-	$mysqli->commit();
+	if (!$mysqli->commit()) {
+		$mysqli->rollback();
+		mysqli_close($mysqli);
+		responderConsultaJson("error","No se pudo confirmar el registro clinico.");
+	}
+	$contextoLaboratorio = tratamientoLaboratorioContextoEvolucion(
+		$mysqli,
+		$cod_detalle_tratamiento,
+		$cod_venta,
+		$operacion == "nuevo" ? "consulta_nueva" : "consulta_editada",
+		$cod_consulta,
+		$codEvolucion
+	);
     $informacion = array(
 		"1" => "exito",
 		"2" => $cod_consulta,
 		"agenda_imprevista_id" => isset($imprevisto["id_agenda"]) ? (string)$imprevisto["id_agenda"] : "",
 		"agenda_imprevista_creada" => !empty($imprevisto["creado"]) ? "1" : "0",
 		"agenda_actualizar_original" => !empty($imprevisto["creado"]) ? "0" : "1",
-		"agenda_validacion" => isset($evaluacionAgenda["motivo"]) ? (string)$evaluacionAgenda["motivo"] : ""
+		"agenda_validacion" => isset($evaluacionAgenda["motivo"]) ? (string)$evaluacionAgenda["motivo"] : "",
+		"cod_evolucion" => $codEvolucion,
+		"laboratorio" => $contextoLaboratorio
 	);
     mysqli_close($mysqli);
     echo json_encode($informacion);

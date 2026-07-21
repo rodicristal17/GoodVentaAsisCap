@@ -9192,6 +9192,88 @@ function datosTemporalidadProducto() {
 	};
 }
 
+function setConfiguracionLaboratorioProductoDefaults() {
+	setValorProductoTemporalidad("inptRequiereLaboratorioProducto", "");
+	setValorProductoTemporalidad("inptModoIndividualizacionProducto", "");
+	var card = document.getElementById("productoLaboratorioCard");
+	if (card) {
+		card.setAttribute("data-requiere-efectivo", "0");
+		card.setAttribute("data-modo-efectivo", "cantidad_libre");
+	}
+	actualizarAyudaConfiguracionLaboratorioProducto();
+}
+
+function cargarConfiguracionLaboratorioProductoDesdeFila(fila) {
+	var requiere = obtenerValorCeldaProductoTemporalidad(fila, "td_datos_130", "");
+	var modo = obtenerValorCeldaProductoTemporalidad(fila, "td_datos_131", "");
+	var requiereEfectivo = obtenerValorCeldaProductoTemporalidad(fila, "td_datos_132", "0");
+	var modoEfectivo = obtenerValorCeldaProductoTemporalidad(fila, "td_datos_133", "cantidad_libre");
+	setValorProductoTemporalidad("inptRequiereLaboratorioProducto", requiere);
+	setValorProductoTemporalidad("inptModoIndividualizacionProducto", modo);
+	var card = document.getElementById("productoLaboratorioCard");
+	if (card) {
+		card.setAttribute("data-requiere-efectivo", String(requiereEfectivo || "0"));
+		card.setAttribute("data-modo-efectivo", String(modoEfectivo || "cantidad_libre"));
+	}
+	actualizarAyudaConfiguracionLaboratorioProducto();
+}
+
+function actualizarAyudaConfiguracionLaboratorioProducto() {
+	var requiereElemento = document.getElementById("inptRequiereLaboratorioProducto");
+	var modoElemento = document.getElementById("inptModoIndividualizacionProducto");
+	var ayuda = document.getElementById("ayudaConfiguracionLaboratorioProducto");
+	var card = document.getElementById("productoLaboratorioCard");
+	if (!requiereElemento || !modoElemento || !ayuda) { return; }
+	var requiere = requiereElemento.value;
+	var modo = modoElemento.value;
+	var requiereEfectivo = requiere !== "" ? requiere : (card ? card.getAttribute("data-requiere-efectivo") : "0");
+	var modoEfectivo = modo !== "" ? modo : (card ? card.getAttribute("data-modo-efectivo") : "cantidad_libre");
+	var etiquetas = {
+		cantidad_libre: "cantidad libre",
+		pieza_individual: "una pieza dentaria independiente",
+		multipieza: "un tratamiento unico sobre varias piezas",
+		arcada: "un tratamiento por arcada",
+		sector: "un tratamiento por sector",
+		dispositivo: "un dispositivo clinico independiente"
+	};
+	var origen = (requiere === "" || modo === "") ? " Los valores sin excepcion se heredan de la categoria." : "";
+	ayuda.style.color = "";
+	if (modoEfectivo !== "cantidad_libre") {
+		ayuda.textContent = "Comportamiento efectivo: " + (requiereEfectivo == "1" ? "requiere laboratorio; " : "sin laboratorio; ") + (etiquetas[modoEfectivo] || modoEfectivo) + ". Cada tratamiento se presupuesta con cantidad 1; su ubicacion puede contener una o varias piezas segun el modo." + origen;
+	} else if (requiereEfectivo == "1") {
+		ayuda.style.color = "#b42318";
+		ayuda.textContent = "Configuracion incompleta: si requiere laboratorio, selecciona un modo clinico de individualizacion. Cantidad libre se reserva para insumos y productos no clinicos." + origen;
+	} else {
+		ayuda.textContent = "Comportamiento efectivo: cantidad libre. Las cantidades de insumos y productos no clinicos continuan funcionando como hasta ahora." + origen;
+	}
+}
+
+function validarConfiguracionLaboratorioProductoAntesDeGuardar() {
+	var requiereElemento = document.getElementById("inptRequiereLaboratorioProducto");
+	var modoElemento = document.getElementById("inptModoIndividualizacionProducto");
+	var card = document.getElementById("productoLaboratorioCard");
+	if (!requiereElemento || !modoElemento) { return true; }
+	var requiereEfectivo = requiereElemento.value !== ""
+		? requiereElemento.value
+		: (card ? card.getAttribute("data-requiere-efectivo") : "0");
+	var modoEfectivo = modoElemento.value !== ""
+		? modoElemento.value
+		: (card ? card.getAttribute("data-modo-efectivo") : "cantidad_libre");
+	if (requiereEfectivo == "1" && modoEfectivo === "cantidad_libre") {
+		ver_vetana_informativa("SI REQUIERE LABORATORIO, SELECCIONA COMO SE INDIVIDUALIZA EL TRATAMIENTO");
+		modoElemento.focus();
+		return false;
+	}
+	return true;
+}
+
+function datosConfiguracionLaboratorioProducto() {
+	return {
+		requiere_laboratorio: document.getElementById("inptRequiereLaboratorioProducto") ? document.getElementById("inptRequiereLaboratorioProducto").value : "",
+		modo_individualizacion: document.getElementById("inptModoIndividualizacionProducto") ? document.getElementById("inptModoIndividualizacionProducto").value : ""
+	};
+}
+
 function obtenerdatosabmProducto(datostr) {
 	$("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''
@@ -9242,6 +9324,7 @@ cod_barraAnt = $(datostr).children('td[id="td_datos_19"]').html();
 	idFkProductoTipoImpuesto = $(datostr).children('td[id="td_datos_16"]').html();
 	codProveedorAbmProducto = $(datostr).children('td[id="td_datos_23"]').html();
 	cargarTemporalidadProductoDesdeFila(datostr);
+	cargarConfiguracionLaboratorioProductoDesdeFila(datostr);
 	cargarInsumosProductoAbmProducto(idAbmProducto);
 	actualizarFichaCatalogoProductoDesdeFila(datostr);
 		document.getElementById('btnAbmProducto').value ="Editar Datos";
@@ -9356,6 +9439,9 @@ function verificarcamposProducto() {
 		ver_vetana_informativa("FALTO SELECCIONAR EL ESTADO")
 		return false;
 	}
+	if (!validarConfiguracionLaboratorioProductoAntesDeGuardar()) {
+		return false;
+	}
 	var accion = "";
 	if (idAbmProducto != "") {
 		accion = "editar";
@@ -9412,6 +9498,9 @@ function abmproducto(linkproducto,codFabricaFK,CodProveedorFK,tipoproducto,codBa
 	datos.append("temporalidad_sesiones_estimadas", temporalidadProducto.temporalidad_sesiones_estimadas)
 	datos.append("temporalidad_duracion_sillon", temporalidadProducto.temporalidad_duracion_sillon)
 	datos.append("temporalidad_observacion", temporalidadProducto.temporalidad_observacion)
+	var configuracionLaboratorioProducto = datosConfiguracionLaboratorioProducto();
+	datos.append("requiere_laboratorio", configuracionLaboratorioProducto.requiere_laboratorio)
+	datos.append("modo_individualizacion", configuracionLaboratorioProducto.modo_individualizacion)
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
@@ -10166,6 +10255,7 @@ function limpiarcamposproducto() {
 	document.getElementById('inptCodBarraProducto').value = "";
 	document.getElementById('inptProveesorProducto').value = "";
 	setTemporalidadProductoDefaults();
+	setConfiguracionLaboratorioProductoDefaults();
 	
 	document.getElementById('inptCodFabricaProducto').value= "";
 	
@@ -11283,6 +11373,8 @@ function verCerrarFrmCategoria(d,v){
 function LimpiarCamposCategoria(){
 	document.getElementById("inptNombreCategoria").value="";
 	document.getElementById("inptEstadoCategoria").value="";
+	document.getElementById("inptRequiereLaboratorioCategoria").value="0";
+	document.getElementById("inptModoIndividualizacionCategoria").value="cantidad_libre";
 	document.getElementById("btnCategoria1").value="Guardar Datos"
 	idAbmCategoria="";
 	ElementoSeleccCategoria="";
@@ -11295,6 +11387,8 @@ function ObtenerdatosAbmCategoria(datostr) {
 	datostr.className = 'tableRegistroSelec'
     document.getElementById("inptNombreCategoria").value = $(datostr).children('td[id="td_datos_1"]').html();
     document.getElementById("inptEstadoCategoria").value = $(datostr).children('td[id="td_datos_2"]').html();
+	document.getElementById("inptRequiereLaboratorioCategoria").value = $(datostr).children('td[id="td_datos_3"]').html() || "0";
+	document.getElementById("inptModoIndividualizacionCategoria").value = $(datostr).children('td[id="td_datos_4"]').html() || "cantidad_libre";
 	idAbmCategoria = $(datostr).children('td[id="td_id"]').html();
      document.getElementById("btnCategoria1").value="Editar Datos"
 }
@@ -11306,6 +11400,12 @@ function SeleccionarRegistroCategoria(){
     if(VentanaCategoria=="abmproducto"){
 	 document.getElementById("inptCategoriaProducto").value = $(ElementoSeleccCategoria).children('td[id="td_datos_1"]').html();
 	 idFkProductoCategoria = $(ElementoSeleccCategoria).children('td[id="td_id"]').html();
+	 var cardLaboratorioProducto = document.getElementById("productoLaboratorioCard");
+	 if (cardLaboratorioProducto) {
+		 cardLaboratorioProducto.setAttribute("data-requiere-efectivo", $(ElementoSeleccCategoria).children('td[id="td_datos_3"]').html() || "0");
+		 cardLaboratorioProducto.setAttribute("data-modo-efectivo", $(ElementoSeleccCategoria).children('td[id="td_datos_4"]').html() || "cantidad_libre");
+		 actualizarAyudaConfiguracionLaboratorioProducto();
+	 }
 	}	
 	 document.getElementById("divAbmCategoria").style.display="none";
 	 LimpiarCamposCategoria()
@@ -11313,6 +11413,8 @@ function SeleccionarRegistroCategoria(){
 function VerificarDatosCategoria(){
 	var inptNombreCategoria = document.getElementById("inptNombreCategoria").value
 	var inptEstadoCategoria = document.getElementById("inptEstadoCategoria").value	
+	var requiereLaboratorioCategoria = document.getElementById("inptRequiereLaboratorioCategoria").value
+	var modoIndividualizacionCategoria = document.getElementById("inptModoIndividualizacionCategoria").value
 	if(inptNombreCategoria==""){
 		document.getElementById("inptNombreCategoria").focus()
 		ver_vetana_informativa("Falto Ingresar el nombre")
@@ -11323,15 +11425,20 @@ function VerificarDatosCategoria(){
 		ver_vetana_informativa("Falto seleccionar el estado del registro")
 		return
 	}	
+	if(requiereLaboratorioCategoria=="1" && modoIndividualizacionCategoria=="cantidad_libre"){
+		document.getElementById("inptModoIndividualizacionCategoria").focus()
+		ver_vetana_informativa("SI LA CATEGORIA REQUIERE LABORATORIO, SELECCIONA UN MODO CLINICO DE INDIVIDUALIZACION")
+		return
+	}
 	var accion = "";
 	if (idAbmCategoria != "") {		
 		accion = "editar";
 	} else {		
 		accion = "nuevo";
 	}
-	AbmCategoria(inptNombreCategoria,inptEstadoCategoria,idAbmCategoria,accion)
+	AbmCategoria(inptNombreCategoria,inptEstadoCategoria,requiereLaboratorioCategoria,modoIndividualizacionCategoria,idAbmCategoria,accion)
 }
-function AbmCategoria(descripcion,Estado,idabm,accion) {
+function AbmCategoria(descripcion,Estado,requiereLaboratorio,modoIndividualizacion,idabm,accion) {
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -11342,6 +11449,8 @@ function AbmCategoria(descripcion,Estado,idabm,accion) {
 	datos.append("idabm", idabm)
 	datos.append("descripcion", descripcion)
 	datos.append("Estado", Estado)
+	datos.append("requiere_laboratorio", requiereLaboratorio)
+	datos.append("modo_individualizacion", modoIndividualizacion)
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/ABMCategoria.php",
@@ -36880,6 +36989,11 @@ ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error",
 function removeToMenu(){
 	
 	
+	if (!accesosuser["VERTRABAJOSLABORATORIO"] || accesosuser["VERTRABAJOSLABORATORIO"]["accion"]!="SI")
+	{
+	$("table[id=divMenuTrabajoLaboratorio]").remove()
+	}
+
 	if( accesosuser["VERLISTADOTAREASUSUARIO"]["accion"]!="SI")
 	{
 	$("table[id=divMenuAbmTareasUsuario]").remove() 	

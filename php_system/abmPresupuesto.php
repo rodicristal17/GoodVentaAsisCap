@@ -5,8 +5,9 @@ require_once("conexion.php");
 include_once("verificar_navegador.php");
 include_once("classTable.php");
 include_once("abmproductos.php");
+require_once("trabajo_laboratorio_helper.php");
 
-date_default_timezone_set('America/Asuncion');
+date_default_timezone_set('Etc/GMT+3');
 
 function verificarOperacionPresupuesto($operacion)
 {
@@ -489,6 +490,48 @@ function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_pr
         exit;
     }
     $mysqli = conectar_al_servidor();
+	$productoActual = null;
+	$cantidadActual = null;
+	if (!empty($id)) {
+		$stmtDetalleActual = $mysqli->prepare("SELECT cod_productoFK, cantidad FROM detalles_presupuesto WHERE id=? LIMIT 1");
+		if ($stmtDetalleActual) {
+			$stmtDetalleActual->bind_param("i", $id);
+			if ($stmtDetalleActual->execute()) {
+				$detalleActual = $stmtDetalleActual->get_result()->fetch_assoc();
+				if ($detalleActual) {
+					$productoActual = $detalleActual["cod_productoFK"];
+					$cantidadActual = $detalleActual["cantidad"];
+				}
+			}
+			$stmtDetalleActual->close();
+		}
+	}
+	$productoValidar = ($cod_productoFK !== null && $cod_productoFK !== "") ? $cod_productoFK : $productoActual;
+	$cantidadValidar = ($cantidad !== null && $cantidad !== "") ? $cantidad : $cantidadActual;
+	if ($productoValidar !== null && $productoValidar !== "" && function_exists("trabajoLaboratorioObtenerConfiguracionProducto")) {
+		$configuracionLaboratorio = trabajoLaboratorioObtenerConfiguracionProducto($mysqli, $productoValidar);
+		$modoIndividualizacion = !empty($configuracionLaboratorio["ok"]) ? $configuracionLaboratorio["modo_individualizacion"] : "cantidad_libre";
+		$requiereLaboratorio = !empty($configuracionLaboratorio["ok"])
+			&& !empty($configuracionLaboratorio["requiere_laboratorio"]);
+		if ($requiereLaboratorio || $modoIndividualizacion !== "cantidad_libre") {
+			$cantidadNormalizada = function_exists("quitarseparadormiles")
+				? quitarseparadormiles(trim((string)$cantidadValidar))
+				: str_replace(",", ".", trim((string)$cantidadValidar));
+			$cantidadNumerica = is_numeric($cantidadNormalizada) ? (float)$cantidadNormalizada : 0.0;
+			$esHistoricoSinModificar = !empty($id)
+				&& (string)$productoActual === (string)$productoValidar
+				&& abs((float)$cantidadActual - $cantidadNumerica) < 0.000001
+				&& abs((float)$cantidadActual - 1.0) >= 0.000001;
+			if ($cantidadNumerica !== 1.0 && !$esHistoricoSinModificar) {
+				echo json_encode(array(
+					"1" => "error",
+					"codigo" => "cantidad_tratamiento_unitaria",
+					"mensaje" => "Este tratamiento clinico debe agregarse con cantidad 1. Para trabajos fisicos independientes, agregue una fila por cada tratamiento; si un unico tratamiento abarca varias piezas, seleccione todas sus ubicaciones en el odontograma."
+				));
+				exit;
+			}
+		}
+	}
 
     if ($cod_clienteFK !== null && $cod_clienteFK !== '') {
         $sqlValidarPresupuesto = "SELECT cod_clienteFK FROM presupuesto WHERE id = ? LIMIT 1";

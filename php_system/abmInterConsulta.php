@@ -2921,7 +2921,13 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 $colorTarjeta="#8bc34a";
             }
 
-            $contenidoMensaje= escaparHtmlInterconsulta($valueMens['contenido']);
+            $contenidoOriginalMensaje= (string)$valueMens['contenido'];
+            $idTrabajoLaboratorioMensaje= 0;
+            if (preg_match('/\[TRABAJO_LAB:(\d+)\]/', $contenidoOriginalMensaje, $coincidenciaTrabajoLaboratorio)) {
+                $idTrabajoLaboratorioMensaje= intval($coincidenciaTrabajoLaboratorio[1]);
+                $contenidoOriginalMensaje= trim(preg_replace('/\[TRABAJO_LAB:\d+\]\s*/', '', $contenidoOriginalMensaje, 1));
+            }
+            $contenidoMensaje= escaparHtmlInterconsulta($contenidoOriginalMensaje);
             // Transforma las menciones con el mapa de usuarios cargado una sola vez por solicitud.
             foreach ($usuarios as $valueUsu) {
                 $codUsuarioMencion= intval($valueUsu['cod_usuario']);
@@ -2933,6 +2939,9 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 );
             }
             $contenidoMensaje = nl2br($contenidoMensaje, false);
+            $accionTrabajoLaboratorioMensaje= $idTrabajoLaboratorioMensaje > 0
+                ? '<button type="button" class="interconsulta-lab-work-link" onclick="event.stopPropagation();if(window.TrabajoLaboratorio){TrabajoLaboratorio.abrirTrabajo('.$idTrabajoLaboratorioMensaje.');}else{ver_vetana_informativa(\'El modulo de trabajos de laboratorio no esta disponible.\');}"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Ver trabajo y trazabilidad</button>'
+                : '';
 
             $miniatura_imagen= "";
             $accionesCentroFactura= "";
@@ -3085,6 +3094,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                         <div class="interconsulta-message-body">
                             '.$respuestaCitada.'
                             <p>'.$contenidoMensaje.'</p>
+                            '.$accionTrabajoLaboratorioMensaje.'
                             '.$tarjetaDocumento.'
                         </div>
                         <footer class="interconsulta-message-footer">'.$palomitasMensaje.'</footer>

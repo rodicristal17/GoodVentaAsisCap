@@ -12,6 +12,102 @@ include("calcularintereses.php");
 // include("calcularInteresDirecto.php");
 include("classTable.php");
 require_once("interconsulta_seguimiento_paciente_helper.php");
+require_once("trabajo_laboratorio_helper.php");
+
+function validarCantidadUnitariaTratamientoVenta($mysqli,$codProducto,$cantidad,$responder = true)
+{
+	if (!function_exists("trabajoLaboratorioObtenerConfiguracionProducto")) {
+		return true;
+	}
+	$configuracion = trabajoLaboratorioObtenerConfiguracionProducto($mysqli,$codProducto);
+	$requiereLaboratorio = !empty($configuracion["ok"])
+		&& !empty($configuracion["requiere_laboratorio"]);
+	$esTratamientoIndividualizable = !empty($configuracion["ok"])
+		&& $configuracion["modo_individualizacion"] !== "cantidad_libre";
+	if (empty($configuracion["ok"]) || (!$requiereLaboratorio && !$esTratamientoIndividualizable)) {
+		return true;
+	}
+	$cantidadNormalizada = function_exists("quitarseparadormiles")
+		? quitarseparadormiles(trim((string)$cantidad))
+		: str_replace(",", ".", trim((string)$cantidad));
+	$cantidadNumerica = is_numeric($cantidadNormalizada) ? (float)$cantidadNormalizada : 0.0;
+	if ($cantidadNumerica === 1.0) {
+		return true;
+	}
+	if ($responder) {
+		echo json_encode(array(
+			"1" => "error",
+			"codigo" => "cantidad_tratamiento_unitaria",
+			"mensaje" => "Los tratamientos clinicos deben venderse con cantidad 1 por fila. Cree filas independientes para trabajos distintos o conserve una sola fila y seleccione varias piezas cuando sea un unico tratamiento."
+		));
+		exit;
+	}
+	return false;
+}
+
+function claveDetalleHistoricoTratamiento($codProducto,$cantidad,$desdeBaseDatos = false)
+{
+	$cantidadNormalizada = $desdeBaseDatos
+		? trim((string)$cantidad)
+		: (function_exists("quitarseparadormiles")
+		? quitarseparadormiles(trim((string)$cantidad))
+		: str_replace(",", ".", trim((string)$cantidad)));
+	$cantidadNumerica = is_numeric($cantidadNormalizada) ? (float)$cantidadNormalizada : 0.0;
+	return trim((string)$codProducto)."|".number_format($cantidadNumerica,6,".","");
+}
+
+/**
+ * Valida todo el lote antes de que la operacion legacy elimine o inserte
+ * detalles. En una edicion se reconocen las filas historicas sin cambios para
+ * no bloquear ventas antiguas que ya fueron guardadas con cantidad mayor a 1.
+ */
+function validarDetallesUnitariosVenta($claveTotal,$codVentaHistorica = 0,$preservarHistoricos = false)
+{
+	$totalRegistro = isset($_POST[$claveTotal]) ? (int)$_POST[$claveTotal] : 0;
+	if ($totalRegistro <= 0) {
+		return;
+	}
+	$mysqli = conectar_al_servidor();
+	$detallesHistoricos = array();
+	$codVentaHistorica = (int)$codVentaHistorica;
+	if ($preservarHistoricos && $codVentaHistorica > 0) {
+		$stmtHistoricos = $mysqli->prepare(
+			"SELECT cod_productoFK,cantidad_detalle
+			 FROM detalle_venta
+			 WHERE cod_ventaFK=? AND estado='Activo'"
+		);
+		if ($stmtHistoricos) {
+			$stmtHistoricos->bind_param("i",$codVentaHistorica);
+			if ($stmtHistoricos->execute()) {
+				$resultadoHistoricos = $stmtHistoricos->get_result();
+				while ($detalleHistorico = $resultadoHistoricos->fetch_assoc()) {
+					$claveHistorica = claveDetalleHistoricoTratamiento(
+						$detalleHistorico["cod_productoFK"],
+						$detalleHistorico["cantidad_detalle"],
+						true
+					);
+					$detallesHistoricos[$claveHistorica] = isset($detallesHistoricos[$claveHistorica])
+						? $detallesHistoricos[$claveHistorica] + 1
+						: 1;
+				}
+			}
+			$stmtHistoricos->close();
+		}
+	}
+	for ($indice = 1; $indice <= $totalRegistro; $indice++) {
+		$producto = isset($_POST["cod_productoFK".$indice]) ? $_POST["cod_productoFK".$indice] : "";
+		$cantidad = isset($_POST["cantidad_detalle".$indice]) ? $_POST["cantidad_detalle".$indice] : "";
+		if ($producto !== "") {
+			$claveHistorica = claveDetalleHistoricoTratamiento($producto,$cantidad);
+			if (isset($detallesHistoricos[$claveHistorica]) && $detallesHistoricos[$claveHistorica] > 0) {
+				$detallesHistoricos[$claveHistorica]--;
+				continue;
+			}
+			validarCantidadUnitariaTratamientoVenta($mysqli,$producto,$cantidad,true);
+		}
+	}
+	$mysqli->close();
+}
 
 
 
@@ -35,12 +131,13 @@ exit;
 	
 if($operacion=="nuevo" || $operacion=="editar")
 {
-	
-	
-	
-
 $cod_ventaFK=$_POST['cod_ventaFK'];
 $cod_ventaFK = mb_convert_encoding((string)($cod_ventaFK), 'ISO-8859-1', 'UTF-8');
+	validarDetallesUnitariosVenta(
+		"totalRegistro",
+		$operacion==="editar" ? $cod_ventaFK : 0,
+		$operacion==="editar"
+	);
 
 $num_factura=$_POST['num_factura'];
 $num_factura = mb_convert_encoding((string)($num_factura), 'ISO-8859-1', 'UTF-8');
@@ -122,6 +219,7 @@ $MetodoPagoCambio=$_POST['MetodoPagoCambio'];
 $MetodoPagoCambio = mb_convert_encoding((string)($MetodoPagoCambio), 'ISO-8859-1', 'UTF-8');
 $Local_FK=$_POST['Local_FK'];
 $Local_FK = mb_convert_encoding((string)($Local_FK), 'ISO-8859-1', 'UTF-8');
+validarDetallesUnitariosVenta("TotalRegistro",0,false);
 registrarSolicitudEliminacionGenerica(
 	"detalle_venta",
 	"cod_detalle",

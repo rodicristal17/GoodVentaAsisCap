@@ -1,5 +1,8 @@
 var cod_mecanico_dental = "";
 var filtro_fecha_mecanico_dental= 1;
+var cod_usuario_telar_mecanico_dental = "";
+var temporizador_busqueda_usuario_telar_mecanico = null;
+var secuencia_busqueda_usuario_telar_mecanico = 0;
 
 function verCerrarVentanaMecanicoDental(mostrar, mostrarAbm) {
     if(controlacceso("VERLISTADOMECANICODENTAL","accion")==false){ return;}
@@ -8,6 +11,7 @@ function verCerrarVentanaMecanicoDental(mostrar, mostrarAbm) {
         $("div[id=divAbmMecanicoDental]").fadeIn(250);
         if (mostrarAbm) {
             buscarTiposTrabajo();
+            cargarCuentasTelarMecanicoDental("", cod_usuario_telar_mecanico_dental);
             $("div[id=divAbmMecanicoDental1]").fadeIn(250);
             // Oculta el listado
             $("div[id=divAbmMecanicoDental2]").fadeOut(250);
@@ -27,12 +31,111 @@ function verCerrarVentanaMecanicoDental(mostrar, mostrarAbm) {
     }
 }
 
+function actualizarEstadoCuentaTelarMecanicoDental(mensaje, esError) {
+    var estado = document.getElementById("estadoUsuarioTelarMecanicoDental");
+    if (!estado) {
+        return;
+    }
+    estado.textContent = mensaje || "";
+    estado.style.color = esError ? "#b42318" : "#526473";
+}
+
+function programarBusquedaCuentaTelarMecanicoDental(busqueda) {
+    if (temporizador_busqueda_usuario_telar_mecanico) {
+        clearTimeout(temporizador_busqueda_usuario_telar_mecanico);
+    }
+    temporizador_busqueda_usuario_telar_mecanico = setTimeout(function () {
+        var selector = document.getElementById("inptUsuarioTelarAbmMecanicoDental");
+        var seleccionado = selector ? selector.value : cod_usuario_telar_mecanico_dental;
+        cargarCuentasTelarMecanicoDental(busqueda, seleccionado);
+    }, 250);
+}
+
+function cargarCuentasTelarMecanicoDental(busqueda, usuarioSeleccionado) {
+    var selector = document.getElementById("inptUsuarioTelarAbmMecanicoDental");
+    var buscador = document.getElementById("inptBuscarUsuarioTelarMecanicoDental");
+    if (!selector || !buscador) {
+        return;
+    }
+
+    usuarioSeleccionado = usuarioSeleccionado || "";
+    var secuenciaActual = ++secuencia_busqueda_usuario_telar_mecanico;
+    actualizarEstadoCuentaTelarMecanicoDental("Buscando cuentas Telar activas y disponibles...", false);
+    obtener_datos_user();
+    var datos = new FormData();
+    datos.append("useru", userid);
+    datos.append("passu", passuser);
+    datos.append("navegador", navegador);
+    datos.append("accion", "buscarUsuariosTelar");
+    datos.append("busqueda", busqueda || "");
+    datos.append("cod_mecanico_dental", cod_mecanico_dental || "");
+    datos.append("cod_usuario_actual", usuarioSeleccionado);
+
+    $.ajax({
+        data: datos,
+        url: "/GoodVentaAsisCap/php_system/abmMecanicoDental.php",
+        type: "post",
+        cache: false,
+        contentType: false,
+        processData: false,
+        error: function () {
+            if (secuenciaActual !== secuencia_busqueda_usuario_telar_mecanico) {
+                return;
+            }
+            actualizarEstadoCuentaTelarMecanicoDental("No se pudieron consultar las cuentas Telar.", true);
+        },
+        success: function (responseText) {
+            if (secuenciaActual !== secuencia_busqueda_usuario_telar_mecanico) {
+                return;
+            }
+            try {
+                var respuesta = $.parseJSON(responseText);
+                if (respuesta["1"] !== "exito") {
+                    selector.disabled = true;
+                    buscador.disabled = true;
+                    actualizarEstadoCuentaTelarMecanicoDental(respuesta.mensaje || "No se pudieron consultar las cuentas Telar.", true);
+                    return;
+                }
+
+                selector.innerHTML = "";
+                var opcionVacia = document.createElement("option");
+                opcionVacia.value = "";
+                opcionVacia.textContent = "Sin cuenta vinculada";
+                selector.appendChild(opcionVacia);
+
+                var cuentas = respuesta.cuentas || [];
+                for (var i = 0; i < cuentas.length; i++) {
+                    var cuenta = cuentas[i];
+                    var opcion = document.createElement("option");
+                    opcion.value = String(cuenta.cod_usuario);
+                    opcion.textContent = cuenta.nombre_persona
+                        + (cuenta.login ? " (" + cuenta.login + ")" : "")
+                        + (cuenta.activa ? "" : " - CUENTA INACTIVA");
+                    selector.appendChild(opcion);
+                }
+
+                selector.disabled = respuesta.disponible !== true;
+                buscador.disabled = respuesta.disponible !== true;
+                selector.value = usuarioSeleccionado;
+                if (selector.value !== String(usuarioSeleccionado || "")) {
+                    selector.value = "";
+                }
+                cod_usuario_telar_mecanico_dental = selector.value;
+                actualizarEstadoCuentaTelarMecanicoDental(respuesta.mensaje || "", respuesta.disponible !== true);
+            } catch (error) {
+                actualizarEstadoCuentaTelarMecanicoDental("La respuesta de cuentas Telar no pudo ser interpretada.", true);
+            }
+        }
+    });
+}
+
 function verificarCamposMecanicoDental() {
     const nombre= $("#inptNombreMecanicoAbmMecanicoDental").val();
     const telefono= $("#inptTelefonoAbmMecanicoDental").val();
     const direccion= $("#inptDireccionAbmMecanicoDental").val();
-    const telefono_referencia= $("inptTelefonoReferenciaAbmMecanicoDental").val();
+    const telefono_referencia= $("#inptTelefonoReferenciaAbmMecanicoDental").val();
     const estado= $("#inptEstadoAbmMecanicoDental").val();
+    const cuenta_telar= $("#inptUsuarioTelarAbmMecanicoDental").val() || "";
 
     if (!nombre || nombre == "") {
         ver_vetana_informativa("Falta completar el nombre");
@@ -43,10 +146,10 @@ function verificarCamposMecanicoDental() {
         return false;
     }
     
-    abmMecanicoDental(nombre, telefono, direccion, telefono_referencia,estado);
+    abmMecanicoDental(nombre, telefono, direccion, telefono_referencia,estado,cuenta_telar);
 }
 
-function abmMecanicoDental(nombre, telefono, direccion, telefono_referencia,estado) {
+function abmMecanicoDental(nombre, telefono, direccion, telefono_referencia,estado,cuenta_telar) {
     obtener_datos_user();
     var datos = new FormData();
     datos.append("useru", userid);
@@ -61,6 +164,7 @@ function abmMecanicoDental(nombre, telefono, direccion, telefono_referencia,esta
     datos.append("estado", estado);
     datos.append("telefono_referencia", telefono_referencia);
     datos.append("cod_personaFK", cod_persona);
+    datos.append("cod_usuarioFK", cuenta_telar || "");
     datos.append("accion", "nuevo/editar");
     
     verCerrarEfectoCargando("1");
@@ -204,11 +308,18 @@ function buscarMecanicosDentales() {
 function limpiarFormularioMecanicoDental() {
     cod_mecanico_dental = "";
     cod_persona = "";
+    cod_usuario_telar_mecanico_dental = "";
     document.getElementById('inptNombreMecanicoAbmMecanicoDental').value = "";
     document.getElementById('inptTelefonoAbmMecanicoDental').value = "";
-    document.getElementById('inptDireccionAbmMecanicoDental').innerHTML = "";
+    document.getElementById('inptDireccionAbmMecanicoDental').value = "";
     document.getElementById('inptTelefonoReferenciaAbmMecanicoDental').value = "";
     document.getElementById('inptEstadoAbmMecanicoDental').value = "activo";
+    if (document.getElementById('inptBuscarUsuarioTelarMecanicoDental')) {
+        document.getElementById('inptBuscarUsuarioTelarMecanicoDental').value = "";
+    }
+    if (document.getElementById('inptUsuarioTelarAbmMecanicoDental')) {
+        document.getElementById('inptUsuarioTelarAbmMecanicoDental').value = "";
+    }
     document.getElementById('inptRegistroSeleccMecanicoDental').value= ""
     document.getElementById('btnEditarMecanicoDental').style.backgroundColor= "#b7b7b7";
     document.getElementById('btnEditarMecanicoDental').disabled= true;
@@ -217,12 +328,17 @@ function limpiarFormularioMecanicoDental() {
 function ObtenerdatosMecanicoDental(elemento) {
     cod_mecanico_dental = $(elemento).children('td[id="td_id"]').html();
     cod_persona = $(elemento).children('td[id="td_datos_6"]').html();
+    cod_usuario_telar_mecanico_dental = $.trim($(elemento).children('td[id="td_datos_8"]').text());
     document.getElementById('inptNombreMecanicoAbmMecanicoDental').value = $(elemento).children('td[id="td_datos_1"]').html();
     document.getElementById('inptTelefonoAbmMecanicoDental').value = $(elemento).children('td[id="td_datos_3"]').html();
-    document.getElementById('inptDireccionAbmMecanicoDental').innerHTML = $(elemento).children('td[id="td_datos_5"]').html();
+    document.getElementById('inptDireccionAbmMecanicoDental').value = $(elemento).children('td[id="td_datos_5"]').html();
     document.getElementById('inptTelefonoReferenciaAbmMecanicoDental').value = $(elemento).children('td[id="td_datos_4"]').html();
     document.getElementById('inptEstadoAbmMecanicoDental').value = $(elemento).children('td[id="td_datos_2"]').html().toLowerCase();
     document.getElementById('inptRegistroSeleccMecanicoDental').value = $(elemento).children('td[id="td_id"]').html();
+    if (document.getElementById('inptBuscarUsuarioTelarMecanicoDental')) {
+        document.getElementById('inptBuscarUsuarioTelarMecanicoDental').value = "";
+    }
+    cargarCuentasTelarMecanicoDental("", cod_usuario_telar_mecanico_dental);
     
     $("tr[id=tbSelecRegistro]").each(function (i, td) {
 		td.className = ''

@@ -36,8 +36,9 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=egresos-multilocal-20260721" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-4" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
-<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=operativa-hilos-20260717-2" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=trabajo-laboratorio-20260721-3" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=buscador-pagare-20260721-1" />
+<link id="telarTrabajoLaboratorioCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260721-3" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-horizontal-ios-20260713" />
@@ -56,11 +57,11 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 
 <script src="/GoodVentaAsisCap/js/jquery.js"></script>
 <script src="/GoodVentaAsisCap/js_system/agendamiento.js?x=performance-polling-20260718"></script>
-<script src="/GoodVentaAsisCap/js_system/consulta.js?x=performance-polling-20260718"></script>
+<script src="/GoodVentaAsisCap/js_system/consulta.js?x=trabajo-laboratorio-20260721-3"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=performance-polling-20260718-telar-dashboard-20260720-telar-loader-20260721-2"></script>
-<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=devolucion-pagare-20260717-1"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=trabajo-laboratorio-20260721-3"></script>
+<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=trabajo-laboratorio-20260721-3"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
@@ -76,15 +77,16 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=performance-polling-20260718"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js?x=performance-polling-20260718"></script>
-<script src="../js_system/abmMecanicoDental.js"></script>
+<script src="../js_system/trabajo_laboratorio.js?x=20260721-4"></script>
+<script src="../js_system/abmMecanicoDental.js?x=cuenta-telar-20260721-3"></script>
 <script src="../js_system/abmInterConsulta.js?x=centro-facturas-documentos-20260721-telar-loader-2"></script>
 <script src="../js_system/abmCentroFacturas.js?x=nomenclatura-legajos-20260721-1"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
 <script src="../js_system/abmRecetarioIndicaciones.js?x=20260605-recetario-historial-grupos"></script>
-<script src="../js_system/abmPresupuesto.js?x=presupuesto-limpiar-tratamiento-20260630"></script>
-<script src="../js_system/odontograma.js?x=odontograma-general-y-limpiar-20260630"></script>
+<script src="../js_system/abmPresupuesto.js?x=trabajo-laboratorio-20260721-3"></script>
+<script src="../js_system/odontograma.js?x=trabajo-laboratorio-20260721-3"></script>
 <script src="../js_system/abmCliente.js?x=cliente-guardar-json-fechas-20260625"></script>
 <script src="../js_system/abmInformacionProtocolo.js"></script>
 
@@ -3579,12 +3581,24 @@ class='divMinimizado'></div>
 </tr>
 </table>
 
+<table class='divMenub' id='divMenuTrabajoLaboratorio' onclick='if(controlacceso("VERTRABAJOSLABORATORIO","accion")!=false){abrirTrabajoLaboratorio()}' style='text-align:center;'>
+<tr>
+<td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2' />
+<p class='pTitulo4'>Trabajos de laboratorio dental</p>
+<center>
+<div id='divMinimizadoTrabajoLaboratorio' style='display:none' class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</table>
+
 <table class='divMenub' id='divMenuTrabajoMecanicoDental' onclick='verCerrarVentanaTrabajoMecanicoDental(true, false)' style='text-align:center;'>
 <tr>
 <td>
 <img class='imgIconoMenu'
 src='/GoodVentaAsisCap/iconos/listadodecarga.png' />
-<p class='pTitulo4'>Trabajos de Mecanicos Dentales</p>
+<p class='pTitulo4'>Trabajos mecanicos (anterior)</p>
 <center>
 <div id='divMinimizadoTrabajoMecanicoDental' style='display:none' class='divMinimizado'>
 </div>
@@ -7373,7 +7387,7 @@ style='background-color:#5bc572'>
         <tr>
             <td>
                 <center>
-                    <div id='divAbmMecanicoDental1' style='display:none;width:400px;min-height: 400px;' class='divAbms'>
+                    <div id='divAbmMecanicoDental1' style='display:none;width:460px;min-height:400px;' class='divAbms'>
                         <table class='tableMenuZ'>
                             <tr>
                                 <td style='width:100%;text-align:left'>
@@ -7445,6 +7459,22 @@ style='background-color:#5bc572'>
                                             </td>
                                         </tr>
                                     </table>
+                                    <br>
+                                    <div style='width:88%;padding:12px 14px;margin:0 auto;border:1px solid #cfe3e6;border-radius:10px;background:#f5fbfb;text-align:left;'>
+                                        <p class='pTituloC' style='margin:0 0 5px 0;'>Cuenta Telar vinculada <span style='font-size:11px;color:#64748b;font-weight:normal;'>(opcional)</span></p>
+                                        <input class='inputText' type='search' id='inptBuscarUsuarioTelarMecanicoDental'
+                                               style='width:100%;box-sizing:border-box;margin-bottom:7px;'
+                                               placeholder='Buscar por nombre, usuario o codigo'
+                                               oninput='programarBusquedaCuentaTelarMecanicoDental(this.value)' />
+                                        <select class='inputSelect' id='inptUsuarioTelarAbmMecanicoDental'
+                                                onchange='cod_usuario_telar_mecanico_dental=this.value'
+                                                style='width:100%;box-sizing:border-box;min-height:34px;'>
+                                            <option value=''>Sin cuenta vinculada</option>
+                                        </select>
+                                        <p id='estadoUsuarioTelarMecanicoDental' style='margin:7px 0 0;color:#526473;font-size:11px;line-height:1.35;'>
+                                            Solo puede vincularse una cuenta activa y libre por mecanico.
+                                        </p>
+                                    </div>
                                 </div>
                                 <br>
                                 <div class="divMenuf" style="width: 90%;">
@@ -7493,14 +7523,17 @@ style='background-color:#5bc572'>
                                             <td class="td_registro" style="width:10%;">
                                                 #
                                             </td>
-                                            <td class="td_registro" style="width:60%;">
+                                            <td class="td_registro" style="width:30%;">
                                                 Nombre
                                             </td>
-                                            <td class="td_registro" style="width:15%;">
+                                            <td class="td_registro" style="width:10%;">
                                                 Estado
                                             </td>
-                                            <td class="td_registro" style="width:20%;">
+                                            <td class="td_registro" style="width:15%;">
                                                 Telefono
+                                            </td>
+                                            <td class="td_registro" style="width:35%;">
+                                                Cuenta Telar
                                             </td>
                                         </tr>
                                     </tbody>
@@ -7514,20 +7547,22 @@ style='background-color:#5bc572'>
                                             <td class="td_registro" style="width:3%;">
                                               <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptCodListadoMecanicoDental')">
                                             </td>
-                                            <td class="td_registro" style="width:57%;">
+                                            <td class="td_registro" style="width:27%;">
                                               <input class='inputText' type='text' id='inptNombreListadoMecanicoDental' onkeyup="if(event.keyCode == 13){buscarMecanicosDentales()}"/>
                                             </td>
                                             <td class="td_registro" style="width:3%;">
                                               <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptNombreListadoMecanicoDental')">
                                             </td>
-                                            <td class="td_registro" style="width:15%;">
-                                              <select class="inputSelect" id="inptEstadoListadoMecanicoDental" style="width:200px">
+                                            <td class="td_registro" style="width:10%;">
+                                              <select class="inputSelect" id="inptEstadoListadoMecanicoDental" style="width:100%">
                                                 <option value="">TODOS</option>
                                                 <option value="activo">Activo</option>
                                                 <option value="inactivo">Inactivo</option>
                                               </select>
                                             </td>
                                             <td class="td_registro" style="width:15%;">
+                                            </td>
+                                            <td class="td_registro" style="width:35%;">
                                             </td>
                                         </tr>
                                     </tbody>
@@ -11285,10 +11320,15 @@ style='background-color:#ccc;width:130px'>
 #divAbmProducto2 .producto-temporalidad-help{display:block;margin-top:8px;color:#6b7a8f;font-size:11px;font-weight:800;line-height:1.35}
 #divAbmProducto2 .producto-temporalidad-card.is-disabled{background:#f1f5f9}
 #divAbmProducto2 .producto-temporalidad-card.is-disabled [data-temporalidad-campo]{opacity:.64}
+#divAbmProducto2 .producto-laboratorio-card{margin:0 0 14px;padding:10px;border:1px solid #b9deda;border-radius:8px;background:#f3fbfa}
+#divAbmProducto2 .producto-laboratorio-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#divAbmProducto2 .producto-laboratorio-field{display:grid;gap:4px;min-width:0}
+#divAbmProducto2 .producto-laboratorio-field span{color:#315f62;font-size:10px;font-weight:850}
+#divAbmProducto2 .producto-laboratorio-help{display:block;margin-top:8px;padding:8px;border-radius:7px;background:#e8f5f3;color:#31545a;font-size:11px;font-weight:800;line-height:1.4}
 #divAbmProducto2 center{display:block;text-align:center}
 #divAbmProducto2 .indicador_cod_barra{margin-top:13px}
 @media(max-width:1100px){#divAbmProducto2.producto-editor-shell{height:92vh}#divAbmProducto2 .producto-editor-body{height:calc(92vh - 58px)}#divAbmProducto2 .producto-editor-grid{grid-template-columns:1fr;min-height:auto}#divAbmProducto2 .producto-editor-card{min-height:auto!important}}
-@media(max-width:640px){#divAbmProducto2 .producto-temporalidad-grid{grid-template-columns:1fr}}
+@media(max-width:640px){#divAbmProducto2 .producto-temporalidad-grid,#divAbmProducto2 .producto-laboratorio-grid{grid-template-columns:1fr}}
 </style>
 <div id='divAbmProducto2' style='display:none;width:98vw;max-width:none;height:94vh;overflow:hidden;padding:0;box-sizing:border-box;' class='divAbms producto-editor-shell'>
 <table class='tableMenuZ'>
@@ -11493,6 +11533,33 @@ style='background-color: #FF5722;'>
 </label>
 </div>
 <small class='producto-temporalidad-help'>Si no se configura, el plan usa 20 dias como referencia general.</small>
+</div>
+<br>
+<p class='pTituloRepor'>LABORATORIO E INDIVIDUALIZACION</p>
+<div class='producto-laboratorio-card' id='productoLaboratorioCard'>
+<div class='producto-laboratorio-grid'>
+<label class='producto-laboratorio-field'>
+<span>Requiere trabajo de laboratorio</span>
+<select class='inputSelect' id='inptRequiereLaboratorioProducto' onchange='actualizarAyudaConfiguracionLaboratorioProducto()'>
+<option value=''>Heredar de la categoria</option>
+<option value='1'>Si</option>
+<option value='0'>No</option>
+</select>
+</label>
+<label class='producto-laboratorio-field'>
+<span>Unidad clinica del tratamiento</span>
+<select class='inputSelect' id='inptModoIndividualizacionProducto' onchange='actualizarAyudaConfiguracionLaboratorioProducto()'>
+<option value=''>Heredar de la categoria</option>
+<option value='cantidad_libre'>Cantidad libre (insumo o producto)</option>
+<option value='pieza_individual'>Una pieza dentaria por tratamiento</option>
+<option value='multipieza'>Un tratamiento sobre varias piezas</option>
+<option value='arcada'>Un tratamiento por arcada</option>
+<option value='sector'>Un tratamiento por sector</option>
+<option value='dispositivo'>Un dispositivo clinico</option>
+</select>
+</label>
+</div>
+<small class='producto-laboratorio-help' id='ayudaConfiguracionLaboratorioProducto'>La categoria define el comportamiento mientras no se indique una excepcion para este producto.</small>
 </div>
 <br>
 <p class='pTituloRepor'> OTROS DATOS </p>
@@ -13531,6 +13598,31 @@ title='Volver Atras' onclick='verCerrarFrmCategoria("2","")' /></td>
 </td>
 </tr>
 </table>
+
+<br>
+<table style='width:100%'>
+<tr>
+<td style='width:50%;padding-right:8px'>
+<p class='pTituloC'>Laboratorio por defecto :</p>
+<select class='inputSelect' style='width:100%' id='inptRequiereLaboratorioCategoria'>
+<option value='0'>No requiere</option>
+<option value='1'>Requiere laboratorio</option>
+</select>
+</td>
+<td style='width:50%'>
+<p class='pTituloC'>Unidad clinica por defecto :</p>
+<select class='inputSelect' style='width:100%' id='inptModoIndividualizacionCategoria'>
+<option value='cantidad_libre'>Cantidad libre</option>
+<option value='pieza_individual'>Pieza dentaria independiente</option>
+<option value='multipieza'>Tratamiento unico multipieza</option>
+<option value='arcada'>Tratamiento por arcada</option>
+<option value='sector'>Tratamiento por sector</option>
+<option value='dispositivo'>Dispositivo clinico</option>
+</select>
+</td>
+</tr>
+</table>
+<small style='display:block;margin-top:6px;color:#607385;line-height:1.35'>Los productos de esta categoria heredan estos valores, salvo que tengan una excepcion propia.</small>
 
 <br>
 <center>

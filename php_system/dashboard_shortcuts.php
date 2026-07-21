@@ -89,6 +89,7 @@ function dashboard_permission_key($accessKey, $catalogPermission)
         'cobros_realizados' => 'VERCOBROSREALIZADOS',
         'expediente_cliente' => 'VEREXPEDIENTEDELCLIENTE',
         'historial_venta' => 'VERHISTORIALVENTA',
+        'trabajos_mecanicos_dentales' => 'VERTRABAJOSLABORATORIO',
         'productos' => 'VERLISTADOPRODUCTOS',
         'nueva_venta' => 'VERVENTA',
         'flujo_egreso_ingreso' => 'VERLISTADOEGRESOINGRESO',

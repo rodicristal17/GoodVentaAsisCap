@@ -2692,6 +2692,9 @@ function AbmConsulta(apodo,motivo,diagnostico,trabajoreali,prxtrabajo,fecha,cod_
 					buscarabmConsultaParaConsulta(cod_ventaFKConsulta)
 					buscarDetalleVentaConsulta(cod_ventaFKConsulta, true)
 					verCerrarAbmDetalleConsulta(false)
+					if (datos.laboratorio && typeof tratamientoLaboratorioClinicoProcesarContexto == "function") {
+						tratamientoLaboratorioClinicoProcesarContexto(datos.laboratorio);
+					}
 				} else if (datos.mensaje) {
 					ver_vetana_informativa(datos.mensaje)
 				}
@@ -4419,6 +4422,9 @@ function guardarPorcentajeProgreso(){
 				actualizarTarjetaTratamientoConsulta(id_detalle_tratamientoConsulta, (datos.porcentaje_nuevo !== undefined ? datos.porcentaje_nuevo : porcentaje), datos.estado_texto || "", datos.estado_clase || "");
 				cerrarModalEvolucionTratamientoConsulta();
 				ver_vetana_informativa('EVOLUCIÓN GUARDADA');
+				if (datos.laboratorio && typeof tratamientoLaboratorioClinicoProcesarContexto == "function") {
+					tratamientoLaboratorioClinicoProcesarContexto(datos.laboratorio);
+				}
 				var codVentaRefrescar = codVentaConsultaVista || codVentaConsultaProgreso;
 				if (codVentaRefrescar != "") {
 					setTimeout(function () {
@@ -4562,3 +4568,272 @@ function verEvolucion(){
 	
 }
 
+
+/* Integracion clinica minima con Trabajos de laboratorio.
+ * El guardado clinico solo muestra contexto y abre el componente central.
+ * Alcanzar 100% nunca registra una instalacion automaticamente.
+ */
+var tratamientoLaboratorioClinicoEstado = {
+	contexto: null,
+	origen: {},
+	cargando: false,
+	error: ""
+};
+
+function tratamientoLaboratorioClinicoEscapar(valor) {
+	return String(valor === undefined || valor === null ? "" : valor)
+		.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function tratamientoLaboratorioClinicoVerdadero(valor) {
+	return valor === true || valor === 1 || valor === "1" || String(valor).toLowerCase() === "true";
+}
+
+function tratamientoLaboratorioClinicoDetalle(contexto) {
+	contexto = contexto || {};
+	var detalle = contexto.detalle || {};
+	if (!detalle.cod_detalle_venta) { detalle.cod_detalle_venta = contexto.cod_detalle_venta || 0; }
+	if (!detalle.cod_venta) { detalle.cod_venta = contexto.cod_venta || 0; }
+	if (!detalle.nro_venta) { detalle.nro_venta = contexto.numero_venta || ""; }
+	if (!detalle.nombre_producto) { detalle.nombre_producto = contexto.producto || "Tratamiento"; }
+	if (detalle.requiere_laboratorio === undefined) { detalle.requiere_laboratorio = contexto.requiere_laboratorio; }
+	return detalle;
+}
+
+function tratamientoLaboratorioClinicoAccionPermitida(contexto, codigo) {
+	var acciones = (contexto && contexto.acciones_permitidas) || {};
+	if (Array.isArray(acciones)) {
+		return acciones.some(function(accion) {
+			if (typeof accion === "string") { return accion === codigo; }
+			return accion && (accion.codigo === codigo || accion.code === codigo)
+				&& accion.permitido !== false && accion.permitido !== 0 && accion.permitido !== "0";
+		});
+	}
+	if (!Object.prototype.hasOwnProperty.call(acciones, codigo)) { return false; }
+	var valor = acciones[codigo];
+	return valor !== false && valor !== 0 && valor !== "0" && valor !== null;
+}
+
+function tratamientoLaboratorioClinicoTextoUbicacion(ubicacion) {
+	ubicacion = ubicacion || {};
+	if (tratamientoLaboratorioClinicoVerdadero(ubicacion.boca_completa)) { return "Boca completa"; }
+	if (Array.isArray(ubicacion.piezas) && ubicacion.piezas.length) { return "Piezas " + ubicacion.piezas.join(", "); }
+	if (ubicacion.pieza) { return "Pieza " + ubicacion.pieza; }
+	if (ubicacion.arcada) { return "Arcada " + String(ubicacion.arcada).replace(/_/g, " "); }
+	if (ubicacion.cuadrante) { return "Cuadrante " + String(ubicacion.cuadrante).replace(/_/g, " "); }
+	return ubicacion.alcance ? String(ubicacion.alcance).replace(/_/g, " ") : "Ubicacion clinica";
+}
+
+function tratamientoLaboratorioClinicoAsegurarPanel() {
+	if (!document.getElementById("tratamientoLaboratorioClinicoEstilos")) {
+		var estilos = document.createElement("style");
+		estilos.id = "tratamientoLaboratorioClinicoEstilos";
+		estilos.textContent = ""
+			+ "#tratamientoLaboratorioClinicoPanel{position:fixed;z-index:100020;right:18px;bottom:18px;width:min(420px,calc(100vw - 28px));max-height:calc(100vh - 36px);overflow:auto;background:#fff;border:1px solid #cfe1e6;border-radius:15px;box-shadow:0 20px 55px rgba(8,38,66,.24);font-family:inherit;color:#17364b}"
+			+ "#tratamientoLaboratorioClinicoPanel[hidden]{display:none!important}.tlc-head{display:flex;justify-content:space-between;gap:12px;padding:15px 17px;background:linear-gradient(135deg,#092f55,#075f78);color:#fff;border-radius:14px 14px 0 0}.tlc-head small{color:#8be0d0;font-weight:700;text-transform:uppercase}.tlc-head h3{font-size:17px;margin:3px 0}.tlc-head p{font-size:12px;margin:0;color:#dbeff5}.tlc-close{border:0;background:rgba(255,255,255,.14);color:#fff;border-radius:8px;width:31px;height:31px;font-size:20px;cursor:pointer}"
+			+ ".tlc-body{padding:14px 17px;display:grid;gap:10px}.tlc-summary{border:1px solid #dce9ed;border-radius:11px;padding:11px;background:#fbfdfd}.tlc-summary b{display:block;font-size:14px}.tlc-summary span{display:block;color:#5a707a;font-size:11px;margin-top:3px}.tlc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.tlc-tag{padding:5px 8px;border-radius:999px;background:#e9f7f4;color:#096a65;font-size:11px;font-weight:700}.tlc-alert{padding:9px 10px;border-radius:9px;background:#fff3df;color:#7a4b00;font-size:12px;border-left:4px solid #ef9b28}.tlc-alert--error{background:#fff0f0;color:#8b2525;border-left-color:#d84d4d}.tlc-status{padding:9px 10px;border-radius:9px;background:#eef5fb;color:#234f6b;font-size:12px}"
+			+ ".tlc-actions{display:flex;justify-content:flex-end;gap:7px;flex-wrap:wrap;padding:0 17px 15px}.tlc-btn{border:0;border-radius:8px;padding:9px 12px;cursor:pointer;font-weight:700;font-size:12px}.tlc-btn--primary{background:#087f75;color:#fff}.tlc-btn--install{background:#235fa4;color:#fff}.tlc-btn--secondary{background:#eaf1f4;color:#24495d}@media(max-width:600px){#tratamientoLaboratorioClinicoPanel{right:8px;bottom:8px;width:calc(100vw - 16px)}}";
+		document.head.appendChild(estilos);
+	}
+	var panel = document.getElementById("tratamientoLaboratorioClinicoPanel");
+	if (!panel) {
+		panel = document.createElement("section");
+		panel.id = "tratamientoLaboratorioClinicoPanel";
+		panel.setAttribute("role", "dialog");
+		panel.setAttribute("aria-modal", "false");
+		panel.setAttribute("aria-labelledby", "tratamientoLaboratorioClinicoTitulo");
+		panel.hidden = true;
+		document.body.appendChild(panel);
+	}
+	return panel;
+}
+
+function tratamientoLaboratorioClinicoRender() {
+	var panel = tratamientoLaboratorioClinicoAsegurarPanel();
+	var contexto = tratamientoLaboratorioClinicoEstado.contexto || {};
+	var detalle = tratamientoLaboratorioClinicoDetalle(contexto);
+	var ubicaciones = Array.isArray(contexto.ubicaciones) ? contexto.ubicaciones : [];
+	var bloqueos = Array.isArray(contexto.bloqueos) ? contexto.bloqueos : [];
+	var trabajo = contexto.trabajo_activo || null;
+	var html = "<header class='tlc-head'><div><small>Tratamiento con laboratorio</small><h3 id='tratamientoLaboratorioClinicoTitulo'>Siguiente paso guiado</h3><p>El registro clinico ya fue guardado.</p></div><button type='button' class='tlc-close' onclick='tratamientoLaboratorioClinicoCerrar()' aria-label='Cerrar'>&times;</button></header><div class='tlc-body'>";
+	html += "<section class='tlc-summary'><b>" + tratamientoLaboratorioClinicoEscapar(detalle.nombre_producto || "Tratamiento") + "</b><span>Venta " + tratamientoLaboratorioClinicoEscapar(detalle.nro_venta || detalle.cod_venta || "-") + " &middot; Detalle #" + tratamientoLaboratorioClinicoEscapar(detalle.cod_detalle_venta || "-") + " &middot; Cantidad " + tratamientoLaboratorioClinicoEscapar(detalle.cantidad || contexto.cantidad_detalle || 1) + "</span>";
+	if (ubicaciones.length) {
+		html += "<div class='tlc-tags'>" + ubicaciones.map(function(ubicacion) {
+			return "<span class='tlc-tag'>" + tratamientoLaboratorioClinicoEscapar(tratamientoLaboratorioClinicoTextoUbicacion(ubicacion)) + "</span>";
+		}).join("") + "</div>";
+	}
+	html += "</section>";
+	if (tratamientoLaboratorioClinicoEstado.cargando) {
+		html += "<div class='tlc-status'>Revisando trabajos abiertos, permisos y responsables...</div>";
+	}
+	if (tratamientoLaboratorioClinicoEstado.error) {
+		html += "<div class='tlc-alert tlc-alert--error' role='alert'>" + tratamientoLaboratorioClinicoEscapar(tratamientoLaboratorioClinicoEstado.error) + "</div>";
+	}
+	if (!tratamientoLaboratorioClinicoEstado.cargando && bloqueos.length) {
+		html += bloqueos.map(function(bloqueo) {
+			return "<div class='tlc-alert'>" + tratamientoLaboratorioClinicoEscapar(bloqueo.mensaje || "Este trabajo necesita una revision antes de continuar.") + "</div>";
+		}).join("");
+	}
+	if (!tratamientoLaboratorioClinicoEstado.cargando && trabajo) {
+		html += "<div class='tlc-status'><strong>" + tratamientoLaboratorioClinicoEscapar(trabajo.codigo_visible || ("Trabajo #" + trabajo.id)) + "</strong><br>Estado: " + tratamientoLaboratorioClinicoEscapar(String(trabajo.estado_derivado || "en seguimiento").replace(/_/g, " ")) + "</div>";
+		if (tratamientoLaboratorioClinicoAccionPermitida(contexto, "registrarInstalacion")
+			&& !tratamientoLaboratorioClinicoEstado.origen.cod_evolucion_origen) {
+			html += "<div class='tlc-alert'>Para registrar la instalacion, guarde una nueva evolucion clinica de este tratamiento.</div>";
+		}
+	}
+	html += "</div><div class='tlc-actions'><button type='button' class='tlc-btn tlc-btn--secondary' onclick='tratamientoLaboratorioClinicoCerrar()'>Ahora no</button>";
+	if (!tratamientoLaboratorioClinicoEstado.cargando && !bloqueos.length && !trabajo && tratamientoLaboratorioClinicoVerdadero(contexto.puede_iniciar)) {
+		html += "<button type='button' class='tlc-btn tlc-btn--primary' onclick='tratamientoLaboratorioClinicoAbrirInicio()'>Preparar trabajo</button>";
+	}
+	if (!tratamientoLaboratorioClinicoEstado.cargando && !trabajo && tratamientoLaboratorioClinicoVerdadero(contexto.puede_asegurar_hilo)) {
+		html += "<button type='button' class='tlc-btn tlc-btn--primary' onclick='tratamientoLaboratorioClinicoAsegurarHilo()'>Preparar Hilo maestro</button>";
+	}
+	if (!tratamientoLaboratorioClinicoEstado.cargando && trabajo) {
+		html += "<button type='button' class='tlc-btn tlc-btn--primary' onclick='tratamientoLaboratorioClinicoAbrirTrabajo()'>Abrir trabajo</button>";
+		if (tratamientoLaboratorioClinicoAccionPermitida(contexto, "registrarInstalacion")
+			&& tratamientoLaboratorioClinicoEstado.origen.cod_evolucion_origen) {
+			html += "<button type='button' class='tlc-btn tlc-btn--install' onclick='tratamientoLaboratorioClinicoAbrirInstalacion()'>Registrar instalacion</button>";
+		}
+	}
+	html += "</div>";
+	panel.innerHTML = html;
+	panel.hidden = false;
+}
+
+function tratamientoLaboratorioClinicoCerrar() {
+	var panel = document.getElementById("tratamientoLaboratorioClinicoPanel");
+	if (panel) { panel.hidden = true; }
+}
+
+function tratamientoLaboratorioClinicoSolicitudContexto(codDetalle) {
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("accion", "obtenerContextoDetalle");
+	datos.append("cod_detalle_venta", codDetalle);
+	return $.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmTrabajoLaboratorio.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		dataType: "json"
+	});
+}
+
+function tratamientoLaboratorioClinicoProcesarContexto(contexto) {
+	contexto = contexto || {};
+	var detalle = tratamientoLaboratorioClinicoDetalle(contexto);
+	if (!tratamientoLaboratorioClinicoVerdadero(detalle.requiere_laboratorio)) { return; }
+	tratamientoLaboratorioClinicoEstado.contexto = contexto;
+	tratamientoLaboratorioClinicoEstado.origen = {
+		cod_consulta_origen: contexto.cod_consulta_origen || null,
+		cod_evolucion_origen: contexto.cod_evolucion_origen || null
+	};
+	tratamientoLaboratorioClinicoEstado.cargando = true;
+	tratamientoLaboratorioClinicoEstado.error = "";
+	tratamientoLaboratorioClinicoRender();
+	tratamientoLaboratorioClinicoSolicitudContexto(detalle.cod_detalle_venta).done(function(respuesta) {
+		tratamientoLaboratorioClinicoEstado.cargando = false;
+		if (!respuesta || !tratamientoLaboratorioClinicoVerdadero(respuesta.ok)) {
+			tratamientoLaboratorioClinicoEstado.error = (respuesta && respuesta.mensaje) || "No se pudo revisar el contexto de laboratorio.";
+			tratamientoLaboratorioClinicoRender();
+			return;
+		}
+		var datosRespuesta = respuesta.datos || {};
+		var actualizado = datosRespuesta.contexto || datosRespuesta;
+		["acciones_permitidas", "trabajo_activo", "puede_iniciar", "bloqueos", "ubicaciones"].forEach(function(clave) {
+			if (actualizado[clave] === undefined && datosRespuesta[clave] !== undefined) {
+				actualizado[clave] = datosRespuesta[clave];
+			}
+		});
+		if (!tratamientoLaboratorioClinicoVerdadero(tratamientoLaboratorioClinicoDetalle(actualizado).requiere_laboratorio)) {
+			tratamientoLaboratorioClinicoCerrar();
+			return;
+		}
+		tratamientoLaboratorioClinicoEstado.contexto = actualizado;
+		tratamientoLaboratorioClinicoEstado.error = "";
+		tratamientoLaboratorioClinicoRender();
+	}).fail(function() {
+		tratamientoLaboratorioClinicoEstado.cargando = false;
+		tratamientoLaboratorioClinicoEstado.error = "La evolucion fue guardada, pero el componente de laboratorio no pudo cargarse. Puede abrirlo desde Aplicaciones.";
+		tratamientoLaboratorioClinicoRender();
+	});
+}
+
+function tratamientoLaboratorioClinicoOpcionesOrigen() {
+	return {
+		cod_consulta_origen: tratamientoLaboratorioClinicoEstado.origen.cod_consulta_origen || null,
+		cod_evolucion_origen: tratamientoLaboratorioClinicoEstado.origen.cod_evolucion_origen || null
+	};
+}
+
+function tratamientoLaboratorioClinicoModuloDisponible() {
+	return window.TrabajoLaboratorio
+		&& typeof window.TrabajoLaboratorio.abrirDesdeDetalleVenta === "function"
+		&& typeof window.TrabajoLaboratorio.abrirTrabajo === "function";
+}
+
+function tratamientoLaboratorioClinicoAbrirInicio() {
+	var detalle = tratamientoLaboratorioClinicoDetalle(tratamientoLaboratorioClinicoEstado.contexto);
+	if (!tratamientoLaboratorioClinicoModuloDisponible()) {
+		tratamientoLaboratorioClinicoEstado.error = "El panel central de Trabajos de laboratorio todavia no termino de cargar.";
+		tratamientoLaboratorioClinicoRender();
+		return;
+	}
+	tratamientoLaboratorioClinicoCerrar();
+	window.TrabajoLaboratorio.abrirDesdeDetalleVenta(detalle.cod_detalle_venta, tratamientoLaboratorioClinicoOpcionesOrigen());
+}
+
+function tratamientoLaboratorioClinicoAsegurarHilo() {
+	var detalle = tratamientoLaboratorioClinicoDetalle(tratamientoLaboratorioClinicoEstado.contexto);
+	if (!window.TrabajoLaboratorio || typeof window.TrabajoLaboratorio.asegurarHiloDetalle !== "function") {
+		tratamientoLaboratorioClinicoEstado.error = "El proceso para preparar el Hilo maestro todavia no termino de cargar.";
+		tratamientoLaboratorioClinicoRender();
+		return;
+	}
+	tratamientoLaboratorioClinicoCerrar();
+	window.TrabajoLaboratorio.asegurarHiloDetalle(
+		detalle.cod_detalle_venta,
+		tratamientoLaboratorioClinicoOpcionesOrigen()
+	);
+}
+
+function tratamientoLaboratorioClinicoAbrirTrabajo() {
+	var trabajo = (tratamientoLaboratorioClinicoEstado.contexto || {}).trabajo_activo;
+	if (!tratamientoLaboratorioClinicoModuloDisponible() || !trabajo || !trabajo.id) {
+		tratamientoLaboratorioClinicoEstado.error = "No se pudo abrir el trabajo seleccionado.";
+		tratamientoLaboratorioClinicoRender();
+		return;
+	}
+	tratamientoLaboratorioClinicoCerrar();
+	window.TrabajoLaboratorio.abrirTrabajo(trabajo.id);
+}
+
+function tratamientoLaboratorioClinicoAbrirInstalacion() {
+	var trabajo = (tratamientoLaboratorioClinicoEstado.contexto || {}).trabajo_activo;
+	var opciones = tratamientoLaboratorioClinicoOpcionesOrigen();
+	if (!trabajo || !trabajo.id || !tratamientoLaboratorioClinicoModuloDisponible()) {
+		tratamientoLaboratorioClinicoEstado.error = "No se pudo abrir la instalacion clinica.";
+		tratamientoLaboratorioClinicoRender();
+		return;
+	}
+	if (!opciones.cod_evolucion_origen) {
+		tratamientoLaboratorioClinicoEstado.error = "La instalacion debe quedar vinculada a una evolucion clinica nueva.";
+		tratamientoLaboratorioClinicoRender();
+		return;
+	}
+	tratamientoLaboratorioClinicoCerrar();
+	if (typeof window.TrabajoLaboratorio.registrarInstalacion === "function") {
+		window.TrabajoLaboratorio.registrarInstalacion(trabajo.id, opciones);
+		return;
+	}
+	window.TrabajoLaboratorio.abrirTrabajo(trabajo.id);
+	if (typeof ver_vetana_informativa === "function") {
+		ver_vetana_informativa("Abra la accion Registrar instalacion dentro de la ficha del trabajo.");
+	}
+}
