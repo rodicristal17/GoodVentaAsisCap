@@ -32,8 +32,8 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=alta-funcionario-telar-20260722-1" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=alta-funcionario-telar-20260722-1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=gestor-accesos-20260723-1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=gestor-accesos-20260723-1" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-4" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=trabajo-laboratorio-20260723-mini-hilo-1" />
@@ -60,8 +60,8 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=trabajo-laboratorio-20260723-6"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=alta-funcionario-telar-20260722-1"></script>
-<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=trabajo-laboratorio-20260721-3"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=gestor-accesos-20260723-1"></script>
+<script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=gestor-accesos-20260723-1"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
@@ -77,7 +77,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=performance-polling-20260718"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js?x=historico-solo-consulta-20260721"></script>
-<script src="../js_system/trabajo_laboratorio.js?x=trabajo-laboratorio-20260723-19"></script>
+<script src="../js_system/trabajo_laboratorio.js?x=trabajo-laboratorio-20260723-20"></script>
 <script src="../js_system/abmMecanicoDental.js?x=cuenta-telar-20260721-3"></script>
 <script src="../js_system/abmInterConsulta.js?x=trabajo-laboratorio-20260723-mini-hilo-1"></script>
 <script src="../js_system/abmCentroFacturas.js?x=nomenclatura-legajos-20260721-1"></script>
@@ -3581,7 +3581,7 @@ class='divMinimizado'></div>
 </tr>
 </table>
 
-<table class='divMenub' id='divMenuTrabajoLaboratorio' onclick='abrirTrabajoLaboratorio()' style='text-align:center;'>
+<table class='divMenub' id='divMenuTrabajoLaboratorio' data-access-key='trabajos_mecanicos_dentales' onclick='abrirTrabajoLaboratorio()' style='text-align:center;'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2' />
@@ -4606,7 +4606,7 @@ class='divMinimizado'></div>
 </tr>
 </table>
 
-<table  class='divMenub' style='text-align:center' onclick='verCerrarMisDatos(1)'>
+<table class='divMenub' data-access-key='mis_datos' style='text-align:center' onclick='verCerrarMisDatos(1)'>
 <tr>
 <td>
 <img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/misDatos.png' />
@@ -6026,77 +6026,80 @@ onclick="vaciar('inptBuscarUsuario3')" />
 <tr>
 <td>
 <center>
-<div class='divAbms accesos-modal' style='display:;'>
-<div class='accesos-header'>
+<div class='divAbms accesos-modal accesos-visual-manager'>
+<header class='accesos-header'>
 <div class='accesos-header-main'>
-<p class='pTituloB accesos-title'>Administrar accesos y restricciones</p>
-<p class='accesos-subtitle'>Gestiona los permisos efectivos asignados a este usuario.</p>
+<p class='accesos-eyebrow'>Seguridad y visibilidad</p>
+<p class='pTituloB accesos-title'>Administrar accesos por usuario y rol</p>
+<p class='accesos-subtitle'>El rol define la base. Las diferencias guardadas en un usuario se muestran como excepciones.</p>
+<input type='hidden' id='inpt_user_selecc' value=''>
+<input type='hidden' id='inpt_nivel_selecc' value=''>
 </div>
-<button type='button' class='accesos-close-btn' title='Cerrar Ventana' onclick='verCerrarAccesoUsuario("2")'>
-<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' alt='Cerrar' />
+<button type='button' class='accesos-close-btn' title='Cerrar Ventana' aria-label='Cerrar administrador de accesos' onclick='verCerrarAccesoUsuario("2")'>
+<img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn' alt='' />
 </button>
-</div>
- 
+</header>
 
-<div class='divMenuf accesos-summary'>
-<label class='accesos-summary-card'>
+<section class='accesos-visual-selectors' aria-label='Seleccion de usuario y rol'>
+<label>
+<span>Tipo de usuario</span>
+<select id='gestorAccesosTipoUsuario' class='inputSelect' onchange='gestorAccesosFiltrarUsuarios()'>
+<option value=''>Todos los tipos</option>
+</select>
+</label>
+<label class='accesos-visual-selectors__user'>
 <span>Usuario</span>
-<input type="text" class="inputTextDisable" id="inpt_user_selecc" autocomplete="off" disabled>
+<select id='gestorAccesosUsuario' class='inputSelect' onchange='gestorAccesosSeleccionarUsuario(this.value)'></select>
 </label>
-<label class='accesos-summary-card accesos-summary-card-small'>
-<span>Permisos habilitados</span>
-<span class='accesos-percent-field'>
-<input type="text" class="inputTextDisable" id="inpt_nivel_selecc" autocomplete="off" disabled>
-<b>%</b>
-</span>
+<label>
+<span>Rol asignado</span>
+<select id='gestorAccesosRol' class='inputSelect' onchange='gestorAccesosCambiarRol(this.value)'></select>
 </label>
+<div class='accesos-scope-switch' role='group' aria-label='Alcance de la edicion'>
+<button type='button' id='gestorAccesosTabUsuario' class='is-active' onclick='gestorAccesosCambiarModo("usuario")'>Permisos del usuario</button>
+<button type='button' id='gestorAccesosTabRol' onclick='gestorAccesosCambiarModo("rol")'>Plantilla del rol</button>
 </div>
-<div class='divMenuf accesos-body'>
-<center>
-<table style="width:100%">
-<tbody><tr>
-<td style="width:99%;text-align:left">
-<p class="pTituloC">Buscar :</p>
-<input class="inputText" type="text" placeholder="Buscar por permiso, formulario o codigo" id="inptBuscarAccesos" onkeyup="if(event.keyCode == 13){buscarAccesosUser()}">
-<input type="button" value="Buscar" class="btn4 accesos-search-btn" onclick="buscarAccesosUser()">
-</td>
-<td>
-</td>
-</tr>
-</tbody></table>
-<div class='accesos-actions'>
-<button type='button' class='btn4 accesos-action-btn accesos-action-enable' id='btnMarcarAccesosVisibles' onclick='marcarAccesosVisibles("SI")'>Marcar visibles</button>
-<button type='button' class='btn4 accesos-action-btn accesos-action-disable' id='btnDesmarcarAccesosVisibles' onclick='marcarAccesosVisibles("NO")'>Desmarcar visibles</button>
+</section>
+
+<section class='accesos-visual-toolbar'>
+<label class='accesos-visual-search'>
+<span class='sr-only'>Buscar acceso</span>
+<input type='search' id='inptBuscarAccesos' placeholder='Buscar acceso, formulario o codigo...' autocomplete='off' oninput='gestorAccesosRenderizar()'>
+</label>
+<div class='accesos-visual-summary' aria-live='polite'>
+<span id='gestorAccesosResumenSeleccion'>0 / 0 seleccionados</span>
+<span id='gestorAccesosResumenExcepciones'>0 excepciones</span>
 </div>
-<div class='accesos-toolbar-meta'>
-<p class='accesos-counter' id='lblContadorAccesosVisibles'>Seleccionados: 0 de 0 visibles</p>
-<p class='accesos-status' id='lblEstadoAccesosVisibles'></p>
-<p class='accesos-autosave-info'>Los cambios se guardan automaticamente al marcar o desmarcar un permiso.</p>
+</section>
+
+<div class='accesos-impacto-rol' id='gestorAccesosImpactoRol' hidden>
+<span class='accesos-impacto-rol__icon'>!</span>
+<span><strong>Editando la plantilla del rol</strong><small id='gestorAccesosImpactoTexto'>Al guardar se reemplazaran los permisos de sus usuarios.</small></span>
 </div>
-<div class='accesos-table-head'>
-<span>Formulario / permiso</span>
-<span>Accion</span>
+
+<main class='accesos-visual-body'>
+<section class='accesos-visual-catalog' id='gestorAccesosCatalogo' aria-label='Catalogo de accesos'>
+<div class='accesos-visual-loading'>Cargando accesos...</div>
+</section>
+<aside class='accesos-visual-selected' aria-label='Accesos seleccionados'>
+<header>
+<strong>Seleccionados</strong>
+<small>Vista efectiva para el usuario o plantilla del rol.</small>
+</header>
+<div id='gestorAccesosSeleccionados'></div>
+</aside>
+</main>
+
+<footer class='accesos-footer accesos-visual-footer'>
+<div>
+<p id='lblEstadoAccesosVisibles'>Los cambios se aplican al guardar.</p>
+<button type='button' class='dashboard-shortcut-modal__btn dashboard-shortcut-modal__btn--secondary' onclick='gestorAccesosRestaurarRol()'>Restaurar permisos del rol</button>
 </div>
-<table class="tableCabeceraRegistro">
-<tbody>
-<tr>
-<td class="td_registro" style="width:70%;">
-DESCRIPCION
-</td>
-<td class="td_registro" style="width:30%;">
-ACCION
-</td>
-</tr>
-</tbody>
-</table>
-<div class="div_cuerpo_table" id="table_abm_accesos_Abm" style='height:50vh;'></div>
-</center>
- 
+<div class='accesos-visual-footer__actions'>
+<button type='button' class='dashboard-shortcut-modal__btn dashboard-shortcut-modal__btn--secondary' onclick='verCerrarAccesoUsuario("2")'>Cancelar</button>
+<button type='button' class='dashboard-shortcut-modal__btn dashboard-shortcut-modal__btn--primary' id='gestorAccesosGuardar' onclick='gestorAccesosGuardar()'>Guardar cambios</button>
 </div>
-<div class='accesos-footer'>
-<p>Estas acciones solo afectan los permisos visibles en la lista actual.</p>
-<button type='button' class='btn4 accesos-footer-close' onclick='verCerrarAccesoUsuario("2")'>Cerrar</button>
-</div>
+</footer>
 </div>
 
 </center>

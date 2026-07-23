@@ -1175,11 +1175,13 @@
     if (mechanicFilter && mechanicFilter.closest(".tlab-field")) {
       mechanicFilter.closest(".tlab-field").hidden = mechanic;
     }
-    if (mechanic && state.context.forzar_bandeja !== false && state.view === "operativa") {
+    /* El mecanico abre la vista operativa completa para poder tomar cualquier
+       hilo. La bandeja personal sigue disponible como filtro voluntario. */
+    if (mechanic && state.context.forzar_bandeja === true && state.view === "operativa") {
       state.view = "mecanico";
     }
     if (!historicosDisponibles && state.view === "historicos") {
-      state.view = mechanic ? "mecanico" : "operativa";
+      state.view = "operativa";
       state.filtersOpen = false;
     }
     renderGroupNavigation();

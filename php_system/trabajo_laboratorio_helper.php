@@ -1710,11 +1710,13 @@ function trabajoLaboratorioPuedeVer($mysqli, $codUsuario, $trabajo)
     if (!$trabajo) {
         return false;
     }
-    /* El hilo es una cadena institucional compartida: cualquier cuenta Telar
-       autenticada y activa puede consultarlo y asumir la custodia. Los permisos
-       especificos continúan protegiendo las acciones clínicas, técnicas,
-       financieras y administrativas que no sean la toma ordinaria del hilo. */
-    return trabajoLaboratorioUsuario($mysqli, intval($codUsuario)) ? true : false;
+    /* La cadena completa es compartida entre quienes poseen
+       VERTRABAJOSLABORATORIO; el auditor conserva su acceso transversal. */
+    return trabajoLaboratorioTienePermiso(
+        $mysqli,
+        intval($codUsuario),
+        'VERTRABAJOSLABORATORIO'
+    ) || trabajoLaboratorioUsuarioEsAuditor($mysqli, intval($codUsuario));
 }
 
 function trabajoLaboratorioEstadoPermiteAccion($estado, $accion)
@@ -2887,7 +2889,21 @@ function trabajoLaboratorioObtenerCicloActual($mysqli, $trabajo)
 
 function trabajoLaboratorioCatalogos($mysqli, $codUsuario = 0)
 {
-    if (!trabajoLaboratorioUsuario($mysqli, intval($codUsuario))) {
+    $usuarioCatalogos = trabajoLaboratorioUsuario($mysqli, intval($codUsuario));
+    $puedeConsultarCatalogos = $usuarioCatalogos && (
+        trabajoLaboratorioTienePermiso(
+            $mysqli,
+            intval($codUsuario),
+            'VERTRABAJOSLABORATORIO'
+        )
+        || trabajoLaboratorioTienePermiso(
+            $mysqli,
+            intval($codUsuario),
+            'CREARTRABAJOLABORATORIO'
+        )
+        || trabajoLaboratorioUsuarioEsAuditor($mysqli, intval($codUsuario))
+    );
+    if (!$puedeConsultarCatalogos) {
         trabajoLaboratorioLanzar('catalogos_no_autorizados', 'El usuario no puede consultar los catalogos de laboratorio.');
     }
     $tipos = array();
@@ -2910,7 +2926,7 @@ function trabajoLaboratorioCatalogos($mysqli, $codUsuario = 0)
     $doctores = array();
     $custodios = array();
     $productos = array();
-    $usuario = trabajoLaboratorioUsuario($mysqli, $codUsuario);
+    $usuario = $usuarioCatalogos;
     $todosLocales = true;
     $localUsuario = $usuario ? intval($usuario['cod_localFK']) : 0;
     $sqlLocal = "SELECT cod_local,Nombre FROM local WHERE estado='Activo'";
@@ -5506,7 +5522,12 @@ function trabajoLaboratorioObtenerDetalleTrabajo($mysqli, $codUsuario, $idTrabaj
 
 function trabajoLaboratorioCondicionAccesoListado($mysqli, $codUsuario, &$tipos, &$valores)
 {
-    return trabajoLaboratorioUsuario($mysqli, intval($codUsuario)) ? '1=1' : '0=1';
+    return trabajoLaboratorioTienePermiso(
+        $mysqli,
+        intval($codUsuario),
+        'VERTRABAJOSLABORATORIO'
+    ) || trabajoLaboratorioUsuarioEsAuditor($mysqli, intval($codUsuario))
+        ? '1=1' : '0=1';
 }
 
 function trabajoLaboratorioVincularParametros($stmt, $tipos, &$valores)

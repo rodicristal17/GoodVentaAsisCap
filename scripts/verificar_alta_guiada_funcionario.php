@@ -32,15 +32,20 @@ function aplicarMigracionAltaFuncionario($mysqli,$ruta)
 }
 
 $base=dirname(__DIR__);
-$rutaMigracion=$base.DIRECTORY_SEPARATOR.'actualizacion_22072026_alta_guiada_funcionario_mecanico_dental.sql';
+$rutasMigracion=array(
+    $base.DIRECTORY_SEPARATOR.'actualizacion_22072026_alta_guiada_funcionario_mecanico_dental.sql',
+    $base.DIRECTORY_SEPARATOR.'actualizacion_23072026_gestor_accesos_y_perfil_mecanico.sql'
+);
 $aplicar=in_array('--apply',$argv,true);
 $mysqli=conectar_al_servidor();
 $correcto=true;
 
 try{
     if($aplicar){
-        aplicarMigracionAltaFuncionario($mysqli,$rutaMigracion);
-        salidaAltaFuncionario(true,'Migracion del perfil de mecanico dental aplicada.');
+        foreach($rutasMigracion as $rutaMigracion){
+            aplicarMigracionAltaFuncionario($mysqli,$rutaMigracion);
+        }
+        salidaAltaFuncionario(true,'Migraciones del perfil de mecanico dental aplicadas.');
     }
 
     $sqlRol="SELECT cod_niveles,nombre,estado
@@ -58,10 +63,10 @@ try{
         $codRol=(int)$rol['cod_niveles'];
         $sqlPermisos="SELECT
             COUNT(DISTINCT CASE WHEN dn.accion='SI' AND la.codigo IN
-              ('VERTRABAJOSLABORATORIO','RECIBIRTRABAJOLABORATORIO','ENTREGARTRABAJOLABORATORIO')
+              ('VERTRABAJOSLABORATORIO','RECIBIRTRABAJOLABORATORIO','ENTREGARTRABAJOLABORATORIO','EVIDENCIATRABAJOLABORATORIO')
               THEN la.codigo END) AS requeridos,
             COUNT(DISTINCT CASE WHEN dn.accion='SI' AND la.codigo NOT IN
-              ('VERTRABAJOSLABORATORIO','RECIBIRTRABAJOLABORATORIO','ENTREGARTRABAJOLABORATORIO')
+              ('VERTRABAJOSLABORATORIO','RECIBIRTRABAJOLABORATORIO','ENTREGARTRABAJOLABORATORIO','EVIDENCIATRABAJOLABORATORIO')
               THEN la.codigo END) AS adicionales
             FROM detallesniveles dn
             INNER JOIN listadodeacceso la ON la.idlistadodeacceso=dn.idlistadodeacceso
@@ -69,8 +74,8 @@ try{
         $resultadoPermisos=$mysqli->query($sqlPermisos);
         $permisos=$resultadoPermisos ? $resultadoPermisos->fetch_assoc() : null;
         $correcto=salidaAltaFuncionario(
-            $permisos && (int)$permisos['requeridos']===3,
-            'El perfil contiene los tres permisos operativos de laboratorio.'
+            $permisos && (int)$permisos['requeridos']===4,
+            'El perfil contiene los cuatro permisos operativos de laboratorio.'
         ) && $correcto;
         $correcto=salidaAltaFuncionario(
             $permisos && (int)$permisos['adicionales']===0,
@@ -105,4 +110,3 @@ try{
 $mysqli->close();
 echo $correcto ? 'RESULTADO: APROBADO'.PHP_EOL : 'RESULTADO: REVISAR'.PHP_EOL;
 exit($correcto ? 0 : 1);
-

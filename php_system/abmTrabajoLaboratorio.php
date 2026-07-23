@@ -93,6 +93,11 @@ function trabajoLaboratorioHttpContextoUsuario($mysqli, $codUsuario)
     $usuario = trabajoLaboratorioUsuario($mysqli, $codUsuario);
     $esMecanico = trabajoLaboratorioObtenerTecnicoFormal($mysqli, $codUsuario, false) ? true : false;
     $esAuditor = trabajoLaboratorioUsuarioEsAuditor($mysqli, $codUsuario);
+    $puedeVerLaboratorio = trabajoLaboratorioTienePermiso(
+        $mysqli,
+        $codUsuario,
+        'VERTRABAJOSLABORATORIO'
+    ) || $esAuditor;
     $historicosDisponibles = function_exists('trabajoLaboratorioHistoricoEstructuraDisponible')
         && trabajoLaboratorioHistoricoEstructuraDisponible($mysqli);
     return array(
@@ -106,10 +111,11 @@ function trabajoLaboratorioHttpContextoUsuario($mysqli, $codUsuario)
         'hilo_custodia_disponible' => trabajoLaboratorioHiloCustodiaDisponible($mysqli),
         'es_mecanico' => $esMecanico,
         'puede_ver_bandeja_mecanico' => $esMecanico
-            && trabajoLaboratorioTienePermiso($mysqli, $codUsuario, 'VERTRABAJOSLABORATORIO'),
+            && $puedeVerLaboratorio,
         'es_auditor' => $esAuditor,
         'historicos_disponibles' => $historicosDisponibles,
-        'puede_resolver_historicos' => $usuario && $historicosDisponibles,
+        'puede_resolver_historicos' => $usuario && $historicosDisponibles
+            && $puedeVerLaboratorio,
         'puede_convalidar_historicos' => $esAuditor && $historicosDisponibles,
         'puede_rectificar_historicos' => $esAuditor && $historicosDisponibles
     );

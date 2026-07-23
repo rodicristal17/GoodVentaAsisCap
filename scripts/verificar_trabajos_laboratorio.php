@@ -841,11 +841,12 @@ pruebaLabAfirmar(
     'Se pudieron leer las integraciones clinicas para verificar sus resguardos.'
 );
 pruebaLabAfirmar(
-    strpos($fuenteInicioHtml, "id='divMenuTrabajoLaboratorio' onclick='abrirTrabajoLaboratorio()'") !== false
-    && strpos($fuenteInicioJs, '$("table[id=divMenuTrabajoLaboratorio]").remove()') === false
-    && strpos($fuenteDashboardShortcutsJs, 'trabajos_mecanicos_dentales: { sourceSelector: "#divMenuTrabajoLaboratorio", allowHiddenTemplate: true }') !== false
-    && strpos($fuenteDashboardShortcutsPhp, "trim((string)\$accessKey) === 'trabajos_mecanicos_dentales'") !== false,
-    'El menu y los accesos rapidos del hilo quedan disponibles para cualquier cuenta autenticada activa.'
+    strpos($fuenteInicioHtml, "id='divMenuTrabajoLaboratorio' data-access-key='trabajos_mecanicos_dentales'") !== false
+    && strpos($fuenteInicioJs, 'permisoAccesoUser("VERTRABAJOSLABORATORIO","accion")==false') !== false
+    && strpos($fuenteInicioJs, '$("table[id=divMenuTrabajoLaboratorio]").remove()') !== false
+    && strpos($fuenteDashboardShortcutsJs, 'trabajos_mecanicos_dentales: { sourceSelector: "#divMenuTrabajoLaboratorio", permissionKey: "VERTRABAJOSLABORATORIO"') !== false
+    && strpos($fuenteDashboardShortcutsPhp, "'trabajos_mecanicos_dentales' => 'VERTRABAJOSLABORATORIO'") !== false,
+    'El menu y los accesos rapidos del hilo requieren el permiso de trabajos de laboratorio.'
 );
 pruebaLabAfirmar(
     strpos($fuenteConsultaJs, 'solicitudActual !== tratamientoLaboratorioClinicoEstado.solicitudSecuencia') !== false
@@ -1203,11 +1204,18 @@ pruebaLabAfirmar(
     'Toda accion vuelve a validar acceso al trabajo y disponibilidad en servidor.'
 );
 pruebaLabAfirmar(
-    strpos($bloquePuedeVerTrabajo, 'trabajoLaboratorioUsuario($mysqli, intval($codUsuario))') !== false
+    strpos($bloquePuedeVerTrabajo, 'VERTRABAJOSLABORATORIO') !== false
+    && strpos($bloquePuedeVerTrabajo, 'trabajoLaboratorioUsuarioEsAuditor') !== false
     && strpos($bloqueCondicionAccesoListado, "? '1=1' : '0=1'") !== false
-    && strpos($bloquePuedeVerTrabajo, 'VERTRABAJOSLABORATORIO') === false
+    && strpos($bloqueCondicionAccesoListado, 'VERTRABAJOSLABORATORIO') !== false
+    && strpos($bloqueCondicionAccesoListado, 'trabajoLaboratorioUsuarioEsAuditor') !== false
     && strpos($bloqueCondicionAccesoListado, 'cod_local_destinoFK') === false,
-    'El hilo completo es visible para cualquier cuenta autenticada activa, sin filtrar por permiso o sucursal.'
+    'El hilo completo requiere permiso de laboratorio o auditoria, sin restringir los trabajos por sucursal.'
+);
+pruebaLabAfirmar(
+    strpos($fuenteTrabajoLaboratorioJs, 'state.context.forzar_bandeja === true') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'state.context.forzar_bandeja !== false') === false,
+    'El mecanico abre todos los trabajos y conserva Mi bandeja como filtro voluntario.'
 );
 pruebaLabAfirmar(
     strpos($bloqueMiniHiloMensajes, 'cod_mensaje_hiloFK') !== false
@@ -1396,13 +1404,19 @@ $bloquePromoverHistorico = pruebaLabBloqueFuncion(
     $fuenteHistoricoHelper,
     'trabajoLaboratorioHistoricoPromoverHistorico'
 );
+$bloqueExigirUsuarioHistorico = pruebaLabBloqueFuncion(
+    $fuenteHistoricoHelper,
+    'trabajoLaboratorioHistoricoExigirUsuarioActivo'
+);
 pruebaLabAfirmar(
     strpos($bloqueListarHistoricos, 'trabajoLaboratorioHistoricoExigirUsuarioActivo') !== false
     && strpos($bloqueListarHistoricos, 'h.id_trabajo_laboratorioFK IS NULL') !== false
     && strpos($bloqueListarHistoricos, "h.estado_convalidacion<>'integrado_operativo'") !== false
     && strpos($bloqueObtenerHistorico, 'trabajoLaboratorioHistoricoExigirUsuarioActivo') !== false
+    && strpos($bloqueExigirUsuarioHistorico, 'VERTRABAJOSLABORATORIO') !== false
+    && strpos($bloqueExigirUsuarioHistorico, 'trabajoLaboratorioUsuarioEsAuditor') !== false
     && strpos($bloqueObtenerHistorico, "'puede_resolver'") !== false,
-    'Cualquier usuario activo puede consultar pendientes historicos y los resueltos dejan esa bandeja.'
+    'El permiso de laboratorio habilita pendientes historicos y los resueltos dejan esa bandeja.'
 );
 pruebaLabAfirmar(
     $bloqueResolverHistorico !== ''
@@ -1439,7 +1453,7 @@ pruebaLabAfirmar(
     strpos($fuenteTrabajoLaboratorioPhp, "case 'resolverHistorico':") !== false
     && strpos($fuenteTrabajoLaboratorioPhp, 'trabajoLaboratorioHistoricoResolverHistorico') !== false
     && strpos($fuenteTrabajoLaboratorioPhp, "'puede_resolver_historicos'") !== false,
-    'El endpoint publica la resolucion historica para toda sesion activa.'
+    'El endpoint publica la resolucion historica para una sesion autorizada.'
 );
 $bloqueNodoOriginalHistorico = pruebaLabBloqueFuncion(
     $fuenteHistoricoHelper,
@@ -1688,7 +1702,7 @@ pruebaLabAfirmar(
 pruebaLabAfirmar(
     strpos($fuenteTrabajoLaboratorioJs, 'if (boolValue(config.requiere_motivo_excepcion))') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'motivo_excepcion).trim().length < 5') !== false
-    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260723-19') !== false,
+    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260723-20') !== false,
     'La interfaz muestra y valida el motivo solo cuando el servidor identifica una intervencion excepcional.'
 );
 $bloqueGuardarRegularizacion = pruebaLabBloqueFuncion(
@@ -2121,7 +2135,11 @@ if ($aplicar || $estructuraPresente) {
     $resultadoCadena->free();
     $usuarioDetalle = pruebaLabEscalar(
         $mysqli,
-        "SELECT MIN(cod_usuario) FROM usuario WHERE estado='Activo'"
+        "SELECT MIN(u.cod_usuario) FROM usuario u "
+        ."INNER JOIN accesosuser au ON au.usuarios_idusario=u.cod_usuario "
+        ."INNER JOIN listadodeacceso la ON la.idlistadodeacceso=au.idlistadodeaccesoFK "
+        ."WHERE u.estado='Activo' AND au.accion='SI' "
+        ."AND la.codigo='VERTRABAJOSLABORATORIO'"
     );
     if (count($trabajosCadena) > 0 && $usuarioDetalle > 0) {
         $detalleTrabajo = trabajoLaboratorioObtenerDetalleTrabajo(
@@ -2288,7 +2306,11 @@ if ($aplicar || $estructuraPresente) {
     }
     $usuarioHistoricoNoAuditor = 0;
     $resultadoUsuariosHistoricos = $mysqli->query(
-        "SELECT cod_usuario FROM usuario WHERE estado='Activo' ORDER BY cod_usuario ASC"
+        "SELECT DISTINCT u.cod_usuario FROM usuario u "
+        ."INNER JOIN accesosuser au ON au.usuarios_idusario=u.cod_usuario "
+        ."INNER JOIN listadodeacceso la ON la.idlistadodeacceso=au.idlistadodeaccesoFK "
+        ."WHERE u.estado='Activo' AND au.accion='SI' "
+        ."AND la.codigo='VERTRABAJOSLABORATORIO' ORDER BY u.cod_usuario ASC"
     );
     if ($resultadoUsuariosHistoricos) {
         while ($filaUsuarioHistorico = $resultadoUsuariosHistoricos->fetch_assoc()) {
@@ -2313,7 +2335,7 @@ if ($aplicar || $estructuraPresente) {
             && isset($bandejaHistoricaReal['historicos'])
             && isset($bandejaHistoricaReal['puede_resolver'])
             && $bandejaHistoricaReal['puede_resolver'] === true,
-            'Una cuenta activa sin auditoria puede consultar y resolver la bandeja historica.'
+            'Una cuenta con permiso de laboratorio y sin auditoria puede consultar y resolver la bandeja historica.'
         );
         if (count($bandejaHistoricaReal['historicos']) > 0) {
             $detalleHistoricoReal = trabajoLaboratorioHistoricoObtenerHistorico(

@@ -76,12 +76,6 @@ function dashboard_authenticated_user()
 
 function dashboard_permission_key($accessKey, $catalogPermission)
 {
-    /* El hilo de laboratorio es institucional: toda cuenta autenticada activa
-       puede abrirlo y tomarlo, aunque el catalogo instalado conserve el
-       permiso historico de esta entrada. */
-    if (trim((string)$accessKey) === 'trabajos_mecanicos_dentales') {
-        return '';
-    }
     $catalogPermission = trim((string)$catalogPermission);
 
     if ($catalogPermission != '') {
@@ -124,6 +118,8 @@ function dashboard_permission_key($accessKey, $catalogPermission)
         'listado_vendedores' => 'VERLISTADOVENDEDORES',
         'listado_caja' => 'VERLISTADODECAJA',
         'lista_factura_habilitadas' => 'VERFACTURASHABILITADAS',
+        'trabajos_mecanicos_dentales' => 'VERTRABAJOSLABORATORIO',
+        'listado_mecanicos_dentales' => 'VERLISTADOMECANICODENTAL',
         'imprimir_precio' => 'VERINFORMECODIGOBARRA',
         'informe_general_cuentas' => 'VERINFORMECUENTAGENERAL',
         'informe_evaluacion' => 'VERINFORMEEVALUACION',
@@ -149,6 +145,32 @@ function dashboard_permission_key($accessKey, $catalogPermission)
     return isset($map[$accessKey]) ? $map[$accessKey] : '';
 }
 
+function dashboard_user_is_dental_mechanic($mysqli, $user)
+{
+    $sql = "SELECT 1
+            FROM usuario u
+            LEFT JOIN listado_niveles ln ON ln.cod_niveles=CAST(u.acceso AS UNSIGNED)
+            WHERE u.cod_usuario=?
+              AND (
+                UPPER(TRIM(IFNULL(u.tipo,'')))='MECANICO DENTAL'
+                OR UPPER(TRIM(IFNULL(ln.nombre,'')))='MECANICO DENTAL / LABORATORIO'
+              )
+            LIMIT 1";
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('s', $user);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return false;
+    }
+    $result = $stmt->get_result();
+    $esMecanico = $result && $result->num_rows > 0;
+    $stmt->close();
+    return $esMecanico;
+}
+
 function dashboard_user_can_access($mysqli, $user, $permissionKey)
 {
     $permissionKey = trim((string)$permissionKey);
@@ -162,6 +184,7 @@ function dashboard_user_can_access($mysqli, $user, $permissionKey)
             INNER JOIN listadodeacceso la ON la.idlistadodeacceso = au.idlistadodeaccesoFK
             WHERE au.usuarios_idusario = ?
               AND la.codigo = ?
+              AND au.tipo = 'Administrativo'
               AND au.accion = 'SI'
             LIMIT 1";
 
@@ -175,11 +198,13 @@ function dashboard_user_can_access($mysqli, $user, $permissionKey)
     $stmt->bind_param($tipos, $user, $permissionKey);
 
     if (!$stmt->execute()) {
+        $stmt->close();
         return false;
     }
 
     $result = $stmt->get_result();
     $row = $result->fetch_row();
+    $stmt->close();
 
     return isset($row[0]) && (int)$row[0] > 0;
 }
@@ -203,9 +228,17 @@ function dashboard_format_access_row($row)
 function dashboard_filter_access_rows($mysqli, $user, $rows)
 {
     $accesos = array();
+    $esMecanico = dashboard_user_is_dental_mechanic($mysqli, $user);
+    $accesosMecanico = array(
+        'trabajos_mecanicos_dentales' => true,
+        'mis_datos' => true
+    );
 
     foreach ($rows as $row) {
         $accessKey = dashboard_to_utf8($row['access_key']);
+        if ($esMecanico && !isset($accesosMecanico[$accessKey])) {
+            continue;
+        }
         $permissionKey = dashboard_permission_key($accessKey, $row['permission_key']);
 
         if (!dashboard_user_can_access($mysqli, $user, $permissionKey)) {
@@ -350,9 +383,18 @@ function dashboard_save_user_shortcuts($mysqli, $user)
 
     $rows = dashboard_fetch_rows($mysqli, $sql);
     $validRows = array();
+    $esMecanico = dashboard_user_is_dental_mechanic($mysqli, $user);
+    $accesosMecanico = array(
+        'trabajos_mecanicos_dentales' => true,
+        'mis_datos' => true
+    );
 
     foreach ($rows as $row) {
-        $permissionKey = dashboard_permission_key(dashboard_to_utf8($row['access_key']), $row['permission_key']);
+        $accessKey = dashboard_to_utf8($row['access_key']);
+        if ($esMecanico && !isset($accesosMecanico[$accessKey])) {
+            dashboard_json(array('1' => 'NI', '2' => 'El acceso no corresponde al perfil de mecanico dental'));
+        }
+        $permissionKey = dashboard_permission_key($accessKey, $row['permission_key']);
 
         if (!dashboard_user_can_access($mysqli, $user, $permissionKey)) {
             dashboard_json(array('1' => 'NI', '2' => 'Acceso no autorizado'));

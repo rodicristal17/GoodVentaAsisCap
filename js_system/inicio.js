@@ -4986,6 +4986,7 @@ $("div[id=divPresentacion]").fadeOut(500);
 					
 					verCerrarEfectoCargando("2")
 					 niveluser = datos["3"];
+					window.tipoUsuarioSesionClinident = datos["16"] || "";
 					var nombre = datos["2"];
 					localStorage.setItem("nombreUsuario" + userid, nombre);
 					 cod_localFKUSer = datos["4"];
@@ -8025,22 +8026,484 @@ function verCerrarAccesoUsuario(d) {
    
     if (d == "1") {
 	if(controlacceso("VERACCESOSUARIOS","accion")==false){return;}
-	if(idAbmUsuario==""){
-	ver_vetana_informativa("FALTO SELCCIONAR UN REGISTRO")
-	return false;
-	}
         document.getElementById("divVistaAcceso").style.display = ""
  document.getElementById("tdEfectoVistaAcceso").className="magictime slideLeftReturn"
 
 		 idAbmAccesoUser="";
-		prepararVistaAccesosUsuario();
-		buscarAccesosUser()
+		gestorAccesosModo="usuario";
+		gestorAccesosRolOriginal="";
+		gestorAccesosGruposAbiertos={};
+		gestorAccesosCargar(idAbmUsuario || userid);
     }else{
 document.getElementById("tdEfectoVistaAcceso").className="magictime slideRight"
 $("div[id=divVistaAcceso]").fadeOut(500);
  
 }
 }
+
+var gestorAccesosDatos=null;
+var gestorAccesosModo="usuario";
+var gestorAccesosEstados={};
+var gestorAccesosEstadosOriginales={};
+var gestorAccesosEstadosRol={};
+var gestorAccesosEstadosRolOriginales={};
+var gestorAccesosRolOriginal="";
+var gestorAccesosRolTrabajo="";
+var gestorAccesosGruposAbiertos={};
+var gestorAccesosCargando=false;
+
+function gestorAccesosEscapar(valor) {
+	return String(valor===undefined || valor===null ? "" : valor).replace(/[&<>"']/g,function(caracter){
+		return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[caracter];
+	});
+}
+
+function gestorAccesosClonarEstados(origen) {
+	var copia={};
+	for(var clave in origen){
+		if(Object.prototype.hasOwnProperty.call(origen,clave)){
+			copia[String(clave)]=origen[clave]==="SI" ? "SI" : "NO";
+		}
+	}
+	return copia;
+}
+
+function gestorAccesosEstadosIguales(a,b) {
+	var clavesA=Object.keys(a || {});
+	var clavesB=Object.keys(b || {});
+	if(clavesA.length!==clavesB.length){return false;}
+	for(var i=0;i<clavesA.length;i++){
+		if((a[clavesA[i]] || "NO")!==(b[clavesA[i]] || "NO")){return false;}
+	}
+	return true;
+}
+
+function gestorAccesosHayCambios() {
+	if(!gestorAccesosDatos){return false;}
+	if(gestorAccesosModo==="usuario" && String(gestorAccesosRolTrabajo)!==String(gestorAccesosRolOriginal)){
+		return true;
+	}
+	return !gestorAccesosEstadosIguales(gestorAccesosEstados,gestorAccesosEstadosOriginales);
+}
+
+function gestorAccesosPeticion(datos) {
+	obtener_datos_user();
+	datos=datos || {};
+	datos.useru=userid;
+	datos.passu=passuser;
+	datos.navegador=navegador;
+	return $.ajax({
+		data:datos,
+		url:"/GoodVentaAsisCap/php_system/abmAccesos.php",
+		type:"post",
+		cache:false
+	});
+}
+
+function gestorAccesosBloquear(bloquear,mensaje) {
+	gestorAccesosCargando=!!bloquear;
+	var guardar=document.getElementById("gestorAccesosGuardar");
+	var usuario=document.getElementById("gestorAccesosUsuario");
+	var tipo=document.getElementById("gestorAccesosTipoUsuario");
+	var rol=document.getElementById("gestorAccesosRol");
+	if(guardar){guardar.disabled=!!bloquear;}
+	if(usuario){usuario.disabled=!!bloquear || gestorAccesosModo==="rol";}
+	if(tipo){tipo.disabled=!!bloquear || gestorAccesosModo==="rol";}
+	if(rol){rol.disabled=!!bloquear;}
+	var estado=document.getElementById("lblEstadoAccesosVisibles");
+	if(estado && mensaje!==undefined){estado.textContent=mensaje;}
+}
+
+function gestorAccesosCargar(usuarioObjetivo,rolObjetivo,restaurarDesdeRol) {
+	if(controlacceso("VERACCESOSUARIOS","accion")==false){return;}
+	var catalogo=document.getElementById("gestorAccesosCatalogo");
+	if(catalogo){catalogo.innerHTML="<div class='accesos-visual-loading'>Cargando accesos...</div>";}
+	gestorAccesosBloquear(true,"Consultando permisos efectivos...");
+	var peticion={funt:"cargarGestor",usuario_id:usuarioObjetivo || idAbmUsuario || userid};
+	if(rolObjetivo){peticion.rol_id=rolObjetivo;}
+	gestorAccesosPeticion(peticion).done(function(responseText){
+		try{
+			var respuesta=$.parseJSON(responseText);
+			if(respuesta["1"]!=="exito"){
+				throw new Error(respuesta["2"] || "No se pudo cargar el administrador.");
+			}
+			gestorAccesosAplicarDatos(respuesta.datos || respuesta["2"],!!restaurarDesdeRol);
+			gestorAccesosBloquear(false,"Los cambios se aplican al guardar.");
+		}catch(error){
+			if(catalogo){catalogo.innerHTML="<div class='accesos-visual-empty'>No se pudieron cargar los accesos.</div>";}
+			gestorAccesosBloquear(false,error.message || "No se pudieron cargar los accesos.");
+			ver_vetana_informativa("No se pudieron cargar los accesos",error.message || "Intente nuevamente.","error");
+		}
+	}).fail(function(jqXHR,textstatus){
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+		if(catalogo){catalogo.innerHTML="<div class='accesos-visual-empty'>No se pudieron cargar los accesos.</div>";}
+		gestorAccesosBloquear(false,"No se pudieron cargar los accesos.");
+	});
+}
+
+function gestorAccesosAplicarDatos(datos,restaurarDesdeRol) {
+	gestorAccesosDatos=datos || {};
+	var seleccion=gestorAccesosDatos.seleccion || {};
+	var rolConsultado=String(seleccion.rol_consultado_id || seleccion.rol_id || "");
+	if(!gestorAccesosRolOriginal){
+		gestorAccesosRolOriginal=String(seleccion.rol_id || "");
+	}
+	gestorAccesosRolTrabajo=rolConsultado;
+	gestorAccesosEstadosRol={};
+	var estadosUsuario={};
+	var grupos=gestorAccesosDatos.grupos || [];
+	for(var i=0;i<grupos.length;i++){
+		for(var j=0;j<grupos[i].permisos.length;j++){
+			var permiso=grupos[i].permisos[j];
+			estadosUsuario[String(permiso.id)]=permiso.usuario==="SI" ? "SI" : "NO";
+			gestorAccesosEstadosRol[String(permiso.id)]=permiso.rol==="SI" ? "SI" : "NO";
+		}
+	}
+	gestorAccesosEstadosRolOriginales=gestorAccesosClonarEstados(gestorAccesosEstadosRol);
+	if(gestorAccesosModo==="rol" || restaurarDesdeRol || rolConsultado!==String(seleccion.rol_id || "")){
+		gestorAccesosEstados=gestorAccesosClonarEstados(gestorAccesosEstadosRol);
+	}else{
+		gestorAccesosEstados=estadosUsuario;
+	}
+	gestorAccesosEstadosOriginales=gestorAccesosClonarEstados(gestorAccesosEstados);
+	if(restaurarDesdeRol || rolConsultado!==String(seleccion.rol_id || "")){
+		gestorAccesosEstadosOriginales=gestorAccesosClonarEstados(gestorAccesosEstadosRol);
+	}
+	gestorAccesosCompletarSelectores();
+	gestorAccesosActualizarModoVisual();
+	gestorAccesosRenderizar();
+}
+
+function gestorAccesosCompletarSelectores() {
+	if(!gestorAccesosDatos){return;}
+	var seleccion=gestorAccesosDatos.seleccion || {};
+	var tipoSelect=document.getElementById("gestorAccesosTipoUsuario");
+	var usuarioSelect=document.getElementById("gestorAccesosUsuario");
+	var rolSelect=document.getElementById("gestorAccesosRol");
+	var tipoActual=tipoSelect ? tipoSelect.value : "";
+	if(tipoSelect){
+		tipoSelect.innerHTML="<option value=''>Todos los tipos</option>";
+		var tipos=gestorAccesosDatos.tipos_usuario || [];
+		for(var i=0;i<tipos.length;i++){
+			tipoSelect.innerHTML+="<option value='"+gestorAccesosEscapar(tipos[i])+"'>"+gestorAccesosEscapar(tipos[i])+"</option>";
+		}
+		if(tipoActual && Array.prototype.some.call(tipoSelect.options,function(op){return op.value===tipoActual;})){
+			tipoSelect.value=tipoActual;
+		}
+	}
+	if(usuarioSelect){
+		gestorAccesosFiltrarUsuarios();
+		usuarioSelect.value=String(seleccion.usuario_id || "");
+	}
+	if(rolSelect){
+		rolSelect.innerHTML="";
+		var roles=gestorAccesosDatos.roles || [];
+		for(var r=0;r<roles.length;r++){
+			var activo=String(roles[r].estado || "").toUpperCase()==="ACTIVO";
+			rolSelect.innerHTML+="<option value='"+roles[r].id+"' "+(activo ? "" : "disabled")+" data-usuarios='"+roles[r].usuarios+"'>"
+				+gestorAccesosEscapar(roles[r].nombre)+(activo ? "" : " (inactivo)")+"</option>";
+		}
+		rolSelect.value=String(gestorAccesosRolTrabajo || seleccion.rol_id || "");
+	}
+}
+
+function gestorAccesosFiltrarUsuarios() {
+	if(!gestorAccesosDatos){return;}
+	var select=document.getElementById("gestorAccesosUsuario");
+	var tipo=document.getElementById("gestorAccesosTipoUsuario");
+	if(!select){return;}
+	var elegido=String((gestorAccesosDatos.seleccion || {}).usuario_id || select.value || "");
+	var filtro=tipo ? String(tipo.value || "").toUpperCase() : "";
+	var usuarios=gestorAccesosDatos.usuarios || [];
+	var html="";
+	for(var i=0;i<usuarios.length;i++){
+		if(filtro && String(usuarios[i].tipo || "").toUpperCase()!==filtro){continue;}
+		var inactivo=String(usuarios[i].estado || "").toUpperCase()!=="ACTIVO";
+		html+="<option value='"+usuarios[i].id+"'>"+gestorAccesosEscapar(usuarios[i].nombre)
+			+" · "+gestorAccesosEscapar(usuarios[i].rol_nombre)+(inactivo ? " (inactivo)" : "")+"</option>";
+	}
+	select.innerHTML=html || "<option value=''>Sin usuarios para este filtro</option>";
+	if(Array.prototype.some.call(select.options,function(op){return op.value===elegido;})){
+		select.value=elegido;
+	}
+}
+
+function gestorAccesosSeleccionarUsuario(usuarioId) {
+	if(!usuarioId || gestorAccesosCargando){return;}
+	if(gestorAccesosHayCambios() && !confirm("Hay cambios sin guardar. ¿Desea descartarlos y seleccionar otro usuario?")){
+		var select=document.getElementById("gestorAccesosUsuario");
+		if(select && gestorAccesosDatos){select.value=String(gestorAccesosDatos.seleccion.usuario_id || "");}
+		return;
+	}
+	gestorAccesosModo="usuario";
+	gestorAccesosRolOriginal="";
+	gestorAccesosCargar(usuarioId);
+}
+
+function gestorAccesosCambiarRol(rolId) {
+	if(!rolId || gestorAccesosCargando || !gestorAccesosDatos){return;}
+	if(gestorAccesosHayCambios() && !confirm("El cambio de rol reemplazara la seleccion actual por la plantilla elegida. ¿Desea continuar?")){
+		document.getElementById("gestorAccesosRol").value=String(gestorAccesosRolTrabajo || "");
+		return;
+	}
+	var usuarioId=(gestorAccesosDatos.seleccion || {}).usuario_id;
+	gestorAccesosCargar(usuarioId,rolId,true);
+}
+
+function gestorAccesosCambiarModo(modo) {
+	modo=modo==="rol" ? "rol" : "usuario";
+	if(modo===gestorAccesosModo || gestorAccesosCargando){return;}
+	if(gestorAccesosHayCambios() && !confirm("Hay cambios sin guardar. ¿Desea descartarlos y cambiar el alcance de edicion?")){
+		return;
+	}
+	gestorAccesosModo=modo;
+	var usuarioId=gestorAccesosDatos && gestorAccesosDatos.seleccion ? gestorAccesosDatos.seleccion.usuario_id : (idAbmUsuario || userid);
+	var rolId=modo==="usuario" && gestorAccesosDatos && gestorAccesosDatos.seleccion
+		? gestorAccesosDatos.seleccion.rol_id
+		: (document.getElementById("gestorAccesosRol") ? document.getElementById("gestorAccesosRol").value : "");
+	gestorAccesosCargar(usuarioId,rolId,modo==="rol");
+}
+
+function gestorAccesosActualizarModoVisual() {
+	var tabUsuario=document.getElementById("gestorAccesosTabUsuario");
+	var tabRol=document.getElementById("gestorAccesosTabRol");
+	var impacto=document.getElementById("gestorAccesosImpactoRol");
+	if(tabUsuario){tabUsuario.classList.toggle("is-active",gestorAccesosModo==="usuario");}
+	if(tabRol){tabRol.classList.toggle("is-active",gestorAccesosModo==="rol");}
+	if(impacto){impacto.hidden=gestorAccesosModo!=="rol";}
+	var usuarios=0;
+	var roles=gestorAccesosDatos ? (gestorAccesosDatos.roles || []) : [];
+	for(var i=0;i<roles.length;i++){
+		if(String(roles[i].id)===String(gestorAccesosRolTrabajo)){usuarios=parseInt(roles[i].usuarios || 0,10);}
+	}
+	var texto=document.getElementById("gestorAccesosImpactoTexto");
+	if(texto){
+		texto.textContent="Al guardar se reemplazaran los permisos efectivos de "+usuarios+" usuario"+(usuarios===1 ? "" : "s")+" y se eliminaran sus excepciones.";
+	}
+	gestorAccesosBloquear(false,"Los cambios se aplican al guardar.");
+}
+
+function gestorAccesosPermisoPorId(id) {
+	if(!gestorAccesosDatos){return null;}
+	var grupos=gestorAccesosDatos.grupos || [];
+	for(var i=0;i<grupos.length;i++){
+		for(var j=0;j<grupos[i].permisos.length;j++){
+			if(String(grupos[i].permisos[j].id)===String(id)){
+				return {permiso:grupos[i].permisos[j],grupo:grupos[i]};
+			}
+		}
+	}
+	return null;
+}
+
+function gestorAccesosTogglePermiso(id,marcado) {
+	gestorAccesosEstados[String(id)]=marcado ? "SI" : "NO";
+	gestorAccesosRenderizar();
+}
+
+function gestorAccesosToggleGrupo(clave) {
+	gestorAccesosGruposAbiertos[clave]=!gestorAccesosGruposAbiertos[clave];
+	gestorAccesosRenderizar();
+}
+
+function gestorAccesosQuitarGrupo(clave) {
+	if(!gestorAccesosDatos){return;}
+	var grupos=gestorAccesosDatos.grupos || [];
+	for(var i=0;i<grupos.length;i++){
+		if(String(grupos[i].clave)!==String(clave)){continue;}
+		for(var j=0;j<grupos[i].permisos.length;j++){
+			gestorAccesosEstados[String(grupos[i].permisos[j].id)]="NO";
+		}
+		break;
+	}
+	gestorAccesosRenderizar();
+}
+
+function gestorAccesosRestaurarRol() {
+	if(!gestorAccesosDatos){return;}
+	if(gestorAccesosModo==="rol"){
+		gestorAccesosEstados=gestorAccesosClonarEstados(gestorAccesosEstadosRolOriginales);
+		document.getElementById("lblEstadoAccesosVisibles").textContent="Se restauro la ultima plantilla guardada.";
+	}else{
+		gestorAccesosEstados=gestorAccesosClonarEstados(gestorAccesosEstadosRol);
+		document.getElementById("lblEstadoAccesosVisibles").textContent="Se restauraron los permisos base del rol seleccionado.";
+	}
+	gestorAccesosRenderizar();
+}
+
+function gestorAccesosRenderizar() {
+	if(!gestorAccesosDatos){return;}
+	var catalogo=document.getElementById("gestorAccesosCatalogo");
+	var seleccionados=document.getElementById("gestorAccesosSeleccionados");
+	if(!catalogo || !seleccionados){return;}
+	var buscador=document.getElementById("inptBuscarAccesos");
+	var termino=String(buscador ? buscador.value : "").toLowerCase().trim();
+	var grupos=gestorAccesosDatos.grupos || [];
+	var html="";
+	var seleccionHtml="";
+	var total=0;
+	var habilitados=0;
+	var excepciones=0;
+	var gruposVisibles=0;
+	var protegido=gestorAccesosModo==="usuario" && !!(gestorAccesosDatos.seleccion && parseInt(gestorAccesosDatos.seleccion.protegido || 0,10));
+	var atributoBloqueo=protegido ? "disabled" : "";
+	for(var i=0;i<grupos.length;i++){
+		var grupo=grupos[i];
+		var permisosVisibles=[];
+		var coincideGrupo=String(grupo.nombre || "").toLowerCase().indexOf(termino)!==-1;
+		var activosGrupo=0;
+		for(var j=0;j<grupo.permisos.length;j++){
+			var permiso=grupo.permisos[j];
+			var id=String(permiso.id);
+			total++;
+			if(gestorAccesosEstados[id]==="SI"){
+				habilitados++;
+				activosGrupo++;
+			}
+			if(gestorAccesosModo==="usuario" && gestorAccesosEstados[id]!==gestorAccesosEstadosRol[id]){
+				excepciones++;
+			}
+			var textoPermiso=(String(permiso.nombre || "")+" "+String(permiso.codigo || "")).toLowerCase();
+			if(!termino || coincideGrupo || textoPermiso.indexOf(termino)!==-1){
+				permisosVisibles.push(permiso);
+			}
+		}
+		if(termino && !coincideGrupo && permisosVisibles.length===0){continue;}
+		gruposVisibles++;
+		var principalId=String(grupo.permiso_principal_id || (grupo.permisos[0] ? grupo.permisos[0].id : ""));
+		var principalMarcado=gestorAccesosEstados[principalId]==="SI" ? "checked" : "";
+		var abierto=!!gestorAccesosGruposAbiertos[grupo.clave] || !!termino;
+		html+="<section class='accesos-visual-group'><div class='accesos-visual-group__header'>";
+		html+="<label class='accesos-visual-module'><input type='checkbox' "+principalMarcado+" "+atributoBloqueo+" onchange='gestorAccesosTogglePermiso(\""+principalId+"\",this.checked)'>";
+		html+="<img src='"+gestorAccesosEscapar(grupo.icono)+"' alt=''><span><strong>"+gestorAccesosEscapar(grupo.nombre)+"</strong><small>"+activosGrupo+" de "+grupo.permisos.length+" acciones habilitadas</small></span></label>";
+		html+="<button type='button' class='accesos-visual-expand' aria-expanded='"+(abierto ? "true" : "false")+"' onclick='gestorAccesosToggleGrupo(\""+gestorAccesosEscapar(grupo.clave)+"\")'>"+(abierto ? "Ocultar" : "Acciones")+" ("+grupo.permisos.length+")</button></div>";
+		html+="<div class='accesos-visual-actions' "+(abierto ? "" : "hidden")+">";
+		for(var p=0;p<permisosVisibles.length;p++){
+			var visible=permisosVisibles[p];
+			var visibleId=String(visible.id);
+			var marcado=gestorAccesosEstados[visibleId]==="SI" ? "checked" : "";
+			var excepcion=gestorAccesosModo==="usuario" && gestorAccesosEstados[visibleId]!==gestorAccesosEstadosRol[visibleId];
+			html+="<label class='accesos-visual-action "+(excepcion ? "is-exception" : "")+"'><input type='checkbox' "+marcado+" "+atributoBloqueo+" onchange='gestorAccesosTogglePermiso(\""+visibleId+"\",this.checked)'>";
+			html+="<span><strong>"+gestorAccesosEscapar(visible.nombre)+"</strong><small>"+gestorAccesosEscapar(visible.codigo)+"</small></span></label>";
+		}
+		html+="</div></section>";
+		if(activosGrupo>0){
+			seleccionHtml+="<div class='accesos-visual-selected-item'><img src='"+gestorAccesosEscapar(grupo.icono)+"' alt=''><span><strong>"+gestorAccesosEscapar(grupo.nombre)+"</strong><small>"+activosGrupo+" accion"+(activosGrupo===1 ? "" : "es")+"</small></span><button type='button' "+atributoBloqueo+" title='Quitar accesos del grupo' onclick='gestorAccesosQuitarGrupo(\""+gestorAccesosEscapar(grupo.clave)+"\")'>x</button></div>";
+		}
+	}
+	catalogo.innerHTML=gruposVisibles ? html : "<div class='accesos-visual-empty'>No se encontraron accesos con ese texto.</div>";
+	seleccionados.innerHTML=seleccionHtml || "<div class='accesos-visual-empty'>No hay accesos seleccionados.</div>";
+	var resumen=document.getElementById("gestorAccesosResumenSeleccion");
+	var resumenExcepciones=document.getElementById("gestorAccesosResumenExcepciones");
+	if(resumen){resumen.textContent=habilitados+" / "+total+" seleccionados";}
+	if(resumenExcepciones){
+		resumenExcepciones.textContent=gestorAccesosModo==="usuario"
+			? excepciones+" excepcion"+(excepciones===1 ? "" : "es")
+			: "Plantilla del rol";
+	}
+	var guardar=document.getElementById("gestorAccesosGuardar");
+	if(guardar){guardar.disabled=protegido;}
+	var rolSelect=document.getElementById("gestorAccesosRol");
+	if(rolSelect){rolSelect.disabled=protegido;}
+	if(protegido){
+		document.getElementById("lblEstadoAccesosVisibles").textContent="Cuenta superadministradora protegida: consulta solamente.";
+	}
+}
+
+function gestorAccesosSerializar() {
+	var salida=[];
+	var claves=Object.keys(gestorAccesosEstados).sort(function(a,b){return parseInt(a,10)-parseInt(b,10);});
+	for(var i=0;i<claves.length;i++){
+		salida.push({id:parseInt(claves[i],10),accion:gestorAccesosEstados[claves[i]]==="SI" ? "SI" : "NO"});
+	}
+	return salida;
+}
+
+function gestorAccesosGuardar() {
+	if(!gestorAccesosDatos || gestorAccesosCargando){return;}
+	if(!gestorAccesosHayCambios()){
+		document.getElementById("lblEstadoAccesosVisibles").textContent="No hay cambios pendientes.";
+		return;
+	}
+	if(gestorAccesosModo==="rol"){
+		gestorAccesosConfirmarGuardarRol();
+		return;
+	}
+	var seleccion=gestorAccesosDatos.seleccion || {};
+	var excepciones=0;
+	for(var id in gestorAccesosEstados){
+		if(Object.prototype.hasOwnProperty.call(gestorAccesosEstados,id) && gestorAccesosEstados[id]!==gestorAccesosEstadosRol[id]){excepciones++;}
+	}
+	var texto="¿Confirma guardar los permisos efectivos de "+String(seleccion.nombre || "este usuario")+"?";
+	if(String(gestorAccesosRolTrabajo)!==String(gestorAccesosRolOriginal)){
+		texto+="\nSe cambiara el rol y se restaurara completamente su plantilla antes de aplicar "+excepciones+" excepcion"+(excepciones===1 ? "" : "es")+".";
+	}
+	if(!confirm(texto)){return;}
+	gestorAccesosBloquear(true,"Guardando permisos del usuario...");
+	gestorAccesosPeticion({
+		funt:"guardarUsuarioGestor",
+		usuario_id:seleccion.usuario_id,
+		rol_id:gestorAccesosRolTrabajo,
+		catalogo_total:Object.keys(gestorAccesosEstados).length,
+		permisos:JSON.stringify(gestorAccesosSerializar())
+	}).done(gestorAccesosProcesarGuardado).fail(gestorAccesosErrorGuardado);
+}
+
+function gestorAccesosConfirmarGuardarRol() {
+	var rolId=gestorAccesosRolTrabajo;
+	gestorAccesosBloquear(true,"Calculando usuarios afectados...");
+	gestorAccesosPeticion({funt:"impactoRolGestor",rol_id:rolId}).done(function(responseText){
+		try{
+			var respuesta=$.parseJSON(responseText);
+			if(respuesta["1"]!=="exito"){throw new Error(respuesta["2"] || "No se pudo calcular el impacto.");}
+			var total=parseInt(respuesta.usuarios_afectados || 0,10);
+			var mensaje="¿Confirma actualizar la plantilla del rol "+String(respuesta.rol_nombre || "")+"?"
+				+"\nSe reemplazaran completamente los permisos efectivos de "+total+" usuario"+(total===1 ? "" : "s")+" y se eliminaran sus excepciones.";
+			if(!confirm(mensaje)){
+				gestorAccesosBloquear(false,"Guardado cancelado. No se modifico ningun usuario.");
+				return;
+			}
+			gestorAccesosBloquear(true,"Actualizando la plantilla y sus usuarios...");
+			gestorAccesosPeticion({
+				funt:"guardarRolGestor",
+				rol_id:rolId,
+				catalogo_total:Object.keys(gestorAccesosEstados).length,
+				permisos:JSON.stringify(gestorAccesosSerializar())
+			}).done(gestorAccesosProcesarGuardado).fail(gestorAccesosErrorGuardado);
+		}catch(error){
+			gestorAccesosBloquear(false,error.message || "No se pudo calcular el impacto.");
+			ver_vetana_informativa("No se pudo guardar",error.message || "Intente nuevamente.","error");
+		}
+	}).fail(gestorAccesosErrorGuardado);
+}
+
+function gestorAccesosProcesarGuardado(responseText) {
+	try{
+		var respuesta=$.parseJSON(responseText);
+		if(respuesta["1"]!=="exito"){
+			throw new Error(respuesta["2"] || "No se autorizaron los cambios.");
+		}
+		gestorAccesosBloquear(false,respuesta["2"] || "Cambios guardados.");
+		ver_vetana_informativa("Accesos actualizados",respuesta["2"] || "Los cambios fueron guardados.","exito");
+		var usuarioId=gestorAccesosDatos && gestorAccesosDatos.seleccion ? gestorAccesosDatos.seleccion.usuario_id : "";
+		if(String(respuesta.sesion_afectada || "")==="1" || (gestorAccesosModo==="usuario" && String(usuarioId)===String(userid))){
+			setTimeout(function(){window.location.reload();},700);
+			return;
+		}
+		gestorAccesosRolOriginal="";
+		gestorAccesosCargar(usuarioId,gestorAccesosRolTrabajo,gestorAccesosModo==="rol");
+	}catch(error){
+		gestorAccesosBloquear(false,error.message || "No se pudieron guardar los cambios.");
+		ver_vetana_informativa("No se pudo guardar",error.message || "No se modificaron los permisos.","error");
+	}
+}
+
+function gestorAccesosErrorGuardado(jqXHR,textstatus) {
+	manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+	gestorAccesosBloquear(false,"No se guardaron los cambios.");
+	ver_vetana_informativa("No se pudo guardar","La operacion no se completo y debe intentarse nuevamente.","error");
+}
+
 function buscarAccesosUser() {
 	if(controlacceso("VERACCESOSUARIOS","accion")==false){return;}
 	prepararVistaAccesosUsuario();
@@ -37664,7 +38127,18 @@ function removeToMenu(){
 	$("table[id=divMenuAbmFacturas]").remove()
 	controllistado=controllistado+1;		
 	}
-	if(controllistado==10){
+	if(permisoAccesoUser("VERTRABAJOSLABORATORIO","accion")==false)
+	{
+	$("table[id=divMenuTrabajoLaboratorio]").remove()
+	}
+
+	if(permisoAccesoUser("VERLISTADOMECANICODENTAL","accion")==false)
+	{
+	$("table[id=divMenuMecanicoDental]").remove()
+	}
+
+	var accesoLaboratorioVisible=document.getElementById("divMenuTrabajoLaboratorio");
+	if(controllistado==10 && (!accesoLaboratorioVisible || accesoLaboratorioVisible.style.display=="none")){
 		document.getElementById("divMenuListados").style.display="none"
 	}
 	
@@ -37893,8 +38367,51 @@ function removeToMenu(){
 	{
 	document.getElementById("divMenuVenta").style.display='none'		
 	}
+
+	aplicarVisibilidadDashboardMecanicoDental();
 	
-	
+}
+
+function aplicarVisibilidadDashboardMecanicoDental(){
+	var tipo=String(window.tipoUsuarioSesionClinident || "").toUpperCase();
+	if(tipo.indexOf("MECANICO DENTAL")===-1){
+		return;
+	}
+	var permitidos={
+		trabajos_mecanicos_dentales:true,
+		mis_datos:true
+	};
+	var secciones=[
+		"quickAccessSection",
+		"divMenuConsultas",
+		"divMenuListados",
+		"divMenuAdministrativo",
+		"divMenuInformes",
+		"divMenuSistema"
+	];
+	for(var i=0;i<secciones.length;i++){
+		var seccion=document.getElementById(secciones[i]);
+		if(!seccion){continue;}
+		var accesos=seccion.querySelectorAll(".divMenub");
+		for(var j=0;j<accesos.length;j++){
+			var clave=accesos[j].getAttribute("data-access-key") || "";
+			if(!permitidos[clave] && accesos[j].parentNode){
+				accesos[j].parentNode.removeChild(accesos[j]);
+			}
+		}
+		var restantes=seccion.querySelectorAll(".divMenub");
+		var hayVisible=false;
+		for(var r=0;r<restantes.length;r++){
+			if(restantes[r].style.display!=="none"){
+				hayVisible=true;
+				break;
+			}
+		}
+		seccion.style.display=hayVisible ? "" : "none";
+	}
+	if(typeof actualizarBuscadorAccesosDashboard=="function"){
+		actualizarBuscadorAccesosDashboard();
+	}
 }
 
 

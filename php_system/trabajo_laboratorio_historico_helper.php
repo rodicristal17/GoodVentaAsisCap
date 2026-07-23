@@ -63,6 +63,16 @@ function trabajoLaboratorioHistoricoExigirUsuarioActivo($mysqli, $codUsuario)
             'El usuario no se encuentra activo.'
         );
     }
+    if (!trabajoLaboratorioTienePermiso(
+        $mysqli,
+        intval($codUsuario),
+        'VERTRABAJOSLABORATORIO'
+    ) && !trabajoLaboratorioUsuarioEsAuditor($mysqli, intval($codUsuario))) {
+        trabajoLaboratorioLanzar(
+            'historico_no_autorizado',
+            'El usuario no puede acceder a trabajos historicos de laboratorio.'
+        );
+    }
     return $usuario;
 }
 
@@ -350,8 +360,16 @@ function trabajoLaboratorioHistoricoObtenerFilaDecorada($mysqli, $idHistorico)
 
 function trabajoLaboratorioHistoricoPuedeVer($mysqli, $codUsuario, $historico)
 {
-    return $historico && trabajoLaboratorioUsuario($mysqli, intval($codUsuario))
-        ? true : false;
+    return $historico
+        && trabajoLaboratorioUsuario($mysqli, intval($codUsuario))
+        && (
+            trabajoLaboratorioTienePermiso(
+                $mysqli,
+                intval($codUsuario),
+                'VERTRABAJOSLABORATORIO'
+            )
+            || trabajoLaboratorioUsuarioEsAuditor($mysqli, intval($codUsuario))
+        );
 }
 
 function trabajoLaboratorioHistoricoExigirAcceso($mysqli, $codUsuario, $historico)
@@ -373,7 +391,15 @@ function trabajoLaboratorioHistoricoCondicionAcceso($mysqli, $codUsuario, $alias
     if ($alias === '') {
         $alias = 'h';
     }
-    return trabajoLaboratorioUsuario($mysqli, intval($codUsuario)) ? '1=1' : '0=1';
+    return trabajoLaboratorioUsuario($mysqli, intval($codUsuario))
+        && (
+            trabajoLaboratorioTienePermiso(
+                $mysqli,
+                intval($codUsuario),
+                'VERTRABAJOSLABORATORIO'
+            )
+            || trabajoLaboratorioUsuarioEsAuditor($mysqli, intval($codUsuario))
+        ) ? '1=1' : '0=1';
 }
 
 function trabajoLaboratorioHistoricoNormalizarEnteroNullable($valor)

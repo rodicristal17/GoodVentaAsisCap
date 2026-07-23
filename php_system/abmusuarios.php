@@ -799,10 +799,10 @@ function nivelMecanicoDentalTienePermisosMinimos($mysqli,$cod_nivel)
 {
 	$sql="SELECT
 		COUNT(DISTINCT CASE WHEN d.accion='SI' AND la.codigo IN
-		('VERTRABAJOSLABORATORIO','RECIBIRTRABAJOLABORATORIO','ENTREGARTRABAJOLABORATORIO')
+		('VERTRABAJOSLABORATORIO','RECIBIRTRABAJOLABORATORIO','ENTREGARTRABAJOLABORATORIO','EVIDENCIATRABAJOLABORATORIO')
 		THEN la.codigo END) AS requeridos,
 		COUNT(DISTINCT CASE WHEN d.accion='SI' AND la.codigo NOT IN
-		('VERTRABAJOSLABORATORIO','RECIBIRTRABAJOLABORATORIO','ENTREGARTRABAJOLABORATORIO')
+		('VERTRABAJOSLABORATORIO','RECIBIRTRABAJOLABORATORIO','ENTREGARTRABAJOLABORATORIO','EVIDENCIATRABAJOLABORATORIO')
 		THEN la.codigo END) AS adicionales
 		FROM detallesniveles d
 		INNER JOIN listadodeacceso la ON la.idlistadodeacceso=d.idlistadodeacceso
@@ -815,7 +815,7 @@ function nivelMecanicoDentalTienePermisosMinimos($mysqli,$cod_nivel)
 	$result=$stmt->get_result();
 	$fila=$result ? $result->fetch_assoc() : null;
 	$stmt->close();
-	return $fila && (int)$fila['requeridos']===3 && (int)$fila['adicionales']===0;
+	return $fila && (int)$fila['requeridos']===4 && (int)$fila['adicionales']===0;
 }
 
 function buscarMecanicosDisponiblesAltaFuncionario($cod_usuario_accion)
