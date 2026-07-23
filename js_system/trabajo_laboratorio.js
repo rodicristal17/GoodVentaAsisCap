@@ -10,10 +10,11 @@
  *
  * Acciones de negocio consumidas:
  *   listarTrabajos, obtenerTrabajo, obtenerResumen, obtenerCatalogos,
- *   obtenerContextoDetalle, iniciarTrabajo, iniciarTransferencia,
- *   confirmarRecepcion, agregarEvidencia, agregarNota, iniciarDevolucion,
- *   confirmarDevolucion, solicitarAjuste, aprobarTrabajo,
- *   registrarInstalacion y cancelarTrabajo.
+ *   obtenerContextoDetalle, iniciarTrabajo, asignarTecnico, iniciarTransferencia,
+ *   tomarHilo, registrarNovedad, rectificarCustodia, agregarEvidencia,
+ *   agregarNota, iniciarDevolucion, solicitarAjuste, aprobarTrabajo,
+ *   registrarInstalacion y cancelarTrabajo. La bandeja histórica consume
+ *   listarHistoricos, obtenerHistorico y resolverHistorico.
  *
  * Reglas del contrato frontend:
  * - Las acciones disponibles se dibujan exclusivamente desde
@@ -33,13 +34,14 @@
   "use strict";
 
   var ENDPOINT = "/GoodVentaAsisCap/php_system/abmTrabajoLaboratorio.php";
-  var STYLE_URL = "/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260721-3";
+  var STYLE_URL = "/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260723-11";
   var BRAND_MARK = "/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2";
   var ROOT_ID = "telarTrabajoLaboratorio";
   var PAGE_SIZE = 18;
-  var MAX_FILES = 5;
-  var MAX_FILE_SIZE = 10 * 1024 * 1024;
+  var MAX_FILES = 3;
+  var MAX_FILE_SIZE = 2 * 1024 * 1024;
   var IMAGE_TYPES = { "image/jpeg": true, "image/png": true, "image/webp": true };
+  var DOCUMENT_TYPES = { "application/pdf": true };
 
   var GROUPS = [
     { key: "pendientes_entrega", label: "Pendientes de entrega", icon: "fa-box-open" },
@@ -62,8 +64,22 @@
       icon: "fa-play",
       evidence: true,
       requiere_evidencia: true,
-      requiere_mecanico: true,
+      requiere_mecanico: false,
       confirmation: "Confirmo que los datos corresponden al tratamiento y que la evidencia inicial es correcta."
+    },
+    iniciarTrabajosAgrupados: {
+      label: "Iniciar trabajos independientes",
+      icon: "fa-diagram-project",
+      evidence: true,
+      requiere_evidencia: true,
+      requiere_mecanico: false,
+      confirmation: "Confirmo las ubicaciones, el origen compartido y la preparacion de todos los trabajos independientes."
+    },
+    asignarTecnico: {
+      label: "Asignar técnico",
+      icon: "fa-user-gear",
+      mechanic: true,
+      confirmation: "Confirmo el técnico para este trabajo y los trabajos pendientes del mismo código de origen."
     },
     iniciarTransferencia: {
       label: "Entregar al mecánico dental",
@@ -73,11 +89,33 @@
       note: true,
       confirmation: "Confirmo la entrega física y el destinatario indicado."
     },
-    confirmarRecepcion: {
-      label: "Confirmar recepción",
-      icon: "fa-hand-holding-medical",
-      note: true,
-      confirmation: "Confirmo que recibí físicamente este trabajo."
+    tomarHilo: {
+      label: "Tomar el hilo",
+      icon: "fa-hand-holding",
+      custodyReceipt: true,
+      evidence: true,
+      permite_excepcion_foto: false,
+      submitLabel: "Confirmar y tomar el hilo",
+      confirmation: "Confirmo que recibí físicamente este trabajo y asumo su custodia en Telar."
+    },
+    registrarNovedad: {
+      label: "Registrar novedad",
+      icon: "fa-pen-to-square",
+      novelty: true,
+      noteRequired: true,
+      evidenceOptional: true,
+      documents: true,
+      submitLabel: "Guardar novedad",
+      confirmation: "Confirmo que esta novedad corresponde al trabajo que tengo bajo mi custodia."
+    },
+    rectificarCustodia: {
+      label: "Rectificar custodia",
+      icon: "fa-user-shield",
+      custodyCorrection: true,
+      justification: true,
+      danger: true,
+      submitLabel: "Confirmar rectificación",
+      confirmation: "Confirmo que esta rectificación es excepcional, necesaria y que el motivo quedará auditado."
     },
     agregarEvidencia: {
       label: "Agregar fotos",
@@ -100,12 +138,6 @@
       evidence: true,
       note: true,
       confirmation: "Confirmo la entrega del trabajo terminado y su evidencia."
-    },
-    confirmarDevolucion: {
-      label: "Confirmar recepción en clínica",
-      icon: "fa-building-circle-check",
-      note: true,
-      confirmation: "Confirmo que la clínica recibió físicamente el trabajo."
     },
     solicitarAjuste: {
       label: "Solicitar ajuste",
@@ -139,16 +171,26 @@
   var ACTION_ALIASES = {
     iniciar_trabajo: "iniciarTrabajo",
     start_lab_work: "iniciarTrabajo",
+    iniciar_trabajos_agrupados: "iniciarTrabajosAgrupados",
+    asignar_tecnico: "asignarTecnico",
+    assign_technician: "asignarTecnico",
     iniciar_transferencia: "iniciarTransferencia",
     entregar: "iniciarTransferencia",
-    confirmar_recepcion: "confirmarRecepcion",
+    confirmar_recepcion: "tomarHilo",
+    confirmarRecepcion: "tomarHilo",
+    tomar_hilo: "tomarHilo",
+    registrar_novedad: "registrarNovedad",
+    registrar_novedad_custodia: "registrarNovedad",
+    registrarNovedadCustodia: "registrarNovedad",
+    rectificar_custodia: "rectificarCustodia",
     add_evidence: "agregarEvidencia",
     agregar_evidencia: "agregarEvidencia",
     add_note: "agregarNota",
     agregar_nota: "agregarNota",
     iniciar_devolucion: "iniciarDevolucion",
     devolver: "iniciarDevolucion",
-    confirmar_devolucion: "confirmarDevolucion",
+    confirmar_devolucion: "tomarHilo",
+    confirmarDevolucion: "tomarHilo",
     solicitar_ajuste: "solicitarAjuste",
     request_adjustment: "solicitarAjuste",
     aprobar: "aprobarTrabajo",
@@ -170,18 +212,37 @@
     view: "operativa",
     mechanicTray: "por_recibir",
     summary: {},
+    historicalSummary: {},
     catalogs: {},
     context: {},
+    filtersOpen: false,
     detail: null,
     detailEnvelope: null,
     detailId: "",
+    detailKind: "",
     detailTab: "timeline",
+    detailReturnFocus: null,
+    detailRequest: 0,
+    detailError: "",
+    historicals: [],
+    historicalDetail: null,
+    historicalEnvelope: null,
+    historicalWizard: null,
+    historicalResolver: null,
     action: null,
     focusBeforeLayer: null,
     searchTimer: null,
     startContext: null,
     moduleOptions: {},
-    objectUrls: []
+    objectUrls: [],
+    nodePopover: null,
+    nodePopoverPinned: false,
+    popoverCloseTimer: null,
+    nodePopoverRecord: null,
+    nodeDetailCache: {},
+    nodeEditor: null,
+    nodeFiles: [],
+    nodeObjectUrls: []
   };
 
   function toStringSafe(value) {
@@ -264,6 +325,23 @@
     return amount + (amount === 1 ? " día" : " días");
   }
 
+  function formatDurationSeconds(value) {
+    var total = Math.max(0, Math.floor(numberValue(value, 0)));
+    var days = Math.floor(total / 86400);
+    var hours = Math.floor((total % 86400) / 3600);
+    var minutes = Math.floor((total % 3600) / 60);
+    if (days) { return days + (days === 1 ? " día" : " días") + (hours ? " " + hours + " h" : ""); }
+    if (hours) { return hours + " h" + (minutes ? " " + minutes + " min" : ""); }
+    return Math.max(1, minutes) + " min";
+  }
+
+  function formatFileLimit(bytes) {
+    var megabytes = Math.max(0.1, numberValue(bytes, MAX_FILE_SIZE) / (1024 * 1024));
+    return (Math.abs(megabytes - Math.round(megabytes)) < 0.01
+      ? Math.round(megabytes).toString()
+      : megabytes.toFixed(1).replace(".", ",")) + " MB";
+  }
+
   function initials(name) {
     var parts = toStringSafe(name).trim().split(/\s+/).filter(Boolean);
     if (!parts.length) { return "?"; }
@@ -281,6 +359,15 @@
       };
     }
     return { name: toStringSafe(value) || "Sin asignar", role: roleFallback || "Responsable", avatar: "" };
+  }
+
+  function personFromRecord(primary, source, nameKeys, roleKeys, avatarKeys, roleFallback) {
+    var base = person(primary || pick(source, nameKeys, ""), roleFallback);
+    return {
+      nombre: pick(source, nameKeys, base.name),
+      rol: pick(source, roleKeys, base.role || roleFallback),
+      avatar_url: pick(source, avatarKeys, base.avatar)
+    };
   }
 
   function avatarHtml(data, extraClass) {
@@ -369,10 +456,10 @@
     };
   }
 
-  function appendPayload(formData, payload) {
+  function appendPayload(formData, payload, incluirVacios) {
     Object.keys(payload || {}).forEach(function (key) {
       var value = payload[key];
-      if (value === null || typeof value === "undefined" || value === "") { return; }
+      if (value === null || typeof value === "undefined" || (value === "" && !incluirVacios)) { return; }
       if (typeof value === "object" && !(value instanceof Blob)) {
         formData.append(key, JSON.stringify(value));
       } else {
@@ -416,7 +503,12 @@
       var xhr = new XMLHttpRequest();
       formData.append("accion", action);
       appendLegacyCredentials(formData);
-      appendPayload(formData, payload || {});
+      appendPayload(
+        formData,
+        payload || {},
+        action === "convalidarHistorico" || action === "rectificarHistorico"
+          || action === "resolverHistorico"
+      );
       asArray(files).forEach(function (file) {
         if (file instanceof Blob) { formData.append("evidencias[]", file, file.name || "evidencia.jpg"); }
       });
@@ -479,7 +571,6 @@
       + '      <button type="button" class="tlab-icon-button" data-tlab-command="close" aria-label="Cerrar módulo" title="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>'
       + '  </header>'
       + '  <main class="tlab-content">'
-      + '    <section class="tlab-summary" id="tlabSummary" aria-label="Resumen operativo">' + loaderHtml("Preparando resumen...", "compact") + '</section>'
       + '    <section class="tlab-toolbar" aria-label="Búsqueda y filtros">'
       + '      <div class="tlab-toolbar__main"><div class="tlab-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><label class="sr-only" for="tlabSearch">Buscar trabajos</label><input id="tlabSearch" type="search" autocomplete="off" placeholder="Venta, código del trabajo, paciente o producto"></div>'
       + '        <button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="toggle-filters" aria-expanded="false" aria-controls="tlabFilters"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Filtros <span class="tlab-filter-count" id="tlabFilterCount" hidden>0</span></button>'
@@ -497,8 +588,13 @@
       + '        <div class="tlab-field"><label for="tlabFilterTo">Hasta</label><input id="tlabFilterTo" name="fecha_hasta" type="date"></div>'
       + '        <label class="tlab-check"><input id="tlabFilterPendingTransfer" name="transferencia_pendiente" type="checkbox"><span>Con transferencia pendiente</span></label>'
       + '      </div><div class="tlab-filters__actions"><button type="button" class="tlab-button tlab-button--ghost" data-tlab-command="clear-filters">Limpiar</button><button type="submit" class="tlab-button tlab-button--primary"><i class="fa-solid fa-filter" aria-hidden="true"></i>Aplicar filtros</button></div></form>'
+      + '      <form class="tlab-filters tlab-filters--historical" id="tlabHistoricalFilters" hidden><div class="tlab-filters__grid">'
+      + '        <div class="tlab-field"><label for="tlabHistoricalOriginalState">Estado original</label><select id="tlabHistoricalOriginalState" name="estado_original"><option value="">Todos</option><option value="pendiente">Pendiente</option><option value="retirado">Retirado</option><option value="pagado">Pagado</option><option value="entregado">Entregado</option><option value="inactivo">Inactivo</option></select></div>'
+      + '        <div class="tlab-field"><label for="tlabHistoricalDeclaredState">Situación declarada</label><select id="tlabHistoricalDeclaredState" name="estado_declarado"><option value="">Todas</option></select></div>'
+      + '        <label class="tlab-check"><input id="tlabHistoricalPending" name="pendiente_revision" type="checkbox"><span>Sólo pendientes de integrar</span></label>'
+      + '      </div><div class="tlab-filters__actions"><button type="button" class="tlab-button tlab-button--ghost" data-tlab-command="clear-filters">Limpiar</button><button type="submit" class="tlab-button tlab-button--primary"><i class="fa-solid fa-filter" aria-hidden="true"></i>Aplicar filtros</button></div></form>'
       + '    </section>'
-      + '    <div class="tlab-view-switch" id="tlabViewSwitch" hidden><button type="button" data-tlab-view="operativa" aria-pressed="true"><i class="fa-solid fa-layer-group" aria-hidden="true"></i>Vista operativa</button><button type="button" data-tlab-view="mecanico" aria-pressed="false"><i class="fa-solid fa-toolbox" aria-hidden="true"></i>Mi bandeja</button></div>'
+      + '    <div class="tlab-view-switch" id="tlabViewSwitch" hidden><button type="button" data-tlab-view="operativa" aria-pressed="true"><i class="fa-solid fa-layer-group" aria-hidden="true"></i>Vista operativa</button><button type="button" data-tlab-view="mecanico" aria-pressed="false"><i class="fa-solid fa-toolbox" aria-hidden="true"></i>Mi bandeja</button><button type="button" data-tlab-view="historicos" aria-pressed="false" hidden><i class="fa-solid fa-box-archive" aria-hidden="true"></i>Históricos</button></div>'
       + '    <nav class="tlab-groups" id="tlabGroups" aria-label="Grupos operativos" role="tablist"></nav>'
       + '    <nav class="tlab-mechanic-tray" id="tlabMechanicTray" aria-label="Bandeja del mecánico" role="tablist" hidden></nav>'
       + '    <div class="tlab-section-heading"><div><h2 id="tlabListTitle">Pendientes de entrega</h2><p id="tlabListHint">Trabajos que requieren una acción de entrega.</p></div><span class="tlab-status tlab-status--neutral" id="tlabResultCount">0 trabajos</span></div>'
@@ -506,7 +602,7 @@
       + '    <div class="tlab-load-more" id="tlabLoadMore" hidden><button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="load-more">Cargar más trabajos</button></div>'
       + '  </main>'
       + '</div>'
-      + '<div class="tlab-detail-layer" id="tlabDetailLayer" hidden><aside class="tlab-detail" role="dialog" aria-modal="true" aria-labelledby="tlabDetailTitle"><header class="tlab-detail__header"><div><small>Cadena de custodia</small><h2 id="tlabDetailTitle">Detalle del trabajo</h2></div><button type="button" class="tlab-icon-button tlab-icon-button--light" data-tlab-command="close-detail" aria-label="Cerrar detalle"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header><div class="tlab-detail__body" id="tlabDetailBody"></div></aside></div>'
+      + '<div class="tlab-node-popover" id="tlabNodePopover" role="dialog" aria-modal="false" aria-label="Detalle del evento" hidden></div>'
       + '<div class="tlab-dialog-layer" id="tlabActionLayer" hidden></div>'
       + '<div class="tlab-viewer-layer" id="tlabViewerLayer" hidden></div>'
       + '<div class="tlab-live-region" id="tlabLiveRegion" aria-live="polite" aria-atomic="true"></div>';
@@ -537,6 +633,7 @@
     root.addEventListener("submit", onRootSubmit);
     root.addEventListener("change", onRootChange);
     root.addEventListener("input", onRootInput);
+    root.addEventListener("scroll", onRootScroll, true);
     document.addEventListener("keydown", onDocumentKeydown);
     if (window.visualViewport) {
       window.visualViewport.addEventListener("resize", updateViewportHeight);
@@ -555,33 +652,63 @@
     var view = event.target.closest("[data-tlab-view]");
     var tray = event.target.closest("[data-tlab-tray]");
     var card = event.target.closest("[data-tlab-work-id]");
+    var historicalCard = event.target.closest("[data-tlab-historical-id]");
     var tab = event.target.closest("[data-tlab-detail-tab]");
     var action = event.target.closest("[data-tlab-action]");
+    var historicalAction = event.target.closest("[data-tlab-historical-action]");
     var previewRemove = event.target.closest("[data-tlab-preview-remove]");
     var evidence = event.target.closest("[data-tlab-media-id], [data-tlab-evidence-url]");
+    var nodeTrigger = event.target.closest("[data-tlab-node-trigger]");
+    var takeNode = event.target.closest("[data-tlab-take-node]");
+    var resolveHistorical = event.target.closest("[data-tlab-resolve-historical]");
+    var nodeEdit = event.target.closest("[data-tlab-node-edit]");
+    var nodeEditCancel = event.target.closest("[data-tlab-node-edit-cancel]");
+    var nodeAction = event.target.closest("[data-tlab-popover-action]");
+    var nodePreviewRemove = event.target.closest("[data-tlab-node-preview-remove]");
+    var popover = event.target.closest("#tlabNodePopover");
+    if (state.nodePopover && !nodeTrigger && !takeNode && !resolveHistorical
+        && !popover && closeNodePopover() === false) { return; }
     if (command) {
       handleCommand(command.getAttribute("data-tlab-command"), command, event);
       return;
     }
     if (action) {
+      var rowActionId = action.getAttribute("data-tlab-row-work-id");
+      var rowWork = rowActionId ? listedWorkRecord(rowActionId) : null;
+      var rowActionCode = action.getAttribute("data-tlab-action");
+      var rowAction = rowWork ? normalizeWork(rowWork).actions.filter(function (item) { return item.code === rowActionCode; })[0] : null;
       event.preventDefault();
-      openAction(action.getAttribute("data-tlab-action"));
+      openAction(rowActionCode, rowAction, rowWork);
+      return;
+    }
+    if (historicalAction) {
+      event.preventDefault();
+      openHistoricalWizard(historicalAction.getAttribute("data-tlab-historical-action"));
       return;
     }
     if (group) {
+      if (closeDetail(true) === false) { return; }
       state.group = group.getAttribute("data-tlab-group");
       state.view = "operativa";
+      state.moduleOptions.cod_venta_historica = "";
       renderGroupNavigation();
       loadWorks(false);
       return;
     }
     if (view) {
-      state.view = view.getAttribute("data-tlab-view") === "mecanico" ? "mecanico" : "operativa";
+      var requestedView = view.getAttribute("data-tlab-view");
+      if (requestedView === "historicos"
+          && !boolValue(state.context.historicos_disponibles)) { return; }
+      if (closeDetail(true) === false) { return; }
+      state.view = requestedView === "mecanico" ? "mecanico" : (requestedView === "historicos" ? "historicos" : "operativa");
+      if (state.view !== "historicos") { state.moduleOptions.cod_venta_historica = ""; }
+      state.filtersOpen = false;
       renderGroupNavigation();
       loadWorks(false);
       return;
     }
     if (tray) {
+      if (closeDetail(true) === false) { return; }
       state.mechanicTray = tray.getAttribute("data-tlab-tray");
       renderGroupNavigation();
       loadWorks(false);
@@ -598,6 +725,7 @@
     }
     if (evidence) {
       event.preventDefault();
+      closeNodePopover();
       if (evidence.getAttribute("data-tlab-media-id")) {
         openAuthorizedMedia(evidence.getAttribute("data-tlab-media-id"), evidence.getAttribute("data-tlab-evidence-caption"));
       } else {
@@ -605,9 +733,46 @@
       }
       return;
     }
+    if (nodePreviewRemove) {
+      event.preventDefault();
+      removeNodeFile(numberValue(nodePreviewRemove.getAttribute("data-tlab-node-preview-remove"), -1));
+      return;
+    }
+    if (nodeEdit) {
+      event.preventDefault();
+      beginCurrentNodeEdit();
+      return;
+    }
+    if (nodeEditCancel) {
+      event.preventDefault();
+      cancelNodeEdit();
+      return;
+    }
+    if (nodeAction) {
+      event.preventDefault();
+      openNodeRelatedAction(nodeAction.getAttribute("data-tlab-popover-action"));
+      return;
+    }
+    if (takeNode) {
+      event.preventDefault();
+      openTakeNodePopover(takeNode);
+      return;
+    }
+    if (resolveHistorical) {
+      event.preventDefault();
+      openHistoricalResolver(resolveHistorical);
+      return;
+    }
+    if (nodeTrigger) {
+      event.preventDefault();
+      toggleNodePopover(nodeTrigger, event.detail === 0);
+      return;
+    }
     if (card) {
       openDetail(card.getAttribute("data-tlab-work-id"));
+      return;
     }
+    if (historicalCard) { return; }
   }
 
   function handleCommand(command, element, event) {
@@ -616,16 +781,20 @@
       case "close": closeModule(); break;
       case "refresh": refreshAll(); break;
       case "toggle-filters":
-        filters = state.root.querySelector("#tlabFilters");
-        filters.hidden = !filters.hidden;
-        element.setAttribute("aria-expanded", filters.hidden ? "false" : "true");
+        filters = currentFilterForm();
+        state.filtersOpen = filters ? filters.hidden : false;
+        renderFilterPresentation();
         break;
       case "clear-filters": clearFilters(); break;
       case "load-more": loadWorks(true); break;
       case "close-detail": closeDetail(); break;
+      case "close-node-popover": closeNodePopover(true); break;
       case "close-action": closeAction(); break;
       case "action-back": actionBack(); break;
       case "action-next": actionNext(); break;
+      case "historical-cancel": closeHistoricalWizard(); break;
+      case "historical-back": historicalWizardBack(); break;
+      case "historical-next": historicalWizardNext(); break;
       case "close-viewer": closeViewer(); break;
       case "copy-code":
         event.stopPropagation();
@@ -635,10 +804,26 @@
   }
 
   function onRootSubmit(event) {
-    if (event.target.id === "tlabFilters") {
+    if (event.target.id === "tlabHistoricalResolverForm") {
       event.preventDefault();
+      submitHistoricalResolver();
+      return;
+    }
+    if (event.target.id === "tlabNodeVersionForm") {
+      event.preventDefault();
+      submitNodeVersion();
+      return;
+    }
+    if (event.target.id === "tlabFilters" || event.target.id === "tlabHistoricalFilters") {
+      event.preventDefault();
+      if (closeDetail(true) === false) { return; }
       updateFilterCount();
       loadWorks(false);
+      return;
+    }
+    if (event.target.id === "tlabHistoricalWizardForm") {
+      event.preventDefault();
+      submitHistoricalWizard();
       return;
     }
     if (event.target.id === "tlabActionForm") {
@@ -648,6 +833,45 @@
   }
 
   function onRootChange(event) {
+    if (event.target.matches("[data-tlab-node-file-input]")) {
+      if (state.historicalResolver) {
+        captureHistoricalResolverValues();
+        state.historicalResolver.values.sin_foto_historica = "0";
+      }
+      addNodeFiles(event.target.files);
+      event.target.value = "";
+      return;
+    }
+    if (state.historicalResolver && event.target.closest("#tlabHistoricalResolverForm")) {
+      var resolverCandidates;
+      var resolverCandidate;
+      captureHistoricalResolverValues();
+      if (event.target.name === "cod_detalle_venta") {
+        resolverCandidates = historicalResolutionCandidates(state.historicalResolver.envelope);
+        resolverCandidate = historicalSelectedCandidate(
+          resolverCandidates,
+          state.historicalResolver.values.cod_detalle_venta
+        );
+        if (historicalCandidateIsFinalized(resolverCandidate)) {
+          state.historicalResolver.values.modo_resolucion = "instalado_entregado";
+          state.historicalResolver.error = "Este tratamiento ya está finalizado. La resolución disponible es Instalado y entregado.";
+        }
+      }
+      if (event.target.name === "modo_resolucion"
+          && state.historicalResolver.values.modo_resolucion === "instalado_entregado") {
+        state.historicalResolver.error = "";
+      }
+      if (event.target.name === "sin_foto_historica") {
+        state.historicalResolver.error = "";
+      }
+      if (event.target.name === "modo_resolucion"
+          || event.target.name === "condicion_pre_entrega"
+          || event.target.name === "cod_detalle_venta"
+          || event.target.name === "sin_foto_historica") {
+        renderHistoricalResolver();
+      }
+      return;
+    }
     if (event.target.matches("[data-tlab-file-input]")) {
       captureActionValues();
       addFiles(event.target.files);
@@ -656,21 +880,103 @@
     }
     if (state.action && event.target.closest("#tlabActionForm")) {
       captureActionValues();
-      if (state.action.code === "solicitarAjuste" && event.target.name === "motivo") {
+      if (state.action.code === "tomarHilo" && event.target.name === "condicion_recepcion"
+          && event.target.value === "conforme") {
+        state.action.values.observacion = "";
+      }
+      if (state.action.code === "tomarHilo" && event.target.name === "sin_foto" && event.target.checked) {
+        revokeObjectUrls();
+        state.action.files = [];
+      }
+      if ((state.action.code === "solicitarAjuste" && event.target.name === "motivo")
+          || (state.action.code === "tomarHilo" && (event.target.name === "condicion_recepcion" || event.target.name === "sin_foto" || event.target.name === "motivo_sin_foto"))) {
         renderActionDialog();
       }
+      return;
+    }
+    if (state.historicalWizard && event.target.closest("#tlabHistoricalWizardForm")) {
+      captureHistoricalWizardValues();
     }
   }
 
   function onRootInput(event) {
     if (event.target.id === "tlabSearch") {
+      if (state.detailId && closeDetail(true) === false) { return; }
+      if (state.view === "historicos") { state.moduleOptions.cod_venta_historica = ""; }
       window.clearTimeout(state.searchTimer);
       state.searchTimer = window.setTimeout(function () { loadWorks(false); }, 380);
       return;
     }
     if (state.action && event.target.closest("#tlabActionForm")) {
       captureActionValues();
+      return;
     }
+    if (state.historicalResolver && event.target.closest("#tlabHistoricalResolverForm")) {
+      captureHistoricalResolverValues();
+      return;
+    }
+    if (state.historicalWizard && event.target.closest("#tlabHistoricalWizardForm")) {
+      captureHistoricalWizardValues();
+    }
+  }
+
+  function hasFinePointer() {
+    return !window.matchMedia || window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  }
+
+  function clearPopoverCloseTimer() {
+    if (state.popoverCloseTimer) {
+      window.clearTimeout(state.popoverCloseTimer);
+      state.popoverCloseTimer = null;
+    }
+  }
+
+  function scheduleNodePopoverClose() {
+    clearPopoverCloseTimer();
+    if (state.nodePopoverPinned) { return; }
+    state.popoverCloseTimer = window.setTimeout(function () {
+      var active = document.activeElement;
+      var popover = state.root && state.root.querySelector("#tlabNodePopover");
+      if (active && (active.closest("[data-tlab-node-trigger]") || (popover && popover.contains(active)))) { return; }
+      closeNodePopover();
+    }, 140);
+  }
+
+  function onRootMouseOver(event) {
+    var trigger;
+    if (!hasFinePointer()) { return; }
+    trigger = event.target.closest("[data-tlab-node-trigger]");
+    if (trigger) {
+      clearPopoverCloseTimer();
+      openNodePopover(trigger, false);
+      return;
+    }
+    if (event.target.closest("#tlabNodePopover")) { clearPopoverCloseTimer(); }
+  }
+
+  function onRootMouseOut(event) {
+    if (!hasFinePointer()) { return; }
+    if (event.target.closest("[data-tlab-node-trigger], #tlabNodePopover")) { scheduleNodePopoverClose(); }
+  }
+
+  function onRootFocusIn(event) {
+    var trigger = event.target.closest("[data-tlab-node-trigger]");
+    if (trigger) {
+      clearPopoverCloseTimer();
+      openNodePopover(trigger, false);
+    } else if (event.target.closest("#tlabNodePopover")) {
+      clearPopoverCloseTimer();
+    }
+  }
+
+  function onRootFocusOut(event) {
+    if (event.target.closest("[data-tlab-node-trigger], #tlabNodePopover")) { scheduleNodePopoverClose(); }
+  }
+
+  function onRootScroll(event) {
+    if (!state.nodePopover) { return; }
+    if (event.target.closest && event.target.closest("#tlabNodePopover")) { return; }
+    closeNodePopover();
   }
 
   function onDocumentKeydown(event) {
@@ -680,7 +986,9 @@
     if (event.key === "Escape") {
       if (!state.root.querySelector("#tlabViewerLayer").hidden) { closeViewer(); }
       else if (!state.root.querySelector("#tlabActionLayer").hidden) { closeAction(); }
-      else if (!state.root.querySelector("#tlabDetailLayer").hidden) { closeDetail(); }
+      else if (state.historicalWizard) { closeHistoricalWizard(); }
+      else if (state.nodePopover) { closeNodePopover(true); }
+      else if (state.detailId) { closeDetail(); }
       else { closeModule(); }
       return;
     }
@@ -688,7 +996,7 @@
   }
 
   function activeLayer() {
-    var selectors = ["#tlabViewerLayer", "#tlabActionLayer", "#tlabDetailLayer"];
+    var selectors = ["#tlabViewerLayer", "#tlabActionLayer"];
     var i;
     var node;
     if (!state.root) { return null; }
@@ -740,16 +1048,30 @@
 
   function openModule(options) {
     var root = ensureDom();
+    var ventaHistorica;
     options = options || {};
+    ventaHistorica = toStringSafe(options.cod_venta_historica).trim();
     state.moduleOptions = {
       cod_consulta_origen: options.cod_consulta_origen || "",
-      cod_evolucion_origen: options.cod_evolucion_origen || ""
+      cod_evolucion_origen: options.cod_evolucion_origen || "",
+      cod_venta_historica: ventaHistorica,
+      cod_detalle_operativo: options.cod_detalle_operativo || ""
     };
     state.focusBeforeLayer = document.activeElement;
     state.open = true;
     state.group = options.grupo || state.group;
-    state.view = options.vista === "mecanico" ? "mecanico" : state.view;
+    state.view = options.vista === "mecanico" ? "mecanico"
+      : (options.vista === "historicos" ? "historicos" : (options.vista === "operativa" ? "operativa" : state.view));
     state.mechanicTray = options.bandeja || state.mechanicTray;
+	if (ventaHistorica) {
+		root.querySelector("#tlabHistoricalFilters").reset();
+		state.filtersOpen = false;
+	}
+	if (Object.prototype.hasOwnProperty.call(options, "busqueda")) {
+		root.querySelector("#tlabSearch").value = toStringSafe(options.busqueda);
+	} else if (ventaHistorica) {
+		root.querySelector("#tlabSearch").value = ventaHistorica;
+	}
     root.hidden = false;
     document.body.classList.add("tlab-lock");
     updateViewportHeight();
@@ -760,9 +1082,26 @@
 
   function closeModule() {
     if (!state.root) { return; }
+    if (state.action && state.action.saving) {
+      notify("La acción se está guardando. Esperá la confirmación del servidor.", "info");
+      return;
+    }
+    if (state.historicalWizard && state.historicalWizard.saving) {
+      notify("La actualización histórica se está confirmando. Esperá a que termine.", "info");
+      return;
+    }
+    if (state.nodeEditor && state.nodeEditor.saving) {
+      notify("La versión del nodo se está guardando. Esperá la confirmación del servidor.", "info");
+      return;
+    }
+    if (state.historicalResolver && state.historicalResolver.saving) {
+      notify("La resolución histórica se está guardando. Esperá la confirmación del servidor.", "info");
+      return;
+    }
     closeViewer();
     closeAction();
-    closeDetail();
+    closeNodePopover();
+    closeDetail(true);
     state.open = false;
     state.root.hidden = true;
     document.body.classList.remove("tlab-lock");
@@ -772,13 +1111,11 @@
   }
 
   function loadInitialData() {
-    var summary = state.root.querySelector("#tlabSummary");
     var results = state.root.querySelector("#tlabResults");
-    summary.innerHTML = loaderHtml("Preparando resumen...", "compact");
     results.innerHTML = '<div class="tlab-results-state">' + loaderHtml("Buscando trabajos...", "content") + '</div>';
     Promise.all([
       loadCatalogs().then(null, function (error) { notify(error.message, "error"); }),
-      loadSummary().then(null, function (error) { renderSummary({}); notify(error.message, "error"); })
+      loadSummary().then(null, function (error) { notify(error.message, "error"); })
     ]).then(function () {
       if (state.open) { loadWorks(false); }
     });
@@ -788,34 +1125,62 @@
     loadSummary().then(null, function (error) { notify(error.message, "error"); });
     loadCatalogs().then(null, function () {});
     loadWorks(false);
-    if (state.detailId) { openDetail(state.detailId, true); }
+    if (state.detailId) {
+      if (state.detailKind === "historico") { openHistoricalDetail(state.detailId, true); }
+      else { openDetail(state.detailId, true); }
+    }
   }
 
   function mergeContext(data) {
-    var context = data.contexto || data.context || {};
+    var context = data.contexto_usuario || data.contexto || data.context || {};
+    var mediaLimits;
+    var contextKeys = [
+      "es_mecanico", "es_auditor", "rol", "cod_usuario", "cod_local",
+      "nombre", "nombre_usuario", "usuario_nombre", "avatar", "avatar_usuario", "usuario_avatar", "nombre_local", "local_nombre",
+      "puede_ver_bandeja_mecanico", "historicos_disponibles",
+      "puede_resolver_historicos", "puede_convalidar_historicos",
+      "puede_rectificar_historicos"
+    ];
     state.context = Object.assign({}, state.context, context);
-    if (data.es_mecanico !== undefined) { state.context.es_mecanico = data.es_mecanico; }
-    if (data.es_auditor !== undefined) { state.context.es_auditor = data.es_auditor; }
-    if (data.rol) { state.context.rol = data.rol; }
+    contextKeys.forEach(function (key) {
+      if (data[key] !== undefined) { state.context[key] = data[key]; }
+    });
+    mediaLimits = state.context.limites_media || {};
+    if (numberValue(mediaLimits.max_archivos, 0) > 0) {
+      MAX_FILES = Math.max(1, Math.min(5, numberValue(mediaLimits.max_archivos, MAX_FILES)));
+    }
+    if (numberValue(mediaLimits.max_bytes_archivo, 0) > 0) {
+      MAX_FILE_SIZE = numberValue(mediaLimits.max_bytes_archivo, MAX_FILE_SIZE);
+    }
     updateRolePresentation();
   }
 
   function updateRolePresentation() {
     var badge;
     var switcher;
+    var historicalButton;
     var mechanicFilter;
     var mechanic = boolValue(state.context.es_mecanico) || toStringSafe(state.context.rol).toLowerCase().indexOf("mecán") >= 0 || toStringSafe(state.context.rol).toLowerCase().indexOf("mecan") >= 0;
+    var auditor = boolValue(state.context.es_auditor);
+    var historicosDisponibles = boolValue(state.context.historicos_disponibles);
     if (!state.root) { return; }
     badge = state.root.querySelector("#tlabRoleBadge span");
     switcher = state.root.querySelector("#tlabViewSwitch");
+    historicalButton = switcher ? switcher.querySelector('[data-tlab-view="historicos"]') : null;
     mechanicFilter = state.root.querySelector("#tlabFilterMechanic");
     if (badge) { badge.textContent = mechanic ? "Mecánico dental" : (state.context.rol || "Acceso autorizado"); }
-    switcher.hidden = !(mechanic || boolValue(state.context.puede_ver_bandeja_mecanico));
+    if (historicalButton) { historicalButton.hidden = !historicosDisponibles; }
+    switcher.hidden = !(mechanic || boolValue(state.context.puede_ver_bandeja_mecanico)
+      || auditor || historicosDisponibles);
     if (mechanicFilter && mechanicFilter.closest(".tlab-field")) {
       mechanicFilter.closest(".tlab-field").hidden = mechanic;
     }
     if (mechanic && state.context.forzar_bandeja !== false && state.view === "operativa") {
       state.view = "mecanico";
+    }
+    if (!historicosDisponibles && state.view === "historicos") {
+      state.view = mechanic ? "mecanico" : "operativa";
+      state.filtersOpen = false;
     }
     renderGroupNavigation();
   }
@@ -832,36 +1197,11 @@
   function loadSummary() {
     return request("obtenerResumen", {}).then(function (response) {
       state.summary = response.data.resumen || response.data;
+      state.historicalSummary = pick(state.summary, ["historicos"], response.data.historicos || state.historicalSummary || {});
       mergeContext(response.data);
-      renderSummary(state.summary);
       renderGroupNavigation();
       return response;
     });
-  }
-
-  function summaryNumber(keys) {
-    var value = pick(state.summary, keys, 0);
-    if (value && typeof value === "object") { value = pick(value, ["cantidad", "total", "valor"], 0); }
-    return numberValue(value, 0);
-  }
-
-  function renderSummary(summary) {
-    var container;
-    var cards;
-    state.summary = summary || {};
-    if (!state.root) { return; }
-    container = state.root.querySelector("#tlabSummary");
-    cards = [
-      { label: "Pendientes de entrega", value: summaryNumber(["pendientes_entrega", "pendientes_de_entrega"]), hint: "Requieren preparar o entregar", icon: "fa-box-open", cls: "" },
-      { label: "En poder del laboratorio", value: summaryNumber(["en_laboratorio", "en_poder_laboratorio"]), hint: "Custodia confirmada", icon: "fa-microscope", cls: "tlab-summary-card--teal" },
-      { label: "Pendientes de revisión", value: summaryNumber(["pendientes_revision", "pendientes_revision_clinica"]), hint: "Esperan decisión clínica", icon: "fa-user-doctor", cls: "tlab-summary-card--violet" },
-      { label: "Ajustes activos", value: summaryNumber(["ajustes_activos", "con_ajustes"]), hint: "Ciclos de ajuste abiertos", icon: "fa-screwdriver-wrench", cls: "tlab-summary-card--warning" },
-      { label: "Fuera del plazo", value: summaryNumber(["fuera_plazo", "atrasados"]), hint: "Necesitan atención", icon: "fa-triangle-exclamation", cls: "tlab-summary-card--danger" },
-      { label: "Finalizados recientes", value: summaryNumber(["finalizados_recientes", "finalizados"]), hint: "Cerrados en el período", icon: "fa-circle-check", cls: "tlab-summary-card--ok" }
-    ];
-    container.innerHTML = cards.map(function (card) {
-      return '<article class="tlab-summary-card ' + card.cls + '"><span class="tlab-summary-card__label"><i class="fa-solid ' + card.icon + '" aria-hidden="true"></i>' + escapeHtml(card.label) + '</span><strong class="tlab-summary-card__value">' + card.value + '</strong><small class="tlab-summary-card__hint">' + escapeHtml(card.hint) + '</small></article>';
-    }).join("");
   }
 
   function catalogItems(names) {
@@ -873,7 +1213,7 @@
     var value;
     var label;
     if (typeof item !== "object") { return '<option value="' + escapeAttr(item) + '">' + escapeHtml(item) + '</option>'; }
-    value = pick(item, ["cod_tecnico_usuario", "cod_usuario", "id", "codigo", "cod", "valor", "value", "cod_persona", "cod_local", "cod_producto"], "");
+    value = pick(item, ["cod_tecnico_usuario", "cod_custodio", "cod_usuario", "id", "codigo", "cod", "valor", "value", "cod_persona", "cod_local", "cod_producto"], "");
     label = pick(item, ["nombre", "descripcion", "etiqueta", "label", "texto"], value);
     return '<option value="' + escapeAttr(value) + '">' + escapeHtml(label) + '</option>';
   }
@@ -900,6 +1240,13 @@
     fillSelect("tlabFilterDoctor", catalogItems(["doctores", "especialistas"]), "Todos");
     fillSelect("tlabFilterProduct", catalogItems(["productos", "tipos_trabajo"]), "Todos");
     fillSelect("tlabFilterCustodian", catalogItems(["custodios", "responsables"]), "Todos");
+    fillSelect(
+      "tlabHistoricalDeclaredState",
+      [{ codigo: "situacion_por_actualizar", nombre: "Situación por actualizar" }].concat(
+        catalogItems(["estados_declarables", "estados_historicos", "situaciones_historicas"])
+      ),
+      "Todas"
+    );
   }
 
   function groupCount(key) {
@@ -928,7 +1275,7 @@
     groups = state.root.querySelector("#tlabGroups");
     tray = state.root.querySelector("#tlabMechanicTray");
     switcher = state.root.querySelector("#tlabViewSwitch");
-    groups.hidden = state.view === "mecanico";
+    groups.hidden = state.view !== "operativa";
     tray.hidden = state.view !== "mecanico";
     if (switcher) {
       Array.prototype.forEach.call(switcher.querySelectorAll("[data-tlab-view]"), function (button) {
@@ -941,7 +1288,10 @@
     tray.innerHTML = MECHANIC_TRAY.map(function (item) {
       return '<button type="button" role="tab" data-tlab-tray="' + item.key + '" aria-selected="' + (item.key === state.mechanicTray ? "true" : "false") + '">' + escapeHtml(item.label) + '<span class="tlab-group-count">' + trayCount(item.key) + '</span></button>';
     }).join("");
-    if (state.view === "mecanico") {
+    if (state.view === "historicos") {
+      title = "Trabajos históricos";
+      hint = "Registros anteriores pendientes de resolución. Cualquier usuario autenticado puede continuarlos o cerrarlos como instalados y entregados.";
+    } else if (state.view === "mecanico") {
       selected = MECHANIC_TRAY.filter(function (item) { return item.key === state.mechanicTray; })[0] || MECHANIC_TRAY[0];
       title = "Mi bandeja · " + selected.label;
       hint = "Sólo se muestran trabajos asignados y acciones autorizadas.";
@@ -952,20 +1302,63 @@
     }
     state.root.querySelector("#tlabListTitle").textContent = title;
     state.root.querySelector("#tlabListHint").textContent = hint;
+    renderFilterPresentation();
+  }
+
+  function currentFilterForm() {
+    if (!state.root) { return null; }
+    return state.root.querySelector(state.view === "historicos" ? "#tlabHistoricalFilters" : "#tlabFilters");
+  }
+
+  function renderFilterPresentation() {
+    var standard;
+    var historical;
+    var current;
+    var button;
+    var search;
+    if (!state.root) { return; }
+    standard = state.root.querySelector("#tlabFilters");
+    historical = state.root.querySelector("#tlabHistoricalFilters");
+    current = state.view === "historicos" ? historical : standard;
+    button = state.root.querySelector('[data-tlab-command="toggle-filters"]');
+    search = state.root.querySelector("#tlabSearch");
+    if (standard) { standard.hidden = standard !== current || !state.filtersOpen; }
+    if (historical) { historical.hidden = historical !== current || !state.filtersOpen; }
+    if (button && current) {
+      button.setAttribute("aria-controls", current.id);
+      button.setAttribute("aria-expanded", state.filtersOpen ? "true" : "false");
+    }
+    if (search) {
+      search.placeholder = state.view === "historicos"
+        ? "Código histórico, paciente, venta, mecánico o tipo de trabajo"
+        : "Venta, código del trabajo, paciente o producto";
+    }
+    updateFilterCount();
   }
 
   function filterPayload() {
-    var form = state.root.querySelector("#tlabFilters");
+    var form = currentFilterForm();
     var payload = {};
     if (!form) { return payload; }
     forEachFormValue(form, function (value, key) {
       if (value !== "") { payload[key] = value; }
     });
+    if (state.view === "historicos") {
+      payload.pendiente_revision = state.root.querySelector("#tlabHistoricalPending").checked ? "1" : "";
+      payload.busqueda = state.root.querySelector("#tlabSearch").value.trim();
+      if (state.moduleOptions.cod_venta_historica) {
+        payload.cod_venta = state.moduleOptions.cod_venta_historica;
+      }
+      return payload;
+    }
     payload.transferencia_pendiente = state.root.querySelector("#tlabFilterPendingTransfer").checked ? "1" : "";
     payload.busqueda = state.root.querySelector("#tlabSearch").value.trim();
     payload.grupo_operativo = state.view === "operativa" ? state.group : "";
     payload.vista = state.view;
     payload.bandeja = state.view === "mecanico" ? state.mechanicTray : "";
+    if (state.moduleOptions.cod_detalle_operativo) {
+      payload.cod_detalle_venta = state.moduleOptions.cod_detalle_operativo;
+    }
     return payload;
   }
 
@@ -979,9 +1372,12 @@
   }
 
   function clearFilters() {
-    var form = state.root.querySelector("#tlabFilters");
+    var form = currentFilterForm();
+    if (closeDetail(true) === false) { return; }
     form.reset();
     state.root.querySelector("#tlabSearch").value = "";
+    if (state.view === "historicos") { state.moduleOptions.cod_venta_historica = ""; }
+    if (state.view !== "historicos") { state.moduleOptions.cod_detalle_operativo = ""; }
     updateFilterCount();
     loadWorks(false);
   }
@@ -995,6 +1391,7 @@
     var requestId;
     var payload;
     var results;
+    if (state.view === "historicos") { loadHistoricals(append); return; }
     if (!state.root || (state.loadingList && append)) { return; }
     state.loadingList = true;
     state.page = append ? state.page + 1 : 1;
@@ -1007,6 +1404,7 @@
     results.setAttribute("aria-busy", "true");
     if (!append) {
       results.innerHTML = '<div class="tlab-results-state">' + loaderHtml("Buscando trabajos...", "content") + '</div>';
+      state.root.querySelector("#tlabResultCount").textContent = "Buscando...";
     }
     request("listarTrabajos", payload).then(function (response) {
       var items;
@@ -1015,6 +1413,7 @@
       if (requestId !== state.listRequest) { return; }
       mergeContext(response.data);
       items = listFromResponse(response.data);
+      if (!append) { state.nodeDetailCache = {}; }
       state.works = append ? state.works.concat(items) : items;
       total = numberValue(
         pick(response.data, ["total", "cantidad_total", "registros"],
@@ -1033,6 +1432,1713 @@
       state.loadingList = false;
       results.setAttribute("aria-busy", "false");
     });
+  }
+
+  function historicalListFromResponse(data) {
+    if (Array.isArray(data)) { return data; }
+    return asArray(data.historicos || []);
+  }
+
+  function loadHistoricals(append) {
+    var requestId;
+    var payload;
+    var results;
+    if (!state.root || (state.loadingList && append)) { return; }
+    if (!boolValue(state.context.historicos_disponibles)) {
+      state.historicals = [];
+      renderHistoricalListError("La bandeja histórica no está disponible.");
+      return;
+    }
+    state.loadingList = true;
+    state.page = append ? state.page + 1 : 1;
+    requestId = ++state.listRequest;
+    payload = filterPayload();
+    payload.pagina = state.page;
+    payload.limite = PAGE_SIZE;
+    payload.por_pagina = PAGE_SIZE;
+    results = state.root.querySelector("#tlabResults");
+    results.setAttribute("aria-busy", "true");
+    if (!append) {
+      results.innerHTML = '<div class="tlab-results-state">' + loaderHtml("Buscando registros históricos...", "content") + '</div>';
+      state.root.querySelector("#tlabResultCount").textContent = "Buscando...";
+    }
+    request("listarHistoricos", payload).then(function (response) {
+      var items;
+      var total;
+      if (requestId !== state.listRequest || state.view !== "historicos") { return; }
+      mergeContext(response.data);
+      if (!boolValue(state.context.historicos_disponibles)) {
+        throw new Error("La bandeja histórica ya no está disponible.");
+      }
+      items = historicalListFromResponse(response.data);
+      if (response.data.estados_declarables) {
+        state.catalogs.estados_declarables = response.data.estados_declarables;
+        fillSelect(
+          "tlabHistoricalDeclaredState",
+          [{ codigo: "situacion_por_actualizar", nombre: "Situación por actualizar" }].concat(
+            asArray(response.data.estados_declarables)
+          ),
+          "Todas"
+        );
+      }
+      if (append) {
+        var historicosConocidos = {};
+        state.historicals.forEach(function (item) {
+          historicosConocidos[toStringSafe(normalizeHistorical(item).id)] = true;
+        });
+        items.forEach(function (item) {
+          var idHistorico = toStringSafe(normalizeHistorical(item).id);
+          if (!historicosConocidos[idHistorico]) {
+            state.historicals.push(item);
+            historicosConocidos[idHistorico] = true;
+          }
+        });
+      } else {
+        state.nodeDetailCache = {};
+        state.historicals = items;
+      }
+      total = numberValue(pick(response.data, ["total"], state.historicals.length), state.historicals.length);
+      if (response.data.hay_mas !== undefined) {
+        state.hasMore = boolValue(response.data.hay_mas);
+      } else if (response.data.tiene_mas !== undefined) {
+        state.hasMore = boolValue(response.data.tiene_mas);
+      } else {
+        state.hasMore = state.page * PAGE_SIZE < total;
+      }
+      state.historicalSummary = response.data.resumen || state.historicalSummary || {};
+      renderHistoricals(total);
+    }).then(null, function (error) {
+      if (requestId !== state.listRequest) { return; }
+      if (append) { state.page = Math.max(1, state.page - 1); }
+      renderHistoricalListError(error.message);
+    }).then(function () {
+      if (requestId !== state.listRequest) { return; }
+      state.loadingList = false;
+      results.setAttribute("aria-busy", "false");
+    });
+  }
+
+  function humanizeHistoricalValue(value, fallback) {
+    var text = toStringSafe(value || fallback || "Sin registrar").replace(/_/g, " ").trim();
+    return text ? text.charAt(0).toUpperCase() + text.slice(1) : "Sin registrar";
+  }
+
+  function photoExceptionLabel(event) {
+    var reason = toStringSafe(event && event.photoExceptionReason);
+    if (reason === "foto_historica_no_disponible") {
+      return "Sin fotografía histórica disponible";
+    }
+    return "Sin foto · " + humanizeHistoricalValue(reason, "Excepción auditada");
+  }
+
+  function historicalPendingItems(item) {
+    var raw = item.pendientes || item.datos_pendientes || item.validaciones_pendientes || [];
+    var pending = asArray(raw).map(function (entry) {
+      if (entry && typeof entry === "object") {
+        return pick(entry, ["etiqueta", "mensaje", "descripcion", "nombre", "campo"], "Dato pendiente");
+      }
+      return humanizeHistoricalValue(entry, "Dato pendiente");
+    }).filter(Boolean);
+    if (!pending.length && boolValue(item.requiere_detalle_venta || item.detalle_venta_pendiente)) { pending.push("Seleccionar el detalle exacto de la venta"); }
+    if (!pending.length && boolValue(item.requiere_convalidacion || item.pendiente_convalidacion)) { pending.push("Actualizar la situación histórica"); }
+    return pending;
+  }
+
+  function normalizeHistorical(item) {
+    var author;
+    var editor;
+    item = item || {};
+    author = item.creado_por || item.insertado_por || item.usuario_creacion || pick(item, ["nombre_usuario_insercion", "usuario_insercion", "user_insert"], "Usuario histórico");
+    editor = item.editado_por || item.usuario_edicion || pick(item, ["nombre_usuario_edicion", "usuario_edicion", "user_update"], "");
+    return {
+      raw: item,
+      id: pick(item, ["id_historico", "cod_trabajo_mecanico_dental", "id", "codigo_historico"], ""),
+      code: pick(item, ["codigo_visible", "codigo_historico", "cod_trabajo_mecanico_legacy", "cod_trabajo_mecanico_dental", "id_historico"], "Sin código"),
+      patient: pick(item, ["paciente_nombre", "nombre_paciente", "paciente", "cliente_nombre", "cliente"], "Paciente sin identificar"),
+      sale: pick(item, ["numero_venta", "nro_venta", "cod_venta", "venta"], "Sin venta"),
+      branch: pick(item, ["local_declarado", "local_snapshot", "local_nombre", "sucursal_nombre", "nombre_local", "local", "sucursal"], "Sin sucursal"),
+      product: pick(item, ["tipo_trabajo", "trabajo", "producto_nombre", "producto", "descripcion_trabajo"], "Trabajo mecánico dental"),
+      doctor: personFromRecord(
+        item.doctor || item.especialista,
+        item,
+        ["nombre_doctor", "doctor_nombre", "odontologo_nombre", "nombre_odontologo"],
+        ["doctor_rol", "odontologo_rol", "rol_doctor"],
+        ["doctor_avatar", "doctor_avatar_url", "odontologo_avatar", "avatar_doctor"],
+        "Odontólogo"
+      ),
+      originalState: pick(item, ["estado_original", "estado_historico", "estado"], "Sin registrar"),
+      declaredState: pick(item, ["estado_declarado", "situacion_declarada"], "Situación por actualizar"),
+      mechanic: personFromRecord(
+        item.mecanico_declarado || item.mecanico_dental_declarado || item.mecanico || item.tecnico,
+        item,
+        ["nombre_mecanico_declarado", "nombre_mecanico_dental", "nombre_mecanico", "mecanico_nombre"],
+        ["tecnico_rol", "mecanico_rol", "mecanico_declarado_rol"],
+        ["tecnico_avatar", "mecanico_avatar", "mecanico_declarado_avatar", "avatar_mecanico"],
+        "Mecánico dental"
+      ),
+      mechanicSnapshot: item.mecanico_snapshot || item.mecanico_dental || item.mecanico || pick(item, ["nombre_mecanico_dental", "nombre_mecanico", "mecanico_nombre"], "Sin dato original"),
+      author: item.autor_original || author,
+      authorDate: pick(item, ["fecha_creacion_original", "fecha_insercion", "fecha_creacion", "creado_en", "fecha_insert"], ""),
+      editor: item.editor_original || editor,
+      editorDate: pick(item, ["fecha_edicion_original", "fecha_edicion", "actualizado_en", "fecha_update"], ""),
+      pending: historicalPendingItems(item),
+      convalidated: toStringSafe(item.estado_convalidacion) === "convalidado_administracion" || boolValue(pick(item, ["convalidado", "esta_convalidado"], false)),
+      synchronizedAutomatically: toStringSafe(item.estado_convalidacion) === "sincronizado_automatico",
+      promoted: boolValue(item.integrado) || toStringSafe(item.estado_convalidacion) === "integrado_operativo" || boolValue(pick(item, ["promovido", "esta_promovido"], false)) || !!pick(item, ["id_trabajo_laboratorio", "cod_trabajo_laboratorio", "fecha_promocion"], ""),
+      route: receivedRoute(item),
+      version: pick(item, ["version", "version_registro"], "")
+    };
+  }
+
+  function historicalStatusClass(value) {
+    var text = toStringSafe(value).toLowerCase();
+    if (text.indexOf("entreg") >= 0 || text.indexOf("final") >= 0 || text.indexOf("promovid") >= 0 || text.indexOf("convalidad") >= 0) { return "ok"; }
+    if (text.indexOf("inactiv") >= 0 || text.indexOf("cancel") >= 0) { return "neutral"; }
+    if (text.indexOf("pend") >= 0 || text.indexOf("actualizar") >= 0 || text.indexOf("pagad") >= 0) { return "warning"; }
+    return "violet";
+  }
+
+  function receivedRoute(item) {
+    var nested;
+    var route;
+    item = item || {};
+    nested = item.detalle && typeof item.detalle === "object" ? item.detalle : {};
+    route = item.recorrido_operativo;
+    if (route === undefined || route === null) { route = item.recorrido; }
+    if (route === undefined || route === null) { route = item.timeline; }
+    if (route === undefined || route === null) { route = item.eventos_resumen; }
+    if (route === undefined || route === null) { route = item.eventos; }
+    if (route === undefined || route === null) { route = item.trazabilidad; }
+    if ((route === undefined || route === null) && nested) { route = nested.recorrido; }
+    if (route && !Array.isArray(route) && typeof route === "object" && route.eventos) { route = route.eventos; }
+    return asArray(route);
+  }
+
+  function receivedCustodyChain(item) {
+    var nested;
+    var chain;
+    item = item || {};
+    nested = item.detalle && typeof item.detalle === "object" ? item.detalle : {};
+    chain = item.cadena_custodia;
+    if (chain === undefined || chain === null) { chain = item.hilo_custodia; }
+    if ((chain === undefined || chain === null) && nested) { chain = nested.cadena_custodia || nested.hilo_custodia; }
+    if (chain && !Array.isArray(chain) && typeof chain === "object") {
+      chain = chain.nodos || chain.eventos || chain.items || chain.cadena || [];
+    }
+    return asArray(chain);
+  }
+
+  function safeDomToken(value) {
+    return toStringSafe(value).replace(/[^a-zA-Z0-9_-]+/g, "-") || "sin-id";
+  }
+
+  function inlineDetailDomId(kind, id, rowIndex) {
+    return "tlab-ficha-" + safeDomToken(kind) + "-" + safeDomToken(id) + "-" + numberValue(rowIndex, 0);
+  }
+
+  function isInlineDetailOpen(kind, id) {
+    return state.detailKind === kind && toStringSafe(state.detailId) === toStringSafe(id);
+  }
+
+  function inlineDetailHtml(kind, id, rowIndex) {
+    var expanded = isInlineDetailOpen(kind, id);
+    return '<section class="tlab-row-detail" id="' + escapeAttr(inlineDetailDomId(kind, id, rowIndex)) + '" data-tlab-inline-kind="' + escapeAttr(kind) + '" data-tlab-inline-id="' + escapeAttr(id) + '" role="region" aria-label="Ficha general del trabajo" ' + (expanded ? '' : 'hidden') + '><div class="tlab-detail__body tlab-row-detail__body">' + (expanded ? loaderHtml("Cargando ficha general...", "compact") : '') + '</div></section>';
+  }
+
+  function routeEvent(item) {
+    var actorRaw = item.actor || item.usuario || item.realizado_por || pick(item, ["nombre_usuario", "actor_nombre"], "Usuario registrado");
+    var actor = person(actorRaw, pick(item, ["actor_rol", "rol_actor"], "Sin rol informado"));
+    var title = pick(item, ["accion_texto", "titulo", "evento_texto", "tipo_evento", "accion"], "Evento registrado");
+    var cycle = pick(item, ["ciclo_etiqueta", "ciclo", "tipo_ciclo"], "Sin ciclo informado");
+    var elapsed = pick(item, ["tiempo_desde_anterior_texto", "dias_desde_anterior", "dias_transcurridos", "duracion_texto"], "");
+    var mediaId = pick(item, ["miniatura_media_id", "id_media", "media_id", "evidencia_id"], "");
+    var image = pick(item, ["miniatura_url", "url_visualizacion", "imagen", "foto", "evidencia_url"], "");
+    var adjustmentText = (toStringSafe(cycle) + " " + toStringSafe(title) + " " + toStringSafe(pick(item, ["tipo_evento", "tipo"], ""))).toLowerCase();
+    if (elapsed !== "" && /^\d+$/.test(toStringSafe(elapsed))) { elapsed = formatDays(elapsed); }
+    return {
+      raw: item,
+      actor: actor,
+      title: humanizeHistoricalValue(title, "Evento registrado"),
+      cycle: humanizeHistoricalValue(cycle, "Sin ciclo informado"),
+      date: pick(item, ["fecha_hora", "fecha_servidor", "server_timestamp", "fecha", "creado_en"], ""),
+      branch: pick(item, ["local_nombre", "sucursal", "local"], "Sin registrar"),
+      elapsed: elapsed,
+      previous: person(item.custodio_anterior || pick(item, ["nombre_custodio_anterior"], "")).name,
+      next: person(item.custodio_nuevo || item.nuevo_custodio || pick(item, ["nombre_custodio_nuevo"], "")).name,
+      sender: person(item.remitente || pick(item, ["nombre_remitente"], "")).name,
+      recipient: person(item.destinatario || pick(item, ["nombre_destinatario"], "")).name,
+      note: pick(item, ["observacion", "nota", "justificacion", "detalle"], ""),
+      mediaId: mediaId,
+      image: image,
+      pending: boolValue(item.pendiente),
+      alert: boolValue(item.atrasado || item.demora),
+      adjustment: adjustmentText.indexOf("ajuste") >= 0
+    };
+  }
+
+  function custodyEvent(item) {
+    var responsibleRaw;
+    var responsible;
+    var performedBy;
+    var duration;
+    var evidence;
+    var evidenceCount;
+    var condition;
+    var terminalState;
+    var terminal;
+    var cancelled;
+    item = item || {};
+    responsibleRaw = item.responsable || item.custodio || item.actor || item.usuario
+      || item.custodio_nuevo || pick(item, ["responsable_nombre", "custodio_nombre", "nombre_custodio", "actor_nombre"], "Responsable registrado");
+    if (responsibleRaw && typeof responsibleRaw === "object") {
+      responsibleRaw = responsibleRaw.persona || responsibleRaw.usuario || responsibleRaw;
+    }
+    responsible = person(responsibleRaw, pick(item, ["responsable_rol", "custodio_rol", "actor_rol", "rol"], "Responsable de custodia"));
+    performedBy = person(item.actor || item.usuario || responsibleRaw, pick(item, ["actor_rol", "rol_actor"], "Usuario Telar"));
+    duration = pick(item, ["duracion_texto", "tiempo_custodia_texto", "tiempo_transcurrido_texto", "tiempo_desde_anterior_texto"], "");
+    if (!duration && pick(item, ["duracion_segundos", "segundos_custodia"], "") !== "") {
+      duration = formatDurationSeconds(pick(item, ["duracion_segundos", "segundos_custodia"], 0));
+    }
+    evidence = item.evidencia || item.media || {};
+    evidenceCount = pick(item, ["evidencias_cantidad", "cantidad_evidencias", "cantidad_media"], pick(evidence, ["cantidad"], ""));
+    if (evidenceCount === "" && Array.isArray(item.evidencias)) { evidenceCount = item.evidencias.length; }
+    condition = pick(item, ["condicion_recepcion_texto", "condicion_texto", "condicion_recepcion", "condicion"], "");
+    terminalState = toStringSafe(pick(item, ["estado_terminal", "motivo_cierre"], "")).toLowerCase();
+    terminal = boolValue(pick(item, ["terminal", "es_final", "final", "finalizado"], false));
+    cancelled = terminal && /cancel/.test(terminalState);
+    return {
+      raw: item,
+      actor: responsible,
+      performedBy: performedBy,
+      title: humanizeHistoricalValue(pick(item, ["titulo", "accion_texto", "evento_texto", "tipo_evento"], "Custodia asumida"), "Custodia asumida"),
+      cycle: "El hilo de custodia",
+      date: pick(item, ["fecha_inicio", "inicio", "fecha_hora", "fecha_servidor", "fecha"], ""),
+      endDate: pick(item, ["fecha_fin", "fin", "fecha_cierre"], ""),
+      branch: pick(item, ["local_nombre", "sucursal_nombre", "sucursal", "local"], "Sin registrar"),
+      elapsed: duration,
+      previous: person(item.custodio_anterior || pick(item, ["nombre_custodio_anterior"], "")).name,
+      next: responsible.name,
+      sender: "",
+      recipient: responsible.name,
+      note: pick(item, ["observacion_recepcion", "observacion", "nota", "detalle", "justificacion"], ""),
+      mediaId: pick(evidence, ["id_media", "id"], pick(item, ["miniatura_media_id", "id_media", "media_id", "evidencia_id"], "")),
+      image: pick(evidence, ["miniatura_url", "url_visualizacion", "url"], pick(item, ["miniatura_url", "url_visualizacion", "imagen", "foto"], "")),
+      evidenceCount: numberValue(evidenceCount, 0),
+      noveltyCount: numberValue(pick(item, ["novedades_cantidad", "cantidad_novedades", "novedades"], 0), 0),
+      condition: condition ? humanizeHistoricalValue(condition, "") : "",
+      current: boolValue(pick(item, ["es_actual", "actual", "custodia_actual"], false)),
+      terminal: terminal,
+      final: terminal && !cancelled,
+      cancelled: cancelled,
+      closed: boolValue(pick(item, ["cerrado"], false)),
+      inTransport: boolValue(pick(item, ["en_transporte"], false)),
+      historical: boolValue(pick(item, ["registro_historico"], false)),
+      status: cancelled ? "Custodia cerrada por cancelación" : (terminal ? "Custodia final"
+        : (boolValue(pick(item, ["actual", "es_actual", "custodia_actual"], false)) ? (boolValue(item.en_transporte) ? "Vigente · trabajo en transporte" : "Custodia vigente")
+          : (boolValue(item.cerrado) ? "Período cerrado" : "Registrado"))),
+      photoException: boolValue(pick(item, ["sin_foto", "excepcion_foto", "foto_exceptuada"], false)),
+      photoExceptionReason: pick(item, ["motivo_sin_foto_texto", "motivo_sin_foto", "razon_excepcion_foto"], ""),
+      workData: item.datos_trabajo && typeof item.datos_trabajo === "object" ? item.datos_trabajo : null,
+      changedFields: asArray(item.campos_modificados),
+      versionEvents: asArray(item.eventos_version),
+      versionNumber: numberValue(pick(item, ["version_nodo"], 0), 0),
+      editionCount: numberValue(pick(item, ["ediciones_cantidad"], 0), 0),
+      pending: false,
+      alert: false,
+      adjustment: false
+    };
+  }
+
+  function routeNodeHtml(item, index, length, kind, rowId, rowIndex) {
+    var event = routeEvent(item);
+    var nodeKey = safeDomToken(kind) + "-" + safeDomToken(rowId) + "-" + rowIndex + "-" + index;
+    var classes = event.adjustment ? " is-adjustment" : (event.alert ? " is-alert" : (event.pending ? " is-pending" : ""));
+    var evidence = event.image
+      ? '<span class="tlab-route-node__evidence" aria-hidden="true"><img src="' + escapeAttr(event.image) + '" alt="" loading="lazy"></span>'
+      : (event.mediaId ? '<span class="tlab-route-node__evidence" aria-hidden="true"><i class="fa-solid fa-image"></i></span>' : '');
+    return '<li class="tlab-route-node' + classes + '">'
+      + (event.elapsed ? '<span class="tlab-route-node__elapsed">' + escapeHtml(event.elapsed) + '</span>' : '<span class="tlab-route-node__elapsed tlab-route-node__elapsed--empty" aria-hidden="true"></span>')
+      + '<button type="button" class="tlab-route-node__trigger" data-tlab-node-trigger data-tlab-node-lane="operativo" data-tlab-node-kind="' + escapeAttr(kind) + '" data-tlab-node-row-id="' + escapeAttr(rowId) + '" data-tlab-node-index="' + index + '" aria-haspopup="dialog" aria-expanded="false" aria-controls="tlabNodePopover" aria-label="Ver evento: ' + escapeAttr(event.title) + '">'
+      + '<span class="tlab-route-node__avatar">' + avatarHtml(event.actor) + evidence + '</span>'
+      + '<strong title="' + escapeAttr(event.title) + '">' + escapeHtml(event.title) + '</strong>'
+      + '<time datetime="' + escapeAttr(event.date) + '">' + escapeHtml(formatDate(event.date, true)) + '</time></button>'
+      + (index < length - 1 ? '<span class="tlab-route-node__connector" aria-hidden="true"></span>' : '')
+      + '<span class="sr-only" id="tlab-node-' + escapeAttr(nodeKey) + '">' + escapeHtml(event.actor.name) + '</span></li>';
+  }
+
+  function routeHtml(route, kind, rowId, rowIndex) {
+    var events = asArray(route);
+    if (!events.length) {
+      return '<div class="tlab-route-empty"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i><span>Sin nodos informados en el recorrido</span></div>';
+    }
+    return '<div class="tlab-route-scroll" tabindex="0" aria-label="Recorrido del trabajo; desplazamiento horizontal"><ol class="tlab-route-list">' + events.map(function (event, index) {
+      return routeNodeHtml(event, index, events.length, kind, rowId, rowIndex);
+    }).join("") + '</ol></div>';
+  }
+
+  function custodyNodeHtml(item, index, length, kind, rowId, rowIndex, forceCurrent) {
+    var event = custodyEvent(item);
+    if (forceCurrent) { event.current = true; }
+    var classes = (event.current ? " is-current" : "") + (event.final ? " is-final" : "") + (event.cancelled ? " is-cancelled" : "") + (event.closed ? " is-closed" : "") + (event.inTransport ? " is-in-transport" : "") + (event.photoException ? " has-photo-exception" : "");
+    var evidence = event.image
+      ? '<span class="tlab-route-node__evidence" aria-label="Con evidencia"><img src="' + escapeAttr(event.image) + '" alt="" loading="lazy"></span>'
+      : (event.mediaId || event.evidenceCount ? '<span class="tlab-route-node__evidence" aria-label="Con evidencia"><i class="fa-solid fa-camera"></i></span>'
+        : (event.photoException ? '<span class="tlab-route-node__evidence tlab-route-node__evidence--exception" aria-label="Sin foto por excepción"><i class="fa-solid fa-camera-slash"></i></span>' : ''));
+    var indicators = (event.noveltyCount ? '<span title="Novedades registradas"><i class="fa-solid fa-message" aria-hidden="true"></i>' + event.noveltyCount + '</span>' : '')
+      + (event.inTransport ? '<span title="Trabajo en transporte"><i class="fa-solid fa-truck" aria-hidden="true"></i></span>' : '')
+      + (event.historical ? '<span title="Registro anterior conservado"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i></span>' : '')
+      + (event.cancelled ? '<span title="Custodia cerrada por cancelación"><i class="fa-solid fa-ban" aria-hidden="true"></i></span>' : '')
+      + (event.condition ? '<span title="Condición de recepción"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i></span>' : '');
+    return '<li class="tlab-route-node tlab-custody-node' + classes + '">'
+      + (event.elapsed ? '<span class="tlab-route-node__elapsed">' + escapeHtml(event.elapsed) + '</span>' : '<span class="tlab-route-node__elapsed tlab-route-node__elapsed--empty" aria-hidden="true"></span>')
+      + '<button type="button" class="tlab-route-node__trigger" data-tlab-node-trigger data-tlab-node-lane="custodia" data-tlab-node-kind="' + escapeAttr(kind) + '" data-tlab-node-row-id="' + escapeAttr(rowId) + '" data-tlab-node-index="' + index + '" aria-haspopup="dialog" aria-expanded="false" aria-controls="tlabNodePopover" aria-label="Ver custodia: ' + escapeAttr(event.actor.name) + '">'
+      + '<span class="tlab-route-node__avatar">' + avatarHtml(event.actor) + evidence + '</span>'
+      + '<strong title="' + escapeAttr(event.title) + '">' + escapeHtml(event.title) + '</strong>'
+      + '<time datetime="' + escapeAttr(event.date) + '">' + escapeHtml(formatDate(event.date, true)) + '</time>'
+      + (indicators ? '<span class="tlab-custody-node__indicators">' + indicators + '</span>' : '') + '</button>'
+      + (index < length - 1 ? '<span class="tlab-route-node__connector" aria-hidden="true"></span>' : '') + '</li>';
+  }
+
+  function custodyRouteHtml(chain, kind, rowId, rowIndex) {
+    var nodes = asArray(chain);
+    var hasCurrent = nodes.some(function (node) { return boolValue(pick(node, ["es_actual", "actual", "custodia_actual"], false)); });
+    var lastIsTerminal = nodes.length ? boolValue(pick(nodes[nodes.length - 1], ["terminal", "es_final", "final", "finalizado"], false)) : false;
+    if (!nodes.length) {
+      return '<div class="tlab-route-empty tlab-route-empty--custody"><i class="fa-solid fa-link" aria-hidden="true"></i><span>El hilo comenzará al iniciar el trabajo</span></div>';
+    }
+    return '<div class="tlab-route-scroll tlab-route-scroll--custody" tabindex="0" aria-label="Hilo de custodia; desplazamiento horizontal"><ol class="tlab-route-list">' + nodes.map(function (node, index) {
+      return custodyNodeHtml(node, index, nodes.length, kind, rowId, rowIndex, !hasCurrent && !lastIsTerminal && index === nodes.length - 1);
+    }).join("") + '</ol></div>';
+  }
+
+  function eventId(item) {
+    return toStringSafe(pick(item || {}, ["id_evento", "id"], ""));
+  }
+
+  function eventDate(item, lane) {
+    return lane === "custodia"
+      ? pick(item || {}, ["fecha_inicio", "inicio", "fecha_hora", "fecha_servidor", "fecha"], "")
+      : pick(item || {}, ["fecha_hora", "fecha_servidor", "server_timestamp", "fecha", "creado_en"], "");
+  }
+
+  function unifiedWorkRoute(work) {
+    var merged = {};
+    var withoutId = [];
+    function add(item, lane, index) {
+      var id = eventId(item);
+      var record = { raw: item, lane: lane, order: index };
+      if (!id) {
+        withoutId.push(record);
+        return;
+      }
+      /* La custodia reemplaza al duplicado operativo porque contiene el
+         responsable y la versión completa vinculada al mismo evento. */
+      if (!merged[id] || lane === "custodia") { merged[id] = record; }
+    }
+    if (work.historicalOrigin) {
+      add(work.historicalOrigin, "historico", -1);
+    }
+    asArray(work.route).forEach(function (item, index) { add(item, "operativo", index); });
+    asArray(work.custodyChain).forEach(function (item, index) { add(item, "custodia", index); });
+    return Object.keys(merged).map(function (key) { return merged[key]; }).concat(withoutId).sort(function (left, right) {
+      var leftDate = toStringSafe(eventDate(left.raw, left.lane));
+      var rightDate = toStringSafe(eventDate(right.raw, right.lane));
+      if (leftDate !== rightDate) { return leftDate < rightDate ? -1 : 1; }
+      return numberValue(eventId(left.raw), left.order) - numberValue(eventId(right.raw), right.order);
+    });
+  }
+
+  function unifiedNodeHtml(record, index, length, work, rowIndex, hasEnd) {
+    var event = record.lane === "custodia" ? custodyEvent(record.raw) : routeEvent(record.raw);
+    var classes = record.lane === "custodia" ? " tlab-custody-node" : "";
+    var evidence;
+    var indicators = "";
+    if (record.lane === "custodia") {
+      classes += (event.current ? " is-current" : "") + (event.final ? " is-final" : "")
+        + (event.cancelled ? " is-cancelled" : "") + (event.closed ? " is-closed" : "")
+        + (event.inTransport ? " is-in-transport" : "") + (event.photoException ? " has-photo-exception" : "");
+      indicators = (event.editionCount ? '<span title="Versión editada"><i class="fa-solid fa-pen" aria-hidden="true"></i>' + event.editionCount + '</span>' : '')
+        + (event.noveltyCount ? '<span title="Novedades registradas"><i class="fa-solid fa-message" aria-hidden="true"></i>' + event.noveltyCount + '</span>' : '')
+        + (event.condition ? '<span title="Condición de recepción"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i></span>' : '');
+    } else {
+      classes += event.adjustment ? " is-adjustment" : (event.alert ? " is-alert" : (event.pending ? " is-pending" : ""));
+      if (record.lane === "historico") {
+        classes += " is-historical-origin";
+        indicators += '<span title="Version historica original"><i class="fa-solid fa-box-archive" aria-hidden="true"></i></span>';
+      }
+    }
+    evidence = event.image
+      ? '<span class="tlab-route-node__evidence" aria-label="Con fotografía"><img src="' + escapeAttr(event.image) + '" alt="" loading="lazy"></span>'
+      : (event.mediaId || event.evidenceCount ? '<span class="tlab-route-node__evidence" aria-label="Con fotografía"><i class="fa-solid fa-camera" aria-hidden="true"></i></span>'
+        : (event.photoException ? '<span class="tlab-route-node__evidence tlab-route-node__evidence--exception" aria-label="Sin foto por excepción"><i class="fa-solid fa-camera-slash" aria-hidden="true"></i></span>' : ''));
+    return '<li class="tlab-route-node tlab-unified-node' + classes + '">'
+      + (event.elapsed ? '<span class="tlab-route-node__elapsed">' + escapeHtml(event.elapsed) + '</span>' : '<span class="tlab-route-node__elapsed tlab-route-node__elapsed--empty" aria-hidden="true"></span>')
+      + '<button type="button" class="tlab-route-node__trigger" data-tlab-node-trigger data-tlab-node-lane="unificado" data-tlab-node-kind="operativo" data-tlab-node-row-id="' + escapeAttr(work.id) + '" data-tlab-node-index="' + index + '" aria-haspopup="dialog" aria-expanded="false" aria-controls="tlabNodePopover" aria-label="Ver nodo: ' + escapeAttr(event.title) + '">'
+      + '<span class="tlab-route-node__avatar">' + avatarHtml(event.actor) + evidence + '</span>'
+      + '<strong title="' + escapeAttr(event.title) + '">' + escapeHtml(event.title) + '</strong>'
+      + '<time datetime="' + escapeAttr(event.date) + '">' + escapeHtml(formatDate(event.date, true)) + '</time>'
+      + (indicators ? '<span class="tlab-custody-node__indicators">' + indicators + '</span>' : '') + '</button>'
+      + (index < length - 1 || hasEnd ? '<span class="tlab-route-node__connector" aria-hidden="true"></span>' : '') + '</li>';
+  }
+
+  function closureNode(work) {
+    var route = unifiedWorkRoute(work);
+    var previousRecord = route.length ? route[route.length - 1] : null;
+    var previousEvent = previousRecord
+      ? (previousRecord.lane === "custodia" ? custodyEvent(previousRecord.raw) : routeEvent(previousRecord.raw))
+      : null;
+    var rawWork = work.raw || {};
+    var cancelled = !!work.cancelled;
+    var closedAt = cancelled
+      ? pick(rawWork, ["fecha_cancelado", "fecha_completado", "fecha_actualizacion"], "")
+      : pick(rawWork, ["fecha_instalado", "fecha_completado", "fecha_actualizacion"], "");
+    if (!closedAt && previousEvent) { closedAt = previousEvent.endDate || previousEvent.date; }
+    return {
+      id: "cierre-" + toStringSafe(work.id),
+      id_evento: null,
+      id_trabajo: work.id,
+      origen: "cierre_derivado",
+      tipo_evento: cancelled ? "hilo_cancelado" : "hilo_cerrado",
+      titulo: cancelled ? "Trabajo cancelado" : "Hilo cerrado",
+      fecha_servidor: closedAt,
+      actor: previousEvent ? previousEvent.actor : work.custodian,
+      responsable: previousEvent ? previousEvent.actor : work.custodian,
+      local: previousEvent ? previousEvent.branch : work.branch,
+      ciclo_etiqueta: "Resultado final",
+      observacion: cancelled
+        ? "La custodia termino por cancelacion del trabajo."
+        : "El seguimiento de laboratorio quedo instalado, entregado y cerrado.",
+      resultado: cancelled ? "Trabajo cancelado" : "Instalado y entregado",
+      tratamiento_porcentaje: cancelled ? null : 100,
+      referencia_nodo_anterior: previousEvent ? previousEvent.title : "Ultimo nodo registrado",
+      terminal: true,
+      estado_terminal: cancelled ? "cancelado" : "instalado",
+      motivo_cierre: cancelled ? "cancelacion" : "instalacion",
+      pendiente: false
+    };
+  }
+
+  function pendingNodeHtml(work) {
+    var take = workActionByCode(work, "tomarHilo");
+    if (work.terminal) {
+      return '<li class="tlab-route-node tlab-thread-end ' + (work.cancelled ? 'is-cancelled' : 'is-finished') + '"><button type="button" data-tlab-node-trigger data-tlab-node-lane="cierre" data-tlab-node-kind="operativo" data-tlab-node-row-id="' + escapeAttr(work.id) + '" data-tlab-node-index="0" aria-haspopup="dialog" aria-expanded="false" aria-controls="tlabNodePopover" aria-label="Consultar ' + (work.cancelled ? 'el cierre por cancelacion' : 'el cierre del hilo') + '"><span class="tlab-thread-end__icon"><i class="fa-solid ' + (work.cancelled ? 'fa-ban' : 'fa-flag-checkered') + '" aria-hidden="true"></i></span><strong>' + (work.cancelled ? 'Trabajo cancelado' : 'Hilo cerrado') + '</strong><small>' + (work.cancelled ? 'Custodia finalizada' : 'Consultar resultado') + '</small></button></li>';
+    }
+    if (take) {
+      return '<li class="tlab-route-node tlab-thread-end is-action"><button type="button" data-tlab-take-node data-tlab-node-row-id="' + escapeAttr(work.id) + '" aria-haspopup="dialog" aria-expanded="false" aria-controls="tlabNodePopover" aria-label="Revisar y tomar el hilo"><span class="tlab-thread-end__icon"><i class="fa-solid fa-hand-holding" aria-hidden="true"></i><i class="fa-solid fa-minus tlab-thread-end__thread" aria-hidden="true"></i></span><strong>Tomar el hilo</strong><small>Revisar antes de recibir</small></button></li>';
+    }
+    return '<li class="tlab-route-node tlab-thread-end"><span class="tlab-thread-end__icon"><i class="fa-solid fa-hand-holding" aria-hidden="true"></i></span><strong>Próximo relevo</strong><small>Otro usuario puede tomarlo</small></li>';
+  }
+
+  function unifiedLaneHtml(work, rowIndex) {
+    var route = unifiedWorkRoute(work);
+    return '<section class="tlab-unified-lane" aria-label="Hilo único del trabajo"><header class="tlab-unified-lane__heading"><span><i class="fa-solid fa-diagram-project" aria-hidden="true"></i><strong>Hilo del trabajo</strong><small>Proceso, responsables y versiones</small></span></header><div class="tlab-route-scroll tlab-route-scroll--unified" tabindex="0" aria-label="Hilo del trabajo; desplazamiento horizontal"><ol class="tlab-route-list">'
+      + route.map(function (record, index) { return unifiedNodeHtml(record, index, route.length, work, rowIndex, true); }).join("")
+      + pendingNodeHtml(work) + '</ol></div></section>';
+  }
+
+  function identityPeopleHtml(doctor, mechanic) {
+    return '<span class="tlab-thread-identity__people">' + personHtml(doctor, "Odontólogo") + personHtml(mechanic, "Mecánico dental") + '</span>';
+  }
+
+  function listedRouteFor(kind, rowId, lane) {
+    var source = kind === "historico" ? state.historicals : state.works;
+    var found = source.filter(function (item) {
+      var normalized = kind === "historico" ? normalizeHistorical(item) : normalizeWork(item);
+      return toStringSafe(normalized.id) === toStringSafe(rowId);
+    })[0];
+    var normalized;
+    if (!found) { return []; }
+    if (kind === "historico") { return normalizeHistorical(found).route; }
+    normalized = normalizeWork(found);
+    if (lane === "unificado") { return unifiedWorkRoute(normalized); }
+    if (lane === "cierre") { return normalized.terminal ? [closureNode(normalized)] : []; }
+    return lane === "custodia" ? normalized.custodyChain : normalized.route;
+  }
+
+  function listedWorkRecord(rowId) {
+    return state.works.filter(function (item) {
+      return toStringSafe(normalizeWork(item).id) === toStringSafe(rowId);
+    })[0] || null;
+  }
+
+  function popoverFieldHtml(label, value) {
+    return '<div><dt>' + escapeHtml(label) + '</dt><dd>' + escapeHtml(value || "Sin registrar") + '</dd></div>';
+  }
+
+  function nodePopoverHtml(event) {
+    var evidence;
+    if (event.mediaId) {
+      evidence = '<button type="button" class="tlab-node-popover__evidence" data-tlab-media-id="' + escapeAttr(event.mediaId) + '" data-tlab-evidence-caption="' + escapeAttr(event.title) + '"><i class="fa-solid fa-image" aria-hidden="true"></i>Ver evidencia autorizada</button>';
+    } else if (event.image) {
+      evidence = '<button type="button" class="tlab-node-popover__evidence" data-tlab-evidence-url="' + escapeAttr(event.image) + '" data-tlab-evidence-caption="' + escapeAttr(event.title) + '"><i class="fa-solid fa-image" aria-hidden="true"></i>Ver evidencia disponible</button>';
+    } else if (event.photoException) {
+      evidence = '<span class="tlab-node-popover__no-evidence is-exception"><i class="fa-solid fa-camera-slash" aria-hidden="true"></i>' + escapeHtml(photoExceptionLabel(event)) + '</span>';
+    } else {
+      evidence = '<span class="tlab-node-popover__no-evidence"><i class="fa-solid fa-image" aria-hidden="true"></i>Sin evidencia asociada</span>';
+    }
+    return '<header class="tlab-node-popover__header"><div><small>' + escapeHtml(event.cycle) + '</small><h3>' + escapeHtml(event.title) + '</h3></div><button type="button" data-tlab-command="close-node-popover" aria-label="Cerrar detalle del evento"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>'
+      + '<div class="tlab-node-popover__actor">' + avatarHtml(event.actor) + '<span><strong>' + escapeHtml(event.actor.name) + '</strong><small>' + escapeHtml(event.actor.role || "Sin rol informado") + '</small></span></div>'
+      + '<dl class="tlab-node-popover__data">'
+      + popoverFieldHtml("Fecha y hora", formatDate(event.date, true))
+      + popoverFieldHtml("Duración", event.elapsed)
+      + popoverFieldHtml("Sucursal / local", event.branch)
+      + popoverFieldHtml("Ciclo", event.cycle)
+      + popoverFieldHtml("Custodio anterior", event.previous)
+      + popoverFieldHtml("Custodio nuevo", event.next)
+      + popoverFieldHtml("Remitente", event.sender)
+      + popoverFieldHtml("Destinatario", event.recipient)
+      + (event.condition ? popoverFieldHtml("Condición al recibir", event.condition) : '')
+      + (event.status ? popoverFieldHtml("Estado del período", event.status) : '')
+      + (event.performedBy ? popoverFieldHtml("Acción registrada por", event.performedBy.name + " · " + event.performedBy.role) : '')
+      + (event.historical ? popoverFieldHtml("Origen del dato", "Registro anterior conservado") : '')
+      + (event.endDate ? popoverFieldHtml("Fin de custodia", formatDate(event.endDate, true)) : '')
+      + (event.evidenceCount ? popoverFieldHtml("Evidencias", event.evidenceCount) : '')
+      + (event.noveltyCount ? popoverFieldHtml("Novedades", event.noveltyCount) : '')
+      + '</dl><div class="tlab-node-popover__note"><small>Observación</small><p>' + escapeHtml(event.note || "Sin observación registrada") + '</p></div>' + evidence;
+  }
+
+  function positionNodePopover(trigger, popover) {
+    var triggerRect = trigger.getBoundingClientRect();
+    var popoverRect;
+    var viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    var left;
+    var top;
+    popover.style.left = "8px";
+    popover.style.top = "8px";
+    popoverRect = popover.getBoundingClientRect();
+    left = Math.max(8, Math.min(triggerRect.left + (triggerRect.width / 2) - (popoverRect.width / 2), viewportWidth - popoverRect.width - 8));
+    if (popover.classList.contains("is-editor") && triggerRect.left > viewportWidth / 2) {
+      left = Math.max(8, Math.min(triggerRect.right - popoverRect.width, viewportWidth - popoverRect.width - 8));
+    }
+    top = triggerRect.bottom + 8;
+    if (top + popoverRect.height > viewportHeight - 8) { top = Math.max(8, triggerRect.top - popoverRect.height - 8); }
+    popover.style.left = Math.round(left) + "px";
+    popover.style.top = Math.round(top) + "px";
+  }
+
+  function rawUnifiedNode(routeItem, lane) {
+    return lane === "unificado" && routeItem && routeItem.raw ? routeItem.raw : routeItem;
+  }
+
+  function loadNodeEnvelope(rowId) {
+    var key = toStringSafe(rowId);
+    var cached = state.nodeDetailCache[key];
+    if (cached && typeof cached.then === "function") { return cached; }
+    if (cached) { return Promise.resolve(cached); }
+    state.nodeDetailCache[key] = request("obtenerTrabajo", { id_trabajo: rowId, cod_trabajo_laboratorio: rowId }).then(function (response) {
+      var envelope = response.data || {};
+      var work = envelope.trabajo || envelope.item || envelope;
+      if (!work.acciones_permitidas && envelope.acciones_permitidas) { work.acciones_permitidas = envelope.acciones_permitidas; }
+      ["recorrido_operativo", "cadena_custodia", "hilo_custodia", "custodia_actual", "novedades"].forEach(function (keyName) {
+        if ((work[keyName] === undefined || work[keyName] === null) && envelope[keyName] !== undefined) { work[keyName] = envelope[keyName]; }
+      });
+      if (!work.version && response.version) { work.version = response.version; }
+      mergeContext(envelope);
+      state.nodeDetailCache[key] = { envelope: envelope, work: work };
+      return state.nodeDetailCache[key];
+    }).then(null, function (error) {
+      delete state.nodeDetailCache[key];
+      throw error;
+    });
+    return state.nodeDetailCache[key];
+  }
+
+  function loadHistoricalNodeEnvelope(rowId) {
+    var key = "historico:" + toStringSafe(rowId);
+    var cached = state.nodeDetailCache[key];
+    if (cached && typeof cached.then === "function") { return cached; }
+    if (cached) { return Promise.resolve(cached); }
+    state.nodeDetailCache[key] = request("obtenerHistorico", {
+      id_historico: rowId,
+      cod_trabajo_mecanico_dental: rowId
+    }).then(function (response) {
+      var envelope = response.data || {};
+      var historical = envelope.historico || envelope.trabajo_historico || envelope.item || envelope;
+      if (!historical.version && response.version) { historical.version = response.version; }
+      mergeContext(envelope);
+      state.nodeDetailCache[key] = { envelope: envelope, historical: historical };
+      return state.nodeDetailCache[key];
+    }).then(null, function (error) {
+      delete state.nodeDetailCache[key];
+      throw error;
+    });
+    return state.nodeDetailCache[key];
+  }
+
+  function nodeSnapshot(raw, work, takeMode) {
+    var snapshot = raw && raw.datos_trabajo && typeof raw.datos_trabajo === "object" ? raw.datos_trabajo : null;
+    var normalized;
+    var chain;
+    var current;
+    if (!snapshot && work) {
+      normalized = normalizeWork(work);
+      chain = normalized.custodyChain;
+      current = chain.filter(function (node) { return boolValue(pick(node, ["actual", "es_actual", "custodia_actual"], false)); })[0]
+        || (chain.length ? chain[chain.length - 1] : null);
+      if ((takeMode || (raw && boolValue(pick(raw, ["actual", "es_actual", "custodia_actual"], false))))
+          && current && current.datos_trabajo && typeof current.datos_trabajo === "object") {
+        snapshot = current.datos_trabajo;
+      }
+    }
+    if (snapshot) { return Object.assign({}, snapshot); }
+    if (!work) { return null; }
+    normalized = normalizeWork(work);
+    return {
+      cod_tipo_trabajo: pick(work, ["cod_tipo_trabajo", "cod_tipo_trabajoFK"], ""),
+      tipo_trabajo: pick(work, ["tipo_trabajo"], normalized.product),
+      paciente: normalized.patient,
+      producto: normalized.product,
+      colorimetro: pick(work, ["colorimetro", "color"], ""),
+      cod_especialista: pick(work, ["cod_especialista", "cod_especialistaFK"], ""),
+      doctor: person(normalized.doctor).name,
+      cod_tecnico_usuario: pick(work, ["cod_tecnico_usuario", "cod_tecnico_usuarioFK"], ""),
+      mecanico_dental: person(normalized.mechanic).name,
+      fecha_retiro: pick(work, ["fecha_retiro"], ""),
+      fecha_entrega: pick(work, ["fecha_entrega"], ""),
+      costo_estimado: pick(work, ["costo_estimado"], ""),
+      estado: pick(work, ["estado_derivado", "estado"], normalized.situation),
+      cod_local: pick(work, ["cod_local", "cod_localFK"], ""),
+      local: normalized.branch,
+      observacion: pick(work, ["instrucciones", "observacion"], "")
+    };
+  }
+
+  function nodeMedia(record) {
+    var envelope = record && record.envelope ? record.envelope : {};
+    var raw = record && record.raw ? record.raw : {};
+    var ids = asArray(raw.eventos_version);
+    var baseId = eventId(raw);
+    var media = asArray(pick(envelope, ["media", "evidencias"], []));
+    if (!ids.length && baseId) { ids = [baseId]; }
+    ids = ids.map(toStringSafe);
+    return media.filter(function (item) {
+      return ids.indexOf(toStringSafe(pick(item, ["id_evento", "id_eventoFK"], ""))) >= 0;
+    });
+  }
+
+  function nodeMediaHtml(record, event) {
+    var media = nodeMedia(record);
+    if (media.length) {
+      return '<div class="tlab-node-media" aria-label="Archivos de esta versión">' + media.map(function (item) {
+        var mediaId = pick(item, ["id", "id_media"], "");
+        var thumb = pick(item, ["miniatura_url", "url_visualizacion"], "");
+        var documentFile = toStringSafe(pick(item, ["mime"], "")).toLowerCase() === "application/pdf";
+        return '<button type="button" data-tlab-media-id="' + escapeAttr(mediaId) + '" data-tlab-evidence-caption="' + escapeAttr(pick(item, ["descripcion", "nombre"], event.title)) + '" aria-label="Abrir archivo de esta versión">'
+          + (thumb ? '<img src="' + escapeAttr(thumb) + '" alt="" loading="lazy">' : '<i class="fa-solid ' + (documentFile ? 'fa-file-pdf' : 'fa-image') + '" aria-hidden="true"></i>') + '</button>';
+      }).join("") + '</div>';
+    }
+    if (event.mediaId) {
+      return '<button type="button" class="tlab-node-popover__evidence" data-tlab-media-id="' + escapeAttr(event.mediaId) + '" data-tlab-evidence-caption="' + escapeAttr(event.title) + '"><i class="fa-solid fa-image" aria-hidden="true"></i>Ver fotografía de este nodo</button>';
+    }
+    if (event.photoException) {
+      return '<span class="tlab-node-popover__no-evidence is-exception"><i class="fa-solid fa-camera-slash" aria-hidden="true"></i>' + escapeHtml(photoExceptionLabel(event)) + '</span>';
+    }
+    return '<span class="tlab-node-popover__no-evidence"><i class="fa-solid fa-image" aria-hidden="true"></i>Este nodo no incorporó fotografías ni documentos</span>';
+  }
+
+  function changedNodeField(changed, keys) {
+    return keys.some(function (key) { return changed.indexOf(key) >= 0; });
+  }
+
+  function nodeWorkFieldHtml(label, value, changed) {
+    return '<div class="tlab-node-work-field' + (changed ? ' is-modified' : '') + '"><small>' + escapeHtml(label) + (changed ? '<i class="fa-solid fa-pen" aria-hidden="true"></i><span class="sr-only"> Modificado en esta versión</span>' : '') + '</small><strong>' + escapeHtml(value === null || value === "" || typeof value === "undefined" ? "No asignado" : value) + '</strong></div>';
+  }
+
+  function nodeActionsHtml(work, raw) {
+    var actions;
+    if (!boolValue(pick(raw, ["actual", "es_actual", "custodia_actual"], false))) { return ""; }
+    actions = normalizeActions(work.acciones_permitidas || []);
+    actions = actions.filter(function (action) { return action.code !== "tomarHilo" && actionAllowedInCurrentContext(action); });
+    if (!actions.length) { return ""; }
+    return '<div class="tlab-node-popover__actions" aria-label="Acciones del nodo actual">' + actions.map(function (action) {
+      return '<button type="button" data-tlab-popover-action="' + escapeAttr(action.code) + '"><i class="fa-solid ' + escapeAttr(action.icon || "fa-arrow-right") + '" aria-hidden="true"></i>' + escapeHtml(action.label) + '</button>';
+    }).join("") + '</div>';
+  }
+
+  function nodeVersionPopoverHtml(record) {
+    var event = record.event;
+    var raw = record.raw || {};
+    var work = record.work || {};
+    var snapshot = nodeSnapshot(raw, work, false);
+    var changed = asArray(raw.campos_modificados);
+    var currentUser = numberValue(pick(state.context, ["cod_usuario"], 0), 0);
+    var responsibleRaw = raw.responsable || raw.custodio_nuevo || {};
+    var responsibleId = numberValue(pick(responsibleRaw, ["cod_usuario", "id"], pick(raw, ["cod_custodio_nuevoFK"], 0)), 0);
+    var canEdit = !!snapshot && boolValue(pick(raw, ["actual", "es_actual", "custodia_actual"], false))
+      && !event.terminal && currentUser > 0 && responsibleId === currentUser;
+    var versionLabel = event.versionNumber ? "Versión " + event.versionNumber : event.cycle;
+    var status = snapshot ? humanizeHistoricalValue(snapshot.estado || event.status, "PENDIENTE") : event.status;
+    var fields = "";
+    if (snapshot) {
+      fields = '<div class="tlab-node-work-grid">'
+        + nodeWorkFieldHtml("Tipo de trabajo", snapshot.tipo_trabajo || "No asignado", changedNodeField(changed, ["cod_tipo_trabajo"]))
+        + nodeWorkFieldHtml("Colorimetría", snapshot.colorimetro || "No asignado", changedNodeField(changed, ["colorimetro"]))
+        + nodeWorkFieldHtml("Paciente", snapshot.paciente || normalizeWork(work).patient, false)
+        + nodeWorkFieldHtml("Producto de la venta", snapshot.producto || normalizeWork(work).product, false)
+        + nodeWorkFieldHtml("Doctor", snapshot.doctor || "No asignado", changedNodeField(changed, ["cod_especialista"]))
+        + nodeWorkFieldHtml("Mecánico dental", snapshot.mecanico_dental || "No asignado", changedNodeField(changed, ["cod_mecanico_dental", "cod_tecnico_usuario"]))
+        + nodeWorkFieldHtml("Retiro", snapshot.fecha_retiro ? formatDate(snapshot.fecha_retiro, false) : "Sin fecha definida", changedNodeField(changed, ["fecha_retiro"]))
+        + nodeWorkFieldHtml("Entrega", snapshot.fecha_entrega ? formatDate(snapshot.fecha_entrega, false) : "Sin fecha definida", changedNodeField(changed, ["fecha_entrega"]))
+        + nodeWorkFieldHtml("Costo", snapshot.costo_estimado === null || snapshot.costo_estimado === "" ? "Sin registrar" : snapshot.costo_estimado, changedNodeField(changed, ["costo_estimado"]))
+        + nodeWorkFieldHtml("Local", snapshot.local || "No asignado", changedNodeField(changed, ["cod_local"])) + '</div>'
+        + '<div class="tlab-node-popover__note' + (changedNodeField(changed, ["observacion"]) ? ' is-modified' : '') + '"><small>Observación' + (changedNodeField(changed, ["observacion"]) ? ' <i class="fa-solid fa-pen" aria-hidden="true"></i>' : '') + '</small><p>' + escapeHtml(snapshot.observacion || "Sin observación registrada") + '</p></div>';
+    } else {
+      fields = '<dl class="tlab-node-popover__data">' + popoverFieldHtml("Fecha y hora", formatDate(event.date, true))
+        + popoverFieldHtml("Duración", event.elapsed) + popoverFieldHtml("Sucursal / local", event.branch)
+        + popoverFieldHtml("Custodio anterior", event.previous) + popoverFieldHtml("Custodio nuevo", event.next) + '</dl>'
+        + '<div class="tlab-node-popover__note"><small>Observación</small><p>' + escapeHtml(event.note || "Sin observación registrada") + '</p></div>';
+    }
+    return '<header class="tlab-node-popover__header"><div><small>' + escapeHtml(versionLabel) + '</small><h3>' + escapeHtml(event.title) + '</h3></div><span class="tlab-node-status">' + escapeHtml(status || "Registrado") + '</span><button type="button" data-tlab-command="close-node-popover" aria-label="Cerrar detalle del nodo"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>'
+      + '<div class="tlab-node-popover__actor">' + avatarHtml(event.actor) + '<span><strong>' + escapeHtml(event.actor.name) + '</strong><small>' + escapeHtml((event.current ? "Responsable actual · " : "Responsable del nodo · ") + (event.actor.role || "Usuario Telar")) + '</small></span></div>'
+      + nodeMediaHtml(record, event) + fields
+      + (event.condition ? '<p class="tlab-node-condition"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>Recibido ' + escapeHtml(humanizeHistoricalValue(event.condition)) + '</p>' : '')
+      + (canEdit ? '<div class="tlab-node-popover__edit"><button type="button" data-tlab-node-edit><i class="fa-solid fa-pen" aria-hidden="true"></i>Editar versión activa</button><small>La edición queda auditada en este mismo nodo.</small></div>' : '')
+      + nodeActionsHtml(work, raw);
+  }
+
+  function historicalVersionPopoverHtml(record) {
+    var event = record.event;
+    var historical = record.historical || {};
+    var normalized = normalizeHistorical(historical);
+    var originalNode = toStringSafe(pick(record.raw || {}, ["tipo_evento"], "")) === "registro_original";
+    var author = {
+      name: historical.autor_original || normalized.author || event.actor.name,
+      role: historical.autor_original_rol || event.actor.role || "Usuario del registro original",
+      avatar: historical.autor_original_avatar || event.actor.avatar || ""
+    };
+    var declaredState = originalNode
+      ? humanizeHistoricalValue(historical.estado_original || pick(record.raw || {}, ["estado_original", "estado"], ""), "Situación original sin definir")
+      : (historical.estado_declarado
+        ? historical.estado_declarado_nombre || humanizeHistoricalValue(historical.estado_declarado)
+        : "Situación por actualizar");
+    var mechanic = originalNode
+      ? historical.mecanico_snapshot || normalized.mechanic.name
+      : historical.mecanico_declarado || historical.mecanico_snapshot || normalized.mechanic.name;
+    var withdrawalDate = originalNode
+      ? historical.fecha_retiro_original
+      : historical.fecha_retiro_declarada || historical.fecha_retiro_original;
+    var deliveryDate = originalNode
+      ? historical.fecha_entrega_original
+      : historical.fecha_entrega_declarada || historical.fecha_entrega_original;
+    var branch = originalNode
+      ? historical.local_snapshot || normalized.branch
+      : historical.local_declarado || historical.local_snapshot || normalized.branch;
+    var evidence = event.mediaId
+      ? '<button type="button" class="tlab-node-popover__evidence" data-tlab-media-id="' + escapeAttr(event.mediaId) + '" data-tlab-evidence-caption="Registro histórico"><i class="fa-solid fa-image" aria-hidden="true"></i>Ver fotografía del registro</button>'
+      : (event.image
+        ? '<button type="button" class="tlab-node-popover__evidence" data-tlab-evidence-url="' + escapeAttr(event.image) + '" data-tlab-evidence-caption="Registro histórico"><i class="fa-solid fa-image" aria-hidden="true"></i>Ver fotografía del registro</button>'
+        : '<span class="tlab-node-popover__no-evidence"><i class="fa-solid fa-image" aria-hidden="true"></i>El registro importado no contiene fotografías</span>');
+    return '<header class="tlab-node-popover__header"><div><small>Versión histórica original</small><h3>' + escapeHtml(event.title || "Registro original") + '</h3></div><span class="tlab-node-status">' + escapeHtml(declaredState) + '</span><button type="button" data-tlab-command="close-node-popover" aria-label="Cerrar detalle"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>'
+      + '<div class="tlab-node-popover__actor">' + avatarHtml(author) + '<span><strong>' + escapeHtml(author.name) + '</strong><small>' + escapeHtml(author.role) + '</small></span></div>'
+      + evidence
+      + '<div class="tlab-node-work-grid">'
+      + nodeWorkFieldHtml("Tipo de trabajo", historical.tipo_trabajo || normalized.product, false)
+      + nodeWorkFieldHtml("Colorimetría", historical.colorimetro_original || "No asignado", false)
+      + nodeWorkFieldHtml("Paciente", normalized.patient, false)
+      + nodeWorkFieldHtml("Producto de la venta", historical.producto || normalized.product, false)
+      + nodeWorkFieldHtml("Doctor", historical.doctor || normalized.doctor.name, false)
+      + nodeWorkFieldHtml("Mecánico dental", mechanic, false)
+      + nodeWorkFieldHtml("Retiro", withdrawalDate ? formatDate(withdrawalDate, false) : "Sin fecha definida", false)
+      + nodeWorkFieldHtml("Entrega", deliveryDate ? formatDate(deliveryDate, false) : "Sin fecha definida", false)
+      + nodeWorkFieldHtml("Costo", historical.costo_original === null || historical.costo_original === "" ? "Sin registrar" : historical.costo_original, false)
+      + nodeWorkFieldHtml("Local", branch, false)
+      + '</div><div class="tlab-node-popover__note"><small>Observación</small><p>'
+      + escapeHtml(historical.observacion_original || event.note || "Sin observación registrada")
+      + '</p></div><p class="tlab-node-history-note"><i class="fa-solid fa-box-archive" aria-hidden="true"></i>Esta versión se conserva como respaldo y no se sobrescribe al resolver el trabajo.</p>';
+  }
+
+  function closurePopoverHtml(record) {
+    var work = normalizeWork(record.work || {});
+    var closure = closureNode(work);
+    var event = routeEvent(closure);
+    var status = work.cancelled ? "CANCELADO" : "FINALIZADO";
+    return '<header class="tlab-node-popover__header"><div><small>Resultado final del hilo</small><h3>'
+      + escapeHtml(closure.titulo) + '</h3></div><span class="tlab-node-status">'
+      + escapeHtml(status) + '</span><button type="button" data-tlab-command="close-node-popover" aria-label="Cerrar detalle del cierre"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>'
+      + '<div class="tlab-node-popover__actor">' + avatarHtml(event.actor) + '<span><strong>'
+      + escapeHtml(event.actor.name) + '</strong><small>Responsable final del seguimiento</small></span></div>'
+      + '<dl class="tlab-node-popover__data">'
+      + popoverFieldHtml("Fecha y hora del cierre", formatDate(event.date, true))
+      + popoverFieldHtml("Resultado", closure.resultado)
+      + popoverFieldHtml("Estado del hilo", "Cerrado")
+      + (!work.cancelled ? popoverFieldHtml("Tratamiento", "100 % finalizado") : "")
+      + popoverFieldHtml("Nodo anterior", closure.referencia_nodo_anterior)
+      + popoverFieldHtml("Sucursal / local", event.branch)
+      + '</dl><p class="tlab-node-history-note"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>'
+      + 'Este nodo resume el cierre registrado en el nodo anterior. Es de solo lectura y no reemplaza ninguna versión del recorrido.</p>';
+  }
+
+  function catalogValue(item, keys) {
+    return typeof item === "object" ? pick(item, keys, "") : item;
+  }
+
+  function catalogLabel(item) {
+    return typeof item === "object"
+      ? pick(item, ["nombre", "producto", "nombre_producto", "descripcion", "etiqueta", "label", "texto"],
+        catalogValue(item, ["id", "codigo", "cod", "valor", "value"]))
+      : item;
+  }
+
+  function inferCatalogValue(items, value, label, keys) {
+    if (toStringSafe(value)) { return value; }
+    var target = toStringSafe(label).trim().toLowerCase();
+    var found = asArray(items).filter(function (item) { return toStringSafe(catalogLabel(item)).trim().toLowerCase() === target; })[0];
+    return found ? catalogValue(found, keys) : "";
+  }
+
+  function includeCurrentCatalogOption(items, value, keys, label) {
+    var source = asArray(items).slice();
+    var exists = source.some(function (item) {
+      return toStringSafe(catalogValue(item, keys)) === toStringSafe(value);
+    });
+    var fallback;
+    if (!toStringSafe(value) || exists) { return source; }
+    fallback = { nombre: "Actual · " + humanizeHistoricalValue(label, value) };
+    fallback[keys[0]] = value;
+    source.unshift(fallback);
+    return source;
+  }
+
+  function nodeSelectHtml(label, name, items, selected, keys, required) {
+    var options = '<option value="">' + (required ? 'Seleccionar' : 'No asignado') + '</option>';
+    asArray(items).forEach(function (item) {
+      var value = catalogValue(item, keys);
+      options += '<option value="' + escapeAttr(value) + '"' + (toStringSafe(value) === toStringSafe(selected) ? ' selected' : '') + '>' + escapeHtml(catalogLabel(item)) + '</option>';
+    });
+    return '<label class="tlab-node-form__field"><span>' + escapeHtml(label) + (required ? ' *' : '') + '</span><select name="' + escapeAttr(name) + '"' + (required ? ' required' : '') + '>' + options + '</select></label>';
+  }
+
+  function dateInputValue(value) {
+    var match = toStringSafe(value).match(/^\d{4}-\d{2}-\d{2}/);
+    return match ? match[0] : "";
+  }
+
+  function nodeFilePreviewHtml(file, index) {
+    var url = file._tlabNodeUrl;
+    if (!url) {
+      url = URL.createObjectURL(file);
+      file._tlabNodeUrl = url;
+      state.nodeObjectUrls.push(url);
+    }
+    return '<figure class="tlab-node-file-preview"><img src="' + escapeAttr(url) + '" alt="Nueva fotografía ' + (index + 1) + '"><button type="button" data-tlab-node-preview-remove="' + index + '" aria-label="Quitar fotografía"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></figure>';
+  }
+
+  function nodeEditorHtml() {
+    var editor = state.nodeEditor;
+    var record = state.nodePopoverRecord;
+    var work = record.work || {};
+    var snapshot = editor.values;
+    var types = catalogItems(["tipos_trabajo"]);
+    var doctors = catalogItems(["doctores", "especialistas"]);
+    var mechanics = catalogItems(["mecanicos", "tecnicos", "tecnicos_disponibles"]);
+    var branches = catalogItems(["locales", "sucursales"]);
+    var typeId = inferCatalogValue(types, snapshot.cod_tipo_trabajo, snapshot.tipo_trabajo, ["id", "codigo", "cod"]);
+    var doctorId = inferCatalogValue(doctors, snapshot.cod_especialista, snapshot.doctor, ["cod_usuario", "id", "codigo", "cod"]);
+    var mechanicId = inferCatalogValue(mechanics, snapshot.cod_tecnico_usuario, snapshot.mecanico_dental, ["cod_tecnico_usuario", "cod_usuario", "id", "codigo", "cod"]);
+    var branchId = inferCatalogValue(branches, snapshot.cod_local, snapshot.local, ["cod_local", "id", "codigo", "cod"]);
+    var taking = editor.mode === "take";
+    var existingMedia = record.raw && eventId(record.raw)
+      ? '<section class="tlab-node-existing-media"><small>Archivos de la versión que estás revisando</small>' + nodeMediaHtml(record, custodyEvent(record.raw)) + '</section>' : '';
+    var newMedia = '<section class="tlab-node-new-media"><div><strong>' + (taking ? 'Nueva fotografía *' : 'Nueva fotografía') + '</strong><small>Se mostrará únicamente en ' + (taking ? 'el nuevo nodo' : 'esta versión activa') + '; las anteriores permanecen en su nodo.</small></div><label><i class="fa-solid fa-camera" aria-hidden="true"></i>Seleccionar<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-tlab-node-file-input></label><div class="tlab-node-file-list">' + state.nodeFiles.map(nodeFilePreviewHtml).join("") + '</div></section>';
+    return '<header class="tlab-node-popover__header"><div><small>' + (taking ? 'Trabajo a recibir' : 'Versión activa') + '</small><h3>' + (taking ? 'Revisar y tomar el hilo' : 'Editar datos del nodo') + '</h3></div><span class="tlab-node-status">' + escapeHtml(humanizeHistoricalValue(snapshot.estado, "PENDIENTE")) + '</span><button type="button" data-tlab-command="close-node-popover" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>'
+      + '<form id="tlabNodeVersionForm" class="tlab-node-form" novalidate><div class="tlab-node-readonly"><span><small>Paciente</small><strong>' + escapeHtml(snapshot.paciente || normalizeWork(work).patient) + '</strong></span><span><small>Producto vinculado a la venta</small><strong>' + escapeHtml(snapshot.producto || normalizeWork(work).product) + '</strong></span><span><small>Estado del proceso</small><strong>' + escapeHtml(humanizeHistoricalValue(snapshot.estado, "PENDIENTE")) + '</strong></span></div>'
+      + existingMedia + newMedia
+      + '<div class="tlab-node-form__grid">'
+      + nodeSelectHtml("Tipo de trabajo", "cod_tipo_trabajo", types, typeId, ["id", "codigo", "cod"], true)
+      + '<label class="tlab-node-form__field"><span>Colorimetría</span><input name="colorimetro" type="text" maxlength="30" value="' + escapeAttr(snapshot.colorimetro || "") + '" placeholder="Ej.: B2"></label>'
+      + nodeSelectHtml("Doctor", "cod_especialista", doctors, doctorId, ["cod_usuario", "id", "codigo", "cod"], false)
+      + nodeSelectHtml("Mecánico dental", "cod_tecnico_usuario", mechanics, mechanicId, ["cod_tecnico_usuario", "cod_usuario", "id", "codigo", "cod"], false)
+      + '<label class="tlab-node-form__field"><span>Fecha de retiro</span><input name="fecha_retiro" type="date" value="' + escapeAttr(dateInputValue(snapshot.fecha_retiro)) + '"></label>'
+      + '<label class="tlab-node-form__field"><span>Fecha de entrega</span><input name="fecha_entrega" type="date" value="' + escapeAttr(dateInputValue(snapshot.fecha_entrega)) + '"></label>'
+      + '<label class="tlab-node-form__field"><span>Costo</span><input name="costo_estimado" type="number" min="0" step="1" value="' + escapeAttr(snapshot.costo_estimado === null ? "" : snapshot.costo_estimado) + '"></label>'
+      + nodeSelectHtml("Local", "cod_local", branches, branchId, ["cod_local", "id", "codigo", "cod"], true) + '</div>'
+      + '<label class="tlab-node-form__field tlab-node-form__field--wide"><span>Observación del trabajo</span><textarea name="datos_observacion" maxlength="1000" rows="3">' + escapeHtml(snapshot.observacion || "") + '</textarea></label>'
+      + (taking ? '<fieldset class="tlab-node-condition-field"><legend>¿Cómo recibís el trabajo? *</legend><label><input type="radio" name="condicion_recepcion" value="conforme" checked><span><i class="fa-solid fa-circle-check" aria-hidden="true"></i>Conforme</span></label><label><input type="radio" name="condicion_recepcion" value="con_observaciones"><span><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>Con observaciones</span></label></fieldset><label class="tlab-node-form__field tlab-node-form__field--wide"><span>Observación de recepción</span><textarea name="observacion_recepcion" maxlength="1000" rows="2" placeholder="Obligatoria si recibís con observaciones"></textarea></label>' : '')
+      + '<div class="tlab-form-error" id="tlabNodeFormError"' + (editor.error ? '' : ' hidden') + '>' + escapeHtml(editor.error || "") + '</div>'
+      + '<footer class="tlab-node-form__footer"><button type="button" class="tlab-button tlab-button--secondary" data-tlab-node-edit-cancel ' + (editor.saving ? 'disabled' : '') + '>Cancelar</button><button type="submit" class="tlab-button tlab-button--primary" ' + (editor.saving ? 'disabled' : '') + '><i class="fa-solid ' + (editor.saving ? 'fa-hourglass-half' : (taking ? 'fa-hand-holding' : 'fa-floppy-disk')) + '" aria-hidden="true"></i>' + (editor.saving ? 'Guardando...' : (taking ? 'Confirmar recepción' : 'Guardar cambios')) + '</button></footer></form>';
+  }
+
+  function renderNodeEditor() {
+    var popover = state.root && state.root.querySelector("#tlabNodePopover");
+    if (!popover || !state.nodeEditor || !state.nodePopoverRecord) { return; }
+    popover.classList.add("is-editor");
+    popover.innerHTML = nodeEditorHtml();
+    positionNodePopover(state.nodePopover, popover);
+  }
+
+  function beginCurrentNodeEdit() {
+    var record = state.nodePopoverRecord;
+    var snapshot;
+    if (!record || !record.work || !record.raw) { return; }
+    snapshot = nodeSnapshot(record.raw, record.work, false);
+    if (!snapshot) { notify("Este nodo histórico no tiene una versión completa editable.", "info"); return; }
+    state.nodeEditor = { mode: "edit", values: snapshot, idempotencyKey: makeIdempotencyKey(), saving: false, error: "" };
+    revokeNodeObjectUrls();
+    state.nodeFiles = [];
+    renderNodeEditor();
+  }
+
+  function cancelNodeEdit() {
+    var mode = state.nodeEditor ? state.nodeEditor.mode : "";
+    if (state.nodeEditor && state.nodeEditor.saving) { return; }
+    state.nodeEditor = null;
+    revokeNodeObjectUrls();
+    state.nodeFiles = [];
+    if (mode === "take") { closeNodePopover(true); return; }
+    if (state.nodePopoverRecord) {
+      var popover = state.root.querySelector("#tlabNodePopover");
+      popover.classList.remove("is-editor");
+      popover.innerHTML = nodeVersionPopoverHtml(state.nodePopoverRecord);
+      positionNodePopover(state.nodePopover, popover);
+    }
+  }
+
+  function addNodeFiles(fileList) {
+    var error = "";
+    Array.prototype.slice.call(fileList || []).forEach(function (file) {
+      if (state.nodeFiles.length >= MAX_FILES) { error = "Podés adjuntar hasta " + MAX_FILES + " fotografías."; return; }
+      if (!IMAGE_TYPES[file.type]) { error = "Sólo se admiten imágenes JPG, PNG o WEBP."; return; }
+      if (file.size > MAX_FILE_SIZE) { error = "Cada imagen debe pesar como máximo " + formatFileLimit(MAX_FILE_SIZE) + "."; return; }
+      state.nodeFiles.push(file);
+    });
+    if (state.nodeEditor) { state.nodeEditor.error = error; }
+    if (state.historicalResolver) { state.historicalResolver.error = error; }
+    if (state.historicalResolver) { renderHistoricalResolver(); }
+    else { renderNodeEditor(); }
+  }
+
+  function removeNodeFile(index) {
+    var file;
+    if (index < 0 || index >= state.nodeFiles.length) { return; }
+    file = state.nodeFiles[index];
+    if (file._tlabNodeUrl) {
+      try { URL.revokeObjectURL(file._tlabNodeUrl); } catch (ignore) {}
+      state.nodeObjectUrls = state.nodeObjectUrls.filter(function (url) { return url !== file._tlabNodeUrl; });
+    }
+    state.nodeFiles.splice(index, 1);
+    if (state.historicalResolver) { renderHistoricalResolver(); }
+    else { renderNodeEditor(); }
+  }
+
+  function revokeNodeObjectUrls() {
+    state.nodeObjectUrls.forEach(function (url) { try { URL.revokeObjectURL(url); } catch (ignore) {} });
+    state.nodeObjectUrls = [];
+  }
+
+  function nodeFormValues() {
+    var form = state.root.querySelector("#tlabNodeVersionForm");
+    var values = {};
+    forEachFormValue(form, function (value, key) { values[key] = value; });
+    return values;
+  }
+
+  function showNodeEditorError(message) {
+    if (!state.nodeEditor) { return; }
+    state.nodeEditor.error = message;
+    renderNodeEditor();
+    var error = state.root.querySelector("#tlabNodeFormError");
+    if (error) { error.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+  }
+
+  function submitNodeVersion() {
+    var editor = state.nodeEditor;
+    var record = state.nodePopoverRecord;
+    var values;
+    var payload;
+    var endpoint;
+    if (!editor || !record || editor.saving) { return; }
+    values = nodeFormValues();
+    if (!values.cod_tipo_trabajo || !values.cod_local) { showNodeEditorError("Seleccioná el tipo de trabajo y el local."); return; }
+    if (editor.mode === "take" && values.condicion_recepcion !== "conforme" && values.condicion_recepcion !== "con_observaciones") { showNodeEditorError("Indicá cómo recibís el trabajo."); return; }
+    if (editor.mode === "take" && values.condicion_recepcion === "con_observaciones" && toStringSafe(values.observacion_recepcion).trim().length < 5) { showNodeEditorError("Describí la observación de recepción con al menos cinco caracteres."); return; }
+    if (editor.mode === "take" && !state.nodeFiles.length) { showNodeEditorError("Agregá al menos una fotografía nueva para recibir el trabajo."); return; }
+    payload = {
+      id_trabajo: pick(record.work, ["id_trabajo", "cod_trabajo_laboratorio", "id"], record.rowId),
+      cod_trabajo_laboratorio: pick(record.work, ["cod_trabajo_laboratorio", "id_trabajo", "id"], record.rowId),
+      version_esperada: pick(record.work, ["version", "version_registro"], ""),
+      clave_idempotencia: editor.idempotencyKey,
+      datos_trabajo: {
+        cod_tipo_trabajo: values.cod_tipo_trabajo,
+        colorimetro: values.colorimetro || "",
+        cod_especialista: values.cod_especialista || "",
+        cod_tecnico_usuario: values.cod_tecnico_usuario || "",
+        fecha_retiro: values.fecha_retiro || "",
+        fecha_entrega: values.fecha_entrega || "",
+        costo_estimado: values.costo_estimado || "",
+        cod_local: values.cod_local,
+        observacion: values.datos_observacion || ""
+      }
+    };
+    if (editor.mode === "take") {
+      payload.condicion_recepcion = values.condicion_recepcion;
+      payload.observacion = values.condicion_recepcion === "con_observaciones" ? (values.observacion_recepcion || "") : "";
+      payload.sin_foto = "0";
+      endpoint = "tomarHilo";
+    } else {
+      payload.observacion = "";
+      endpoint = "actualizarDatosTrabajo";
+    }
+    editor.saving = true;
+    editor.error = "";
+    renderNodeEditor();
+    request(endpoint, payload, state.nodeFiles).then(function (response) {
+      var message = response.message || (editor.mode === "take" ? "Ahora sos responsable del trabajo." : "La versión activa quedó actualizada.");
+      delete state.nodeDetailCache[toStringSafe(record.rowId)];
+      closeNodePopover(false, true);
+      notify(message, "success");
+      loadSummary().then(null, function () {});
+      loadWorks(false);
+    }).then(null, function (error) {
+      if (!state.nodeEditor) { return; }
+      state.nodeEditor.saving = false;
+      showNodeEditorError(error.message + (error.code && /VERSION|CUSTODIA/i.test(error.code) ? " Actualizá la vista y revisá el nodo vigente." : ""));
+    });
+  }
+
+  function openNodeRelatedAction(code) {
+    var record = state.nodePopoverRecord;
+    var work = record && record.work ? record.work : null;
+    var action = work ? normalizeActions(work.acciones_permitidas || []).filter(function (item) { return item.code === code; })[0] : null;
+    if (!work || !action) { notify("La acción ya no está disponible. Actualizá el trabajo.", "error"); return; }
+    closeNodePopover(false, true);
+    openAction(code, action, work);
+  }
+
+  function openTakeNodePopover(trigger) {
+    var rowId = trigger.getAttribute("data-tlab-node-row-id");
+    var popover = state.root.querySelector("#tlabNodePopover");
+    if (state.nodeEditor && state.nodeEditor.saving) {
+      notify("La versión se está guardando. Esperá la confirmación del servidor.", "info");
+      return;
+    }
+    closeNodePopover(false, true);
+    state.nodePopover = trigger;
+    state.nodePopoverPinned = true;
+    trigger.setAttribute("aria-expanded", "true");
+    popover.classList.add("is-editor");
+    popover.innerHTML = loaderHtml("Recuperando la versión vigente...", "compact");
+    popover.hidden = false;
+    positionNodePopover(trigger, popover);
+    loadNodeEnvelope(rowId).then(function (loaded) {
+      var action = normalizeActions(loaded.work.acciones_permitidas || loaded.envelope.acciones_permitidas || []).filter(function (item) { return item.code === "tomarHilo"; })[0];
+      var chain = normalizeWork(loaded.work).custodyChain;
+      var currentNode = chain.filter(function (node) { return boolValue(pick(node, ["actual", "es_actual", "custodia_actual"], false)); })[0]
+        || (chain.length ? chain[chain.length - 1] : {});
+      var snapshot;
+      if (state.nodePopover !== trigger) { return; }
+      if (!action) { throw new Error("Otra persona ya tomó el hilo o la acción dejó de estar disponible."); }
+      snapshot = nodeSnapshot(null, loaded.work, true);
+      state.nodePopoverRecord = { rowId: rowId, raw: currentNode, event: custodyEvent(currentNode), envelope: loaded.envelope, work: loaded.work, take: true };
+      state.nodeEditor = { mode: "take", values: snapshot, idempotencyKey: makeIdempotencyKey(), saving: false, error: "" };
+      revokeNodeObjectUrls();
+      state.nodeFiles = [];
+      renderNodeEditor();
+      focusFirst(popover);
+    }).then(null, function (error) {
+      if (state.nodePopover !== trigger) { return; }
+      popover.classList.remove("is-editor");
+      popover.innerHTML = '<div class="tlab-node-load-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><strong>No se pudo abrir el nodo</strong><span>' + escapeHtml(error.message) + '</span><button type="button" data-tlab-command="close-node-popover">Cerrar</button></div>';
+      positionNodePopover(trigger, popover);
+    });
+  }
+
+  function openNodePopover(trigger, pinned) {
+    var kind;
+    var rowId;
+    var lane;
+    var index;
+    var route;
+    var routeRecord;
+    var raw;
+    var event;
+    var popover;
+    var historicalOrigin;
+    var historicalId;
+    if (!trigger || !state.root) { return; }
+    if (state.nodePopover === trigger && state.nodePopoverPinned && !pinned) { return; }
+    kind = trigger.getAttribute("data-tlab-node-kind");
+    rowId = trigger.getAttribute("data-tlab-node-row-id");
+    lane = trigger.getAttribute("data-tlab-node-lane") || "operativo";
+    index = numberValue(trigger.getAttribute("data-tlab-node-index"), -1);
+    route = listedRouteFor(kind, rowId, lane);
+    routeRecord = index >= 0 ? route[index] : null;
+    raw = routeRecord;
+    if (!raw) { return; }
+    raw = rawUnifiedNode(raw, lane);
+    historicalOrigin = kind === "historico"
+      || (lane === "unificado" && routeRecord && routeRecord.lane === "historico")
+      || toStringSafe(pick(raw, ["origen"], "")) === "historico";
+    historicalId = historicalOrigin
+      ? pick(raw, ["id_historico"], kind === "historico" ? rowId : "")
+      : "";
+    event = lane === "custodia" || (lane === "unificado" && routeRecord && routeRecord.lane === "custodia")
+      ? custodyEvent(raw) : routeEvent(raw);
+    popover = state.root.querySelector("#tlabNodePopover");
+    clearPopoverCloseTimer();
+    Array.prototype.forEach.call(state.root.querySelectorAll("[data-tlab-node-trigger]"), function (button) { button.setAttribute("aria-expanded", button === trigger ? "true" : "false"); });
+    popover.classList.remove("is-editor");
+    popover.innerHTML = loaderHtml("Recuperando el detalle del nodo...", "compact");
+    popover.hidden = false;
+    state.nodePopover = trigger;
+    state.nodePopoverPinned = !!pinned;
+    state.nodePopoverRecord = {
+      kind: kind,
+      rowId: rowId,
+      lane: lane,
+      index: index,
+      raw: raw,
+      event: event,
+      envelope: null,
+      work: null,
+      historicalId: historicalId
+    };
+    positionNodePopover(trigger, popover);
+    if (historicalOrigin) {
+      loadHistoricalNodeEnvelope(historicalId || rowId).then(function (loaded) {
+        if (state.nodePopover !== trigger || !state.nodePopoverRecord) { return; }
+        state.nodePopoverRecord.envelope = loaded.envelope;
+        state.nodePopoverRecord.historical = loaded.historical;
+        popover.innerHTML = historicalVersionPopoverHtml(state.nodePopoverRecord);
+        positionNodePopover(trigger, popover);
+      }).then(null, function (error) {
+        if (state.nodePopover !== trigger) { return; }
+        popover.innerHTML = '<div class="tlab-node-load-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><strong>No se pudo consultar el nodo</strong><span>' + escapeHtml(error.message) + '</span><button type="button" data-tlab-command="close-node-popover">Cerrar</button></div>';
+        positionNodePopover(trigger, popover);
+      });
+    } else if (lane === "cierre") {
+      loadNodeEnvelope(rowId).then(function (loaded) {
+        var closed;
+        if (state.nodePopover !== trigger || !state.nodePopoverRecord) { return; }
+        closed = closureNode(normalizeWork(loaded.work));
+        state.nodePopoverRecord.envelope = loaded.envelope;
+        state.nodePopoverRecord.work = loaded.work;
+        state.nodePopoverRecord.raw = closed;
+        state.nodePopoverRecord.event = routeEvent(closed);
+        popover.innerHTML = closurePopoverHtml(state.nodePopoverRecord);
+        positionNodePopover(trigger, popover);
+      }).then(null, function (error) {
+        if (state.nodePopover !== trigger) { return; }
+        popover.innerHTML = '<div class="tlab-node-load-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><strong>No se pudo consultar el cierre</strong><span>' + escapeHtml(error.message) + '</span><button type="button" data-tlab-command="close-node-popover">Cerrar</button></div>';
+        positionNodePopover(trigger, popover);
+      });
+    } else {
+      loadNodeEnvelope(rowId).then(function (loaded) {
+        if (state.nodePopover !== trigger || !state.nodePopoverRecord) { return; }
+        state.nodePopoverRecord.envelope = loaded.envelope;
+        state.nodePopoverRecord.work = loaded.work;
+        popover.innerHTML = nodeVersionPopoverHtml(state.nodePopoverRecord);
+        positionNodePopover(trigger, popover);
+      }).then(null, function (error) {
+        if (state.nodePopover !== trigger) { return; }
+        popover.innerHTML = '<div class="tlab-node-load-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><strong>No se pudo consultar el nodo</strong><span>' + escapeHtml(error.message) + '</span><button type="button" data-tlab-command="close-node-popover">Cerrar</button></div>';
+        positionNodePopover(trigger, popover);
+      });
+    }
+  }
+
+  function toggleNodePopover(trigger, focusPopover) {
+    var popover;
+    if ((state.nodeEditor && state.nodeEditor.saving)
+        || (state.historicalResolver && state.historicalResolver.saving)) {
+      notify("La versión se está guardando. Esperá la confirmación del servidor.", "info");
+      return;
+    }
+    if (state.nodePopover === trigger && state.nodePopoverPinned) {
+      closeNodePopover(true);
+      return;
+    }
+    openNodePopover(trigger, true);
+    if (focusPopover && state.root) {
+      popover = state.root.querySelector("#tlabNodePopover");
+      focusFirst(popover);
+    }
+  }
+
+  function closeNodePopover(returnFocus, force) {
+    var trigger = state.nodePopover;
+    var popover;
+    if (state.nodeEditor && state.nodeEditor.saving && force !== true) {
+      notify("La versión se está guardando. Esperá la confirmación del servidor.", "info");
+      return false;
+    }
+    if (state.historicalResolver && state.historicalResolver.saving && force !== true) {
+      notify("La resolución histórica se está guardando. Esperá la confirmación del servidor.", "info");
+      return false;
+    }
+    clearPopoverCloseTimer();
+    if (!state.root) { return; }
+    popover = state.root.querySelector("#tlabNodePopover");
+    if (popover) {
+      popover.hidden = true;
+      popover.innerHTML = "";
+      popover.classList.remove("is-editor", "is-historical-resolver");
+    }
+    if (trigger && typeof trigger.setAttribute === "function") { trigger.setAttribute("aria-expanded", "false"); }
+    state.nodePopover = null;
+    state.nodePopoverPinned = false;
+    state.nodePopoverRecord = null;
+    state.nodeEditor = null;
+    state.historicalResolver = null;
+    state.nodeFiles = [];
+    revokeNodeObjectUrls();
+    if (returnFocus && trigger && typeof trigger.focus === "function" && document.documentElement.contains(trigger)) { trigger.focus(); }
+    return true;
+  }
+
+  function localDateValue(date) {
+    var value = date || new Date();
+    var year = value.getFullYear();
+    var month = String(value.getMonth() + 1);
+    var day = String(value.getDate());
+    return year + "-" + (month.length < 2 ? "0" + month : month)
+      + "-" + (day.length < 2 ? "0" + day : day);
+  }
+
+  function futureDateValue(days) {
+    var value = new Date();
+    value.setDate(value.getDate() + days);
+    return localDateValue(value);
+  }
+
+  function historicalCandidateIsFinalized(candidate) {
+    var status;
+    if (!candidate) { return false; }
+    if (candidate.finalizado !== undefined && candidate.finalizado !== null) {
+      return boolValue(candidate.finalizado);
+    }
+    if (candidate.puede_continuar !== undefined && candidate.puede_continuar !== null) {
+      return !boolValue(candidate.puede_continuar);
+    }
+    if (numberValue(candidate.progreso_porcentaje, 0) >= 100) { return true; }
+    status = (toStringSafe(candidate.estado_detalle) + " "
+      + toStringSafe(candidate.estado_tratamiento)).toLowerCase();
+    return ["eliminado", "inactivo", "anulado", "cancelado", "completado",
+      "finalizado", "terminado", "realizado"].some(function (word) {
+        return status.indexOf(word) >= 0;
+      });
+  }
+
+  function historicalResolutionCandidates(envelope) {
+    return asArray(envelope.candidatos_detalle
+      || pick(envelope.opciones_convalidacion || {}, ["detalles_venta", "candidatos_detalle"], [])).map(function (item) {
+        var finalized = historicalCandidateIsFinalized(item);
+        return Object.assign({}, item, {
+          finalizado: finalized,
+          puede_continuar: !finalized,
+          nombre: toStringSafe(item.producto || item.nombre_producto || "Tratamiento")
+            + " · Detalle " + toStringSafe(item.cod_detalle_venta || item.id)
+            + " · " + numberValue(item.progreso_porcentaje, 0) + "%"
+            + (finalized ? " · Finalizado" : "")
+            + (boolValue(item.ocupado) ? " · Ya tiene trabajo activo" : "")
+        });
+      });
+  }
+
+  function historicalSelectedCandidate(candidates, detailId) {
+    return asArray(candidates).filter(function (item) {
+      return toStringSafe(item.cod_detalle_venta || item.id) === toStringSafe(detailId);
+    })[0] || null;
+  }
+
+  function historicalResolverInitialValues(historical, envelope) {
+    var candidates = historicalResolutionCandidates(envelope);
+    var selected = candidates.filter(function (item) {
+      return boolValue(item.seleccionado)
+        || toStringSafe(item.cod_detalle_venta) === toStringSafe(historical.cod_detalle_venta);
+    })[0];
+    var stateCode = toStringSafe(historical.estado_declarado);
+    var continuationStates = {
+      pendiente_entrega_mecanico: true,
+      en_laboratorio: true,
+      pendiente_revision: true,
+      ajuste_solicitado: true,
+      listo_instalacion: true
+    };
+    if (!continuationStates[stateCode]) { stateCode = "pendiente_revision"; }
+    if (!selected && candidates.length === 1) { selected = candidates[0]; }
+    return {
+      modo_resolucion: historicalCandidateIsFinalized(selected)
+        ? "instalado_entregado" : "continuar",
+      cod_detalle_venta: selected ? selected.cod_detalle_venta : (historical.cod_detalle_venta || ""),
+      estado_continuacion: stateCode,
+      cod_tipo_trabajo: historical.cod_tipo_trabajo || "",
+      cod_mecanico_dental: historical.cod_mecanico_dental || historical.cod_mecanico_snapshot || "",
+      cod_especialista: historical.cod_especialista || "",
+      cod_local: historical.cod_local || historical.cod_local_snapshot || "",
+      colorimetro: historical.colorimetro_original || "",
+      fecha_retiro_declarada: dateInputValue(historical.fecha_retiro_declarada || historical.fecha_retiro_original),
+      fecha_entrega_declarada: dateInputValue(historical.fecha_entrega_declarada || historical.fecha_entrega_original),
+      fecha_objetivo: dateInputValue(historical.fecha_objetivo) || futureDateValue(30),
+      costo_estimado: historical.costo_original === null || typeof historical.costo_original === "undefined"
+        ? "" : historical.costo_original,
+      observacion_trabajo: historical.observacion_original || "",
+      condicion_pre_entrega: "conforme",
+      observacion_entrega: "",
+      sin_foto_historica: "0",
+      justificacion: ""
+    };
+  }
+
+  function captureHistoricalResolverValues() {
+    var resolver = state.historicalResolver;
+    var form = state.root && state.root.querySelector("#tlabHistoricalResolverForm");
+    var values = {};
+    var noHistoricalPhoto;
+    if (!resolver || !form) { return; }
+    forEachFormValue(form, function (value, key) { values[key] = value; });
+    noHistoricalPhoto = form.querySelector('[name="sin_foto_historica"]');
+    values.sin_foto_historica = noHistoricalPhoto && noHistoricalPhoto.checked ? "1" : "0";
+    resolver.values = Object.assign({}, resolver.values, values);
+  }
+
+  function historicalResolverHtml() {
+    var resolver = state.historicalResolver;
+    var historical = resolver.historical;
+    var envelope = resolver.envelope;
+    var values = resolver.values;
+    var normalized = normalizeHistorical(historical);
+    var modesInstalled = values.modo_resolucion === "instalado_entregado";
+    var noHistoricalPhoto = boolValue(values.sin_foto_historica);
+    var selectedCandidate;
+    var continuationBlocked;
+    var types = includeCurrentCatalogOption(
+      catalogItems(["tipos_trabajo"]),
+      values.cod_tipo_trabajo,
+      ["id", "codigo", "cod"],
+      historical.tipo_trabajo
+    );
+    var doctors = includeCurrentCatalogOption(
+      catalogItems(["doctores", "especialistas"]),
+      values.cod_especialista,
+      ["cod_usuario", "id", "codigo", "cod"],
+      historical.doctor
+    );
+    var candidates = historicalResolutionCandidates(envelope);
+    selectedCandidate = historicalSelectedCandidate(candidates, values.cod_detalle_venta);
+    continuationBlocked = historicalCandidateIsFinalized(selectedCandidate);
+    if (continuationBlocked && !modesInstalled) {
+      values.modo_resolucion = "instalado_entregado";
+      modesInstalled = true;
+    }
+    var mechanics = asArray(envelope.mecanicos
+      || pick(envelope.opciones_convalidacion || {}, ["mecanicos"], []));
+    var branches = asArray(envelope.locales
+      || pick(envelope.opciones_convalidacion || {}, ["locales"], []));
+    var states = asArray(envelope.estados_declarables
+      || pick(envelope.opciones_convalidacion || {}, ["estados_declarables"], [])).filter(function (item) {
+        return !boolValue(item.final) && ["pendiente_entrega_mecanico", "en_laboratorio",
+          "pendiente_revision", "ajuste_solicitado", "listo_instalacion"].indexOf(toStringSafe(item.codigo)) >= 0;
+      });
+    var currentUser = personFromRecord(
+      state.context,
+      state.context,
+      ["nombre", "nombre_usuario", "usuario_nombre"],
+      ["rol"],
+      ["avatar", "avatar_usuario", "usuario_avatar"],
+      "Usuario autenticado"
+    );
+    var photoSection = modesInstalled
+      ? '<section class="tlab-node-new-media tlab-historical-final-media"><div><strong>Evidencia del cierre histórico</strong><small>Adjuntá una fotografía si todavía está disponible. Las versiones anteriores permanecen intactas.</small></div>'
+        + (noHistoricalPhoto
+          ? '<p class="tlab-historical-no-photo__notice"><i class="fa-solid fa-camera-slash" aria-hidden="true"></i><span>El último nodo indicará <strong>Sin fotografía histórica disponible</strong>.</span></p>'
+          : '<label><i class="fa-solid fa-camera" aria-hidden="true"></i>Seleccionar fotografía<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-tlab-node-file-input></label><div class="tlab-node-file-list">' + state.nodeFiles.map(nodeFilePreviewHtml).join("") + '</div>')
+        + '<div class="tlab-historical-no-photo"><label><input type="checkbox" name="sin_foto_historica" value="1"' + (noHistoricalPhoto ? " checked" : "") + '><span><strong>No se dispone de fotografía histórica</strong><small>Usar únicamente cuando la imagen ya no existe. El motivo de regularización quedará como respaldo.</small></span></label></div></section>'
+      : "";
+    var modeFields = modesInstalled
+      ? '<fieldset class="tlab-node-condition-field"><legend>Situación antes de entregar *</legend><label><input type="radio" name="condicion_pre_entrega" value="conforme"' + (values.condicion_pre_entrega === "conforme" ? " checked" : "") + '><span><i class="fa-solid fa-circle-check" aria-hidden="true"></i>Conforme</span></label><label><input type="radio" name="condicion_pre_entrega" value="con_observaciones"' + (values.condicion_pre_entrega === "con_observaciones" ? " checked" : "") + '><span><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>Con observaciones</span></label></fieldset>'
+        + (values.condicion_pre_entrega === "con_observaciones"
+          ? '<label class="tlab-node-form__field tlab-node-form__field--wide"><span>Detalle de la situación *</span><textarea name="observacion_entrega" maxlength="1000" rows="2" required placeholder="Describí la condición observada antes de la entrega">' + escapeHtml(values.observacion_entrega || "") + '</textarea></label>'
+          : '<input type="hidden" name="observacion_entrega" value="">')
+      : '<div class="tlab-node-form__grid">'
+        + nodeSelectHtml("Etapa en la que continuará", "estado_continuacion", states, values.estado_continuacion, ["codigo", "id", "valor"], true)
+        + '<label class="tlab-node-form__field"><span>Fecha objetivo *</span><input name="fecha_objetivo" type="date" required value="' + escapeAttr(values.fecha_objetivo || "") + '"></label></div>';
+    return '<header class="tlab-node-popover__header"><div><small>Trabajo histórico a resolver</small><h3>Revisar antes de asumir</h3></div><span class="tlab-node-status">' + escapeHtml(modesInstalled ? "Instalado y entregado" : "Continuar trabajo") + '</span><button type="button" data-tlab-command="close-node-popover" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>'
+      + '<form id="tlabHistoricalResolverForm" class="tlab-node-form tlab-historical-resolver-form" novalidate>'
+      + '<div class="tlab-node-readonly"><span><small>Paciente</small><strong>' + escapeHtml(normalized.patient) + '</strong></span><span><small>Venta original</small><strong>Venta ' + escapeHtml(normalized.sale) + '</strong></span><span><small>Trabajo recibido</small><strong>' + escapeHtml(historical.tipo_trabajo || normalized.product) + '</strong></span></div>'
+      + '<fieldset class="tlab-historical-resolution-modes"><legend>¿Qué ocurrió con este trabajo?</legend>'
+      + '<label class="' + (continuationBlocked ? "is-disabled" : "") + '"><input type="radio" name="modo_resolucion" value="continuar"' + (!modesInstalled ? " checked" : "") + (continuationBlocked ? " disabled" : "") + '><span><i class="fa-solid fa-play" aria-hidden="true"></i><strong>Continuar trabajo</strong><small>' + escapeHtml(continuationBlocked ? "No disponible: el tratamiento seleccionado ya está finalizado." : "Deja de ser histórico y pasa al flujo operativo bajo tu responsabilidad.") + '</small></span></label>'
+      + '<label><input type="radio" name="modo_resolucion" value="instalado_entregado"' + (modesInstalled ? " checked" : "") + '><span><i class="fa-solid fa-tooth" aria-hidden="true"></i><strong>Instalado y entregado</strong><small>Cierra el hilo de laboratorio y completa el tratamiento al 100%.</small></span></label></fieldset>'
+      + (continuationBlocked ? '<p class="tlab-historical-finalized-notice"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span><strong>Tratamiento finalizado</strong>El sistema seleccionó Instalado y entregado para evitar enviarlo nuevamente como trabajo en curso.</span></p>' : '')
+      + '<div class="tlab-form-error" id="tlabHistoricalResolverError"' + (resolver.error ? "" : " hidden") + '>' + escapeHtml(resolver.error || "") + '</div>'
+      + '<p class="tlab-historical-responsibility"><i class="fa-solid fa-user-check" aria-hidden="true"></i><span><strong>' + escapeHtml(currentUser.name) + '</strong> quedará como responsable del nodo que se genere.</span></p>'
+      + nodeSelectHtml("Tratamiento exacto de la venta", "cod_detalle_venta", candidates, values.cod_detalle_venta, ["cod_detalle_venta", "id"], true)
+      + modeFields + photoSection
+      + '<div class="tlab-node-form__grid">'
+      + nodeSelectHtml("Tipo de trabajo", "cod_tipo_trabajo", types, values.cod_tipo_trabajo, ["id", "codigo", "cod"], true)
+      + '<label class="tlab-node-form__field"><span>Colorimetría</span><input name="colorimetro" type="text" maxlength="30" value="' + escapeAttr(values.colorimetro || "") + '" placeholder="Ej.: B2"></label>'
+      + nodeSelectHtml("Doctor", "cod_especialista", doctors, values.cod_especialista, ["cod_usuario", "id", "codigo", "cod"], false)
+      + nodeSelectHtml("Mecánico dental", "cod_mecanico_dental", mechanics, values.cod_mecanico_dental, ["cod_mecanico_dental", "id", "codigo", "cod"], false)
+      + '<label class="tlab-node-form__field"><span>Fecha de retiro</span><input name="fecha_retiro_declarada" type="date" value="' + escapeAttr(values.fecha_retiro_declarada || "") + '"></label>'
+      + '<label class="tlab-node-form__field"><span>Fecha de entrega</span><input name="fecha_entrega_declarada" type="date" value="' + escapeAttr(values.fecha_entrega_declarada || "") + '"></label>'
+      + '<label class="tlab-node-form__field"><span>Costo</span><input name="costo_estimado" type="number" min="0" step="1" value="' + escapeAttr(values.costo_estimado) + '"></label>'
+      + nodeSelectHtml("Local", "cod_local", branches, values.cod_local, ["cod_local", "id", "codigo", "cod"], true) + '</div>'
+      + '<label class="tlab-node-form__field tlab-node-form__field--wide"><span>Observación del trabajo</span><textarea name="observacion_trabajo" maxlength="1000" rows="3">' + escapeHtml(values.observacion_trabajo || "") + '</textarea></label>'
+      + '<label class="tlab-node-form__field tlab-node-form__field--wide"><span>Motivo de regularización *</span><textarea name="justificacion" maxlength="750" rows="2" required placeholder="Explicá brevemente por qué se continúa o se cierra este registro">' + escapeHtml(values.justificacion || "") + '</textarea></label>'
+      + (modesInstalled ? '<p class="tlab-historical-close-note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>Este cierre no genera una evolución clínica. Conserva la declaración y ' + (noHistoricalPhoto ? 'la ausencia explícita de fotografía' : 'la fotografía disponible') + ' como última versión del hilo de laboratorio.</p>' : '')
+      + '<footer class="tlab-node-form__footer"><button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="close-node-popover" ' + (resolver.saving ? "disabled" : "") + '>Cancelar</button><button type="submit" class="tlab-button tlab-button--primary" ' + (resolver.saving ? "disabled" : "") + '><i class="fa-solid ' + (resolver.saving ? "fa-hourglass-half" : (modesInstalled ? "fa-flag-checkered" : "fa-hand-holding")) + '" aria-hidden="true"></i>' + (resolver.saving ? "Guardando..." : (modesInstalled ? "Confirmar instalación y entrega" : "Continuar y asumir responsabilidad")) + '</button></footer></form>';
+  }
+
+  function renderHistoricalResolver() {
+    var popover = state.root && state.root.querySelector("#tlabNodePopover");
+    if (!popover || !state.historicalResolver || !state.nodePopover) { return; }
+    popover.classList.add("is-editor", "is-historical-resolver");
+    popover.innerHTML = historicalResolverHtml();
+    positionNodePopover(state.nodePopover, popover);
+  }
+
+  function showHistoricalResolverError(message) {
+    var error;
+    if (!state.historicalResolver) { return; }
+    state.historicalResolver.error = message;
+    renderHistoricalResolver();
+    error = state.root.querySelector("#tlabHistoricalResolverError");
+    if (error) { error.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+  }
+
+  function openHistoricalResolver(trigger) {
+    var rowId = trigger.getAttribute("data-tlab-historical-row-id");
+    var popover = state.root.querySelector("#tlabNodePopover");
+    if (!boolValue(state.context.puede_resolver_historicos)
+        && state.context.puede_resolver_historicos !== undefined) {
+      notify("Tu sesión ya no puede resolver trabajos históricos.", "error");
+      return;
+    }
+    if (state.historicalResolver && state.historicalResolver.saving) {
+      notify("La resolución histórica se está guardando. Esperá la confirmación del servidor.", "info");
+      return;
+    }
+    closeNodePopover(false, true);
+    state.nodePopover = trigger;
+    state.nodePopoverPinned = true;
+    trigger.setAttribute("aria-expanded", "true");
+    popover.classList.add("is-editor", "is-historical-resolver");
+    popover.innerHTML = loaderHtml("Recuperando el trabajo histórico...", "compact");
+    popover.hidden = false;
+    positionNodePopover(trigger, popover);
+    loadHistoricalNodeEnvelope(rowId).then(function (loaded) {
+      if (state.nodePopover !== trigger) { return; }
+      if (!boolValue(loaded.envelope.puede_resolver)
+          && !boolValue(pick(loaded.historical.acciones || {}, ["puede_resolver"], false))) {
+        throw new Error("Este trabajo ya fue resuelto o dejó de estar disponible.");
+      }
+      state.nodePopoverRecord = {
+        kind: "historico",
+        rowId: rowId,
+        envelope: loaded.envelope,
+        historical: loaded.historical
+      };
+      state.historicalResolver = {
+        rowId: rowId,
+        envelope: loaded.envelope,
+        historical: loaded.historical,
+        values: historicalResolverInitialValues(loaded.historical, loaded.envelope),
+        idempotencyKey: makeIdempotencyKey(),
+        saving: false,
+        error: ""
+      };
+      revokeNodeObjectUrls();
+      state.nodeFiles = [];
+      renderHistoricalResolver();
+      focusFirst(popover);
+    }).then(null, function (error) {
+      if (state.nodePopover !== trigger) { return; }
+      popover.classList.remove("is-editor", "is-historical-resolver");
+      popover.innerHTML = '<div class="tlab-node-load-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><strong>No se pudo abrir el trabajo histórico</strong><span>' + escapeHtml(error.message) + '</span><button type="button" data-tlab-command="close-node-popover">Cerrar</button></div>';
+      positionNodePopover(trigger, popover);
+    });
+  }
+
+  function groupForHistoricalResolution(mode, stateCode) {
+    if (mode === "instalado_entregado") { return "finalizados"; }
+    if (stateCode === "en_laboratorio") { return "en_laboratorio"; }
+    if (stateCode === "pendiente_revision"
+        || stateCode === "ajuste_solicitado"
+        || stateCode === "listo_instalacion") {
+      return "pendientes_revision";
+    }
+    return "pendientes_entrega";
+  }
+
+  function submitHistoricalResolver() {
+    var resolver = state.historicalResolver;
+    var form;
+    var checkedMode;
+    var candidates;
+    var selectedCandidate;
+    var values;
+    var payload;
+    var installed;
+    var noHistoricalPhoto;
+    if (!resolver || resolver.saving) { return; }
+    captureHistoricalResolverValues();
+    form = state.root && state.root.querySelector("#tlabHistoricalResolverForm");
+    checkedMode = form && form.querySelector('input[name="modo_resolucion"]:checked');
+    if (checkedMode) {
+      resolver.values.modo_resolucion = checkedMode.value;
+    }
+    values = resolver.values;
+    candidates = historicalResolutionCandidates(resolver.envelope);
+    selectedCandidate = historicalSelectedCandidate(candidates, values.cod_detalle_venta);
+    if (values.modo_resolucion === "continuar"
+        && historicalCandidateIsFinalized(selectedCandidate)) {
+      resolver.values.modo_resolucion = "instalado_entregado";
+      showHistoricalResolverError("El tratamiento ya está finalizado. Se seleccionó Instalado y entregado; revisá la condición y la evidencia disponible.");
+      return;
+    }
+    installed = values.modo_resolucion === "instalado_entregado";
+    noHistoricalPhoto = installed && boolValue(values.sin_foto_historica);
+    if (values.modo_resolucion !== "continuar" && !installed) {
+      showHistoricalResolverError("Seleccioná si el trabajo debe continuar o ya fue instalado y entregado.");
+      return;
+    }
+    if (!values.cod_detalle_venta) {
+      showHistoricalResolverError("Seleccioná el tratamiento exacto de la venta original.");
+      return;
+    }
+    if (!values.cod_tipo_trabajo || !values.cod_local) {
+      showHistoricalResolverError("Seleccioná el tipo de trabajo y el local.");
+      return;
+    }
+    if (!installed && !values.estado_continuacion) {
+      showHistoricalResolverError("Seleccioná la etapa en la que continuará el trabajo.");
+      return;
+    }
+    if (toStringSafe(values.justificacion).trim().length < 5) {
+      showHistoricalResolverError("Escribí un motivo de regularización de al menos cinco caracteres.");
+      return;
+    }
+    if (installed && values.condicion_pre_entrega !== "conforme"
+        && values.condicion_pre_entrega !== "con_observaciones") {
+      showHistoricalResolverError("Indicá la situación del trabajo antes de entregarlo.");
+      return;
+    }
+    if (installed && values.condicion_pre_entrega === "con_observaciones"
+        && toStringSafe(values.observacion_entrega).trim().length < 3) {
+      showHistoricalResolverError("Describí la situación observada antes de la entrega.");
+      return;
+    }
+    if (installed && !state.nodeFiles.length && !noHistoricalPhoto) {
+      showHistoricalResolverError("Adjuntá una fotografía o marcá que no se dispone de fotografía histórica.");
+      return;
+    }
+    payload = {
+      id_historico: resolver.rowId,
+      cod_trabajo_mecanico_dental: resolver.rowId,
+      version_esperada: resolver.historical.version,
+      clave_idempotencia: resolver.idempotencyKey,
+      modo_resolucion: values.modo_resolucion,
+      cod_detalle_venta: values.cod_detalle_venta,
+      estado_continuacion: installed ? "" : values.estado_continuacion,
+      cod_tipo_trabajo: values.cod_tipo_trabajo,
+      cod_mecanico_dental: values.cod_mecanico_dental || "",
+      cod_especialista: values.cod_especialista || "",
+      cod_local: values.cod_local,
+      colorimetro: values.colorimetro || "",
+      fecha_retiro_declarada: values.fecha_retiro_declarada || "",
+      fecha_entrega_declarada: values.fecha_entrega_declarada || "",
+      fecha_objetivo: installed ? "" : (values.fecha_objetivo || ""),
+      costo_estimado: values.costo_estimado || "",
+      observacion_trabajo: values.observacion_trabajo || "",
+      condicion_pre_entrega: installed ? values.condicion_pre_entrega : "",
+      observacion_entrega: installed ? (values.observacion_entrega || "") : "",
+      sin_foto_historica: noHistoricalPhoto ? "1" : "0",
+      justificacion: toStringSafe(values.justificacion).trim()
+    };
+    resolver.saving = true;
+    resolver.error = "";
+    renderHistoricalResolver();
+    request("resolverHistorico", payload, installed && !noHistoricalPhoto ? state.nodeFiles : []).then(function (response) {
+      var message = response.message || (installed
+        ? "El trabajo quedó instalado y entregado."
+        : "El trabajo dejó de ser histórico y ahora está bajo tu responsabilidad.");
+      delete state.nodeDetailCache["historico:" + toStringSafe(resolver.rowId)];
+      closeNodePopover(false, true);
+      notify(message, "success");
+      state.view = "operativa";
+      state.group = groupForHistoricalResolution(values.modo_resolucion, values.estado_continuacion);
+      state.filtersOpen = false;
+      state.moduleOptions.cod_venta_historica = "";
+      state.moduleOptions.cod_detalle_operativo = "";
+      renderGroupNavigation();
+      loadSummary().then(null, function () {});
+      loadWorks(false);
+    }).then(null, function (error) {
+      if (!state.historicalResolver) { return; }
+      state.historicalResolver.saving = false;
+      if (error.code === "tratamiento_ya_finalizado") {
+        state.historicalResolver.values.modo_resolucion = "instalado_entregado";
+        showHistoricalResolverError("El tratamiento ya está finalizado. Se seleccionó Instalado y entregado; revisá la condición y la evidencia disponible.");
+        return;
+      }
+      showHistoricalResolverError(error.message + (error.code && /VERSION|OCUPADO|INTEGRADO/i.test(error.code)
+        ? " Actualizá la vista y revisá la situación vigente." : ""));
+    });
+  }
+
+  function historicalResolutionNodeHtml(historical) {
+    return '<li class="tlab-route-node tlab-thread-end is-action tlab-historical-resolution-node">'
+      + '<button type="button" data-tlab-resolve-historical data-tlab-historical-row-id="'
+      + escapeAttr(historical.id)
+      + '" aria-haspopup="dialog" aria-expanded="false" aria-controls="tlabNodePopover"'
+      + ' aria-label="Resolver la situación del trabajo histórico">'
+      + '<span class="tlab-thread-end__icon"><i class="fa-solid fa-hand-holding-medical"'
+      + ' aria-hidden="true"></i><i class="fa-solid fa-minus tlab-thread-end__thread"'
+      + ' aria-hidden="true"></i></span><strong>Resolver situación</strong>'
+      + '<small>Continuar o cerrar</small></button></li>';
+  }
+
+  function historicalLaneHtml(historical, rowIndex) {
+    var route = asArray(historical.route);
+    return '<section class="tlab-unified-lane tlab-unified-lane--historical"'
+      + ' aria-label="Hilo histórico pendiente"><header class="tlab-unified-lane__heading">'
+      + '<span><i class="fa-solid fa-diagram-project" aria-hidden="true"></i>'
+      + '<strong>Hilo del trabajo</strong><small>Origen y resolución pendiente</small></span>'
+      + '</header><div class="tlab-route-scroll tlab-route-scroll--unified" tabindex="0"'
+      + ' aria-label="Hilo histórico; desplazamiento horizontal"><ol class="tlab-route-list">'
+      + route.map(function (event, index) {
+        return routeNodeHtml(
+          event,
+          index,
+          route.length + 1,
+          "historico",
+          historical.id,
+          rowIndex
+        );
+      }).join("")
+      + historicalResolutionNodeHtml(historical) + '</ol></div></section>';
+  }
+
+  function historicalCardHtml(item, rowIndex) {
+    var historical = normalizeHistorical(item);
+    return '<article class="tlab-thread-record tlab-thread-record--historical"><div class="tlab-thread-row tlab-thread-row--unified">'
+      + '<div class="tlab-thread-identity tlab-thread-identity--historical tlab-thread-identity--summary">'
+      + '<span class="tlab-thread-identity__code"><span>Venta ' + escapeHtml(historical.sale) + '</span><b aria-hidden="true">·</b><strong>Trabajo ' + escapeHtml(historical.code) + '</strong><em class="tlab-status tlab-status--' + historicalStatusClass(historical.declaredState) + '">' + escapeHtml(humanizeHistoricalValue(historical.declaredState)) + '</em></span>'
+      + '<span class="tlab-thread-identity__patient">' + escapeHtml(historical.patient) + '</span><span class="tlab-thread-identity__product">' + escapeHtml(historical.product) + '</span><span class="tlab-thread-identity__branch"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>' + escapeHtml(historical.branch) + '</span>'
+      + identityPeopleHtml(historical.doctor, historical.mechanic)
+      + '<span class="tlab-thread-identity__open tlab-thread-identity__open--status"><span>Situación pendiente</span></span></div>'
+      + '<div class="tlab-thread-route tlab-thread-route--unified" aria-label="Recorrido histórico recibido">'
+      + historicalLaneHtml(historical, rowIndex) + '</div></div></article>';
+  }
+
+  function renderHistoricals(total) {
+    var results = state.root.querySelector("#tlabResults");
+    var count = state.root.querySelector("#tlabResultCount");
+    var more = state.root.querySelector("#tlabLoadMore");
+    closeNodePopover();
+    count.textContent = total + (total === 1 ? " registro histórico" : " registros históricos");
+    if (!state.historicals.length) {
+      results.innerHTML = '<div class="tlab-empty"><div><i class="fa-solid fa-box-archive" aria-hidden="true"></i><strong>No hay históricos para estos filtros</strong><span>Probá otra búsqueda o limpiá los filtros históricos.</span></div></div>';
+    } else {
+      results.innerHTML = '<div class="tlab-thread-list tlab-thread-list--historical">' + state.historicals.map(historicalCardHtml).join("") + '</div>';
+    }
+    more.hidden = !state.hasMore;
+  }
+
+  function renderHistoricalListError(message) {
+    var results = state.root.querySelector("#tlabResults");
+    results.innerHTML = '<div class="tlab-empty"><div><i class="fa-solid fa-lock" aria-hidden="true"></i><strong>No se pudo cargar el archivo histórico</strong><span>' + escapeHtml(message) + '</span><br><button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="refresh">Reintentar</button></div></div>';
+    state.root.querySelector("#tlabLoadMore").hidden = true;
   }
 
   function normalizeActions(value) {
@@ -1062,13 +3168,52 @@
     }).filter(Boolean);
   }
 
+  function normalizeCurrentCustody(item, chain) {
+    var raw = item.custodia_actual || item.responsable_actual || {};
+    var nodes = asArray(chain);
+    var currentNode;
+    var primary;
+    var responsible;
+    var duration;
+    if (!raw || typeof raw !== "object") { raw = {}; }
+    currentNode = nodes.filter(function (node) {
+      return boolValue(pick(node, ["es_actual", "actual", "custodia_actual"], false));
+    })[0] || (nodes.length ? nodes[nodes.length - 1] : {});
+    primary = raw.persona || raw.responsable || raw.custodio || raw.usuario
+      || (pick(raw, ["nombre", "nombre_completo", "name"], "") ? raw : null)
+      || currentNode.responsable || currentNode.custodio || currentNode.actor || currentNode.usuario;
+    responsible = personFromRecord(
+      primary,
+      Object.assign({}, currentNode, item, raw),
+      ["responsable_nombre", "custodio_nombre", "nombre_custodio_actual", "nombre_custodio", "actor_nombre"],
+      ["responsable_rol", "custodio_rol", "rol_custodio_actual", "actor_rol"],
+      ["responsable_avatar", "custodio_avatar", "custodio_avatar_url", "actor_avatar"],
+      "Responsable actual"
+    );
+    duration = pick(raw, ["duracion_texto", "tiempo_texto", "tiempo_custodia_texto"], pick(currentNode, ["duracion_texto", "tiempo_custodia_texto"], ""));
+    if (!duration && pick(raw, ["duracion_segundos", "segundos_custodia"], pick(currentNode, ["duracion_segundos", "segundos_custodia"], "")) !== "") {
+      duration = formatDurationSeconds(pick(raw, ["duracion_segundos", "segundos_custodia"], pick(currentNode, ["duracion_segundos", "segundos_custodia"], 0)));
+    }
+    return {
+      person: responsible,
+      startedAt: pick(raw, ["fecha_inicio", "inicio", "desde"], pick(currentNode, ["fecha_inicio", "inicio", "fecha_servidor", "fecha_hora"], "")),
+      duration: duration,
+      local: pick(raw, ["local_nombre", "sucursal_nombre", "local"], pick(currentNode, ["local_nombre", "sucursal_nombre", "local"], ""))
+    };
+  }
+
   function normalizeWork(item) {
     item = item || {};
     var nestedDetail = item.detalle && typeof item.detalle === "object" ? item.detalle : {};
+    var workState = pick(item, ["estado_derivado", "situacion"], "");
     var deadline = pick(item, ["semaforo", "plazo", "cumplimiento_plazo"], "");
     var deadlineText;
     var deadlineClass;
     var actions = normalizeActions(item.acciones_permitidas || item.acciones || []);
+    var custodyChain = receivedCustodyChain(item);
+    var currentCustody = normalizeCurrentCustody(item, custodyChain);
+    var terminalState = toStringSafe(pick(item, ["estado_derivado", "situacion", "estado_actual", "estado"], "")).toLowerCase();
+    var cancelled = boolValue(pick(item, ["cancelado"], false)) || /cancelad/.test(terminalState);
     if (deadline && typeof deadline === "object") {
       deadlineText = pick(deadline, ["texto", "etiqueta", "estado"], "Sin plazo");
       deadlineClass = pick(deadline, ["nivel", "clase", "codigo"], "neutral");
@@ -1084,23 +3229,50 @@
       raw: item,
       id: pick(item, ["id_trabajo", "cod_trabajo_laboratorio", "id", "cod_trabajo"], ""),
       code: pick(item, ["codigo_visible", "codigo_trabajo", "codigo", "nomenclatura"], pick(nestedDetail, ["codigo_visible", "nro_venta", "numero_venta"], "Nuevo trabajo")),
+      originCode: pick(item, ["codigo_origen"], ""),
+      originUnit: numberValue(pick(item, ["unidad_origen"], 1), 1),
+      originTotal: numberValue(pick(item, ["cantidad_unidades_origen"], 1), 1),
       sale: pick(item, ["numero_venta", "nro_venta", "venta"], pick(nestedDetail, ["numero_venta", "nro_venta", "venta"], "")),
       patient: pick(item, ["paciente_nombre", "nombre_paciente", "paciente"], pick(nestedDetail, ["paciente_nombre", "nombre_paciente", "paciente"], "Paciente autorizado")),
       product: pick(item, ["producto_nombre", "tipo_trabajo", "producto", "tratamiento"], pick(nestedDetail, ["producto_nombre", "nombre_producto", "producto", "tratamiento"], "Trabajo de laboratorio")),
       branch: pick(item, ["local_nombre", "sucursal_nombre", "local", "sucursal"], pick(nestedDetail, ["local_nombre", "nombre_local", "sucursal_nombre", "local", "sucursal"], "Sin sucursal")),
-      mechanic: item.mecanico || item.mecanico_dental || item.tecnico || pick(item, ["nombre_mecanico"], "Sin asignar"),
-      doctor: item.doctor || item.especialista || pick(item, ["nombre_doctor"], "Sin asignar"),
-      custodian: item.custodio_actual || item.custodio || pick(item, ["nombre_custodio"], "Sin confirmar"),
+      mechanic: personFromRecord(
+        item.mecanico || item.mecanico_dental || item.tecnico
+          || (workState === "pendiente_tecnico" ? { nombre: "Técnico pendiente", rol: "Asignación pendiente" } : null),
+        item,
+        ["nombre_mecanico", "mecanico_nombre", "tecnico_nombre", "nombre_tecnico"],
+        ["tecnico_rol", "mecanico_rol", "rol_tecnico"],
+        ["tecnico_avatar", "mecanico_avatar", "tecnico_avatar_url", "avatar_mecanico"],
+        "Mecánico dental"
+      ),
+      doctor: personFromRecord(
+        item.doctor || item.especialista,
+        item,
+        ["nombre_doctor", "doctor_nombre", "odontologo_nombre", "nombre_odontologo"],
+        ["doctor_rol", "odontologo_rol", "rol_doctor"],
+        ["doctor_avatar", "doctor_avatar_url", "odontologo_avatar", "avatar_doctor"],
+        "Odontólogo"
+      ),
+      custodian: currentCustody.person,
+      currentCustody: currentCustody,
       currentDays: numberValue(pick(item, ["dias_custodio_actual", "dias_con_custodio", "dias_responsable"], 0), 0),
       totalDays: numberValue(pick(item, ["dias_totales", "dias_total"], 0), 0),
       adjustments: numberValue(pick(item, ["cantidad_ajustes", "ajustes", "ciclo_actual"], 0), 0),
       targetDate: pick(item, ["fecha_objetivo", "fecha_limite"], ""),
       image: pick(item, ["miniatura_url", "imagen_principal", "evidencia_principal", "foto"], ""),
+      imageId: pick(item, ["miniatura_media_id", "id_media_principal", "id_media"], ""),
       situation: pick(item, ["situacion_texto", "situacion", "estado_derivado"], "En seguimiento"),
       deadlineText: deadlineText,
       deadlineClass: deadlineClass,
       pendingTransfer: boolValue(pick(item, ["transferencia_pendiente", "tiene_transferencia_pendiente"], false)),
       currentCycle: pick(item, ["ciclo_etiqueta", "ciclo", "tipo_ciclo"], "Original"),
+      route: receivedRoute(item),
+      custodyChain: custodyChain,
+      historicalOrigin: item.registro_historico_original && typeof item.registro_historico_original === "object"
+        ? item.registro_historico_original : null,
+      terminal: boolValue(pick(item, ["es_terminal", "terminal", "finalizado", "cancelado"], false))
+        || /finaliz|instalad|cancelad/.test(terminalState),
+      cancelled: cancelled,
       actions: actions,
       version: pick(item, ["version", "version_registro"], "")
     };
@@ -1111,31 +3283,73 @@
     return '<img src="' + escapeAttr(url) + '" alt="' + escapeAttr(alt || "Evidencia del trabajo") + '" loading="lazy">';
   }
 
-  function workCardHtml(item) {
+  function workActionByCode(work, code) {
+    return work.actions.filter(function (action) { return action.code === code; })[0] || null;
+  }
+
+  function rowActionButtonHtml(action, work, modifier, label) {
+    var visibleLabel;
+    if (!action) { return ""; }
+    visibleLabel = label || action.label;
+    return '<button type="button" class="tlab-custody-action ' + escapeAttr(modifier || "") + '" data-tlab-action="' + escapeAttr(action.code) + '" data-tlab-row-work-id="' + escapeAttr(work.id) + '" aria-label="' + escapeAttr(visibleLabel) + '" title="' + escapeAttr(visibleLabel) + '"><i class="fa-solid ' + escapeAttr(action.icon || "fa-arrow-right") + '" aria-hidden="true"></i>' + escapeHtml(visibleLabel) + '</button>';
+  }
+
+  function operationalLaneHtml(work, rowIndex) {
+    return '<section class="tlab-route-lane tlab-route-lane--operational" aria-label="Recorrido operativo">'
+      + '<header class="tlab-route-lane__heading"><span><i class="fa-solid fa-diagram-project" aria-hidden="true"></i><strong>Recorrido operativo</strong><small>Etapas y decisiones del trabajo</small></span></header>'
+      + routeHtml(work.route, "operativo", work.id, rowIndex) + '</section>';
+  }
+
+  function custodyLaneHtml(work, rowIndex) {
+    var take = workActionByCode(work, "tomarHilo");
+    var novelty = workActionByCode(work, "registrarNovedad");
+    var correction = workActionByCode(work, "rectificarCustodia");
+    var current = work.currentCustody || {};
+    var currentPerson = person(current.person, "Responsable actual");
+    var currentLabel = work.terminal ? "Último custodio" : "Responsable actual";
+    var actions = rowActionButtonHtml(novelty, work, "is-secondary") + rowActionButtonHtml(correction, work, "is-audit");
+    var end;
+    if (work.terminal) {
+      end = work.cancelled
+        ? '<div class="tlab-custody-next is-cancelled" aria-label="Custodia cerrada por cancelación"><span class="tlab-custody-next__icon"><i class="fa-solid fa-ban" aria-hidden="true"></i></span><span><strong>Trabajo cancelado</strong><small>Custodia cerrada sin entrega final</small></span></div>'
+        : '<div class="tlab-custody-next is-finished" aria-label="Custodia finalizada"><span class="tlab-custody-next__icon"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i></span><span><strong>Hilo cerrado</strong><small>Resultado final registrado</small></span></div>';
+    } else if (take) {
+      end = '<div class="tlab-custody-next is-action"><span class="tlab-custody-next__icon"><i class="fa-solid fa-link" aria-hidden="true"></i></span><span><strong>Tomar el hilo</strong><small>Iniciá tu período de custodia</small>' + rowActionButtonHtml(take, work, "is-primary", "Tomar el hilo") + '</span></div>';
+    } else {
+      end = '<div class="tlab-custody-next"><span class="tlab-custody-next__icon"><i class="fa-solid fa-flag" aria-hidden="true"></i></span><span><strong>Próximo relevo</strong><small>Se habilita al responsable autorizado</small></span></div>';
+    }
+    return '<section class="tlab-route-lane tlab-route-lane--custody" aria-label="El hilo de custodia">'
+      + '<header class="tlab-route-lane__heading"><span><i class="fa-solid fa-link" aria-hidden="true"></i><strong>El hilo</strong><small>Custodios internos con cuenta Telar</small></span>'
+      + '<span class="tlab-route-lane__current" title="' + escapeAttr(currentLabel) + ': ' + escapeAttr(currentPerson.name) + '">' + avatarHtml(currentPerson) + '<span><small>' + escapeHtml(currentLabel) + '</small><strong>' + escapeHtml(currentPerson.name) + '</strong></span></span>'
+      + (actions ? '<span class="tlab-route-lane__actions">' + actions + '</span>' : '') + '</header>'
+      + '<div class="tlab-custody-lane__body">' + custodyRouteHtml(work.custodyChain, "operativo", work.id, rowIndex) + end + '</div></section>';
+  }
+
+  function workCardHtml(item, rowIndex) {
     var work = normalizeWork(item);
-    var next = work.actions[0];
-    return '<article class="tlab-work-card">'
-      + '<button type="button" class="tlab-work-card__open" data-tlab-work-id="' + escapeAttr(work.id) + '" aria-label="Abrir trabajo ' + escapeAttr(work.code) + '">'
-      + '<span class="tlab-work-card__hero"><span class="tlab-work-card__image">' + imageBlock(work.image, "Evidencia principal de " + work.code) + '</span><span>'
-      + '<span class="tlab-work-card__code"><strong>' + escapeHtml(work.code) + '</strong><span class="tlab-copy-hint" title="Código visible confirmado"><i class="fa-solid fa-link" aria-hidden="true"></i></span></span>'
-      + '<span class="tlab-work-card__product">' + escapeHtml(work.product) + '</span><span class="tlab-work-card__patient"><i class="fa-solid fa-user" aria-hidden="true"></i> ' + escapeHtml(work.patient) + '</span><span class="tlab-work-card__branch"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(work.branch) + '</span></span></span>'
-      + '<span class="tlab-work-card__body"><span class="tlab-custody"><small>Actualmente en poder de</small><strong>' + escapeHtml(person(work.custodian).name) + '</strong></span>'
-      + '<span class="tlab-person-row">' + personHtml(work.doctor, "Doctor") + personHtml(work.mechanic, "Mecánico dental") + '</span>'
-      + '<span class="tlab-metrics"><span class="tlab-metric"><strong>' + formatDays(work.currentDays) + '</strong><small>con custodio</small></span><span class="tlab-metric"><strong>' + formatDays(work.totalDays) + '</strong><small>totales</small></span><span class="tlab-metric"><strong>' + work.adjustments + '</strong><small>ajustes</small></span></span>'
-      + '<span class="tlab-badges"><span class="tlab-badge"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i>Objetivo: ' + escapeHtml(formatDate(work.targetDate, false)) + '</span><span class="tlab-badge"><i class="fa-solid fa-code-branch" aria-hidden="true"></i>' + escapeHtml(work.currentCycle) + '</span>' + (work.pendingTransfer ? '<span class="tlab-badge tlab-badge--alert"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>Recepción pendiente</span>' : '') + '</span></span>'
-      + '<span class="tlab-work-card__footer"><span class="tlab-status tlab-status--' + work.deadlineClass + '"><i class="fa-solid ' + (work.deadlineClass === "danger" ? "fa-triangle-exclamation" : "fa-clock") + '" aria-hidden="true"></i>' + escapeHtml(work.deadlineText) + '</span><span class="tlab-next-action">' + escapeHtml(next ? "Próxima: " + next.label : "Ver trazabilidad") + '</span></span>'
-      + '</button></article>';
+    var next = work.actions.filter(function (action) {
+      return action.code !== "registrarNovedad" && action.code !== "rectificarCustodia" && action.code !== "agregarEvidencia" && action.code !== "agregarNota";
+    })[0] || null;
+    return '<article class="tlab-thread-record"><div class="tlab-thread-row tlab-thread-row--unified">'
+      + '<div class="tlab-thread-identity tlab-thread-identity--summary" aria-label="Datos generales del trabajo ' + escapeAttr(work.code) + '">'
+      + '<span class="tlab-thread-identity__code"><span>Venta ' + escapeHtml(work.sale || "-") + '</span><b aria-hidden="true">·</b><strong>Trabajo ' + escapeHtml(work.code) + '</strong><em class="tlab-status tlab-status--' + work.deadlineClass + '">' + escapeHtml(work.deadlineText) + '</em>'
+      + (work.originTotal > 1 ? '<small class="tlab-origin-badge">Origen ' + escapeHtml(work.originCode) + ' · Trabajo ' + work.originUnit + ' de ' + work.originTotal + '</small>' : '') + '</span>'
+      + '<span class="tlab-thread-identity__patient">' + escapeHtml(work.patient) + '</span><span class="tlab-thread-identity__product">' + escapeHtml(work.product) + '</span><span class="tlab-thread-identity__branch"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>' + escapeHtml(work.branch) + '</span>'
+      + identityPeopleHtml(work.doctor, work.mechanic)
+      + '<span class="tlab-thread-identity__next"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>' + escapeHtml(next ? "Próxima: " + next.label : (work.terminal ? "Proceso finalizado" : "El avance continúa desde los nodos")) + '</span></div>'
+      + '<div class="tlab-thread-route tlab-thread-route--unified">' + unifiedLaneHtml(work, rowIndex) + '</div></div></article>';
   }
 
   function renderWorks(total) {
     var results = state.root.querySelector("#tlabResults");
     var count = state.root.querySelector("#tlabResultCount");
     var more = state.root.querySelector("#tlabLoadMore");
+    closeNodePopover();
     count.textContent = total + (total === 1 ? " trabajo" : " trabajos");
     if (!state.works.length) {
       results.innerHTML = '<div class="tlab-empty"><div><i class="fa-solid fa-diagram-project" aria-hidden="true"></i><strong>No hay trabajos en esta bandeja</strong><span>Probá otro grupo o ajustá los filtros de búsqueda.</span></div></div>';
     } else {
-      results.innerHTML = '<div class="tlab-cards">' + state.works.map(workCardHtml).join("") + '</div>';
+      results.innerHTML = '<div class="tlab-thread-list">' + state.works.map(workCardHtml).join("") + '</div>';
     }
     more.hidden = !state.hasMore;
   }
@@ -1146,46 +3360,633 @@
     state.root.querySelector("#tlabLoadMore").hidden = true;
   }
 
-  function openDetail(id, preserveFocus) {
-    var layer;
+  function inlineDetailHost(kind, id) {
+    var hosts;
+    var found = null;
+    if (!state.root) { return null; }
+    hosts = state.root.querySelectorAll("[data-tlab-inline-kind][data-tlab-inline-id]");
+    Array.prototype.some.call(hosts, function (host) {
+      if (host.getAttribute("data-tlab-inline-kind") === kind && toStringSafe(host.getAttribute("data-tlab-inline-id")) === toStringSafe(id)) {
+        found = host;
+        return true;
+      }
+      return false;
+    });
+    return found;
+  }
+
+  function detailBodyElement() {
+    var host = inlineDetailHost(state.detailKind, state.detailId);
+    return host ? host.querySelector(".tlab-row-detail__body") : null;
+  }
+
+  function removeStandaloneDetailHosts() {
+    if (!state.root) { return; }
+    Array.prototype.forEach.call(state.root.querySelectorAll(".tlab-thread-record--standalone"), function (item) {
+      if (item.parentNode) { item.parentNode.removeChild(item); }
+    });
+  }
+
+  function createStandaloneDetailHost(kind, id) {
+    var results;
+    var host;
+    if (!state.root) { return null; }
+    results = state.root.querySelector("#tlabResults");
+    if (!results) { return null; }
+    removeStandaloneDetailHosts();
+    results.insertAdjacentHTML("afterbegin", '<article class="tlab-thread-record tlab-thread-record--standalone ' + (kind === "historico" ? 'tlab-thread-record--historical' : '') + '">' + inlineDetailHtml(kind, id, 0) + '</article>');
+    host = inlineDetailHost(kind, id);
+    return host;
+  }
+
+  function setInlineDetailPresentation(kind, id, loadingLabel, scrollToDetail) {
+    var host = inlineDetailHost(kind, id) || createStandaloneDetailHost(kind, id);
     var body;
+    if (!state.root || !host) { return null; }
+    Array.prototype.forEach.call(state.root.querySelectorAll(".tlab-row-detail"), function (item) { item.hidden = item !== host; });
+    Array.prototype.forEach.call(state.root.querySelectorAll("[data-tlab-work-id], [data-tlab-historical-id]"), function (button) {
+      var matches = (kind === "operativo" && toStringSafe(button.getAttribute("data-tlab-work-id")) === toStringSafe(id))
+        || (kind === "historico" && toStringSafe(button.getAttribute("data-tlab-historical-id")) === toStringSafe(id));
+      button.setAttribute("aria-expanded", matches ? "true" : "false");
+      var label = button.querySelector(".tlab-thread-identity__open");
+      var labelText = button.querySelector("[data-tlab-inline-label]");
+      if (labelText) { labelText.textContent = matches ? "Ocultar ficha" : "Ver ficha"; }
+      if (label && matches) {
+        label.classList.add("is-open");
+      } else if (label) {
+        label.classList.remove("is-open");
+      }
+    });
+    host.hidden = false;
+    body = host.querySelector(".tlab-row-detail__body");
+    if (body && loadingLabel) { body.innerHTML = '<div class="tlab-detail__loader">' + loaderHtml(loadingLabel, "content") + '</div>'; }
+    if (scrollToDetail) {
+      window.setTimeout(function () { host.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 30);
+    }
+    return body;
+  }
+
+  function inlineDetailHeaderHtml(eyebrow, title) {
+    return '<header class="tlab-row-detail__header"><div><small>' + escapeHtml(eyebrow) + '</small><h3>' + escapeHtml(title) + '</h3></div><button type="button" class="tlab-icon-button tlab-icon-button--light" data-tlab-command="close-detail" aria-label="Ocultar ficha general"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button></header>';
+  }
+
+  function restoreInlineDetail() {
+    var body;
+    if (!state.detailId || !state.detailKind) { return; }
+    body = setInlineDetailPresentation(state.detailKind, state.detailId, state.detail || state.historicalDetail ? "" : "Cargando ficha general...", false);
+    if (!body) { return; }
+    if (state.detailError) {
+      body.innerHTML = inlineDetailHeaderHtml(state.detailKind === "historico" ? "Ficha general histórica" : "Ficha general", "Trabajo " + state.detailId) + '<div class="tlab-empty"><div><i class="fa-solid fa-lock" aria-hidden="true"></i><strong>No se pudo abrir la ficha</strong><span>' + escapeHtml(state.detailError) + '</span></div></div>';
+      return;
+    }
+    if (state.detailKind === "historico" && state.historicalDetail) { renderHistoricalDetailContent(); }
+    else if (state.detailKind === "operativo" && state.detail) { renderDetailContent(); }
+  }
+
+  function openDetail(id, preserveFocus) {
+    var body;
+    var requestId;
+    var currentHost;
     if (!id || !state.root) { return; }
-    layer = state.root.querySelector("#tlabDetailLayer");
-    body = state.root.querySelector("#tlabDetailBody");
-    if (!preserveFocus) { state.focusBeforeLayer = document.activeElement; }
+    currentHost = inlineDetailHost("operativo", id);
+    if (!preserveFocus && isInlineDetailOpen("operativo", id) && currentHost && !currentHost.hidden) {
+      closeDetail();
+      return;
+    }
+    if (!preserveFocus) { state.detailReturnFocus = document.activeElement; }
+    closeNodePopover();
     state.detailId = id;
+    state.detailKind = "operativo";
+    state.detailError = "";
     state.detail = null;
     state.detailEnvelope = null;
+    state.historicalDetail = null;
+    state.historicalEnvelope = null;
+    state.historicalWizard = null;
     state.detailTab = "timeline";
-    layer.hidden = false;
-    body.innerHTML = '<div class="tlab-detail__loader">' + loaderHtml("Reconstruyendo la trazabilidad...", "content") + '</div>';
+    requestId = ++state.detailRequest;
+    body = setInlineDetailPresentation("operativo", id, "Reconstruyendo la trazabilidad...", !preserveFocus);
     return request("obtenerTrabajo", { id_trabajo: id, cod_trabajo_laboratorio: id }).then(function (response) {
       var envelope = response.data || {};
       var detail = envelope.trabajo || envelope.item || envelope;
-      if (toStringSafe(state.detailId) !== toStringSafe(id)) { return; }
+      if (requestId !== state.detailRequest || state.detailKind !== "operativo" || toStringSafe(state.detailId) !== toStringSafe(id)) { return; }
       if (!detail.acciones_permitidas && envelope.acciones_permitidas) { detail.acciones_permitidas = envelope.acciones_permitidas; }
+      ["recorrido_operativo", "cadena_custodia", "hilo_custodia", "custodia_actual", "novedades"].forEach(function (key) {
+        if ((detail[key] === undefined || detail[key] === null) && envelope[key] !== undefined) { detail[key] = envelope[key]; }
+      });
       if (!detail.version && response.version) { detail.version = response.version; }
       state.detail = detail;
       state.detailEnvelope = envelope;
       mergeContext(envelope);
       renderDetailContent();
-      focusFirst(layer);
       return response;
     }).then(null, function (error) {
-      if (toStringSafe(state.detailId) !== toStringSafe(id)) { return null; }
-      body.innerHTML = '<div class="tlab-empty"><div><i class="fa-solid fa-lock" aria-hidden="true"></i><strong>No se pudo abrir el trabajo</strong><span>' + escapeHtml(error.message) + '</span></div></div>';
+      if (requestId !== state.detailRequest || state.detailKind !== "operativo" || toStringSafe(state.detailId) !== toStringSafe(id)) { return null; }
+      state.detailError = error.message;
+      body = detailBodyElement();
+      if (body) { body.innerHTML = inlineDetailHeaderHtml("Ficha general", "Trabajo " + id) + '<div class="tlab-empty"><div><i class="fa-solid fa-lock" aria-hidden="true"></i><strong>No se pudo abrir el trabajo</strong><span>' + escapeHtml(error.message) + '</span></div></div>'; }
       return null;
     });
   }
 
-  function closeDetail() {
-    var layer;
+  function closeDetail(preserveFocus) {
+    var returnFocus = state.detailReturnFocus;
     if (!state.root) { return; }
-    layer = state.root.querySelector("#tlabDetailLayer");
-    layer.hidden = true;
+    if (state.historicalWizard && state.historicalWizard.saving) {
+      notify("La actualización histórica se está confirmando. Esperá a que termine.", "info");
+      return false;
+    }
+    ++state.detailRequest;
+    Array.prototype.forEach.call(state.root.querySelectorAll(".tlab-row-detail"), function (item) { item.hidden = true; });
+    removeStandaloneDetailHosts();
+    Array.prototype.forEach.call(state.root.querySelectorAll("[data-tlab-work-id], [data-tlab-historical-id]"), function (button) {
+      var labelText = button.querySelector("[data-tlab-inline-label]");
+      button.setAttribute("aria-expanded", "false");
+      if (labelText) { labelText.textContent = "Ver ficha"; }
+    });
     state.detailId = "";
+    state.detailKind = "";
+    state.detailError = "";
     state.detail = null;
     state.detailEnvelope = null;
+    state.historicalDetail = null;
+    state.historicalEnvelope = null;
+    state.historicalWizard = null;
+    state.detailReturnFocus = null;
+    if (!preserveFocus && returnFocus && typeof returnFocus.focus === "function" && document.documentElement.contains(returnFocus)) {
+      returnFocus.focus();
+    }
+    return true;
+  }
+
+  function openHistoricalDetail(id, preserveFocus) {
+    var body;
+    var requestId;
+    var currentHost;
+    if (!id || !state.root) { return; }
+    if (!boolValue(state.context.es_auditor)) {
+      notify("Esta consulta requiere el permiso de auditoría de trabajos de laboratorio.", "error");
+      return;
+    }
+    currentHost = inlineDetailHost("historico", id);
+    if (!preserveFocus && isInlineDetailOpen("historico", id) && currentHost && !currentHost.hidden) {
+      closeDetail();
+      return;
+    }
+    if (!preserveFocus) { state.detailReturnFocus = document.activeElement; }
+    closeNodePopover();
+    state.detailId = id;
+    state.detailKind = "historico";
+    state.detailError = "";
+    state.detail = null;
+    state.detailEnvelope = null;
+    state.historicalDetail = null;
+    state.historicalEnvelope = null;
+    state.historicalWizard = null;
+    requestId = ++state.detailRequest;
+    body = setInlineDetailPresentation("historico", id, "Recuperando el registro y su autoría...", !preserveFocus);
+    return request("obtenerHistorico", { id_historico: id, cod_trabajo_mecanico_dental: id }).then(function (response) {
+      var envelope = response.data || {};
+      var detail = envelope.historico || envelope.item || envelope;
+      if (requestId !== state.detailRequest || state.detailKind !== "historico" || toStringSafe(state.detailId) !== toStringSafe(id)) { return; }
+      if (!detail.version && response.version) { detail.version = response.version; }
+      state.historicalDetail = detail;
+      state.historicalEnvelope = envelope;
+      mergeContext(envelope);
+      if (!boolValue(state.context.es_auditor)) { throw new Error("La sesión ya no tiene permiso para consultar históricos."); }
+      renderHistoricalDetailContent();
+      return response;
+    }).then(null, function (error) {
+      if (requestId !== state.detailRequest || state.detailKind !== "historico" || toStringSafe(state.detailId) !== toStringSafe(id)) { return null; }
+      state.detailError = error.message;
+      body = detailBodyElement();
+      if (body) { body.innerHTML = inlineDetailHeaderHtml("Ficha general histórica", "Trabajo " + id) + '<div class="tlab-empty"><div><i class="fa-solid fa-lock" aria-hidden="true"></i><strong>No se pudo abrir el registro histórico</strong><span>' + escapeHtml(error.message) + '</span></div></div>'; }
+      return null;
+    });
+  }
+
+  function historicalArray(names) {
+    var envelope = state.historicalEnvelope || {};
+    var detail = state.historicalDetail || {};
+    return asArray(pick(envelope, names, pick(detail, names, [])));
+  }
+
+  function historicalActionAllowed(actionCode) {
+    var envelope = state.historicalEnvelope || {};
+    var detail = state.historicalDetail || {};
+    var options = envelope.opciones_convalidacion || detail.opciones_convalidacion || {};
+    var directNames = actionCode === "convalidarHistorico"
+      ? ["puede_convalidar", "permite_convalidar"]
+      : (actionCode === "rectificarHistorico"
+        ? ["puede_rectificar", "permite_rectificar"]
+        : ["puede_promover", "permite_promover"]);
+    var permissionMap = detail.acciones || envelope.acciones || options.acciones || {};
+    var direct = pick(envelope, directNames, pick(detail, directNames, pick(permissionMap, directNames, pick(options, directNames, ""))));
+    var actions = envelope.acciones_permitidas || detail.acciones_permitidas || options.acciones_permitidas || [];
+    var target = actionCode.toLowerCase().replace(/[_-]/g, "");
+    if (!boolValue(state.context.es_auditor)) { return false; }
+    if (boolValue(direct)) { return true; }
+    if (actions && !Array.isArray(actions) && typeof actions === "object") {
+      if (boolValue(actions[actionCode])) { return true; }
+      actions = Object.keys(actions).filter(function (key) { return boolValue(actions[key]) || (actions[key] && typeof actions[key] === "object"); });
+    }
+    return asArray(actions).some(function (entry) {
+      var code = typeof entry === "object" ? pick(entry, ["codigo", "accion", "code", "endpoint"], "") : entry;
+      return toStringSafe(code).toLowerCase().replace(/[_-]/g, "") === target;
+    });
+  }
+
+  function historicalEventHtml(item) {
+    var actor = item.actor || item.usuario || item.realizado_por || pick(item, ["nombre_usuario"], "Usuario registrado");
+    var title = pick(item, ["titulo", "accion_texto", "evento_texto", "accion", "tipo_evento"], "Actualización histórica");
+    var date = pick(item, ["fecha_servidor", "fecha_hora", "fecha", "creado_en", "server_timestamp"], "");
+    var note = pick(item, ["justificacion", "observacion", "detalle", "nota"], "");
+    return '<li><span class="tlab-history-events__icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span><span><strong>' + escapeHtml(humanizeHistoricalValue(title)) + '</strong><small>' + escapeHtml(person(actor).name) + ' · ' + escapeHtml(formatDate(date, true)) + '</small>' + (note ? '<p>' + escapeHtml(note) + '</p>' : '') + '</span></li>';
+  }
+
+  function renderHistoricalDetailContent() {
+    var detail;
+    var historical;
+    var body;
+    var actions = [];
+    var events;
+    var author;
+    var editor;
+    if (!state.historicalDetail || !state.root || state.detailKind !== "historico") { return; }
+    if (state.historicalWizard) { renderHistoricalWizard(); return; }
+    detail = state.historicalDetail;
+    historical = normalizeHistorical(detail);
+    body = detailBodyElement();
+    if (!body) { return; }
+    events = historicalArray(["eventos", "auditoria", "historial"]);
+    author = person(historical.author, "Carga histórica");
+    editor = person(historical.editor || "Sin edición posterior", "Última edición histórica");
+    if (historicalActionAllowed("convalidarHistorico")) {
+      actions.push('<button type="button" class="tlab-button tlab-button--primary" data-tlab-historical-action="convalidarHistorico"><i class="fa-solid fa-shield-circle-check" aria-hidden="true"></i>Convalidar situación</button>');
+    }
+    if (historicalActionAllowed("rectificarHistorico")) {
+      actions.push('<button type="button" class="tlab-button tlab-button--secondary" data-tlab-historical-action="rectificarHistorico"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>Rectificar declaración</button>');
+    }
+    /* La promoción jamás se infiere por estado: sólo aparece cuando la
+       autorización explícita llega desde obtenerHistorico. */
+    if (historicalActionAllowed("promoverHistorico")) {
+      actions.push('<button type="button" class="tlab-button tlab-button--teal" data-tlab-historical-action="promoverHistorico"><i class="fa-solid fa-arrow-up-right-dots" aria-hidden="true"></i>Promover al flujo operativo</button>');
+    }
+    body.innerHTML = inlineDetailHeaderHtml("Archivo histórico · origen preservado", "Ficha general · " + historical.code)
+      + '<section class="tlab-historical-detail-hero">'
+      + '<div><span class="tlab-historical-detail-hero__code">Código histórico #' + escapeHtml(historical.code) + '</span><h3>' + escapeHtml(historical.patient) + '</h3><p>' + escapeHtml(historical.product) + '</p></div>'
+      + '<div class="tlab-historical-detail-hero__states"><span><small>Estado original</small><strong>' + escapeHtml(humanizeHistoricalValue(historical.originalState)) + '</strong></span><span class="tlab-status tlab-status--' + historicalStatusClass(historical.declaredState) + '">' + escapeHtml(humanizeHistoricalValue(historical.declaredState)) + '</span></div>'
+      + '</section>'
+      + '<section class="tlab-panel tlab-detail-section"><h3>Información sincronizada</h3><div class="tlab-data-grid">'
+      + dataBox("Paciente", historical.patient) + dataBox("Venta", historical.sale) + dataBox("Sucursal histórica", historical.branch) + dataBox("Tipo de trabajo", historical.product)
+      + dataBox("Fecha de retiro declarada", formatDate(pick(detail, ["fecha_retiro_declarada", "fecha_retiro_original", "fecha_retiro"], ""), false)) + dataBox("Fecha de entrega declarada", formatDate(pick(detail, ["fecha_entrega_declarada", "fecha_entrega_original", "fecha_entrega"], ""), false))
+      + dataBox("Fecha objetivo", formatDate(pick(detail, ["fecha_objetivo", "fecha_comprometida"], ""), false)) + dataBox("Fecha de la situación", formatDate(pick(detail, ["fecha_situacion_declarada", "fecha_estado"], ""), false))
+      + '</div><div class="tlab-historical-mechanic"><i class="fa-solid fa-flask-vial" aria-hidden="true"></i><span><small>Mecánico histórico declarado por Administración</small><strong>' + escapeHtml(person(historical.mechanic).name) + '</strong><em>Dato original sugerido: ' + escapeHtml(person(historical.mechanicSnapshot).name) + '. El código declarado pertenece al catálogo histórico y no equivale a una cuenta de usuario técnico.</em></span></div></section>'
+      + '<section class="tlab-panel tlab-detail-section"><h3>Autoría preservada</h3><div class="tlab-historical-authorship"><div>' + personHtml(author, "Carga histórica") + '<span>' + escapeHtml(formatDate(historical.authorDate, true)) + '</span></div><div>' + personHtml(editor, "Última edición histórica") + '<span>' + escapeHtml(formatDate(historical.editorDate, true)) + '</span></div></div></section>'
+      + '<section class="tlab-panel tlab-detail-section"><div class="tlab-section-heading"><div><h3>Datos pendientes</h3><p>La falta de un detalle exacto no altera la relación ya conservada con paciente y venta.</p></div><span class="tlab-status ' + (historical.pending.length ? 'tlab-status--warning' : 'tlab-status--ok') + '">' + historical.pending.length + '</span></div>'
+      + (historical.pending.length ? '<ul class="tlab-historical-pending-list">' + historical.pending.map(function (entry) { return '<li><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span>' + escapeHtml(entry) + '</span></li>'; }).join("") + '</ul>' : '<p class="tlab-historical-complete"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>No hay datos pendientes informados por el servidor.</p>') + '</section>'
+      + '<section class="tlab-panel tlab-detail-section"><div class="tlab-section-heading"><div><h3>Acciones administrativas</h3><p>La información original permanece intacta y cada declaración queda auditada.</p></div></div><div class="tlab-actions">' + (actions.length ? actions.join("") : '<p class="tlab-actions-empty"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> El servidor no habilita acciones para este registro.</p>') + '</div></section>'
+      + '<section class="tlab-panel tlab-detail-section"><h3>Historial de convalidación</h3>' + (events.length ? '<ol class="tlab-history-events">' + events.map(historicalEventHtml).join("") + '</ol>' : '<p class="tlab-actions-empty">Todavía no hay intervenciones administrativas registradas.</p>') + '</section>';
+  }
+
+  function historicalOptions(names) {
+    var envelope = state.historicalEnvelope || {};
+    var detail = state.historicalDetail || {};
+    var options = envelope.opciones_convalidacion || detail.opciones_convalidacion || {};
+    var aliases = names.slice(0);
+    if (names.indexOf("detalles_venta") >= 0 || names.indexOf("tratamientos_venta") >= 0) {
+      aliases.push("candidatos_detalle");
+    }
+    return asArray(pick(options, aliases, pick(envelope, aliases, pick(detail, aliases, []))));
+  }
+
+  function historicalOptionValue(item, kind) {
+    var keys;
+    if (typeof item !== "object") { return item; }
+    keys = kind === "detail"
+      ? ["cod_detalle_venta", "id_detalle_venta", "id", "codigo", "valor", "value"]
+      : (kind === "mechanic"
+        ? ["cod_mecanico_dental", "id_mecanico_dental", "codigo", "id", "valor", "value"]
+        : (kind === "branch"
+          ? ["cod_local", "id_local", "codigo", "id", "valor", "value"]
+          : (kind === "custodian"
+            ? ["cod_custodio_actual", "cod_usuario", "cod_persona", "id", "codigo", "valor", "value"]
+            : ["estado_declarado", "codigo", "cod", "valor", "value", "id"])));
+    return pick(item, keys, "");
+  }
+
+  function historicalOptionLabel(item, fallback) {
+    var label;
+    if (typeof item !== "object") { return humanizeHistoricalValue(item, fallback); }
+    label = pick(item, ["etiqueta", "label", "nombre", "producto", "producto_nombre", "tipo_trabajo", "descripcion", "texto"], fallback || "Opción disponible");
+    if (item.cod_detalle_venta) {
+      label += " · Detalle #" + item.cod_detalle_venta;
+      if (item.detalle_producto) { label += " · " + item.detalle_producto; }
+      if (boolValue(item.ocupado)) { label += " · Ya vinculado"; }
+      else if (boolValue(item.inactivo)) { label += " · Inactivo"; }
+    }
+    if (item.habilitado_custodia === false) {
+      label += " · Sin permisos operativos";
+    }
+    return label;
+  }
+
+  function historicalSelectField(label, name, kind, items, selected, required, placeholder, selectedLabel) {
+    var found = false;
+    var options = items.map(function (item) {
+      var value = historicalOptionValue(item, kind);
+      var isSelected = toStringSafe(value) === toStringSafe(selected);
+      var unavailable = item && typeof item === "object" && item.seleccionable === false;
+      if (isSelected) { found = true; }
+      return '<option value="' + escapeAttr(value) + '" ' + (isSelected ? "selected" : "")
+        + (unavailable && !isSelected ? " disabled" : "") + '>'
+        + escapeHtml(historicalOptionLabel(item, value)) + '</option>';
+    });
+    if (selected !== "" && selected !== null && typeof selected !== "undefined" && !found) {
+      options.unshift('<option value="' + escapeAttr(selected) + '" selected>' + escapeHtml(selectedLabel || ("Valor histórico #" + selected)) + '</option>');
+    }
+    return '<div class="tlab-field"><label for="tlabHistorical_' + escapeAttr(name) + '">' + escapeHtml(label) + '</label><select id="tlabHistorical_' + escapeAttr(name) + '" name="' + escapeAttr(name) + '" ' + (required ? "required" : "") + '><option value="">' + escapeHtml(placeholder) + '</option>' + options.join("") + '</select></div>';
+  }
+
+  function historicalDateInputValue(value) {
+    var match = toStringSafe(value).match(/^\d{4}-\d{2}-\d{2}/);
+    return match ? match[0] : "";
+  }
+
+  function historicalPositiveId(value) {
+    var id = numberValue(value, 0);
+    return id > 0 ? id : "";
+  }
+
+  function openHistoricalWizard(actionCode) {
+    var detail = state.historicalDetail || {};
+    var historical;
+    var mode;
+    var declaredMechanicId;
+    var suggestedMechanicId;
+    if (!detail || state.detailKind !== "historico") { return; }
+    if (!historicalActionAllowed(actionCode)) {
+      notify("El servidor no habilita esta acción para el registro actual.", "error");
+      return;
+    }
+    mode = actionCode === "rectificarHistorico" ? "rectificar" : (actionCode === "promoverHistorico" ? "promover" : "convalidar");
+    historical = normalizeHistorical(detail);
+    declaredMechanicId = historicalPositiveId(pick(detail, ["cod_mecanico_dental", "id_mecanico_dental"], 0));
+    suggestedMechanicId = declaredMechanicId || historicalPositiveId(pick(detail, ["cod_mecanico_snapshot"], 0));
+    state.historicalWizard = {
+      mode: mode,
+      endpoint: actionCode,
+      step: 1,
+      totalSteps: mode === "promover" ? 2 : 3,
+      saving: false,
+      idempotencyKey: makeIdempotencyKey(),
+      values: {
+        estado_declarado: pick(detail, ["estado_declarado", "situacion_declarada"], ""),
+        cod_detalle_venta: historicalPositiveId(pick(detail, ["cod_detalle_venta", "id_detalle_venta"], 0)),
+        cod_mecanico_dental: suggestedMechanicId,
+        cod_local: historicalPositiveId(pick(detail, ["cod_local", "id_local", "cod_local_snapshot"], 0)),
+        cod_custodio_actual: historicalPositiveId(pick(detail, ["cod_custodio_actual", "cod_custodio", "cod_usuario_custodio"], 0)),
+        fecha_objetivo: historicalDateInputValue(pick(detail, ["fecha_objetivo", "fecha_comprometida"], "")),
+        fecha_retiro_declarada: historicalDateInputValue(pick(detail, ["fecha_retiro_declarada", "fecha_retiro"], "")),
+        fecha_entrega_declarada: historicalDateInputValue(pick(detail, ["fecha_entrega_declarada", "fecha_entrega"], "")),
+        fecha_situacion_declarada: historicalDateInputValue(pick(detail, ["fecha_situacion_declarada", "fecha_estado", "fecha_edicion", "fecha_insercion"], "")),
+        justificacion: ""
+      },
+      historical: historical
+    };
+    renderHistoricalWizard();
+    focusFirst(detailBodyElement());
+  }
+
+  function historicalWizardStepsHtml(wizard) {
+    var labels = wizard.mode === "promover"
+      ? ["Revisión", "Confirmación"]
+      : ["Situación", "Relaciones y fechas", "Confirmación"];
+    return '<div class="tlab-steps ' + (labels.length === 2 ? 'tlab-steps--two' : '') + '" aria-label="Progreso">' + labels.map(function (label, index) {
+      var step = index + 1;
+      var cls = step < wizard.step ? "is-done" : (step === wizard.step ? "is-current" : "");
+      return '<span class="tlab-step ' + cls + '" data-step="' + step + '">' + escapeHtml(label) + '</span>';
+    }).join("") + '</div>';
+  }
+
+  function renderHistoricalSituationStep() {
+    var wizard = state.historicalWizard;
+    var values = wizard.values;
+    var states = historicalOptions(["situaciones", "estados_declarables", "estados", "situaciones_estables"]);
+    return '<div class="tlab-historical-wizard__intro"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><div><h3>Declarar una situación estable</h3><p>Elegí la situación comprobada actualmente. El estado original seguirá visible y no será sobrescrito.</p></div></div>'
+      + '<div class="tlab-form-grid">'
+      + historicalSelectField("Situación actual comprobada", "estado_declarado", "state", states, values.estado_declarado, true, "Seleccionar situación estable", humanizeHistoricalValue(values.estado_declarado))
+      + '<div class="tlab-field"><label for="tlabHistoricalSituationDate">Fecha de esta situación</label><input id="tlabHistoricalSituationDate" name="fecha_situacion_declarada" type="date" required value="' + escapeAttr(values.fecha_situacion_declarada) + '"><small>No uses la fecha de hoy si conocés cuándo cambió realmente la situación.</small></div>'
+      + '</div><div class="tlab-historical-original-state"><small>Estado preservado del módulo anterior</small><strong>' + escapeHtml(humanizeHistoricalValue(wizard.historical.originalState)) + '</strong></div>';
+  }
+
+  function renderHistoricalRelationsStep() {
+    var wizard = state.historicalWizard;
+    var values = wizard.values;
+    var detail = state.historicalDetail || {};
+    var details = historicalOptions(["detalles_venta", "tratamientos_venta", "detalles"]);
+    var mechanics = historicalOptions(["mecanicos", "mecanicos_dentales", "mecanicos_historicos"]);
+    var branches = historicalOptions(["locales", "sucursales"]);
+    var custodians = historicalOptions(["custodios", "responsables"]);
+    return '<div class="tlab-historical-wizard__intro"><i class="fa-solid fa-link" aria-hidden="true"></i><div><h3>Completar relaciones y fechas</h3><p>El detalle exacto es opcional. Paciente y venta ya permanecen vinculados por el registro histórico.</p></div></div>'
+      + '<div class="tlab-form-grid">'
+      + historicalSelectField("Detalle exacto de la venta (opcional)", "cod_detalle_venta", "detail", details, values.cod_detalle_venta, false, "Dejar pendiente", pick(detail, ["detalle_venta_nombre", "tratamiento_nombre"], "Detalle #" + values.cod_detalle_venta))
+      + historicalSelectField("Mecánico histórico", "cod_mecanico_dental", "mechanic", mechanics, values.cod_mecanico_dental, true, "Seleccionar mecánico", person(wizard.historical.mechanicSnapshot).name)
+      + historicalSelectField("Sucursal declarada", "cod_local", "branch", branches, values.cod_local, true, "Seleccionar sucursal", wizard.historical.branch)
+      + historicalSelectField("Custodio actual (opcional)", "cod_custodio_actual", "custodian", custodians, values.cod_custodio_actual, false, "Sin custodio comprobado", pick(detail, ["custodio_actual_nombre", "nombre_custodio"], "Custodio #" + values.cod_custodio_actual))
+      + '<div class="tlab-field"><label for="tlabHistoricalTargetDate">Fecha objetivo</label><input id="tlabHistoricalTargetDate" name="fecha_objetivo" type="date" value="' + escapeAttr(values.fecha_objetivo) + '"></div>'
+      + '<div class="tlab-field"><label for="tlabHistoricalWithdrawalDate">Fecha de retiro declarada</label><input id="tlabHistoricalWithdrawalDate" name="fecha_retiro_declarada" type="date" value="' + escapeAttr(values.fecha_retiro_declarada) + '"></div>'
+      + '<div class="tlab-field"><label for="tlabHistoricalDeliveryDate">Fecha de entrega declarada</label><input id="tlabHistoricalDeliveryDate" name="fecha_entrega_declarada" type="date" value="' + escapeAttr(values.fecha_entrega_declarada) + '"></div>'
+      + '<div class="tlab-field tlab-field--wide"><label for="tlabHistoricalJustification">Justificación administrativa</label><textarea id="tlabHistoricalJustification" name="justificacion" required maxlength="750" placeholder="Explicá qué información fue comprobada y por qué corresponde esta declaración">' + escapeHtml(values.justificacion) + '</textarea><small>Quedará registrada junto al usuario, fecha, estado anterior y estado nuevo.</small></div>'
+      + '</div><div class="tlab-historical-mechanic-note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span><strong>Sugerencia del registro original: ' + escapeHtml(person(wizard.historical.mechanicSnapshot).name) + '.</strong> Confirmá o cambiá la selección. Sólo al guardar se declarará por Administración mediante <code>cod_mecanico_dental</code>; no se asigna ni se suplanta una cuenta técnica.</span></div>';
+  }
+
+  function historicalSelectedLabel(name, kind, names) {
+    var value = state.historicalWizard.values[name];
+    var found = historicalOptions(names).filter(function (item) {
+      return toStringSafe(historicalOptionValue(item, kind)) === toStringSafe(value);
+    })[0];
+    return found ? historicalOptionLabel(found, value) : value;
+  }
+
+  function renderHistoricalConfirmationStep() {
+    var wizard = state.historicalWizard;
+    var values = wizard.values;
+    var items = [
+      "Registro histórico: #" + wizard.historical.code,
+      "Situación declarada: " + (historicalSelectedLabel("estado_declarado", "state", ["situaciones", "estados_declarables", "estados", "situaciones_estables"]) || "Sin seleccionar"),
+      "Fecha de situación: " + formatDate(values.fecha_situacion_declarada, false),
+      "Mecánico histórico: " + (historicalSelectedLabel("cod_mecanico_dental", "mechanic", ["mecanicos", "mecanicos_dentales", "mecanicos_historicos"]) || "Sin seleccionar"),
+      "Sucursal: " + (historicalSelectedLabel("cod_local", "branch", ["locales", "sucursales"]) || "Sin seleccionar"),
+      "Detalle exacto: " + (historicalSelectedLabel("cod_detalle_venta", "detail", ["detalles_venta", "tratamientos_venta", "detalles"]) || "Pendiente")
+    ];
+    if (values.cod_custodio_actual) { items.push("Custodio: " + historicalSelectedLabel("cod_custodio_actual", "custodian", ["custodios", "responsables"])); }
+    if (values.fecha_objetivo) { items.push("Fecha objetivo: " + formatDate(values.fecha_objetivo, false)); }
+    if (values.fecha_retiro_declarada) { items.push("Retiro declarado: " + formatDate(values.fecha_retiro_declarada, false)); }
+    if (values.fecha_entrega_declarada) { items.push("Entrega declarada: " + formatDate(values.fecha_entrega_declarada, false)); }
+    return '<div class="tlab-confirm-box"><h3>Revisá la declaración antes de guardar</h3><ul class="tlab-confirm-list">' + items.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join("") + '</ul><div class="tlab-historical-justification-preview"><small>Justificación</small><p>' + escapeHtml(values.justificacion) + '</p></div><label class="tlab-check"><input type="checkbox" id="tlabHistoricalConfirmed" required><span>Confirmo que estos datos fueron comprobados por Administración y que el registro histórico original debe conservarse sin cambios.</span></label></div>';
+  }
+
+  function renderHistoricalPromotionStep() {
+    var wizard = state.historicalWizard;
+    var historical = wizard.historical;
+    var detail = state.historicalDetail || {};
+    var detalleSeleccionado = pick(detail, ["producto", "nombre_producto"], "Tratamiento sin descripción")
+      + " · Detalle #" + pick(detail, ["cod_detalle_venta"], "-");
+    var resumen = '<div class="tlab-data-grid">'
+      + dataBox("Registro", "#" + historical.code)
+      + dataBox("Paciente", historical.patient)
+      + dataBox("Venta", historical.sale)
+      + dataBox("Tratamiento exacto", detalleSeleccionado)
+      + dataBox("Sucursal", historical.branch)
+      + dataBox("Mecánico declarado", person(historical.mechanic).name)
+      + dataBox("Custodio actual", pick(detail, ["custodio_actual", "nombre_custodio"], "Sin registrar"))
+      + dataBox("Fecha objetivo", formatDate(pick(detail, ["fecha_objetivo"], ""), false))
+      + dataBox("Situación declarada", humanizeHistoricalValue(historical.declaredState))
+      + '</div>';
+    if (wizard.step === 1) {
+      return '<div class="tlab-historical-wizard__intro tlab-historical-wizard__intro--promotion"><i class="fa-solid fa-arrow-up-right-dots" aria-hidden="true"></i><div><h3>Promover al flujo operativo</h3><p>El servidor confirmó que este histórico reúne los requisitos. La promoción reutiliza los datos ya convalidados y no modifica el registro de origen.</p></div></div>'
+        + resumen
+        + '<div class="tlab-field tlab-field--wide tlab-historical-promotion-reason"><label for="tlabHistoricalPromotionReason">Justificación de la promoción</label><textarea id="tlabHistoricalPromotionReason" name="justificacion" required maxlength="750" placeholder="Indicá por qué corresponde incorporar este registro al seguimiento operativo">' + escapeHtml(wizard.values.justificacion) + '</textarea><small>La promoción y su autor quedarán auditados.</small></div>';
+    }
+    return '<div class="tlab-confirm-box"><h3>Confirmación final</h3><p>Se creará o vinculará el trabajo operativo utilizando exclusivamente los datos previamente convalidados.</p>' + resumen + '<div class="tlab-historical-justification-preview"><small>Justificación</small><p>' + escapeHtml(wizard.values.justificacion) + '</p></div><label class="tlab-check"><input type="checkbox" id="tlabHistoricalConfirmed" required><span>Confirmo la promoción del histórico #' + escapeHtml(historical.code) + ' al flujo operativo.</span></label></div>';
+  }
+
+  function renderHistoricalWizard() {
+    var wizard = state.historicalWizard;
+    var body;
+    var content;
+    var title;
+    var last;
+    if (!wizard || !state.root) { return; }
+    title = wizard.mode === "rectificar" ? "Rectificar declaración histórica" : (wizard.mode === "promover" ? "Promover registro histórico" : "Convalidar situación histórica");
+    if (wizard.mode === "promover") {
+      content = renderHistoricalPromotionStep();
+    } else {
+      content = wizard.step === 1 ? renderHistoricalSituationStep() : (wizard.step === 2 ? renderHistoricalRelationsStep() : renderHistoricalConfirmationStep());
+    }
+    last = wizard.step === wizard.totalSteps;
+    body = detailBodyElement();
+    if (!body) { return; }
+    body.innerHTML = inlineDetailHeaderHtml("Archivo histórico · Acción guiada", title) + '<form id="tlabHistoricalWizardForm" class="tlab-historical-wizard">' + historicalWizardStepsHtml(wizard) + '<div class="tlab-historical-wizard__body">' + content + '<div class="tlab-form-error" id="tlabHistoricalWizardError" hidden></div></div>'
+      + '<footer class="tlab-historical-wizard__footer"><button type="button" class="tlab-button tlab-button--ghost" data-tlab-command="historical-back" ' + (wizard.step === 1 ? "disabled" : "") + '><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Volver</button><div><button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="historical-cancel">Cancelar</button>'
+      + (last ? '<button type="submit" class="tlab-button ' + (wizard.mode === "promover" ? 'tlab-button--teal' : 'tlab-button--primary') + '" id="tlabHistoricalWizardSubmit"><i class="fa-solid ' + (wizard.mode === "promover" ? 'fa-arrow-up-right-dots' : 'fa-shield-circle-check') + '" aria-hidden="true"></i>' + (wizard.mode === "promover" ? 'Confirmar promoción' : 'Guardar declaración') + '</button>' : '<button type="button" class="tlab-button tlab-button--primary" data-tlab-command="historical-next">Continuar<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>') + '</div></footer></form>';
+  }
+
+  function captureHistoricalWizardValues() {
+    var form;
+    if (!state.historicalWizard || !state.root) { return; }
+    form = state.root.querySelector("#tlabHistoricalWizardForm");
+    if (!form) { return; }
+    forEachFormValue(form, function (value, key) {
+      state.historicalWizard.values[key] = value;
+    });
+  }
+
+  function validateHistoricalWizardStep(step) {
+    var wizard = state.historicalWizard;
+    var values = wizard.values;
+    if (wizard.mode === "promover") {
+      if (step >= 1 && !toStringSafe(values.justificacion).trim()) { return "Escribí la justificación de la promoción."; }
+      return "";
+    }
+    if (step >= 1 && !values.estado_declarado) { return "Seleccioná la situación actual comprobada."; }
+    if (step >= 1 && !values.fecha_situacion_declarada) { return "Indicá la fecha correspondiente a la situación declarada."; }
+    if (step >= 2 && !values.cod_mecanico_dental) { return "Seleccioná el mecánico del catálogo histórico."; }
+    if (step >= 2 && !values.cod_local) { return "Seleccioná la sucursal declarada."; }
+    if (step >= 2 && !toStringSafe(values.justificacion).trim()) { return "Escribí la justificación administrativa."; }
+    return "";
+  }
+
+  function showHistoricalWizardError(message) {
+    var box = state.root.querySelector("#tlabHistoricalWizardError");
+    if (!box) { return; }
+    box.textContent = message;
+    box.hidden = false;
+    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function historicalWizardBack() {
+    if (!state.historicalWizard || state.historicalWizard.saving) { return; }
+    captureHistoricalWizardValues();
+    state.historicalWizard.step = Math.max(1, state.historicalWizard.step - 1);
+    renderHistoricalWizard();
+  }
+
+  function historicalWizardNext() {
+    var error;
+    if (!state.historicalWizard || state.historicalWizard.saving) { return; }
+    captureHistoricalWizardValues();
+    error = validateHistoricalWizardStep(state.historicalWizard.step);
+    if (error) { showHistoricalWizardError(error); return; }
+    state.historicalWizard.step = Math.min(state.historicalWizard.totalSteps, state.historicalWizard.step + 1);
+    renderHistoricalWizard();
+  }
+
+  function closeHistoricalWizard() {
+    if (!state.historicalWizard || state.historicalWizard.saving) { return; }
+    state.historicalWizard = null;
+    renderHistoricalDetailContent();
+    focusFirst(detailBodyElement());
+  }
+
+  function historicalWizardPayload() {
+    var wizard = state.historicalWizard;
+    var detail = state.historicalDetail || {};
+    var values = wizard.values;
+    var id = pick(detail, ["id_historico", "cod_trabajo_mecanico_dental", "id", "codigo_historico"], state.detailId);
+    var payload = {
+      id_historico: id,
+      cod_trabajo_mecanico_dental: pick(detail, ["cod_trabajo_mecanico_dental"], id),
+      version_esperada: pick(detail, ["version", "version_registro"], pick(state.historicalEnvelope || {}, ["version"], "")),
+      clave_idempotencia: wizard.idempotencyKey,
+      justificacion: values.justificacion || ""
+    };
+    if (wizard.mode !== "promover") {
+      payload.estado_declarado = values.estado_declarado || "";
+      payload.cod_detalle_venta = values.cod_detalle_venta || "";
+      payload.cod_mecanico_dental = values.cod_mecanico_dental || "";
+      payload.cod_local = values.cod_local || "";
+      payload.cod_custodio_actual = values.cod_custodio_actual || "";
+      payload.fecha_objetivo = values.fecha_objetivo || "";
+      payload.fecha_retiro_declarada = values.fecha_retiro_declarada || "";
+      payload.fecha_entrega_declarada = values.fecha_entrega_declarada || "";
+      payload.fecha_situacion_declarada = values.fecha_situacion_declarada || "";
+    }
+    return payload;
+  }
+
+  function submitHistoricalWizard() {
+    var wizard = state.historicalWizard;
+    var confirmed = state.root.querySelector("#tlabHistoricalConfirmed");
+    var submit = state.root.querySelector("#tlabHistoricalWizardSubmit");
+    var error;
+    var id;
+    if (!wizard || wizard.saving) { return; }
+    captureHistoricalWizardValues();
+    error = validateHistoricalWizardStep(wizard.mode === "promover" ? 1 : 2);
+    if (error) { showHistoricalWizardError(error); return; }
+    if (!confirmed || !confirmed.checked) { showHistoricalWizardError("Confirmá la declaración antes de guardar."); return; }
+    if (!historicalActionAllowed(wizard.endpoint)) {
+      showHistoricalWizardError("El servidor ya no habilita esta acción. Actualizá el registro.");
+      return;
+    }
+    wizard.saving = true;
+    id = state.detailId;
+    if (submit) { submit.disabled = true; submit.innerHTML = '<i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>Guardando...'; }
+    request(wizard.endpoint, historicalWizardPayload()).then(function (response) {
+      var message = response.message || (wizard.mode === "promover" ? "El registro fue promovido al flujo operativo." : "La declaración histórica quedó auditada.");
+      state.historicalWizard = null;
+      notify(message, "success");
+      loadHistoricals(false);
+      loadSummary().then(null, function (summaryError) { notify(summaryError.message, "error"); });
+      return openHistoricalDetail(id, true);
+    }).then(null, function (requestError) {
+      if (!state.historicalWizard) { return; }
+      state.historicalWizard.saving = false;
+      renderHistoricalWizard();
+      showHistoricalWizardError(requestError.message + (requestError.code && /CONFLICT|VERSION/i.test(requestError.code) ? " Actualizá el registro antes de volver a confirmar." : ""));
+    });
   }
 
   function detailArray(names) {
@@ -1226,7 +4027,6 @@
     }) && numberValue(state.moduleOptions.cod_evolucion_origen, 0) <= 0;
     actions = contextActions(serverActions);
     canAudit = boolValue(envelope.puede_ver_auditoria || detail.puede_ver_auditoria) && detailArray(["auditoria", "historial_auditoria"]).length > 0;
-    state.root.querySelector("#tlabDetailTitle").textContent = work.code;
     tabs = [
       { key: "timeline", label: "Trazabilidad", icon: "fa-diagram-project" },
       { key: "evidence", label: "Evidencias", icon: "fa-images" },
@@ -1237,11 +4037,13 @@
     tabContent = state.detailTab === "evidence" ? renderEvidenceTab()
       : (state.detailTab === "notes" ? renderNotesTab()
         : (state.detailTab === "audit" ? renderAuditTab() : renderTimelineTab()));
-    body = state.root.querySelector("#tlabDetailBody");
-    body.innerHTML = '<div class="tlab-detail-summary">'
+    body = detailBodyElement();
+    if (!body) { return; }
+    body.innerHTML = inlineDetailHeaderHtml("Ficha general · cadena de custodia", work.code) + '<div class="tlab-detail-summary">'
       + '<section class="tlab-detail-hero"><div class="tlab-detail-hero__image">' + imageBlock(work.image, "Evidencia principal de " + work.code) + '</div><div class="tlab-detail-hero__copy"><h3>' + escapeHtml(work.product) + '</h3><p><i class="fa-solid fa-user" aria-hidden="true"></i> ' + escapeHtml(work.patient) + '</p><p><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(work.branch) + '</p><span class="tlab-status tlab-status--' + work.deadlineClass + '">' + escapeHtml(work.deadlineText) + '</span></div></section>'
       + '<section class="tlab-panel"><h3>Situación actual</h3><div class="tlab-custody"><small>Actualmente en poder de</small><strong>' + escapeHtml(person(work.custodian).name) + '</strong></div><div class="tlab-data-grid" style="margin-top:10px">'
       + dataBox("Venta", work.sale || work.code) + dataBox("Situación", work.situation) + dataBox("Fecha objetivo", formatDate(work.targetDate, false)) + dataBox("Ciclo", work.currentCycle)
+      + dataBox("Odontólogo", person(work.doctor, "Odontólogo").name) + dataBox("Mecánico dental", person(work.mechanic, "Mecánico dental").name)
       + dataBox("Días totales", formatDays(work.totalDays)) + dataBox("Días con custodio", formatDays(work.currentDays)) + dataBox("Ajustes", work.adjustments) + dataBox("Sucursal", work.branch)
       + '</div></section></div>'
       + '<section class="tlab-panel tlab-detail-section"><div class="tlab-section-heading"><div><h3>Próxima acción</h3><p>Disponible según permiso, asignación y custodia actual.</p></div></div><div class="tlab-actions">'
@@ -1253,7 +4055,8 @@
   }
 
   function actionButtonHtml(action) {
-    return '<button type="button" class="tlab-button ' + (action.danger ? "tlab-button--danger" : (action.code === "agregarEvidencia" || action.code === "agregarNota" ? "tlab-button--secondary" : "tlab-button--primary")) + '" data-tlab-action="' + escapeAttr(action.code) + '"><i class="fa-solid ' + escapeAttr(action.icon || "fa-arrow-right") + '" aria-hidden="true"></i>' + escapeHtml(action.label) + '</button>';
+    var secondary = action.code === "agregarEvidencia" || action.code === "agregarNota" || action.code === "registrarNovedad";
+    return '<button type="button" class="tlab-button ' + (action.danger ? "tlab-button--danger" : (secondary ? "tlab-button--secondary" : "tlab-button--primary")) + '" data-tlab-action="' + escapeAttr(action.code) + '"><i class="fa-solid ' + escapeAttr(action.icon || "fa-arrow-right") + '" aria-hidden="true"></i>' + escapeHtml(action.label) + '</button>';
   }
 
   function timelineEventHtml(item, index, length) {
@@ -1279,13 +4082,37 @@
       + '</div>' + (index < length - 1 ? '<span class="tlab-timeline-node__knot" aria-hidden="true"></span><span class="tlab-timeline-node__elapsed">' + escapeHtml(elapsed || "Siguiente") + '</span>' : '') + '</article>';
   }
 
+  function custodyTimelineEventHtml(item, index, length) {
+    var event = custodyEvent(item);
+    var evidence = event.mediaId
+      ? '<button type="button" class="tlab-event-card__photo" data-tlab-media-id="' + escapeAttr(event.mediaId) + '" data-tlab-evidence-caption="' + escapeAttr(event.title) + '">' + imageBlock(event.image, event.title) + '</button>'
+      : '<button type="button" class="tlab-event-card__photo" ' + (event.image ? 'data-tlab-evidence-url="' + escapeAttr(event.image) + '" data-tlab-evidence-caption="' + escapeAttr(event.title) + '"' : 'disabled') + '>' + imageBlock(event.image, event.title) + '</button>';
+    return '<article class="tlab-timeline-node tlab-timeline-node--custody"><div class="tlab-event-card ' + (event.current ? "tlab-event-card--current" : (event.cancelled ? "tlab-event-card--cancelled" : "")) + '">'
+      + '<div class="tlab-event-card__media">' + evidence + avatarHtml(event.actor) + '</div>'
+      + '<span class="tlab-event-card__cycle">' + (event.current ? "Custodia actual" : (event.cancelled ? "Cierre por cancelación" : (event.final ? "Custodia final" : "Custodia cerrada"))) + '</span><h4>' + escapeHtml(event.title) + '</h4>'
+      + '<span class="tlab-event-card__who">' + escapeHtml(event.actor.name) + ' · ' + escapeHtml(event.actor.role) + '</span><span class="tlab-event-card__when">' + escapeHtml(formatDate(event.date, true)) + ' · ' + escapeHtml(event.branch) + '</span>'
+      + (event.performedBy && event.performedBy.name !== event.actor.name ? '<p class="tlab-event-card__audit"><i class="fa-solid fa-user-shield" aria-hidden="true"></i> Registrado por ' + escapeHtml(event.performedBy.name) + '</p>' : '')
+      + (event.elapsed ? '<p class="tlab-event-card__duration"><i class="fa-solid fa-clock" aria-hidden="true"></i> ' + escapeHtml(event.elapsed) + '</p>' : '')
+      + (event.condition ? '<p class="tlab-event-card__condition"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> ' + escapeHtml(event.condition) + '</p>' : '')
+      + (event.cancelled ? '<p class="tlab-event-card__cancelled"><i class="fa-solid fa-ban" aria-hidden="true"></i> Custodia cerrada sin entrega final</p>' : '')
+      + (event.note ? '<p class="tlab-event-card__note">' + escapeHtml(event.note) + '</p>' : '')
+      + (event.photoException ? '<p class="tlab-event-card__exception"><i class="fa-solid fa-camera-slash" aria-hidden="true"></i> ' + escapeHtml(photoExceptionLabel(event)) + '</p>' : '')
+      + (event.noveltyCount ? '<p class="tlab-event-card__novelties"><i class="fa-solid fa-message" aria-hidden="true"></i> ' + event.noveltyCount + (event.noveltyCount === 1 ? " novedad" : " novedades") + '</p>' : '')
+      + '</div>' + (index < length - 1 ? '<span class="tlab-timeline-node__knot" aria-hidden="true"></span><span class="tlab-timeline-node__elapsed">' + escapeHtml(event.elapsed || "Relevo") + '</span>' : '') + '</article>';
+  }
+
   function renderTimelineTab() {
-    var events = detailArray(["eventos", "timeline", "trazabilidad"]).filter(function (item) {
+    var work = normalizeWork(state.detail || {});
+    var events = work.route.length ? work.route : detailArray(["eventos", "timeline", "trazabilidad"]);
+    var custody = work.custodyChain;
+    events = events.filter(function (item) {
       var type = toStringSafe(pick(item, ["tipo_evento", "tipo", "accion"], "")).toLowerCase();
-      return type !== "evidencia_agregada" && type !== "nota_agregada";
+      return type !== "evidencia_agregada" && type !== "nota_agregada" && type !== "novedad_custodia" && type !== "hilo_tomado" && type !== "custodia_rectificada";
     });
-    if (!events.length) { return '<div class="tlab-empty"><div><i class="fa-solid fa-diagram-project" aria-hidden="true"></i><strong>Aún no hay eventos visibles</strong><span>La trazabilidad se formará con acciones y confirmaciones de custodia.</span></div></div>'; }
-    return '<section class="tlab-timeline"><div class="tlab-section-heading"><div><h3>Hilo visual del trabajo</h3><p>Cada nodo representa una acción o una confirmación auditada.</p></div></div><div class="tlab-timeline-list">' + events.map(function (event, index) { return timelineEventHtml(event, index, events.length); }).join("") + '</div></section>';
+    return '<div class="tlab-detail-tracks"><section class="tlab-timeline"><div class="tlab-section-heading"><div><h3>Recorrido operativo</h3><p>Etapas, decisiones y avance del trabajo.</p></div></div>'
+      + (events.length ? '<div class="tlab-timeline-list">' + events.map(function (event, index) { return timelineEventHtml(event, index, events.length); }).join("") + '</div>' : '<div class="tlab-empty tlab-empty--compact"><div><i class="fa-solid fa-diagram-project" aria-hidden="true"></i><strong>Sin etapas operativas visibles</strong></div></div>') + '</section>'
+      + '<section class="tlab-timeline tlab-timeline--custody"><div class="tlab-section-heading"><div><h3>El hilo de custodia</h3><p>Cada nodo es una persona interna que tuvo físicamente el trabajo.</p></div></div>'
+      + (custody.length ? '<div class="tlab-timeline-list">' + custody.map(function (node, index) { return custodyTimelineEventHtml(node, index, custody.length); }).join("") + '</div>' : '<div class="tlab-empty tlab-empty--compact"><div><i class="fa-solid fa-link" aria-hidden="true"></i><strong>El hilo comenzará al iniciar el trabajo</strong></div></div>') + '</section></div>';
   }
 
   function renderEvidenceTab() {
@@ -1303,24 +4130,26 @@
         var original = pick(item, ["url_original_autorizada"], "");
         var mediaId = pick(item, ["id_media", "id"], "");
         var label = pick(item, ["descripcion", "tipo_evidencia", "nombre_original", "nombre"], "Evidencia");
+        var mime = pick(item, ["mime", "mime_type", "tipo_mime"], "");
         return '<button type="button" ' + (mediaId
           ? 'data-tlab-media-id="' + escapeAttr(mediaId) + '"'
           : 'data-tlab-evidence-url="' + escapeAttr(original || url) + '"')
-          + ' data-tlab-evidence-caption="' + escapeAttr(label) + '">' + imageBlock(url, label) + '<span>' + escapeHtml(label) + '</span></button>';
+          + ' data-tlab-evidence-caption="' + escapeAttr(label) + '">' + (toStringSafe(mime).toLowerCase() === "application/pdf" ? '<i class="fa-solid fa-file-pdf tlab-gallery__document" aria-hidden="true"></i>' : imageBlock(url, label)) + '<span>' + escapeHtml(label) + '</span></button>';
       }).join("") + '</div></section>';
     }).join("") + '</div>';
   }
 
   function renderNotesTab() {
-    var notes = detailArray(["notas", "observaciones"]);
+    var notes = detailArray(["novedades"]).concat(detailArray(["notas", "observaciones"]));
     if (!notes.length) {
       notes = detailArray(["eventos", "timeline", "trazabilidad"]).filter(function (item) {
-        return toStringSafe(pick(item, ["tipo_evento", "tipo", "accion"], "")).toLowerCase() === "nota_agregada";
+        var type = toStringSafe(pick(item, ["tipo_evento", "tipo", "accion"], "")).toLowerCase();
+        return type === "nota_agregada" || type === "novedad_custodia";
       });
     }
     if (!notes.length) { return '<div class="tlab-empty"><div><i class="fa-solid fa-message" aria-hidden="true"></i><strong>Sin observaciones</strong><span>Las notas autorizadas del trabajo aparecerán aquí.</span></div></div>'; }
     return '<ul class="tlab-note-list">' + notes.map(function (item) {
-      return '<li><strong>' + escapeHtml(pick(item, ["texto", "nota", "observacion"], "Observación")) + '</strong><span>' + escapeHtml(person(item.actor || item.usuario || pick(item, ["nombre_usuario"], "Usuario")).name) + ' · ' + escapeHtml(formatDate(pick(item, ["fecha_hora", "fecha", "creado_en"], ""), true)) + '</span></li>';
+      return '<li><strong>' + escapeHtml(pick(item, ["texto", "nota", "observacion", "descripcion", "detalle"], "Observación")) + '</strong><span>' + escapeHtml(humanizeHistoricalValue(pick(item, ["tipo_novedad", "categoria"], "Observación"))) + ' · ' + escapeHtml(person(item.actor || item.usuario || pick(item, ["nombre_usuario", "actor_nombre"], "Usuario")).name) + ' · ' + escapeHtml(formatDate(pick(item, ["fecha_hora", "fecha_servidor", "fecha", "creado_en"], ""), true)) + '</span></li>';
     }).join("") + '</ul>';
   }
 
@@ -1362,6 +4191,10 @@
     return normalizeWork((state.action && state.action.work) || {});
   }
 
+  function isStartAction(code) {
+    return code === "iniciarTrabajo" || code === "iniciarTrabajosAgrupados";
+  }
+
   function renderActionDialog() {
     var layer = state.root.querySelector("#tlabActionLayer");
     var action = state.action;
@@ -1372,10 +4205,10 @@
     work = actionContextWork();
     body = action.step === 1 ? renderActionIntro(work)
       : (action.step === 2 ? renderActionFields(work) : renderActionConfirmation(work));
-    nextLabel = action.step === 3 ? "Confirmar acción" : "Continuar";
-    layer.innerHTML = '<section class="tlab-dialog" role="dialog" aria-modal="true" aria-labelledby="tlabActionTitle"><header class="tlab-dialog__header"><div><small>Acción guiada</small><h2 id="tlabActionTitle">' + escapeHtml(action.config.label) + '</h2></div><button type="button" class="tlab-icon-button tlab-icon-button--light" data-tlab-command="close-action" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>'
+    nextLabel = action.step === 3 ? (action.config.submitLabel || "Confirmar acción") : "Continuar";
+    layer.innerHTML = '<section class="tlab-dialog" role="dialog" aria-modal="true" aria-labelledby="tlabActionTitle" aria-busy="' + (action.saving ? 'true' : 'false') + '"><header class="tlab-dialog__header"><div><small>Acción guiada</small><h2 id="tlabActionTitle">' + escapeHtml(action.config.label) + '</h2></div><button type="button" class="tlab-icon-button tlab-icon-button--light" data-tlab-command="close-action" aria-label="Cerrar" ' + (action.saving ? 'disabled' : '') + '><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>'
       + '<form class="tlab-dialog__form" id="tlabActionForm"><div class="tlab-dialog__body"><div class="tlab-steps" aria-label="Progreso"><span class="tlab-step ' + (action.step === 1 ? "is-current" : "is-done") + '" data-step="1">Revisar</span><span class="tlab-step ' + (action.step === 2 ? "is-current" : (action.step > 2 ? "is-done" : "")) + '" data-step="2">Completar</span><span class="tlab-step ' + (action.step === 3 ? "is-current" : "") + '" data-step="3">Confirmar</span></div>' + body + '<div class="tlab-form-error" id="tlabActionError" hidden></div><div class="tlab-upload-progress" id="tlabUploadProgress" hidden><span></span></div></div>'
-      + '<footer class="tlab-dialog__footer"><button type="button" class="tlab-button tlab-button--ghost" data-tlab-command="action-back" ' + (action.step === 1 ? "disabled" : "") + '><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Volver</button><div class="tlab-dialog__footer-actions"><button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="close-action">Cancelar</button>'
+      + '<footer class="tlab-dialog__footer"><button type="button" class="tlab-button tlab-button--ghost" data-tlab-command="action-back" ' + (action.step === 1 || action.saving ? "disabled" : "") + '><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Volver</button><div class="tlab-dialog__footer-actions"><button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="close-action" ' + (action.saving ? 'disabled' : '') + '>Cancelar</button>'
       + (action.step === 3 ? '<button type="submit" class="tlab-button ' + (action.config.danger ? "tlab-button--danger" : "tlab-button--primary") + '" id="tlabActionSubmit">' : '<button type="button" class="tlab-button tlab-button--primary" data-tlab-command="action-next">') + '<i class="fa-solid ' + escapeAttr(action.config.icon || "fa-arrow-right") + '" aria-hidden="true"></i>' + escapeHtml(nextLabel) + '</button></div></footer></form></section>';
     layer.hidden = false;
     focusFirst(layer);
@@ -1384,24 +4217,53 @@
   function renderActionIntro(work) {
     var action = state.action;
     var raw = action.work || {};
+    var sessionPerson = person(
+      state.context.usuario || state.context.actor || {
+        nombre: pick(state.context, ["nombre_usuario", "usuario_nombre", "nombre"], "Usuario autenticado"),
+        rol: pick(state.context, ["rol", "perfil"], "Usuario Telar"),
+        avatar_url: pick(state.context, ["avatar", "avatar_usuario", "usuario_avatar", "avatar_url"], "")
+      },
+      "Usuario Telar"
+    );
+    var custodyGuide = action.code === "tomarHilo"
+      ? '<section class="tlab-custody-guide"><div><small>Custodio anterior</small><strong>' + escapeHtml(person(work.currentCustody.person).name) + '</strong></div><div class="tlab-custody-guide__arrow"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div><div class="tlab-custody-guide__person">' + avatarHtml(sessionPerson) + '<span><small>La custodia quedará a nombre de</small><strong>' + escapeHtml(sessionPerson.name) + '</strong><em>' + escapeHtml(sessionPerson.role) + (pick(state.context, ["nombre_local", "local_nombre"], "") ? ' · ' + escapeHtml(pick(state.context, ["nombre_local", "local_nombre"], "")) : '') + '</em></span></div><p><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Al confirmar, la fecha y hora del servidor abrirán tu período de custodia. Nadie externo a Telar se agrega como custodio.</p></section>'
+      : '';
     return '<div class="tlab-action-context">'
       + '<div><small>Código</small><strong>' + escapeHtml(work.code) + '</strong></div>'
       + '<div><small>Paciente</small><strong>' + escapeHtml(work.patient) + '</strong></div>'
       + '<div><small>Producto</small><strong>' + escapeHtml(work.product) + '</strong></div>'
-      + '</div><div class="tlab-confirm-box"><h3><i class="fa-solid ' + escapeAttr(action.config.icon || "fa-circle-check") + '" aria-hidden="true"></i> Qué se registrará</h3><p>' + escapeHtml(pick(action.config, ["ayuda", "descripcion"], actionHelp(action.code))) + '</p>'
-      + (action.code === "iniciarTrabajo" && pick(raw, ["modo_individualizacion"], "") ? '<p><strong>Individualización:</strong> ' + escapeHtml(pick(raw, ["modo_individualizacion"], "").replace(/_/g, " ")) + '</p>' : '')
+      + '</div>' + custodyGuide + '<div class="tlab-confirm-box"><h3><i class="fa-solid ' + escapeAttr(action.config.icon || "fa-circle-check") + '" aria-hidden="true"></i> Qué se registrará</h3><p>' + escapeHtml(pick(action.config, ["ayuda", "descripcion"], actionHelp(action.code))) + '</p>'
+      + (isStartAction(action.code) && pick(raw, ["modo_individualizacion"], "") ? '<p><strong>Individualización:</strong> ' + escapeHtml(pick(raw, ["modo_individualizacion"], "").replace(/_/g, " ")) + '</p>' : '')
+	  + (action.code === "iniciarTrabajosAgrupados" ? renderGroupedStartSummary(raw) : '')
       + '<p><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> La fecha, el usuario y la trazabilidad serán registrados por el servidor.</p></div>';
+  }
+
+  function renderGroupedStartSummary(raw) {
+    var regularizacion = raw.regularizacion_unidades || raw.regularizacion || {};
+    var unidades = asArray(regularizacion.unidades);
+    return '<section class="tlab-grouped-origin"><div><small>Codigo de origen compartido</small><strong>'
+      + escapeHtml(regularizacion.codigo_origen || "Pendiente") + '</strong></div><ol>'
+      + unidades.map(function (unidad) {
+        var piezas = asArray(unidad.piezas);
+        return '<li><b>Trabajo ' + escapeHtml(unidad.numero_unidad || "-") + ' de '
+          + escapeHtml(regularizacion.cantidad_unidades || unidades.length) + '</b><span>'
+          + escapeHtml(piezas.length ? "Piezas " + piezas.join(", ") : (unidad.pieza ? "Pieza " + unidad.pieza : "Sin ubicacion"))
+          + '</span></li>';
+      }).join("") + '</ol><p>El técnico puede asignarse ahora o más adelante. Las instrucciones y la evidencia inicial se aplicarán al lote; después, cada trabajo avanzará de forma independiente.</p></section>';
   }
 
   function actionHelp(code) {
     var help = {
-      iniciarTrabajo: "Se creará el ciclo Original y la primera evidencia de custodia.",
+      iniciarTrabajo: "Se creará el ciclo Original y la primera evidencia de custodia. Si no elegís técnico, quedará con Técnico pendiente.",
+      iniciarTrabajosAgrupados: "Se creará un trabajo independiente por cada selección, todos con el mismo código de origen. Si no elegís técnico, quedarán con Técnico pendiente.",
+      asignarTecnico: "Se asignará el técnico a todos los trabajos pendientes del mismo código de origen, sin iniciar el traslado.",
       iniciarTransferencia: "Se registrará una entrega pendiente hasta que el destinatario confirme la recepción.",
-      confirmarRecepcion: "La confirmación creará un nuevo nodo y actualizará el custodio físico.",
+      tomarHilo: "Se cerrará el período del custodio anterior y se abrirá un nuevo nodo a nombre del usuario autenticado.",
+      registrarNovedad: "La novedad quedará dentro de tu período de custodia, sin transferir el trabajo ni borrar antecedentes.",
+      rectificarCustodia: "La corrección administrativa cambiará el responsable actual y conservará el motivo, el actor y la hora para auditoría.",
       agregarEvidencia: "Las fotos se agregarán al ciclo actual sin reemplazar evidencias anteriores.",
       agregarNota: "La observación quedará vinculada al nodo actual sin cambiar la custodia.",
       iniciarDevolucion: "Se registrará la entrega del trabajo terminado y quedará pendiente de recepción en clínica.",
-      confirmarDevolucion: "La clínica pasará a ser custodio y el trabajo quedará pendiente de revisión.",
       solicitarAjuste: "Se abrirá un nuevo ciclo de ajuste sin borrar la historia original.",
       aprobarTrabajo: "El tiempo de laboratorio quedará cerrado y el trabajo esperará su instalación.",
       registrarInstalacion: "La instalación cerrará el flujo desde la evolución clínica vinculada.",
@@ -1421,6 +4283,42 @@
     return asArray(config.motivos || config.motivos_ajuste || catalogItems(["motivos_ajuste"]));
   }
 
+  function noveltyTypes() {
+    var config = state.action.config || {};
+    var supplied = asArray(config.tipos_novedad || config.novedades_permitidas || catalogItems(["tipos_novedad_custodia"]));
+    return supplied.length ? supplied : [
+      { codigo: "modificacion_trabajo", nombre: "Modificación del trabajo" },
+      { codigo: "cambio_color", nombre: "Cambio de color" },
+      { codigo: "ajuste_solicitado", nombre: "Ajuste solicitado" },
+      { codigo: "problema_detectado", nombre: "Problema detectado" },
+      { codigo: "pieza_danada", nombre: "Pieza dañada" },
+      { codigo: "falta_informacion", nombre: "Falta información" },
+      { codigo: "trabajo_listo", nombre: "Trabajo listo" },
+      { codigo: "solicitud_confirmacion_clinica", nombre: "Solicitud de confirmación clínica" },
+      { codigo: "observacion_general", nombre: "Observación general" }
+    ];
+  }
+
+  function noPhotoReasons() {
+    var config = state.action.config || {};
+    var supplied = asArray(config.motivos_sin_foto || config.motivos_excepcion_foto);
+    return supplied.length ? supplied : [
+      { codigo: "falla_dispositivo", nombre: "Falla del dispositivo" },
+      { codigo: "imposibilidad_operativa", nombre: "Imposibilidad operativa" },
+      { codigo: "foto_no_disponible", nombre: "La foto no está disponible" },
+      { codigo: "otro", nombre: "Otro motivo" }
+    ];
+  }
+
+  function custodyCorrectionPeople() {
+    var config = state.action.config || {};
+    var work = state.action.work || {};
+    return asArray(config.custodios_permitidos || config.usuarios_telar || config.custodios
+      || work.custodios_permitidos || work.usuarios_telar
+      || (state.detailEnvelope && (state.detailEnvelope.custodios_permitidos || state.detailEnvelope.usuarios_telar))
+      || catalogItems(["custodios", "responsables", "usuarios_telar"]));
+  }
+
   function renderActionFields(work) {
     var action = state.action;
     var config = action.config;
@@ -1429,7 +4327,7 @@
     var raw = action.work || {};
     var recipients;
     var reasons;
-    if (action.code === "iniciarTrabajo") {
+    if (isStartAction(action.code)) {
       var tieneCatalogoContextual = Object.prototype.hasOwnProperty.call(raw, "tecnicos_disponibles")
         || Object.prototype.hasOwnProperty.call(raw, "mecanicos");
       var tecnicosInicio = asArray(raw.tecnicos_disponibles || raw.mecanicos || []);
@@ -1438,9 +4336,46 @@
           return typeof item !== "object" || item.habilitado_flujo !== false;
         });
       }
-      fields.push(selectField("Mecánico dental", "cod_tecnico_usuario", tecnicosInicio, values.cod_tecnico_usuario, true, "Seleccionar técnico asignado"));
+      fields.push(selectField(
+        "Técnico de laboratorio",
+        "cod_tecnico_usuario",
+        tecnicosInicio,
+        values.cod_tecnico_usuario,
+        false,
+        "Asignar más adelante",
+        tecnicosInicio.length
+          ? "Podés elegirlo ahora o continuar con Técnico pendiente."
+          : "No hay técnicos habilitados. El trabajo se guardará con Técnico pendiente."
+      ));
       fields.push('<div class="tlab-field"><label for="tlabActionColor">Color o colorímetro</label><input id="tlabActionColor" name="colorimetro" type="text" maxlength="30" placeholder="Ej.: A2" value="' + escapeAttr(values.colorimetro || pick(raw, ["colorimetro", "color", "color_precargado"], "")) + '"><small>Completálo cuando el tratamiento lo requiera.</small></div>');
       fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionInstructions">Instrucciones para el laboratorio</label><textarea id="tlabActionInstructions" name="instrucciones" maxlength="1000" placeholder="Material, diseño u otra especificación necesaria">' + escapeHtml(values.instrucciones || pick(raw, ["instrucciones", "observacion_precargada", "indicaciones"], "")) + '</textarea><small>El producto y las ubicaciones ya están vinculados; agregá solamente lo que falte.</small></div>');
+    }
+    if (action.code === "asignarTecnico") {
+      var tecnicosAsignacion = catalogItems(["mecanicos", "tecnicos", "tecnicos_disponibles"]).filter(function (item) {
+        return typeof item !== "object" || item.habilitado_flujo !== false;
+      });
+      fields.push(selectField(
+        "Técnico de laboratorio",
+        "cod_tecnico_usuario",
+        tecnicosAsignacion,
+        values.cod_tecnico_usuario,
+        true,
+        "Seleccionar técnico habilitado",
+        "La asignación alcanzará a los trabajos con Técnico pendiente del mismo código de origen. No iniciará el traslado."
+      ));
+    }
+    if (action.code === "tomarHilo") {
+      var receptionCondition = values.condicion_recepcion || "";
+      fields.push('<fieldset class="tlab-field tlab-field--wide tlab-reception-condition"><legend>¿Cómo recibís este trabajo? <span aria-hidden="true">*</span></legend><label class="tlab-choice-card"><input type="radio" name="condicion_recepcion" value="conforme" ' + (receptionCondition === "conforme" ? "checked" : "") + '><span><i class="fa-solid fa-circle-check" aria-hidden="true"></i><strong>Conforme</strong><small>Coincide con lo esperado y puede continuar.</small></span></label><label class="tlab-choice-card"><input type="radio" name="condicion_recepcion" value="con_observaciones" ' + (receptionCondition === "con_observaciones" ? "checked" : "") + '><span><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><strong>Con observaciones</strong><small>Lo recibís, dejando constancia de una diferencia.</small></span></label></fieldset>');
+      if (receptionCondition === "con_observaciones") {
+        fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionNote">Observación de recepción <span aria-hidden="true">*</span></label><textarea id="tlabActionNote" name="observacion" required minlength="5" maxlength="750" placeholder="Describí qué observaste al recibir el trabajo">' + escapeHtml(values.observacion || "") + '</textarea><small>La observación quedará visible en este nodo de custodia.</small></div>');
+      }
+    }
+    if (action.code === "registrarNovedad") {
+      fields.push(selectField("Tipo de novedad", "tipo_novedad", noveltyTypes(), values.tipo_novedad || "observacion_general", false, "Observación general", "Ayuda a identificar la novedad sin cambiar la custodia."));
+    }
+    if (action.code === "rectificarCustodia") {
+      fields.push(selectField("Nuevo custodio interno", "cod_custodio_rectificado", custodyCorrectionPeople(), values.cod_custodio_rectificado, true, "Seleccionar usuario Telar", "Es una corrección administrativa; no representa una recepción normal."));
     }
     if (config.recipient || boolValue(config.requiere_destinatario)) {
       recipients = eligibleRecipients();
@@ -1451,43 +4386,45 @@
       fields.push(selectField("Motivo del ajuste", "motivo", reasons, values.motivo, true, "Seleccionar motivo"));
     }
     if (config.justification || boolValue(config.requiere_justificacion)) {
-      fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionJustification">Justificación</label><textarea id="tlabActionJustification" name="justificacion" required maxlength="1000" placeholder="Explicá el motivo de forma clara">' + escapeHtml(values.justificacion || "") + '</textarea><small>Este texto quedará auditado.</small></div>');
+      fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionJustification">Justificación</label><textarea id="tlabActionJustification" name="justificacion" required ' + (action.code === "rectificarCustodia" ? 'minlength="5" maxlength="750"' : 'maxlength="1000"') + ' placeholder="Explicá el motivo de forma clara">' + escapeHtml(values.justificacion || "") + '</textarea><small>Este texto quedará auditado.</small></div>');
     }
-    if (config.note || config.noteRequired || boolValue(config.permite_observacion)) {
-      fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionNote">' + (action.code === "agregarNota" ? "Observación" : "Indicaciones u observaciones") + '</label><textarea id="tlabActionNote" name="observacion" ' + (config.noteRequired ? "required" : "") + ' maxlength="1200" placeholder="Agregá sólo información necesaria para este trabajo">' + escapeHtml(values.observacion || pick(raw, ["observacion_precargada", "indicaciones"], "")) + '</textarea></div>');
+    if ((config.note || config.noteRequired || boolValue(config.permite_observacion)) && action.code !== "tomarHilo") {
+      fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionNote">' + (action.code === "registrarNovedad" ? "Descripción de la novedad" : (action.code === "agregarNota" ? "Observación" : "Indicaciones u observaciones")) + '</label><textarea id="tlabActionNote" name="observacion" ' + (config.noteRequired ? "required" : "") + (action.code === "registrarNovedad" ? ' minlength="3" maxlength="750"' : ' maxlength="1200"') + ' placeholder="Agregá sólo información necesaria para este trabajo">' + escapeHtml(values.observacion || pick(raw, ["observacion_precargada", "indicaciones"], "")) + '</textarea>' + (action.code === "registrarNovedad" ? '<small>Quedará vinculada a tu período actual de custodia.</small>' : '') + '</div>');
     }
-    if (boolValue(state.context.es_auditor)) {
-      fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionAuditReason">Motivo de intervención excepcional</label><textarea id="tlabActionAuditReason" name="motivo_excepcion" maxlength="750" placeholder="Completá este campo cuando actuás fuera del rol, asignación o sucursal habitual">' + escapeHtml(values.motivo_excepcion || "") + '</textarea><small>El servidor lo exigirá sólo si esta acción depende del permiso de auditoría.</small></div>');
+    if (boolValue(config.requiere_motivo_excepcion)) {
+      fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionAuditReason">Motivo de intervención excepcional</label><textarea id="tlabActionAuditReason" name="motivo_excepcion" required maxlength="750" placeholder="Explicá por qué corresponde intervenir fuera del recorrido habitual">' + escapeHtml(values.motivo_excepcion || "") + '</textarea><small>Se exige porque esta acción depende excepcionalmente del permiso de auditoría.</small></div>');
     }
     if (action.code === "solicitarAjuste" && values.motivo && toStringSafe(values.motivo).toLowerCase() === "otro") {
       fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionOtherReason">Descripción de “Otro”</label><input id="tlabActionOtherReason" name="motivo_otro" type="text" required maxlength="180" value="' + escapeAttr(values.motivo_otro || "") + '"></div>');
     }
-    return '<div class="tlab-form-grid">' + fields.join("") + '</div>' + ((config.evidence || config.evidenceOptional || boolValue(config.requiere_evidencia) || boolValue(config.permite_evidencia)) ? renderEvidencePicker(config.evidence || boolValue(config.requiere_evidencia)) : '');
+    return '<div class="tlab-form-grid">' + fields.join("") + '</div>' + ((config.evidence || config.evidenceOptional || boolValue(config.requiere_evidencia) || boolValue(config.permite_evidencia)) ? renderEvidencePicker(config.evidence || boolValue(config.requiere_evidencia), boolValue(config.documents)) : '');
   }
 
-  function selectField(label, name, items, selected, required, placeholder) {
+  function selectField(label, name, items, selected, required, placeholder, helper) {
     return '<div class="tlab-field"><label for="tlabAction_' + escapeAttr(name) + '">' + escapeHtml(label) + '</label><select id="tlabAction_' + escapeAttr(name) + '" name="' + escapeAttr(name) + '" ' + (required ? "required" : "") + '><option value="">' + escapeHtml(placeholder) + '</option>' + items.map(function (item) {
       var html = optionHtml(item);
-      var value = typeof item === "object" ? pick(item, ["cod_tecnico_usuario", "cod_usuario", "id", "codigo", "cod", "valor", "value", "cod_persona"], "") : item;
+      var value = typeof item === "object" ? pick(item, ["cod_tecnico_usuario", "cod_custodio", "cod_usuario", "id", "codigo", "cod", "valor", "value", "cod_persona"], "") : item;
       return toStringSafe(value) === toStringSafe(selected) ? html.replace("<option ", '<option selected ') : html;
-    }).join("") + '</select></div>';
+    }).join("") + '</select>' + (helper ? '<small>' + escapeHtml(helper) + '</small>' : '') + '</div>';
   }
 
-  function renderEvidencePicker(required) {
+  function renderEvidencePicker(required, allowDocuments) {
     var files = state.action.files || [];
-    return '<section class="tlab-evidence-box"><div class="tlab-evidence-box__heading"><div><strong>Fotografías ' + (required ? "obligatorias" : "opcionales") + '</strong><small>JPG, PNG o WEBP · máximo 10 MB por imagen.</small></div><span class="tlab-status ' + (files.length ? "tlab-status--ok" : "tlab-status--neutral") + '">' + files.length + ' de ' + MAX_FILES + '</span></div>'
-      + '<div class="tlab-evidence-choices"><label class="tlab-file-choice"><i class="fa-solid fa-camera" aria-hidden="true"></i><span>Tomar foto</span><input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" data-tlab-file-input aria-label="Tomar fotografía con la cámara"></label><label class="tlab-file-choice"><i class="fa-solid fa-images" aria-hidden="true"></i><span>Elegir de galería</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple data-tlab-file-input aria-label="Seleccionar fotografías de la galería"></label></div>'
+    var accept = allowDocuments ? "image/jpeg,image/png,image/webp,application/pdf" : "image/jpeg,image/png,image/webp";
+    return '<section class="tlab-evidence-box"><div class="tlab-evidence-box__heading"><div><strong>' + (allowDocuments ? "Archivos" : "Fotografías") + ' ' + (required ? (allowDocuments ? "obligatorios" : "obligatorias") : "opcionales") + '</strong><small>' + (allowDocuments ? "JPG, PNG, WEBP o PDF" : "JPG, PNG o WEBP") + ' · máximo ' + escapeHtml(formatFileLimit(MAX_FILE_SIZE)) + ' por archivo.</small></div><span class="tlab-status ' + (files.length ? "tlab-status--ok" : "tlab-status--neutral") + '">' + files.length + ' de ' + MAX_FILES + '</span></div>'
+      + '<div class="tlab-evidence-choices"><label class="tlab-file-choice"><i class="fa-solid fa-camera" aria-hidden="true"></i><span>Tomar foto</span><input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" data-tlab-file-input aria-label="Tomar fotografía con la cámara"></label><label class="tlab-file-choice"><i class="fa-solid ' + (allowDocuments ? "fa-paperclip" : "fa-images") + '" aria-hidden="true"></i><span>' + (allowDocuments ? "Elegir archivos" : "Elegir de galería") + '</span><input type="file" accept="' + accept + '" multiple data-tlab-file-input aria-label="' + (allowDocuments ? "Seleccionar archivos" : "Seleccionar fotografías de la galería") + '"></label></div>'
       + '<div class="tlab-preview-list" id="tlabPreviewList">' + files.map(previewHtml).join("") + '</div><div class="tlab-file-error" id="tlabFileError" hidden></div></section>';
   }
 
   function previewHtml(file, index) {
     var url = file._tlabUrl;
+    var isPdf = file.type === "application/pdf";
     if (!url) {
       url = URL.createObjectURL(file);
       file._tlabUrl = url;
       state.objectUrls.push(url);
     }
-    return '<figure class="tlab-preview"><img src="' + escapeAttr(url) + '" alt="Vista previa ' + (index + 1) + '"><button type="button" data-tlab-preview-remove="' + index + '" aria-label="Quitar ' + escapeAttr(file.name || "imagen") + '"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></figure>';
+    return '<figure class="tlab-preview ' + (isPdf ? "tlab-preview--document" : "") + '">' + (isPdf ? '<span><i class="fa-solid fa-file-pdf" aria-hidden="true"></i><small title="' + escapeAttr(file.name || "Documento PDF") + '">' + escapeHtml(file.name || "Documento PDF") + '</small></span>' : '<img src="' + escapeAttr(url) + '" alt="Vista previa ' + (index + 1) + '">') + '<button type="button" data-tlab-preview-remove="' + index + '" aria-label="Quitar ' + escapeAttr(file.name || "archivo") + '"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></figure>';
   }
 
   function renderActionConfirmation(work) {
@@ -1496,19 +4433,33 @@
     var items = ["Trabajo: " + work.code, "Acción: " + action.config.label];
     var recipient = selectedOptionLabel("cod_destinatario");
     var mechanic = selectedOptionLabel("cod_tecnico_usuario");
+    var correctedCustodian = selectedOptionLabel("cod_custodio_rectificado");
     if (recipient) { items.push("Destinatario: " + recipient); }
-    if (mechanic) { items.push("Mecánico: " + mechanic); }
+    if (mechanic) { items.push("Técnico: " + mechanic); }
+    else if (isStartAction(action.code)) { items.push("Técnico: Técnico pendiente"); }
+    if (correctedCustodian) { items.push("Nuevo custodio: " + correctedCustodian); }
+    if (values.condicion_recepcion) { items.push("Condición: " + humanizeHistoricalValue(values.condicion_recepcion)); }
+    if (boolValue(values.sin_foto)) { items.push("Foto: excepción auditada · " + humanizeHistoricalValue(values.motivo_sin_foto)); }
+    if (values.tipo_novedad) { items.push("Tipo de novedad: " + humanizeHistoricalValue(values.tipo_novedad)); }
     if (values.motivo) { items.push("Motivo: " + values.motivo + (values.motivo_otro ? " · " + values.motivo_otro : "")); }
+    if (values.observacion) { items.push((action.code === "registrarNovedad" ? "Descripción: " : "Observación: ") + toStringSafe(values.observacion).slice(0, 180)); }
+    if (values.justificacion) { items.push("Justificación: " + toStringSafe(values.justificacion).slice(0, 180)); }
     if (values.motivo_excepcion) { items.push("Excepción de auditoría: " + values.motivo_excepcion); }
-    if (state.action.files.length) { items.push("Evidencias: " + state.action.files.length); }
+    if (state.action.files.length) { items.push("Archivos adjuntos: " + state.action.files.length); }
+    if (action.code === "iniciarTrabajosAgrupados") {
+      var regularizacion = action.work.regularizacion_unidades || action.work.regularizacion || {};
+      items.push("Trabajos independientes: " + (regularizacion.cantidad_unidades || asArray(regularizacion.unidades).length));
+      items.push("Código de origen: " + (regularizacion.codigo_origen || "Pendiente"));
+    }
     return '<div class="tlab-confirm-box"><h3>Revisá antes de confirmar</h3><ul class="tlab-confirm-list">' + items.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join("") + '</ul><label class="tlab-check"><input type="checkbox" id="tlabActionConfirmed" required><span>' + escapeHtml(action.config.confirmation) + '</span></label></div>';
   }
 
   function selectedOptionLabel(name) {
     var value = state.action.values[name];
-    var items = name === "cod_tecnico_usuario" ? catalogItems(["mecanicos", "tecnicos", "tecnicos_disponibles"]) : eligibleRecipients();
+    var items = name === "cod_tecnico_usuario" ? catalogItems(["mecanicos", "tecnicos", "tecnicos_disponibles"])
+      : (name === "cod_custodio_rectificado" ? custodyCorrectionPeople() : eligibleRecipients());
     var found = items.filter(function (item) {
-      var itemValue = typeof item === "object" ? pick(item, ["cod_tecnico_usuario", "cod_usuario", "id", "codigo", "cod", "valor", "value", "cod_persona"], "") : item;
+      var itemValue = typeof item === "object" ? pick(item, ["cod_tecnico_usuario", "cod_custodio", "cod_usuario", "id", "codigo", "cod", "valor", "value", "cod_persona"], "") : item;
       return toStringSafe(itemValue) === toStringSafe(value);
     })[0];
     if (!found) { return value || ""; }
@@ -1517,12 +4468,23 @@
 
   function captureActionValues() {
     var form;
+    var noPhoto;
     if (!state.action || !state.root) { return; }
     form = state.root.querySelector("#tlabActionForm");
     if (!form) { return; }
     forEachFormValue(form, function (value, key) {
       if (key !== "evidencias[]") { state.action.values[key] = value; }
     });
+    noPhoto = form.querySelector('[name="sin_foto"]');
+    if (noPhoto) {
+      state.action.values.sin_foto = noPhoto.checked ? "1" : "0";
+      if (!noPhoto.checked) {
+        state.action.values.motivo_sin_foto = "";
+        state.action.values.detalle_sin_foto = "";
+      } else if (state.action.values.motivo_sin_foto !== "otro") {
+        state.action.values.detalle_sin_foto = "";
+      }
+    }
   }
 
   function actionBack() {
@@ -1551,7 +4513,13 @@
     if ((config.mechanic || boolValue(config.requiere_mecanico)) && !values.cod_tecnico_usuario) { return "Seleccioná el mecánico responsable."; }
     if ((config.reason || boolValue(config.requiere_motivo)) && !values.motivo) { return "Seleccioná el motivo del ajuste."; }
     if ((config.justification || boolValue(config.requiere_justificacion)) && !toStringSafe(values.justificacion).trim()) { return "Escribí una justificación."; }
+    if (boolValue(config.requiere_motivo_excepcion) && toStringSafe(values.motivo_excepcion).trim().length < 5) { return "Explicá brevemente el motivo de la intervención excepcional."; }
     if (config.noteRequired && !toStringSafe(values.observacion).trim()) { return "Escribí la observación."; }
+    if (action.code === "tomarHilo" && values.condicion_recepcion !== "conforme" && values.condicion_recepcion !== "con_observaciones") { return "Indicá cómo recibís el trabajo."; }
+    if (action.code === "tomarHilo" && values.condicion_recepcion === "con_observaciones" && toStringSafe(values.observacion).trim().length < 5) { return "Describí la observación de recepción con al menos cinco caracteres."; }
+    if (action.code === "registrarNovedad" && toStringSafe(values.observacion).trim().length < 3) { return "Describí la novedad con al menos tres caracteres."; }
+    if (action.code === "rectificarCustodia" && !values.cod_custodio_rectificado) { return "Seleccioná el nuevo custodio interno."; }
+    if (action.code === "rectificarCustodia" && toStringSafe(values.justificacion).trim().length < 5) { return "Explicá el motivo de la rectificación con al menos cinco caracteres."; }
     if (action.code === "solicitarAjuste" && toStringSafe(values.motivo).toLowerCase() === "otro" && !toStringSafe(values.motivo_otro).trim()) { return "Describí el motivo seleccionado como “Otro”."; }
     if ((config.evidence || boolValue(config.requiere_evidencia)) && !action.files.length) { return "Agregá al menos una fotografía para continuar."; }
     return "";
@@ -1568,11 +4536,13 @@
   function addFiles(fileList) {
     var files = Array.prototype.slice.call(fileList || []);
     var error = "";
+    var allowDocuments;
     if (!state.action) { return; }
+    allowDocuments = boolValue(state.action.config.documents);
     files.forEach(function (file) {
-      if (state.action.files.length >= MAX_FILES) { error = "Podés adjuntar hasta " + MAX_FILES + " fotografías por acción."; return; }
-      if (!IMAGE_TYPES[file.type]) { error = "Sólo se admiten imágenes JPG, PNG o WEBP."; return; }
-      if (file.size > MAX_FILE_SIZE) { error = "Cada fotografía debe pesar como máximo 10 MB."; return; }
+      if (state.action.files.length >= MAX_FILES) { error = "Podés adjuntar hasta " + MAX_FILES + " archivos por acción."; return; }
+      if (!IMAGE_TYPES[file.type] && !(allowDocuments && DOCUMENT_TYPES[file.type])) { error = allowDocuments ? "Sólo se admiten imágenes JPG, PNG, WEBP o documentos PDF." : "Sólo se admiten imágenes JPG, PNG o WEBP."; return; }
+      if (file.size > MAX_FILE_SIZE) { error = "Cada archivo debe pesar como máximo " + formatFileLimit(MAX_FILE_SIZE) + "."; return; }
       state.action.files.push(file);
     });
     renderActionDialog();
@@ -1599,14 +4569,19 @@
     state.objectUrls = [];
   }
 
-  function closeAction() {
+  function closeAction(force) {
     var layer;
     if (!state.root) { return; }
+    if (state.action && state.action.saving && force !== true) {
+      notify("La acción se está guardando. Esperá la confirmación del servidor.", "info");
+      return false;
+    }
     layer = state.root.querySelector("#tlabActionLayer");
     layer.hidden = true;
     layer.innerHTML = "";
     revokeObjectUrls();
     state.action = null;
+    return true;
   }
 
   function actionPayload() {
@@ -1624,9 +4599,15 @@
       motivo_otro: values.motivo_otro || "",
       motivo_excepcion: values.motivo_excepcion || "",
       justificacion: values.justificacion || "",
-      observacion: values.observacion || (state.action.code === "iniciarTrabajo" ? (values.instrucciones || "") : "")
+      condicion_recepcion: values.condicion_recepcion || "",
+      sin_foto: state.action.code === "tomarHilo" ? (boolValue(values.sin_foto) ? "1" : "0") : "",
+      motivo_sin_foto: values.motivo_sin_foto || "",
+      detalle_sin_foto: values.detalle_sin_foto || "",
+      tipo_novedad: state.action.code === "registrarNovedad" ? (values.tipo_novedad || "observacion_general") : "",
+      cod_custodio_rectificado: values.cod_custodio_rectificado || "",
+      observacion: values.observacion || (isStartAction(state.action.code) ? (values.instrucciones || "") : "")
     };
-    if (state.action.code === "iniciarTrabajo") {
+    if (isStartAction(state.action.code)) {
       payload.cod_detalle_venta = pick(work, ["cod_detalle_venta", "id_detalle_venta", "sale_item_id"], pick(detalle, ["cod_detalle_venta", "id_detalle_venta"], ""));
       payload.cod_venta = pick(work, ["cod_venta", "sale_id"], pick(detalle, ["cod_venta", "sale_id"], ""));
       payload.cod_producto = pick(work, ["cod_producto", "product_id"], pick(detalle, ["cod_producto", "product_id"], ""));
@@ -1638,6 +4619,11 @@
       payload.piezas_json = pick(work, ["piezas_json", "ubicaciones"], "");
       payload.colorimetro = values.colorimetro || "";
       payload.instrucciones = values.instrucciones || "";
+      if (state.action.code === "iniciarTrabajosAgrupados") {
+        var regularizacion = work.regularizacion_unidades || work.regularizacion || {};
+        payload.id_regularizacion = regularizacion.id || "";
+        payload.codigo_origen = regularizacion.codigo_origen || "";
+      }
     }
     if (state.action.code === "registrarInstalacion") {
       payload.cod_consulta_origen = state.moduleOptions.cod_consulta_origen || pick(work, ["cod_consulta_origen"], "");
@@ -1650,7 +4636,7 @@
     var action = state.action;
     var payload = actionPayload();
     var files = action.files.slice(0);
-    if (action.code !== "iniciarTrabajo" || !files.length) {
+    if (!isStartAction(action.code) || !files.length) {
       return Promise.resolve({ payload: payload, files: files });
     }
     return new Promise(function (resolve, reject) {
@@ -1680,6 +4666,11 @@
     if (!confirmed || !confirmed.checked) { showActionError("Confirmá la declaración antes de guardar."); return; }
     action.saving = true;
     if (submit) { submit.disabled = true; submit.innerHTML = '<i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>Guardando...'; }
+    Array.prototype.forEach.call(state.root.querySelectorAll('#tlabActionLayer [data-tlab-command="close-action"], #tlabActionLayer [data-tlab-command="action-back"]'), function (button) {
+      button.disabled = true;
+    });
+    var dialog = state.root.querySelector("#tlabActionLayer .tlab-dialog");
+    if (dialog) { dialog.setAttribute("aria-busy", "true"); }
     if (progress && action.files.length) { progress.hidden = false; }
     prepareActionSubmission().then(function (prepared) {
       return request(action.code, prepared.payload, prepared.files, function (percent) {
@@ -1689,37 +4680,66 @@
     }).then(function (response) {
       var message = response.message || "La acción quedó registrada en la trazabilidad.";
       var workId = pick(response.data, ["id_trabajo", "cod_trabajo_laboratorio"], state.detailId);
-      closeAction();
+      var groupedStart = action.code === "iniciarTrabajosAgrupados";
+      var groupedDetailId = pick(response.data, ["cod_detalle_venta"], pick(action.work, ["cod_detalle_venta"], ""));
+      if (typeof window.tratamientoLaboratorioClinicoAplicarRespuestaOperacion === "function") {
+        window.tratamientoLaboratorioClinicoAplicarRespuestaOperacion(response);
+      }
+      closeAction(true);
       notify(message, "success");
       loadSummary().then(null, function () {});
+      if (groupedStart) {
+        state.moduleOptions.cod_detalle_operativo = groupedDetailId;
+        state.view = "operativa";
+        state.group = "pendientes_entrega";
+        renderGroupNavigation();
+      }
       loadWorks(false);
-      if (workId) { openDetail(workId, true); }
+      if (workId && !groupedStart) { openDetail(workId, true); }
     }).then(null, function (error) {
       action.saving = false;
-      if (submit) { submit.disabled = false; submit.innerHTML = '<i class="fa-solid ' + escapeAttr(action.config.icon || "fa-arrow-right") + '" aria-hidden="true"></i>Confirmar acción'; }
+      if (submit) { submit.disabled = false; submit.innerHTML = '<i class="fa-solid ' + escapeAttr(action.config.icon || "fa-arrow-right") + '" aria-hidden="true"></i>' + escapeHtml(action.config.submitLabel || "Confirmar acción"); }
+      Array.prototype.forEach.call(state.root.querySelectorAll('#tlabActionLayer [data-tlab-command="close-action"], #tlabActionLayer [data-tlab-command="action-back"]'), function (button) {
+        button.disabled = button.getAttribute("data-tlab-command") === "action-back" && action.step === 1;
+      });
+      var dialog = state.root.querySelector("#tlabActionLayer .tlab-dialog");
+      if (dialog) { dialog.setAttribute("aria-busy", "false"); }
       showActionError(error.message + (error.code && /CONFLICT|VERSION/i.test(error.code) ? " Actualizá el trabajo antes de volver a confirmar." : ""));
     });
   }
 
-  function openViewer(url, caption) {
+  function openViewer(url, caption, mime) {
     var layer;
+    var isPdf;
     if (!url || !state.root) { return; }
+    isPdf = toStringSafe(mime).toLowerCase() === "application/pdf" || /^data:application\/pdf/i.test(url);
     state.focusBeforeLayer = document.activeElement;
     layer = state.root.querySelector("#tlabViewerLayer");
-    layer.innerHTML = '<figure class="tlab-viewer" role="dialog" aria-modal="true" aria-label="Evidencia ampliada"><button type="button" class="tlab-icon-button" data-tlab-command="close-viewer" aria-label="Cerrar imagen"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button><img src="' + escapeAttr(url) + '" alt="' + escapeAttr(caption || "Evidencia del trabajo") + '"><figcaption class="tlab-viewer__caption">' + escapeHtml(caption || "Evidencia del trabajo") + '</figcaption></figure>';
+    layer.innerHTML = '<figure class="tlab-viewer ' + (isPdf ? "tlab-viewer--document" : "") + '" role="dialog" aria-modal="true" aria-label="Evidencia ampliada"><button type="button" class="tlab-icon-button" data-tlab-command="close-viewer" aria-label="Cerrar evidencia"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' + (isPdf ? '<iframe sandbox referrerpolicy="no-referrer" src="' + escapeAttr(url) + '" title="' + escapeAttr(caption || "Documento del trabajo") + '"></iframe>' : '<img src="' + escapeAttr(url) + '" alt="' + escapeAttr(caption || "Evidencia del trabajo") + '">') + '<figcaption class="tlab-viewer__caption">' + escapeHtml(caption || "Evidencia del trabajo") + '</figcaption></figure>';
     layer.hidden = false;
     focusFirst(layer);
+  }
+
+  function loadAuthorizedMedia(mediaId) {
+    if (!mediaId) { return Promise.reject(new Error("No se pudo identificar la evidencia.")); }
+    return request("descargarMedia", { id_media: mediaId }).then(function (response) {
+      var media = response.data.media || response.data;
+      var encoded = pick(media, ["data_base64", "base64"], "");
+      var mime = pick(media, ["mime", "mime_type", "tipo_mime"], "image/jpeg");
+      if (!encoded) { throw new Error("La evidencia protegida no está disponible."); }
+      return {
+        src: "data:" + mime + ";base64," + encoded,
+        mime: mime,
+        nombre: pick(media, ["nombre", "nombre_original"], "Evidencia del trabajo")
+      };
+    });
   }
 
   function openAuthorizedMedia(mediaId, caption) {
     if (!mediaId) { return; }
     notify("Cargando evidencia protegida...", "info");
-    request("descargarMedia", { id_media: mediaId }).then(function (response) {
-      var media = response.data.media || response.data;
-      var encoded = pick(media, ["data_base64", "base64"], "");
-      var mime = pick(media, ["mime"], "image/jpeg");
-      if (!encoded) { throw new Error("La evidencia protegida no está disponible."); }
-      openViewer("data:" + mime + ";base64," + encoded, caption || pick(media, ["nombre"], "Evidencia del trabajo"));
+    loadAuthorizedMedia(mediaId).then(function (media) {
+      openViewer(media.src, caption || media.nombre, media.mime);
     }).then(null, function (error) {
       notify(error.message, "error");
     });
@@ -1736,6 +4756,10 @@
     notify("Preparando el Hilo maestro sin duplicar el seguimiento...", "info");
     return request("asegurarHiloDetalle", { cod_detalle_venta: detailId }).then(function (response) {
       notify(response.message || "El Hilo maestro quedó preparado.", "success");
+      if (options.regularizacion_unidades) {
+        options.hilo_confirmado = true;
+        return openGroupedRegularization(detailId, options.regularizacion_unidades, options);
+      }
       return openFromSaleDetail(detailId, options);
     }).then(null, function (error) {
       notify(error.message, "error");
@@ -1761,6 +4785,15 @@
       var actions = normalizeActions(response.data.acciones_permitidas || context.acciones_permitidas || []);
       var start = actions.filter(function (item) { return item.code === "iniciarTrabajo"; })[0];
       if (context.trabajo_activo && context.trabajo_activo.id) {
+        if (options.soloListadoDetalle || asArray(context.trabajos_activos).length > 1) {
+          state.moduleOptions.cod_detalle_operativo = detailId;
+          state.view = "operativa";
+          state.group = "pendientes_entrega";
+          renderGroupNavigation();
+          loadWorks(false);
+          notify("Se muestran los trabajos independientes vinculados al mismo origen.", "info");
+          return response;
+        }
         notify("Este tratamiento ya tiene un trabajo activo. Se abrirá su trazabilidad.", "info");
         return openDetail(context.trabajo_activo.id);
       }
@@ -1778,6 +4811,48 @@
       return response;
     }).then(null, function (error) {
       notify(error.message, "error");
+      return false;
+    });
+  }
+
+  function openGroupedRegularization(detailId, regularizacion, options) {
+    options = Object.assign({}, options || {}, {
+      vista: "operativa",
+      grupo: "pendientes_entrega",
+      cod_detalle_operativo: detailId,
+      regularizacion_unidades: regularizacion || {}
+    });
+    ensureDom();
+    openModule(options);
+    state.root.querySelector("#tlabResults").innerHTML = '<div class="tlab-results-state">' + loaderHtml("Preparando los trabajos independientes...", "content") + '</div>';
+    return request("obtenerContextoDetalle", { cod_detalle_venta: detailId }).then(function (response) {
+      var context = response.data.contexto || response.data;
+      var actions = normalizeActions(response.data.acciones_permitidas || context.acciones_permitidas || []);
+      var start = actions.filter(function (item) { return item.code === "iniciarTrabajosAgrupados"; })[0];
+      if (context.trabajo_activo && context.trabajo_activo.id) {
+        state.moduleOptions.cod_detalle_operativo = detailId;
+        loadWorks(false);
+        notify("Los trabajos de este origen ya fueron creados.", "info");
+        return response;
+      }
+      context.regularizacion_unidades = context.regularizacion_unidades || regularizacion || {};
+      if (!start) {
+        if (boolValue(context.puede_asegurar_hilo || response.data.puede_asegurar_hilo)) {
+          options.regularizacion_unidades = context.regularizacion_unidades;
+          return ensureThreadForDetail(detailId, options);
+        }
+        throw new Error(response.data.mensaje_contexto || "Las ubicaciones estan guardadas, pero este usuario no puede iniciar los trabajos.");
+      }
+      start.label = "Preparar " + (context.regularizacion_unidades.cantidad_unidades || "los") + " trabajos";
+      context.cod_detalle_venta = detailId;
+      context.cod_consulta_origen = context.cod_consulta_origen || options.cod_consulta_origen || "";
+      context.cod_evolucion_origen = context.cod_evolucion_origen || options.cod_evolucion_origen || "";
+      state.startContext = context;
+      openAction("iniciarTrabajosAgrupados", start, context);
+      return response;
+    }).then(null, function (error) {
+      notify(error.message, "error");
+      loadWorks(false);
       return false;
     });
   }
@@ -1809,9 +4884,11 @@
     actualizar: refreshAll,
     abrirTrabajo: function (id, options) { openModule(options); return openDetail(id); },
     abrirDesdeDetalleVenta: openFromSaleDetail,
+    abrirRegularizacionUnidades: openGroupedRegularization,
     asegurarHiloDetalle: ensureThreadForDetail,
     abrirAccionTrabajo: openWorkAction,
     registrarInstalacion: function (id, options) { return openWorkAction(id, "registrarInstalacion", options); },
+    obtenerMedia: loadAuthorizedMedia,
     endpoint: ENDPOINT
   };
 

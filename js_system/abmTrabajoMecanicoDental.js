@@ -9,6 +9,7 @@ function verCerrarVentanaTrabajoMecanicoDental(mostrar, mostrarAbm) {
         $("div[id=divAbmTrabajoMecanicoDental]").fadeIn(250);
         if (mostrarAbm) {
             buscarTiposTrabajo();
+            aplicarModoConsultaTrabajoMecanicoDental();
             $("div[id=divAbmTrabajoMecanicoDental1]").fadeIn(250);
             // Oculta el listado
             $("div[id=divAbmTrabajoMecanicoDental2]").fadeOut(250);
@@ -27,6 +28,25 @@ function verCerrarVentanaTrabajoMecanicoDental(mostrar, mostrarAbm) {
             $("div[id=divAbmTrabajoMecanicoDental]").fadeOut(250);
         }
     }
+}
+
+function aplicarModoConsultaTrabajoMecanicoDental() {
+    var contenedor = document.getElementById('divAbmTrabajoMecanicoDental1');
+    if (!contenedor) {
+        return;
+    }
+
+    $(contenedor).find('input:not([type=button]), select, textarea').prop('disabled', true);
+    $('#btnAgregarTipoTrabajoMecanicoDentalLegacy, #btnSeleccionarVentaTrabajoMecanicoDentalLegacy, #btnAbmTrabajoMecanicoDental').hide();
+    $('#btnImprimirTrabajoMecanicoDentalLegacy').prop('disabled', false).show();
+}
+
+function abrirDetalleTrabajoMecanicoDentalSoloConsulta() {
+    if (cod_trabajo_mecanico_dental === '') {
+        ver_vetana_informativa('Seleccioná primero un trabajo histórico.');
+        return;
+    }
+    verCerrarVentanaTrabajoMecanicoDental(true, true);
 }
 
 function verificarCamposTrabajoMecanicoDental() {

@@ -36,6 +36,89 @@ function odontoVerificarSesion()
     return $user;
 }
 
+/**
+ * La asignacion directa desde Consulta sigue el alcance de lectura clinica y
+ * del local. Las operaciones destructivas del odontograma conservan el
+ * contrato estricto anterior mediante el parametro opcional.
+ */
+function odontoAutorizarUbicacionLaboratorioDetalle($mysqli, $user, $detalleId, $permitirAccesoConsulta = false)
+{
+    $detalleId = intval($detalleId);
+    if ($detalleId <= 0) {
+        return null;
+    }
+    $detalle = trabajoLaboratorioObtenerDetalleClinico($mysqli, $detalleId, false);
+    if (!$detalle) {
+        odontoResponder("error", array(
+            "codigo" => "tratamiento_no_encontrado",
+            "mensaje" => "No se encontro el tratamiento solicitado."
+        ));
+    }
+    $config = isset($detalle["configuracion_laboratorio"])
+        ? $detalle["configuracion_laboratorio"] : array();
+    if (empty($config["ok"]) || empty($config["requiere_laboratorio"])) {
+        return null;
+    }
+	$cantidad = isset($detalle["cantidad_detalle"])
+		? floatval($detalle["cantidad_detalle"]) : 0;
+	if (abs($cantidad - 1.0) >= 0.000001) {
+		odontoResponder("error", array(
+			"codigo" => "detalle_laboratorio_requiere_regularizacion",
+			"mensaje" => "Administracion debe regularizar las unidades registradas antes de asignar una ubicacion para laboratorio."
+		));
+	}
+	$detalleInactivo = !trabajoLaboratorioDetalleClinicoActivo($detalle);
+	if ($detalleInactivo) {
+		odontoResponder("error", array(
+			"codigo" => "detalle_venta_inactivo",
+			"mensaje" => "No se puede asignar una ubicacion a una venta o tratamiento inactivo o finalizado."
+		));
+	}
+	if (trabajoLaboratorioObtenerTrabajoActivoDetalle($mysqli, $detalleId)) {
+		odontoResponder("error", array(
+			"codigo" => "trabajo_laboratorio_activo",
+			"mensaje" => "La ubicacion clinica no puede modificarse porque el tratamiento ya posee un trabajo activo."
+		));
+	}
+	if (trabajoLaboratorioAntecedenteHistoricoDetalle($mysqli, $detalleId)) {
+		odontoResponder("error", array(
+			"codigo" => "antecedente_laboratorio_existente",
+			"mensaje" => "Administracion debe regularizar el antecedente antes de modificar la ubicacion para un trabajo nuevo."
+		));
+	}
+    if ($permitirAccesoConsulta) {
+        $autorizado = trabajoLaboratorioTienePermiso(
+            $mysqli,
+            $user,
+            "VERFORMULARIOCONSULTORIO"
+        ) && trabajoLaboratorioUsuarioPuedeLocal(
+            $mysqli,
+            $user,
+            intval($detalle["cod_local"])
+        );
+    } else {
+        $autorizado = trabajoLaboratorioTienePermiso($mysqli, $user, "VERFORMULARIOCONSULTORIO")
+            && trabajoLaboratorioTienePermiso($mysqli, $user, "EDITARFORMULARIOCONSULTORIO")
+            && trabajoLaboratorioTienePermiso($mysqli, $user, "CREARTRABAJOLABORATORIO")
+            && (trabajoLaboratorioUsuarioEsDoctor($mysqli, $user)
+                || trabajoLaboratorioUsuarioEsAuditor($mysqli, $user))
+            && trabajoLaboratorioUsuarioPuedeOperarLocal(
+                $mysqli,
+                $user,
+                intval($detalle["cod_local"])
+            );
+    }
+    if (!$autorizado) {
+        odontoResponder("error", array(
+            "codigo" => "ubicacion_laboratorio_no_autorizada",
+            "mensaje" => $permitirAccesoConsulta
+                ? "Necesita acceso a Consulta y al local de la venta para asignar la ubicacion."
+                : "La ubicacion de este tratamiento de laboratorio solo puede modificarla un profesional autorizado."
+        ));
+    }
+    return $detalle;
+}
+
 function odontoColumnaExiste($mysqli, $tabla, $columna)
 {
     $sql = "SELECT COUNT(*) AS total FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?";
@@ -103,6 +186,20 @@ function odontoAlcanceSeguroProducto($alcance, $nombre, $forzarUnidadPieza)
         return "pieza_dental";
     }
     return odontoNormalizarAlcance($alcance);
+}
+
+function odontoAlcanceSelectorRapidoLaboratorio($alcance, $esSelectorRapido, $pieza, $piezasJson)
+{
+    if (!$esSelectorRapido) {
+        return $alcance;
+    }
+    if (count(odontoPiezasJsonArray($piezasJson)) > 0) {
+        return "piezas_multiples";
+    }
+    if (trim((string)$pieza) !== "") {
+        return "pieza_dental";
+    }
+    return $alcance;
 }
 
 function odontoTextoSuperficie($superficie)
@@ -484,11 +581,9 @@ function odontoDatosTratamientoDesdePresupuestoItem($mysqli, $itemId)
     return $row ? $row : null;
 }
 
-function odontoGuardarLink($mysqli, $ctx, $odontograma, $user)
+function odontoGuardarLink($mysqli, $ctx, $odontograma, $user, $detalleLaboratorioAutorizado = null)
 {
     $motivo = odontoPost("motivo");
-    odontoPrepararModificacion($mysqli, $odontograma, $user, $motivo);
-
     $detalleId = trim(odontoPost("detalle_venta_id"));
     $presupuestoItemId = trim(odontoPost("presupuesto_item_id"));
     $presupuestoId = trim(odontoPost("presupuesto_id", $ctx["presupuesto_id"]));
@@ -505,6 +600,7 @@ function odontoGuardarLink($mysqli, $ctx, $odontograma, $user)
     $bocaCompleta = odontoPost("boca_completa") == "1" ? 1 : 0;
     $origen = trim(odontoPost("origen", "ficha_clinica"));
     $forzarUnidadPieza = odontoForzarUnidadPiezaPresupuesto();
+    $selectorRapidoLaboratorio = odontoPost("selector_rapido_laboratorio") == "1";
     $estadoLink = "pendiente";
     $riesgo = null;
 
@@ -547,6 +643,14 @@ function odontoGuardarLink($mysqli, $ctx, $odontograma, $user)
     }
 
     $alcance = odontoAlcanceSeguroProducto($alcance, $nombre, $forzarUnidadPieza);
+    /* El selector rapido envia una ubicacion dental explicita. No debe perderse
+       por un alcance de catalogo antiguo antes de validar el modo de laboratorio. */
+    $alcance = odontoAlcanceSelectorRapidoLaboratorio(
+        $alcance,
+        $selectorRapidoLaboratorio,
+        $pieza,
+        $piezasJson
+    );
     if ($piezasJson != null) {
         $alcance = "piezas_multiples";
         $pieza = null;
@@ -606,6 +710,48 @@ function odontoGuardarLink($mysqli, $ctx, $odontograma, $user)
         $linkExistente = $stmt->get_result()->fetch_assoc();
     }
 
+    $detallePersistidoId = $linkExistente && !empty($linkExistente["detalle_venta_id"])
+        ? intval($linkExistente["detalle_venta_id"]) : 0;
+    if ($detallePersistidoId > 0) {
+        /* La edicion se autoriza con el vinculo guardado, aunque el navegador omita el detalle. */
+        $detalleLaboratorioAutorizado = odontoAutorizarUbicacionLaboratorioDetalle(
+            $mysqli,
+            $user,
+            $detallePersistidoId,
+            true
+        );
+        if (intval($detalleId) !== $detallePersistidoId) {
+            $datosPersistidos = odontoDatosTratamientoDesdeDetalle($mysqli, $detallePersistidoId);
+            if (!$datosPersistidos) {
+                odontoResponder("error", array("mensaje" => "No se encontro el tratamiento vinculado a la ubicacion."));
+            }
+            $detalleId = (string)$detallePersistidoId;
+            $productoId = (string)$datosPersistidos["cod_productoFK"];
+            $nombre = (string)$datosPersistidos["nombre_producto"];
+            $ventaId = (string)$datosPersistidos["cod_ventaFK"];
+            $alcance = odontoAlcanceSeguroProducto(
+                $datosPersistidos["alcance_odontologico"],
+                $nombre,
+                $forzarUnidadPieza
+            );
+            $riesgo = isset($datosPersistidos["nivel_riesgo_financiero"])
+                ? (int)$datosPersistidos["nivel_riesgo_financiero"] : null;
+            $avancePersistido = isset($datosPersistidos["progreso_porcentaje"])
+                ? (int)$datosPersistidos["progreso_porcentaje"] : 0;
+            $estadoLink = $avancePersistido >= 100
+                ? "completado" : ($avancePersistido > 0 ? "en_proceso" : "pendiente");
+            $origen = !empty($linkExistente["origen"])
+                ? (string)$linkExistente["origen"] : "venta_principal";
+        }
+    }
+
+    $alcance = odontoAlcanceSelectorRapidoLaboratorio(
+        $alcance,
+        $selectorRapidoLaboratorio,
+        $pieza,
+        $piezasJson
+    );
+
     $ubicacionNuevo = array(
         "pieza" => $pieza,
         "piezas_json" => $piezasJson,
@@ -614,6 +760,38 @@ function odontoGuardarLink($mysqli, $ctx, $odontograma, $user)
         "cuadrante" => $cuadrante,
         "boca_completa" => $bocaCompleta
     );
+
+    if ($detalleLaboratorioAutorizado) {
+        $configLaboratorio = isset($detalleLaboratorioAutorizado["configuracion_laboratorio"])
+            ? $detalleLaboratorioAutorizado["configuracion_laboratorio"] : array();
+        $modoLaboratorio = isset($configLaboratorio["modo_individualizacion"])
+            ? $configLaboratorio["modo_individualizacion"] : "cantidad_libre";
+        if ($selectorRapidoLaboratorio
+            && trim((string)$pieza) === "" && count(odontoPiezasJsonArray($piezasJson)) === 0) {
+            odontoResponder("error", array(
+                "codigo" => "pieza_requerida",
+                "mensaje" => "Seleccione al menos una pieza dentaria para guardar la ubicacion."
+            ));
+        }
+        $bloqueoLaboratorio = trabajoLaboratorioValidarUbicacionesModo(
+            $modoLaboratorio,
+            array(array(
+                "pieza" => $pieza,
+                "piezas" => odontoPiezasJsonArray($piezasJson),
+                "arcada" => $arcada,
+                "cuadrante" => $cuadrante,
+                "alcance" => $alcance
+            ))
+        );
+        if ($bloqueoLaboratorio) {
+            odontoResponder("error", array(
+                "codigo" => $bloqueoLaboratorio["codigo"],
+                "mensaje" => $bloqueoLaboratorio["mensaje"]
+            ));
+        }
+    }
+
+    odontoPrepararModificacion($mysqli, $odontograma, $user, $motivo);
 
     if ($linkExistente) {
         $linkId = (int)$linkExistente["id"];
@@ -701,7 +879,6 @@ function odontoEliminarMarca($mysqli, $odontograma, $user)
 function odontoEliminarLink($mysqli, $odontograma, $user)
 {
     $motivo = odontoPost("motivo");
-    odontoPrepararModificacion($mysqli, $odontograma, $user, $motivo);
     $linkId = odontoPost("link_id");
     $stmt = $mysqli->prepare("SELECT * FROM odontograma_tratamiento_links WHERE id = ? AND odontograma_id = ? AND activo = 1 LIMIT 1");
     $stmt->bind_param("si", $linkId, $odontograma["id"]);
@@ -710,6 +887,11 @@ function odontoEliminarLink($mysqli, $odontograma, $user)
     if (!$link) {
         odontoResponder("error", array("mensaje" => "Vinculo no encontrado."));
     }
+    if (!empty($link["detalle_venta_id"])) {
+        /* El detalle se obtiene del vinculo persistido: nunca se confia en el id enviado por el navegador. */
+        odontoAutorizarUbicacionLaboratorioDetalle($mysqli, $user, $link["detalle_venta_id"]);
+    }
+    odontoPrepararModificacion($mysqli, $odontograma, $user, $motivo);
     $stmt = $mysqli->prepare("UPDATE odontograma_tratamiento_links SET activo = 0, actualizado_por = ?, fecha_actualizacion = NOW() WHERE id = ? LIMIT 1");
     $stmt->bind_param("is", $user, $linkId);
     if (!$stmt->execute()) {
@@ -880,6 +1062,7 @@ function odontoConvalidar($mysqli, $odontograma, $user)
 
 function odontoDeshacer($mysqli, $odontograma, $user)
 {
+    $detalleLaboratorioId = 0;
     $stmt = $mysqli->prepare("SELECT * FROM odontograma_historial WHERE odontograma_id = ? AND usuario_id = ? AND (link_id IS NOT NULL OR marca_id IS NOT NULL) ORDER BY id DESC LIMIT 1");
     $stmt->bind_param("ii", $odontograma["id"], $user);
     if (!$stmt->execute()) {
@@ -890,6 +1073,24 @@ function odontoDeshacer($mysqli, $odontograma, $user)
         odontoResponder("error", array("mensaje" => "No hay accion reciente para deshacer."));
     }
     if (!empty($hist["link_id"])) {
+        $stmt = $mysqli->prepare("SELECT * FROM odontograma_tratamiento_links WHERE id = ? AND odontograma_id = ? LIMIT 1");
+        $stmt->bind_param("ii", $hist["link_id"], $odontograma["id"]);
+        $stmt->execute();
+        $link = $stmt->get_result()->fetch_assoc();
+        if (!$link) {
+            odontoResponder("error", array("mensaje" => "No se encontro el vinculo que se desea deshacer."));
+        }
+        if (!empty($link["detalle_venta_id"])) {
+            /* Deshacer tampoco puede evitar los permisos y bloqueos propios de Laboratorio. */
+            $detalleLaboratorio = odontoAutorizarUbicacionLaboratorioDetalle(
+                $mysqli,
+                $user,
+                $link["detalle_venta_id"]
+            );
+            if ($detalleLaboratorio) {
+                $detalleLaboratorioId = intval($link["detalle_venta_id"]);
+            }
+        }
         $stmt = $mysqli->prepare("UPDATE odontograma_tratamiento_links SET activo = 0, actualizado_por = ?, fecha_actualizacion = NOW() WHERE id = ? AND odontograma_id = ? LIMIT 1");
         $stmt->bind_param("iii", $user, $hist["link_id"], $odontograma["id"]);
         $stmt->execute();
@@ -900,7 +1101,7 @@ function odontoDeshacer($mysqli, $odontograma, $user)
         $stmt->execute();
     }
     odontoRegistrarHistorial($mysqli, $odontograma["id"], $odontograma["version_actual"], "deshacer_accion", "Se deshizo la ultima accion registrada.", $hist["pieza"], $hist["superficie"], $hist["marca_id"], $hist["link_id"], $hist["tratamiento_id"], $hist["venta_id"], $hist["detalle_venta_id"], $hist["presupuesto_id"], $hist["presupuesto_item_id"], null, $user);
-    odontoResponder("exito");
+    odontoResponder("exito", array("detalle_venta_laboratorio_id" => $detalleLaboratorioId));
 }
 
 function odontoMigrarPresupuestoAVenta($mysqli, $ctx, $odontograma, $user)
@@ -914,22 +1115,68 @@ function odontoMigrarPresupuestoAVenta($mysqli, $ctx, $odontograma, $user)
     if (!$res) {
         odontoResponder("error", array("mensaje" => "No se pudieron consultar vinculos."));
     }
-    $migrados = 0;
+    $links = array();
     while ($link = $res->fetch_assoc()) {
-        $stmt = $mysqli->prepare("SELECT dtv.cod_detalle FROM detalle_venta dtv LEFT JOIN odontograma_tratamiento_links l ON l.detalle_venta_id = dtv.cod_detalle AND l.activo = 1 WHERE dtv.cod_ventaFK = ? AND dtv.cod_productoFK = ? AND l.id IS NULL ORDER BY dtv.cod_detalle ASC LIMIT 1");
+        $links[] = $link;
+    }
+    $asignaciones = array();
+    $detallesReservados = array();
+    foreach ($links as $link) {
+        $stmt = $mysqli->prepare("SELECT dtv.cod_detalle FROM detalle_venta dtv LEFT JOIN odontograma_tratamiento_links l ON l.detalle_venta_id = dtv.cod_detalle AND l.activo = 1 WHERE dtv.cod_ventaFK = ? AND dtv.cod_productoFK = ? AND l.id IS NULL ORDER BY dtv.cod_detalle ASC");
+        if (!$stmt) {
+            odontoResponder("error", array("mensaje" => "No se pudo preparar la validacion del tratamiento de destino."));
+        }
         $stmt->bind_param("is", $ventaId, $link["producto_id"]);
-        if ($stmt->execute()) {
-            $row = $stmt->get_result()->fetch_assoc();
-            if ($row) {
-                $detalleId = (int)$row["cod_detalle"];
-                $stmtUpd = $mysqli->prepare("UPDATE odontograma_tratamiento_links SET venta_id = ?, detalle_venta_id = ?, origen = 'venta_principal', actualizado_por = ?, fecha_actualizacion = NOW() WHERE id = ? LIMIT 1");
-                $stmtUpd->bind_param("iiii", $ventaId, $detalleId, $user, $link["id"]);
-                if ($stmtUpd->execute()) {
-                    $migrados++;
-                    odontoRegistrarHistorial($mysqli, $odontograma["id"], $odontograma["version_actual"], "migrar_presupuesto_venta", "Se vinculo ubicacion del presupuesto a la venta #".$ventaId.".", $link["pieza"], null, null, $link["id"], $link["producto_id"], $ventaId, $detalleId, $presupuestoId, $link["presupuesto_item_id"], null, $user);
-                }
+        if (!$stmt->execute()) {
+            odontoResponder("error", array("mensaje" => "No se pudo validar el tratamiento de destino."));
+        }
+        $resultadoDetalles = $stmt->get_result();
+        $detalleId = 0;
+        while ($row = $resultadoDetalles->fetch_assoc()) {
+            $candidatoId = intval($row["cod_detalle"]);
+            if ($candidatoId > 0 && empty($detallesReservados[$candidatoId])) {
+                $detalleId = $candidatoId;
+                break;
             }
         }
+        $stmt->close();
+        if ($detalleId > 0) {
+            /* Todas las autorizaciones ocurren antes de escribir para evitar una migracion parcial. */
+            odontoAutorizarUbicacionLaboratorioDetalle($mysqli, $user, $detalleId);
+            $detallesReservados[$detalleId] = true;
+            $asignaciones[] = array("link" => $link, "detalle_id" => $detalleId);
+        }
+    }
+    $migrados = 0;
+    if (count($asignaciones) > 0 && !$mysqli->begin_transaction()) {
+        odontoResponder("error", array("mensaje" => "No se pudo iniciar la vinculacion de ubicaciones."));
+    }
+    try {
+        foreach ($asignaciones as $asignacion) {
+            $link = $asignacion["link"];
+            $detalleId = intval($asignacion["detalle_id"]);
+            $linkId = intval($link["id"]);
+            $stmtUpd = $mysqli->prepare("UPDATE odontograma_tratamiento_links SET venta_id = ?, detalle_venta_id = ?, origen = 'venta_principal', actualizado_por = ?, fecha_actualizacion = NOW() WHERE id = ? LIMIT 1");
+            if (!$stmtUpd
+                || !$stmtUpd->bind_param("iiii", $ventaId, $detalleId, $user, $linkId)
+                || !$stmtUpd->execute()) {
+                throw new Exception("No se pudo vincular una ubicacion a la venta.");
+            }
+            if (!odontoRegistrarHistorial($mysqli, $odontograma["id"], $odontograma["version_actual"], "migrar_presupuesto_venta", "Se vinculo ubicacion del presupuesto a la venta #".$ventaId.".", $link["pieza"], null, null, $linkId, $link["producto_id"], $ventaId, $detalleId, $presupuestoId, $link["presupuesto_item_id"], null, $user)) {
+                throw new Exception("No se pudo registrar la trazabilidad de una ubicacion.");
+            }
+            $migrados++;
+        }
+        if (count($asignaciones) > 0 && !$mysqli->commit()) {
+            throw new Exception("No se pudo confirmar la vinculacion de ubicaciones.");
+        }
+    } catch (Exception $e) {
+        if (count($asignaciones) > 0) {
+            $mysqli->rollback();
+        }
+        odontoResponder("error", array(
+            "mensaje" => "No se vinculo ninguna ubicacion. La venta se conserva y puede completarse desde la ficha clinica."
+        ));
     }
     odontoResponder("exito", array("migrados" => $migrados));
 }
@@ -946,7 +1193,26 @@ if ($accion == "obtenerAlcanceProducto") {
     odontoObtenerAlcanceProducto($mysqli, odontoPost("producto_id"));
 }
 
-$ctx = odontoObtenerContexto($mysqli, odontoPost("paciente_id"), odontoPost("cedula"), odontoPost("venta_id"), odontoPost("presupuesto_id"));
+$detalleLaboratorioAutorizado = null;
+if ($accion == "guardarLinkTratamientoOdontograma" && trim(odontoPost("detalle_venta_id")) != "") {
+    $detalleLaboratorioAutorizado = odontoAutorizarUbicacionLaboratorioDetalle(
+        $mysqli,
+        $user,
+        odontoPost("detalle_venta_id"),
+        true
+    );
+}
+$pacienteContexto = $detalleLaboratorioAutorizado
+    ? (string)$detalleLaboratorioAutorizado["cod_clienteFK"] : odontoPost("paciente_id");
+$ventaContexto = $detalleLaboratorioAutorizado
+    ? (string)$detalleLaboratorioAutorizado["cod_ventaFK"] : odontoPost("venta_id");
+$ctx = odontoObtenerContexto(
+    $mysqli,
+    $pacienteContexto,
+    odontoPost("cedula"),
+    $ventaContexto,
+    odontoPost("presupuesto_id")
+);
 $odontograma = odontoObtenerOCrear($mysqli, $ctx, $user);
 if (!$odontograma) {
     odontoResponder("error", array("mensaje" => "No se pudo crear o consultar el odontograma."));
@@ -963,7 +1229,7 @@ switch ($accion) {
         odontoEliminarMarca($mysqli, $odontograma, $user);
         break;
     case "guardarLinkTratamientoOdontograma":
-        odontoGuardarLink($mysqli, $ctx, $odontograma, $user);
+        odontoGuardarLink($mysqli, $ctx, $odontograma, $user, $detalleLaboratorioAutorizado);
         break;
     case "eliminarLinkTratamientoOdontograma":
         odontoEliminarLink($mysqli, $odontograma, $user);

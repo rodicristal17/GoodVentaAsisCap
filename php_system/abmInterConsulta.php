@@ -14,6 +14,7 @@
     require_once("centro_facturas_helper.php");
     require_once("interconsulta_operaciones_helper.php");
     require_once("interconsulta_fusion_helper.php");
+    require_once("trabajo_laboratorio_helper.php");
 
     date_default_timezone_set('America/Asuncion');
 
@@ -1459,6 +1460,84 @@
     return htmlspecialchars((string)(isset($texto) ? $texto : ''), ENT_QUOTES, 'UTF-8');
 }
 
+function obtenerVistaNodoMiniHiloLaboratorioInterconsulta($nodo, $idTrabajo) {
+    $nodo= is_array($nodo) ? $nodo : array();
+    $titulo= isset($nodo['titulo']) && trim((string)$nodo['titulo']) !== ''
+        ? (string)$nodo['titulo'] : 'Evento registrado';
+    $icono= isset($nodo['icono']) && preg_match('/^fa-[a-z0-9-]+$/', (string)$nodo['icono'])
+        ? (string)$nodo['icono'] : 'fa-circle';
+    $semantica= isset($nodo['estado_semantico'])
+        ? preg_replace('/[^a-z0-9_-]/i', '', (string)$nodo['estado_semantico'])
+        : 'sin_definir';
+    $datosNodo= $nodo;
+    $datosNodo['id_trabajo']= intval($idTrabajo);
+    $jsonNodo= json_encode($datosNodo, JSON_UNESCAPED_UNICODE);
+    if ($jsonNodo === false) {
+        $jsonNodo= '{}';
+    }
+    $etiqueta= $titulo;
+    if (function_exists('mb_strlen') && mb_strlen($etiqueta, 'UTF-8') > 26) {
+        $etiqueta= mb_substr($etiqueta, 0, 23, 'UTF-8').'...';
+    } elseif (strlen($etiqueta) > 26) {
+        $etiqueta= substr($etiqueta, 0, 23).'...';
+    }
+    return '<button type="button" class="interconsulta-lab-mini-node is-'.escaparHtmlInterconsulta($semantica).'" '
+        .'data-interconsulta-lab-node="'.escaparHtmlInterconsulta($jsonNodo).'" '
+        .'aria-haspopup="dialog" aria-expanded="false" title="'.escaparHtmlInterconsulta($titulo).'">'
+        .'<span class="interconsulta-lab-mini-node__dot"><i class="fa-solid '.escaparHtmlInterconsulta($icono).'" aria-hidden="true"></i></span>'
+        .'<span class="interconsulta-lab-mini-node__label">'.escaparHtmlInterconsulta($etiqueta).'</span>'
+        .'</button>';
+}
+
+function obtenerVistaMiniHiloLaboratorioInterconsulta($miniHilo, $idTrabajo) {
+    $idTrabajo= intval($idTrabajo);
+    $miniHilo= is_array($miniHilo) ? $miniHilo : array();
+    $nodos= isset($miniHilo['nodos']) && is_array($miniHilo['nodos'])
+        ? array_values($miniHilo['nodos']) : array();
+    $codigo= isset($miniHilo['codigo_visible']) && trim((string)$miniHilo['codigo_visible']) !== ''
+        ? (string)$miniHilo['codigo_visible'] : 'Trabajo #'.$idTrabajo;
+    $cantidad= count($nodos);
+    $contenido= '';
+    if ($cantidad > 0) {
+        $contenido.= obtenerVistaNodoMiniHiloLaboratorioInterconsulta($nodos[0], $idTrabajo);
+        $inicioUltimos= $cantidad > 3 ? $cantidad - 2 : 1;
+        $ocultos= max(0, $inicioUltimos - 1);
+        if ($ocultos > 0) {
+            $contenido.= '<span class="interconsulta-lab-mini-segment interconsulta-lab-mini-segment--more">'
+                .'<span class="interconsulta-lab-mini-connector" aria-hidden="true"></span>'
+                .'<button type="button" class="interconsulta-lab-mini-more" data-interconsulta-lab-more '
+                .'aria-expanded="false" title="Mostrar los '.$ocultos.' nodos intermedios">+'.$ocultos.'</button>'
+                .'</span>';
+        }
+        for ($indice=1; $indice < $cantidad; $indice++) {
+            $oculto= $ocultos > 0 && $indice < $inicioUltimos;
+            $contenido.= '<span class="interconsulta-lab-mini-segment'
+                .($oculto ? ' is-collapsed-segment' : '').'">'
+                .'<span class="interconsulta-lab-mini-connector" aria-hidden="true"></span>'
+                .obtenerVistaNodoMiniHiloLaboratorioInterconsulta($nodos[$indice], $idTrabajo)
+                .'</span>';
+        }
+    } else {
+        $contenido= '<span class="interconsulta-lab-mini-node interconsulta-lab-mini-node--unavailable">'
+            .'<span class="interconsulta-lab-mini-node__dot"><i class="fa-solid fa-link" aria-hidden="true"></i></span>'
+            .'<span class="interconsulta-lab-mini-node__label">Trabajo vinculado</span></span>';
+    }
+    return '<section class="interconsulta-lab-mini-thread'.($cantidad === 0 ? ' is-unavailable' : '').'" '
+        .'data-interconsulta-lab-work="'.intval($idTrabajo).'" aria-label="Recorrido del trabajo al enviarse este mensaje">'
+        .'<div class="interconsulta-lab-mini-thread__caption">'
+        .'<span><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Estado al enviar</span>'
+        .'<small>'.escaparHtmlInterconsulta($codigo).'</small>'
+        .'</div>'
+        .'<div class="interconsulta-lab-mini-thread__track">'.$contenido
+        .'<span class="interconsulta-lab-mini-segment interconsulta-lab-mini-segment--open">'
+        .'<span class="interconsulta-lab-mini-connector" aria-hidden="true"></span>'
+        .'<button type="button" class="interconsulta-lab-mini-open" '
+        .'data-interconsulta-lab-open-work="'.intval($idTrabajo).'" '
+        .'title="Abrir el trabajo y su trazabilidad completa" aria-label="Abrir el trabajo y su trazabilidad completa">'
+        .'<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>'
+        .'</span></div></section>';
+}
+
 function convertirTextoDocumentoInterconsulta($texto) {
     $texto = trim((string)(isset($texto) ? $texto : ''));
     if ($texto === '') {
@@ -2895,6 +2974,34 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         }
         $regMensaje= obtenerMensaje($filtrosMensajeTarjeta, $limite);
         $resumenLecturasMensajes= interconsultaLecturasResumenMensajes($filtros["cod_interConsultaFK"], $regMensaje);
+        $referenciasTrabajoLaboratorio= array();
+        foreach ($regMensaje as $mensajeTrabajoLaboratorio) {
+            $contenidoReferencia= isset($mensajeTrabajoLaboratorio['contenido'])
+                ? (string)$mensajeTrabajoLaboratorio['contenido'] : '';
+            if (preg_match('/\[TRABAJO_LAB:(\d+)\]/', $contenidoReferencia, $coincidenciaReferencia)) {
+                $referenciasTrabajoLaboratorio[]= array(
+                    'cod_mensaje' => intval($mensajeTrabajoLaboratorio['cod_mensaje']),
+                    'id_trabajo' => intval($coincidenciaReferencia[1])
+                );
+            }
+        }
+        $miniHilosTrabajoLaboratorio= array();
+        if (count($referenciasTrabajoLaboratorio) > 0) {
+            $mysqliMiniHilos= conectar_al_servidor();
+            try {
+                $miniHilosTrabajoLaboratorio= trabajoLaboratorioMiniHilosPorMensajes(
+                    $mysqliMiniHilos,
+                    $referenciasTrabajoLaboratorio
+                );
+            } catch (Exception $errorMiniHilo) {
+                error_log(
+                    '[InterConsultaLaboratorio] No se pudo proyectar el mini hilo historico: '
+                    .$errorMiniHilo->getMessage()
+                );
+                $miniHilosTrabajoLaboratorio= array();
+            }
+            $mysqliMiniHilos->close();
+        }
         $mesActualTimeline = '';
         $diaActualTimeline = '';
         foreach ($regMensaje as $key => $valueMens) {
@@ -2939,8 +3046,14 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 );
             }
             $contenidoMensaje = nl2br($contenidoMensaje, false);
+            $codigoMensajeTrabajoLaboratorio= intval($valueMens['cod_mensaje']);
+            $miniHiloMensaje= isset($miniHilosTrabajoLaboratorio[$codigoMensajeTrabajoLaboratorio])
+                ? $miniHilosTrabajoLaboratorio[$codigoMensajeTrabajoLaboratorio] : array();
             $accionTrabajoLaboratorioMensaje= $idTrabajoLaboratorioMensaje > 0
-                ? '<button type="button" class="interconsulta-lab-work-link" onclick="event.stopPropagation();if(window.TrabajoLaboratorio){TrabajoLaboratorio.abrirTrabajo('.$idTrabajoLaboratorioMensaje.');}else{ver_vetana_informativa(\'El modulo de trabajos de laboratorio no esta disponible.\');}"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Ver trabajo y trazabilidad</button>'
+                ? obtenerVistaMiniHiloLaboratorioInterconsulta(
+                    $miniHiloMensaje,
+                    $idTrabajoLaboratorioMensaje
+                )
                 : '';
 
             $miniatura_imagen= "";

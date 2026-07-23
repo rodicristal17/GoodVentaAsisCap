@@ -7261,3 +7261,428 @@ function minimizarabmInterConsulta() {
     document.getElementById('divAbmInterConsulta').style.display="none";
     document.getElementById('divMinimizadoInterConsulta').style.display="";
 }
+
+var miniHiloLaboratorioPopoverInterConsulta= null;
+var miniHiloLaboratorioTriggerInterConsulta= null;
+var miniHiloLaboratorioViewerInterConsulta= null;
+
+function escaparMiniHiloLaboratorioInterConsulta(valor) {
+    return (valor === null || typeof valor === "undefined" ? "" : String(valor))
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function textoMiniHiloLaboratorioInterConsulta(valor, alternativo) {
+    var texto= valor === null || typeof valor === "undefined" ? "" : String(valor).trim();
+    if (texto) {
+        return texto;
+    }
+    if (arguments.length > 1) {
+        return alternativo === null || typeof alternativo === "undefined"
+            ? "" : String(alternativo);
+    }
+    return "No asignado";
+}
+
+function fechaMiniHiloLaboratorioInterConsulta(valor, incluirHora) {
+    var texto= textoMiniHiloLaboratorioInterConsulta(valor, "");
+    var coincidencia= texto.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+    if (!coincidencia) {
+        return texto || "Sin fecha definida";
+    }
+    return coincidencia[3] + "/" + coincidencia[2] + "/" + coincidencia[1]
+        + (incluirHora && coincidencia[4] ? " · " + coincidencia[4] + ":" + coincidencia[5] : "");
+}
+
+function nombreEstadoMiniHiloLaboratorioInterConsulta(nodo) {
+    var nombre= textoMiniHiloLaboratorioInterConsulta(nodo.estado_nombre, "");
+    if (nombre) {
+        return nombre;
+    }
+    nombre= textoMiniHiloLaboratorioInterConsulta(nodo.estado, "Registrado");
+    return nombre.replace(/_/g, " ").replace(/\b\w/g, function (letra) {
+        return letra.toUpperCase();
+    });
+}
+
+function campoModificadoMiniHiloLaboratorioInterConsulta(nodo, claves) {
+    var modificados= Array.isArray(nodo.campos_modificados) ? nodo.campos_modificados : [];
+    return claves.some(function (clave) {
+        return modificados.indexOf(clave) >= 0;
+    });
+}
+
+function campoMiniHiloLaboratorioInterConsulta(etiqueta, valor, modificado) {
+    return '<div class="interconsulta-lab-node-field' + (modificado ? ' is-modified' : '') + '">'
+        + '<small>' + escaparMiniHiloLaboratorioInterConsulta(etiqueta)
+        + (modificado ? ' <i class="fa-solid fa-pen" aria-hidden="true"></i>' : '') + '</small>'
+        + '<strong>' + escaparMiniHiloLaboratorioInterConsulta(
+            textoMiniHiloLaboratorioInterConsulta(valor, "No asignado")
+        ) + '</strong></div>';
+}
+
+function mediaMiniHiloLaboratorioInterConsulta(nodo) {
+    var media= Array.isArray(nodo.media) ? nodo.media : [];
+    if (!media.length) {
+        return '<span class="interconsulta-lab-node-media-empty"><i class="fa-solid fa-image" aria-hidden="true"></i>'
+            + 'Este nodo no incorporó fotografías ni documentos</span>';
+    }
+    return '<div class="interconsulta-lab-node-media" aria-label="Archivos incorporados en este nodo">'
+        + media.map(function (archivo) {
+            var id= parseInt(archivo.id, 10) || 0;
+            var mime= textoMiniHiloLaboratorioInterConsulta(archivo.mime, "").toLowerCase();
+            var nombre= textoMiniHiloLaboratorioInterConsulta(
+                archivo.descripcion || archivo.nombre,
+                mime === "application/pdf" ? "Documento PDF" : "Fotografía"
+            );
+            var vista= mime === "application/pdf"
+                ? '<i class="fa-solid fa-file-pdf" aria-hidden="true"></i>'
+                : '<span class="interconsulta-lab-node-media__loading"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i></span>';
+            return '<button type="button" data-interconsulta-lab-media="' + id + '" '
+                + 'data-interconsulta-lab-media-mime="' + escaparMiniHiloLaboratorioInterConsulta(mime) + '" '
+                + 'data-interconsulta-lab-media-name="' + escaparMiniHiloLaboratorioInterConsulta(nombre) + '" '
+                + 'aria-label="Abrir ' + escaparMiniHiloLaboratorioInterConsulta(nombre) + '">'
+                + vista + '<small>' + escaparMiniHiloLaboratorioInterConsulta(nombre) + '</small></button>';
+        }).join("") + '</div>';
+}
+
+function contenidoNodoMiniHiloLaboratorioInterConsulta(nodo) {
+    var snapshot= nodo.snapshot && typeof nodo.snapshot === "object" ? nodo.snapshot : null;
+    var actor= nodo.actor && typeof nodo.actor === "object" ? nodo.actor : {};
+    var responsable= nodo.responsable && typeof nodo.responsable === "object"
+        ? nodo.responsable : actor;
+    var avatar= textoMiniHiloLaboratorioInterConsulta(responsable.avatar || actor.avatar, "");
+    var cabeceraActor= '<div class="interconsulta-lab-node-actor">'
+        + (avatar
+            ? '<img src="' + escaparMiniHiloLaboratorioInterConsulta(avatar) + '" alt="">'
+            : '<span aria-hidden="true"><i class="fa-solid fa-user"></i></span>')
+        + '<div><strong>' + escaparMiniHiloLaboratorioInterConsulta(
+            textoMiniHiloLaboratorioInterConsulta(responsable.nombre || actor.nombre, "Usuario Telar")
+        ) + '</strong><small>Responsable del nodo'
+        + (responsable.rol ? ' · ' + escaparMiniHiloLaboratorioInterConsulta(responsable.rol) : '')
+        + '</small></div></div>';
+    var resumen= '<dl class="interconsulta-lab-node-summary">'
+        + '<div><dt>Fecha y hora</dt><dd>'
+        + escaparMiniHiloLaboratorioInterConsulta(fechaMiniHiloLaboratorioInterConsulta(nodo.fecha, true))
+        + '</dd></div><div><dt>Local</dt><dd>'
+        + escaparMiniHiloLaboratorioInterConsulta(
+            textoMiniHiloLaboratorioInterConsulta(nodo.local, "Sin local informado")
+        ) + '</dd></div></dl>';
+    if (nodo.cierre) {
+        return cabeceraActor + resumen
+            + '<div class="interconsulta-lab-node-closure"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>'
+            + '<div><strong>' + escaparMiniHiloLaboratorioInterConsulta(
+                nodo.estado === "cancelado" ? "Seguimiento cancelado" : "Resultado finalizado"
+            ) + '</strong><span>' + escaparMiniHiloLaboratorioInterConsulta(
+                textoMiniHiloLaboratorioInterConsulta(nodo.observacion, "El hilo quedó cerrado.")
+            ) + '</span></div></div>';
+    }
+    var campos= "";
+    if (snapshot) {
+        campos= '<div class="interconsulta-lab-node-fields">'
+            + campoMiniHiloLaboratorioInterConsulta(
+                "Tipo de trabajo",
+                snapshot.tipo_trabajo,
+                campoModificadoMiniHiloLaboratorioInterConsulta(nodo, ["cod_tipo_trabajo"])
+            )
+            + campoMiniHiloLaboratorioInterConsulta(
+                "Colorimetría",
+                snapshot.colorimetro,
+                campoModificadoMiniHiloLaboratorioInterConsulta(nodo, ["colorimetro"])
+            )
+            + campoMiniHiloLaboratorioInterConsulta("Paciente", snapshot.paciente, false)
+            + campoMiniHiloLaboratorioInterConsulta("Producto de la venta", snapshot.producto, false)
+            + campoMiniHiloLaboratorioInterConsulta(
+                "Doctor",
+                snapshot.doctor,
+                campoModificadoMiniHiloLaboratorioInterConsulta(nodo, ["cod_especialista"])
+            )
+            + campoMiniHiloLaboratorioInterConsulta(
+                "Mecánico dental",
+                snapshot.mecanico_dental,
+                campoModificadoMiniHiloLaboratorioInterConsulta(
+                    nodo,
+                    ["cod_mecanico_dental", "cod_tecnico_usuario"]
+                )
+            )
+            + campoMiniHiloLaboratorioInterConsulta(
+                "Retiro",
+                snapshot.fecha_retiro
+                    ? fechaMiniHiloLaboratorioInterConsulta(snapshot.fecha_retiro, false)
+                    : "Sin fecha definida",
+                campoModificadoMiniHiloLaboratorioInterConsulta(nodo, ["fecha_retiro"])
+            )
+            + campoMiniHiloLaboratorioInterConsulta(
+                "Entrega",
+                snapshot.fecha_entrega
+                    ? fechaMiniHiloLaboratorioInterConsulta(snapshot.fecha_entrega, false)
+                    : "Sin fecha definida",
+                campoModificadoMiniHiloLaboratorioInterConsulta(nodo, ["fecha_entrega"])
+            )
+            + campoMiniHiloLaboratorioInterConsulta(
+                "Costo",
+                snapshot.costo_estimado === null || typeof snapshot.costo_estimado === "undefined"
+                    ? "Sin registrar" : snapshot.costo_estimado,
+                campoModificadoMiniHiloLaboratorioInterConsulta(nodo, ["costo_estimado"])
+            )
+            + campoMiniHiloLaboratorioInterConsulta(
+                "Local",
+                snapshot.local || nodo.local,
+                campoModificadoMiniHiloLaboratorioInterConsulta(nodo, ["cod_local"])
+            ) + '</div>';
+    }
+    var observacion= snapshot && snapshot.observacion
+        ? snapshot.observacion : nodo.observacion;
+    return cabeceraActor + mediaMiniHiloLaboratorioInterConsulta(nodo) + campos + resumen
+        + '<div class="interconsulta-lab-node-note'
+        + (campoModificadoMiniHiloLaboratorioInterConsulta(nodo, ["observacion"]) ? ' is-modified' : '')
+        + '"><small>Observación'
+        + (campoModificadoMiniHiloLaboratorioInterConsulta(nodo, ["observacion"])
+            ? ' <i class="fa-solid fa-pen" aria-hidden="true"></i>' : '')
+        + '</small><p>' + escaparMiniHiloLaboratorioInterConsulta(
+            textoMiniHiloLaboratorioInterConsulta(observacion, "Sin observación registrada")
+        ) + '</p></div>';
+}
+
+function posicionarNodoMiniHiloLaboratorioInterConsulta() {
+    if (!miniHiloLaboratorioPopoverInterConsulta
+        || !miniHiloLaboratorioTriggerInterConsulta
+        || miniHiloLaboratorioPopoverInterConsulta.hidden) {
+        return;
+    }
+    var rect= miniHiloLaboratorioTriggerInterConsulta.getBoundingClientRect();
+    var popover= miniHiloLaboratorioPopoverInterConsulta;
+    var margen= 12;
+    var ancho= Math.min(410, window.innerWidth - (margen * 2));
+    popover.style.width= ancho + "px";
+    popover.style.left= Math.max(
+        margen,
+        Math.min(window.innerWidth - ancho - margen, rect.left + (rect.width / 2) - (ancho / 2))
+    ) + "px";
+    popover.style.top= (rect.bottom + 9) + "px";
+    var alto= popover.offsetHeight;
+    if (rect.bottom + 9 + alto > window.innerHeight - margen) {
+        popover.style.top= Math.max(margen, rect.top - alto - 9) + "px";
+    }
+}
+
+function cerrarNodoMiniHiloLaboratorioInterConsulta(devolverFoco) {
+    var trigger= miniHiloLaboratorioTriggerInterConsulta;
+    if (miniHiloLaboratorioPopoverInterConsulta) {
+        miniHiloLaboratorioPopoverInterConsulta.hidden= true;
+        miniHiloLaboratorioPopoverInterConsulta.innerHTML= "";
+    }
+    if (trigger) {
+        trigger.setAttribute("aria-expanded", "false");
+    }
+    miniHiloLaboratorioTriggerInterConsulta= null;
+    if (devolverFoco && trigger && document.documentElement.contains(trigger)) {
+        trigger.focus();
+    }
+}
+
+function cargarMiniaturasNodoLaboratorioInterConsulta(popover) {
+    if (!popover || !window.TrabajoLaboratorio
+        || typeof window.TrabajoLaboratorio.obtenerMedia !== "function") {
+        return;
+    }
+    Array.prototype.forEach.call(
+        popover.querySelectorAll('[data-interconsulta-lab-media]:not([data-interconsulta-lab-media-mime="application/pdf"])'),
+        function (boton) {
+            var id= boton.getAttribute("data-interconsulta-lab-media");
+            window.TrabajoLaboratorio.obtenerMedia(id).then(function (media) {
+                if (!document.documentElement.contains(boton)) {
+                    return;
+                }
+                boton._interconsultaLabMedia= media;
+                var vista= boton.querySelector(".interconsulta-lab-node-media__loading");
+                if (vista) {
+                    vista.className= "interconsulta-lab-node-media__preview";
+                    vista.innerHTML= '<img src="' + escaparMiniHiloLaboratorioInterConsulta(media.src) + '" alt="">';
+                }
+                posicionarNodoMiniHiloLaboratorioInterConsulta();
+            }).catch(function () {
+                var vista= boton.querySelector(".interconsulta-lab-node-media__loading");
+                if (vista) {
+                    vista.innerHTML= '<i class="fa-solid fa-image" aria-hidden="true"></i>';
+                }
+            });
+        }
+    );
+}
+
+function abrirNodoMiniHiloLaboratorioInterConsulta(trigger) {
+    var nodo;
+    try {
+        nodo= JSON.parse(trigger.getAttribute("data-interconsulta-lab-node") || "{}");
+    } catch (error) {
+        if (typeof ver_vetana_informativa === "function") {
+            ver_vetana_informativa("No se pudo interpretar la información histórica de este nodo.");
+        }
+        return;
+    }
+    if (miniHiloLaboratorioTriggerInterConsulta === trigger
+        && miniHiloLaboratorioPopoverInterConsulta
+        && !miniHiloLaboratorioPopoverInterConsulta.hidden) {
+        cerrarNodoMiniHiloLaboratorioInterConsulta(true);
+        return;
+    }
+    cerrarNodoMiniHiloLaboratorioInterConsulta(false);
+    if (!miniHiloLaboratorioPopoverInterConsulta) {
+        miniHiloLaboratorioPopoverInterConsulta= document.createElement("div");
+        miniHiloLaboratorioPopoverInterConsulta.id= "interconsultaLabNodePopover";
+        miniHiloLaboratorioPopoverInterConsulta.className= "interconsulta-lab-node-popover";
+        miniHiloLaboratorioPopoverInterConsulta.setAttribute("role", "dialog");
+        miniHiloLaboratorioPopoverInterConsulta.setAttribute("aria-modal", "false");
+        miniHiloLaboratorioPopoverInterConsulta.setAttribute("aria-label", "Detalle histórico del nodo");
+        document.body.appendChild(miniHiloLaboratorioPopoverInterConsulta);
+    }
+    miniHiloLaboratorioTriggerInterConsulta= trigger;
+    trigger.setAttribute("aria-expanded", "true");
+    miniHiloLaboratorioPopoverInterConsulta.innerHTML=
+        '<header class="interconsulta-lab-node-popover__header"><div><small>'
+        + escaparMiniHiloLaboratorioInterConsulta(
+            nodo.cierre ? "Resultado del seguimiento" : (nodo.version ? "Versión " + nodo.version : "Versión conservada")
+        ) + '</small><h3>' + escaparMiniHiloLaboratorioInterConsulta(
+            textoMiniHiloLaboratorioInterConsulta(nodo.titulo, "Evento registrado")
+        ) + '</h3></div><span>' + escaparMiniHiloLaboratorioInterConsulta(
+            nombreEstadoMiniHiloLaboratorioInterConsulta(nodo)
+        ) + '</span><button type="button" data-interconsulta-lab-popover-close '
+        + 'aria-label="Cerrar detalle"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>'
+        + '<div class="interconsulta-lab-node-popover__body">'
+        + contenidoNodoMiniHiloLaboratorioInterConsulta(nodo) + '</div>';
+    miniHiloLaboratorioPopoverInterConsulta.hidden= false;
+    posicionarNodoMiniHiloLaboratorioInterConsulta();
+    cargarMiniaturasNodoLaboratorioInterConsulta(miniHiloLaboratorioPopoverInterConsulta);
+}
+
+function cerrarVisorMiniHiloLaboratorioInterConsulta() {
+    if (miniHiloLaboratorioViewerInterConsulta) {
+        miniHiloLaboratorioViewerInterConsulta.remove();
+        miniHiloLaboratorioViewerInterConsulta= null;
+    }
+}
+
+function mostrarVisorMiniHiloLaboratorioInterConsulta(media, titulo) {
+    cerrarVisorMiniHiloLaboratorioInterConsulta();
+    var esPdf= textoMiniHiloLaboratorioInterConsulta(media.mime, "").toLowerCase() === "application/pdf";
+    miniHiloLaboratorioViewerInterConsulta= document.createElement("div");
+    miniHiloLaboratorioViewerInterConsulta.className= "interconsulta-lab-media-viewer";
+    miniHiloLaboratorioViewerInterConsulta.innerHTML=
+        '<figure role="dialog" aria-modal="true" aria-label="Evidencia del trabajo">'
+        + '<button type="button" data-interconsulta-lab-viewer-close aria-label="Cerrar evidencia">'
+        + '<i class="fa-solid fa-xmark" aria-hidden="true"></i></button>'
+        + (esPdf
+            ? '<iframe sandbox referrerpolicy="no-referrer" src="'
+                + escaparMiniHiloLaboratorioInterConsulta(media.src) + '" title="'
+                + escaparMiniHiloLaboratorioInterConsulta(titulo) + '"></iframe>'
+            : '<img src="' + escaparMiniHiloLaboratorioInterConsulta(media.src) + '" alt="'
+                + escaparMiniHiloLaboratorioInterConsulta(titulo) + '">')
+        + '<figcaption>' + escaparMiniHiloLaboratorioInterConsulta(titulo) + '</figcaption></figure>';
+    document.body.appendChild(miniHiloLaboratorioViewerInterConsulta);
+}
+
+document.addEventListener("click", function (event) {
+    var cerrarVisor= event.target.closest("[data-interconsulta-lab-viewer-close]");
+    if (cerrarVisor || (miniHiloLaboratorioViewerInterConsulta
+        && event.target === miniHiloLaboratorioViewerInterConsulta)) {
+        event.preventDefault();
+        cerrarVisorMiniHiloLaboratorioInterConsulta();
+        return;
+    }
+    var cerrarPopover= event.target.closest("[data-interconsulta-lab-popover-close]");
+    if (cerrarPopover) {
+        event.preventDefault();
+        cerrarNodoMiniHiloLaboratorioInterConsulta(true);
+        return;
+    }
+    var media= event.target.closest("[data-interconsulta-lab-media]");
+    if (media) {
+        event.preventDefault();
+        event.stopPropagation();
+        var titulo= media.getAttribute("data-interconsulta-lab-media-name") || "Evidencia del trabajo";
+        var abrir= function (archivo) {
+            media._interconsultaLabMedia= archivo;
+            mostrarVisorMiniHiloLaboratorioInterConsulta(archivo, titulo);
+        };
+        if (media._interconsultaLabMedia) {
+            abrir(media._interconsultaLabMedia);
+        } else if (window.TrabajoLaboratorio
+            && typeof window.TrabajoLaboratorio.obtenerMedia === "function") {
+            window.TrabajoLaboratorio.obtenerMedia(
+                media.getAttribute("data-interconsulta-lab-media")
+            ).then(abrir).catch(function (error) {
+                if (typeof ver_vetana_informativa === "function") {
+                    ver_vetana_informativa(error.message || "No se pudo abrir la evidencia.");
+                }
+            });
+        }
+        return;
+    }
+    var nodo= event.target.closest("[data-interconsulta-lab-node]");
+    if (nodo) {
+        event.preventDefault();
+        event.stopPropagation();
+        abrirNodoMiniHiloLaboratorioInterConsulta(nodo);
+        return;
+    }
+    var mas= event.target.closest("[data-interconsulta-lab-more]");
+    if (mas) {
+        event.preventDefault();
+        event.stopPropagation();
+        cerrarNodoMiniHiloLaboratorioInterConsulta(false);
+        var miniHilo= mas.closest(".interconsulta-lab-mini-thread");
+        var expandido= !miniHilo.classList.contains("is-expanded");
+        miniHilo.classList.toggle("is-expanded", expandido);
+        mas.setAttribute("aria-expanded", expandido ? "true" : "false");
+        mas.title= expandido ? "Ocultar nodos intermedios" : "Mostrar nodos intermedios";
+        return;
+    }
+    var abrirTrabajo= event.target.closest("[data-interconsulta-lab-open-work]");
+    if (abrirTrabajo) {
+        event.preventDefault();
+        event.stopPropagation();
+        cerrarNodoMiniHiloLaboratorioInterConsulta(false);
+        var idTrabajo= parseInt(
+            abrirTrabajo.getAttribute("data-interconsulta-lab-open-work"),
+            10
+        ) || 0;
+        if (window.TrabajoLaboratorio && typeof window.TrabajoLaboratorio.abrirTrabajo === "function") {
+            window.TrabajoLaboratorio.abrirTrabajo(idTrabajo);
+        } else if (typeof ver_vetana_informativa === "function") {
+            ver_vetana_informativa("El módulo de trabajos de laboratorio no está disponible.");
+        }
+        return;
+    }
+    if (miniHiloLaboratorioPopoverInterConsulta
+        && !miniHiloLaboratorioPopoverInterConsulta.hidden
+        && !miniHiloLaboratorioPopoverInterConsulta.contains(event.target)) {
+        cerrarNodoMiniHiloLaboratorioInterConsulta(false);
+    }
+});
+
+document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") {
+        return;
+    }
+    if (miniHiloLaboratorioViewerInterConsulta) {
+        cerrarVisorMiniHiloLaboratorioInterConsulta();
+        return;
+    }
+    cerrarNodoMiniHiloLaboratorioInterConsulta(true);
+});
+
+document.addEventListener("scroll", function (event) {
+    if (miniHiloLaboratorioPopoverInterConsulta
+        && miniHiloLaboratorioPopoverInterConsulta.contains(event.target)) {
+        return;
+    }
+    cerrarNodoMiniHiloLaboratorioInterConsulta(false);
+}, true);
+
+window.addEventListener("resize", function () {
+    cerrarNodoMiniHiloLaboratorioInterConsulta(false);
+});

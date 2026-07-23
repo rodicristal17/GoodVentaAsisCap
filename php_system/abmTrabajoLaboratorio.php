@@ -12,8 +12,12 @@ require_once __DIR__.'/centro_facturas_helper.php';
 require_once __DIR__.'/centro_legajos_helper.php';
 require_once __DIR__.'/interconsulta_seguimiento_paciente_helper.php';
 require_once __DIR__.'/trabajo_laboratorio_helper.php';
+require_once __DIR__.'/trabajo_laboratorio_historico_helper.php';
 
 date_default_timezone_set('Etc/GMT+3');
+/* Los errores siguen registrandose en el log de PHP, pero nunca deben
+   mezclarse con el JSON que interpreta el modulo. */
+ini_set('display_errors', '0');
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 header('Cache-Control: no-store, private');
@@ -30,6 +34,9 @@ function trabajoLaboratorioHttpResponder($respuesta, $estadoHttp = 200)
 function trabajoLaboratorioHttpArchivos($archivos, $descripcion)
 {
     $salida = array();
+    $limites = trabajoLaboratorioLimitesMedia();
+    $maximoArchivos = intval($limites['max_archivos']);
+    $maximoBytes = intval($limites['max_bytes_archivo']);
     if (!isset($archivos['name'])) {
         return $salida;
     }
@@ -37,20 +44,32 @@ function trabajoLaboratorioHttpArchivos($archivos, $descripcion)
     $temporales = is_array($archivos['tmp_name']) ? $archivos['tmp_name'] : array($archivos['tmp_name']);
     $errores = is_array($archivos['error']) ? $archivos['error'] : array($archivos['error']);
     $tamanos = is_array($archivos['size']) ? $archivos['size'] : array($archivos['size']);
-    if (count($nombres) > 5) {
-        trabajoLaboratorioLanzar('cantidad_evidencias_invalida', 'Puede adjuntar hasta cinco imagenes por operacion.');
+    if (count($nombres) > $maximoArchivos) {
+        trabajoLaboratorioLanzar(
+            'cantidad_evidencias_invalida',
+            'Puede adjuntar hasta '.$maximoArchivos.' archivos por operacion.'
+        );
     }
     foreach ($nombres as $indice => $nombre) {
         $error = isset($errores[$indice]) ? intval($errores[$indice]) : UPLOAD_ERR_NO_FILE;
         if ($error === UPLOAD_ERR_NO_FILE) {
             continue;
         }
+        if ($error === UPLOAD_ERR_INI_SIZE || $error === UPLOAD_ERR_FORM_SIZE) {
+            trabajoLaboratorioLanzar(
+                'evidencia_demasiado_grande',
+                'Cada archivo debe pesar como maximo '.trabajoLaboratorioTamanoMediaTexto($maximoBytes).'.'
+            );
+        }
         if ($error !== UPLOAD_ERR_OK) {
-            trabajoLaboratorioLanzar('carga_media_incompleta', 'Una de las imagenes no pudo cargarse completamente.');
+            trabajoLaboratorioLanzar('carga_media_incompleta', 'Uno de los archivos no pudo cargarse completamente.');
         }
         $tamano = isset($tamanos[$indice]) ? intval($tamanos[$indice]) : 0;
-        if ($tamano <= 0 || $tamano > 10485760) {
-            trabajoLaboratorioLanzar('evidencia_invalida', 'Cada imagen debe pesar como maximo 10 MB.');
+        if ($tamano <= 0 || $tamano > $maximoBytes) {
+            trabajoLaboratorioLanzar(
+                'evidencia_invalida',
+                'Cada archivo debe pesar como maximo '.trabajoLaboratorioTamanoMediaTexto($maximoBytes).'.'
+            );
         }
         $temporal = isset($temporales[$indice]) ? $temporales[$indice] : '';
         if ($temporal === '' || !is_uploaded_file($temporal)) {
@@ -58,7 +77,7 @@ function trabajoLaboratorioHttpArchivos($archivos, $descripcion)
         }
         $contenido = file_get_contents($temporal);
         if ($contenido === false || strlen($contenido) !== $tamano) {
-            trabajoLaboratorioLanzar('carga_media_incompleta', 'No se pudo leer una de las imagenes recibidas.');
+            trabajoLaboratorioLanzar('carga_media_incompleta', 'No se pudo leer uno de los archivos recibidos.');
         }
         $salida[] = array(
             'data_base64' => base64_encode($contenido),
@@ -73,18 +92,39 @@ function trabajoLaboratorioHttpContextoUsuario($mysqli, $codUsuario)
 {
     $usuario = trabajoLaboratorioUsuario($mysqli, $codUsuario);
     $esMecanico = trabajoLaboratorioObtenerTecnicoFormal($mysqli, $codUsuario, false) ? true : false;
+    $esAuditor = trabajoLaboratorioUsuarioEsAuditor($mysqli, $codUsuario);
+    $historicosDisponibles = function_exists('trabajoLaboratorioHistoricoEstructuraDisponible')
+        && trabajoLaboratorioHistoricoEstructuraDisponible($mysqli);
     return array(
         'cod_usuario' => intval($codUsuario),
+        'nombre' => $usuario ? trabajoLaboratorioTextoUtf8($usuario['nombre_persona']) : null,
         'rol' => $usuario ? trabajoLaboratorioTextoUtf8($usuario['tipo']) : null,
+        'avatar' => $usuario ? trabajoLaboratorioTextoUtf8($usuario['url']) : null,
         'cod_local' => $usuario ? intval($usuario['cod_localFK']) : null,
+        'nombre_local' => $usuario ? trabajoLaboratorioTextoUtf8($usuario['nombre_local']) : null,
+        'limites_media' => trabajoLaboratorioLimitesMedia(),
+        'hilo_custodia_disponible' => trabajoLaboratorioHiloCustodiaDisponible($mysqli),
         'es_mecanico' => $esMecanico,
         'puede_ver_bandeja_mecanico' => $esMecanico
             && trabajoLaboratorioTienePermiso($mysqli, $codUsuario, 'VERTRABAJOSLABORATORIO'),
-        'es_auditor' => trabajoLaboratorioUsuarioEsAuditor($mysqli, $codUsuario)
+        'es_auditor' => $esAuditor,
+        'historicos_disponibles' => $historicosDisponibles,
+        'puede_resolver_historicos' => $usuario && $historicosDisponibles,
+        'puede_convalidar_historicos' => $esAuditor && $historicosDisponibles,
+        'puede_rectificar_historicos' => $esAuditor && $historicosDisponibles
     );
 }
 
 try {
+    $limitesSolicitud = trabajoLaboratorioLimitesMedia();
+    $longitudSolicitud = isset($_SERVER['CONTENT_LENGTH']) ? intval($_SERVER['CONTENT_LENGTH']) : 0;
+    if (intval($limitesSolicitud['max_bytes_solicitud']) > 0
+        && $longitudSolicitud > intval($limitesSolicitud['max_bytes_solicitud'])) {
+        trabajoLaboratorioLanzar(
+            'carga_total_excedida',
+            'La carga completa supera el limite del servidor. Reduzca la cantidad o el tamano de los archivos.'
+        );
+    }
     $entrada = $_POST;
     $accion = trabajoLaboratorioTextoEntrada(isset($entrada['accion']) ? $entrada['accion'] : '', 50);
     if ($accion === '') {
@@ -134,9 +174,13 @@ try {
 
     $contextoUsuario = trabajoLaboratorioHttpContextoUsuario($mysqli, $codUsuario);
     $accionesEscritura = array(
-        'iniciarTrabajo', 'iniciarTransferencia', 'confirmarRecepcion', 'agregarEvidencia',
-        'agregarNota', 'iniciarDevolucion', 'confirmarDevolucion', 'solicitarAjuste',
-        'aprobarTrabajo', 'registrarInstalacion', 'cancelarTrabajo', 'asegurarHiloDetalle'
+        'iniciarTrabajo', 'iniciarTrabajosAgrupados', 'guardarRegularizacionUnidades',
+        'asignarTecnico', 'iniciarTransferencia', 'tomarHilo', 'confirmarRecepcion', 'actualizarDatosTrabajo', 'agregarEvidencia',
+        'agregarNota', 'registrarNovedad', 'registrarNovedadCustodia', 'rectificarCustodia',
+        'iniciarDevolucion', 'confirmarDevolucion', 'solicitarAjuste',
+        'aprobarTrabajo', 'registrarInstalacion', 'cancelarTrabajo', 'asegurarHiloDetalle',
+        'convalidarHistorico', 'rectificarHistorico', 'promoverHistorico',
+        'resolverHistorico'
     );
     if (in_array($accion, $accionesEscritura, true) && !trabajoLaboratorioEstructuraDisponible($mysqli)) {
         trabajoLaboratorioLanzar(
@@ -149,8 +193,23 @@ try {
         case 'iniciarTrabajo':
             $respuesta = trabajoLaboratorioIniciar($mysqli, $codUsuario, $entrada);
             break;
+        case 'iniciarTrabajosAgrupados':
+            $respuesta = trabajoLaboratorioIniciar($mysqli, $codUsuario, $entrada);
+            break;
+        case 'guardarRegularizacionUnidades':
+            $respuesta = trabajoLaboratorioGuardarRegularizacionUnidades($mysqli, $codUsuario, $entrada);
+            break;
+        case 'asignarTecnico':
+            $respuesta = trabajoLaboratorioAsignarTecnico($mysqli, $codUsuario, $entrada);
+            break;
         case 'iniciarTransferencia':
             $respuesta = trabajoLaboratorioIniciarTransferencia($mysqli, $codUsuario, $entrada);
+            break;
+        case 'tomarHilo':
+            $respuesta = trabajoLaboratorioTomarHilo($mysqli, $codUsuario, $entrada);
+            break;
+        case 'actualizarDatosTrabajo':
+            $respuesta = trabajoLaboratorioActualizarDatos($mysqli, $codUsuario, $entrada);
             break;
         case 'confirmarRecepcion':
             $respuesta = trabajoLaboratorioConfirmarRecepcion($mysqli, $codUsuario, $entrada);
@@ -160,6 +219,13 @@ try {
             break;
         case 'agregarNota':
             $respuesta = trabajoLaboratorioAgregarNota($mysqli, $codUsuario, $entrada);
+            break;
+        case 'registrarNovedad':
+        case 'registrarNovedadCustodia':
+            $respuesta = trabajoLaboratorioRegistrarNovedad($mysqli, $codUsuario, $entrada);
+            break;
+        case 'rectificarCustodia':
+            $respuesta = trabajoLaboratorioRectificarCustodia($mysqli, $codUsuario, $entrada);
             break;
         case 'iniciarDevolucion':
             $respuesta = trabajoLaboratorioIniciarDevolucion($mysqli, $codUsuario, $entrada);
@@ -178,6 +244,34 @@ try {
             break;
         case 'cancelarTrabajo':
             $respuesta = trabajoLaboratorioCancelar($mysqli, $codUsuario, $entrada);
+            break;
+        case 'convalidarHistorico':
+            $respuesta = trabajoLaboratorioHistoricoConvalidarHistorico(
+                $mysqli,
+                $codUsuario,
+                $entrada
+            );
+            break;
+        case 'rectificarHistorico':
+            $respuesta = trabajoLaboratorioHistoricoRectificarHistorico(
+                $mysqli,
+                $codUsuario,
+                $entrada
+            );
+            break;
+        case 'promoverHistorico':
+            $respuesta = trabajoLaboratorioHistoricoPromoverHistorico(
+                $mysqli,
+                $codUsuario,
+                $entrada
+            );
+            break;
+        case 'resolverHistorico':
+            $respuesta = trabajoLaboratorioHistoricoResolverHistorico(
+                $mysqli,
+                $codUsuario,
+                $entrada
+            );
             break;
         case 'asegurarHiloDetalle':
             $respuesta = trabajoLaboratorioAsegurarHiloDetalle(
@@ -216,11 +310,51 @@ try {
             $datos = array_merge($datos, $contextoUsuario);
             $respuesta = trabajoLaboratorioRespuesta(true, 'trabajos_listados', 'Trabajos listados.', $datos, null);
             break;
+        case 'listarHistoricos':
+            $datos = trabajoLaboratorioHistoricoListarHistoricos($mysqli, $codUsuario, $entrada);
+            $datos['contexto_usuario'] = $contextoUsuario;
+            $datos = array_merge($datos, $contextoUsuario);
+            $respuesta = trabajoLaboratorioRespuesta(
+                true,
+                'historicos_listados',
+                'Trabajos historicos listados.',
+                $datos,
+                null
+            );
+            break;
+        case 'obtenerHistorico':
+            $datos = trabajoLaboratorioHistoricoObtenerHistorico(
+                $mysqli,
+                $codUsuario,
+                isset($entrada['id_historico']) ? $entrada['id_historico']
+                    : (isset($entrada['id_trabajo']) ? $entrada['id_trabajo'] : 0)
+            );
+            $datos['contexto_usuario'] = $contextoUsuario;
+            $datos = array_merge($datos, $contextoUsuario);
+            $versionHistorica = isset($datos['historico']['version'])
+                ? intval($datos['historico']['version']) : null;
+            $respuesta = trabajoLaboratorioRespuesta(
+                true,
+                'historico_obtenido',
+                'Trabajo historico obtenido.',
+                $datos,
+                $versionHistorica
+            );
+            break;
         case 'obtenerResumen':
             if (!trabajoLaboratorioEstructuraDisponible($mysqli)) {
                 trabajoLaboratorioLanzar('estructura_laboratorio_no_instalada', 'El modulo de laboratorio todavia no esta instalado.');
             }
             $resumen = trabajoLaboratorioResumen($mysqli, $codUsuario, $entrada);
+            if (trabajoLaboratorioHistoricoEstructuraDisponible($mysqli)) {
+                $resumenHistorico = trabajoLaboratorioHistoricoResumen($mysqli, $codUsuario, $entrada);
+                $resumen['historicos'] = $resumenHistorico;
+                $resumen['historicos_total'] = isset($resumenHistorico['total'])
+                    ? intval($resumenHistorico['total']) : 0;
+                $resumen['historicos_por_actualizar'] = isset($resumenHistorico['por_actualizar'])
+                    ? intval($resumenHistorico['por_actualizar']) : 0;
+                $resumen['grupos']['historicos'] = $resumen['historicos_total'];
+            }
             $datos = array_merge($resumen, array('resumen' => $resumen, 'contexto_usuario' => $contextoUsuario), $contextoUsuario);
             $respuesta = trabajoLaboratorioRespuesta(true, 'resumen_obtenido', 'Resumen obtenido.', $datos, null);
             break;

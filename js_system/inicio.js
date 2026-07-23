@@ -105,7 +105,8 @@ function textoRespuestaAjaxFlexible(responseText) {
 	}
 }
 
-function cambiarTabFichaClinicaConsulta(tab) {
+function cambiarTabFichaClinicaConsulta(tab, opciones) {
+	opciones = opciones || {};
 	var raiz = document.getElementById("divAbmConsulta");
 	if (!raiz) {
 		return false;
@@ -136,14 +137,27 @@ function cambiarTabFichaClinicaConsulta(tab) {
 			panel.style.setProperty("display", "none", "important");
 		}
 	}
-	if (destino == "odontograma" && typeof cargarOdontogramaFichaClinica == "function") {
+	if (destino == "odontograma" && opciones.recargarOdontograma !== false
+		&& typeof cargarOdontogramaFichaClinica == "function") {
 		setTimeout(function () {
 			try {
-				cargarOdontogramaFichaClinica();
+				cargarOdontogramaFichaClinica(opciones.opcionesOdontograma || {});
 			} catch (error) {
 				console.error("No se pudo refrescar el odontograma de la ficha clinica:", error);
 			}
 		}, 80);
+	}
+	if (opciones.enfocar === true) {
+		setTimeout(function () {
+			var panelActivo = raiz.querySelector("[data-consulta-tab-panel='" + destino + "']");
+			if (!panelActivo) { return; }
+			if (!panelActivo.hasAttribute("tabindex")) { panelActivo.setAttribute("tabindex", "-1"); }
+			try { panelActivo.focus({ preventScroll: true }); } catch (error) { panelActivo.focus(); }
+			if (typeof panelActivo.scrollIntoView === "function") {
+				try { panelActivo.scrollIntoView({ behavior: "smooth", block: "start" }); }
+				catch (error) { panelActivo.scrollIntoView(true); }
+			}
+		}, opciones.demoraEnfoque || 0);
 	}
 	return false;
 }
@@ -2480,6 +2494,7 @@ function cargarFormularioUsuarioDesdeRegistro(registro) {
 	actualizarCabeceraFormularioFuncionario();
 	actualizarProgresoContratoUsuario();
 	buscarHistorialUsuariosAnteriores(idAbmUsuario);
+	configurarModoFormularioFuncionario(false);
 	return true;
 }
 
@@ -4113,6 +4128,485 @@ function habilitarCambioContrasenhaFuncionario() {
 	}
 }
 
+var pasoAltaFuncionario = 1;
+var altaFuncionarioEnProceso = false;
+var ultimaAltaFuncionario = null;
+var mecanicosDisponiblesAltaFuncionarioCargados = false;
+var rolMecanicoDentalFuncionario = "MECANICO DENTAL / LABORATORIO";
+
+function normalizarTextoAltaFuncionario(valor) {
+	valor = $.trim(String(valor || "")).toUpperCase();
+	if (valor.normalize) {
+		valor = valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+	}
+	return valor;
+}
+
+function esTipoMecanicoDentalFuncionario(valor) {
+	return normalizarTextoAltaFuncionario(valor) == "MECANICO DENTAL";
+}
+
+function asegurarOpcionTipoMecanicoDentalFuncionario() {
+	var select = document.getElementById("inptTipoUsuUser");
+	if (!select) { return; }
+	for (var i = 0; i < select.options.length; i++) {
+		if (esTipoMecanicoDentalFuncionario(select.options[i].value)) { return; }
+	}
+	select.appendChild(new Option("MECÁNICO DENTAL", "MECANICO DENTAL"));
+}
+
+function limpiarErroresAltaFuncionario() {
+	var formulario = document.getElementById("funcionarioFormularioEdicion");
+	if (!formulario) { return; }
+	var campos = formulario.querySelectorAll(".funcionario-form-field.is-error");
+	for (var i = 0; i < campos.length; i++) {
+		campos[i].classList.remove("is-error");
+	}
+	var mensajes = formulario.querySelectorAll(".funcionario-field-error");
+	for (var j = 0; j < mensajes.length; j++) {
+		if (mensajes[j].parentNode) { mensajes[j].parentNode.removeChild(mensajes[j]); }
+	}
+	var mensajeGeneral = document.getElementById("funcionarioAltaMensaje");
+	if (mensajeGeneral) {
+		mensajeGeneral.innerHTML = "";
+		mensajeGeneral.style.display = "none";
+	}
+}
+
+function mostrarErrorCampoAltaFuncionario(idCampo, mensaje, enfocar) {
+	var campo = document.getElementById(idCampo);
+	if (!campo) { return false; }
+	var contenedor = campo.closest ? campo.closest(".funcionario-form-field") : null;
+	if (contenedor) {
+		contenedor.classList.add("is-error");
+		var anterior = contenedor.querySelector(".funcionario-field-error");
+		if (anterior && anterior.parentNode) { anterior.parentNode.removeChild(anterior); }
+		var error = document.createElement("p");
+		error.className = "funcionario-field-error";
+		error.innerHTML = escaparHtmlFuncionario(mensaje);
+		contenedor.appendChild(error);
+	}
+	if (enfocar !== false) {
+		setTimeout(function() { campo.focus(); }, 30);
+	}
+	return false;
+}
+
+function mostrarMensajeAltaFuncionario(mensaje, htmlExtra) {
+	var contenedor = document.getElementById("funcionarioAltaMensaje");
+	if (!contenedor) {
+		ver_vetana_informativa(mensaje);
+		return;
+	}
+	contenedor.innerHTML = escaparHtmlFuncionario(mensaje) + (htmlExtra || "");
+	contenedor.style.display = "";
+}
+
+function pasoCampoAltaFuncionario(idCampo) {
+	var pasoDos = ["inptClaveAcceso", "inptAccesoUser", "inptContrasenhaUserTemporal", "inptMecanicoDentalVinculoUsuario"];
+	return pasoDos.indexOf(idCampo) >= 0 ? 2 : 1;
+}
+
+function valorSeleccionadoTexto(id) {
+	var select = document.getElementById(id);
+	if (!select || select.selectedIndex < 0) { return ""; }
+	return $.trim(select.options[select.selectedIndex].text || "");
+}
+
+function seleccionarRolMecanicoDentalFuncionario() {
+	var select = document.getElementById("inptAccesoUser");
+	var ayuda = document.getElementById("funcionarioRolAccesoAyuda");
+	if (!select) { return false; }
+	var encontrado = false;
+	for (var i = 0; i < select.options.length; i++) {
+		if (normalizarTextoAltaFuncionario(select.options[i].text) == rolMecanicoDentalFuncionario) {
+			select.value = select.options[i].value;
+			encontrado = true;
+			break;
+		}
+	}
+	select.disabled = encontrado;
+	if (ayuda) {
+		ayuda.innerHTML = encontrado
+			? "Perfil mínimo aplicado: ver, recibir y entregar trabajos de laboratorio."
+			: "No se encontró el perfil MECÁNICO DENTAL / LABORATORIO. Aplicá la actualización de permisos antes de crear esta cuenta.";
+		ayuda.style.color = encontrado ? "#18756f" : "#a3342c";
+	}
+	return encontrado;
+}
+
+function cargarMecanicosDisponiblesAltaFuncionario(forzar) {
+	if (mecanicosDisponiblesAltaFuncionarioCargados && !forzar) { return; }
+	var select = document.getElementById("inptMecanicoDentalVinculoUsuario");
+	if (!select) { return; }
+	select.innerHTML = "";
+	select.appendChild(new Option("Cargando mecánicos disponibles...", ""));
+	select.disabled = true;
+	obtener_datos_user();
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"funt": "buscarMecanicosDisponiblesAlta"
+		},
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
+		type: "post",
+		success: function(responseText) {
+			select.disabled = false;
+			select.innerHTML = "";
+			select.appendChild(new Option("Seleccionar un mecánico sin vincular", ""));
+			try {
+				var datos = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(datos["1"]) == true) {
+					var registros = Array.isArray(datos["2"]) ? datos["2"] : [];
+					for (var i = 0; i < registros.length; i++) {
+						var detalle = registros[i].telefono ? " · " + registros[i].telefono : "";
+						select.appendChild(new Option(registros[i].nombre_persona + detalle, registros[i].cod_mecanico_dental));
+					}
+					select.appendChild(new Option("Crear un nuevo registro con estos datos", "__nuevo__"));
+					mecanicosDisponiblesAltaFuncionarioCargados = true;
+					return;
+				}
+				mostrarMensajeAltaFuncionario(datos.mensaje || "No se pudieron cargar los mecánicos disponibles.");
+			} catch (error) {
+				select.appendChild(new Option("Crear un nuevo registro con estos datos", "__nuevo__"));
+				mostrarMensajeAltaFuncionario("No se pudo consultar la lista de mecánicos dentales.");
+			}
+		},
+		error: function() {
+			select.disabled = false;
+			select.innerHTML = "";
+			select.appendChild(new Option("Crear un nuevo registro con estos datos", "__nuevo__"));
+			mostrarMensajeAltaFuncionario("No se pudo consultar la lista de mecánicos dentales.");
+		}
+	});
+}
+
+function actualizarTipoFuncionarioAlta() {
+	asegurarOpcionTipoMecanicoDentalFuncionario();
+	var esAlta = idAbmUsuario == "";
+	var tipo = document.getElementById("inptTipoUsuUser") ? document.getElementById("inptTipoUsuUser").value : "";
+	var panel = document.getElementById("funcionarioVinculoMecanicoAlta");
+	var acceso = document.getElementById("inptAccesoUser");
+	var ayuda = document.getElementById("funcionarioRolAccesoAyuda");
+	if (esAlta && esTipoMecanicoDentalFuncionario(tipo)) {
+		if (panel && pasoAltaFuncionario == 2) { panel.style.display = ""; }
+		seleccionarRolMecanicoDentalFuncionario();
+		cargarMecanicosDisponiblesAltaFuncionario(false);
+	} else {
+		if (panel) { panel.style.display = "none"; }
+		if (acceso) { acceso.disabled = false; }
+		if (ayuda) {
+			ayuda.innerHTML = "El rol define los permisos disponibles dentro de Telar.";
+			ayuda.style.color = "";
+		}
+	}
+	actualizarRevisionAltaFuncionario();
+	actualizarCabeceraFormularioFuncionario();
+}
+
+function configurarModoFormularioFuncionario(esAlta) {
+	var formulario = document.getElementById("funcionarioFormularioEdicion");
+	var guia = document.getElementById("funcionarioAltaGuiada");
+	var resultado = document.getElementById("funcionarioAltaResultado");
+	var layout = formulario ? formulario.querySelector(".funcionario-form-layout") : null;
+	var btnContinuar = document.getElementById("btnContinuarAltaFuncionario");
+	var btnVolver = document.getElementById("btnVolverPasoAltaFuncionario");
+	var btnCancelar = document.getElementById("btnCancelarAltaFuncionario");
+	var btnGuardar = document.getElementById("btnAbmUsuario");
+	var inputTemporal = document.getElementById("inptContrasenhaUserTemporal");
+	var btnGenerar = document.getElementById("btnGenerarContrasenhaFuncionario");
+	var btnRestablecer = document.getElementById("btnRestablecerContrasenhaFuncionario");
+	var tituloClave = document.getElementById("funcionarioContrasenhaTitulo");
+	var ayudaClave = document.getElementById("funcionarioContrasenhaAyuda");
+	var estado = document.getElementById("inptEstadoUser");
+	var fecha = document.getElementById("inptFechaCreacionMUser");
+	limpiarErroresAltaFuncionario();
+	if (resultado) { resultado.style.display = "none"; }
+	if (layout) { layout.style.display = ""; }
+	if (formulario) { formulario.classList.toggle("funcionario-alta-modo", !!esAlta); }
+	if (guia) { guia.style.display = esAlta ? "" : "none"; }
+	if (btnCancelar) { btnCancelar.style.display = esAlta ? "" : "none"; }
+	if (btnContinuar) { btnContinuar.style.display = esAlta ? "" : "none"; }
+	if (btnVolver) { btnVolver.style.display = "none"; }
+	if (btnGuardar) {
+		btnGuardar.value = esAlta ? "Crear funcionario" : "ACTUALIZAR DATOS";
+		btnGuardar.style.display = esAlta ? "none" : "";
+		btnGuardar.disabled = false;
+	}
+	if (inputTemporal) { inputTemporal.style.display = esAlta ? "" : "none"; }
+	if (btnGenerar) { btnGenerar.style.display = esAlta ? "" : "none"; }
+	if (btnRestablecer) { btnRestablecer.style.display = esAlta ? "none" : ""; }
+	if (tituloClave) {
+		tituloClave.innerHTML = esAlta
+			? "Contraseña temporal <span class='funcionario-required'>*</span>"
+			: "Acciones de contraseña";
+	}
+	if (ayudaClave) {
+		ayudaClave.innerHTML = esAlta
+			? "La clave temporal se podrá copiar al finalizar el alta."
+			: "La contraseña actual no se muestra ni se edita directamente.";
+	}
+	if (estado) {
+		if (esAlta) { estado.value = "Activo"; }
+		estado.disabled = !!esAlta;
+	}
+	if (fecha) { fecha.disabled = !!esAlta; }
+	if (esAlta) {
+		pasoAltaFuncionario = 1;
+		ultimaAltaFuncionario = null;
+		mecanicosDisponiblesAltaFuncionarioCargados = false;
+		var confirmar = document.getElementById("chkConfirmarAltaFuncionario");
+		if (confirmar) { confirmar.checked = false; }
+		asegurarOpcionTipoMecanicoDentalFuncionario();
+		renderPasoAltaFuncionario();
+	} else {
+		var secciones = document.querySelectorAll("#funcionarioFormularioEdicion [data-funcionario-alta-paso]");
+		for (var i = 0; i < secciones.length; i++) {
+			secciones[i].style.display = secciones[i].id == "funcionarioAltaRevision" ? "none" : "";
+		}
+		var acceso = document.getElementById("inptAccesoUser");
+		if (acceso) { acceso.disabled = false; }
+	}
+}
+
+function renderPasoAltaFuncionario() {
+	if (idAbmUsuario != "") { return; }
+	var secciones = document.querySelectorAll("#funcionarioFormularioEdicion [data-funcionario-alta-paso]");
+	var tipo = document.getElementById("inptTipoUsuUser") ? document.getElementById("inptTipoUsuUser").value : "";
+	for (var i = 0; i < secciones.length; i++) {
+		var paso = parseInt(secciones[i].getAttribute("data-funcionario-alta-paso"), 10);
+		var mostrar = paso == pasoAltaFuncionario;
+		if (secciones[i].id == "funcionarioVinculoMecanicoAlta" && !esTipoMecanicoDentalFuncionario(tipo)) {
+			mostrar = false;
+		}
+		secciones[i].style.display = mostrar ? "" : "none";
+	}
+	var pasos = document.querySelectorAll("#funcionarioAltaGuiada .funcionario-alta-paso");
+	for (var j = 0; j < pasos.length; j++) {
+		var numero = parseInt(pasos[j].getAttribute("data-paso"), 10);
+		pasos[j].classList.toggle("is-active", numero == pasoAltaFuncionario);
+		pasos[j].classList.toggle("is-complete", numero < pasoAltaFuncionario);
+	}
+	var btnVolver = document.getElementById("btnVolverPasoAltaFuncionario");
+	var btnContinuar = document.getElementById("btnContinuarAltaFuncionario");
+	var btnGuardar = document.getElementById("btnAbmUsuario");
+	if (btnVolver) { btnVolver.style.display = pasoAltaFuncionario > 1 ? "" : "none"; }
+	if (btnContinuar) { btnContinuar.style.display = pasoAltaFuncionario < 3 ? "" : "none"; }
+	if (btnGuardar) { btnGuardar.style.display = pasoAltaFuncionario == 3 ? "" : "none"; }
+	if (pasoAltaFuncionario == 3) { actualizarRevisionAltaFuncionario(); }
+	actualizarEstadoBotonAltaFuncionario();
+}
+
+function validarPasoAltaFuncionario(paso, enfocar) {
+	limpiarErroresAltaFuncionario();
+	var requeridos = paso == 1 ? [
+		["inptNombreApellidoUsuario", "Ingresá el nombre y apellido del funcionario."],
+		["inptNroDocUsuario", "Ingresá el número de documento."],
+		["inptlocaluser", "Seleccioná el local principal."],
+		["inptTipoUsuUser", "Seleccioná el tipo de funcionario o cargo."]
+	] : [
+		["inptClaveAcceso", "Ingresá el usuario con el que accederá a Telar."],
+		["inptAccesoUser", "Seleccioná el rol de acceso."],
+		["inptContrasenhaUserTemporal", "Generá o ingresá una contraseña temporal."]
+	];
+	for (var i = 0; i < requeridos.length; i++) {
+		var campo = document.getElementById(requeridos[i][0]);
+		if (!campo || $.trim(campo.value || "") == "") {
+			return mostrarErrorCampoAltaFuncionario(requeridos[i][0], requeridos[i][1], enfocar);
+		}
+	}
+	if (paso == 2 && esTipoMecanicoDentalFuncionario(document.getElementById("inptTipoUsuUser").value)) {
+		if (!seleccionarRolMecanicoDentalFuncionario()) {
+			return mostrarErrorCampoAltaFuncionario("inptAccesoUser", "Falta el perfil de acceso MECÁNICO DENTAL / LABORATORIO.", enfocar);
+		}
+		var vinculo = document.getElementById("inptMecanicoDentalVinculoUsuario");
+		if (!vinculo || $.trim(vinculo.value || "") == "") {
+			return mostrarErrorCampoAltaFuncionario("inptMecanicoDentalVinculoUsuario", "Seleccioná un mecánico existente o elegí crear uno nuevo.", enfocar);
+		}
+	}
+	return true;
+}
+
+function irPasoAltaFuncionario(paso) {
+	paso = parseInt(paso, 10);
+	if (idAbmUsuario != "" || paso < 1 || paso > 3) { return; }
+	if (paso > pasoAltaFuncionario) {
+		for (var actual = pasoAltaFuncionario; actual < paso; actual++) {
+			if (actual <= 2 && !validarPasoAltaFuncionario(actual, true)) { return; }
+		}
+	}
+	pasoAltaFuncionario = paso;
+	renderPasoAltaFuncionario();
+}
+
+function continuarPasoAltaFuncionario() {
+	if (!validarPasoAltaFuncionario(pasoAltaFuncionario, true)) { return; }
+	if (pasoAltaFuncionario < 3) {
+		pasoAltaFuncionario++;
+		renderPasoAltaFuncionario();
+	}
+}
+
+function volverPasoAltaFuncionario() {
+	if (pasoAltaFuncionario > 1) {
+		pasoAltaFuncionario--;
+		renderPasoAltaFuncionario();
+	}
+}
+
+function resumenItemAltaFuncionario(etiqueta, valor) {
+	return "<div class='funcionario-alta-resumen-item'><span>" + escaparHtmlFuncionario(etiqueta) + "</span><strong>" + escaparHtmlFuncionario(valor || "-") + "</strong></div>";
+}
+
+function actualizarRevisionAltaFuncionario() {
+	var contenedor = document.getElementById("funcionarioAltaRevisionContenido");
+	if (!contenedor) { return; }
+	var tipo = valorSeleccionadoTexto("inptTipoUsuUser");
+	var html = resumenItemAltaFuncionario("Funcionario", document.getElementById("inptNombreApellidoUsuario").value);
+	html += resumenItemAltaFuncionario("Documento", document.getElementById("inptNroDocUsuario").value);
+	html += resumenItemAltaFuncionario("Local", valorSeleccionadoTexto("inptlocaluser"));
+	html += resumenItemAltaFuncionario("Tipo / cargo", tipo);
+	html += resumenItemAltaFuncionario("Usuario Telar", document.getElementById("inptClaveAcceso").value);
+	html += resumenItemAltaFuncionario("Rol de acceso", valorSeleccionadoTexto("inptAccesoUser"));
+	if (esTipoMecanicoDentalFuncionario(document.getElementById("inptTipoUsuUser").value)) {
+		html += resumenItemAltaFuncionario("Registro de mecánico", valorSeleccionadoTexto("inptMecanicoDentalVinculoUsuario"));
+	}
+	contenedor.innerHTML = html;
+}
+
+function actualizarEstadoBotonAltaFuncionario() {
+	var boton = document.getElementById("btnAbmUsuario");
+	if (!boton || idAbmUsuario != "" || pasoAltaFuncionario != 3) { return; }
+	var confirmar = document.getElementById("chkConfirmarAltaFuncionario");
+	boton.disabled = altaFuncionarioEnProceso || !confirmar || !confirmar.checked;
+}
+
+function generarContrasenhaTemporalFuncionario() {
+	var mayusculas = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+	var minusculas = "abcdefghijkmnopqrstuvwxyz";
+	var numeros = "23456789";
+	var especiales = "@#*-_";
+	var todos = mayusculas + minusculas + numeros + especiales;
+	function elegir(cadena) {
+		if (window.crypto && window.crypto.getRandomValues) {
+			var dato = new Uint32Array(1);
+			window.crypto.getRandomValues(dato);
+			return cadena.charAt(dato[0] % cadena.length);
+		}
+		return cadena.charAt(Math.floor(Math.random() * cadena.length));
+	}
+	var clave = elegir(mayusculas) + elegir(minusculas) + elegir(numeros) + elegir(especiales);
+	while (clave.length < 12) { clave += elegir(todos); }
+	clave = clave.split("").sort(function() { return Math.random() - 0.5; }).join("");
+	var temporal = document.getElementById("inptContrasenhaUserTemporal");
+	var oculto = document.getElementById("inptContrasenhaUser");
+	if (temporal) {
+		temporal.style.display = "";
+		temporal.value = clave;
+		temporal.focus();
+		temporal.select();
+	}
+	if (oculto) { oculto.value = clave; }
+	limpiarErroresAltaFuncionario();
+}
+
+function mostrarResultadoAltaFuncionario(datos, credenciales) {
+	var formulario = document.getElementById("funcionarioFormularioEdicion");
+	var guia = document.getElementById("funcionarioAltaGuiada");
+	var resultado = document.getElementById("funcionarioAltaResultado");
+	var layout = formulario ? formulario.querySelector(".funcionario-form-layout") : null;
+	var acciones = document.getElementById("funcionarioAltaAcciones");
+	if (guia) { guia.style.display = "none"; }
+	if (layout) { layout.style.display = "none"; }
+	if (acciones) { acciones.style.display = "none"; }
+	if (resultado) { resultado.style.display = "flex"; }
+	ultimaAltaFuncionario = {
+		cod_usuario: datos.cod_usuario,
+		nombre: credenciales.nombre,
+		login: credenciales.login,
+		password: credenciales.password,
+		local: credenciales.local,
+		tipo: credenciales.tipo,
+		rol: credenciales.rol,
+		mecanico: datos.mecanico || ""
+	};
+	idAbmUsuario = datos.cod_usuario;
+	var detalle = document.getElementById("funcionarioAltaResultadoDetalle");
+	var resumen = document.getElementById("funcionarioAltaResultadoResumen");
+	if (detalle) {
+		detalle.innerHTML = esTipoMecanicoDentalFuncionario(credenciales.tipo)
+			? "La cuenta Telar quedó vinculada al registro operativo del mecánico dental."
+			: "La cuenta quedó activa. La jornada y el legajo pueden completarse ahora o más adelante.";
+	}
+	if (resumen) {
+		resumen.innerHTML = resumenItemAltaFuncionario("Funcionario", credenciales.nombre)
+			+ resumenItemAltaFuncionario("Usuario Telar", credenciales.login)
+			+ resumenItemAltaFuncionario("Local", credenciales.local)
+			+ resumenItemAltaFuncionario("Rol", credenciales.rol);
+	}
+	var oculto = document.getElementById("inptContrasenhaUser");
+	var temporal = document.getElementById("inptContrasenhaUserTemporal");
+	if (oculto) { oculto.value = ""; }
+	if (temporal) { temporal.value = ""; }
+}
+
+function copiarCredencialesUltimaAltaFuncionario() {
+	if (!ultimaAltaFuncionario) { return; }
+	var texto = "Acceso Telar\nFuncionario: " + ultimaAltaFuncionario.nombre + "\nUsuario: " + ultimaAltaFuncionario.login + "\nContraseña temporal: " + ultimaAltaFuncionario.password;
+	function confirmado() { ver_vetana_informativa("Credenciales copiadas."); }
+	if (navigator.clipboard && navigator.clipboard.writeText) {
+		navigator.clipboard.writeText(texto).then(confirmado, function() { copiarTextoCredencialesFallback(texto); });
+	} else {
+		copiarTextoCredencialesFallback(texto);
+	}
+}
+
+function copiarTextoCredencialesFallback(texto) {
+	var temporal = document.createElement("textarea");
+	temporal.value = texto;
+	temporal.style.position = "fixed";
+	temporal.style.opacity = "0";
+	document.body.appendChild(temporal);
+	temporal.select();
+	document.execCommand("copy");
+	document.body.removeChild(temporal);
+	ver_vetana_informativa("Credenciales copiadas.");
+}
+
+function continuarJornadaUltimaAltaFuncionario() {
+	if (!ultimaAltaFuncionario) { return; }
+	var resultado = document.getElementById("funcionarioAltaResultado");
+	var layout = document.querySelector("#funcionarioFormularioEdicion .funcionario-form-layout");
+	var acciones = document.getElementById("funcionarioAltaAcciones");
+	if (resultado) { resultado.style.display = "none"; }
+	if (layout) { layout.style.display = ""; }
+	if (acciones) { acciones.style.display = "flex"; }
+	configurarModoFormularioFuncionario(false);
+	var columna = document.getElementById("funcionarioColumnaJornada");
+	if (columna && columna.scrollIntoView) { columna.scrollIntoView({behavior: "smooth", block: "start"}); }
+}
+
+function finalizarAltaFuncionario() {
+	ultimaAltaFuncionario = null;
+	idAbmUsuario = "";
+	verCerrarVentanaAbmUsuarios("2", "");
+	buscarabmusuario();
+}
+
+function abrirFuncionarioExistenteDesdeAlta(codUsuario, estado) {
+	var estadoNormalizado = normalizarTextoAltaFuncionario(estado) == "INACTIVO" ? "Inactivo" : "Activo";
+	verCerrarVentanaAbmUsuarios("2", "");
+	aplicarFiltroEstadoFuncionarios(estadoNormalizado);
+	setTimeout(function() {
+		seleccionarFuncionarioDesdeDirectorio(codUsuario);
+		if (funcionarioSeleccionadoCache && String(funcionarioSeleccionadoCache.cod_usuario) == String(codUsuario)) {
+			abrirFichaFuncionarioSeleccionado("resumen");
+		}
+	}, 700);
+}
+
 function cargarHistorialCambiosFuncionario() {
 	if (!idAbmUsuario) {
 		return;
@@ -5172,9 +5666,10 @@ function obtenerdatosabmusuario(datostr) {
     extcliente3=""; 
 	
 	document.getElementById('btnEditarUsuario').style.backgroundColor="";
-    document.getElementById('btnAbmUsuario').value = "ACTUALIZAR DATOS";
+	document.getElementById('btnAbmUsuario').value = "ACTUALIZAR DATOS";
 	actualizarCabeceraFormularioFuncionario();
 	actualizarProgresoContratoUsuario();
+	configurarModoFormularioFuncionario(false);
 
 	buscarHistorialUsuariosAnteriores(idAbmUsuario);
 	for (var i = 0; i < funcionariosDirectorioCache.length; i++) {
@@ -6931,49 +7426,73 @@ function renderCalendarioEsperadoUsuario() {
 }
 
 function verificarcamposusuario() {
-	var inptNombreApellidoUsuario = document.getElementById('inptNombreApellidoUsuario').value
-	var inptNroDocUsuario = document.getElementById('inptNroDocUsuario').value
-	var inptNroTelefUsuario = document.getElementById('inptNroTelefUsuario').value
-	var inptClaveAcceso = document.getElementById('inptClaveAcceso').value
-	var inptContrasenhaUser = document.getElementById('inptContrasenhaUser').value
+	var esAlta = idAbmUsuario == "";
+	if (esAlta) {
+		if (!validarPasoAltaFuncionario(1, true)) {
+			pasoAltaFuncionario = 1;
+			renderPasoAltaFuncionario();
+			return false;
+		}
+		if (!validarPasoAltaFuncionario(2, true)) {
+			pasoAltaFuncionario = 2;
+			renderPasoAltaFuncionario();
+			return false;
+		}
+		var confirmacion = document.getElementById("chkConfirmarAltaFuncionario");
+		if (!confirmacion || !confirmacion.checked) {
+			pasoAltaFuncionario = 3;
+			renderPasoAltaFuncionario();
+			mostrarMensajeAltaFuncionario("Confirmá que los datos son correctos antes de crear el funcionario.");
+			return false;
+		}
+	}
+	limpiarErroresAltaFuncionario();
+	var inptNombreApellidoUsuario = $.trim(document.getElementById('inptNombreApellidoUsuario').value);
+	var inptNroDocUsuario = $.trim(document.getElementById('inptNroDocUsuario').value);
+	var inptNroTelefUsuario = $.trim(document.getElementById('inptNroTelefUsuario').value);
+	var inptClaveAcceso = $.trim(document.getElementById('inptClaveAcceso').value);
+	var inptContrasenhaUser = document.getElementById('inptContrasenhaUser').value;
 	var inptContrasenhaUserTemporal = document.getElementById('inptContrasenhaUserTemporal') ? document.getElementById('inptContrasenhaUserTemporal').value : "";
 	if (inptContrasenhaUserTemporal != "") {
 		inptContrasenhaUser = inptContrasenhaUserTemporal;
 		document.getElementById('inptContrasenhaUser').value = inptContrasenhaUserTemporal;
 	}
-	var inptAccesoUser = document.getElementById('inptAccesoUser').value
-	var inptEstadoUser = document.getElementById('inptEstadoUser').value
-	var inptlocaluser = document.getElementById('inptlocaluser').value
-	var inptTipoUsuUser = document.getElementById('inptTipoUsuUser').value
+	var inptAccesoUser = document.getElementById('inptAccesoUser').value;
+	var inptEstadoUser = esAlta ? "Activo" : document.getElementById('inptEstadoUser').value;
+	var inptlocaluser = document.getElementById('inptlocaluser').value;
+	var inptTipoUsuUser = document.getElementById('inptTipoUsuUser').value;
 	const inptTipoRelacionamientoUser= document.getElementById('inptTipoRelacionamientoUser').value;
 	const inptNroTelefReferenciaUser= document.getElementById('inptNroTelefReferenciaUser').value;
 	const inptDireccionUser = document.getElementById('inptDireccionUser').value;
 	const inptFechaCreacionMUser = document.getElementById('inptFechaCreacionMUser').value;
 	const inptFechaVencimientoContratoUser = document.getElementById('inptFechaVencimientoContratoUser').value;
+	var mecanicoVinculo = esAlta && esTipoMecanicoDentalFuncionario(inptTipoUsuUser)
+		? document.getElementById("inptMecanicoDentalVinculoUsuario").value : "";
 
 	const horariosUsuario = obtenerHorariosUsuarioFormulario();
 	if (horariosUsuario === null) {
 		return false;
 	}
 	if (inptNombreApellidoUsuario == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NOMBRE DE USUARIO")
-		return false;
+		return mostrarErrorCampoAltaFuncionario("inptNombreApellidoUsuario", "Ingresá el nombre y apellido del funcionario.", true);
 	}
 	if (inptNroDocUsuario == "") {
-		ver_vetana_informativa("FALTO INGRESAR EL NRO DE DOCUMENTO")
-		return false;
+		return mostrarErrorCampoAltaFuncionario("inptNroDocUsuario", "Ingresá el número de documento.", true);
 	}
 	if (inptTipoUsuUser == "") {
-		ver_vetana_informativa("FALTO SELECCIONAR EL TIPO DE USUARIO")
-		return false;
+		return mostrarErrorCampoAltaFuncionario("inptTipoUsuUser", "Seleccioná el tipo de funcionario o cargo.", true);
 	}
 	if (inptClaveAcceso == "") {
-		ver_vetana_informativa("FALTO INGRESAR LA CLAVE DE ACCESO")
-		return false;
+		return mostrarErrorCampoAltaFuncionario("inptClaveAcceso", "Ingresá el usuario para acceder a Telar.", true);
+	}
+	if (inptlocaluser == "") {
+		return mostrarErrorCampoAltaFuncionario("inptlocaluser", "Seleccioná el local principal.", true);
+	}
+	if (inptAccesoUser == "") {
+		return mostrarErrorCampoAltaFuncionario("inptAccesoUser", "Seleccioná el rol de acceso.", true);
 	}
 	if (inptContrasenhaUser == "" && idAbmUsuario == "") {
-		ver_vetana_informativa("FALTO INGRESAR UNA CLAVE TEMPORAL")
-		return false;
+		return mostrarErrorCampoAltaFuncionario("inptContrasenhaUserTemporal", "Generá o ingresá una contraseña temporal.", true);
 	}
 	var accion = "";
 	if (idAbmUsuario != "") {
@@ -6983,10 +7502,15 @@ function verificarcamposusuario() {
 		accion = "nuevo";
 		if(controlacceso("INSERTARLISTADOUSUARIO","accion")==false){return;}
 	}
-	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptAccesoUser, inptEstadoUser, inptlocaluser, inptTipoRelacionamientoUser,inptNroTelefReferenciaUser, inptDireccionUser,inptFechaCreacionMUser,inptFechaVencimientoContratoUser,horariosUsuario,idAbmUsuario, accion);
+	abmusuario(inptTipoUsuUser,inptNombreApellidoUsuario, inptNroDocUsuario, inptNroTelefUsuario, inptClaveAcceso, inptContrasenhaUser, inptAccesoUser, inptEstadoUser, inptlocaluser, inptTipoRelacionamientoUser,inptNroTelefReferenciaUser, inptDireccionUser,inptFechaCreacionMUser,inptFechaVencimientoContratoUser,horariosUsuario,idAbmUsuario, accion,mecanicoVinculo);
+	return true;
 }
-function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acceso, estado, cod_localFK, tipo_relacionamiento, telefono_referencia, direccion,fecha_creacion,fecha_vencimiento_contrato,horarios_usuario,cod_persona, accion) {
+function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acceso, estado, cod_localFK, tipo_relacionamiento, telefono_referencia, direccion,fecha_creacion,fecha_vencimiento_contrato,horarios_usuario,cod_persona, accion,mecanico_vinculo) {
 	verCerrarEfectoCargando("1")
+	altaFuncionarioEnProceso = accion == "nuevo";
+	actualizarEstadoBotonAltaFuncionario();
+	var btnGuardarFuncionario = document.getElementById("btnAbmUsuario");
+	if (btnGuardarFuncionario) { btnGuardarFuncionario.disabled = true; }
 	var datos = new FormData();
 	obtener_datos_user();
 	datos.append("useru", userid)
@@ -7011,6 +7535,7 @@ function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acc
 	datos.append("horarios_usuario_json", JSON.stringify(horarios_usuario));
 	datos.append("fecha_creacion", fecha_creacion);
 	datos.append("fecha_vencimiento_contrato", fecha_vencimiento_contrato);
+	datos.append("mecanico_vinculo", mecanico_vinculo || "");
 	var OpAjax = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
@@ -7046,11 +7571,17 @@ function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acc
 						
 		error: function (jqXHR, textstatus, errorThrowm) {
 			verCerrarEfectoCargando("")
+			altaFuncionarioEnProceso = false;
+			if (btnGuardarFuncionario) { btnGuardarFuncionario.disabled = false; }
+			actualizarEstadoBotonAltaFuncionario();
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			return false;
 		},
 		success: function (responseText) {
 			verCerrarEfectoCargando("")
+			altaFuncionarioEnProceso = false;
+			if (btnGuardarFuncionario) { btnGuardarFuncionario.disabled = false; }
+			actualizarEstadoBotonAltaFuncionario();
 			Respuesta = responseText;
 			console.log(Respuesta)
 		try {
@@ -7058,13 +7589,40 @@ function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acc
 				Respuesta = datos["1"];
                 Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
-					limpiarcamposusuarios()
-					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
-					idAbmUsuario = "";
-					verCerrarVentanaAbmUsuarios("2","");
-					buscarabmusuario();
+					if (accion == "nuevo") {
+						mostrarResultadoAltaFuncionario(datos, {
+							nombre: nombre_persona,
+							login: login,
+							password: pass,
+							local: valorSeleccionadoTexto("inptlocaluser"),
+							tipo: tipo,
+							rol: valorSeleccionadoTexto("inptAccesoUser")
+						});
+						buscarabmusuario();
+					} else {
+						limpiarcamposusuarios();
+						ver_vetana_informativa("DATOS ACTUALIZADOS CORRECTAMENTE.");
+						idAbmUsuario = "";
+						verCerrarVentanaAbmUsuarios("2","");
+						buscarabmusuario();
+					}
 				} else if (datos["mensaje"]) {
-					ver_vetana_informativa(datos["mensaje"])
+					if (accion == "nuevo") {
+						var campoError = datos["campo"] || "";
+						if (campoError) {
+							pasoAltaFuncionario = pasoCampoAltaFuncionario(campoError);
+							renderPasoAltaFuncionario();
+							mostrarErrorCampoAltaFuncionario(campoError, datos["mensaje"], true);
+						}
+						var extra = "";
+						if (datos["funcionario_existente"] && datos["funcionario_existente"]["cod_usuario"]) {
+							var existente = datos["funcionario_existente"];
+							extra = " <button type='button' onclick='abrirFuncionarioExistenteDesdeAlta(\"" + String(existente["cod_usuario"]).replace(/[^0-9]/g, "") + "\",\"" + escaparHtmlFuncionario(existente["estado"] || "Activo") + "\")'>Abrir funcionario existente</button>";
+						}
+						mostrarMensajeAltaFuncionario(datos["mensaje"], extra);
+					} else {
+						ver_vetana_informativa(datos["mensaje"]);
+					}
 				}
 					
 			} catch (error) {
@@ -7377,7 +7935,7 @@ function limpiarcamposusuarios() {
 	limpiarHorariosUsuario();
 
 	const fecahActual= new Date();
-	document.getElementById('inptFechaCreacionMUser').value = fecahActual.getFullYear()+'-'+String(fecahActual.getMonth()).padStart(2, '0')+'-'+String(fecahActual.getDate()).padStart(2, '0');
+	document.getElementById('inptFechaCreacionMUser').value = fecahActual.getFullYear()+'-'+String(fecahActual.getMonth() + 1).padStart(2, '0')+'-'+String(fecahActual.getDate()).padStart(2, '0');
 	document.getElementById('inptFechaVencimientoContratoUser').value = "";
 	
 		$("div[id=imgFotoPerfil1]").css({"background-image":"url(/GoodVentaAsisCap/iconos/sinperfil.png)"})
@@ -7395,6 +7953,11 @@ function limpiarcamposusuarios() {
 	document.getElementById('divTableHistorialPersonasUsuarios').innerHTML="";
 	seleccionarLocalUSer()
 	mostrarFormularioFuncionario()
+	var vinculoMecanico = document.getElementById("inptMecanicoDentalVinculoUsuario");
+	if (vinculoMecanico) { vinculoMecanico.value = ""; }
+	var accionesAlta = document.getElementById("funcionarioAltaAcciones");
+	if (accionesAlta) { accionesAlta.style.display = "flex"; }
+	configurarModoFormularioFuncionario(true);
 }
 
 function buscarHistorialUsuariosAnteriores(cod_usuario) {
@@ -36958,6 +37521,7 @@ function BuscarNivelesSelect() {
 					if (document.getElementById("inptTipoUsuUser") && datos[4]) {
 						var selectTipoUsuario = document.getElementById("inptTipoUsuUser")
 						selectTipoUsuario.innerHTML = datos[4]
+						asegurarOpcionTipoMecanicoDentalFuncionario();
 						if (tipoUsuarioActual != "") {
 							selectTipoUsuario.value = tipoUsuarioActual
 							if (selectTipoUsuario.value != tipoUsuarioActual) {
@@ -36968,6 +37532,9 @@ function BuscarNivelesSelect() {
 								selectTipoUsuario.value = tipoUsuarioActual
 							}
 						}
+					}
+					if (idAbmUsuario == "") {
+						actualizarTipoFuncionarioAlta();
 					}
 					
 				}
@@ -36989,11 +37556,6 @@ ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error",
 function removeToMenu(){
 	
 	
-	if (!accesosuser["VERTRABAJOSLABORATORIO"] || accesosuser["VERTRABAJOSLABORATORIO"]["accion"]!="SI")
-	{
-	$("table[id=divMenuTrabajoLaboratorio]").remove()
-	}
-
 	if( accesosuser["VERLISTADOTAREASUSUARIO"]["accion"]!="SI")
 	{
 	$("table[id=divMenuAbmTareasUsuario]").remove() 	

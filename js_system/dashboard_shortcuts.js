@@ -94,7 +94,7 @@ var DASHBOARD_ACCESS_REGISTRY = {
 	lista_factura_habilitadas: { sourceSelector: "#divMenuAbmFacturas", permissionKey: "VERFACTURASHABILITADAS" },
 	lista_tipos_pago: { sourceSelector: "#divMenuAbmTipoVenta" },
 	lista_bancos: { sourceSelector: "#divMenuAbmBanco" },
-	trabajos_mecanicos_dentales: { sourceSelector: "#divMenuTrabajoLaboratorio", permissionKey: "VERTRABAJOSLABORATORIO", allowHiddenTemplate: true },
+	trabajos_mecanicos_dentales: { sourceSelector: "#divMenuTrabajoLaboratorio", allowHiddenTemplate: true },
 	listado_mecanicos_dentales: { sourceSelector: "#divMenuMecanicoDental" },
 
 	imprimir_precio: { sourceSelector: "#divMenuCodigoBarra", permissionKey: "VERINFORMECODIGOBARRA" },

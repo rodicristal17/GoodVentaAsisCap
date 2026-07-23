@@ -5,6 +5,15 @@
     include("buscar_nivel.php");
     include("classTable.php");
 
+    function trabajoMecanicoDentalResponderSoloConsulta() {
+        echo json_encode(array(
+            "1" => "error",
+            "codigo" => "modulo_legacy_solo_consulta",
+            "mensaje" => "Los trabajos historicos se consultan aqui, pero se actualizan desde Trabajos de laboratorio dental."
+        ));
+        exit;
+    }
+
     function verificar($funt) {
         $user = $_POST['useru'];
         $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
@@ -18,6 +27,10 @@
             $informacion = array("1" => "UI");
             echo json_encode($informacion);
             exit;
+        }
+
+        if ($funt === 'nuevo' || $funt === 'editar') {
+            trabajoMecanicoDentalResponderSoloConsulta();
         }
 
         switch ($funt) {

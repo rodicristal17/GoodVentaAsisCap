@@ -76,6 +76,12 @@ function dashboard_authenticated_user()
 
 function dashboard_permission_key($accessKey, $catalogPermission)
 {
+    /* El hilo de laboratorio es institucional: toda cuenta autenticada activa
+       puede abrirlo y tomarlo, aunque el catalogo instalado conserve el
+       permiso historico de esta entrada. */
+    if (trim((string)$accessKey) === 'trabajos_mecanicos_dentales') {
+        return '';
+    }
     $catalogPermission = trim((string)$catalogPermission);
 
     if ($catalogPermission != '') {
@@ -89,7 +95,6 @@ function dashboard_permission_key($accessKey, $catalogPermission)
         'cobros_realizados' => 'VERCOBROSREALIZADOS',
         'expediente_cliente' => 'VEREXPEDIENTEDELCLIENTE',
         'historial_venta' => 'VERHISTORIALVENTA',
-        'trabajos_mecanicos_dentales' => 'VERTRABAJOSLABORATORIO',
         'productos' => 'VERLISTADOPRODUCTOS',
         'nueva_venta' => 'VERVENTA',
         'flujo_egreso_ingreso' => 'VERLISTADOEGRESOINGRESO',

@@ -2267,6 +2267,58 @@ function ProductoClinicoWhereSqlConsulta($productoAlias = "pr")
 	return " AND UPPER(TRIM(".$alias.".nombre_producto)) NOT IN ('CREDITO','INTERES','GASTO ADMINISTRATIVO','CORRETAJE')";
 }
 
+/**
+ * Mantiene en Consulta la misma regla efectiva del modulo de laboratorio:
+ * el producto puede sobrescribir la configuracion heredada de su categoria.
+ */
+function ProductoLaboratorioSelectSqlConsulta($mysqli, $productoAlias = "pr", $categoriaAlias = "ca")
+{
+	$productoAlias = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$productoAlias);
+	$categoriaAlias = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$categoriaAlias);
+	if ($productoAlias == "") { $productoAlias = "pr"; }
+	if ($categoriaAlias == "") { $categoriaAlias = "ca"; }
+	$productoRequiere = columnaExisteConsulta($mysqli, "producto", "requiere_laboratorio")
+		? $productoAlias.".requiere_laboratorio" : "NULL";
+	$categoriaRequiere = columnaExisteConsulta($mysqli, "categoria", "requiere_laboratorio")
+		? $categoriaAlias.".requiere_laboratorio" : "0";
+	return "COALESCE(".$categoriaAlias.".descripcion,'') AS categoria_laboratorio, "
+		."COALESCE(".$productoRequiere.",".$categoriaRequiere.",0) AS requiere_laboratorio_efectivo";
+}
+
+/**
+ * Expone solamente la existencia de un seguimiento para rotular correctamente
+ * la accion inicial. El detalle completo sigue consultandose bajo demanda y
+ * con las autorizaciones del modulo de laboratorio.
+ */
+function EstadoLaboratorioSelectSqlConsulta($mysqli, $detalleAlias = "dtv")
+{
+	$detalleAlias = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$detalleAlias);
+	if ($detalleAlias == "") { $detalleAlias = "dtv"; }
+	$trabajoActivo = tablaExisteConsulta($mysqli, "trabajo_laboratorio")
+		? "EXISTS(SELECT 1 FROM trabajo_laboratorio tla WHERE tla.cod_detalle_activo_unico=".$detalleAlias.".cod_detalle)"
+		: "0";
+	$antecedenteHistorico = tablaExisteConsulta($mysqli, "trabajo_laboratorio_historico")
+		? "EXISTS(SELECT 1 FROM trabajo_laboratorio_historico tlh WHERE tlh.cod_detalle_ventaFK=".$detalleAlias.".cod_detalle)"
+		: "0";
+	return $trabajoActivo." AS tiene_trabajo_laboratorio_activo, "
+		.$antecedenteHistorico." AS tiene_antecedente_laboratorio_historico";
+}
+
+function EsCategoriaProtesisLaboratorioConsulta($categoria, $requiereLaboratorio)
+{
+	if ((int)$requiereLaboratorio !== 1) { return false; }
+	$texto = trim((string)$categoria);
+	if ($texto == "") { return false; }
+	if (!mb_check_encoding($texto, 'UTF-8')) {
+		$texto = mb_convert_encoding($texto, 'UTF-8', 'ISO-8859-1');
+	}
+	$texto = mb_strtoupper($texto, 'UTF-8');
+	$texto = strtr($texto, array(
+		'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ü' => 'U'
+	));
+	return $texto === "PROTESIS";
+}
+
 function obtenerTratamientosVentaPlanConsulta($mysqli,$cod_venta)
 {
 	$cod_venta = mysqli_real_escape_string($mysqli, $cod_venta);
@@ -2274,13 +2326,16 @@ function obtenerTratamientosVentaPlanConsulta($mysqli,$cod_venta)
 	$selectTemporalidad = ProductoTemporalidadSelectSqlConsulta($mysqli, "pr");
 	$selectFechaPlanificada = FechaPlanificadaTratamientoSelectSqlConsulta($mysqli, "dtv");
 	$selectFechaEvolucion = FechaEvolucionTratamientoSelectSqlConsulta($mysqli, "dtv");
+	$selectLaboratorio = ProductoLaboratorioSelectSqlConsulta($mysqli, "pr", "ca");
+	$selectEstadoLaboratorio = EstadoLaboratorioSelectSqlConsulta($mysqli, "dtv");
 	$selectAlcanceOdontologico = columnaExisteConsulta($mysqli, "producto", "alcance_odontologico")
 		? "pr.alcance_odontologico"
 		: "'no_requiere' AS alcance_odontologico";
 	$sql= "select dtv.descripcion, pr.cod_producto, dtv.cantidad_detalle, pr.nombre_producto, pr.precio_producto, vt.fecha_venta,
-		dtv.cod_detalle, dtv.cod_ventaFK as venta_id, estado_tratamiento, progreso_porcentaje, dtv.estado, ".$selectAlcanceOdontologico.", ".$selectRiesgo.", ".$selectTemporalidad.", ".$selectFechaPlanificada.", ".$selectFechaEvolucion."
+		dtv.cod_detalle, dtv.cod_ventaFK as venta_id, estado_tratamiento, progreso_porcentaje, dtv.estado, ".$selectAlcanceOdontologico.", ".$selectLaboratorio.", ".$selectEstadoLaboratorio.", ".$selectRiesgo.", ".$selectTemporalidad.", ".$selectFechaPlanificada.", ".$selectFechaEvolucion."
 		from producto pr inner join detalle_venta dtv on dtv.cod_productoFK=pr.cod_producto
 		inner join venta vt on vt.cod_venta=dtv.cod_ventaFK
+		left join categoria ca on ca.cod_categoria=pr.cod_categoriaFK
 		where dtv.cod_ventaFK='$cod_venta'
 		".ProductoClinicoWhereSqlConsulta("pr")."
 		order by dtv.cod_detalle asc";
@@ -2313,6 +2368,8 @@ function obtenerTratamientosVentaPlanConsulta($mysqli,$cod_venta)
 		$alcance_odontologico = isset($valor["alcance_odontologico"]) ? mb_convert_encoding((string)$valor["alcance_odontologico"], 'UTF-8', 'ISO-8859-1') : "no_requiere";
 		$temporalidad_tipo = isset($valor["temporalidad_tipo"]) ? mb_convert_encoding((string)$valor["temporalidad_tipo"], 'UTF-8', 'ISO-8859-1') : "";
 		$temporalidad_observacion = isset($valor["temporalidad_observacion"]) ? mb_convert_encoding((string)$valor["temporalidad_observacion"], 'UTF-8', 'ISO-8859-1') : "";
+		$categoria_laboratorio = isset($valor["categoria_laboratorio"]) ? mb_convert_encoding((string)$valor["categoria_laboratorio"], 'UTF-8', 'ISO-8859-1') : "";
+		$requiere_laboratorio = isset($valor["requiere_laboratorio_efectivo"]) ? (int)$valor["requiere_laboratorio_efectivo"] : 0;
 		$ubicacion_odontograma = obtenerUbicacionOdontogramaDetalleConsulta($mysqli, $cod_detalle, $alcance_odontologico);
 		$ordenNatural++;
 
@@ -2332,6 +2389,11 @@ function obtenerTratamientosVentaPlanConsulta($mysqli,$cod_venta)
 			"nivel_riesgo_financiero" => $nivel_riesgo_financiero,
 			"alcance_odontologico" => $alcance_odontologico,
 			"ubicacion_odontograma" => $ubicacion_odontograma,
+			"categoria_laboratorio" => $categoria_laboratorio,
+			"requiere_laboratorio" => $requiere_laboratorio,
+			"es_protesis_laboratorio" => EsCategoriaProtesisLaboratorioConsulta($categoria_laboratorio, $requiere_laboratorio),
+			"tiene_trabajo_laboratorio_activo" => !empty($valor["tiene_trabajo_laboratorio_activo"]),
+			"tiene_antecedente_laboratorio_historico" => !empty($valor["tiene_antecedente_laboratorio_historico"]),
 			"riesgo_orden" => $nivel_riesgo_financiero,
 			"precio_producto" => $precio_producto,
 			"usa_temporalidad" => isset($valor["usa_temporalidad"]) ? (int)$valor["usa_temporalidad"] : 0,
@@ -3627,6 +3689,73 @@ function renderTemporalidadTratamientoConsulta($item,$claseBase)
 	return "<div class='".$claseBase." tratamiento-temporalidad-chips'>".implode("", $chips)."</div>";
 }
 
+function atributosLaboratorioTratamientoConsulta($item, $ubicacion, $codProducto, $alcance)
+{
+	if (empty($item["es_protesis_laboratorio"])) { return ""; }
+	$categoria = isset($item["categoria_laboratorio"]) ? $item["categoria_laboratorio"] : "PROTESIS";
+	$cantidad = isset($item["cantidad_detalle_laboratorio"])
+		? $item["cantidad_detalle_laboratorio"]
+		: (isset($item["cantidad_detalle"]) ? $item["cantidad_detalle"] : 1);
+	$cantidadNumero = (float)str_replace(",", ".", (string)$cantidad);
+	$requiereRegularizacion = abs($cantidadNumero - 1.0) > 0.0001;
+	return " data-tratamiento-laboratorio='1'"
+		." data-laboratorio-ubicacion-falta='".(!empty($ubicacion["falta"]) ? "1" : "0")."'"
+		." data-laboratorio-trabajo-activo='".(!empty($item["tiene_trabajo_laboratorio_activo"]) ? "1" : "0")."'"
+		." data-laboratorio-antecedente-historico='".(!empty($item["tiene_antecedente_laboratorio_historico"]) ? "1" : "0")."'"
+		." data-laboratorio-regularizacion='".($requiereRegularizacion ? "1" : "0")."'"
+		." data-tratamiento-cantidad='".htmlspecialchars((string)$cantidad, ENT_QUOTES, "UTF-8")."'"
+		." data-tratamiento-producto='".htmlspecialchars((string)$codProducto, ENT_QUOTES, "UTF-8")."'"
+		." data-tratamiento-alcance='".htmlspecialchars((string)$alcance, ENT_QUOTES, "UTF-8")."'"
+		." data-tratamiento-categoria='".htmlspecialchars((string)$categoria, ENT_QUOTES, "UTF-8")."'";
+}
+
+function renderizarAccionLaboratorioTratamientoConsulta($item, $ubicacion, $modo = "accion")
+{
+	if (empty($item["es_protesis_laboratorio"])) { return ""; }
+	$faltaUbicacion = !empty($ubicacion["falta"]);
+	$cantidad = isset($item["cantidad_detalle_laboratorio"])
+		? $item["cantidad_detalle_laboratorio"]
+		: (isset($item["cantidad_detalle"]) ? $item["cantidad_detalle"] : 1);
+	$cantidadNumero = (float)str_replace(",", ".", (string)$cantidad);
+	$requiereRegularizacion = abs($cantidadNumero - 1.0) > 0.0001;
+	if ($modo === "microhilo" && !empty($item["tiene_trabajo_laboratorio_activo"])) {
+		return "<aside class='consulta-laboratorio-microhilo-slot' data-laboratorio-mini-hilo-slot>"
+			."<section class='consulta-laboratorio-microhilo is-loading' data-laboratorio-mini-hilo "
+			."data-laboratorio-mini-hilo-estado='cargando' aria-busy='true' aria-live='polite'>"
+			."<span class='consulta-laboratorio-microhilo__loader' aria-hidden='true'></span>"
+			."<span>Consultando hilo del trabajo...</span>"
+			."</section></aside>";
+	}
+	$resumen = "";
+	if (!empty($item["tiene_trabajo_laboratorio_activo"])) {
+		$texto = "Abrir trabajo de laboratorio";
+	} elseif (!empty($item["tiene_antecedente_laboratorio_historico"])) {
+		$texto = "Ver antecedente de laboratorio";
+	} elseif ($requiereRegularizacion) {
+		$cantidadTexto = formatearCantidadTratamientoConsulta($cantidad);
+		$esCantidadAgrupada = $cantidadNumero >= 2
+			&& $cantidadNumero <= 32
+			&& abs($cantidadNumero - round($cantidadNumero)) < 0.0001;
+		$texto = $esCantidadAgrupada
+			? "Designar ".intval(round($cantidadNumero))." trabajos"
+			: "Regularizar para laboratorio";
+		$resumen = $esCantidadAgrupada
+			? $cantidadTexto." trabajos &middot; Un selector por trabajo"
+			: $cantidadTexto." unidades registradas &middot; Administraci&oacute;n";
+	} else {
+		$texto = $faltaUbicacion ? "Asignar ubicaci&oacute;n para iniciar" : "Preparar trabajo de laboratorio";
+	}
+	return "<div class='consulta-laboratorio-card-action'>"
+		."<button type='button' class='consulta-laboratorio-card-action__button' data-tratamiento-laboratorio-accion "
+		."onclick='event.stopPropagation(); tratamientoLaboratorioClinicoAbrirDesdeTarjeta(this)' "
+		."aria-label='".strip_tags($texto)."'>"
+		."<i class='fa-solid fa-microscope' aria-hidden='true'></i>"
+		."<span data-tratamiento-laboratorio-accion-texto>".$texto."</span>"
+		."</button>"
+		."<span class='consulta-laboratorio-card-action__resumen".($requiereRegularizacion ? " is-regularization" : "")."' data-tratamiento-laboratorio-resumen aria-live='polite'".($resumen == "" ? " hidden" : "").">".$resumen."</span>"
+		."</div>";
+}
+
 function renderizarItemPlanTratamientoConsulta($tratamiento, $numero, &$styleName)
 {
 	$styleName = CargarStyleTable($styleName);
@@ -3645,20 +3774,26 @@ function renderizarItemPlanTratamientoConsulta($tratamiento, $numero, &$styleNam
 	$descripcionHtml = $descripcion != "" ? "<span class='plan-tratamientos-descripcion'>".$descripcion."</span>" : "";
 	$ubicacionHtml = renderizarUbicacionOdontogramaConsulta($tratamiento["ubicacion_odontograma"], "plan-tratamientos-ubicacion");
 	$temporalidadHtml = renderTemporalidadTratamientoConsulta($tratamiento, "plan-tratamientos-temporalidad");
-	$asignarUbicacionHtml = (!empty($tratamiento["ubicacion_odontograma"]["falta"]))
+	$esLaboratorio = !empty($tratamiento["es_protesis_laboratorio"]);
+	$atributosLaboratorio = atributosLaboratorioTratamientoConsulta($tratamiento, $tratamiento["ubicacion_odontograma"], $tratamiento["cod_producto"], $tratamiento["alcance_odontologico"]);
+	$accionLaboratorioHtml = renderizarAccionLaboratorioTratamientoConsulta($tratamiento, $tratamiento["ubicacion_odontograma"]);
+	$asignarUbicacionHtml = (!empty($tratamiento["ubicacion_odontograma"]["falta"]) && !$esLaboratorio)
 		? "<button type='button' class='odontograma-plan-ubicar-btn' onclick='event.stopPropagation(); odontogramaAsignarTratamientoFicha(\"".$cod_detalle."\",\"".$venta_id."\",\"".$cod_producto."\",".$nombreJs.",\"".$alcance_odontologico."\")'>Asignar ubicaci&oacute;n</button>"
 		: "";
 
 return "
 <table class='$styleName consulta-treatment-row plan-tratamientos-card plan-tratamientos-card--".$tratamiento["grupo_plan"]." consulta-treatment-row--$estadoClase' border='1' cellspacing='1' cellpadding='5'>
-<tr id='tbSelecRegistro' onclick='obtenerdatostrConsultaTratamiento(this)' data-detalle-tratamiento='".$cod_detalle."' data-tratamiento-nombre='".$nombre."' data-tratamiento-estado='".$estadoTexto."' data-tratamiento-estado-clase='".$estadoClase."' data-tratamiento-avance='".$avance."'>
+<tr id='tbSelecRegistro' onclick='obtenerdatostrConsultaTratamiento(this)' data-detalle-tratamiento='".$cod_detalle."' data-tratamiento-venta='".$venta_id."' data-tratamiento-nombre='".$nombre."' data-tratamiento-estado='".$estadoTexto."' data-tratamiento-estado-clase='".$estadoClase."' data-tratamiento-avance='".$avance."'".$atributosLaboratorio.">
 <td class='consulta-treatment-row__qty plan-tratamientos-numero' style='width:5%;text-aling:center'>".$numero."</td>
 <td class='consulta-treatment-row__name plan-tratamientos-info' style='width:60%'>
 <strong>".$nombre."</strong>
 <span class='plan-tratamientos-ayuda-card'>".$ayuda."</span>
 ".$descripcionHtml."
+<div class='consulta-treatment-location-actions'>
 ".$ubicacionHtml."
 ".$asignarUbicacionHtml."
+".$accionLaboratorioHtml."
+</div>
 ".$temporalidadHtml."
 </td>
 <td class='consulta-treatment-row__progress plan-tratamientos-badges' style='width:25%;text-align: center;'>
@@ -3737,18 +3872,21 @@ function obtenerItemsPlanDefinitivoConsulta($mysqli,$plan_id)
 	$selectTemporalidad = ProductoTemporalidadSelectSqlConsulta($mysqli, "pr");
 	$selectFechaPlanificada = FechaPlanificadaTratamientoSelectSqlConsulta($mysqli, "dtv");
 	$selectFechaEvolucion = FechaEvolucionTratamientoSelectSqlConsulta($mysqli, "dtv");
+	$selectLaboratorio = ProductoLaboratorioSelectSqlConsulta($mysqli, "pr", "ca");
+	$selectEstadoLaboratorio = EstadoLaboratorioSelectSqlConsulta($mysqli, "dtv");
 	$selectAlcanceOdontologico = columnaExisteConsulta($mysqli, "producto", "alcance_odontologico")
 		? "pr.alcance_odontologico"
 		: "'no_requiere' AS alcance_odontologico";
 	$sql = "SELECT i.*, vt.num_factura, vt.apodo, vt.fecha_venta, vt.cod_clienteFK,
-		dtv.estado, dtv.estado_tratamiento, dtv.progreso_porcentaje,
+		dtv.estado, dtv.estado_tratamiento, dtv.progreso_porcentaje, dtv.cantidad_detalle AS cantidad_detalle_laboratorio,
 		COALESCE(pr.nombre_producto, i.nombre_tratamiento_snapshot) AS nombre_producto_actual,
 		pr.precio_producto,
-		".$selectAlcanceOdontologico.", ".$selectRiesgo.", ".$selectTemporalidad.", ".$selectFechaPlanificada.", ".$selectFechaEvolucion."
+		".$selectAlcanceOdontologico.", ".$selectLaboratorio.", ".$selectEstadoLaboratorio.", ".$selectRiesgo.", ".$selectTemporalidad.", ".$selectFechaPlanificada.", ".$selectFechaEvolucion."
 		FROM plan_definitivo_tratamiento_items i
 		INNER JOIN detalle_venta dtv ON dtv.cod_detalle = i.detalle_venta_id
 		INNER JOIN venta vt ON vt.cod_venta = i.venta_id
 		LEFT JOIN producto pr ON pr.cod_producto = dtv.cod_productoFK
+		LEFT JOIN categoria ca ON ca.cod_categoria = pr.cod_categoriaFK
 		WHERE i.plan_definitivo_id = ? AND i.activo = 1
 		".ProductoClinicoWhereSqlConsulta("pr")."
 		ORDER BY i.orden ASC, i.id ASC";
@@ -3772,6 +3910,11 @@ function obtenerItemsPlanDefinitivoConsulta($mysqli,$plan_id)
 		$row["num_factura"] = mb_convert_encoding((string)$row["num_factura"], 'UTF-8', 'ISO-8859-1');
 		$row["nivel_riesgo_financiero"] = ProductoRiesgoFinancieroNormalizar(isset($row["nivel_riesgo_financiero"]) ? $row["nivel_riesgo_financiero"] : $row["nivel_riesgo_snapshot"]);
 		$row["alcance_odontologico"] = isset($row["alcance_odontologico"]) ? $row["alcance_odontologico"] : "no_requiere";
+		$row["categoria_laboratorio"] = isset($row["categoria_laboratorio"]) ? mb_convert_encoding((string)$row["categoria_laboratorio"], 'UTF-8', 'ISO-8859-1') : "";
+		$row["requiere_laboratorio"] = isset($row["requiere_laboratorio_efectivo"]) ? (int)$row["requiere_laboratorio_efectivo"] : 0;
+		$row["es_protesis_laboratorio"] = EsCategoriaProtesisLaboratorioConsulta($row["categoria_laboratorio"], $row["requiere_laboratorio"]);
+		$row["tiene_trabajo_laboratorio_activo"] = !empty($row["tiene_trabajo_laboratorio_activo"]);
+		$row["tiene_antecedente_laboratorio_historico"] = !empty($row["tiene_antecedente_laboratorio_historico"]);
 		$row["precio_producto"] = isset($row["precio_producto"]) ? (float)$row["precio_producto"] : 0;
 		$row["usa_temporalidad"] = isset($row["usa_temporalidad"]) ? (int)$row["usa_temporalidad"] : 0;
 		$row["temporalidad_tipo"] = isset($row["temporalidad_tipo"]) ? mb_convert_encoding((string)$row["temporalidad_tipo"], 'UTF-8', 'ISO-8859-1') : "";
@@ -3821,28 +3964,42 @@ function renderizarItemPlanDefinitivoConsulta($item,$numero,$plan_id,$editable)
 	$nodoTitulo = ($estadoClase == "completado") ? "Paso ".$numero." completado" : "Paso ".$numero;
 	$ubicacionHtml = renderizarUbicacionOdontogramaConsulta($item["ubicacion_odontograma"], "plan-definitivo-ubicacion");
 	$temporalidadHtml = renderTemporalidadTratamientoConsulta($item, "plan-definitivo-temporalidad");
-	$asignarUbicacionHtml = (!empty($item["ubicacion_odontograma"]["falta"]))
+	$esLaboratorio = !empty($item["es_protesis_laboratorio"]);
+	$atributosLaboratorio = atributosLaboratorioTratamientoConsulta($item, $item["ubicacion_odontograma"], $item["producto_id"], $item["alcance_odontologico"]);
+	$laboratorioActivo = $esLaboratorio && !empty($item["tiene_trabajo_laboratorio_activo"]);
+	$accionLaboratorioHtml = $laboratorioActivo
+		? "" : renderizarAccionLaboratorioTratamientoConsulta($item, $item["ubicacion_odontograma"]);
+	$microHiloLaboratorioHtml = $laboratorioActivo
+		? renderizarAccionLaboratorioTratamientoConsulta($item, $item["ubicacion_odontograma"], "microhilo")
+		: ($esLaboratorio
+			? "<aside class='consulta-laboratorio-microhilo-slot' data-laboratorio-mini-hilo-slot hidden></aside>"
+			: "");
+	$claseMicroHiloLaboratorio = $laboratorioActivo ? " is-laboratorio-microhilo" : "";
+	$asignarUbicacionHtml = (!empty($item["ubicacion_odontograma"]["falta"]) && !$esLaboratorio)
 		? "<button type='button' class='odontograma-plan-ubicar-btn' onclick='event.stopPropagation(); odontogramaAsignarTratamientoFicha(\"".$detalleOdontograma."\",\"".$venta."\",\"".$producto."\",".$nombreJs.",\"".$alcanceOdontologico."\")'>Asignar ubicaci&oacute;n</button>"
 		: "";
 
 	return "
-<article class='plan-definitivo-item plan-ruta-item plan-definitivo-item--".$estadoClase.$editableClass.$finalizadoClass."' role='listitem' onclick='obtenerDatosPlanDefinitivoTratamientoConsulta(event,this)' data-plan-id='".$planId."' data-plan-item='".$itemId."' data-plan-numero='".$numero."' data-detalle-odontograma='".$detalleOdontograma."' data-detalle-tratamiento='".$detalleOdontograma."' data-tratamiento-venta='".$venta."' data-tratamiento-venta-visible='".$ventaVisibleHtml."' data-tratamiento-origen='".$origenHtml."' data-tratamiento-riesgo='".$riesgoValor."' data-tratamiento-riesgo-texto='".htmlspecialchars($riesgoTexto, ENT_QUOTES, "UTF-8")."' data-tratamiento-nombre='".$nombreHtml."' data-tratamiento-estado='".$estadoTexto."' data-tratamiento-estado-clase='".$estadoClase."' data-tratamiento-avance='".$avance."' data-observacion='".htmlspecialchars($observacion, ENT_QUOTES, "UTF-8")."'>
+<article class='plan-definitivo-item plan-ruta-item plan-definitivo-item--".$estadoClase.$editableClass.$finalizadoClass."' role='listitem' onclick='obtenerDatosPlanDefinitivoTratamientoConsulta(event,this)' data-plan-id='".$planId."' data-plan-item='".$itemId."' data-plan-numero='".$numero."' data-detalle-odontograma='".$detalleOdontograma."' data-detalle-tratamiento='".$detalleOdontograma."' data-tratamiento-venta='".$venta."' data-tratamiento-venta-visible='".$ventaVisibleHtml."' data-tratamiento-origen='".$origenHtml."' data-tratamiento-riesgo='".$riesgoValor."' data-tratamiento-riesgo-texto='".htmlspecialchars($riesgoTexto, ENT_QUOTES, "UTF-8")."' data-tratamiento-nombre='".$nombreHtml."' data-tratamiento-estado='".$estadoTexto."' data-tratamiento-estado-clase='".$estadoClase."' data-tratamiento-avance='".$avance."' data-observacion='".htmlspecialchars($observacion, ENT_QUOTES, "UTF-8")."'".$atributosLaboratorio.">
 	<div class='plan-ruta-nodo' title='".$nodoTitulo."'><span>".$nodoTexto."</span></div>
-	<div class='plan-definitivo-item__body'>
-		<div class='plan-definitivo-item__top'>
-			<strong>".$nombreHtml."</strong>
-			<span>Paso ".$numero." de la ruta cl&iacute;nica</span>
+	<div class='plan-definitivo-item__body".$claseMicroHiloLaboratorio."'>
+		<div class='plan-definitivo-item__main'>
+			<div class='plan-definitivo-item__top'>
+				<strong>".$nombreHtml."</strong>
+				<span>Paso ".$numero." de la ruta cl&iacute;nica</span>
+			</div>
+			<div class='plan-ruta-origen'>Venta #".$ventaVisibleHtml." &middot; ".$origenHtml."</div>
+			<div class='plan-ruta-ubicacion'>".$ubicacionHtml.$asignarUbicacionHtml.$accionLaboratorioHtml."</div>
+			".$temporalidadHtml."
+			<div class='plan-definitivo-item__badges'>
+				".$badge_riesgo_financiero."
+				<span class='consulta-treatment-status consulta-treatment-status--".$estadoClase."'>".$estadoTexto."</span>
+				<span class='consulta-treatment-percent'>".$avance."%</span>
+				".$etapaHtml."
+			</div>
+			".$observacionHtml."
 		</div>
-		<div class='plan-ruta-origen'>Venta #".$ventaVisibleHtml." &middot; ".$origenHtml."</div>
-		<div class='plan-ruta-ubicacion'>".$ubicacionHtml.$asignarUbicacionHtml."</div>
-		".$temporalidadHtml."
-		<div class='plan-definitivo-item__badges'>
-			".$badge_riesgo_financiero."
-			<span class='consulta-treatment-status consulta-treatment-status--".$estadoClase."'>".$estadoTexto."</span>
-			<span class='consulta-treatment-percent'>".$avance."%</span>
-			".$etapaHtml."
-		</div>
-		".$observacionHtml."
+		".$microHiloLaboratorioHtml."
 	</div>
 	<div class='plan-definitivo-item__actions plan-definitivo-edit-only'>
 		<button type='button' class='plan-definitivo-icon-btn plan-definitivo-order-btn' title='Subir' onpointerdown='event.stopPropagation()' onclick='moverItemPlanDefinitivoConsulta(event,\"".$planId."\",\"".$itemId."\",-1)'>&uarr;</button>

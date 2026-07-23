@@ -651,7 +651,7 @@ if ( ! $stmt->execute()) {
 		  	  $tipo=mb_convert_encoding((string)($valor['tipo']), 'UTF-8', 'ISO-8859-1');
 			  if($tipo=="Administrativo"){
 		  	   $pagina.="<option value='$cod_niveles' >$nombre</option>";
-		  	   if(strtoupper(trim($nombre))!="SIN ACCESO"){
+			   if(strtoupper(trim($nombre))!="SIN ACCESO" && strtoupper(trim($nombre))!="MECANICO DENTAL / LABORATORIO"){
 		  	   	$nombreSeguro=htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8');
 		  	   	$paginaRolesOperativos.="<option value='".$nombreSeguro."' >".$nombreSeguro."</option>";
 		  	   }
@@ -666,7 +666,8 @@ if ( ! $stmt->execute()) {
 			  
 	  }
 	  
- }
+	 }
+	$paginaRolesOperativos.="<option value='MECANICO DENTAL'>MEC&Aacute;NICO DENTAL</option>";
  
   mysqli_close($mysqli); 
 $informacion =array("1" => "exito","2" => $pagina,"3"=> $paginaAdministrativo,"4"=> $paginaRolesOperativos);

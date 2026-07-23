@@ -24,6 +24,10 @@ echo json_encode($informacion);
 exit;
 }
 
+if($operacion=="buscarMecanicosDisponiblesAlta"){
+	buscarMecanicosDisponiblesAltaFuncionario($user);
+}
+
 
 
 if($operacion=="nuevo" || $operacion=="editar" || $operacion=="eliminar")
@@ -74,10 +78,12 @@ $fecha_creacion = $_POST['fecha_creacion'];
 $fecha_creacion = mb_convert_encoding((string)($fecha_creacion), 'ISO-8859-1', 'UTF-8');
 $fecha_vencimiento_contrato = isset($_POST['fecha_vencimiento_contrato']) ? $_POST['fecha_vencimiento_contrato'] : "";
 $fecha_vencimiento_contrato = mb_convert_encoding((string)($fecha_vencimiento_contrato), 'ISO-8859-1', 'UTF-8');
+$mecanico_vinculo = isset($_POST['mecanico_vinculo']) ? $_POST['mecanico_vinculo'] : "";
+$mecanico_vinculo = mb_convert_encoding((string)($mecanico_vinculo), 'ISO-8859-1', 'UTF-8');
 
 $horarios_usuario = obtenerHorariosUsuarioPost();
 
-abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$fecha_vencimiento_contrato,$horarios_usuario,$user,$operacion);
+abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$fecha_vencimiento_contrato,$horarios_usuario,$user,$operacion,$mecanico_vinculo);
 }
 
  
@@ -717,6 +723,365 @@ function responderErrorAbmUsuario($mensaje,$detalle="")
 	}
 	echo json_encode($informacion);
 	exit;
+}
+
+class ExcepcionAltaFuncionario extends Exception
+{
+	public $campo;
+	public $codigoAlta;
+
+	public function __construct($mensaje,$campo="",$codigoAlta="error_alta_funcionario")
+	{
+		parent::__construct($mensaje);
+		$this->campo=$campo;
+		$this->codigoAlta=$codigoAlta;
+	}
+}
+
+function responderErrorAltaFuncionario($mensaje,$campo="",$codigo="error_alta_funcionario",$extra=array())
+{
+	$informacion=array(
+		"1"=>"error",
+		"mensaje"=>$mensaje,
+		"campo"=>$campo,
+		"codigo"=>$codigo
+	);
+	if(is_array($extra)){
+		foreach($extra as $clave=>$valor){
+			$informacion[$clave]=$valor;
+		}
+	}
+	echo json_encode($informacion);
+	exit;
+}
+
+function usuarioPuedeCrearFuncionarioTelar($cod_usuario)
+{
+	return controldeaccesoacasas($cod_usuario,"INSERTARLISTADOUSUARIO"," u.accion='SI' ")==1;
+}
+
+function tipoFuncionarioEsMecanicoDental($tipo)
+{
+	$tipo=strtoupper(trim((string)$tipo));
+	$tipo=str_replace(array('Á','É','Í','Ó','Ú'),array('A','E','I','O','U'),$tipo);
+	return $tipo==='MECANICO DENTAL';
+}
+
+function obtenerNivelActivoAltaFuncionario($mysqli,$cod_nivel)
+{
+	$sql="SELECT cod_niveles,nombre,estado FROM listado_niveles WHERE cod_niveles=? AND estado='Activo' LIMIT 1";
+	$stmt=$mysqli->prepare($sql);
+	if(!$stmt){return null;}
+	$cod_nivel=(int)$cod_nivel;
+	$stmt->bind_param('i',$cod_nivel);
+	if(!$stmt->execute()){$stmt->close();return null;}
+	$result=$stmt->get_result();
+	$fila=$result ? $result->fetch_assoc() : null;
+	$stmt->close();
+	return $fila;
+}
+
+function obtenerLocalActivoAltaFuncionario($mysqli,$cod_local)
+{
+	$sql="SELECT cod_local,Nombre,estado FROM local WHERE cod_local=? AND estado='Activo' LIMIT 1";
+	$stmt=$mysqli->prepare($sql);
+	if(!$stmt){return null;}
+	$cod_local=(int)$cod_local;
+	$stmt->bind_param('i',$cod_local);
+	if(!$stmt->execute()){$stmt->close();return null;}
+	$result=$stmt->get_result();
+	$fila=$result ? $result->fetch_assoc() : null;
+	$stmt->close();
+	return $fila;
+}
+
+function nivelMecanicoDentalTienePermisosMinimos($mysqli,$cod_nivel)
+{
+	$sql="SELECT
+		COUNT(DISTINCT CASE WHEN d.accion='SI' AND la.codigo IN
+		('VERTRABAJOSLABORATORIO','RECIBIRTRABAJOLABORATORIO','ENTREGARTRABAJOLABORATORIO')
+		THEN la.codigo END) AS requeridos,
+		COUNT(DISTINCT CASE WHEN d.accion='SI' AND la.codigo NOT IN
+		('VERTRABAJOSLABORATORIO','RECIBIRTRABAJOLABORATORIO','ENTREGARTRABAJOLABORATORIO')
+		THEN la.codigo END) AS adicionales
+		FROM detallesniveles d
+		INNER JOIN listadodeacceso la ON la.idlistadodeacceso=d.idlistadodeacceso
+		WHERE d.cod_nivelesfk=?";
+	$stmt=$mysqli->prepare($sql);
+	if(!$stmt){return false;}
+	$cod_nivel=(int)$cod_nivel;
+	$stmt->bind_param('i',$cod_nivel);
+	if(!$stmt->execute()){$stmt->close();return false;}
+	$result=$stmt->get_result();
+	$fila=$result ? $result->fetch_assoc() : null;
+	$stmt->close();
+	return $fila && (int)$fila['requeridos']===3 && (int)$fila['adicionales']===0;
+}
+
+function buscarMecanicosDisponiblesAltaFuncionario($cod_usuario_accion)
+{
+	if(!usuarioPuedeCrearFuncionarioTelar($cod_usuario_accion)){
+		echo json_encode(array("1"=>"NI"));
+		exit;
+	}
+	$mysqli=conectar_al_servidor();
+	if(!columnaUsuarioExiste($mysqli,'mecanico_dental','cod_usuarioFK')){
+		responderErrorAltaFuncionario(
+			'La vinculacion de mecanicos con cuentas Telar aun no esta disponible.',
+			'inptMecanicoDentalVinculoUsuario',
+			'vinculo_mecanico_no_disponible'
+		);
+	}
+	$sql="SELECT md.cod_mecanico_dental,p.nombre_persona,IFNULL(p.telefono,'') AS telefono
+		FROM mecanico_dental md
+		INNER JOIN persona p ON p.cod_persona=md.cod_personaFK
+		WHERE md.estado='activo' AND (md.cod_usuarioFK IS NULL OR md.cod_usuarioFK=0)
+		ORDER BY p.nombre_persona ASC";
+	$stmt=$mysqli->prepare($sql);
+	if(!$stmt || !$stmt->execute()){
+		responderErrorAltaFuncionario(
+			'No se pudo consultar la lista de mecanicos dentales.',
+			'inptMecanicoDentalVinculoUsuario',
+			'error_consulta_mecanicos'
+		);
+	}
+	$result=$stmt->get_result();
+	$registros=array();
+	while($fila=$result->fetch_assoc()){
+		$registros[]=array(
+			'cod_mecanico_dental'=>(int)$fila['cod_mecanico_dental'],
+			'nombre_persona'=>mb_convert_encoding((string)$fila['nombre_persona'],'UTF-8','ISO-8859-1'),
+			'telefono'=>mb_convert_encoding((string)$fila['telefono'],'UTF-8','ISO-8859-1')
+		);
+	}
+	$stmt->close();
+	$mysqli->close();
+	echo json_encode(array("1"=>"exito","2"=>$registros));
+	exit;
+}
+
+function crearFuncionarioGuiadoTelar(
+	$tipo,$nombre_persona,$telefono,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,
+	$telefono_referencia,$direccion,$tipo_relacion,$fecha_vencimiento_contrato,$cod_usuario_accion,
+	$mecanico_vinculo,$foto,$ext
+){
+	if(!usuarioPuedeCrearFuncionarioTelar($cod_usuario_accion)){
+		echo json_encode(array("1"=>"NI"));
+		exit;
+	}
+	$nombre_persona=trim((string)$nombre_persona);
+	$rut_usuario=trim((string)$rut_usuario);
+	$login=trim((string)$login);
+	$password=(string)$password;
+	$tipo=trim((string)$tipo);
+	$acceso=(int)$acceso;
+	$cod_localFK=(int)$cod_localFK;
+	$mecanico_vinculo=trim((string)$mecanico_vinculo);
+	$estado='Activo';
+	if($nombre_persona===''){
+		responderErrorAltaFuncionario('Ingrese el nombre y apellido del funcionario.','inptNombreApellidoUsuario','nombre_requerido');
+	}
+	if($rut_usuario===''){
+		responderErrorAltaFuncionario('Ingrese el numero de documento.','inptNroDocUsuario','documento_requerido');
+	}
+	if($tipo===''){
+		responderErrorAltaFuncionario('Seleccione el tipo de funcionario o cargo.','inptTipoUsuUser','tipo_requerido');
+	}
+	if($login===''){
+		responderErrorAltaFuncionario('Ingrese el usuario para acceder a Telar.','inptClaveAcceso','login_requerido');
+	}
+	if($password===''){
+		responderErrorAltaFuncionario('Genere o ingrese una contrasena temporal.','inptContrasenhaUserTemporal','password_requerido');
+	}
+	if(strlen($password)>45){
+		responderErrorAltaFuncionario('La contrasena temporal no puede superar 45 caracteres.','inptContrasenhaUserTemporal','password_demasiado_largo');
+	}
+	if($cod_localFK<=0){
+		responderErrorAltaFuncionario('Seleccione el local principal.','inptlocaluser','local_requerido');
+	}
+	if($acceso<=0){
+		responderErrorAltaFuncionario('Seleccione el rol de acceso.','inptAccesoUser','rol_requerido');
+	}
+	$esMecanico=tipoFuncionarioEsMecanicoDental($tipo);
+	if($esMecanico && $mecanico_vinculo===""){
+		responderErrorAltaFuncionario(
+			'Seleccione un mecanico existente o indique que debe crearse uno nuevo.',
+			'inptMecanicoDentalVinculoUsuario',
+			'vinculo_mecanico_requerido'
+		);
+	}
+	$mysqli=conectar_al_servidor();
+	$rol=obtenerNivelActivoAltaFuncionario($mysqli,$acceso);
+	if(!$rol){
+		responderErrorAltaFuncionario('El rol seleccionado no existe o no esta activo.','inptAccesoUser','rol_invalido');
+	}
+	$local=obtenerLocalActivoAltaFuncionario($mysqli,$cod_localFK);
+	if(!$local){
+		responderErrorAltaFuncionario('El local seleccionado no existe o no esta activo.','inptlocaluser','local_invalido');
+	}
+	if($esMecanico){
+		$nombreRol=strtoupper(trim((string)$rol['nombre']));
+		if($nombreRol!=='MECANICO DENTAL / LABORATORIO' || !nivelMecanicoDentalTienePermisosMinimos($mysqli,$acceso)){
+			responderErrorAltaFuncionario(
+				'El mecanico dental debe utilizar el perfil MECANICO DENTAL / LABORATORIO con permisos operativos minimos.',
+				'inptAccesoUser',
+				'rol_mecanico_invalido'
+			);
+		}
+		if(!columnaUsuarioExiste($mysqli,'mecanico_dental','cod_usuarioFK')){
+			responderErrorAltaFuncionario(
+				'La vinculacion de mecanicos con cuentas Telar aun no esta disponible.',
+				'inptMecanicoDentalVinculoUsuario',
+				'vinculo_mecanico_no_disponible'
+			);
+		}
+	}
+	$fecha_vencimiento_contrato=normalizarFechaUsuarioContrato($fecha_vencimiento_contrato);
+	$mysqli->begin_transaction();
+	try{
+		$sqlDuplicado="SELECT u.cod_usuario,u.rut_usuario,u.login,u.estado,p.nombre_persona
+			FROM usuario u INNER JOIN persona p ON p.cod_persona=u.cod_usuario
+			WHERE TRIM(u.rut_usuario)=? OR LOWER(TRIM(u.login))=LOWER(?)
+			ORDER BY u.cod_usuario DESC LIMIT 1 FOR UPDATE";
+		$stmtDuplicado=$mysqli->prepare($sqlDuplicado);
+		if(!$stmtDuplicado){throw new Exception($mysqli->error);}
+		$stmtDuplicado->bind_param('ss',$rut_usuario,$login);
+		if(!$stmtDuplicado->execute()){throw new Exception($stmtDuplicado->error);}
+		$resultDuplicado=$stmtDuplicado->get_result();
+		$duplicado=$resultDuplicado ? $resultDuplicado->fetch_assoc() : null;
+		$stmtDuplicado->close();
+		if($duplicado){
+			$esLogin=strtolower(trim((string)$duplicado['login']))===strtolower($login);
+			$campo=$esLogin ? 'inptClaveAcceso' : 'inptNroDocUsuario';
+			$mensaje=$esLogin
+				? 'El usuario de ingreso ya pertenece a otro funcionario.'
+				: 'El numero de documento ya pertenece a otro funcionario.';
+			$mysqli->rollback();
+			responderErrorAltaFuncionario($mensaje,$campo,'funcionario_duplicado',array(
+				'funcionario_existente'=>array(
+					'cod_usuario'=>(int)$duplicado['cod_usuario'],
+					'nombre_persona'=>mb_convert_encoding((string)$duplicado['nombre_persona'],'UTF-8','ISO-8859-1'),
+					'estado'=>mb_convert_encoding((string)$duplicado['estado'],'UTF-8','ISO-8859-1')
+				)
+			));
+		}
+
+		$sqlPersona="INSERT INTO persona (nombre_persona,telefono,telefono_referencia,direccion,tipo_relacion) VALUES (?,?,?,?,?)";
+		$stmtPersona=$mysqli->prepare($sqlPersona);
+		if(!$stmtPersona){throw new Exception($mysqli->error);}
+		$stmtPersona->bind_param('sssss',$nombre_persona,$telefono,$telefono_referencia,$direccion,$tipo_relacion);
+		if(!$stmtPersona->execute()){throw new Exception($stmtPersona->error);}
+		$codUsuario=(int)$stmtPersona->insert_id;
+		$stmtPersona->close();
+
+		$sqlUsuario="INSERT INTO usuario
+			(rut_usuario,login,cod_usuario,password,estado,acceso,cod_localFK,tipo,fecha_creacion,fecha_vencimiento_contrato)
+			VALUES (?,?,?,?,?,?,?,?,CURDATE(),?)";
+		$stmtUsuario=$mysqli->prepare($sqlUsuario);
+		if(!$stmtUsuario){throw new Exception($mysqli->error);}
+		$stmtUsuario->bind_param('ssissiiss',$rut_usuario,$login,$codUsuario,$password,$estado,$acceso,$cod_localFK,$tipo,$fecha_vencimiento_contrato);
+		if(!$stmtUsuario->execute()){throw new Exception($stmtUsuario->error);}
+		$stmtUsuario->close();
+
+		$con=rand(5,1500);
+		$sqlCobrador="INSERT INTO cobrador (idzona,usu,cod_cobrador,con,estado) VALUES ('1',?,?,?,'Activo')";
+		$stmtCobrador=$mysqli->prepare($sqlCobrador);
+		if(!$stmtCobrador){throw new Exception($mysqli->error);}
+		$stmtCobrador->bind_param('sii',$login,$codUsuario,$con);
+		if(!$stmtCobrador->execute()){throw new Exception($stmtCobrador->error);}
+		$stmtCobrador->close();
+
+		$sqlVinculoCobrador="INSERT INTO cobradorusuario (cod_usuarioFk,cod_cobradorFk) VALUES (?,?)";
+		$stmtVinculoCobrador=$mysqli->prepare($sqlVinculoCobrador);
+		if(!$stmtVinculoCobrador){throw new Exception($mysqli->error);}
+		$stmtVinculoCobrador->bind_param('ii',$codUsuario,$codUsuario);
+		if(!$stmtVinculoCobrador->execute()){throw new Exception($stmtVinculoCobrador->error);}
+		$stmtVinculoCobrador->close();
+
+		$sqlAccesos="INSERT INTO accesosuser (idlistadodeaccesoFK,tipo,usuarios_idusario,accion)
+			SELECT d.idlistadodeacceso,'Administrativo',?,d.accion
+			FROM detallesniveles d WHERE d.cod_nivelesfk=?";
+		$stmtAccesos=$mysqli->prepare($sqlAccesos);
+		if(!$stmtAccesos){throw new Exception($mysqli->error);}
+		$stmtAccesos->bind_param('ii',$codUsuario,$acceso);
+		if(!$stmtAccesos->execute() || $stmtAccesos->affected_rows<=0){
+			throw new ExcepcionAltaFuncionario('El rol seleccionado no tiene permisos configurados.','inptAccesoUser','rol_sin_configuracion');
+		}
+		$stmtAccesos->close();
+
+		$codMecanico=0;
+		if($esMecanico){
+			if($mecanico_vinculo==='__nuevo__'){
+				$sqlMecanico="INSERT INTO mecanico_dental (cod_personaFK,estado,cod_usuarioFK) VALUES (?,'activo',?)";
+				$stmtMecanico=$mysqli->prepare($sqlMecanico);
+				if(!$stmtMecanico){throw new Exception($mysqli->error);}
+				$stmtMecanico->bind_param('ii',$codUsuario,$codUsuario);
+				if(!$stmtMecanico->execute()){throw new Exception($stmtMecanico->error);}
+				$codMecanico=(int)$stmtMecanico->insert_id;
+				$stmtMecanico->close();
+			}else{
+				$codMecanico=(int)$mecanico_vinculo;
+				if($codMecanico<=0){
+					throw new ExcepcionAltaFuncionario('Seleccione un mecanico dental valido.','inptMecanicoDentalVinculoUsuario','mecanico_invalido');
+				}
+				$sqlMecanico="UPDATE mecanico_dental SET cod_usuarioFK=?
+					WHERE cod_mecanico_dental=? AND estado='activo' AND (cod_usuarioFK IS NULL OR cod_usuarioFK=0) LIMIT 1";
+				$stmtMecanico=$mysqli->prepare($sqlMecanico);
+				if(!$stmtMecanico){throw new Exception($mysqli->error);}
+				$stmtMecanico->bind_param('ii',$codUsuario,$codMecanico);
+				if(!$stmtMecanico->execute() || $stmtMecanico->affected_rows!==1){
+					throw new ExcepcionAltaFuncionario(
+						'El mecanico seleccionado ya fue vinculado o dejo de estar disponible.',
+						'inptMecanicoDentalVinculoUsuario',
+						'mecanico_no_disponible'
+					);
+				}
+				$stmtMecanico->close();
+			}
+		}
+
+		registrarHistorialCambiosUsuario($mysqli,$codUsuario,array(),array(
+			'nombre_persona'=>$nombre_persona,
+			'telefono'=>$telefono,
+			'telefono_referencia'=>$telefono_referencia,
+			'direccion'=>$direccion,
+			'tipo_relacion'=>$tipo_relacion,
+			'rut_usuario'=>$rut_usuario,
+			'login'=>$login,
+			'password'=>$password,
+			'estado'=>$estado,
+			'acceso'=>$acceso,
+			'cod_localFK'=>$cod_localFK,
+			'tipo'=>$tipo,
+			'fecha_creacion'=>date('Y-m-d'),
+			'fecha_vencimiento_contrato'=>$fecha_vencimiento_contrato,
+			'horarios_usuario'=>'[]'
+		),$cod_usuario_accion,'Alta guiada Telar');
+
+		$mysqli->commit();
+		if(!empty($ext)){
+			cargarFotos($codUsuario);
+		}
+		echo json_encode(array(
+			'1'=>'exito',
+			'cod_usuario'=>$codUsuario,
+			'estado'=>'Activo',
+			'mecanico'=>$codMecanico>0 ? $codMecanico : null,
+			'rol_nombre'=>mb_convert_encoding((string)$rol['nombre'],'UTF-8','ISO-8859-1'),
+			'local_nombre'=>mb_convert_encoding((string)$local['Nombre'],'UTF-8','ISO-8859-1')
+		));
+		exit;
+	}catch(Exception $e){
+		$mysqli->rollback();
+		if($e instanceof ExcepcionAltaFuncionario){
+			responderErrorAltaFuncionario($e->getMessage(),$e->campo,$e->codigoAlta);
+		}
+		responderErrorAltaFuncionario(
+			'No se pudo crear el funcionario. No se guardo ningun registro parcial.',
+			'',
+			'error_guardado_funcionario'
+		);
+	}
 }
 
 function usuarioEstaInactivo($estado)
@@ -1651,13 +2016,21 @@ function calcularResumenesControlFuncionario($mysqli,$cod_usuario,$horarios)
 	);
 }
 
-function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$fecha_vencimiento_contrato,$horarios_usuario,$cod_usuario_accion,$operacion)
+function abm($tipo,$cod_persona,$nombre_persona,$telefono,$rut_usuario,$cod_usuario,$login,$password,$estado,$acceso,$cod_localFK,$foto,$ext,$telefono_referencia,$direccion,$tipo_relacion,$fecha_creacion,$fecha_vencimiento_contrato,$horarios_usuario,$cod_usuario_accion,$operacion,$mecanico_vinculo="")
 {
 
 
 
 if($operacion!="nuevo" && $operacion!="editar"){
 	responderErrorAbmUsuario("No se pudo guardar el funcionario porque la operacion solicitada no es valida.");
+}
+
+if($operacion==="nuevo"){
+	crearFuncionarioGuiadoTelar(
+		$tipo,$nombre_persona,$telefono,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,
+		$telefono_referencia,$direccion,$tipo_relacion,$fecha_vencimiento_contrato,$cod_usuario_accion,
+		$mecanico_vinculo,$foto,$ext
+	);
 }
 
 if($nombre_persona==""  || $rut_usuario==""  || $login=="" || ($operacion=="nuevo" && $password=="")){

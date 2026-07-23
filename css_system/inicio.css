@@ -53830,3 +53830,568 @@ body.interconsulta-read-dialog-open {
   color: #687a90;
   font-size: 8px;
 }
+
+/* Consulta clinica: doble seguimiento de protesis/laboratorio. */
+
+.tratamiento-doble-seguimiento {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #cbdfe7;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #f7fbfd, #f4fbfa);
+}
+
+.tratamiento-doble-seguimiento[hidden] {
+  display: none !important;
+}
+
+.tratamiento-doble-seguimiento > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tratamiento-doble-seguimiento > header small,
+.tratamiento-doble-seguimiento__carril small {
+  display: block;
+  color: #55717f;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.tratamiento-doble-seguimiento > header h4 {
+  margin: 2px 0 0;
+  color: #173c56;
+  font-size: 14px;
+}
+
+.tratamiento-doble-seguimiento > header > span {
+  max-width: 180px;
+  color: #55717f;
+  font-size: 10px;
+  text-align: right;
+}
+
+.tratamiento-doble-seguimiento__carriles {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.35fr);
+  gap: 9px;
+}
+
+.tratamiento-doble-seguimiento__carril {
+  display: grid;
+  grid-template-columns: 31px minmax(0, 1fr);
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid #d7e5eb;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.tratamiento-doble-seguimiento__carril > i {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border-radius: 50%;
+  background: #e8f1fb;
+  color: #235fa4;
+}
+
+.tratamiento-doble-seguimiento__carril--laboratorio > i {
+  background: #e5f7f3;
+  color: #087f75;
+}
+
+.tratamiento-doble-seguimiento__carril strong,
+.tratamiento-doble-seguimiento__carril em {
+  display: block;
+  margin-top: 3px;
+  color: #173c56;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.tratamiento-doble-seguimiento__carril em {
+  color: #72579a;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.tratamiento-doble-seguimiento__carril div > span {
+  display: block;
+  margin-top: 3px;
+  color: #5d7480;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.tratamiento-doble-seguimiento__hitos,
+#tratamientoLaboratorioClinicoPanel .tlc-hitos {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+}
+
+.tratamiento-doble-seguimiento__hitos li,
+#tratamientoLaboratorioClinicoPanel .tlc-hitos li {
+  display: grid;
+  grid-template-columns: 8px auto;
+  min-width: 112px;
+  gap: 2px 5px;
+  color: #426171;
+  font-size: 9px;
+}
+
+.tratamiento-doble-seguimiento__hitos li > span,
+#tratamientoLaboratorioClinicoPanel .tlc-hitos li > span {
+  grid-row: 1 / span 2;
+  align-self: start;
+  width: 8px;
+  height: 8px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: #198e83;
+}
+
+.tratamiento-doble-seguimiento__hitos b,
+#tratamientoLaboratorioClinicoPanel .tlc-hitos b {
+  font-size: 9px;
+}
+
+.tratamiento-doble-seguimiento__hitos time,
+#tratamientoLaboratorioClinicoPanel .tlc-hitos time {
+  color: #758790;
+  font-size: 8px;
+}
+
+.tratamiento-doble-seguimiento__acciones {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tratamiento-doble-seguimiento__acciones button {
+  min-height: 33px;
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: #087f75;
+  color: #fff;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+#tratamientoLaboratorioClinicoPanel .tlc-status--work > span,
+#tratamientoLaboratorioClinicoPanel .tlc-status--historical > span,
+#tratamientoLaboratorioClinicoPanel .tlc-status--historical > small {
+  display: block;
+  margin-top: 3px;
+}
+
+#tratamientoLaboratorioClinicoPanel .tlc-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 9px;
+}
+
+#tratamientoLaboratorioClinicoPanel .tlc-detail-grid > span {
+  min-width: 0;
+  padding: 6px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .7);
+}
+
+#tratamientoLaboratorioClinicoPanel .tlc-detail-grid small,
+#tratamientoLaboratorioClinicoPanel .tlc-detail-grid b {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+#tratamientoLaboratorioClinicoPanel .tlc-status--readonly {
+  background: #f1f3f5;
+  color: #56616b;
+}
+
+#tratamientoLaboratorioClinicoPanel .tlc-status--historical {
+  border-left: 4px solid #72579a;
+  background: #f5f1fb;
+  color: #523f72;
+}
+
+#tratamientoLaboratorioClinicoPanel .tlc-status--historical em {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .tratamiento-doble-seguimiento__carriles {
+    grid-template-columns: 1fr;
+  }
+
+  .tratamiento-doble-seguimiento > header {
+    display: block;
+  }
+
+  .tratamiento-doble-seguimiento > header > span {
+    display: block;
+    max-width: none;
+    margin-top: 4px;
+    text-align: left;
+  }
+}
+
+@media (max-width: 600px) {
+  #tratamientoLaboratorioClinicoPanel .tlc-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Alta guiada de funcionarios. Alcance limitado a la ficha de RR.HH. */
+#funcionarioFormularioEdicion .funcionario-alta-guiada,
+#funcionarioFormularioEdicion .funcionario-alta-resultado {
+  width: min(980px, calc(100% - 8px));
+  margin: 8px auto 14px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-guiada {
+  padding: 16px;
+  border: 1px solid #c9dce8;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f7fbfd 0%, #f2faf9 100%);
+  box-shadow: 0 10px 26px rgba(20, 58, 82, 0.08);
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-guiada__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-guiada__head strong,
+#funcionarioFormularioEdicion .funcionario-alta-resultado > div > strong {
+  display: block;
+  margin-top: 2px;
+  color: #143a52;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-guiada__head p,
+#funcionarioFormularioEdicion .funcionario-alta-resultado p {
+  margin: 5px 0 0;
+  color: #587083;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-guiada__eyebrow {
+  color: #07877f;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-guiada__required {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid #f2d0a1;
+  border-radius: 999px;
+  background: #fff8ed;
+  color: #9b5c09;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-pasos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-paso {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid #d5e1e8;
+  border-radius: 12px;
+  background: #fff;
+  color: #607386;
+  text-align: left;
+  cursor: pointer;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-paso > span {
+  grid-row: 1 / 3;
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e7eef3;
+  color: #476174;
+  font-weight: 800;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-paso strong {
+  color: #29465a;
+  font-size: 12px;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-paso small {
+  margin-top: 2px;
+  font-size: 10px;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-paso.is-active {
+  border-color: #0a8f88;
+  background: #eef9f8;
+  box-shadow: 0 0 0 2px rgba(10, 143, 136, 0.1);
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-paso.is-complete > span,
+#funcionarioFormularioEdicion .funcionario-alta-paso.is-active > span {
+  background: #078d86;
+  color: #fff;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-mensaje {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-left: 4px solid #c0392b;
+  border-radius: 9px;
+  background: #fff0ef;
+  color: #943229;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-mensaje button {
+  margin-left: 8px;
+  border: 0;
+  background: transparent;
+  color: #075f91;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#funcionarioFormularioEdicion.funcionario-alta-modo .funcionario-form-layout {
+  justify-content: center !important;
+}
+
+#funcionarioFormularioEdicion.funcionario-alta-modo .funcionario-form-column--datos {
+  width: min(760px, 100%) !important;
+  max-width: 760px !important;
+}
+
+#funcionarioFormularioEdicion.funcionario-alta-modo #funcionarioColumnaJornada,
+#funcionarioFormularioEdicion.funcionario-alta-modo .jornada-esperada-card,
+#funcionarioFormularioEdicion.funcionario-alta-modo #divHistorialPersonasUsuario,
+#funcionarioFormularioEdicion.funcionario-alta-modo [data-funcionario-alta-opcional='1'],
+#funcionarioFormularioEdicion.funcionario-alta-modo [data-funcionario-alta-opcional-campo='1'],
+#funcionarioFormularioEdicion.funcionario-alta-modo .funcionario-profile-strip__action {
+  display: none !important;
+}
+
+#funcionarioFormularioEdicion .funcionario-required {
+  color: #b6372f;
+  font-weight: 900;
+}
+
+#funcionarioFormularioEdicion .funcionario-field-error {
+  margin: 5px 0 0;
+  color: #aa3029;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+#funcionarioFormularioEdicion .funcionario-form-field.is-error .inputText,
+#funcionarioFormularioEdicion .funcionario-form-field.is-error .inputSelect {
+  border-color: #c53b32 !important;
+  box-shadow: 0 0 0 2px rgba(197, 59, 50, 0.1);
+  background: #fffafa;
+}
+
+#funcionarioFormularioEdicion .funcionario-password-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#funcionarioFormularioEdicion .funcionario-password-row .funcionario-password-action {
+  flex: 0 0 auto;
+  margin: 0;
+  white-space: nowrap;
+}
+
+#funcionarioFormularioEdicion .funcionario-mecanico-vinculo {
+  border-color: #b9d9d7;
+  background: #f3fbfa;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-revision__contenido,
+#funcionarioFormularioEdicion .funcionario-alta-resultado__resumen {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-resumen-item {
+  padding: 10px 12px;
+  border: 1px solid #d8e4ea;
+  border-radius: 10px;
+  background: #fff;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-resumen-item span {
+  display: block;
+  margin-bottom: 3px;
+  color: #6b7d8c;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-resumen-item strong {
+  color: #203e52;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-confirmacion {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin-top: 12px;
+  padding: 11px 12px;
+  border: 1px solid #c9dce8;
+  border-radius: 10px;
+  background: #f8fbfd;
+  color: #29465a;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-confirmacion input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #078d86;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(760px, calc(100% - 8px));
+  margin: 10px auto 4px;
+  padding: 12px 0 4px;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-acciones__spacer {
+  flex: 1 1 auto;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-acciones button,
+#funcionarioFormularioEdicion .funcionario-alta-acciones input {
+  min-height: 38px;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-acciones input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-resultado {
+  display: flex;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #a9d8cf;
+  border-radius: 16px;
+  background: #f0faf7;
+  box-shadow: 0 12px 28px rgba(7, 110, 102, 0.09);
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-resultado__icon {
+  display: inline-flex;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #078d86;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-resultado > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#funcionarioFormularioEdicion .funcionario-alta-resultado__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+@media (max-width: 760px) {
+  #funcionarioFormularioEdicion .funcionario-alta-guiada__head {
+    display: block;
+  }
+
+  #funcionarioFormularioEdicion .funcionario-alta-guiada__required {
+    display: inline-block;
+    margin-top: 10px;
+  }
+
+  #funcionarioFormularioEdicion .funcionario-alta-pasos,
+  #funcionarioFormularioEdicion .funcionario-alta-revision__contenido,
+  #funcionarioFormularioEdicion .funcionario-alta-resultado__resumen {
+    grid-template-columns: 1fr;
+  }
+
+  #funcionarioFormularioEdicion .funcionario-password-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  #funcionarioFormularioEdicion .funcionario-alta-acciones {
+    flex-wrap: wrap;
+  }
+
+  #funcionarioFormularioEdicion .funcionario-alta-acciones__spacer {
+    display: none;
+  }
+}

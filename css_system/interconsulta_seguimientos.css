@@ -1191,24 +1191,618 @@ body.interconsulta-followup-from-list #panelProgramarSeguimientoInterConsulta {
     min-height: 56px;
   }
 }
-.interconsulta-lab-work-link {
+.interconsulta-lab-mini-thread {
+    width: min(100%, 620px);
+    margin-top: 8px;
+    padding: 6px 9px 7px;
+    border: 1px solid rgba(13, 148, 136, .24);
+    border-radius: 11px;
+    background: linear-gradient(135deg, rgba(240, 253, 250, .96), rgba(239, 246, 255, .94));
+    box-sizing: border-box;
+}
+
+.interconsulta-lab-mini-thread__caption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    margin-bottom: 3px;
+    color: #42627a;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.interconsulta-lab-mini-thread__caption span {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    margin-top: 9px;
-    padding: 8px 12px;
-    border: 1px solid rgba(13, 148, 136, .28);
-    border-radius: 9px;
-    background: #ecfdfb;
-    color: #0f5f67;
+    gap: 5px;
+    color: #0f766e;
+    text-transform: uppercase;
+    letter-spacing: .035em;
+}
+
+.interconsulta-lab-mini-thread__caption small {
+    overflow: hidden;
+    color: #61778a;
+    font-size: 9px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.interconsulta-lab-mini-thread__track {
+    display: flex;
+    align-items: flex-start;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.interconsulta-lab-mini-segment {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.interconsulta-lab-mini-segment.is-collapsed-segment {
+    display: none;
+}
+
+.interconsulta-lab-mini-thread.is-expanded .interconsulta-lab-mini-segment.is-collapsed-segment {
+    display: flex;
+}
+
+.interconsulta-lab-mini-thread.is-expanded .interconsulta-lab-mini-segment--more {
+    display: none;
+}
+
+.interconsulta-lab-mini-thread.is-expanded .interconsulta-lab-mini-thread__track {
+    overflow-x: auto;
+    padding-bottom: 3px;
+}
+
+.interconsulta-lab-mini-connector {
+    flex: 1 1 28px;
+    min-width: 12px;
+    height: 2px;
+    margin-top: 14px;
+    background: linear-gradient(90deg, #0ea5a6, #2563a8);
+    opacity: .85;
+}
+
+.interconsulta-lab-mini-node {
+    display: inline-flex;
+    flex: 0 0 72px;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #17324d;
     font: inherit;
-    font-weight: 800;
     cursor: pointer;
 }
 
-.interconsulta-lab-work-link:hover,
-.interconsulta-lab-work-link:focus-visible {
+.interconsulta-lab-mini-node__dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 29px;
+    height: 29px;
+    border: 2px solid #d7e5ef;
+    border-radius: 50%;
+    background: #0f9f9a;
+    color: #fff;
+    box-shadow: 0 0 0 2px #fff;
+    box-sizing: border-box;
+    font-size: 11px;
+}
+
+.interconsulta-lab-mini-node.is-pendiente .interconsulta-lab-mini-node__dot,
+.interconsulta-lab-mini-node.is-revision .interconsulta-lab-mini-node__dot,
+.interconsulta-lab-mini-node.is-advertencia .interconsulta-lab-mini-node__dot {
+    background: #d88a16;
+}
+
+.interconsulta-lab-mini-node.is-en_transito .interconsulta-lab-mini-node__dot {
+    background: #7254c8;
+}
+
+.interconsulta-lab-mini-node.is-en_proceso .interconsulta-lab-mini-node__dot {
+    background: #2165a8;
+}
+
+.interconsulta-lab-mini-node.is-finalizado .interconsulta-lab-mini-node__dot,
+.interconsulta-lab-mini-node.is-completo .interconsulta-lab-mini-node__dot,
+.interconsulta-lab-mini-node.is-listo .interconsulta-lab-mini-node__dot {
+    background: #7254c8;
+}
+
+.interconsulta-lab-mini-node.is-cancelado .interconsulta-lab-mini-node__dot,
+.interconsulta-lab-mini-node.is-inactivo .interconsulta-lab-mini-node__dot {
+    background: #687b89;
+}
+
+.interconsulta-lab-mini-node__label {
+    display: -webkit-box;
+    overflow: hidden;
+    max-width: 72px;
+    min-height: 20px;
+    color: #29445d;
+    font-size: 8.5px;
+    font-weight: 800;
+    line-height: 1.08;
+    text-align: center;
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+button.interconsulta-lab-mini-node:hover .interconsulta-lab-mini-node__dot,
+button.interconsulta-lab-mini-node:focus-visible .interconsulta-lab-mini-node__dot,
+button.interconsulta-lab-mini-node[aria-expanded="true"] .interconsulta-lab-mini-node__dot {
+    border-color: #0b8190;
+    box-shadow: 0 0 0 3px rgba(14, 165, 166, .18);
+    transform: translateY(-1px);
+}
+
+button.interconsulta-lab-mini-node:focus-visible,
+.interconsulta-lab-mini-more:focus-visible,
+.interconsulta-lab-mini-open:focus-visible {
+    outline: 2px solid #0b8190;
+    outline-offset: 2px;
+}
+
+.interconsulta-lab-mini-node--unavailable {
+    cursor: default;
+}
+
+.interconsulta-lab-mini-node--unavailable .interconsulta-lab-mini-node__dot {
+    background: #7890a3;
+}
+
+.interconsulta-lab-mini-more {
+    display: inline-flex;
+    flex: 0 0 31px;
+    align-items: center;
+    justify-content: center;
+    width: 31px;
+    height: 23px;
+    margin-top: 3px;
+    padding: 0;
+    border: 1px solid #9ab8c9;
+    border-radius: 999px;
+    background: #fff;
+    color: #31566c;
+    font: inherit;
+    font-size: 9px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.interconsulta-lab-mini-more:hover {
     border-color: #0d9488;
-    background: #dff8f4;
-    outline: none;
+    color: #0f766e;
+}
+
+.interconsulta-lab-mini-segment--open {
+    flex: 0 1 55px;
+}
+
+.interconsulta-lab-mini-open {
+    display: inline-flex;
+    flex: 0 0 27px;
+    align-items: center;
+    justify-content: center;
+    width: 27px;
+    height: 27px;
+    margin-top: 1px;
+    padding: 0;
+    border: 1px solid #9fb9ca;
+    border-radius: 50%;
+    background: #fff;
+    color: #135f75;
+    cursor: pointer;
+}
+
+.interconsulta-lab-mini-open:hover {
+    border-color: #0d9488;
+    background: #e6fffb;
+    color: #0f766e;
+}
+
+.interconsulta-lab-node-popover {
+    position: fixed;
+    z-index: 100080;
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    border: 1px solid #b8d3df;
+    border-radius: 14px;
+    background: #fff;
+    color: #17324d;
+    box-shadow: 0 18px 48px rgba(15, 42, 64, .24);
+    box-sizing: border-box;
+}
+
+.interconsulta-lab-node-popover[hidden] {
+    display: none;
+}
+
+.interconsulta-lab-node-popover::before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 4px;
+    border-radius: 14px 14px 0 0;
+    background: linear-gradient(90deg, #0f9f9a, #2165a8, #7254c8);
+    content: "";
+}
+
+.interconsulta-lab-node-popover__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: start;
+    gap: 8px;
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid #e1edf3;
+}
+
+.interconsulta-lab-node-popover__header small {
+    display: block;
+    margin-bottom: 2px;
+    color: #6b8292;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.interconsulta-lab-node-popover__header h3 {
+    margin: 0;
+    color: #17324d;
+    font-size: 15px;
+    line-height: 1.2;
+}
+
+.interconsulta-lab-node-popover__header > span {
+    align-self: center;
+    max-width: 120px;
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: #eef7f9;
+    color: #0f6670;
+    font-size: 9px;
+    font-weight: 900;
+    line-height: 1.15;
+    text-align: center;
+}
+
+.interconsulta-lab-node-popover__header button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: #edf4f7;
+    color: #39566c;
+    cursor: pointer;
+}
+
+.interconsulta-lab-node-popover__body {
+    display: grid;
+    gap: 10px;
+    padding: 11px 14px 14px;
+}
+
+.interconsulta-lab-node-actor {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.interconsulta-lab-node-actor > img,
+.interconsulta-lab-node-actor > span {
+    display: inline-flex;
+    flex: 0 0 34px;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #e8f6f5;
+    color: #0f766e;
+    object-fit: cover;
+}
+
+.interconsulta-lab-node-actor div {
+    min-width: 0;
+}
+
+.interconsulta-lab-node-actor strong,
+.interconsulta-lab-node-actor small {
+    display: block;
+}
+
+.interconsulta-lab-node-actor strong {
+    overflow: hidden;
+    color: #17324d;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.interconsulta-lab-node-actor small {
+    margin-top: 1px;
+    color: #6d8292;
+    font-size: 9px;
+}
+
+.interconsulta-lab-node-media {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.interconsulta-lab-node-media button {
+    display: grid;
+    grid-template-rows: 54px auto;
+    gap: 3px;
+    min-width: 0;
+    padding: 3px;
+    border: 1px solid #c9dce5;
+    border-radius: 8px;
+    background: #f7fbfc;
+    color: #31546a;
+    cursor: pointer;
+}
+
+.interconsulta-lab-node-media button > i,
+.interconsulta-lab-node-media__loading,
+.interconsulta-lab-node-media__preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    width: 100%;
+    height: 54px;
+    border-radius: 6px;
+    background: #e8f3f6;
+    color: #0e7b82;
+    font-size: 22px;
+}
+
+.interconsulta-lab-node-media__preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.interconsulta-lab-node-media button small {
+    overflow: hidden;
+    color: #405f72;
+    font-size: 8px;
+    font-weight: 800;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.interconsulta-lab-node-media-empty {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 9px;
+    border-radius: 8px;
+    background: #f3f7f9;
+    color: #718796;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.interconsulta-lab-node-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px 10px;
+}
+
+.interconsulta-lab-node-field {
+    min-width: 0;
+}
+
+.interconsulta-lab-node-field small,
+.interconsulta-lab-node-field strong {
+    display: block;
+}
+
+.interconsulta-lab-node-field small {
+    margin-bottom: 2px;
+    color: #748a99;
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.interconsulta-lab-node-field strong {
+    overflow-wrap: anywhere;
+    color: #213e56;
+    font-size: 10px;
+    line-height: 1.25;
+}
+
+.interconsulta-lab-node-field.is-modified strong,
+.interconsulta-lab-node-field.is-modified small,
+.interconsulta-lab-node-note.is-modified small {
+    color: #0c8584;
+}
+
+.interconsulta-lab-node-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin: 0;
+    padding: 7px 9px;
+    border-radius: 8px;
+    background: #f6f9fb;
+}
+
+.interconsulta-lab-node-summary dt {
+    color: #778b99;
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.interconsulta-lab-node-summary dd {
+    margin: 2px 0 0;
+    color: #29475d;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.interconsulta-lab-node-note {
+    padding-top: 8px;
+    border-top: 1px solid #e3edf2;
+}
+
+.interconsulta-lab-node-note small {
+    color: #718695;
+    font-size: 8px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.interconsulta-lab-node-note p {
+    margin: 3px 0 0;
+    color: #344f63;
+    font-size: 10px;
+    line-height: 1.35;
+    white-space: pre-line;
+}
+
+.interconsulta-lab-node-closure {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px;
+    border: 1px solid #d9d0f4;
+    border-radius: 9px;
+    background: #f6f2ff;
+    color: #6245ad;
+}
+
+.interconsulta-lab-node-closure > i {
+    font-size: 19px;
+}
+
+.interconsulta-lab-node-closure strong,
+.interconsulta-lab-node-closure span {
+    display: block;
+}
+
+.interconsulta-lab-node-closure strong {
+    font-size: 10px;
+}
+
+.interconsulta-lab-node-closure span {
+    margin-top: 2px;
+    color: #5d5672;
+    font-size: 9px;
+    line-height: 1.3;
+}
+
+.interconsulta-lab-media-viewer {
+    position: fixed;
+    z-index: 100120;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inset: 0;
+    padding: 18px;
+    background: rgba(8, 24, 38, .78);
+    box-sizing: border-box;
+}
+
+.interconsulta-lab-media-viewer figure {
+    position: relative;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    width: min(920px, 96vw);
+    height: min(760px, 92vh);
+    margin: 0;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .38);
+}
+
+.interconsulta-lab-media-viewer img,
+.interconsulta-lab-media-viewer iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    border: 0;
+    background: #eef4f7;
+    object-fit: contain;
+}
+
+.interconsulta-lab-media-viewer figure > button {
+    position: absolute;
+    z-index: 2;
+    top: 10px;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(12, 36, 54, .84);
+    color: #fff;
+    cursor: pointer;
+}
+
+.interconsulta-lab-media-viewer figcaption {
+    padding: 10px 14px;
+    color: #29475d;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+@media (max-width: 720px) {
+    .interconsulta-lab-mini-thread {
+        padding-right: 6px;
+        padding-left: 6px;
+    }
+
+    .interconsulta-lab-mini-node {
+        flex-basis: 62px;
+    }
+
+    .interconsulta-lab-mini-node__label {
+        max-width: 62px;
+        font-size: 8px;
+    }
+
+    .interconsulta-lab-mini-connector {
+        min-width: 7px;
+    }
+
+    .interconsulta-lab-node-fields,
+    .interconsulta-lab-node-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .interconsulta-lab-node-media {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
