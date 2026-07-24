@@ -1024,16 +1024,19 @@ pruebaLabAfirmar(
     'La carga dinamica usa la misma version vigente de estilos del modulo.'
 );
 pruebaLabAfirmar(
-    strpos($fuenteMigracionHiloCustodia, 'information_schema.COLUMNS') !== false
-    && strpos($fuenteMigracionHiloCustodia, 'information_schema.STATISTICS') !== false
+    strpos($fuenteMigracionHiloCustodia, 'ADD COLUMN IF NOT EXISTS') !== false
+    && strpos($fuenteMigracionHiloCustodia, 'ADD INDEX IF NOT EXISTS') !== false
+    && strpos($fuenteMigracionHiloCustodia, 'FOREIGN KEY IF NOT EXISTS') !== false
     && strpos($fuenteMigracionHiloCustodia, 'information_schema.REFERENTIAL_CONSTRAINTS') !== false
     && strpos($fuenteMigracionHiloCustodia, 'id_evento_custodia_actualFK') !== false
     && strpos($fuenteMigracionHiloCustodia, 'id_evento_custodiaFK') !== false
-    && strpos($fuenteMigracionHiloCustodia, 'UPDATE trabajo_laboratorio tl') !== false
-    && strpos($fuenteMigracionHiloCustodia, 'UPDATE trabajo_laboratorio_evento') === false
+    && strpos($fuenteMigracionHiloCustodia, 'UPDATE `trabajo_laboratorio` AS tl') !== false
+    && strpos($fuenteMigracionHiloCustodia, 'UPDATE `trabajo_laboratorio_evento`') === false
+    && strpos($fuenteMigracionHiloCustodia, 'CREATE PROCEDURE') === false
+    && strpos($fuenteMigracionHiloCustodia, 'DELIMITER $$') === false
     && stripos($fuenteMigracionHiloCustodia, 'ROW_NUMBER(') === false
     && stripos($fuenteMigracionHiloCustodia, 'WITH ') === false,
-    'La migracion es aditiva, recupera solo el puntero y evita reescribir eventos o usar sintaxis posterior a MySQL 5.6.'
+    'La migracion para MariaDB 10.6 es aditiva, idempotente, no requiere rutinas y recupera solo el puntero.'
 );
 $contratosTransicion = array(
     'trabajoLaboratorioIniciar' => array(
