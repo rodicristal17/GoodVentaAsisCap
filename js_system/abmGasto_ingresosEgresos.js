@@ -1827,6 +1827,9 @@ function verCerrarAutorizacionEgreso(mostrar) {
 
 function aprobarMovimiento(opcion, elemento= null) {
 	if(controlacceso("AUTORIZAREGRESOINGRESO","accion")==false){return;}
+	if (opcion === true && !confirm("Al aprobar, el gasto pasara a Pagado y se descontara de la caja activa de la persona que lo registro. ¿Continuar?")) {
+		return;
+	}
 
 	if (elemento != null) {
 		obtenerdatosabmGasto(elemento);
@@ -1891,7 +1894,7 @@ function aprobarMovimiento(opcion, elemento= null) {
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
-				   ver_vetana_informativa("Datos guardados.", "", "info");
+				   ver_vetana_informativa(opcion === true ? "Gasto aprobado y descontado de la caja de origen." : "Gasto rechazado.", "", "info");
 				   switch (ventanaAnterior[ventanaAnterior.length - 1]) {
 						case 'divListadoInterConsulta':
 							buscarInterConsultasYContenido(cod_interConsulta);
@@ -3882,6 +3885,61 @@ function aplicarLecturaCascadaGasto() {
 	});
 }
 
+function aplicarFiltroPendientesFlujoGasto() {
+	var contenedor = document.getElementById("table_abm_gasto");
+	var selector = document.getElementById("inptSoloPendientesPagoGasto");
+	var contador = document.getElementById("cantidadPendientesPagoGasto");
+	if (!contenedor || !selector) { return; }
+
+	var soloPendientes = selector.checked;
+	var selectorPendiente = '[data-flujo-item-pago="1"][data-estado-pago="pendiente"][data-tipo-movimiento="egreso"]';
+	var pendientes = contenedor.querySelectorAll(selectorPendiente);
+	Array.prototype.forEach.call(contenedor.querySelectorAll('[data-flujo-item-pago="1"]'), function (item) {
+		var esPendientePago = item.matches ? item.matches(selectorPendiente) :
+			(item.getAttribute("data-estado-pago") == "pendiente" && item.getAttribute("data-tipo-movimiento") == "egreso");
+		var ocultar = soloPendientes && !esPendientePago;
+		item.classList.toggle("flujo-filtro-oculto", ocultar);
+	});
+
+	Array.prototype.forEach.call(contenedor.querySelectorAll(".flujo-concepto-subgrupo"), function (subgrupo) {
+		var tienePendientes = subgrupo.querySelector(selectorPendiente) !== null;
+		subgrupo.classList.toggle("flujo-filtro-oculto", soloPendientes && !tienePendientes);
+	});
+
+	Array.prototype.forEach.call(contenedor.querySelectorAll(".flujo-caja-motivo-wrap"), function (motivo) {
+		var tienePendientes = motivo.querySelector(selectorPendiente) !== null;
+		motivo.classList.toggle("flujo-filtro-oculto", soloPendientes && !tienePendientes);
+		var detalle = motivo.querySelector(".flujo-caja-motivo > .collapse");
+		if (detalle && soloPendientes && tienePendientes && !detalle.classList.contains("show")) {
+			detalle.classList.add("show");
+			detalle.setAttribute("data-abierto-por-filtro", "1");
+		} else if (detalle && !soloPendientes && detalle.getAttribute("data-abierto-por-filtro") == "1") {
+			detalle.classList.remove("show");
+			detalle.removeAttribute("data-abierto-por-filtro");
+		}
+	});
+
+	Array.prototype.forEach.call(contenedor.querySelectorAll(".flujo-caja-zona"), function (zona) {
+		var tienePendientes = zona.querySelector(selectorPendiente) !== null;
+		zona.classList.toggle("flujo-filtro-oculto", soloPendientes && !tienePendientes);
+	});
+
+	var vacio = document.getElementById("flujoPendientesPagoVacio");
+	if (!vacio) {
+		vacio = document.createElement("div");
+		vacio.id = "flujoPendientesPagoVacio";
+		vacio.className = "flujo-pendientes-vacio";
+		vacio.innerHTML = "<strong>No hay pagos pendientes</strong><span>No se encontraron egresos pendientes de pago con los filtros actuales.</span>";
+		contenedor.appendChild(vacio);
+	}
+	vacio.style.display = (soloPendientes && pendientes.length === 0) ? "flex" : "none";
+	if (contador) {
+		contador.textContent = pendientes.length;
+		contador.title = pendientes.length + " pago(s) pendiente(s) en el resultado actual";
+	}
+	selector.parentElement.classList.toggle("flujo-pendientes-filtro--activo", soloPendientes);
+}
+
 function buscarabmGasto() {
 if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}	
 	var fecha1 = document.getElementById('inptBuscarGastoF1').value
@@ -3994,6 +4052,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("table_abm_gasto_imprimir").innerHTML = construirComposicionFlujoGastoImpresion(datos[13] || null, datos) + (datos[12] || "");
 					document.getElementById("table_abm_gasto").innerHTML = datos[2];
 					aplicarLecturaCascadaGasto();
+					aplicarFiltroPendientesFlujoGasto();
 					actualizarEncabezadoFlujoGasto();
 
 					document.getElementById("inptTotalGasto").value = datos[4];

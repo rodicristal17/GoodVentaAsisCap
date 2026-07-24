@@ -17723,6 +17723,10 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				if (Respuesta == true) {
 					if(datos[2]=="1"){
+						document.getElementById("inptcajaAperturaCierreCaja").value=datos[4];
+						if (document.getElementById("pCaja")) {
+							document.getElementById("pCaja").innerHTML = $("select[id=inptcajaAperturaCierreCaja]").children(":selected").text();
+						}
 						document.getElementById("inptEstadoAperturaCierreCaja").value="Cerrado"
 						document.getElementById('inptMontoCierreCaja5').disabled= false;
 						document.getElementById('inptMontoCierreCaja10').disabled= false;
@@ -18249,7 +18253,7 @@ function cajaAperturaCierreAplicarModo(modo) {
 		apertura: {
 			clase: 'is-modo-apertura',
 			tituloModal: "<b style='font-size: 30px;' >Apertura</b> de Caja",
-			tituloMenu: "Apertura de caja",
+			tituloMenu: "Aperturar caja",
 			etiqueta: "Apertura",
 			tituloModo: "Nueva apertura de caja",
 			descripcion: "Carga el monto inicial para iniciar el lote de caja.",
