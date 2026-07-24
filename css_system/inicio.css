@@ -14194,7 +14194,7 @@ text-align: justify;
 
 /* badge visual */
 .card-activo::after{
-  content:"APROBADO";
+  content:"PAGADO";
   position:absolute;
   top:10px;
   right:10px;
@@ -14204,6 +14204,33 @@ text-align: justify;
   border-radius:8px;
   background:#27ae60;
   color:white;
+}
+
+.card-aprobado {
+  border-left: 5px solid #2f73b8;
+  background: rgba(47,115,184,0.07);
+}
+
+.card-aprobado .card-title,
+.card-aprobado .line:nth-child(4) {
+  color: #245f9e;
+}
+
+.card-aprobado .line:nth-child(4) {
+  font-weight: 900;
+}
+
+.card-aprobado::after {
+  content: "APROBADO";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: #2f73b8;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
 }
 
 .btn-menu-extracto {
@@ -52198,6 +52225,116 @@ button.tratamiento-ubicacion-visual {
   font-size: 11px;
 }
 
+#divAbmGasto1 .flujo-pendientes-filtro-celda {
+  padding: 7px 6px 2px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+#divAbmGasto1 .flujo-pendientes-filtro-celda > small {
+  margin-left: 8px;
+  color: #687d90;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+#divAbmGasto1 .flujo-pendientes-filtro {
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1px solid #c6d7e4;
+  border-radius: 9px;
+  background: #f7fafc;
+  color: #294158;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+#divAbmGasto1 .flujo-pendientes-filtro input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #b63232;
+  cursor: pointer;
+}
+
+#divAbmGasto1 .flujo-pendientes-filtro b {
+  min-width: 22px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #dfe8ef;
+  color: #52687b;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+#divAbmGasto1 .flujo-pendientes-filtro--activo {
+  border-color: #e39999;
+  background: #fff2f2;
+  color: #9e2525;
+  box-shadow: 0 0 0 2px rgba(182, 50, 50, 0.08);
+}
+
+#divAbmGasto1 .flujo-pendientes-filtro--activo b {
+  background: #b63232;
+  color: #ffffff;
+}
+
+#table_abm_gasto .flujo-filtro-oculto {
+  display: none !important;
+}
+
+#table_abm_gasto .flujo-pendientes-vacio {
+  width: calc(100% - 20px);
+  min-height: 90px;
+  margin: 10px;
+  padding: 18px;
+  border: 1px dashed #c9d7e2;
+  border-radius: 10px;
+  background: #f8fbfd;
+  box-sizing: border-box;
+  color: #52687b;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  text-align: center;
+}
+
+#table_abm_gasto .flujo-pendientes-vacio strong {
+  color: #243d54;
+  font-size: 15px;
+}
+
+#table_abm_gasto .flujo-aprobar-pendiente {
+  min-height: 26px;
+  padding: 4px 9px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: #087d3c !important;
+  color: #ffffff !important;
+  cursor: pointer;
+  font-size: 9px !important;
+  font-weight: 900;
+  line-height: 1;
+}
+
+#table_abm_gasto .flujo-aprobar-pendiente:hover {
+  background: #05632f !important;
+}
+
+#table_abm_gasto .flujo-aprobar-pendiente:focus-visible,
+#divAbmGasto1 .flujo-pendientes-filtro:focus-within {
+  outline: 3px solid rgba(22, 138, 104, 0.2);
+  outline-offset: 2px;
+}
+
 #divAbmGasto1 .flujo-caja-periodo {
   width: calc(100% - 16px);
   min-height: 58px;
@@ -54348,6 +54485,11 @@ button.tratamiento-ubicacion-visual {
 #table_abm_gasto.flujo-caja-cascada .cuotas-programadas-estado--pagado {
   background: #eaf7ef;
   color: #147545;
+}
+
+#table_abm_gasto.flujo-caja-cascada .cuotas-programadas-estado--aprobado {
+  background: #eaf2ff;
+  color: #245f9e;
 }
 
 #table_abm_gasto.flujo-caja-cascada .cuotas-programadas-estado--programado {

@@ -1031,23 +1031,29 @@ if ( ! $stmt->execute()) {
 
 function controldecaja($buscar,$cod_local,$user)
 {
+	$buscar= (int)$buscar;
+	$cod_local= (int)$cod_local;
+	$user= (int)$user;
+
 	// Se prepara el filtro
 	$sqlFiltro= " WHERE estado='Activo'";
-	if ($buscar) {
-		$sqlFiltro .= " and caja_idcaja='$buscar'";
-	}
 	if ($cod_local) {
 		$sqlFiltro .= " and cod_local='$cod_local'";
 	}
 	if ($user) {
 		$sqlFiltro .= " and codusuarioap='$user'";
 	}
+	// La caja elegida tiene prioridad. Si no esta abierta, se recupera cualquier
+	// otra caja activa del mismo usuario y local para no ofrecer otra apertura.
+	$sqlOrden= $buscar
+		? " ORDER BY (caja_idcaja='$buscar') DESC, idarqueocaja DESC LIMIT 1"
+		: " ORDER BY idarqueocaja DESC LIMIT 1";
 	
 	$mysqli=conectar_al_servidor();
 	
 		$sql= "Select idarqueocaja, caja_idcaja, montoapertura, montocierre, fechaapertura, fechacierre, estado, codusuarioap, codusuarioce,lote,
 		(Select nombre_persona from persona where cod_persona=codusuarioap) as usuarioap
-		from arqueocaja $sqlFiltro ";
+		from arqueocaja $sqlFiltro $sqlOrden";
 		 $pagina="";  
 
    

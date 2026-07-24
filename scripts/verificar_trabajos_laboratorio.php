@@ -316,16 +316,21 @@ pruebaLabAfirmar(
     'El inicio agrupado y la asignacion posterior de tecnico son acciones normales dentro del local propio.'
 );
 pruebaLabAfirmar(
-    !trabajoLaboratorioAccionNaturalContexto('iniciarTrabajo', array('local_propio' => false))
-    && !trabajoLaboratorioAccionNaturalContexto('asignarTecnico', array('local_propio' => false)),
-    'El auditor conserva la justificacion cuando inicia o asigna tecnico fuera de su local.'
+    trabajoLaboratorioAccionNaturalContexto('iniciarTrabajo', array('local_propio' => false))
+    && trabajoLaboratorioAccionNaturalContexto('iniciarTrabajosAgrupados', array('local_propio' => false))
+    && trabajoLaboratorioAccionNaturalContexto('asignarTecnico', array('local_propio' => false)),
+    'El inicio simple, agrupado y la asignacion de tecnico son ordinarios en cualquier local autorizado.'
 );
 pruebaLabAfirmar(
-    !trabajoLaboratorioAccionNaturalContexto('registrarInstalacion', array(
-        'local_propio' => true,
+    !trabajoLaboratorioAccionNaturalContexto('guardarRegularizacionUnidades', array('local_propio' => false)),
+    'La regularizacion administrativa de unidades conserva el alcance del local propio.'
+);
+pruebaLabAfirmar(
+    trabajoLaboratorioAccionNaturalContexto('registrarInstalacion', array(
+        'custodio' => true,
         'doctor' => false
     )),
-    'La liberacion no convierte una instalacion fuera del rol profesional en una accion ordinaria.'
+    'El custodio vigente puede cerrar el hilo sin depender del rango de doctor ni justificar una excepcion.'
 );
 pruebaLabAfirmar(
     trabajoLaboratorioAccionNaturalContexto('tomarHilo', array(
@@ -384,7 +389,8 @@ $matrizEstados = array(
     ),
     'pendiente_revision' => array(
         'tomarHilo', 'agregarEvidencia', 'agregarNota', 'registrarNovedad',
-        'rectificarCustodia', 'solicitarAjuste', 'aprobarTrabajo', 'cancelarTrabajo'
+        'rectificarCustodia', 'solicitarAjuste', 'aprobarTrabajo',
+        'registrarInstalacion', 'cancelarTrabajo'
     ),
     'ajuste_solicitado' => array(
         'iniciarTransferencia', 'tomarHilo', 'agregarEvidencia', 'agregarNota',
@@ -505,7 +511,24 @@ $casosRoles = array(
         ),
         'esperadas' => array(
             'agregarEvidencia', 'agregarNota', 'registrarNovedad', 'solicitarAjuste',
-            'aprobarTrabajo', 'cancelarTrabajo'
+            'aprobarTrabajo', 'registrarInstalacion', 'cancelarTrabajo'
+        )
+    ),
+    'custodio_no_doctor_cierre_operativo' => array(
+        'estado' => 'pendiente_revision',
+        'contexto' => array(
+            'auditor' => false, 'local' => false, 'custodio' => true,
+            'tecnico' => false, 'tecnico_formal' => true, 'doctor' => false,
+            'permisos' => array(
+                'VERTRABAJOSLABORATORIO' => true,
+                'RECIBIRTRABAJOLABORATORIO' => true,
+                'ENTREGARTRABAJOLABORATORIO' => true,
+                'EVIDENCIATRABAJOLABORATORIO' => true
+            )
+        ),
+        'esperadas' => array(
+            'agregarEvidencia', 'agregarNota', 'registrarNovedad',
+            'registrarInstalacion'
         )
     ),
     'doctor_instalacion' => array(
@@ -1020,7 +1043,7 @@ pruebaLabAfirmar(
     'Migrar ubicaciones autoriza antes de escribir, usa transaccion completa y comunica rechazos.'
 );
 pruebaLabAfirmar(
-    strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260723-11') !== false,
+    strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260724-13') !== false,
     'La carga dinamica usa la misma version vigente de estilos del modulo.'
 );
 pruebaLabAfirmar(
@@ -1123,6 +1146,22 @@ $bloqueActualizarDatos = pruebaLabBloqueFuncion(
 $bloqueAplicarDatosVersion = pruebaLabBloqueFuncion(
     $fuenteHelper,
     'trabajoLaboratorioAplicarDatosVersion'
+);
+$bloqueDatosVersion = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioDatosVersionEntrada'
+);
+$bloqueSnapshotDatos = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioSnapshotDatosTrabajo'
+);
+$bloquePuedeGestionarCosto = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioUsuarioPuedeGestionarCosto'
+);
+$bloqueRespuestaSinCostos = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioRespuestaSinCostos'
 );
 $bloqueRegistrarNovedad = pruebaLabBloqueFuncion(
     $fuenteHelper,
@@ -1244,6 +1283,43 @@ pruebaLabAfirmar(
     'Solo el custodio vigente edita datos operativos; paciente, producto y estado quedan fuera de la escritura y cada cambio genera auditoria.'
 );
 pruebaLabAfirmar(
+    strpos($bloqueDatosVersion, '$codUsuario') !== false
+    && strpos($bloqueDatosVersion, "\$valor('cod_tipo_trabajo'") === false
+    && strpos($bloqueDatosVersion, "\$valor('cod_especialista'") === false
+    && strpos($bloqueDatosVersion, "isset(\$trabajo['cod_tipo_trabajoFK'])") !== false
+    && strpos($bloqueDatosVersion, "isset(\$trabajo['cod_especialistaFK'])") !== false
+    && strpos($bloqueSnapshotDatos, "'cod_iniciador'") !== false
+    && strpos($bloqueSnapshotDatos, "'iniciador'") !== false
+    && strpos($fuenteHelper, 'pini.nombre_persona AS nombre_iniciador') !== false
+    && strpos($fuenteHelper, 'uini.cod_usuario=tl.cod_usuarioFK_create') !== false,
+    'El producto de la venta y el usuario que inicio el trabajo permanecen como datos de origen inmutables.'
+);
+pruebaLabAfirmar(
+    strpos($bloquePuedeGestionarCosto, 'trabajoLaboratorioUsuarioEsAuditor') !== false
+    && strpos($bloquePuedeGestionarCosto, 'trabajoLaboratorioObtenerTecnicoFormal') !== false
+    && strpos($bloquePuedeGestionarCosto, "'administrativo'") !== false
+    && strpos($bloqueDatosVersion, 'trabajoLaboratorioUsuarioPuedeGestionarCosto') !== false
+    && strpos($bloqueDatosVersion, ': $costoActual') !== false
+    && strpos($bloqueRespuestaSinCostos, "'costo_estimado'") !== false
+    && strpos($bloqueRespuestaSinCostos, "'costo_original'") !== false
+    && strpos($bloqueHttpContextoUsuario, "'puede_gestionar_costo'") !== false
+    && strpos($fuenteTrabajoLaboratorioPhp, 'trabajoLaboratorioRespuestaSinCostos($respuesta)') !== false,
+    'El costo se conserva en servidor y solo Administracion o Auditoria pueden consultarlo o modificarlo.'
+);
+$respuestaSinCostos = trabajoLaboratorioRespuestaSinCostos(array(
+    'trabajo' => array(
+        'id' => 1,
+        'costo_estimado' => 250,
+        'versiones' => array(array('costo_original' => 200, 'estado' => 'activo'))
+    )
+));
+pruebaLabAfirmar(
+    !isset($respuestaSinCostos['trabajo']['costo_estimado'])
+    && !isset($respuestaSinCostos['trabajo']['versiones'][0]['costo_original'])
+    && $respuestaSinCostos['trabajo']['versiones'][0]['estado'] === 'activo',
+    'La respuesta para perfiles sin acceso elimina costos anidados sin quitar los demas datos del hilo.'
+);
+pruebaLabAfirmar(
     strpos($bloqueTomarHilo, 'trabajoLaboratorioDatosVersionEntrada') !== false
     && strpos($bloqueTomarHilo, 'trabajoLaboratorioAplicarDatosVersion') !== false
     && strpos($bloqueTomarHilo, "'datos_trabajo'") !== false
@@ -1309,6 +1385,8 @@ pruebaLabAfirmar(
     $bloqueRectificarCustodia !== ''
     && strpos($bloqueRectificarCustodia, "'rectificarCustodia'") !== false
     && strpos($bloqueRectificarCustodia, "'justificacion_rectificacion_requerida'") !== false
+    && strpos($bloqueRectificarCustodia, "if (".'$justificacion'." === '')") !== false
+    && strpos($bloqueRectificarCustodia, 'strlen($justificacion) < 5') === false
     && strpos($bloqueRectificarCustodia, 'trabajoLaboratorioUsuario($mysqli, $codCustodioNuevo)') !== false
     && strpos($bloqueRectificarCustodia, "'custodio_rectificacion_invalido'") !== false
     && strpos($bloqueRectificarCustodia, "'custodia_rectificada'") !== false
@@ -1438,6 +1516,11 @@ pruebaLabAfirmar(
     'Resolver un historico crea un nodo normal y admite ausencia explicita de foto solo en el cierre historico.'
 );
 pruebaLabAfirmar(
+    strpos($bloquePrepararResolucionHistorica, 'trabajoLaboratorioUsuarioPuedeGestionarCosto') !== false
+    && strpos($bloquePrepararResolucionHistorica, "\$historico['costo_legacy']") !== false,
+    'Resolver un historico sin permiso de costos conserva el valor original y no acepta reemplazarlo.'
+);
+pruebaLabAfirmar(
     strpos($bloqueCandidatosResolucionHistorica, "'finalizado' => !\$detalleActivo") !== false
     && strpos($bloqueCandidatosResolucionHistorica, "'puede_continuar' => \$detalleActivo") !== false
     && strpos($bloquePrepararResolucionHistorica, "'modo_recomendado' => 'instalado_entregado'") !== false
@@ -1504,8 +1587,47 @@ pruebaLabAfirmar(
     && strpos($bloqueAbrirNodo, 'loadHistoricalNodeEnvelope(historicalId || rowId)') !== false,
     'El cierre es un resumen consultable y el nodo original integrado abre su ficha historica propia.'
 );
+$bloqueCamposCierreOperativo = pruebaLabBloqueJavascript(
+    $fuenteTrabajoLaboratorioJs,
+    'renderActionFields'
+);
+$bloqueValidarCierreOperativo = pruebaLabBloqueJavascript(
+    $fuenteTrabajoLaboratorioJs,
+    'validateActionStep'
+);
+$bloquePayloadCierreOperativo = pruebaLabBloqueJavascript(
+    $fuenteTrabajoLaboratorioJs,
+    'actionPayload'
+);
+$bloqueSubmitCierreOperativo = pruebaLabBloqueJavascript(
+    $fuenteTrabajoLaboratorioJs,
+    'submitAction'
+);
+pruebaLabAfirmar(
+    strpos($bloqueFinHilo, 'data-tlab-action="registrarInstalacion"') !== false
+    && strpos($bloqueFinHilo, 'Instalado y entregado') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'submitLabel: "Confirmar instalación y entrega"') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'registrarInstalacion: {') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'evidence: true') !== false
+    && strpos($bloqueCamposCierreOperativo, 'name="condicion_pre_entrega"') !== false
+    && strpos($bloqueCamposCierreOperativo, 'name="observacion_entrega"') !== false
+    && strpos($bloqueCamposCierreOperativo, 'cantidad mínima de caracteres') !== false
+    && strpos($bloqueValidarCierreOperativo, 'values.observacion_entrega).trim()') !== false
+    && strpos($bloquePayloadCierreOperativo, 'payload.modo_resolucion = "instalado_entregado"') !== false
+    && strpos($bloqueSubmitCierreOperativo, 'closeDetail(true)') !== false
+    && substr_count($bloqueSubmitCierreOperativo, '"finalizados"') >= 2,
+    'Vista operativa y Mi bandeja muestran el nodo final y guian un cierre con condicion, foto y observacion sin minimo.'
+);
 $bloqueBindEvents = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'bindEvents');
 $bloqueNodeEditor = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'nodeEditorHtml');
+$bloqueVersionOperativa = pruebaLabBloqueJavascript(
+    $fuenteTrabajoLaboratorioJs,
+    'nodeVersionPopoverHtml'
+);
+$bloqueVersionHistorica = pruebaLabBloqueJavascript(
+    $fuenteTrabajoLaboratorioJs,
+    'historicalVersionPopoverHtml'
+);
 $bloqueSubmitNode = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'submitNodeVersion');
 $bloqueCerrarNodo = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'closeNodePopover');
 $bloqueTarjetaResolucionHistorica = pruebaLabBloqueJavascript(
@@ -1535,15 +1657,32 @@ pruebaLabAfirmar(
     'El detalle se abre solo por clic, existe un unico popover y se cierra al cambiar de nodo o hacer clic fuera.'
 );
 pruebaLabAfirmar(
-    strpos($bloqueNodeEditor, 'Producto vinculado a la venta') !== false
+    strpos($bloqueVersionOperativa, 'nodeWorkFieldHtml("Tipo de trabajo", snapshot.producto') !== false
+    && strpos($bloqueVersionOperativa, 'nodeWorkFieldHtml("Iniciado por"') !== false
+    && strpos($bloqueVersionOperativa, 'nodeWorkFieldHtml("Doctor"') === false
+    && strpos($bloqueVersionOperativa, 'canManageWorkCost()') !== false
+    && strpos($bloqueVersionHistorica, 'nodeWorkFieldHtml("Tipo de trabajo", historical.tipo_trabajo') !== false
+    && strpos($bloqueVersionHistorica, 'nodeWorkFieldHtml("Doctor", historical.doctor') !== false
+    && strpos($bloqueVersionHistorica, 'canManageWorkCost()') !== false,
+    'La vista operativa usa el producto y el iniciador; la version historica conserva sus datos originales y protege el costo.'
+);
+pruebaLabAfirmar(
+    strpos($bloqueNodeEditor, '<small>Tipo de trabajo</small>') !== false
+    && strpos($bloqueNodeEditor, '<small>Iniciado por</small>') !== false
     && strpos($bloqueNodeEditor, 'Estado del proceso') !== false
+    && strpos($bloqueNodeEditor, 'nodeSelectHtml("Tipo de trabajo"') === false
+    && strpos($bloqueNodeEditor, 'nodeSelectHtml("Doctor"') === false
+    && strpos($bloqueNodeEditor, 'canManageWorkCost()') !== false
     && strpos($bloqueNodeEditor, 'name="condicion_recepcion"') !== false
     && strpos($bloqueNodeEditor, 'data-tlab-node-file-input') !== false
     && strpos($bloqueNodeEditor, 'name="sin_foto"') === false
     && strpos($bloqueSubmitNode, 'Agregá al menos una fotografía nueva') !== false
     && strpos($bloqueSubmitNode, 'datos_trabajo:') !== false
+    && strpos($bloqueSubmitNode, 'cod_tipo_trabajo:') === false
+    && strpos($bloqueSubmitNode, 'cod_especialista:') === false
+    && strpos($bloqueSubmitNode, 'payload.datos_trabajo.costo_estimado') !== false
     && strpos($bloqueSubmitNode, 'endpoint = "actualizarDatosTrabajo"') !== false,
-    'La tarjeta flotante mantiene paciente, producto y estado en lectura, exige foto al tomar y permite editar la version activa.'
+    'La tarjeta operativa fija tipo e iniciador, oculta costo sin permiso y limita la edicion a los datos de seguimiento.'
 );
 pruebaLabAfirmar(
     strpos($bloqueTarjetaHistorica, 'inlineDetailHtml') === false
@@ -1552,11 +1691,13 @@ pruebaLabAfirmar(
     && strpos($bloqueTarjetaResolucionHistorica, 'Instalado y entregado') !== false
     && strpos($bloqueTarjetaResolucionHistorica, 'name="sin_foto_historica"') !== false
     && strpos($bloqueTarjetaResolucionHistorica, 'Sin fotografía histórica disponible') !== false
+    && strpos($bloqueTarjetaResolucionHistorica, 'canManageWorkCost()') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'function photoExceptionLabel') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'foto_historica_no_disponible') !== false
     && strpos($bloqueSubmitResolucionHistorica, 'request("resolverHistorico"') !== false
     && strpos($bloqueSubmitResolucionHistorica, '!state.nodeFiles.length && !noHistoricalPhoto') !== false
     && strpos($bloqueSubmitResolucionHistorica, 'sin_foto_historica: noHistoricalPhoto ? "1" : "0"') !== false
+    && strpos($bloqueSubmitResolucionHistorica, 'payload.costo_estimado') !== false
     && strpos($bloqueCerrarNodo, 'state.historicalResolver = null') !== false,
     'El cierre historico exige foto o una declaracion explicita de que ya no esta disponible.'
 );
@@ -1697,16 +1838,23 @@ $bloqueExigirMotivoAuditor = pruebaLabBloqueFuncion(
 pruebaLabAfirmar(
     strpos($bloqueAccionNatural, "'iniciarTrabajosAgrupados'") !== false
     && strpos($bloqueAccionNatural, "'asignarTecnico'") !== false
+    && strpos($bloqueAccionNatural, 'return true;') !== false
+    && strpos($bloqueAccionNatural, "if (".'$accion'." === 'guardarRegularizacionUnidades')") !== false
     && strpos($bloqueAccionNatural, 'return $localPropio;') !== false
     && strpos($bloqueExigirMotivoAuditor, 'trabajoLaboratorioAccionRequiereMotivoExcepcionAuditor') !== false
-    && strpos($bloqueInicioTrabajo, '$accionComando') !== false,
-    'El servidor libera las acciones rutinarias del local y conserva el motivo para una excepcion real.'
+    && strpos($bloqueExigirMotivoAuditor, "if (".'$motivo'." === '')") !== false
+    && strpos($bloqueExigirMotivoAuditor, 'al menos cinco caracteres') === false
+    && preg_match('/use\s*\([^)]*\$accionComando\s*\)/s', $bloqueInicioTrabajo) === 1,
+    'El servidor libera la preparacion inicial entre locales y exige una observacion sin minimo para otras excepciones.'
 );
 pruebaLabAfirmar(
     strpos($fuenteTrabajoLaboratorioJs, 'if (boolValue(config.requiere_motivo_excepcion))') !== false
-    && strpos($fuenteTrabajoLaboratorioJs, 'motivo_excepcion).trim().length < 5') !== false
-    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260723-20') !== false,
-    'La interfaz muestra y valida el motivo solo cuando el servidor identifica una intervencion excepcional.'
+    && strpos($fuenteTrabajoLaboratorioJs, 'Observación administrativa') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, '!toStringSafe(values.motivo_excepcion).trim()') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'motivo_excepcion).trim().length < 5') === false
+    && strpos($fuenteTrabajoLaboratorioJs, 'action.code === "rectificarCustodia" && toStringSafe(values.justificacion).trim().length < 5') === false
+    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260724-03') !== false,
+    'La interfaz ofrece una observacion inicial opcional y solo exige contenido, sin minimo, en otras excepciones.'
 );
 $bloqueGuardarRegularizacion = pruebaLabBloqueFuncion(
     $fuenteHelper,
@@ -1825,14 +1973,22 @@ $bloqueValidacionInstalacion = pruebaLabBloqueFuncion(
     'trabajoLaboratorioValidarEvolucionInstalacion'
 );
 pruebaLabAfirmar(
-    strpos($bloqueInstalacion, "'evolucion_origen_requerida'") !== false
+    strpos($bloqueInstalacion, "'evolucion_origen_requerida'") === false
+    && strpos($bloqueInstalacion, 'if ($codEvolucionOrigen > 0)') !== false
     && strpos($bloqueInstalacion, 'trabajoLaboratorioValidarEvolucionInstalacion') !== false
+    && strpos($bloqueInstalacion, 'trabajoLaboratorioEvidenciasFinales') !== false
+    && strpos($bloqueInstalacion, "'evidencia_instalacion_requerida'") !== false
+    && strpos($bloqueInstalacion, "'condicion_entrega_requerida'") !== false
+    && strpos($bloqueInstalacion, "'observacion_entrega_requerida'") !== false
+    && strpos($bloqueInstalacion, 'trabajoLaboratorioGuardarMediaProtegida') !== false
+    && strpos($bloqueInstalacion, "'instalacion_final'") !== false
     && strpos($bloqueInstalacion, 'cod_detalle_activo_unico=NULL') === false
     && strpos($bloqueInstalacion, 'fecha_instalado=NOW()') !== false
-    && strpos($bloqueInstalacion, "'evolucion_clinica_explicita' => 1") !== false
+    && strpos($bloqueInstalacion, "'resolucion_operativa' => 1") !== false
+    && strpos($bloqueInstalacion, "'modo_resolucion' => 'instalado_entregado'") !== false
     && strpos($bloqueInstalacion, "\$origen['cod_consulta_origen']") !== false
     && strpos($bloqueInstalacion, "\$origen['cod_evolucion_origen']") !== false,
-    'La instalacion exige evolucion explicita, cierra el trabajo y conserva la reserva unica del tratamiento.'
+    'El cierre operativo exige condicion y evidencia final, admite una evolucion opcional y conserva la reserva unica del tratamiento.'
 );
 pruebaLabAfirmar(
     strpos($bloqueInstalacion, 'AND cod_custodio_actualFK=?') !== false
@@ -1881,6 +2037,13 @@ $bloqueRecepcion = $bloquesTransicion['trabajoLaboratorioTomarHilo'];
 $bloqueDevolucion = $bloquesTransicion['trabajoLaboratorioIniciarDevolucion'];
 $bloqueAprobacion = $bloquesTransicion['trabajoLaboratorioAprobar'];
 $bloqueCancelacion = $bloquesTransicion['trabajoLaboratorioCancelar'];
+pruebaLabAfirmar(
+    strpos($bloqueAjuste, "if (".'$justificacion'." === '')") !== false
+    && strpos($bloqueAjuste, 'strlen($justificacion) < 5') === false
+    && strpos($bloqueCancelacion, "if (".'$motivo'." === '')") !== false
+    && strpos($bloqueCancelacion, 'strlen($motivo) < 5') === false,
+    'Ajustes y cancelaciones conservan texto obligatorio sin imponer una cantidad minima.'
+);
 pruebaLabAfirmar(
     substr_count($bloqueInicio, 'DATE_ADD(NOW(),INTERVAL ? DAY)') >= 2
     && strpos($bloqueInicio, '$dias = 30;') !== false
@@ -1983,6 +2146,61 @@ foreach ($tablasEsperadas as $tabla) {
 
 if ($aplicar || $estructuraPresente) {
     pruebaLabAfirmar($estructuraPresente, 'Existen las tablas operativas, historicas y de regularizacion por unidades.');
+    $resultadoMecanicoCosto = $mysqli->query(
+        "SELECT md.cod_usuarioFK FROM mecanico_dental md "
+        ."INNER JOIN usuario u ON u.cod_usuario=md.cod_usuarioFK AND u.estado='Activo' "
+        ."WHERE md.cod_usuarioFK IS NOT NULL AND md.estado='activo' LIMIT 1"
+    );
+    if ($resultadoMecanicoCosto && ($filaMecanicoCosto = $resultadoMecanicoCosto->fetch_assoc())) {
+        $codMecanicoCosto = intval($filaMecanicoCosto['cod_usuarioFK']);
+        pruebaLabAfirmar(
+            trabajoLaboratorioUsuarioPuedeGestionarCosto($mysqli, $codMecanicoCosto)
+                === trabajoLaboratorioUsuarioEsAuditor($mysqli, $codMecanicoCosto),
+            'Una cuenta real vinculada como mecanico solo recibe costos si posee permiso auditor.'
+        );
+    }
+    if ($resultadoMecanicoCosto) {
+        $resultadoMecanicoCosto->free();
+    }
+    $resultadoAdministrativoCosto = $mysqli->query(
+        "SELECT u.cod_usuario FROM usuario u "
+        ."LEFT JOIN mecanico_dental md ON md.cod_usuarioFK=u.cod_usuario AND md.estado='activo' "
+        ."WHERE u.estado='Activo' AND UPPER(TRIM(u.tipo)) IN ('ADMINISTRATIVO','ADMINISTRADOR') "
+        ."AND md.cod_mecanico_dental IS NULL LIMIT 1"
+    );
+    if ($resultadoAdministrativoCosto
+        && ($filaAdministrativoCosto = $resultadoAdministrativoCosto->fetch_assoc())) {
+        pruebaLabAfirmar(
+            trabajoLaboratorioUsuarioPuedeGestionarCosto(
+                $mysqli,
+                intval($filaAdministrativoCosto['cod_usuario'])
+            ),
+            'Una cuenta administrativa real no vinculada como mecanico conserva acceso al costo.'
+        );
+    }
+    if ($resultadoAdministrativoCosto) {
+        $resultadoAdministrativoCosto->free();
+    }
+    $resultadoTrabajoOrigen = $mysqli->query(
+        'SELECT id FROM trabajo_laboratorio ORDER BY id DESC LIMIT 1'
+    );
+    if ($resultadoTrabajoOrigen && ($filaTrabajoOrigen = $resultadoTrabajoOrigen->fetch_assoc())) {
+        $trabajoOrigen = trabajoLaboratorioObtenerTrabajo(
+            $mysqli,
+            intval($filaTrabajoOrigen['id']),
+            false
+        );
+        pruebaLabAfirmar(
+            $trabajoOrigen
+            && array_key_exists('nombre_producto', $trabajoOrigen)
+            && array_key_exists('nombre_iniciador', $trabajoOrigen)
+            && array_key_exists('iniciador_rol', $trabajoOrigen),
+            'La consulta real recupera el producto vendido y la identidad del iniciador.'
+        );
+    }
+    if ($resultadoTrabajoOrigen) {
+        $resultadoTrabajoOrigen->free();
+    }
     pruebaLabAfirmar(
         pruebaLabEscalar(
             $mysqli,

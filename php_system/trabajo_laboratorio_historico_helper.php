@@ -2404,9 +2404,13 @@ function trabajoLaboratorioHistoricoPrepararResolucion(
             : $historico['observacion_legacy'],
         1000
     );
-    $costo = isset($entrada['costo_estimado']) && trim((string)$entrada['costo_estimado']) !== ''
-        ? trabajoLaboratorioEntero($entrada['costo_estimado'])
-        : ($historico['costo_legacy'] === null ? null : intval($historico['costo_legacy']));
+    $costo = $historico['costo_legacy'] === null
+        ? null : intval($historico['costo_legacy']);
+    if (trabajoLaboratorioUsuarioPuedeGestionarCosto($mysqli, $codUsuario)) {
+        $costo = isset($entrada['costo_estimado']) && trim((string)$entrada['costo_estimado']) !== ''
+            ? trabajoLaboratorioEntero($entrada['costo_estimado'])
+            : $costo;
+    }
     if ($costo !== null && $costo < 0) {
         trabajoLaboratorioLanzar(
             'costo_historico_invalido',

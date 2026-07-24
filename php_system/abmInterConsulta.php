@@ -2823,6 +2823,37 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         );
     }
 
+    function interConsultaFlujoGastoObtenerSerieEstricta($gastoBase, $registrosGastos) {
+        $idBase= isset($gastoBase['idgastos']) ? intval($gastoBase['idgastos']) : 0;
+        $idPadreBase= isset($gastoBase['cod_gasto_padre']) ? intval($gastoBase['cod_gasto_padre']) : 0;
+        $idRaiz= $idPadreBase > 0 ? $idPadreBase : $idBase;
+        if ($idRaiz <= 0) {
+            return array();
+        }
+
+        $serie= array();
+        foreach ($registrosGastos as $registro) {
+            $idRegistro= isset($registro['idgastos']) ? intval($registro['idgastos']) : 0;
+            $idPadreRegistro= isset($registro['cod_gasto_padre']) ? intval($registro['cod_gasto_padre']) : 0;
+            $idRaizRegistro= $idPadreRegistro > 0 ? $idPadreRegistro : $idRegistro;
+            if ($idRaizRegistro === $idRaiz) {
+                $serie[]= $registro;
+            }
+        }
+
+        usort($serie, function($a, $b) {
+            $fechaA= isset($a['fecha']) ? (string)$a['fecha'] : '';
+            $fechaB= isset($b['fecha']) ? (string)$b['fecha'] : '';
+            if ($fechaA === $fechaB) {
+                return intval(isset($a['idgastos']) ? $a['idgastos'] : 0)
+                    - intval(isset($b['idgastos']) ? $b['idgastos'] : 0);
+            }
+            return strcmp($fechaA, $fechaB);
+        });
+
+        return $serie;
+    }
+
     function interConsultaFlujoGastoFicha($gasto, $estadoVisual, $gastosSerie= array()) {
         $idGasto= isset($gasto['idgastos']) ? $gasto['idgastos'] : '';
         $descripcion= trim((string)(isset($gasto['descripcion']) ? $gasto['descripcion'] : ''));
@@ -2883,16 +2914,13 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $registrosGastos[$key]['mostrado'] = true;
 
             if (strtolower(trim((string)$gasto['modalidad'])) == 'credito') {
-                // Evita mostrar cuotas repetidas y conserva el gasto principal.
-                $gastos_asociados= obtenerGastosAsociados($gasto["idgastos"]);
-                if (empty($gastos_asociados)) {continue;}
+                // Cada tarjeta representa exclusivamente una raiz y sus cuotas.
+                // No se agrupa por proyecto: un proyecto puede contener series
+                // historicas o independientes que no deben mezclarse.
+                $gastosSerie= interConsultaFlujoGastoObtenerSerieEstricta($gasto, $registrosGastos);
+                if (count($gastosSerie) < 1) {continue;}
 
-                $gastosSerie= function_exists('filtrarGastosCuotasProgramadas') ? filtrarGastosCuotasProgramadas($gastos_asociados) : $gastos_asociados;
-                if (count($gastosSerie) < 1) {
-                    $gastosSerie= $gastos_asociados;
-                }
-
-                foreach ($gastos_asociados as $value) {
+                foreach ($gastosSerie as $value) {
                     foreach ($registrosGastos as &$value2) {
                         if ($value['idgastos'] == $value2['idgastos']) {
                             $value2['mostrado'] = true;

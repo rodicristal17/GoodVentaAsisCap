@@ -1827,6 +1827,9 @@ function verCerrarAutorizacionEgreso(mostrar) {
 
 function aprobarMovimiento(opcion, elemento= null) {
 	if(controlacceso("AUTORIZAREGRESOINGRESO","accion")==false){return;}
+	if (opcion === true && !confirm("Al aprobar, el gasto pasara a Pagado y se descontara de la caja activa de la persona que lo registro. ¿Continuar?")) {
+		return;
+	}
 
 	if (elemento != null) {
 		obtenerdatosabmGasto(elemento);
@@ -1891,7 +1894,7 @@ function aprobarMovimiento(opcion, elemento= null) {
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 			   if (Respuesta == true) {
-				   ver_vetana_informativa("Datos guardados.", "", "info");
+				   ver_vetana_informativa(opcion === true ? "Gasto aprobado y descontado de la caja de origen." : "Gasto rechazado.", "", "info");
 				   switch (ventanaAnterior[ventanaAnterior.length - 1]) {
 						case 'divListadoInterConsulta':
 							buscarInterConsultasYContenido(cod_interConsulta);
@@ -1915,10 +1918,12 @@ function darBajaCuotaProgramada(evento, idgastos, alcance) {
 	if (evento) { evento.stopPropagation(); }
 	var esSerie = alcance == 'serie';
 	var esHilo = alcance == 'hilo';
+	var esProyecto = alcance == 'proyecto';
 	var mensaje = esHilo
 		? 'Se daran de baja TODAS las cuotas pendientes de pago vinculadas a este hilo. Las cuotas pagadas y el hilo no se modificaran. ¿Continuar?'
+		: (esProyecto ? 'Se daran de baja solamente las cuotas pendientes de este proyecto. Las cuotas pagadas y los demas proyectos del hilo no se modificaran. ¿Continuar?'
 		: (esSerie ? 'Se daran de baja esta cuota y todas las siguientes de la misma serie. Las cuotas pagadas no se modificaran. ¿Continuar?'
-		: 'Se dara de baja esta cuota programada. No volvera a sumar como pendiente. ¿Continuar?');
+		: 'Se dara de baja esta cuota programada. No volvera a sumar como pendiente. ¿Continuar?'));
 	if (!confirm(mensaje)) { return; }
 	var datos = new FormData();
 	obtener_datos_user();
@@ -1927,7 +1932,7 @@ function darBajaCuotaProgramada(evento, idgastos, alcance) {
 	datos.append('navegador', navegador);
 	datos.append('funt', 'darBajaCuotaProgramada');
 	datos.append('idgastos', idgastos);
-	datos.append('alcance', esHilo ? 'hilo' : (esSerie ? 'serie' : 'cuota'));
+	datos.append('alcance', esHilo ? 'hilo' : (esProyecto ? 'proyecto' : (esSerie ? 'serie' : 'cuota')));
 	verCerrarEfectoCargando('1');
 	$.ajax({
 		data: datos, url: '/GoodVentaAsisCap/php_system/abmgasto.php', type: 'post',
@@ -1945,7 +1950,7 @@ function darBajaCuotaProgramada(evento, idgastos, alcance) {
 					return;
 				}
 				ver_vetana_informativa((respuesta['2'] || 1) + ' cuota(s) dadas de baja.', '', 'info');
-				if (esHilo && extractoActual) {
+				if ((esHilo || esProyecto || esSerie) && extractoActual) {
 					var idExtractoRecargar = extractoActual;
 					extractoActual = null;
 					mostrarExtractoGasto(idExtractoRecargar);
@@ -1962,12 +1967,16 @@ function darBajaCuotaProgramada(evento, idgastos, alcance) {
 }
 
 function darBajaCuotasPendientesHilo(evento) {
+	darBajaCuotasPendientesProyecto(evento);
+}
+
+function darBajaCuotasPendientesProyecto(evento) {
 	if (evento) { evento.stopPropagation(); }
 	if (!extractoActual) {
 		ver_vetana_informativa('No hay un extracto seleccionado.');
 		return;
 	}
-	darBajaCuotaProgramada(evento, extractoActual, 'hilo');
+	darBajaCuotaProgramada(evento, extractoActual, 'proyecto');
 }
 
 function seleccionarGastosAsociados(element) {
@@ -2686,6 +2695,8 @@ function obtenerGastosAsociados(id_gasto) {
 var extractoActual= null;
 var bsExtracto = null;
 var botonExtractoActivo = null;
+var extractoGastoSolicitud= null;
+var extractoGastoSecuencia= 0;
 
 function limpiarBotonExtractoActivo() {
 	document.querySelectorAll(".btn-menu-extracto.active").forEach(function (btn) {
@@ -2718,6 +2729,10 @@ function cerrarExtractoGasto() {
 	if (!panelExtracto) {
 		return;
 	}
+	extractoGastoSecuencia++;
+	if (extractoGastoSolicitud && extractoGastoSolicitud.readyState != 4) {
+		extractoGastoSolicitud.abort();
+	}
 	const instancia = bootstrap.Collapse.getOrCreateInstance(panelExtracto, { toggle: false });
 	instancia.hide();
 }
@@ -2738,6 +2753,12 @@ function mostrarExtractoGasto(id_gastos) {
     }
 
 	extractoActual = id_gastos;
+	extractoGastoSecuencia++;
+	const secuenciaExtracto= extractoGastoSecuencia;
+	const idExtractoSolicitado= String(id_gastos || "");
+	if (extractoGastoSolicitud && extractoGastoSolicitud.readyState != 4) {
+		extractoGastoSolicitud.abort();
+	}
 	establecerBotonExtractoActivo(id_gastos);
 	bsExtracto.show();
 
@@ -2754,8 +2775,9 @@ function mostrarExtractoGasto(id_gastos) {
 	datos.append("navegador", navegador);
 	datos.append("funt", 'obtenerGastosAsociados');
     datos.append("idgastos", id_gastos);
+	datos.append("serie_estricta", "1");
 
-	var OpAjax = $.ajax({
+	extractoGastoSolicitud = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
 		type: "post",
@@ -2789,11 +2811,15 @@ function mostrarExtractoGasto(id_gastos) {
     },
 		
 		error: function (jqXHR, textstatus, errorThrowm) {
+			if (textstatus == "abort" || secuenciaExtracto != extractoGastoSecuencia
+				|| String(extractoActual || "") != idExtractoSolicitado) { return; }
 			verCerrarEfectoCargando("")
-		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			return false;
 		},
 		success: function (responseText) {
+			if (secuenciaExtracto != extractoGastoSecuencia
+				|| String(extractoActual || "") != idExtractoSolicitado) { return; }
 			Respuesta = responseText;
 			verCerrarEfectoCargando("")
 			console.log(Respuesta)
@@ -3859,6 +3885,61 @@ function aplicarLecturaCascadaGasto() {
 	});
 }
 
+function aplicarFiltroPendientesFlujoGasto() {
+	var contenedor = document.getElementById("table_abm_gasto");
+	var selector = document.getElementById("inptSoloPendientesPagoGasto");
+	var contador = document.getElementById("cantidadPendientesPagoGasto");
+	if (!contenedor || !selector) { return; }
+
+	var soloPendientes = selector.checked;
+	var selectorPendiente = '[data-flujo-item-pago="1"][data-estado-pago="pendiente"][data-tipo-movimiento="egreso"]';
+	var pendientes = contenedor.querySelectorAll(selectorPendiente);
+	Array.prototype.forEach.call(contenedor.querySelectorAll('[data-flujo-item-pago="1"]'), function (item) {
+		var esPendientePago = item.matches ? item.matches(selectorPendiente) :
+			(item.getAttribute("data-estado-pago") == "pendiente" && item.getAttribute("data-tipo-movimiento") == "egreso");
+		var ocultar = soloPendientes && !esPendientePago;
+		item.classList.toggle("flujo-filtro-oculto", ocultar);
+	});
+
+	Array.prototype.forEach.call(contenedor.querySelectorAll(".flujo-concepto-subgrupo"), function (subgrupo) {
+		var tienePendientes = subgrupo.querySelector(selectorPendiente) !== null;
+		subgrupo.classList.toggle("flujo-filtro-oculto", soloPendientes && !tienePendientes);
+	});
+
+	Array.prototype.forEach.call(contenedor.querySelectorAll(".flujo-caja-motivo-wrap"), function (motivo) {
+		var tienePendientes = motivo.querySelector(selectorPendiente) !== null;
+		motivo.classList.toggle("flujo-filtro-oculto", soloPendientes && !tienePendientes);
+		var detalle = motivo.querySelector(".flujo-caja-motivo > .collapse");
+		if (detalle && soloPendientes && tienePendientes && !detalle.classList.contains("show")) {
+			detalle.classList.add("show");
+			detalle.setAttribute("data-abierto-por-filtro", "1");
+		} else if (detalle && !soloPendientes && detalle.getAttribute("data-abierto-por-filtro") == "1") {
+			detalle.classList.remove("show");
+			detalle.removeAttribute("data-abierto-por-filtro");
+		}
+	});
+
+	Array.prototype.forEach.call(contenedor.querySelectorAll(".flujo-caja-zona"), function (zona) {
+		var tienePendientes = zona.querySelector(selectorPendiente) !== null;
+		zona.classList.toggle("flujo-filtro-oculto", soloPendientes && !tienePendientes);
+	});
+
+	var vacio = document.getElementById("flujoPendientesPagoVacio");
+	if (!vacio) {
+		vacio = document.createElement("div");
+		vacio.id = "flujoPendientesPagoVacio";
+		vacio.className = "flujo-pendientes-vacio";
+		vacio.innerHTML = "<strong>No hay pagos pendientes</strong><span>No se encontraron egresos pendientes de pago con los filtros actuales.</span>";
+		contenedor.appendChild(vacio);
+	}
+	vacio.style.display = (soloPendientes && pendientes.length === 0) ? "flex" : "none";
+	if (contador) {
+		contador.textContent = pendientes.length;
+		contador.title = pendientes.length + " pago(s) pendiente(s) en el resultado actual";
+	}
+	selector.parentElement.classList.toggle("flujo-pendientes-filtro--activo", soloPendientes);
+}
+
 function buscarabmGasto() {
 if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}	
 	var fecha1 = document.getElementById('inptBuscarGastoF1').value
@@ -3971,6 +4052,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("table_abm_gasto_imprimir").innerHTML = construirComposicionFlujoGastoImpresion(datos[13] || null, datos) + (datos[12] || "");
 					document.getElementById("table_abm_gasto").innerHTML = datos[2];
 					aplicarLecturaCascadaGasto();
+					aplicarFiltroPendientesFlujoGasto();
 					actualizarEncabezadoFlujoGasto();
 
 					document.getElementById("inptTotalGasto").value = datos[4];

@@ -486,6 +486,19 @@ function trabajoLaboratorioUsuarioEsAuditor($mysqli, $codUsuario)
     return trabajoLaboratorioTienePermiso($mysqli, $codUsuario, 'AUDITARTRABAJOLABORATORIO');
 }
 
+function trabajoLaboratorioUsuarioPuedeGestionarCosto($mysqli, $codUsuario)
+{
+    if (trabajoLaboratorioUsuarioEsAuditor($mysqli, $codUsuario)) {
+        return true;
+    }
+    if (trabajoLaboratorioObtenerTecnicoFormal($mysqli, $codUsuario, false)) {
+        return false;
+    }
+    $usuario = trabajoLaboratorioUsuario($mysqli, $codUsuario);
+    $rol = $usuario ? trabajoLaboratorioNormalizarTexto($usuario['tipo']) : '';
+    return in_array($rol, array('administrativo', 'administrador'), true);
+}
+
 function trabajoLaboratorioUsuarioPuedeTodosLocales($mysqli, $codUsuario)
 {
     return trabajoLaboratorioUsuarioEsAuditor($mysqli, $codUsuario)
@@ -1730,7 +1743,7 @@ function trabajoLaboratorioEstadoPermiteAccion($estado, $accion)
         'confirmarDevolucion' => array('en_transferencia_clinica'),
         'solicitarAjuste' => array('pendiente_revision'),
         'aprobarTrabajo' => array('pendiente_revision'),
-        'registrarInstalacion' => array('listo_instalacion')
+        'registrarInstalacion' => array('pendiente_revision', 'listo_instalacion')
     );
     if (in_array($accion, array(
         'agregarEvidencia',
@@ -1817,8 +1830,7 @@ function trabajoLaboratorioResolverAcciones($estado, $contexto)
         && $tiene('APROBARTRABAJOLABORATORIO');
     $acciones['registrarInstalacion'] = trabajoLaboratorioEstadoPermiteAccion($estado, 'registrarInstalacion')
         && $custodio
-        && (($doctor && $local) || $auditor)
-        && $tiene('INSTALARTRABAJOLABORATORIO');
+        && ($tiene('ENTREGARTRABAJOLABORATORIO') || $tiene('INSTALARTRABAJOLABORATORIO'));
     $acciones['cancelarTrabajo'] = trabajoLaboratorioEstadoPermiteAccion($estado, 'cancelarTrabajo')
         && (($local && !$tecnicoFormal) || $auditor)
         && $tiene('CANCELARTRABAJOLABORATORIO');
@@ -2647,6 +2659,8 @@ function trabajoLaboratorioObtenerTrabajo($mysqli, $idTrabajo, $bloquear = false
         .'pcu.nombre_persona AS nombre_custodio,ucu.tipo AS custodio_rol,ucu.url AS custodio_avatar,'
         .'pdoc.nombre_persona AS nombre_doctor,'
         .'udoc.tipo AS doctor_rol,udoc.url AS doctor_avatar,'
+        .'pini.nombre_persona AS nombre_iniciador,'
+        .'uini.tipo AS iniciador_rol,uini.url AS iniciador_avatar,'
         .'(SELECT MAX(ev.fecha_servidor) FROM trabajo_laboratorio_evento ev '
         .'WHERE ev.id_trabajoFK=tl.id AND ev.cod_custodio_nuevoFK=tl.cod_custodio_actualFK) AS fecha_custodio_actual,'
         .'(SELECT mm.id FROM trabajo_laboratorio_media mm WHERE mm.id_trabajoFK=tl.id '
@@ -2668,6 +2682,8 @@ function trabajoLaboratorioObtenerTrabajo($mysqli, $idTrabajo, $bloquear = false
         .'LEFT JOIN persona pcu ON pcu.cod_persona=tl.cod_custodio_actualFK '
         .'LEFT JOIN usuario udoc ON udoc.cod_usuario=COALESCE(tl.cod_especialistaFK,tl.cod_usuarioFK_create) '
         .'LEFT JOIN persona pdoc ON pdoc.cod_persona=COALESCE(tl.cod_especialistaFK,tl.cod_usuarioFK_create) '
+        .'LEFT JOIN usuario uini ON uini.cod_usuario=tl.cod_usuarioFK_create '
+        .'LEFT JOIN persona pini ON pini.cod_persona=tl.cod_usuarioFK_create '
         .'LEFT JOIN tipo_trabajo_mecanico_dental tt ON tt.cod_tipo_trabajo_mecanico_dental=tl.cod_tipo_trabajoFK '
         .'WHERE tl.id=? LIMIT 1';
     if ($bloquear) {
@@ -2712,9 +2728,11 @@ function trabajoLaboratorioAccionNaturalContexto($accion, $contexto)
     if (in_array($accion, array(
         'iniciarTrabajo',
         'iniciarTrabajosAgrupados',
-        'asignarTecnico',
-        'guardarRegularizacionUnidades'
+        'asignarTecnico'
     ), true)) {
+        return true;
+    }
+    if ($accion === 'guardarRegularizacionUnidades') {
         return $localPropio;
     }
     if ($accion === 'iniciarTransferencia') {
@@ -2738,9 +2756,11 @@ function trabajoLaboratorioAccionNaturalContexto($accion, $contexto)
     if ($accion === 'confirmarDevolucion') {
         return $localPropio && !$tecnicoFormal;
     }
-    if ($accion === 'solicitarAjuste' || $accion === 'aprobarTrabajo'
-        || $accion === 'registrarInstalacion') {
+    if ($accion === 'solicitarAjuste' || $accion === 'aprobarTrabajo') {
         return $doctor && $localPropio;
+    }
+    if ($accion === 'registrarInstalacion') {
+        return $custodio;
     }
     if ($accion === 'cancelarTrabajo') {
         return $localPropio && !$tecnicoFormal;
@@ -2810,10 +2830,10 @@ function trabajoLaboratorioExigirMotivoExcepcionAuditor($mysqli, $codUsuario, $t
     }
     $motivo = isset($entrada['motivo_excepcion'])
         ? trabajoLaboratorioTextoEntrada($entrada['motivo_excepcion'], 750) : '';
-    if (strlen($motivo) < 5) {
+    if ($motivo === '') {
         trabajoLaboratorioLanzar(
             'motivo_excepcion_auditor_requerido',
-            'La intervencion excepcional del auditor requiere una justificacion de al menos cinco caracteres.'
+            'La intervencion excepcional del auditor requiere una observacion.'
         );
     }
     return $motivo;
@@ -3201,6 +3221,25 @@ function trabajoLaboratorioRespuestaIdempotenciaProtegida($valor)
             continue;
         }
         $salida[$clave] = trabajoLaboratorioRespuestaIdempotenciaProtegida($item);
+    }
+    return $salida;
+}
+
+function trabajoLaboratorioRespuestaSinCostos($valor)
+{
+    if (!is_array($valor)) {
+        return $valor;
+    }
+    $salida = array();
+    $clavesCosto = array(
+        'costo', 'costo_estimado', 'costo_original', 'costo_resuelto',
+        'costo_legacy', 'costo_snapshot'
+    );
+    foreach ($valor as $clave => $item) {
+        if (in_array((string)$clave, $clavesCosto, true)) {
+            continue;
+        }
+        $salida[$clave] = trabajoLaboratorioRespuestaSinCostos($item);
     }
     return $salida;
 }
@@ -5224,6 +5263,14 @@ function trabajoLaboratorioFormatearTrabajo($mysqli, $codUsuario, $trabajo, $com
         'doctor' => isset($trabajo['nombre_doctor']) ? trabajoLaboratorioTextoUtf8($trabajo['nombre_doctor']) : null,
         'doctor_rol' => isset($trabajo['doctor_rol']) ? trabajoLaboratorioTextoUtf8($trabajo['doctor_rol']) : null,
         'doctor_avatar' => isset($trabajo['doctor_avatar']) ? trabajoLaboratorioTextoUtf8($trabajo['doctor_avatar']) : null,
+        'cod_iniciador' => isset($trabajo['cod_usuarioFK_create'])
+            ? intval($trabajo['cod_usuarioFK_create']) : null,
+        'iniciador' => isset($trabajo['nombre_iniciador'])
+            ? trabajoLaboratorioTextoUtf8($trabajo['nombre_iniciador']) : null,
+        'iniciador_rol' => isset($trabajo['iniciador_rol'])
+            ? trabajoLaboratorioTextoUtf8($trabajo['iniciador_rol']) : null,
+        'iniciador_avatar' => isset($trabajo['iniciador_avatar'])
+            ? trabajoLaboratorioTextoUtf8($trabajo['iniciador_avatar']) : null,
         'estado_derivado' => $trabajo['estado_derivado'],
         'ciclo_actual' => intval($trabajo['ciclo_actual']),
         'fecha_objetivo' => $trabajo['fecha_objetivo'],
@@ -5252,7 +5299,10 @@ function trabajoLaboratorioFormatearTrabajo($mysqli, $codUsuario, $trabajo, $com
     if ($completo) {
         $salida['colorimetro'] = trabajoLaboratorioTextoUtf8($trabajo['colorimetro']);
         $salida['instrucciones'] = trabajoLaboratorioTextoUtf8($trabajo['instrucciones']);
-        $salida['costo_estimado'] = $trabajo['costo_estimado'] === null ? null : intval($trabajo['costo_estimado']);
+        if (trabajoLaboratorioUsuarioPuedeGestionarCosto($mysqli, $codUsuario)) {
+            $salida['costo_estimado'] = $trabajo['costo_estimado'] === null
+                ? null : intval($trabajo['costo_estimado']);
+        }
         $salida['cod_consulta_origen'] = $trabajo['cod_consulta_origenFK'] === null
             ? null : intval($trabajo['cod_consulta_origenFK']);
         $salida['cod_evolucion_origen'] = $trabajo['cod_evolucion_origenFK'] === null
@@ -5757,6 +5807,8 @@ function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada)
         .'LEFT JOIN persona pcu ON pcu.cod_persona=tl.cod_custodio_actualFK '
         .'LEFT JOIN usuario udoc ON udoc.cod_usuario=COALESCE(tl.cod_especialistaFK,tl.cod_usuarioFK_create) '
         .'LEFT JOIN persona pdoc ON pdoc.cod_persona=COALESCE(tl.cod_especialistaFK,tl.cod_usuarioFK_create) '
+        .'LEFT JOIN usuario uini ON uini.cod_usuario=tl.cod_usuarioFK_create '
+        .'LEFT JOIN persona pini ON pini.cod_persona=tl.cod_usuarioFK_create '
         .'LEFT JOIN local l ON l.cod_local=tl.cod_localFK '
         .'LEFT JOIN tipo_trabajo_mecanico_dental tt ON tt.cod_tipo_trabajo_mecanico_dental=tl.cod_tipo_trabajoFK '
         .'WHERE '.$where;
@@ -5774,7 +5826,9 @@ function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada)
         .'pt.nombre_persona AS nombre_tecnico,utec.tipo AS tecnico_rol,utec.url AS tecnico_avatar,'
         .'pcu.nombre_persona AS nombre_custodio,ucu.tipo AS custodio_rol,ucu.url AS custodio_avatar,'
         .'pdoc.nombre_persona AS nombre_doctor,'
-        .'udoc.tipo AS doctor_rol,udoc.url AS doctor_avatar,tt.descripcion AS tipo_trabajo,'
+        .'udoc.tipo AS doctor_rol,udoc.url AS doctor_avatar,'
+        .'pini.nombre_persona AS nombre_iniciador,'
+        .'uini.tipo AS iniciador_rol,uini.url AS iniciador_avatar,tt.descripcion AS tipo_trabajo,'
         .'(SELECT MAX(ev.fecha_servidor) FROM trabajo_laboratorio_evento ev '
         .'WHERE ev.id_trabajoFK=tl.id AND ev.cod_custodio_nuevoFK=tl.cod_custodio_actualFK) AS fecha_custodio_actual,'
         .'(SELECT mm.id FROM trabajo_laboratorio_media mm WHERE mm.id_trabajoFK=tl.id '
@@ -6063,6 +6117,14 @@ function trabajoLaboratorioSnapshotDatosTrabajo($trabajo)
             ? intval($trabajo['cod_especialistaFK']) : null,
         'doctor' => isset($trabajo['nombre_doctor'])
             ? trabajoLaboratorioTextoUtf8($trabajo['nombre_doctor']) : null,
+        'cod_iniciador' => isset($trabajo['cod_usuarioFK_create'])
+            ? intval($trabajo['cod_usuarioFK_create']) : null,
+        'iniciador' => isset($trabajo['nombre_iniciador'])
+            ? trabajoLaboratorioTextoUtf8($trabajo['nombre_iniciador']) : null,
+        'iniciador_rol' => isset($trabajo['iniciador_rol'])
+            ? trabajoLaboratorioTextoUtf8($trabajo['iniciador_rol']) : null,
+        'iniciador_avatar' => isset($trabajo['iniciador_avatar'])
+            ? trabajoLaboratorioTextoUtf8($trabajo['iniciador_avatar']) : null,
         'cod_mecanico_dental' => isset($trabajo['cod_mecanico_dentalFK']) && $trabajo['cod_mecanico_dentalFK'] !== null
             ? intval($trabajo['cod_mecanico_dentalFK']) : null,
         'cod_tecnico_usuario' => isset($trabajo['cod_tecnico_usuarioFK']) && $trabajo['cod_tecnico_usuarioFK'] !== null
@@ -6127,7 +6189,7 @@ function trabajoLaboratorioFechaVersion($valor, $campo)
     );
 }
 
-function trabajoLaboratorioDatosVersionEntrada($mysqli, $trabajo, $entrada)
+function trabajoLaboratorioDatosVersionEntrada($mysqli, $codUsuario, $trabajo, $entrada)
 {
     $datos = isset($entrada['datos_trabajo'])
         ? trabajoLaboratorioDecodificarJson($entrada['datos_trabajo'], array()) : array();
@@ -6138,20 +6200,12 @@ function trabajoLaboratorioDatosVersionEntrada($mysqli, $trabajo, $entrada)
         return array_key_exists($clave, $datos) ? $datos[$clave] : $actual;
     };
 
-    $codTipo = intval($valor('cod_tipo_trabajo', isset($trabajo['cod_tipo_trabajoFK'])
-        ? $trabajo['cod_tipo_trabajoFK'] : 0));
-    $codTipo = trabajoLaboratorioValidarTipoTrabajo($mysqli, $codTipo);
-
-    $codDoctor = intval($valor('cod_especialista', isset($trabajo['cod_especialistaFK'])
-        ? $trabajo['cod_especialistaFK'] : 0));
-    if ($codDoctor > 0) {
-        $doctor = trabajoLaboratorioUsuario($mysqli, $codDoctor);
-        if (!$doctor || trabajoLaboratorioNormalizarTexto($doctor['tipo']) !== 'doctor') {
-            trabajoLaboratorioLanzar('doctor_trabajo_invalido', 'Seleccione un doctor activo del sistema.');
-        }
-    } else {
-        $codDoctor = null;
-    }
+    /* El producto de la venta y el usuario iniciador son datos de origen.
+       Las versiones operativas no pueden reinterpretarlos ni reemplazarlos. */
+    $codTipo = isset($trabajo['cod_tipo_trabajoFK']) && $trabajo['cod_tipo_trabajoFK'] !== null
+        ? intval($trabajo['cod_tipo_trabajoFK']) : null;
+    $codDoctor = isset($trabajo['cod_especialistaFK']) && $trabajo['cod_especialistaFK'] !== null
+        ? intval($trabajo['cod_especialistaFK']) : null;
 
     $codTecnico = intval($valor('cod_tecnico_usuario', isset($trabajo['cod_tecnico_usuarioFK'])
         ? $trabajo['cod_tecnico_usuarioFK'] : 0));
@@ -6179,7 +6233,10 @@ function trabajoLaboratorioDatosVersionEntrada($mysqli, $trabajo, $entrada)
         trabajoLaboratorioLanzar('local_trabajo_invalido', 'Seleccione un local activo.');
     }
 
-    $costoValor = $valor('costo_estimado', isset($trabajo['costo_estimado']) ? $trabajo['costo_estimado'] : null);
+    $costoActual = isset($trabajo['costo_estimado']) ? $trabajo['costo_estimado'] : null;
+    $costoValor = trabajoLaboratorioUsuarioPuedeGestionarCosto($mysqli, $codUsuario)
+        ? $valor('costo_estimado', $costoActual)
+        : $costoActual;
     $costo = trim((string)$costoValor) === '' ? null : trabajoLaboratorioEntero($costoValor);
     if ($costo !== null && $costo < 0) {
         trabajoLaboratorioLanzar('costo_invalido', 'El costo no puede ser negativo.');
@@ -6303,7 +6360,13 @@ function trabajoLaboratorioIniciar($mysqli, $codUsuario, $entrada)
         $codUsuario,
         $accionComando,
         $entrada,
-        function ($idIdempotencia, $contexto) use ($mysqli, $codUsuario, $entrada, $idRegularizacionEntrada) {
+        function ($idIdempotencia, $contexto) use (
+            $mysqli,
+            $codUsuario,
+            $entrada,
+            $idRegularizacionEntrada,
+            $accionComando
+        ) {
             $codDetalle = trabajoLaboratorioEntero(isset($entrada['cod_detalle_venta']) ? $entrada['cod_detalle_venta'] : 0);
             $codTecnico = trabajoLaboratorioEntero(isset($entrada['cod_tecnico_usuario'])
                 ? $entrada['cod_tecnico_usuario']
@@ -7332,7 +7395,7 @@ function trabajoLaboratorioActualizarDatos($mysqli, $codUsuario, $entrada)
                 );
             }
             $snapshotAnterior = trabajoLaboratorioSnapshotDatosTrabajo($trabajo);
-            $datos = trabajoLaboratorioDatosVersionEntrada($mysqli, $trabajo, $entrada);
+            $datos = trabajoLaboratorioDatosVersionEntrada($mysqli, $codUsuario, $trabajo, $entrada);
             trabajoLaboratorioAplicarDatosVersion($mysqli, $trabajo, $datos);
             $trabajoConDatos = trabajoLaboratorioObtenerTrabajo($mysqli, $idTrabajo, true);
             $snapshotNuevo = trabajoLaboratorioSnapshotDatosTrabajo($trabajoConDatos);
@@ -7517,7 +7580,7 @@ function trabajoLaboratorioTomarHilo($mysqli, $codUsuario, $entrada, $accionComa
                 );
             }
             $snapshotAnterior = trabajoLaboratorioSnapshotDatosTrabajo($trabajo);
-            $datosVersion = trabajoLaboratorioDatosVersionEntrada($mysqli, $trabajo, $entrada);
+            $datosVersion = trabajoLaboratorioDatosVersionEntrada($mysqli, $codUsuario, $trabajo, $entrada);
             trabajoLaboratorioAplicarDatosVersion($mysqli, $trabajo, $datosVersion);
             $trabajo = trabajoLaboratorioObtenerTrabajo($mysqli, $idTrabajo, true);
             $ciclo = trabajoLaboratorioObtenerCicloActual($mysqli, $trabajo);
@@ -7987,7 +8050,7 @@ function trabajoLaboratorioRectificarCustodia($mysqli, $codUsuario, $entrada)
                         : (isset($entrada['observacion']) ? $entrada['observacion'] : '')),
                 750
             );
-            if (strlen($justificacion) < 5) {
+            if ($justificacion === '') {
                 trabajoLaboratorioLanzar(
                     'justificacion_rectificacion_requerida',
                     'Explique por que corresponde rectificar al responsable actual.'
@@ -8227,7 +8290,7 @@ function trabajoLaboratorioSolicitarAjuste($mysqli, $codUsuario, $entrada)
             }
             $motivoGuardado = $motivo === 'otro' ? $motivoOtro : $motivo;
             $justificacion = trabajoLaboratorioTextoEntrada(isset($entrada['justificacion']) ? $entrada['justificacion'] : '', 500);
-            if (strlen($justificacion) < 5) {
+            if ($justificacion === '') {
                 trabajoLaboratorioLanzar('justificacion_ajuste_requerida', 'Explique brevemente que debe ajustarse.');
             }
             $evidencias = trabajoLaboratorioNormalizarEvidencias($entrada, 'evidencias');
@@ -8345,7 +8408,43 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
 {
     return trabajoLaboratorioEjecutarComando(
         $mysqli, $codUsuario, 'registrarInstalacion', $entrada,
-        function ($idIdempotencia) use ($mysqli, $codUsuario, $entrada) {
+        function ($idIdempotencia, $contexto) use ($mysqli, $codUsuario, $entrada) {
+            $modoResolucion = trabajoLaboratorioNormalizarTexto(
+                isset($entrada['modo_resolucion']) ? $entrada['modo_resolucion'] : ''
+            );
+            if ($modoResolucion !== '' && $modoResolucion !== 'instalado_entregado') {
+                trabajoLaboratorioLanzar(
+                    'modo_resolucion_invalido',
+                    'Seleccione Instalado y entregado para cerrar el trabajo.'
+                );
+            }
+            $condicion = trabajoLaboratorioNormalizarTexto(
+                isset($entrada['condicion_pre_entrega']) ? $entrada['condicion_pre_entrega'] : ''
+            );
+            if (!in_array($condicion, array('conforme', 'con_observaciones'), true)) {
+                trabajoLaboratorioLanzar(
+                    'condicion_entrega_requerida',
+                    'Indique la situacion del trabajo antes de confirmar la entrega.'
+                );
+            }
+            $observacionEntrega = trabajoLaboratorioTextoEntrada(
+                isset($entrada['observacion_entrega']) ? $entrada['observacion_entrega'] : '',
+                1000
+            );
+            if ($condicion === 'con_observaciones' && $observacionEntrega === '') {
+                trabajoLaboratorioLanzar(
+                    'observacion_entrega_requerida',
+                    'Describa la situacion observada antes de la entrega.'
+                );
+            }
+            $evidencias = trabajoLaboratorioEvidenciasFinales($entrada);
+            $maximoEvidencias = trabajoLaboratorioMaximoArchivosMedia();
+            if (count($evidencias) < 1 || count($evidencias) > $maximoEvidencias) {
+                trabajoLaboratorioLanzar(
+                    'evidencia_instalacion_requerida',
+                    'Adjunte entre una y '.$maximoEvidencias.' fotos para confirmar la instalacion y entrega.'
+                );
+            }
             $idTrabajo = trabajoLaboratorioIdEntrada($entrada);
             $trabajo = trabajoLaboratorioObtenerTrabajo($mysqli, $idTrabajo, true);
             $motivoExcepcion = trabajoLaboratorioExigirAccion(
@@ -8354,21 +8453,24 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
             trabajoLaboratorioExigirVersion($trabajo, $entrada);
             $esExcepcionAuditor = trabajoLaboratorioUsuarioEsAuditor($mysqli, $codUsuario)
                 && $motivoExcepcion !== '';
-            if (trabajoLaboratorioEntero(isset($entrada['cod_evolucion_origen'])
-                ? $entrada['cod_evolucion_origen'] : 0) <= 0) {
-                trabajoLaboratorioLanzar(
-                    'evolucion_origen_requerida',
-                    'La instalacion debe registrarse expresamente dentro de una evolucion clinica.'
+            $codEvolucionOrigen = trabajoLaboratorioEntero(
+                isset($entrada['cod_evolucion_origen']) ? $entrada['cod_evolucion_origen'] : 0
+            );
+            $origen = array(
+                'cod_consulta_origen' => null,
+                'cod_evolucion_origen' => null,
+                'cod_usuario_evolucion' => 0
+            );
+            if ($codEvolucionOrigen > 0) {
+                $origen = trabajoLaboratorioValidarEvolucionInstalacion(
+                    $mysqli,
+                    $trabajo,
+                    $codUsuario,
+                    isset($entrada['cod_consulta_origen']) ? $entrada['cod_consulta_origen'] : 0,
+                    $codEvolucionOrigen,
+                    $esExcepcionAuditor
                 );
             }
-            $origen = trabajoLaboratorioValidarEvolucionInstalacion(
-                $mysqli,
-                $trabajo,
-                $codUsuario,
-                isset($entrada['cod_consulta_origen']) ? $entrada['cod_consulta_origen'] : 0,
-                isset($entrada['cod_evolucion_origen']) ? $entrada['cod_evolucion_origen'] : 0,
-                $esExcepcionAuditor
-            );
             $ciclo = trabajoLaboratorioObtenerCicloActual($mysqli, $trabajo);
             $versionAnterior = intval($trabajo['version']);
             $versionNueva = $versionAnterior + 1;
@@ -8396,13 +8498,23 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
             }
             $stmt->close();
             $actual = trabajoLaboratorioObtenerTrabajo($mysqli, $idTrabajo, true);
-            $observacion = isset($entrada['observacion']) ? $entrada['observacion'] : '';
-            trabajoLaboratorioRegistrarEvento(
+            $observacion = $condicion === 'con_observaciones'
+                ? $observacionEntrega
+                : trabajoLaboratorioTextoEntrada(
+                    isset($entrada['observacion']) ? $entrada['observacion'] : '',
+                    1000
+                );
+            $idEvento = trabajoLaboratorioRegistrarEvento(
                 $mysqli, $actual, intval($ciclo['id']), $idIdempotencia, 'instalacion_registrada',
                 $codUsuario, $versionNueva, $observacion,
                 trabajoLaboratorioMetadataExcepcionAuditor(
                     array(
-                        'evolucion_clinica_explicita' => 1,
+                        'resolucion_operativa' => 1,
+                        'modo_resolucion' => 'instalado_entregado',
+                        'condicion_pre_entrega' => $condicion,
+                        'observacion_entrega' => $observacionEntrega,
+                        'cantidad_evidencias' => count($evidencias),
+                        'evolucion_clinica_explicita' => $codEvolucionOrigen > 0 ? 1 : 0,
                         'cod_usuario_evolucion' => intval($origen['cod_usuario_evolucion']),
                         'cierra_custodia' => 1,
                         'id_evento_custodia' => trabajoLaboratorioEventoCustodiaActual(
@@ -8417,8 +8529,28 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
                 intval($trabajo['cod_custodio_actualFK']), null, null, null,
                 $origen['cod_consulta_origen'], $origen['cod_evolucion_origen']
             );
+            foreach ($evidencias as $evidencia) {
+                $media = trabajoLaboratorioGuardarMediaProtegida(
+                    $evidencia,
+                    $idTrabajo,
+                    $contexto
+                );
+                trabajoLaboratorioInsertarMedia(
+                    $mysqli,
+                    $actual,
+                    intval($ciclo['id']),
+                    $idEvento,
+                    $codUsuario,
+                    $media,
+                    'instalacion_final'
+                );
+            }
             $respuesta = trabajoLaboratorioRespuestaActualizada(
-                $mysqli, $codUsuario, $idTrabajo, 'instalacion_registrada', 'La instalacion quedo vinculada a la evolucion clinica.'
+                $mysqli,
+                $codUsuario,
+                $idTrabajo,
+                'instalacion_registrada',
+                'El trabajo quedo instalado y entregado. El hilo fue cerrado.'
             );
             return array('id_trabajo' => $idTrabajo, 'respuesta' => $respuesta);
         }
@@ -8432,7 +8564,7 @@ function trabajoLaboratorioCancelar($mysqli, $codUsuario, $entrada)
         function ($idIdempotencia) use ($mysqli, $codUsuario, $entrada) {
             $motivo = trabajoLaboratorioTextoEntrada(isset($entrada['justificacion']) ? $entrada['justificacion']
                 : (isset($entrada['motivo']) ? $entrada['motivo'] : ''), 500);
-            if (strlen($motivo) < 5) {
+            if ($motivo === '') {
                 trabajoLaboratorioLanzar('motivo_cancelacion_requerido', 'Explique el motivo de la cancelacion.');
             }
             $idTrabajo = trabajoLaboratorioIdEntrada($entrada);

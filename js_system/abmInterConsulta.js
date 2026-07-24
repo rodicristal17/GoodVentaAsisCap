@@ -5284,6 +5284,7 @@ function limpiarFormularioAdjuntoDocumentoGuiado() {
     adjuntoDocumentoGuiadoEstado.extension= "";
     adjuntoDocumentoGuiadoEstado.nombreArchivo= "";
     adjuntoDocumentoGuiadoEstado.mime= "";
+    actualizarVistaPreviaAdjuntoDocumentoGuiado("", "");
     document.querySelectorAll("#tiposAdjuntoDocumentoGuiado [data-tipo-adjunto]").forEach(function(boton) {
         boton.classList.remove("is-selected");
         boton.setAttribute("aria-pressed", "false");
@@ -5293,6 +5294,29 @@ function limpiarFormularioAdjuntoDocumentoGuiado() {
     document.getElementById("resumenAdjuntoDocumentoGuiado").hidden= true;
     document.getElementById("btnConfirmarAdjuntoDocumentoGuiado").disabled= true;
     mostrarErrorAdjuntoDocumentoGuiado("");
+}
+
+function actualizarVistaPreviaAdjuntoDocumentoGuiado(archivo, extension) {
+    var contenedor= document.getElementById("vistaPreviaAdjuntoDocumento");
+    var imagen= document.getElementById("imagenVistaPreviaAdjuntoDocumento");
+    var pdf= document.getElementById("pdfVistaPreviaAdjuntoDocumento");
+    if (!contenedor || !imagen || !pdf) { return; }
+    imagen.hidden= true;
+    pdf.hidden= true;
+    imagen.removeAttribute("src");
+    pdf.removeAttribute("src");
+    if (!archivo) {
+        contenedor.hidden= true;
+        return;
+    }
+    contenedor.hidden= false;
+    if (extension == "pdf") {
+        pdf.src= archivo;
+        pdf.hidden= false;
+    } else {
+        imagen.src= archivo;
+        imagen.hidden= false;
+    }
 }
 
 function abrirAdjuntoDocumentoGuiado(origen) {
@@ -5404,6 +5428,7 @@ function leerArchivoAdjuntoDocumentoGuiado(input) {
     adjuntoDocumentoGuiadoEstado.extension= "";
     adjuntoDocumentoGuiadoEstado.nombreArchivo= "";
     adjuntoDocumentoGuiadoEstado.mime= "";
+    actualizarVistaPreviaAdjuntoDocumentoGuiado("", "");
     var nombreArchivo= document.getElementById("nombreArchivoAdjuntoDocumento");
     if (!adjuntoDocumentoGuiadoEstado.tipo) {
         input.value= "";
@@ -5451,6 +5476,7 @@ function leerArchivoAdjuntoDocumentoGuiado(input) {
         adjuntoDocumentoGuiadoEstado.nombreArchivo= archivo.name;
         adjuntoDocumentoGuiadoEstado.mime= archivo.type || "";
         if (nombreArchivo) { nombreArchivo.textContent= archivo.name + " · " + Math.max(1, Math.round(archivo.size / 1024)) + " KB"; }
+        actualizarVistaPreviaAdjuntoDocumentoGuiado(adjuntoDocumentoGuiadoEstado.archivo, adjuntoDocumentoGuiadoEstado.extension);
         actualizarResumenAdjuntoDocumentoGuiado();
     };
     lector.readAsDataURL(archivo);

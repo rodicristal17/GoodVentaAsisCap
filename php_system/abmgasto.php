@@ -35,6 +35,35 @@ function esTipoDepositoCentral($tipo)
 	return strtolower(trim((string)$tipo)) == 'deposito';
 }
 
+function gastoBuscarCajaActivaDelCreador($mysqli, $gasto, $bloquear= false)
+{
+	$codUsuario= (int)(isset($gasto['cod_usuario']) ? $gasto['cod_usuario'] : 0);
+	$codLocal= (int)(isset($gasto['cod_local']) ? $gasto['cod_local'] : 0);
+	$codAperturaPreferida= (int)(isset($gasto['codApertura']) ? $gasto['codApertura'] : 0);
+	$codCajaPreferida= (int)(isset($gasto['codCaja']) ? $gasto['codCaja'] : 0);
+	if ($codUsuario <= 0 || $codLocal <= 0) {
+		return null;
+	}
+	$sql= "SELECT idarqueocaja,caja_idcaja,cod_local,codusuarioap
+		FROM arqueocaja
+		WHERE codusuarioap=? AND cod_local=? AND LOWER(TRIM(estado))='activo'
+		ORDER BY (idarqueocaja=? AND caja_idcaja=?) DESC, idarqueocaja DESC
+		LIMIT 1".($bloquear ? " FOR UPDATE" : "");
+	$stmt= $mysqli->prepare($sql);
+	if (!$stmt) {
+		throw new Exception('No se pudo consultar la caja de la persona que registro el gasto.');
+	}
+	$stmt->bind_param('iiii', $codUsuario, $codLocal, $codAperturaPreferida, $codCajaPreferida);
+	if (!$stmt->execute()) {
+		$mensaje= $stmt->error;
+		$stmt->close();
+		throw new Exception('No se pudo validar la caja de la persona que registro el gasto: '.$mensaje);
+	}
+	$caja= $stmt->get_result()->fetch_assoc();
+	$stmt->close();
+	return $caja ?: null;
+}
+
 function normalizarConceptoMovimientoInterno($descripcion)
 {
 	$texto= (string)$descripcion;
@@ -628,7 +657,7 @@ function gastoDistribucionMontoUsadoPresupuesto($mysqli, $codLocal, $codMotivo, 
 	$fechaDesde= $mysqli->real_escape_string($fechaDesde);
 	$fechaHasta= $mysqli->real_escape_string($fechaHasta);
 	$excluir= count($idsExcluir) > 0 ? ' AND g.idgastos NOT IN ('.implode(',', $idsExcluir).')' : '';
-	$estado= "LOWER(TRIM(IFNULL(g.estado,''))) IN ('activo','pendiente','solicitado')";
+	$estado= "LOWER(TRIM(IFNULL(g.estado,''))) IN ('activo','aprobado','pendiente','solicitado')";
 	$total= 0;
 	$consultas= array();
 	if (!gastoDistribucionTablaDisponible($mysqli)) {
@@ -1638,7 +1667,7 @@ if($operacion=="buscar")
 			break;
 		}
 	}
-	$estadosBusqueda= array('' => '', 'activo' => 'Activo', 'inactivo' => 'Inactivo', 'pendiente' => 'pendiente', 'solicitado' => 'solicitado', 'rechazado' => 'Rechazado', 'baja' => 'Baja');
+	$estadosBusqueda= array('' => '', 'activo' => 'Activo', 'aprobado' => 'Aprobado', 'inactivo' => 'Inactivo', 'pendiente' => 'pendiente', 'solicitado' => 'solicitado', 'rechazado' => 'Rechazado', 'baja' => 'Baja');
 	$tiposBusqueda= array('' => '', 'ingreso' => 'Ingreso', 'egreso' => 'Egreso', 'deposito' => 'Deposito', 'depósito' => 'Deposito');
 	$arreglosBusqueda= array('' => '', 'interno' => 'INTERNO', 'externo' => 'EXTERNO');
 	$claveEstadoBusqueda= strtolower(trim((string)$estado));
@@ -1922,7 +1951,10 @@ if ($operacion == "obtenerGastosAsociados") {
 		exit;
 	}
 	
-	$gastos= obtenerGastosAsociados($idgastos);
+	$serieEstricta= isset($_POST['serie_estricta']) && (string)$_POST['serie_estricta'] === '1';
+	$gastos= $serieEstricta
+		? obtenerGastosSerieEstricta($idgastos)
+		: obtenerGastosAsociados($idgastos);
 	$gastos= array_values(array_filter($gastos, function($gasto) use ($user) {
 		return isset($gasto['cod_local']) && usuarioPuedeGestionarLocalGasto($user, $gasto['cod_local']);
 	}));
@@ -1943,13 +1975,16 @@ if ($operacion == "obtenerGastosAsociados") {
 		$estadoOriginalGasto= strtolower(trim((string)(isset($gast['estado']) ? $gast['estado'] : '')));
 		$gastoPagado= ($estadoOriginalGasto == 'activo');
 		$soloLecturaHistorica= strtolower(trim((string)(isset($gast['estado_motivo']) ? $gast['estado_motivo'] : ''))) !== 'activo';
-		if ($gast['estado'] == 'pendiente' || $gast['estado'] == 'solicitado') {
+		if (flujoGastoEstadoPendientePago($gast['estado'])) {
 			$total_pendiente += $gast['monto'];
 		}
 		$estado= '<span style="text-transform: capitalize;" class="badge bg-';
 		switch ($gast['estado']) {
 			case 'Activo':
 				$estado .= 'primary">Pagado</span>';
+				break;
+			case 'Aprobado':
+				$estado .= 'info">Aprobado</span>';
 				break;
 			case 'Rechazado':
 				$estado .= 'secondary">'.$gast['estado'].'</span>';
@@ -2069,9 +2104,46 @@ function obtenerGastosAsociados($idgastos, $codLocalDistribucion = '') {
 
 	return array_merge($resultadoBaseVisible, $gastos_asociados);
 }
+
+function obtenerGastosSerieEstricta($idgastos) {
+	$idgastos= intval($idgastos);
+	if ($idgastos <= 0) {
+		return array();
+	}
+
+	$registroSeleccionado= buscarGasto('','','','','','','','','false','','','','','', $idgastos, 'ASC', '', false);
+	if (count($registroSeleccionado) < 1) {
+		return array();
+	}
+
+	$gastoSeleccionado= $registroSeleccionado[0];
+	$idRaiz= !empty($gastoSeleccionado['cod_gasto_padre'])
+		? intval($gastoSeleccionado['cod_gasto_padre'])
+		: intval($gastoSeleccionado['idgastos']);
+	if ($idRaiz <= 0) {
+		return array();
+	}
+
+	$raiz= buscarGasto('','','','','','','','','false','','','','','', $idRaiz, 'ASC', '', false);
+	if (count($raiz) < 1) {
+		return array();
+	}
+
+	$hijos= buscarGasto('','','','','','','','','true','','','','',$idRaiz, '', 'ASC', '', false);
+	$serie= array();
+	foreach (array_merge($raiz, $hijos) as $registro) {
+		$idRegistro= isset($registro['idgastos']) ? intval($registro['idgastos']) : 0;
+		$idPadreRegistro= isset($registro['cod_gasto_padre']) ? intval($registro['cod_gasto_padre']) : 0;
+		if ($idRegistro === $idRaiz || $idPadreRegistro === $idRaiz) {
+			$serie[$idRegistro]= $registro;
+		}
+	}
+
+	return array_values($serie);
+}
 function darBajaCuotaProgramada($idgastos, $alcance, $codUsuario) {
 	$idgastos= intval($idgastos);
-	$alcance= in_array($alcance, array('serie', 'hilo')) ? $alcance : 'cuota';
+	$alcance= in_array($alcance, array('serie', 'proyecto', 'hilo')) ? $alcance : 'cuota';
 	if ($idgastos <= 0) {
 		echo json_encode(array('1'=>'error', '2'=>'Cuota no valida.'));
 		exit;
@@ -2088,17 +2160,17 @@ function darBajaCuotaProgramada($idgastos, $alcance, $codUsuario) {
 	}
 	// Primero se resuelve el alcance sin bloquear gastos; si existen conciliaciones,
 	// se bloquean movimiento/vinculo Ueno antes de tomar las filas de la serie.
-	$stmt= $mysqli->prepare("SELECT idgastos,fecha,estado,modalidad,cod_gasto_padre,cod_interConsultaFK,cod_local FROM gastos WHERE idgastos=? LIMIT 1");
+	$stmt= $mysqli->prepare("SELECT idgastos,fecha,estado,modalidad,cod_gasto_padre,cod_proyecto_gastoFK,cod_interConsultaFK,cod_local FROM gastos WHERE idgastos=? LIMIT 1");
 	$stmt->bind_param('i', $idgastos);
 	$stmt->execute();
 	$cuota= $stmt->get_result()->fetch_assoc();
 	$stmt->close();
 	$estadoActual= $cuota ? strtolower(trim((string)$cuota['estado'])) : '';
 	$esCuotaProgramada= $cuota && strtolower(trim((string)$cuota['modalidad'])) == 'credito';
-	$estadoPermiteBajaIndividual= ($estadoActual == 'pendiente' || $estadoActual == 'solicitado');
-	if (!$esCuotaProgramada || ($alcance != 'hilo' && !$estadoPermiteBajaIndividual)) {
+	$estadoPermiteBajaIndividual= flujoGastoEstadoPendientePago($estadoActual);
+	if (!$esCuotaProgramada || ($alcance == 'cuota' && !$estadoPermiteBajaIndividual)) {
 		$mysqli->rollback();
-		echo json_encode(array('1'=>'error', '2'=>'Solo se pueden dar de baja cuotas programadas pendientes.'));
+		echo json_encode(array('1'=>'error', '2'=>'Solo se pueden dar de baja cuotas programadas.'));
 		exit;
 	}
 	$ids= array($idgastos);
@@ -2110,8 +2182,23 @@ function darBajaCuotaProgramada($idgastos, $alcance, $codUsuario) {
 			echo json_encode(array('1'=>'error', '2'=>'La cuota no esta vinculada a un hilo.'));
 			exit;
 		}
-		$stmt= $mysqli->prepare("SELECT idgastos,cod_local FROM gastos WHERE cod_interConsultaFK=? AND modalidad='credito' AND LOWER(TRIM(estado)) IN ('pendiente','solicitado') ORDER BY idgastos");
+		$stmt= $mysqli->prepare("SELECT idgastos,cod_local FROM gastos WHERE cod_interConsultaFK=? AND modalidad='credito' AND LOWER(TRIM(estado)) IN ('pendiente','solicitado','aprobado') ORDER BY idgastos");
 		$stmt->bind_param('i', $codInterConsulta);
+		$stmt->execute();
+		$result= $stmt->get_result();
+		$ids= array();
+		$localesObjetivo= array();
+		while ($fila= $result->fetch_assoc()) { $ids[]= intval($fila['idgastos']); $localesObjetivo[]= intval($fila['cod_local']); }
+		$stmt->close();
+	} else if ($alcance == 'proyecto') {
+		$codProyecto= intval($cuota['cod_proyecto_gastoFK']);
+		if ($codProyecto <= 0) {
+			$mysqli->rollback();
+			echo json_encode(array('1'=>'error', '2'=>'El movimiento no pertenece a un proyecto de gastos.'));
+			exit;
+		}
+		$stmt= $mysqli->prepare("SELECT idgastos,cod_local FROM gastos WHERE cod_proyecto_gastoFK=? AND modalidad='credito' AND LOWER(TRIM(estado)) IN ('pendiente','solicitado','aprobado') ORDER BY fecha,idgastos");
+		$stmt->bind_param('i', $codProyecto);
 		$stmt->execute();
 		$result= $stmt->get_result();
 		$ids= array();
@@ -2122,7 +2209,7 @@ function darBajaCuotaProgramada($idgastos, $alcance, $codUsuario) {
 		$idSerie= intval($cuota['cod_gasto_padre']);
 		if ($idSerie <= 0) { $idSerie= $idgastos; }
 		$fechaDesde= $cuota['fecha'];
-		$stmt= $mysqli->prepare("SELECT idgastos,cod_local FROM gastos WHERE (idgastos=? OR cod_gasto_padre=?) AND fecha>=? AND LOWER(TRIM(estado)) IN ('pendiente','solicitado') ORDER BY idgastos");
+		$stmt= $mysqli->prepare("SELECT idgastos,cod_local FROM gastos WHERE (idgastos=? OR cod_gasto_padre=?) AND fecha>=? AND LOWER(TRIM(estado)) IN ('pendiente','solicitado','aprobado') ORDER BY idgastos");
 		$stmt->bind_param('iis', $idSerie, $idSerie, $fechaDesde);
 		$stmt->execute();
 		$result= $stmt->get_result();
@@ -2191,7 +2278,7 @@ function darBajaCuotaProgramada($idgastos, $alcance, $codUsuario) {
 		exit;
 	}
 	$usuarioEditor= intval($codUsuario);
-	$ok= $mysqli->query("UPDATE gastos SET estado='Baja', cod_usuarioFK_edit=".$usuarioEditor." WHERE idgastos IN (".$listaIds.") AND estado IN ('pendiente','solicitado')");
+	$ok= $mysqli->query("UPDATE gastos SET estado='Baja', cod_usuarioFK_edit=".$usuarioEditor." WHERE idgastos IN (".$listaIds.") AND LOWER(TRIM(estado)) IN ('pendiente','solicitado','aprobado')");
 	if (!$ok) {
 		$mysqli->rollback();
 		echo json_encode(array('1'=>'error', '2'=>'No se pudo actualizar las cuotas.'));
@@ -2254,10 +2341,11 @@ function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estad
     INNER JOIN interconsulta ic 
         ON g.cod_interConsultaFK = ic.cod_interConsulta
 	WHERE g.monto!=''
+		AND LOWER(TRIM(IFNULL(g.estado,''))) NOT IN ('inactivo','baja')
 		AND (?=0 OR g.fecha BETWEEN ? AND ?)
 		AND (?=0 OR g.cod_local=?)
 		AND (?='' OR ic.asunto LIKE CONCAT('%', ?, '%'))
-		AND (?=0 OR g.estado IN ('pendiente','solicitado'))
+		AND (?=0 OR LOWER(TRIM(g.estado)) IN ('pendiente','solicitado','aprobado'))
     ORDER BY g.fecha ASC ";
 
     $stmt = $mysqli->prepare($sql);
@@ -2414,6 +2502,9 @@ function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estad
 		}
 		if($estadoLower == "activo"){
 			$claseEstado = "card-activo";
+		}
+		if($estadoLower == "aprobado"){
+			$claseEstado = "card-aprobado";
 		}
 
         return "
@@ -2679,17 +2770,6 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 		echo json_encode(array('1'=>'error', '2'=>'Los depositos a central no utilizan el flujo de aprobacion o rechazo.'));
 		exit;
 	}
-	$cod_aperturaFK= $registroGasto['codApertura'];
-	$cod_cajaFK= $registroGasto['codCaja'];
-
-	// Se verifica si la caja sigue abierta, en caso contrario se actualiza basandose en el usuario creador
-	$result_caja = controldecaja($registroGasto['codCaja'],$registroGasto['cod_local'],$registroGasto['cod_usuario']);
-	if ($result_caja["2"] == "0" || $result_caja["3"] != $registroGasto['codApertura']) {
-		$result_caja = controldecaja('',$registroGasto['cod_local'],$registroGasto['cod_usuario']);
-		$cod_aperturaFK = $result_caja["3"];
-		$cod_cajaFK= $result_caja["4"];
-	}
-
 	$fechaActual= new DateTime();
 	$fechaActual= $fechaActual->format('Y-m-d H:i:s');
 	$decision= ($decision == 'true' ? 'Activo' : 'Rechazado');
@@ -2718,6 +2798,13 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 		if (!usuarioPuedeGestionarLocalGasto($cod_usuarioFK, $registroBloqueado['cod_local'])) {
 			throw new Exception('No administra el local de origen del movimiento.');
 		}
+		$cajaCreador= null;
+		if ($decision == 'Activo') {
+			$cajaCreador= gastoBuscarCajaActivaDelCreador($mysqli, $registroBloqueado, true);
+			if (!$cajaCreador) {
+				throw new Exception('No se puede aprobar: la persona que registro el gasto no tiene una caja activa en el local de origen.');
+			}
+		}
 		// Current read posterior al bloqueo del gasto: una asignacion parcial
 		// tambien impide aprobar o rechazar hasta que sea revertida.
 		$vinculosUenoActuales= gastoUenoConsultarIdsActivos($mysqli, array($idgastos), true);
@@ -2730,9 +2817,17 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 		echo json_encode(array('1'=>'error', '2'=>$e->getMessage()));
 		exit;
 	}
-	$sql= "UPDATE gastos SET cod_usuario_autoriz=?,fecha_autoriz=?,codApertura=?,codCaja=?,estado=? WHERE idgastos=?";
-	$stmt = $mysqli->prepare($sql);
-	$stmt->bind_param('isiisi',$cod_usuarioFK,$fechaActual,$cod_aperturaFK,$cod_cajaFK,$decision,$idgastos);
+	if ($decision == 'Activo') {
+		$codAperturaCajaCreador= (int)$cajaCreador['idarqueocaja'];
+		$codCajaCreador= (int)$cajaCreador['caja_idcaja'];
+		$sql= "UPDATE gastos SET cod_usuario_autoriz=?,fecha_autoriz=?,codApertura=?,codCaja=?,estado=? WHERE idgastos=?";
+		$stmt= $mysqli->prepare($sql);
+		$stmt->bind_param('isiisi', $cod_usuarioFK, $fechaActual, $codAperturaCajaCreador, $codCajaCreador, $decision, $idgastos);
+	} else {
+		$sql= "UPDATE gastos SET cod_usuario_autoriz=?,fecha_autoriz=?,estado=? WHERE idgastos=?";
+		$stmt= $mysqli->prepare($sql);
+		$stmt->bind_param('issi', $cod_usuarioFK, $fechaActual, $decision, $idgastos);
+	}
 
 	if (!$stmt->execute()) {
 		$mysqli->rollback();
@@ -2753,7 +2848,7 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 	// para no invertir el orden de locks Hilo -> gasto de las altas/ediciones.
 	if (!empty($registroGasto['cod_interConsultaFK'])) {
 		try {
-			$mensaje= " @{".$cod_usuarioFK."} decidio ". ($decision == 'Activo' ? ' aprobar ' : ' rechazar ') . " el movimiento con descripcion ".$registroGasto['motivo'].".";
+			$mensaje= " @{".$cod_usuarioFK."} decidio ". ($decision == 'Activo' ? ' aprobar y pagar ' : ' rechazar ') . " el movimiento con descripcion ".$registroGasto['motivo'].".";
 			$mensaje= mb_convert_encoding($mensaje, 'ISO-8859-1', 'UTF-8');
 			gastoMensajeCrearTransaccional($mysqli, $mensaje, $fechaActual, $registroGasto['cod_interConsultaFK'], $cod_usuarioFK);
 		} catch (Exception $e) {
@@ -3325,7 +3420,7 @@ function gastoValidarLimiteHiloBloqueado($mysqli, $codInterConsulta, $montoNuevo
 	$resultado= $mysqli->query("SELECT IFNULL(SUM(monto),0) AS total FROM gastos
 		WHERE cod_interConsultaFK=$codInterConsulta
 		AND LOWER(TRIM(IFNULL(tipo,'')))='egreso'
-		AND LOWER(TRIM(IFNULL(estado,''))) IN ('activo','pendiente','solicitado')$excluir");
+		AND LOWER(TRIM(IFNULL(estado,''))) IN ('activo','aprobado','pendiente','solicitado')$excluir");
 	if (!$resultado) {
 		throw new Exception('No se pudo calcular el presupuesto utilizado por el Hilo.');
 	}
@@ -3578,7 +3673,9 @@ $pasadoManana = new DateTime('today');
 $pasadoManana->modify('+1 day');
 $necesitaAutorizacion= isset($registros_motivos['4'][0]['necesita_autorizacion'])
 	? $registros_motivos['4'][0]['necesita_autorizacion'] : '0';
-if (!esTipoDepositoCentral($tipo) && $estado == 'Activo' && $necesitaAutorizacion == '1') {
+$esEgresoManual= strtolower(trim((string)$tipo)) == 'egreso' && $idMovimientoUenoGasto <= 0;
+if (!esTipoDepositoCentral($tipo) && $estado == 'Activo'
+	&& ($necesitaAutorizacion == '1' || $esEgresoManual)) {
 	$estado = ($fechaGasto && ($fechaGasto > $pasadoManana)) ? 'pendiente' : 'solicitado';
 }
 if ($idMovimientoUenoGasto > 0) {
@@ -4597,7 +4694,12 @@ function flujoGastoFinalizarResumenComposicion($resumen, $ingresos, $costosVaria
 
 function flujoGastoEstadoComputableResumen($estado) {
 	$estado= strtolower(trim((string)$estado));
-	return ($estado == 'activo' || $estado == 'pendiente' || $estado == 'solicitado');
+	return in_array($estado, array('activo','aprobado','pendiente','solicitado'), true);
+}
+
+function flujoGastoEstadoPendientePago($estado) {
+	$estado= strtolower(trim((string)$estado));
+	return in_array($estado, array('aprobado','pendiente','solicitado'), true);
 }
 
 function flujoGastoLocalAdministracionCompartida() {
@@ -4983,6 +5085,9 @@ function obtenerEtiquetaCuotaProgramada($gasto) {
 	if ($estado == 'activo') {
 		return array('tipo' => 'pagado', 'texto' => 'Pagado');
 	}
+	if ($estado == 'aprobado') {
+		return array('tipo' => 'aprobado', 'texto' => 'Aprobado');
+	}
 	$fechaObj= flujoGastoFechaObjeto(isset($gasto['fecha']) ? $gasto['fecha'] : '');
 	if ($fechaObj && $fechaObj <= new DateTime('today')) {
 		return array('tipo' => 'vencido', 'texto' => 'Vencido');
@@ -5326,6 +5431,8 @@ function construirTablaCuotasProyectoFlujo($gastosSerie, $resumen) {
 		}
 		$estado= obtenerEtiquetaCuotaProgramada($gasto);
 		$estadoOriginal= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
+		$estadoFiltroPago= flujoGastoEstadoPendientePago($estadoOriginal) ? 'pendiente' : 'otro';
+		$tipoFiltroPago= strtolower(trim((string)(isset($gasto['tipo']) ? $gasto['tipo'] : '')));
 		$soloLecturaFila= $soloLecturaHistorica || !empty($gasto['concepto_historico']) || flujoGastoEsAsignacionMultilocalSoloLectura($gasto);
 		$indicadorConciliacionUeno= "";
 		if (!$soloLecturaFila && !flujoGastoEstaAnulado($gasto)) {
@@ -5338,14 +5445,14 @@ function construirTablaCuotasProyectoFlujo($gastosSerie, $resumen) {
 		if (!$soloLecturaFila && $estadoOriginal != 'activo') {
 			$acciones= "<button type='button' title='Editar cuota' onclick='editarGastoDesdeFila(event, this)' style='border:0;background:#2f80ed;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>Editar</button>";
 			if ($estadoOriginal == 'pendiente' || $estadoOriginal == 'solicitado') {
-				$acciones .= " <button type='button' title='Aprobar cuota' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)' style='border:0;background:#078b35;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>OK</button>"
+				$acciones .= " <button type='button' title='Aprobar y descontar de la caja de origen' aria-label='Aprobar y pagar cuota' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)' class='flujo-aprobar-pendiente'>Aprobar y pagar</button>"
 					." <button type='button' title='Rechazar cuota' onclick='event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement)' style='border:0;background:#c92323;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>X</button>";
 			}
 		}
 		if (!$soloLecturaFila) {
 			$acciones .= construirBotonConciliarEgresoUeno($gasto, 'Cuotas programadas');
 		}
-		$filas .= "<tr id='tbSelecRegistro'>"
+		$filas .= "<tr id='tbSelecRegistro' data-flujo-item-pago='1' data-estado-pago='".$estadoFiltroPago."' data-tipo-movimiento='".flujoGastoTextoSeguro($tipoFiltroPago)."' data-monto-pago='".intval(isset($gasto['monto']) ? $gasto['monto'] : 0)."'>"
 			."<td id='td_id' style='display:none'>".flujoGastoTextoSeguro($idCuota)."</td>"
 			."<td>".($indice + 1)."/".$total."</td>"
 			."<td>".flujoGastoFechaCorta(isset($gasto['fecha']) ? $gasto['fecha'] : '')."</td>"
@@ -5415,6 +5522,8 @@ function construirPagoUnicoFlujoConcepto($gasto, $tituloZona= '', $codUsuarioAct
 	$montoPadre= intval(isset($gasto['monto_total_padre']) ? $gasto['monto_total_padre'] : $monto);
 	$estado= obtenerEtiquetaCuotaProgramada($gasto);
 	$estadoOriginal= strtolower(trim((string)(isset($gasto['estado']) ? $gasto['estado'] : '')));
+	$estadoFiltroPago= flujoGastoEstadoPendientePago($estadoOriginal) ? 'pendiente' : 'otro';
+	$tipoFiltroPago= strtolower(trim((string)(isset($gasto['tipo']) ? $gasto['tipo'] : '')));
 	$indicadorConciliacionUeno= "";
 	if (!$soloLecturaMovimiento && !flujoGastoEstaAnulado($gasto)) {
 		$resumenConciliacionUeno= flujoGastoResumenConciliacionUeno($idGasto, $montoPadre);
@@ -5427,7 +5536,7 @@ function construirPagoUnicoFlujoConcepto($gasto, $tituloZona= '', $codUsuarioAct
 			."<img src='/GoodVentaAsisCap/iconos/editar.png' alt='Editar'>"
 			."</button>".$botonConciliarUeno;
 	if (!$soloLecturaMovimiento && ($estadoOriginal == 'pendiente' || $estadoOriginal == 'solicitado')) {
-		$acciones .= "<button type='button' title='Aprobar pago' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement.parentElement)' class='flujo-pago-unico-validar flujo-pago-unico-validar--ok'>OK</button>"
+		$acciones .= "<button type='button' title='Aprobar y descontar de la caja de origen' aria-label='Aprobar y pagar' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement.parentElement)' class='flujo-pago-unico-validar flujo-pago-unico-validar--ok flujo-aprobar-pendiente'>Aprobar y pagar</button>"
 			."<button type='button' title='Rechazar pago' onclick='event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement.parentElement)' class='flujo-pago-unico-validar flujo-pago-unico-validar--rechazar'>X</button>";
 	}
 	$claseFila= flujoGastoEstaAnulado($gasto) ? " flujo-pago-unico-table__row--anulado" : "";
@@ -5449,9 +5558,11 @@ function construirPagoUnicoFlujoConcepto($gasto, $tituloZona= '', $codUsuarioAct
 		$styleEstado= "background-color: #585f08;color: #ffffff;";
 	} else if ($estadoOriginal == 'activo') {
 		$styleEstado= "background-color: #085f1c;color: #ffffff;";
+	} else if ($estadoOriginal == 'aprobado') {
+		$styleEstado= "background-color: #2563a6;color: #ffffff;";
 	}
 
-	return "<div class='flujo-pago-unico-card'>"
+	return "<div class='flujo-pago-unico-card' data-flujo-item-pago='1' data-estado-pago='".$estadoFiltroPago."' data-tipo-movimiento='".flujoGastoTextoSeguro($tipoFiltroPago)."' data-monto-pago='".$monto."'>"
 		."<table class='flujo-pago-unico-table flujo-pago-unico-table--encabezado'>"
 		."<tbody><tr id='tbSelecRegistro' class='flujo-pago-unico-table__row".$claseFila."' onclick='".($soloLecturaMovimiento ? "" : "obtenerdatosabmGasto(this)")."'>"
 		."<td id='td_id' class='flujo-pago-unico-ref' style='".$styleEstado."'>".flujoGastoTextoSeguro($esAsignacionAdministrativa ? "ADM ".$idGasto : $idGasto)."</td>"
@@ -5901,6 +6012,8 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				$styleEstado= "background-color: #585f08;color: #ffffff;";
 			} else if ($estado == 'Activo') {
 				$styleEstado= "background-color: #085f1c;color: #ffffff;";
+			} else if (strtolower(trim((string)$estado)) == 'aprobado') {
+				$styleEstado= "background-color: #2563a6;color: #ffffff;";
 			}
 			if ($tieneCuotasProgramadas && $resumenCuotasProgramadas && $resumenCuotasProgramadas['tipo'] == 'vencido') {
 				$registro_autorizacion_necesario= true;

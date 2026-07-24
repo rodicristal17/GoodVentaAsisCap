@@ -113,6 +113,10 @@ function trabajoLaboratorioHttpContextoUsuario($mysqli, $codUsuario)
         'puede_ver_bandeja_mecanico' => $esMecanico
             && $puedeVerLaboratorio,
         'es_auditor' => $esAuditor,
+        'puede_gestionar_costo' => trabajoLaboratorioUsuarioPuedeGestionarCosto(
+            $mysqli,
+            $codUsuario
+        ),
         'historicos_disponibles' => $historicosDisponibles,
         'puede_resolver_historicos' => $usuario && $historicosDisponibles
             && $puedeVerLaboratorio,
@@ -390,6 +394,9 @@ try {
             trabajoLaboratorioLanzar('accion_no_reconocida', 'La accion solicitada no existe.');
     }
 
+    if (empty($contextoUsuario['puede_gestionar_costo'])) {
+        $respuesta = trabajoLaboratorioRespuestaSinCostos($respuesta);
+    }
     $mysqli->close();
     trabajoLaboratorioHttpResponder($respuesta, 200);
 } catch (TrabajoLaboratorioExcepcion $e) {
