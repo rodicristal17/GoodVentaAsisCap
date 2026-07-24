@@ -4197,6 +4197,10 @@
     return code === "iniciarTrabajo" || code === "iniciarTrabajosAgrupados";
   }
 
+  function isInitialPreparationAction(code) {
+    return isStartAction(code) || code === "asignarTecnico";
+  }
+
   function renderActionDialog() {
     var layer = state.root.querySelector("#tlabActionLayer");
     var action = state.action;
@@ -4366,6 +4370,9 @@
         "La asignación alcanzará a los trabajos con Técnico pendiente del mismo código de origen. No iniciará el traslado."
       ));
     }
+    if (isInitialPreparationAction(action.code)) {
+      fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionAdministrativeNote">Observación administrativa</label><textarea id="tlabActionAdministrativeNote" name="observacion" maxlength="750" placeholder="Dato adicional para dejar registrado, si corresponde">' + escapeHtml(values.observacion || "") + '</textarea><small>Es opcional y quedará vinculada al evento en la trazabilidad.</small></div>');
+    }
     if (action.code === "tomarHilo") {
       var receptionCondition = values.condicion_recepcion || "";
       fields.push('<fieldset class="tlab-field tlab-field--wide tlab-reception-condition"><legend>¿Cómo recibís este trabajo? <span aria-hidden="true">*</span></legend><label class="tlab-choice-card"><input type="radio" name="condicion_recepcion" value="conforme" ' + (receptionCondition === "conforme" ? "checked" : "") + '><span><i class="fa-solid fa-circle-check" aria-hidden="true"></i><strong>Conforme</strong><small>Coincide con lo esperado y puede continuar.</small></span></label><label class="tlab-choice-card"><input type="radio" name="condicion_recepcion" value="con_observaciones" ' + (receptionCondition === "con_observaciones" ? "checked" : "") + '><span><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><strong>Con observaciones</strong><small>Lo recibís, dejando constancia de una diferencia.</small></span></label></fieldset>');
@@ -4388,13 +4395,13 @@
       fields.push(selectField("Motivo del ajuste", "motivo", reasons, values.motivo, true, "Seleccionar motivo"));
     }
     if (config.justification || boolValue(config.requiere_justificacion)) {
-      fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionJustification">Justificación</label><textarea id="tlabActionJustification" name="justificacion" required ' + (action.code === "rectificarCustodia" ? 'minlength="5" maxlength="750"' : 'maxlength="1000"') + ' placeholder="Explicá el motivo de forma clara">' + escapeHtml(values.justificacion || "") + '</textarea><small>Este texto quedará auditado.</small></div>');
+      fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionJustification">Justificación</label><textarea id="tlabActionJustification" name="justificacion" required ' + (action.code === "rectificarCustodia" ? 'maxlength="750"' : 'maxlength="1000"') + ' placeholder="Explicá el motivo de forma clara">' + escapeHtml(values.justificacion || "") + '</textarea><small>Es obligatoria, sin una cantidad mínima de caracteres, y quedará auditada.</small></div>');
     }
     if ((config.note || config.noteRequired || boolValue(config.permite_observacion)) && action.code !== "tomarHilo") {
       fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionNote">' + (action.code === "registrarNovedad" ? "Descripción de la novedad" : (action.code === "agregarNota" ? "Observación" : "Indicaciones u observaciones")) + '</label><textarea id="tlabActionNote" name="observacion" ' + (config.noteRequired ? "required" : "") + (action.code === "registrarNovedad" ? ' minlength="3" maxlength="750"' : ' maxlength="1200"') + ' placeholder="Agregá sólo información necesaria para este trabajo">' + escapeHtml(values.observacion || pick(raw, ["observacion_precargada", "indicaciones"], "")) + '</textarea>' + (action.code === "registrarNovedad" ? '<small>Quedará vinculada a tu período actual de custodia.</small>' : '') + '</div>');
     }
     if (boolValue(config.requiere_motivo_excepcion)) {
-      fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionAuditReason">Motivo de intervención excepcional</label><textarea id="tlabActionAuditReason" name="motivo_excepcion" required maxlength="750" placeholder="Explicá por qué corresponde intervenir fuera del recorrido habitual">' + escapeHtml(values.motivo_excepcion || "") + '</textarea><small>Se exige porque esta acción depende excepcionalmente del permiso de auditoría.</small></div>');
+      fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionAuditReason">Observación de intervención excepcional <span aria-hidden="true">*</span></label><textarea id="tlabActionAuditReason" name="motivo_excepcion" required maxlength="750" placeholder="Dejá constancia de la intervención">' + escapeHtml(values.motivo_excepcion || "") + '</textarea><small>Es obligatoria, sin una cantidad mínima de caracteres, y quedará auditada.</small></div>');
     }
     if (action.code === "solicitarAjuste" && values.motivo && toStringSafe(values.motivo).toLowerCase() === "otro") {
       fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionOtherReason">Descripción de “Otro”</label><input id="tlabActionOtherReason" name="motivo_otro" type="text" required maxlength="180" value="' + escapeAttr(values.motivo_otro || "") + '"></div>');
@@ -4444,7 +4451,7 @@
     if (boolValue(values.sin_foto)) { items.push("Foto: excepción auditada · " + humanizeHistoricalValue(values.motivo_sin_foto)); }
     if (values.tipo_novedad) { items.push("Tipo de novedad: " + humanizeHistoricalValue(values.tipo_novedad)); }
     if (values.motivo) { items.push("Motivo: " + values.motivo + (values.motivo_otro ? " · " + values.motivo_otro : "")); }
-    if (values.observacion) { items.push((action.code === "registrarNovedad" ? "Descripción: " : "Observación: ") + toStringSafe(values.observacion).slice(0, 180)); }
+    if (values.observacion) { items.push((action.code === "registrarNovedad" ? "Descripción: " : (isInitialPreparationAction(action.code) ? "Observación administrativa: " : "Observación: ")) + toStringSafe(values.observacion).slice(0, 180)); }
     if (values.justificacion) { items.push("Justificación: " + toStringSafe(values.justificacion).slice(0, 180)); }
     if (values.motivo_excepcion) { items.push("Excepción de auditoría: " + values.motivo_excepcion); }
     if (state.action.files.length) { items.push("Archivos adjuntos: " + state.action.files.length); }
@@ -4515,13 +4522,12 @@
     if ((config.mechanic || boolValue(config.requiere_mecanico)) && !values.cod_tecnico_usuario) { return "Seleccioná el mecánico responsable."; }
     if ((config.reason || boolValue(config.requiere_motivo)) && !values.motivo) { return "Seleccioná el motivo del ajuste."; }
     if ((config.justification || boolValue(config.requiere_justificacion)) && !toStringSafe(values.justificacion).trim()) { return "Escribí una justificación."; }
-    if (boolValue(config.requiere_motivo_excepcion) && toStringSafe(values.motivo_excepcion).trim().length < 5) { return "Explicá brevemente el motivo de la intervención excepcional."; }
+    if (boolValue(config.requiere_motivo_excepcion) && !toStringSafe(values.motivo_excepcion).trim()) { return "Escribí una observación para la intervención excepcional."; }
     if (config.noteRequired && !toStringSafe(values.observacion).trim()) { return "Escribí la observación."; }
     if (action.code === "tomarHilo" && values.condicion_recepcion !== "conforme" && values.condicion_recepcion !== "con_observaciones") { return "Indicá cómo recibís el trabajo."; }
     if (action.code === "tomarHilo" && values.condicion_recepcion === "con_observaciones" && toStringSafe(values.observacion).trim().length < 5) { return "Describí la observación de recepción con al menos cinco caracteres."; }
     if (action.code === "registrarNovedad" && toStringSafe(values.observacion).trim().length < 3) { return "Describí la novedad con al menos tres caracteres."; }
     if (action.code === "rectificarCustodia" && !values.cod_custodio_rectificado) { return "Seleccioná el nuevo custodio interno."; }
-    if (action.code === "rectificarCustodia" && toStringSafe(values.justificacion).trim().length < 5) { return "Explicá el motivo de la rectificación con al menos cinco caracteres."; }
     if (action.code === "solicitarAjuste" && toStringSafe(values.motivo).toLowerCase() === "otro" && !toStringSafe(values.motivo_otro).trim()) { return "Describí el motivo seleccionado como “Otro”."; }
     if ((config.evidence || boolValue(config.requiere_evidencia)) && !action.files.length) { return "Agregá al menos una fotografía para continuar."; }
     return "";

@@ -2712,9 +2712,11 @@ function trabajoLaboratorioAccionNaturalContexto($accion, $contexto)
     if (in_array($accion, array(
         'iniciarTrabajo',
         'iniciarTrabajosAgrupados',
-        'asignarTecnico',
-        'guardarRegularizacionUnidades'
+        'asignarTecnico'
     ), true)) {
+        return true;
+    }
+    if ($accion === 'guardarRegularizacionUnidades') {
         return $localPropio;
     }
     if ($accion === 'iniciarTransferencia') {
@@ -2810,10 +2812,10 @@ function trabajoLaboratorioExigirMotivoExcepcionAuditor($mysqli, $codUsuario, $t
     }
     $motivo = isset($entrada['motivo_excepcion'])
         ? trabajoLaboratorioTextoEntrada($entrada['motivo_excepcion'], 750) : '';
-    if (strlen($motivo) < 5) {
+    if ($motivo === '') {
         trabajoLaboratorioLanzar(
             'motivo_excepcion_auditor_requerido',
-            'La intervencion excepcional del auditor requiere una justificacion de al menos cinco caracteres.'
+            'La intervencion excepcional del auditor requiere una observacion.'
         );
     }
     return $motivo;
@@ -7987,7 +7989,7 @@ function trabajoLaboratorioRectificarCustodia($mysqli, $codUsuario, $entrada)
                         : (isset($entrada['observacion']) ? $entrada['observacion'] : '')),
                 750
             );
-            if (strlen($justificacion) < 5) {
+            if ($justificacion === '') {
                 trabajoLaboratorioLanzar(
                     'justificacion_rectificacion_requerida',
                     'Explique por que corresponde rectificar al responsable actual.'
@@ -8227,7 +8229,7 @@ function trabajoLaboratorioSolicitarAjuste($mysqli, $codUsuario, $entrada)
             }
             $motivoGuardado = $motivo === 'otro' ? $motivoOtro : $motivo;
             $justificacion = trabajoLaboratorioTextoEntrada(isset($entrada['justificacion']) ? $entrada['justificacion'] : '', 500);
-            if (strlen($justificacion) < 5) {
+            if ($justificacion === '') {
                 trabajoLaboratorioLanzar('justificacion_ajuste_requerida', 'Explique brevemente que debe ajustarse.');
             }
             $evidencias = trabajoLaboratorioNormalizarEvidencias($entrada, 'evidencias');
@@ -8432,7 +8434,7 @@ function trabajoLaboratorioCancelar($mysqli, $codUsuario, $entrada)
         function ($idIdempotencia) use ($mysqli, $codUsuario, $entrada) {
             $motivo = trabajoLaboratorioTextoEntrada(isset($entrada['justificacion']) ? $entrada['justificacion']
                 : (isset($entrada['motivo']) ? $entrada['motivo'] : ''), 500);
-            if (strlen($motivo) < 5) {
+            if ($motivo === '') {
                 trabajoLaboratorioLanzar('motivo_cancelacion_requerido', 'Explique el motivo de la cancelacion.');
             }
             $idTrabajo = trabajoLaboratorioIdEntrada($entrada);
