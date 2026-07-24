@@ -2071,7 +2071,7 @@ function obtenerGastosAsociados($idgastos, $codLocalDistribucion = '') {
 }
 function darBajaCuotaProgramada($idgastos, $alcance, $codUsuario) {
 	$idgastos= intval($idgastos);
-	$alcance= in_array($alcance, array('serie', 'hilo')) ? $alcance : 'cuota';
+	$alcance= in_array($alcance, array('serie', 'proyecto', 'hilo')) ? $alcance : 'cuota';
 	if ($idgastos <= 0) {
 		echo json_encode(array('1'=>'error', '2'=>'Cuota no valida.'));
 		exit;
@@ -2088,7 +2088,7 @@ function darBajaCuotaProgramada($idgastos, $alcance, $codUsuario) {
 	}
 	// Primero se resuelve el alcance sin bloquear gastos; si existen conciliaciones,
 	// se bloquean movimiento/vinculo Ueno antes de tomar las filas de la serie.
-	$stmt= $mysqli->prepare("SELECT idgastos,fecha,estado,modalidad,cod_gasto_padre,cod_interConsultaFK,cod_local FROM gastos WHERE idgastos=? LIMIT 1");
+	$stmt= $mysqli->prepare("SELECT idgastos,fecha,estado,modalidad,cod_gasto_padre,cod_proyecto_gastoFK,cod_interConsultaFK,cod_local FROM gastos WHERE idgastos=? LIMIT 1");
 	$stmt->bind_param('i', $idgastos);
 	$stmt->execute();
 	$cuota= $stmt->get_result()->fetch_assoc();
@@ -2096,9 +2096,9 @@ function darBajaCuotaProgramada($idgastos, $alcance, $codUsuario) {
 	$estadoActual= $cuota ? strtolower(trim((string)$cuota['estado'])) : '';
 	$esCuotaProgramada= $cuota && strtolower(trim((string)$cuota['modalidad'])) == 'credito';
 	$estadoPermiteBajaIndividual= ($estadoActual == 'pendiente' || $estadoActual == 'solicitado');
-	if (!$esCuotaProgramada || ($alcance != 'hilo' && !$estadoPermiteBajaIndividual)) {
+	if (!$esCuotaProgramada || ($alcance == 'cuota' && !$estadoPermiteBajaIndividual)) {
 		$mysqli->rollback();
-		echo json_encode(array('1'=>'error', '2'=>'Solo se pueden dar de baja cuotas programadas pendientes.'));
+		echo json_encode(array('1'=>'error', '2'=>'Solo se pueden dar de baja cuotas programadas.'));
 		exit;
 	}
 	$ids= array($idgastos);
@@ -2112,6 +2112,21 @@ function darBajaCuotaProgramada($idgastos, $alcance, $codUsuario) {
 		}
 		$stmt= $mysqli->prepare("SELECT idgastos,cod_local FROM gastos WHERE cod_interConsultaFK=? AND modalidad='credito' AND LOWER(TRIM(estado)) IN ('pendiente','solicitado') ORDER BY idgastos");
 		$stmt->bind_param('i', $codInterConsulta);
+		$stmt->execute();
+		$result= $stmt->get_result();
+		$ids= array();
+		$localesObjetivo= array();
+		while ($fila= $result->fetch_assoc()) { $ids[]= intval($fila['idgastos']); $localesObjetivo[]= intval($fila['cod_local']); }
+		$stmt->close();
+	} else if ($alcance == 'proyecto') {
+		$codProyecto= intval($cuota['cod_proyecto_gastoFK']);
+		if ($codProyecto <= 0) {
+			$mysqli->rollback();
+			echo json_encode(array('1'=>'error', '2'=>'El movimiento no pertenece a un proyecto de gastos.'));
+			exit;
+		}
+		$stmt= $mysqli->prepare("SELECT idgastos,cod_local FROM gastos WHERE cod_proyecto_gastoFK=? AND modalidad='credito' AND LOWER(TRIM(estado)) IN ('pendiente','solicitado') ORDER BY fecha,idgastos");
+		$stmt->bind_param('i', $codProyecto);
 		$stmt->execute();
 		$result= $stmt->get_result();
 		$ids= array();

@@ -1915,10 +1915,12 @@ function darBajaCuotaProgramada(evento, idgastos, alcance) {
 	if (evento) { evento.stopPropagation(); }
 	var esSerie = alcance == 'serie';
 	var esHilo = alcance == 'hilo';
+	var esProyecto = alcance == 'proyecto';
 	var mensaje = esHilo
 		? 'Se daran de baja TODAS las cuotas pendientes de pago vinculadas a este hilo. Las cuotas pagadas y el hilo no se modificaran. ¿Continuar?'
+		: (esProyecto ? 'Se daran de baja solamente las cuotas pendientes de este proyecto. Las cuotas pagadas y los demas proyectos del hilo no se modificaran. ¿Continuar?'
 		: (esSerie ? 'Se daran de baja esta cuota y todas las siguientes de la misma serie. Las cuotas pagadas no se modificaran. ¿Continuar?'
-		: 'Se dara de baja esta cuota programada. No volvera a sumar como pendiente. ¿Continuar?');
+		: 'Se dara de baja esta cuota programada. No volvera a sumar como pendiente. ¿Continuar?'));
 	if (!confirm(mensaje)) { return; }
 	var datos = new FormData();
 	obtener_datos_user();
@@ -1927,7 +1929,7 @@ function darBajaCuotaProgramada(evento, idgastos, alcance) {
 	datos.append('navegador', navegador);
 	datos.append('funt', 'darBajaCuotaProgramada');
 	datos.append('idgastos', idgastos);
-	datos.append('alcance', esHilo ? 'hilo' : (esSerie ? 'serie' : 'cuota'));
+	datos.append('alcance', esHilo ? 'hilo' : (esProyecto ? 'proyecto' : (esSerie ? 'serie' : 'cuota')));
 	verCerrarEfectoCargando('1');
 	$.ajax({
 		data: datos, url: '/GoodVentaAsisCap/php_system/abmgasto.php', type: 'post',
@@ -1945,7 +1947,7 @@ function darBajaCuotaProgramada(evento, idgastos, alcance) {
 					return;
 				}
 				ver_vetana_informativa((respuesta['2'] || 1) + ' cuota(s) dadas de baja.', '', 'info');
-				if (esHilo && extractoActual) {
+				if ((esHilo || esProyecto || esSerie) && extractoActual) {
 					var idExtractoRecargar = extractoActual;
 					extractoActual = null;
 					mostrarExtractoGasto(idExtractoRecargar);
@@ -1962,12 +1964,16 @@ function darBajaCuotaProgramada(evento, idgastos, alcance) {
 }
 
 function darBajaCuotasPendientesHilo(evento) {
+	darBajaCuotasPendientesProyecto(evento);
+}
+
+function darBajaCuotasPendientesProyecto(evento) {
 	if (evento) { evento.stopPropagation(); }
 	if (!extractoActual) {
 		ver_vetana_informativa('No hay un extracto seleccionado.');
 		return;
 	}
-	darBajaCuotaProgramada(evento, extractoActual, 'hilo');
+	darBajaCuotaProgramada(evento, extractoActual, 'proyecto');
 }
 
 function seleccionarGastosAsociados(element) {
