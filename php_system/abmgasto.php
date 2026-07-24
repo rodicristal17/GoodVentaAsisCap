@@ -1922,7 +1922,10 @@ if ($operacion == "obtenerGastosAsociados") {
 		exit;
 	}
 	
-	$gastos= obtenerGastosAsociados($idgastos);
+	$serieEstricta= isset($_POST['serie_estricta']) && (string)$_POST['serie_estricta'] === '1';
+	$gastos= $serieEstricta
+		? obtenerGastosSerieEstricta($idgastos)
+		: obtenerGastosAsociados($idgastos);
 	$gastos= array_values(array_filter($gastos, function($gasto) use ($user) {
 		return isset($gasto['cod_local']) && usuarioPuedeGestionarLocalGasto($user, $gasto['cod_local']);
 	}));
@@ -2068,6 +2071,43 @@ function obtenerGastosAsociados($idgastos, $codLocalDistribucion = '') {
 	$gastos_asociados= buscarGasto('','','','',$codLocalFiltro,'','','','true','','','','',$regGasto['idgastos'], '','ASC', '', $usarDistribucionLocal);
 
 	return array_merge($resultadoBaseVisible, $gastos_asociados);
+}
+
+function obtenerGastosSerieEstricta($idgastos) {
+	$idgastos= intval($idgastos);
+	if ($idgastos <= 0) {
+		return array();
+	}
+
+	$registroSeleccionado= buscarGasto('','','','','','','','','false','','','','','', $idgastos, 'ASC', '', false);
+	if (count($registroSeleccionado) < 1) {
+		return array();
+	}
+
+	$gastoSeleccionado= $registroSeleccionado[0];
+	$idRaiz= !empty($gastoSeleccionado['cod_gasto_padre'])
+		? intval($gastoSeleccionado['cod_gasto_padre'])
+		: intval($gastoSeleccionado['idgastos']);
+	if ($idRaiz <= 0) {
+		return array();
+	}
+
+	$raiz= buscarGasto('','','','','','','','','false','','','','','', $idRaiz, 'ASC', '', false);
+	if (count($raiz) < 1) {
+		return array();
+	}
+
+	$hijos= buscarGasto('','','','','','','','','true','','','','',$idRaiz, '', 'ASC', '', false);
+	$serie= array();
+	foreach (array_merge($raiz, $hijos) as $registro) {
+		$idRegistro= isset($registro['idgastos']) ? intval($registro['idgastos']) : 0;
+		$idPadreRegistro= isset($registro['cod_gasto_padre']) ? intval($registro['cod_gasto_padre']) : 0;
+		if ($idRegistro === $idRaiz || $idPadreRegistro === $idRaiz) {
+			$serie[$idRegistro]= $registro;
+		}
+	}
+
+	return array_values($serie);
 }
 function darBajaCuotaProgramada($idgastos, $alcance, $codUsuario) {
 	$idgastos= intval($idgastos);
@@ -2269,6 +2309,7 @@ function buscarProximosPagos($fecha_inicio,$fecha_fin,$local,$descripcion,$estad
     INNER JOIN interconsulta ic 
         ON g.cod_interConsultaFK = ic.cod_interConsulta
 	WHERE g.monto!=''
+		AND LOWER(TRIM(IFNULL(g.estado,''))) NOT IN ('inactivo','baja')
 		AND (?=0 OR g.fecha BETWEEN ? AND ?)
 		AND (?=0 OR g.cod_local=?)
 		AND (?='' OR ic.asunto LIKE CONCAT('%', ?, '%'))

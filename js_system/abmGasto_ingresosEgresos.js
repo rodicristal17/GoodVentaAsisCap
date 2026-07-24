@@ -2692,6 +2692,8 @@ function obtenerGastosAsociados(id_gasto) {
 var extractoActual= null;
 var bsExtracto = null;
 var botonExtractoActivo = null;
+var extractoGastoSolicitud= null;
+var extractoGastoSecuencia= 0;
 
 function limpiarBotonExtractoActivo() {
 	document.querySelectorAll(".btn-menu-extracto.active").forEach(function (btn) {
@@ -2724,6 +2726,10 @@ function cerrarExtractoGasto() {
 	if (!panelExtracto) {
 		return;
 	}
+	extractoGastoSecuencia++;
+	if (extractoGastoSolicitud && extractoGastoSolicitud.readyState != 4) {
+		extractoGastoSolicitud.abort();
+	}
 	const instancia = bootstrap.Collapse.getOrCreateInstance(panelExtracto, { toggle: false });
 	instancia.hide();
 }
@@ -2744,6 +2750,12 @@ function mostrarExtractoGasto(id_gastos) {
     }
 
 	extractoActual = id_gastos;
+	extractoGastoSecuencia++;
+	const secuenciaExtracto= extractoGastoSecuencia;
+	const idExtractoSolicitado= String(id_gastos || "");
+	if (extractoGastoSolicitud && extractoGastoSolicitud.readyState != 4) {
+		extractoGastoSolicitud.abort();
+	}
 	establecerBotonExtractoActivo(id_gastos);
 	bsExtracto.show();
 
@@ -2760,8 +2772,9 @@ function mostrarExtractoGasto(id_gastos) {
 	datos.append("navegador", navegador);
 	datos.append("funt", 'obtenerGastosAsociados');
     datos.append("idgastos", id_gastos);
+	datos.append("serie_estricta", "1");
 
-	var OpAjax = $.ajax({
+	extractoGastoSolicitud = $.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
 		type: "post",
@@ -2795,11 +2808,15 @@ function mostrarExtractoGasto(id_gastos) {
     },
 		
 		error: function (jqXHR, textstatus, errorThrowm) {
+			if (textstatus == "abort" || secuenciaExtracto != extractoGastoSecuencia
+				|| String(extractoActual || "") != idExtractoSolicitado) { return; }
 			verCerrarEfectoCargando("")
-		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 			return false;
 		},
 		success: function (responseText) {
+			if (secuenciaExtracto != extractoGastoSecuencia
+				|| String(extractoActual || "") != idExtractoSolicitado) { return; }
 			Respuesta = responseText;
 			verCerrarEfectoCargando("")
 			console.log(Respuesta)
