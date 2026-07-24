@@ -1710,7 +1710,7 @@ pruebaLabAfirmar(
     && strpos($bloqueExigirMotivoAuditor, 'trabajoLaboratorioAccionRequiereMotivoExcepcionAuditor') !== false
     && strpos($bloqueExigirMotivoAuditor, "if (".'$motivo'." === '')") !== false
     && strpos($bloqueExigirMotivoAuditor, 'al menos cinco caracteres') === false
-    && strpos($bloqueInicioTrabajo, '$accionComando') !== false,
+    && preg_match('/use\s*\([^)]*\$accionComando\s*\)/s', $bloqueInicioTrabajo) === 1,
     'El servidor libera la preparacion inicial entre locales y exige una observacion sin minimo para otras excepciones.'
 );
 pruebaLabAfirmar(

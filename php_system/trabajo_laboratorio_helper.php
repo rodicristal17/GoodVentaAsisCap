@@ -6305,7 +6305,13 @@ function trabajoLaboratorioIniciar($mysqli, $codUsuario, $entrada)
         $codUsuario,
         $accionComando,
         $entrada,
-        function ($idIdempotencia, $contexto) use ($mysqli, $codUsuario, $entrada, $idRegularizacionEntrada) {
+        function ($idIdempotencia, $contexto) use (
+            $mysqli,
+            $codUsuario,
+            $entrada,
+            $idRegularizacionEntrada,
+            $accionComando
+        ) {
             $codDetalle = trabajoLaboratorioEntero(isset($entrada['cod_detalle_venta']) ? $entrada['cod_detalle_venta'] : 0);
             $codTecnico = trabajoLaboratorioEntero(isset($entrada['cod_tecnico_usuario'])
                 ? $entrada['cod_tecnico_usuario']
