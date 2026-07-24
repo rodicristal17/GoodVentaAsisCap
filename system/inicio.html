@@ -79,7 +79,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="../js_system/abmTrabajoMecanicoDental.js?x=historico-solo-consulta-20260721"></script>
 <script src="../js_system/trabajo_laboratorio.js?x=trabajo-laboratorio-20260723-20"></script>
 <script src="../js_system/abmMecanicoDental.js?x=cuenta-telar-20260721-3"></script>
-<script src="../js_system/abmInterConsulta.js?x=trabajo-laboratorio-20260723-mini-hilo-1"></script>
+<script src="../js_system/abmInterConsulta.js?x=adjunto-preview-20260724-1"></script>
 <script src="../js_system/abmCentroFacturas.js?x=nomenclatura-legajos-20260721-1"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
@@ -93,7 +93,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/historial_ventas.css?x=historial-ventas-ui-20260530" />
-<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_adjuntos.css?x=adjuntos-guiados-20260716-2" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_adjuntos.css?x=adjunto-preview-20260724-1" />
 <style>
   #principalMenub .dashboard-contenedor {
     padding-top: 76px !important;
@@ -8539,6 +8539,14 @@ style='background-color:#5bc572'>
           <span id="nombreArchivoAdjuntoDocumento">Todav&iacute;a no se seleccion&oacute; un archivo.</span>
           <input type="file" id="archivoAdjuntoDocumento" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/jpeg,image/png,image/webp,image/gif,application/pdf" onchange="leerArchivoAdjuntoDocumentoGuiado(this)">
         </label>
+        <div id="vistaPreviaAdjuntoDocumento" class="adjunto-documento-preview" hidden aria-live="polite">
+          <div class="adjunto-documento-preview__heading">
+            <strong>Vista previa del archivo seleccionado</strong>
+            <small>Compruebe que sea el documento correcto antes de adjuntarlo.</small>
+          </div>
+          <img id="imagenVistaPreviaAdjuntoDocumento" alt="Vista previa de la imagen seleccionada" hidden>
+          <iframe id="pdfVistaPreviaAdjuntoDocumento" title="Vista previa del documento PDF seleccionado" hidden></iframe>
+        </div>
       </section>
 
       <div id="errorAdjuntoDocumentoGuiado" class="adjunto-documento-error" role="alert" hidden></div>
