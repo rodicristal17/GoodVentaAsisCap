@@ -34,7 +34,7 @@
   "use strict";
 
   var ENDPOINT = "/GoodVentaAsisCap/php_system/abmTrabajoLaboratorio.php";
-  var STYLE_URL = "/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260723-11";
+  var STYLE_URL = "/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260724-13";
   var BRAND_MARK = "/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2";
   var ROOT_ID = "telarTrabajoLaboratorio";
   var PAGE_SIZE = 18;
@@ -154,10 +154,11 @@
       confirmation: "Confirmo la aprobación clínica del trabajo."
     },
     registrarInstalacion: {
-      label: "Registrar instalación",
+      label: "Instalado y entregado",
       icon: "fa-tooth",
-      note: true,
-      confirmation: "Confirmo que el trabajo fue instalado desde la evolución clínica correspondiente."
+      evidence: true,
+      submitLabel: "Confirmar instalación y entrega",
+      confirmation: "Confirmo que el trabajo fue instalado y entregado, y que la evidencia final corresponde a este tratamiento."
     },
     cancelarTrabajo: {
       label: "Cancelar trabajo",
@@ -889,7 +890,8 @@
         state.action.files = [];
       }
       if ((state.action.code === "solicitarAjuste" && event.target.name === "motivo")
-          || (state.action.code === "tomarHilo" && (event.target.name === "condicion_recepcion" || event.target.name === "sin_foto" || event.target.name === "motivo_sin_foto"))) {
+          || (state.action.code === "tomarHilo" && (event.target.name === "condicion_recepcion" || event.target.name === "sin_foto" || event.target.name === "motivo_sin_foto"))
+          || (state.action.code === "registrarInstalacion" && event.target.name === "condicion_pre_entrega")) {
         renderActionDialog();
       }
       return;
@@ -1926,11 +1928,15 @@
 
   function pendingNodeHtml(work) {
     var take = workActionByCode(work, "tomarHilo");
+    var finish = workActionByCode(work, "registrarInstalacion");
     if (work.terminal) {
       return '<li class="tlab-route-node tlab-thread-end ' + (work.cancelled ? 'is-cancelled' : 'is-finished') + '"><button type="button" data-tlab-node-trigger data-tlab-node-lane="cierre" data-tlab-node-kind="operativo" data-tlab-node-row-id="' + escapeAttr(work.id) + '" data-tlab-node-index="0" aria-haspopup="dialog" aria-expanded="false" aria-controls="tlabNodePopover" aria-label="Consultar ' + (work.cancelled ? 'el cierre por cancelacion' : 'el cierre del hilo') + '"><span class="tlab-thread-end__icon"><i class="fa-solid ' + (work.cancelled ? 'fa-ban' : 'fa-flag-checkered') + '" aria-hidden="true"></i></span><strong>' + (work.cancelled ? 'Trabajo cancelado' : 'Hilo cerrado') + '</strong><small>' + (work.cancelled ? 'Custodia finalizada' : 'Consultar resultado') + '</small></button></li>';
     }
     if (take) {
       return '<li class="tlab-route-node tlab-thread-end is-action"><button type="button" data-tlab-take-node data-tlab-node-row-id="' + escapeAttr(work.id) + '" aria-haspopup="dialog" aria-expanded="false" aria-controls="tlabNodePopover" aria-label="Revisar y tomar el hilo"><span class="tlab-thread-end__icon"><i class="fa-solid fa-hand-holding" aria-hidden="true"></i><i class="fa-solid fa-minus tlab-thread-end__thread" aria-hidden="true"></i></span><strong>Tomar el hilo</strong><small>Revisar antes de recibir</small></button></li>';
+    }
+    if (finish) {
+      return '<li class="tlab-route-node tlab-thread-end is-action is-final-action"><button type="button" data-tlab-action="registrarInstalacion" data-tlab-row-work-id="' + escapeAttr(work.id) + '" aria-label="Confirmar instalación y entrega"><span class="tlab-thread-end__icon"><i class="fa-solid fa-tooth" aria-hidden="true"></i><i class="fa-solid fa-check tlab-thread-end__final-check" aria-hidden="true"></i></span><strong>Instalado y entregado</strong><small>Confirmar cierre del hilo</small></button></li>';
     }
     return '<li class="tlab-route-node tlab-thread-end"><span class="tlab-thread-end__icon"><i class="fa-solid fa-hand-holding" aria-hidden="true"></i></span><strong>Próximo relevo</strong><small>Otro usuario puede tomarlo</small></li>';
   }
@@ -4022,8 +4028,7 @@
   }
 
   function actionAllowedInCurrentContext(action) {
-    if (!action || action.code !== "registrarInstalacion") { return true; }
-    return numberValue(state.moduleOptions.cod_evolucion_origen, 0) > 0;
+    return !!action;
   }
 
   function contextActions(actions) {
@@ -4044,9 +4049,6 @@
     envelope = state.detailEnvelope || {};
     work = normalizeWork(detail);
     var serverActions = normalizeActions(detail.acciones_permitidas || envelope.acciones_permitidas || []);
-    var installationFromEvolution = serverActions.some(function (action) {
-      return action.code === "registrarInstalacion";
-    }) && numberValue(state.moduleOptions.cod_evolucion_origen, 0) <= 0;
     actions = contextActions(serverActions);
     canAudit = boolValue(envelope.puede_ver_auditoria || detail.puede_ver_auditoria) && detailArray(["auditoria", "historial_auditoria"]).length > 0;
     tabs = [
@@ -4070,7 +4072,7 @@
       + '</div></section></div>'
       + '<section class="tlab-panel tlab-detail-section"><div class="tlab-section-heading"><div><h3>Próxima acción</h3><p>Disponible según permiso, asignación y custodia actual.</p></div></div><div class="tlab-actions">'
       + (actions.length ? actions.map(actionButtonHtml).join("") : '<p class="tlab-actions-empty"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> No hay acciones disponibles para este usuario.</p>')
-      + '</div>' + (installationFromEvolution ? '<p class="tlab-actions-empty"><i class="fa-solid fa-tooth" aria-hidden="true"></i> La instalación se registra desde una evolución clínica del tratamiento.</p>' : '') + '</section>'
+      + '</div></section>'
       + '<nav class="tlab-detail-tabs" role="tablist" aria-label="Información del trabajo">' + tabs.map(function (tab) {
         return '<button type="button" role="tab" data-tlab-detail-tab="' + tab.key + '" aria-selected="' + (state.detailTab === tab.key ? "true" : "false") + '"><i class="fa-solid ' + tab.icon + '" aria-hidden="true"></i> ' + escapeHtml(tab.label) + '</button>';
       }).join("") + '</nav><div class="tlab-tab-panel" role="tabpanel">' + tabContent + '</div>';
@@ -4201,7 +4203,9 @@
       config: Object.assign({}, ACTIONS[action.code], action),
       work: work || {},
       step: 1,
-      values: {},
+      values: action.code === "registrarInstalacion"
+        ? { modo_resolucion: "instalado_entregado", condicion_pre_entrega: "conforme" }
+        : {},
       files: [],
       saving: false,
       idempotencyKey: makeIdempotencyKey()
@@ -4292,7 +4296,7 @@
       iniciarDevolucion: "Se registrará la entrega del trabajo terminado y quedará pendiente de recepción en clínica.",
       solicitarAjuste: "Se abrirá un nuevo ciclo de ajuste sin borrar la historia original.",
       aprobarTrabajo: "El tiempo de laboratorio quedará cerrado y el trabajo esperará su instalación.",
-      registrarInstalacion: "La instalación cerrará el flujo desde la evolución clínica vinculada.",
+      registrarInstalacion: "Confirmará la instalación y entrega, conservará la evidencia final y cerrará visualmente el hilo. Sólo puede hacerlo quien recibió y mantiene la custodia actual.",
       cancelarTrabajo: "La cancelación requiere motivo y conserva todos los eventos anteriores."
     };
     return help[code] || "La operación quedará registrada en la trazabilidad.";
@@ -4400,6 +4404,13 @@
         fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionNote">Observación de recepción <span aria-hidden="true">*</span></label><textarea id="tlabActionNote" name="observacion" required minlength="5" maxlength="750" placeholder="Describí qué observaste al recibir el trabajo">' + escapeHtml(values.observacion || "") + '</textarea><small>La observación quedará visible en este nodo de custodia.</small></div>');
       }
     }
+    if (action.code === "registrarInstalacion") {
+      var deliveryCondition = values.condicion_pre_entrega || "conforme";
+      fields.push('<fieldset class="tlab-field tlab-field--wide tlab-reception-condition"><legend>Situación antes de entregar <span aria-hidden="true">*</span></legend><label class="tlab-choice-card"><input type="radio" name="condicion_pre_entrega" value="conforme" ' + (deliveryCondition === "conforme" ? "checked" : "") + '><span><i class="fa-solid fa-circle-check" aria-hidden="true"></i><strong>Conforme</strong><small>El trabajo fue instalado y entregado sin novedades.</small></span></label><label class="tlab-choice-card"><input type="radio" name="condicion_pre_entrega" value="con_observaciones" ' + (deliveryCondition === "con_observaciones" ? "checked" : "") + '><span><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><strong>Con observaciones</strong><small>Se cierra el hilo dejando constancia de la situación.</small></span></label></fieldset>');
+      if (deliveryCondition === "con_observaciones") {
+        fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionDeliveryNote">Detalle de la situación <span aria-hidden="true">*</span></label><textarea id="tlabActionDeliveryNote" name="observacion_entrega" required maxlength="1000" placeholder="Describí la situación observada antes de la entrega">' + escapeHtml(values.observacion_entrega || "") + '</textarea><small>Es obligatorio, sin una cantidad mínima de caracteres, y quedará en el último nodo.</small></div>');
+      }
+    }
     if (action.code === "registrarNovedad") {
       fields.push(selectField("Tipo de novedad", "tipo_novedad", noveltyTypes(), values.tipo_novedad || "observacion_general", false, "Observación general", "Ayuda a identificar la novedad sin cambiar la custodia."));
     }
@@ -4468,6 +4479,8 @@
     else if (isStartAction(action.code)) { items.push("Técnico: Técnico pendiente"); }
     if (correctedCustodian) { items.push("Nuevo custodio: " + correctedCustodian); }
     if (values.condicion_recepcion) { items.push("Condición: " + humanizeHistoricalValue(values.condicion_recepcion)); }
+    if (values.condicion_pre_entrega) { items.push("Situación antes de entregar: " + humanizeHistoricalValue(values.condicion_pre_entrega)); }
+    if (values.observacion_entrega) { items.push("Detalle de la situación: " + toStringSafe(values.observacion_entrega).slice(0, 180)); }
     if (boolValue(values.sin_foto)) { items.push("Foto: excepción auditada · " + humanizeHistoricalValue(values.motivo_sin_foto)); }
     if (values.tipo_novedad) { items.push("Tipo de novedad: " + humanizeHistoricalValue(values.tipo_novedad)); }
     if (values.motivo) { items.push("Motivo: " + values.motivo + (values.motivo_otro ? " · " + values.motivo_otro : "")); }
@@ -4546,6 +4559,8 @@
     if (config.noteRequired && !toStringSafe(values.observacion).trim()) { return "Escribí la observación."; }
     if (action.code === "tomarHilo" && values.condicion_recepcion !== "conforme" && values.condicion_recepcion !== "con_observaciones") { return "Indicá cómo recibís el trabajo."; }
     if (action.code === "tomarHilo" && values.condicion_recepcion === "con_observaciones" && toStringSafe(values.observacion).trim().length < 5) { return "Describí la observación de recepción con al menos cinco caracteres."; }
+    if (action.code === "registrarInstalacion" && values.condicion_pre_entrega !== "conforme" && values.condicion_pre_entrega !== "con_observaciones") { return "Indicá la situación del trabajo antes de entregarlo."; }
+    if (action.code === "registrarInstalacion" && values.condicion_pre_entrega === "con_observaciones" && !toStringSafe(values.observacion_entrega).trim()) { return "Describí la situación observada antes de la entrega."; }
     if (action.code === "registrarNovedad" && toStringSafe(values.observacion).trim().length < 3) { return "Describí la novedad con al menos tres caracteres."; }
     if (action.code === "rectificarCustodia" && !values.cod_custodio_rectificado) { return "Seleccioná el nuevo custodio interno."; }
     if (action.code === "solicitarAjuste" && toStringSafe(values.motivo).toLowerCase() === "otro" && !toStringSafe(values.motivo_otro).trim()) { return "Describí el motivo seleccionado como “Otro”."; }
@@ -4654,8 +4669,11 @@
       }
     }
     if (state.action.code === "registrarInstalacion") {
-      payload.cod_consulta_origen = state.moduleOptions.cod_consulta_origen || pick(work, ["cod_consulta_origen"], "");
-      payload.cod_evolucion_origen = state.moduleOptions.cod_evolucion_origen || pick(work, ["cod_evolucion_origen", "cod_evolucion"], "");
+      payload.modo_resolucion = "instalado_entregado";
+      payload.condicion_pre_entrega = values.condicion_pre_entrega || "";
+      payload.observacion_entrega = values.observacion_entrega || "";
+      payload.cod_consulta_origen = state.moduleOptions.cod_consulta_origen || "";
+      payload.cod_evolucion_origen = state.moduleOptions.cod_evolucion_origen || "";
     }
     return payload;
   }
@@ -4709,6 +4727,7 @@
       var message = response.message || "La acción quedó registrada en la trazabilidad.";
       var workId = pick(response.data, ["id_trabajo", "cod_trabajo_laboratorio"], state.detailId);
       var groupedStart = action.code === "iniciarTrabajosAgrupados";
+      var installationClosure = action.code === "registrarInstalacion";
       var groupedDetailId = pick(response.data, ["cod_detalle_venta"], pick(action.work, ["cod_detalle_venta"], ""));
       if (typeof window.tratamientoLaboratorioClinicoAplicarRespuestaOperacion === "function") {
         window.tratamientoLaboratorioClinicoAplicarRespuestaOperacion(response);
@@ -4722,8 +4741,18 @@
         state.group = "pendientes_entrega";
         renderGroupNavigation();
       }
+      if (installationClosure) {
+        closeDetail(true);
+        if (state.view === "mecanico") {
+          state.mechanicTray = "finalizados";
+        } else {
+          state.view = "operativa";
+          state.group = "finalizados";
+        }
+        renderGroupNavigation();
+      }
       loadWorks(false);
-      if (workId && !groupedStart) { openDetail(workId, true); }
+      if (workId && !groupedStart && !installationClosure) { openDetail(workId, true); }
     }).then(null, function (error) {
       action.saving = false;
       if (submit) { submit.disabled = false; submit.innerHTML = '<i class="fa-solid ' + escapeAttr(action.config.icon || "fa-arrow-right") + '" aria-hidden="true"></i>' + escapeHtml(action.config.submitLabel || "Confirmar acción"); }
