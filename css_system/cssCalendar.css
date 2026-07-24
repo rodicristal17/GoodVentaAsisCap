@@ -4326,19 +4326,62 @@
 }
 
 #modalDetalleAgenda .agenda-asignar-tratamiento-panel .modal-filtros-box{
-    height:100%;
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:auto;
+    min-height:0;
     display:grid;
     grid-template-rows:auto minmax(0, 1fr) auto;
+    box-sizing:border-box;
     overflow:hidden;
     border:0;
     border-radius:18px;
 }
 
-#modalDetalleAgenda .agenda-asignar-tratamiento-panel .modal-filtros-body,
-#modalDetalleAgenda .agenda-asignar-tratamiento-panel #divTratamientosAgenda{
+#modalDetalleAgenda #modalAsignarTratamientoAgenda .modal-filtros-header{
+    display:flex;
     min-height:0;
-    max-height:none;
-    overflow:auto;
+    box-sizing:border-box;
+}
+
+#modalDetalleAgenda .agenda-asignar-tratamiento-panel .modal-filtros-body{
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+}
+
+#modalDetalleAgenda .agenda-asignar-tratamiento-panel #divTratamientosAgenda{
+    flex:1 1 auto;
+    min-height:0;
+    max-height:none !important;
+    overflow-y:auto;
+    overflow-x:hidden;
+}
+
+#modalDetalleAgenda .agenda-asignar-tratamiento-panel .modal-filtros-footer{
+    position:relative;
+    z-index:1;
+    flex:0 0 auto;
+    min-height:48px;
+    flex-direction:row;
+    box-sizing:border-box;
+    background:#fff;
+}
+
+@media only screen and (max-width: 620px){
+    #modalDetalleAgenda .agenda-asignar-tratamiento-panel{
+        width:calc(100% - 16px);
+        max-width:none;
+        right:8px;
+        left:auto;
+    }
+
+    #modalDetalleAgenda .agenda-asignar-tratamiento-panel .modal-filtros-footer{
+        align-items:center;
+        padding:8px 10px;
+    }
 }
 
 #modalDetalleAgenda .modal-detalle-agenda-box .detalle-agenda-actions{

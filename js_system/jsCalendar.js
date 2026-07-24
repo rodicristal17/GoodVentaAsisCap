@@ -1362,7 +1362,7 @@ function obtenerInsumosDiaConsultorioAgenda(idConsultorio, fecha){
         PRIMERACONSULTA: true
     };
     var eventos = agendaConsultoriosData.eventos || [];
-    var i, j, evento, insumos, insumo, clave, cantidad, stock, minimo, faltante;
+    var i, j, evento, insumos, insumo, clave, cantidad, stock;
 
     for(i = 0; i < eventos.length; i++){
         evento = eventos[i];
@@ -1374,7 +1374,9 @@ function obtenerInsumosDiaConsultorioAgenda(idConsultorio, fecha){
             continue;
         }
 
-        insumos = evento.insumos_previstos || [];
+        insumos = Array.isArray(evento.insumos_previstos_resueltos)
+            ? evento.insumos_previstos_resueltos
+            : (evento.insumos_previstos || []);
         for(j = 0; j < insumos.length; j++){
             insumo = insumos[j];
             cantidad = normalizarCantidadInsumoAgenda(insumo.cantidad);
@@ -1382,8 +1384,6 @@ function obtenerInsumosDiaConsultorioAgenda(idConsultorio, fecha){
 
             clave = String(insumo.id_insumo || insumo.nombre) + ":" + String(insumo.id_variante || 0) + "|" + String(insumo.unidad_medida || '');
             stock = normalizarCantidadInsumoAgenda(insumo.stock);
-            minimo = normalizarCantidadInsumoAgenda(insumo.stock_minimo);
-            faltante = normalizarCantidadInsumoAgenda(insumo.faltante);
 
             if(!acumulados[clave]){
                 acumulados[clave] = {
@@ -1391,16 +1391,16 @@ function obtenerInsumosDiaConsultorioAgenda(idConsultorio, fecha){
                     unidad: insumo.unidad_medida || '',
                     cantidad: 0,
                     stock: stock,
-                    minimo: minimo,
-                    faltante: 0
+                    estimado: !!insumo.estimado,
+                    sin_stock: !!insumo.sin_stock
                 };
                 orden.push(clave);
             }
 
             acumulados[clave].cantidad += cantidad;
             acumulados[clave].stock = Math.max(acumulados[clave].stock, stock);
-            acumulados[clave].minimo = Math.max(acumulados[clave].minimo, minimo);
-            acumulados[clave].faltante += faltante;
+            acumulados[clave].estimado = acumulados[clave].estimado || !!insumo.estimado;
+            acumulados[clave].sin_stock = acumulados[clave].sin_stock || !!insumo.sin_stock;
         }
     }
 
@@ -1410,8 +1410,7 @@ function obtenerInsumosDiaConsultorioAgenda(idConsultorio, fecha){
 
     return orden.map(function(clave){
         var item = acumulados[clave];
-        var saldo = item.stock - item.cantidad;
-        item.estado_stock = item.faltante > 0 || item.stock <= 0 || saldo < 0 ? 'critico' : (saldo <= item.minimo ? 'bajo' : 'ok');
+        item.estado_stock = item.sin_stock || item.stock < item.cantidad ? 'critico' : 'ok';
         return item;
     });
 }
@@ -1459,11 +1458,11 @@ function renderInsumosDiaConsultorioDropdownAgenda(idConsultorio, fecha){
 
     for(i = 0; i < insumos.length; i++){
         item = insumos[i];
-        detalleStock = "Stock " + formatearCantidadInsumoAgenda(item.stock)
-            + " / usa " + formatearCantidadInsumoAgenda(item.cantidad)
-            + (item.minimo > 0 ? " / min " + formatearCantidadInsumoAgenda(item.minimo) : "");
+        detalleStock = item.sin_stock
+            ? "Sin stock / usa " + formatearCantidadInsumoAgenda(item.cantidad)
+            : "Stock " + formatearCantidadInsumoAgenda(item.stock) + " / usa " + formatearCantidadInsumoAgenda(item.cantidad);
         html += "<div class='agenda-insumo-dia-chip agenda-insumo-dia-chip-" + item.estado_stock + "' title='" + escaparAtributoListaAgenda(detalleStock) + "'>"
-            + "<span>" + escaparHtmlAgenda(item.nombre) + "</span>"
+            + "<span>" + escaparHtmlAgenda(item.nombre) + (item.estimado ? " <em>(estimado)</em>" : "") + "</span>"
             + "<b>" + escaparHtmlAgenda(formatearCantidadInsumoAgenda(item.cantidad)) + " " + escaparHtmlAgenda(item.unidad) + "</b>"
             + "<small>" + escaparHtmlAgenda(detalleStock) + "</small>"
             + "</div>";
@@ -1603,8 +1602,8 @@ function abrirModalInformeInsumosAgenda(){
         return;
     }
 
-    document.getElementById('inptInformeInsumosPeriodo').value = 'dia';
-    document.getElementById('inptInformeInsumosFechaBase').value = fechaAgenda || hoy;
+    document.getElementById('inptInformeInsumosFechaInicio').value = fechaAgenda || hoy;
+    document.getElementById('inptInformeInsumosFechaFinal').value = fechaAgenda || hoy;
     document.getElementById('inptInformeInsumosAlcance').value = 'sucursal';
 
     cargarCatalogosInformeInsumosAgenda(function(){
@@ -1759,15 +1758,23 @@ function actualizarAlcanceInformeInsumosAgenda(){
 }
 
 function generarInformeInsumosAgendaPdf(){
-    var periodo = document.getElementById('inptInformeInsumosPeriodo').value;
-    var fechaBase = document.getElementById('inptInformeInsumosFechaBase').value;
+    var fechaInicio = document.getElementById('inptInformeInsumosFechaInicio').value;
+    var fechaFinal = document.getElementById('inptInformeInsumosFechaFinal').value;
     var alcance = document.getElementById('inptInformeInsumosAlcance').value;
     var sucursal = document.getElementById('inptInformeInsumosSucursal').value;
     var consultorio = document.getElementById('inptInformeInsumosConsultorio').value;
     var ventanaInforme;
 
-    if(fechaBase == ''){
-        ver_vetana_informativa("Seleccione una fecha base.", "", "error");
+    if(fechaInicio == ''){
+        ver_vetana_informativa("Seleccione una fecha de inicio.", "", "error");
+        return;
+    }
+    if(fechaFinal == ''){
+        ver_vetana_informativa("Seleccione una fecha final.", "", "error");
+        return;
+    }
+    if(fechaInicio > fechaFinal){
+        ver_vetana_informativa("La fecha de inicio no puede ser posterior a la fecha final.", "", "error");
         return;
     }
     if(sucursal == ''){
@@ -1795,8 +1802,8 @@ function generarInformeInsumosAgendaPdf(){
             "useru": userid,
             "passu": passuser,
             "navegador": navegador,
-            "periodo": periodo,
-            "fecha_base": fechaBase,
+            "fecha_inicio": fechaInicio,
+            "fecha_final": fechaFinal,
             "tipo_alcance": alcance,
             "id_sucursal": sucursal,
             "id_consultorio": alcance === 'consultorio' ? consultorio : '',
@@ -4392,7 +4399,7 @@ function renderPrevisionInsumosAgenda(evento){
     var insumos = evento.insumos_previstos || [];
     var html = "";
     if(evento.riesgo_insumos){
-        html += "<span class='agenda-alerta-inline agenda-alerta-inline--stock'>Stock de insumos debajo del minimo</span>";
+        html += "<span class='agenda-alerta-inline agenda-alerta-inline--stock'>Stock insuficiente para cubrir esta cita</span>";
     }
     if(insumos.length === 0){
         html += "<span class='agenda-ayuda-inline'>Sin insumos configurados para los tratamientos seleccionados.</span>";
@@ -4425,7 +4432,7 @@ function renderPrevisionInsumosAgenda(evento){
         html += "<div class='agenda-insumos-faltantes'>";
         for(var j = 0; j < evento.insumos_faltantes.length; j++){
             var faltanteNombre = evento.insumos_faltantes[j].nombre + (evento.insumos_faltantes[j].nombre_variante ? " - " + evento.insumos_faltantes[j].nombre_variante : "");
-            html += "<span>" + escaparHtmlAgenda(faltanteNombre) + ": faltan " + escaparHtmlAgenda(evento.insumos_faltantes[j].faltante) + " " + escaparHtmlAgenda(evento.insumos_faltantes[j].unidad_medida) + " para el minimo</span>";
+            html += "<span>" + escaparHtmlAgenda(faltanteNombre) + ": faltan " + escaparHtmlAgenda(evento.insumos_faltantes[j].faltante) + " " + escaparHtmlAgenda(evento.insumos_faltantes[j].unidad_medida) + " para cubrir la cita</span>";
         }
         html += "</div>";
     }

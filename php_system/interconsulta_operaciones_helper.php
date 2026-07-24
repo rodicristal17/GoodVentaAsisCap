@@ -881,9 +881,15 @@ function buscarTimelineUnificadoInterConsulta($codInterConsulta, $codUsuario, $l
 
     $campoFechaRegistroMensaje = interconsultaOperacionColumnaExiste($mysqli, 'mensaje', 'fecha_registro_timeline')
         ? 'm.fecha_registro_timeline' : 'NULL';
-    $stmt = $mysqli->prepare("SELECT m.cod_mensaje,m.contenido,m.url,m.tipo_adjunto,m.estado,m.cod_usuarioFK,
+    $campoTipoAdjuntoMensaje = interconsultaOperacionColumnaExiste($mysqli, 'mensaje', 'tipo_adjunto')
+        ? 'm.tipo_adjunto' : "''";
+    $campoMensajeRespuesta = interconsultaOperacionColumnaExiste($mysqli, 'mensaje', 'cod_mensaje_respuestaFK')
+        ? 'm.cod_mensaje_respuestaFK' : 'NULL';
+    $stmt = $mysqli->prepare("SELECT m.cod_mensaje,m.contenido,m.url,
+            ".$campoTipoAdjuntoMensaje." AS tipo_adjunto,m.estado,m.cod_usuarioFK,
             m.fecha_creacion,".$campoFechaRegistroMensaje." AS fecha_registro_timeline,
-            m.cod_mensaje_respuestaFK,IFNULL(p.nombre_persona,'Sistema') AS nombre_usuario,
+            ".$campoMensajeRespuesta." AS cod_mensaje_respuestaFK,
+            IFNULL(p.nombre_persona,'Sistema') AS nombre_usuario,
             IFNULL(u.url,'') AS url_usuario
         FROM mensaje m
         LEFT JOIN persona p ON p.cod_persona=m.cod_usuarioFK

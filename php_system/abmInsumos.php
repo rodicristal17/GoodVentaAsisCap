@@ -28,8 +28,10 @@ if (!defined('ABM_INSUMOS_JSON_FATAL_HANDLER')) {
 require_once("conexion.php");
 require_once("solicitud_eliminado_helper.php");
 include_once("verificar_navegador.php");
+include_once("buscar_nivel.php");
 include_once("classTable.php");
 include_once('quitarseparadormiles.php');
+require_once("interconsulta_acceso_helper.php");
 
 function ObtenerDatos($operacion)
 {
@@ -132,7 +134,7 @@ function ObtenerDatos($operacion)
             guardarStockDashboardInsumos($id_insumo, $cod_local, $id_consultorio, $cantidad, $id_variante);
             break;
         case "guardar_movimiento":
-            guardarMovimientoInsumo();
+            echo json_encode(array("1" => "ERROR", "mensaje" => "Los movimientos manuales fueron reemplazados por el flujo de reposiciones."));
             break;
         case "listar_movimientos":
             listarMovimientosInsumos();
@@ -142,6 +144,24 @@ function ObtenerDatos($operacion)
             break;
         case "reporte_movimiento":
             generarInformeMovimientoInsumos();
+            break;
+        case "guardar_reposicion":
+            guardarReposicionInsumos();
+            break;
+        case "buscar_hilos_reposicion":
+            buscarHilosReposicionInsumos();
+            break;
+        case "listar_reposiciones":
+            listarReposicionesInsumos();
+            break;
+        case "detalle_reposicion":
+            detalleReposicionInsumos();
+            break;
+        case "recibir_reposicion":
+            recibirReposicionInsumos();
+            break;
+        case "reporte_reposicion":
+            generarInformeReposicionInsumos();
             break;
         case "listar_alertas_stock":
             listarAlertasStockInsumos();
@@ -293,7 +313,88 @@ function asegurarEstructuraInsumos($mysqli)
     }
     agregarColumnaSiNoExiste($mysqli, "movimientos_insumos", "grupo_movimiento", "grupo_movimiento VARCHAR(40) NULL");
     agregarColumnaSiNoExiste($mysqli, "movimientos_insumos", "id_variante", "id_variante INT NULL");
+    asegurarTablasReposicionesInsumos($mysqli);
 
+}
+
+function asegurarTablasReposicionesInsumos($mysqli)
+{
+    $sqlCabecera = "CREATE TABLE IF NOT EXISTS reposiciones_insumos (
+        id_reposicion INT NOT NULL AUTO_INCREMENT,
+        codigo VARCHAR(40) NOT NULL,
+        sucursal_id INT NOT NULL,
+        consultorio_id INT NULL,
+        cod_interConsultaFK INT NULL,
+        cod_mensajeFK INT NULL,
+        fecha_envio DATETIME NOT NULL,
+        motivo VARCHAR(255) NOT NULL,
+        estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
+        usuario_creo INT NULL,
+        fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        usuario_recibio INT NULL,
+        fecha_recepcion DATETIME NULL,
+        PRIMARY KEY (id_reposicion),
+        UNIQUE KEY uq_reposicion_codigo (codigo),
+        KEY idx_reposicion_fecha (fecha_envio),
+        KEY idx_reposicion_destino (sucursal_id, consultorio_id),
+        KEY idx_reposicion_estado (estado),
+        KEY idx_reposicion_hilo (cod_interConsultaFK)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    if (!$mysqli->query($sqlCabecera)) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo preparar la cabecera de reposiciones: ".$mysqli->error));
+        exit;
+    }
+
+    $sqlDetalle = "CREATE TABLE IF NOT EXISTS reposiciones_insumos_detalle (
+        id_detalle INT NOT NULL AUTO_INCREMENT,
+        id_reposicion INT NOT NULL,
+        consultorio_id INT NOT NULL,
+        insumo_id INT NOT NULL,
+        id_variante INT NOT NULL DEFAULT 0,
+        cantidad DECIMAL(12,3) NOT NULL,
+        PRIMARY KEY (id_detalle),
+        UNIQUE KEY uq_reposicion_consultorio_insumo (id_reposicion, consultorio_id, insumo_id, id_variante),
+        KEY idx_reposicion_detalle (id_reposicion),
+        KEY idx_reposicion_detalle_consultorio (consultorio_id),
+        KEY idx_reposicion_detalle_insumo (insumo_id, id_variante)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    if (!$mysqli->query($sqlDetalle)) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo preparar el detalle de reposiciones: ".$mysqli->error));
+        exit;
+    }
+    $resultConsultorioCabecera = $mysqli->query("SHOW COLUMNS FROM reposiciones_insumos LIKE 'consultorio_id'");
+    if ($resultConsultorioCabecera && ($columnaConsultorioCabecera = $resultConsultorioCabecera->fetch_assoc()) && strtoupper((string)$columnaConsultorioCabecera["Null"]) !== "YES") {
+        if (!$mysqli->query("ALTER TABLE reposiciones_insumos MODIFY COLUMN consultorio_id INT NULL")) {
+            echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo habilitar reposiciones con varios consultorios."));
+            exit;
+        }
+    }
+    agregarColumnaSiNoExiste($mysqli, "reposiciones_insumos_detalle", "consultorio_id", "consultorio_id INT NOT NULL DEFAULT 0 AFTER id_reposicion");
+    agregarColumnaSiNoExiste($mysqli, "reposiciones_insumos", "cod_interConsultaFK", "cod_interConsultaFK INT NULL AFTER consultorio_id");
+    agregarColumnaSiNoExiste($mysqli, "reposiciones_insumos", "cod_mensajeFK", "cod_mensajeFK INT NULL AFTER cod_interConsultaFK");
+    agregarIndiceSiNoExisteInsumos(
+        $mysqli,
+        "reposiciones_insumos",
+        "idx_reposicion_hilo",
+        "KEY idx_reposicion_hilo (cod_interConsultaFK)"
+    );
+    $mysqli->query("UPDATE reposiciones_insumos_detalle d
+        INNER JOIN reposiciones_insumos r ON r.id_reposicion=d.id_reposicion
+        SET d.consultorio_id=r.consultorio_id
+        WHERE d.consultorio_id=0 AND r.consultorio_id IS NOT NULL");
+    quitarIndiceSiExisteInsumos($mysqli, "reposiciones_insumos_detalle", "uq_reposicion_insumo_variante");
+    agregarIndiceSiNoExisteInsumos(
+        $mysqli,
+        "reposiciones_insumos_detalle",
+        "uq_reposicion_consultorio_insumo",
+        "UNIQUE KEY uq_reposicion_consultorio_insumo (id_reposicion, consultorio_id, insumo_id, id_variante)"
+    );
+    agregarIndiceSiNoExisteInsumos(
+        $mysqli,
+        "reposiciones_insumos_detalle",
+        "idx_reposicion_detalle_consultorio",
+        "KEY idx_reposicion_detalle_consultorio (consultorio_id)"
+    );
 }
 
 function asegurarTablaInsumoProducto($mysqli)
@@ -965,6 +1066,16 @@ function guardarCantidadStockInsumo($mysqli, $idInsumo, $codLocal, $idConsultori
     return $stmt->execute();
 }
 
+function incrementarCantidadStockInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio, $cantidad, $idVariante = 0)
+{
+    $stmt = $mysqli->prepare("INSERT INTO insumo_stock_consultorio
+        (id_insumo, id_variante, cod_local, id_consultorio, cantidad)
+        VALUES (?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE cantidad=cantidad+VALUES(cantidad), fecha_actualizacion=CURRENT_TIMESTAMP");
+    $stmt->bind_param("iiiid", $idInsumo, $idVariante, $codLocal, $idConsultorio, $cantidad);
+    return $stmt->execute();
+}
+
 function guardarMovimientoInsumo()
 {
     $mysqli = conectar_al_servidor();
@@ -1250,6 +1361,548 @@ function generarInformeMovimientoInsumos()
     $html .= "<p style='font-size:11px;color:#6a7f99;margin-top:18px;'>Informe generado desde el historial de movimientos de insumos.</p>";
     $html .= "</div></body></html>";
 
+    echo json_encode(array("1" => "exito", "html" => $html), JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
+
+function normalizarFechaReposicionInsumos($fecha)
+{
+    $fecha = trim((string)$fecha);
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+        return "";
+    }
+    $partes = explode("-", $fecha);
+    if (count($partes) !== 3 || !checkdate((int)$partes[1], (int)$partes[2], (int)$partes[0])) {
+        return "";
+    }
+    return $fecha;
+}
+
+function formatearCantidadReposicionInsumos($valor)
+{
+    $texto = number_format((float)$valor, 3, ".", "");
+    return rtrim(rtrim($texto, "0"), ".");
+}
+
+function buscarHilosReposicionInsumos()
+{
+    $mysqli = conectar_al_servidor();
+    $codLocal = isset($_POST["cod_local"]) ? (int)$_POST["cod_local"] : 0;
+    $buscarUtf8 = trim((string)(isset($_POST["buscar"]) ? $_POST["buscar"] : ""));
+    $buscar = mb_convert_encoding($buscarUtf8, "ISO-8859-1", "UTF-8");
+    $usuario = obtenerUsuarioIdInsumos();
+
+    if ($codLocal <= 0 || !$usuario || !interconsultaAccesoUsuarioPuedeUsarLocal($usuario, $codLocal, $mysqli)) {
+        echo json_encode(array("1" => "NI", "mensaje" => "No tiene acceso a la sucursal seleccionada."));
+        exit;
+    }
+
+    $patron = "%".$buscar."%";
+    $stmt = $mysqli->prepare("SELECT ic.cod_interConsulta, ic.asunto
+        FROM interconsulta ic
+        WHERE ic.cod_localFK=?
+          AND LOWER(IFNULL(ic.estado,''))<>'inactivo'
+          AND (?='' OR ic.asunto LIKE ? OR CAST(ic.cod_interConsulta AS CHAR)=?)
+        ORDER BY ic.cod_interConsulta DESC
+        LIMIT 20");
+    if (!$stmt) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "No se pudo preparar la busqueda de Hilos."));
+        exit;
+    }
+    $stmt->bind_param("isss", $codLocal, $buscar, $patron, $buscar);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+    $filas = array();
+    while ($fila = $resultado->fetch_assoc()) {
+        $filas[] = array(
+            "cod_interConsulta" => (int)$fila["cod_interConsulta"],
+            "asunto" => mb_convert_encoding((string)$fila["asunto"], "UTF-8", "ISO-8859-1")
+        );
+    }
+    echo json_encode(array("1" => "exito", "filas" => $filas), JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
+
+function guardarReposicionInsumos()
+{
+    $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
+
+    $codLocal = isset($_POST["cod_local"]) ? (int)$_POST["cod_local"] : 0;
+    $codInterConsulta = isset($_POST["cod_interConsulta"]) ? (int)$_POST["cod_interConsulta"] : 0;
+    $fecha = normalizarFechaReposicionInsumos(isset($_POST["fecha"]) ? $_POST["fecha"] : "");
+    $motivoUtf8 = trim((string)(isset($_POST["motivo"]) ? $_POST["motivo"] : ""));
+    $motivo = mb_convert_encoding($motivoUtf8, "ISO-8859-1", "UTF-8");
+    $idsInsumos = isset($_POST["id_insumo"]) && is_array($_POST["id_insumo"]) ? $_POST["id_insumo"] : array();
+    $idsVariantes = isset($_POST["id_variante"]) && is_array($_POST["id_variante"]) ? $_POST["id_variante"] : array();
+    $idsConsultorios = isset($_POST["id_consultorio"]) && is_array($_POST["id_consultorio"]) ? $_POST["id_consultorio"] : array();
+    $cantidades = isset($_POST["cantidad"]) && is_array($_POST["cantidad"]) ? $_POST["cantidad"] : array();
+    $usuario = obtenerUsuarioIdInsumos();
+
+    if ($codLocal <= 0 || $codInterConsulta <= 0 || $fecha === "" || $motivoUtf8 === "" || count($idsInsumos) === 0) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "Complete la sucursal, el Hilo, la fecha, el motivo y los insumos de al menos un consultorio."));
+        exit;
+    }
+    if (!$usuario || !interconsultaAccesoUsuarioPuedeAccederHilo($codInterConsulta, $usuario, true, $mysqli)) {
+        echo json_encode(array("1" => "NI", "mensaje" => "No tiene acceso al Hilo seleccionado o el Hilo esta inactivo."));
+        exit;
+    }
+    if (mb_strlen($motivoUtf8, "UTF-8") > 255) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "El motivo no puede superar 255 caracteres."));
+        exit;
+    }
+    if (count($idsInsumos) !== count($idsVariantes) || count($idsInsumos) !== count($idsConsultorios) || count($idsInsumos) !== count($cantidades)) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "El detalle de la reposicion esta incompleto."));
+        exit;
+    }
+
+    $stmtDestino = $mysqli->prepare("SELECT c.id_consultorio
+        FROM consultorios c
+        INNER JOIN local l ON l.cod_local=c.cod_localFk
+        WHERE c.id_consultorio=? AND c.cod_localFk=?
+          AND UPPER(c.estado)='ACTIVO' AND UPPER(l.estado)='ACTIVO'
+        LIMIT 1");
+    $detalles = array();
+    $consultoriosValidados = array();
+    for ($i = 0; $i < count($idsInsumos); $i++) {
+        $idConsultorio = (int)$idsConsultorios[$i];
+        $idInsumo = (int)$idsInsumos[$i];
+        $idVariante = (int)$idsVariantes[$i];
+        $cantidad = (float)str_replace(",", ".", (string)$cantidades[$i]);
+        if ($idConsultorio <= 0 || $idInsumo <= 0 || $cantidad <= 0) {
+            echo json_encode(array("1" => "ERROR", "mensaje" => "Todos los insumos seleccionados deben tener una cantidad mayor a cero."));
+            exit;
+        }
+        if (!isset($consultoriosValidados[$idConsultorio])) {
+            $stmtDestino->bind_param("ii", $idConsultorio, $codLocal);
+            $stmtDestino->execute();
+            if ($stmtDestino->get_result()->num_rows === 0) {
+                echo json_encode(array("1" => "ERROR", "mensaje" => "Uno de los consultorios no pertenece a la sucursal seleccionada."));
+                exit;
+            }
+            $consultoriosValidados[$idConsultorio] = true;
+        }
+        $resultInsumo = $mysqli->query("SELECT id_insumo FROM insumosconsl WHERE id_insumo='".$idInsumo."' AND estado=1 LIMIT 1");
+        if (!$resultInsumo || $resultInsumo->num_rows === 0 || !validarVariantePerteneceInsumo($mysqli, $idInsumo, $idVariante)) {
+            echo json_encode(array("1" => "ERROR", "mensaje" => "La reposicion contiene un insumo o variante no disponible."));
+            exit;
+        }
+        $clave = $idConsultorio.":".$idInsumo.":".$idVariante;
+        if (!isset($detalles[$clave])) {
+            $detalles[$clave] = array("id_consultorio" => $idConsultorio, "id_insumo" => $idInsumo, "id_variante" => $idVariante, "cantidad" => 0);
+        }
+        $detalles[$clave]["cantidad"] += $cantidad;
+    }
+
+    $codigo = "REP_".date("YmdHis")."_".substr(uniqid(), -6);
+    $mysqli->begin_transaction();
+    try {
+        $stmtHilo = $mysqli->prepare("SELECT cod_localFK, estado,
+                (SELECT m.cod_mensaje FROM mensaje m
+                 WHERE m.cod_interConsultaFK=interconsulta.cod_interConsulta
+                   AND m.estado='activo' AND m.fecha_creacion<=NOW()
+                 ORDER BY m.fecha_creacion DESC, m.cod_mensaje DESC LIMIT 1) AS ultimo_mensaje
+            FROM interconsulta
+            WHERE cod_interConsulta=?
+            LIMIT 1 FOR UPDATE");
+        if (!$stmtHilo) {
+            throw new Exception("No se pudo validar el Hilo seleccionado.");
+        }
+        $stmtHilo->bind_param("i", $codInterConsulta);
+        $stmtHilo->execute();
+        $hilo = $stmtHilo->get_result()->fetch_assoc();
+        $stmtHilo->close();
+        if (!$hilo || strtolower(trim((string)$hilo["estado"])) === "inactivo") {
+            throw new Exception("El Hilo seleccionado ya no esta disponible.");
+        }
+        if ((int)$hilo["cod_localFK"] !== $codLocal) {
+            throw new Exception("El Hilo seleccionado no pertenece a la sucursal destino.");
+        }
+        $ultimoMensajeHilo = (int)$hilo["ultimo_mensaje"];
+
+        $stmtCabecera = $mysqli->prepare("INSERT INTO reposiciones_insumos
+            (codigo, sucursal_id, cod_interConsultaFK, fecha_envio, motivo, estado, usuario_creo)
+            VALUES (?, ?, ?, CONCAT(?, ' ', DATE_FORMAT(NOW(), '%H:%i:%s')), ?, 'pendiente', ?)");
+        $stmtCabecera->bind_param("siissi", $codigo, $codLocal, $codInterConsulta, $fecha, $motivo, $usuario);
+        if (!$stmtCabecera->execute()) {
+            throw new Exception("No se pudo guardar la reposicion.");
+        }
+        $idReposicion = (int)$mysqli->insert_id;
+        $stmtDetalle = $mysqli->prepare("INSERT INTO reposiciones_insumos_detalle
+            (id_reposicion, consultorio_id, insumo_id, id_variante, cantidad) VALUES (?, ?, ?, ?, ?)");
+        foreach ($detalles as $detalle) {
+            $idConsultorio = (int)$detalle["id_consultorio"];
+            $idInsumo = (int)$detalle["id_insumo"];
+            $idVariante = (int)$detalle["id_variante"];
+            $cantidad = (float)$detalle["cantidad"];
+            $stmtDetalle->bind_param("iiiid", $idReposicion, $idConsultorio, $idInsumo, $idVariante, $cantidad);
+            if (!$stmtDetalle->execute()) {
+                throw new Exception("No se pudo guardar el detalle de la reposicion.");
+            }
+        }
+
+        $contenidoMensaje = "[REPOSICION_INSUMOS:".$codigo."] Nueva reposicion de insumos pendiente de recepcion.";
+        $stmtMensaje = $mysqli->prepare("INSERT INTO mensaje
+            (contenido, fecha_creacion, cod_interConsultaFK, cod_usuarioFK, cod_dictamenFK, estado)
+            VALUES (?, NOW(), ?, ?, NULL, 'activo')");
+        if (!$stmtMensaje) {
+            throw new Exception("No se pudo preparar el mensaje del Hilo.");
+        }
+        $stmtMensaje->bind_param("sii", $contenidoMensaje, $codInterConsulta, $usuario);
+        if (!$stmtMensaje->execute()) {
+            throw new Exception("No se pudo publicar la reposicion en el Hilo.");
+        }
+        $codMensaje = (int)$mysqli->insert_id;
+        $stmtMensaje->close();
+
+        if ($ultimoMensajeHilo > 0) {
+            $stmtMenciones = $mysqli->prepare("INSERT IGNORE INTO menciones
+                (cod_usuarioFK, cod_mensajeFK, isLeido, estado)
+                SELECT cod_usuarioFK, ?, 0, 'activo'
+                FROM menciones
+                WHERE cod_mensajeFK=? AND estado='activo'");
+            if (!$stmtMenciones) {
+                throw new Exception("No se pudieron conservar los participantes del Hilo.");
+            }
+            $stmtMenciones->bind_param("ii", $codMensaje, $ultimoMensajeHilo);
+            if (!$stmtMenciones->execute()) {
+                throw new Exception("No se pudieron conservar los participantes del Hilo.");
+            }
+            $stmtMenciones->close();
+        }
+
+        $stmtVinculoMensaje = $mysqli->prepare("UPDATE reposiciones_insumos
+            SET cod_mensajeFK=? WHERE id_reposicion=?");
+        $stmtVinculoMensaje->bind_param("ii", $codMensaje, $idReposicion);
+        if (!$stmtVinculoMensaje->execute() || $stmtVinculoMensaje->affected_rows !== 1) {
+            throw new Exception("No se pudo vincular la reposicion con su mensaje.");
+        }
+        $stmtVinculoMensaje->close();
+
+        $mysqli->commit();
+        echo json_encode(array(
+            "1" => "exito",
+            "mensaje" => "Reposicion guardada y publicada en el Hilo. El stock se actualizara al confirmar la recepcion.",
+            "codigo" => $codigo
+        ), JSON_INVALID_UTF8_SUBSTITUTE);
+        exit;
+    } catch (Exception $e) {
+        $mysqli->rollback();
+        echo json_encode(array("1" => "ERROR", "mensaje" => $e->getMessage()));
+        exit;
+    }
+}
+
+function listarReposicionesInsumos()
+{
+    $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
+
+    $condiciones = array();
+    $tipos = "";
+    $parametros = array();
+    if (!empty($_POST["fecha_desde"])) {
+        $condiciones[] = "r.fecha_envio >= ?";
+        $tipos .= "s";
+        $parametros[] = $_POST["fecha_desde"]." 00:00:00";
+    }
+    if (!empty($_POST["fecha_hasta"])) {
+        $condiciones[] = "r.fecha_envio <= ?";
+        $tipos .= "s";
+        $parametros[] = $_POST["fecha_hasta"]." 23:59:59";
+    }
+    if (!empty($_POST["estado"])) {
+        $condiciones[] = "r.estado = ?";
+        $tipos .= "s";
+        $parametros[] = strtolower(trim((string)$_POST["estado"]));
+    }
+    $sql = "SELECT r.codigo, r.fecha_envio, r.fecha_recepcion, r.estado, r.motivo,
+                   r.sucursal_id, r.cod_interConsultaFK, l.Nombre AS nombre_local,
+                   COALESCE(ic.asunto, '') AS asunto_hilo,
+                   GROUP_CONCAT(DISTINCT c.nombre ORDER BY c.nombre SEPARATOR ', ') AS nombre_consultorio,
+                   COUNT(d.id_detalle) AS total_insumos,
+                   SUM(d.cantidad) AS cantidad_total
+            FROM reposiciones_insumos r
+            INNER JOIN reposiciones_insumos_detalle d ON d.id_reposicion=r.id_reposicion
+            INNER JOIN local l ON l.cod_local=r.sucursal_id
+            INNER JOIN consultorios c ON c.id_consultorio=d.consultorio_id
+            LEFT JOIN interconsulta ic ON ic.cod_interConsulta=r.cod_interConsultaFK";
+    if (count($condiciones) > 0) {
+        $sql .= " WHERE ".implode(" AND ", $condiciones);
+    }
+    $sql .= " GROUP BY r.id_reposicion, r.codigo, r.fecha_envio, r.fecha_recepcion, r.estado, r.motivo,
+              r.sucursal_id, r.cod_interConsultaFK, l.Nombre, ic.asunto
+              ORDER BY r.fecha_envio DESC, r.id_reposicion DESC LIMIT 300";
+    $stmt = $mysqli->prepare($sql);
+    if ($tipos !== "") {
+        $referencias = array();
+        foreach ($parametros as $indice => $valor) {
+            $referencias[$indice] = &$parametros[$indice];
+        }
+        call_user_func_array(array($stmt, "bind_param"), array_merge(array($tipos), $referencias));
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $filas = array();
+    while ($fila = $result->fetch_assoc()) {
+        foreach (array("nombre_local", "nombre_consultorio", "motivo", "asunto_hilo") as $campo) {
+            $fila[$campo] = mb_convert_encoding((string)$fila[$campo], "UTF-8", "ISO-8859-1");
+        }
+        $filas[] = $fila;
+    }
+    echo json_encode(array("1" => "exito", "filas" => $filas), JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
+
+function obtenerDatosReposicionInsumos($mysqli, $codigo)
+{
+    $stmt = $mysqli->prepare("SELECT r.*, l.Nombre AS nombre_local, COALESCE(ic.asunto, '') AS asunto_hilo
+        FROM reposiciones_insumos r
+        INNER JOIN local l ON l.cod_local=r.sucursal_id
+        LEFT JOIN interconsulta ic ON ic.cod_interConsulta=r.cod_interConsultaFK
+        WHERE r.codigo=? LIMIT 1");
+    $stmt->bind_param("s", $codigo);
+    $stmt->execute();
+    $cabecera = $stmt->get_result()->fetch_assoc();
+    if (!$cabecera) {
+        return array("cabecera" => null, "filas" => array());
+    }
+    foreach (array("nombre_local", "motivo", "asunto_hilo") as $campo) {
+        $cabecera[$campo] = mb_convert_encoding((string)$cabecera[$campo], "UTF-8", "ISO-8859-1");
+    }
+
+    $stmtDetalle = $mysqli->prepare("SELECT d.*, i.nombre AS nombre_insumo, i.unidad_medida,
+            COALESCE(v.nombre_variante, '') AS nombre_variante, c.nombre AS nombre_consultorio
+        FROM reposiciones_insumos_detalle d
+        INNER JOIN insumosconsl i ON i.id_insumo=d.insumo_id
+        INNER JOIN consultorios c ON c.id_consultorio=d.consultorio_id
+        LEFT JOIN insumo_variantes v ON v.id_variante=d.id_variante
+        WHERE d.id_reposicion=?
+        ORDER BY c.nombre ASC, i.nombre ASC, v.nombre_variante ASC");
+    $idReposicion = (int)$cabecera["id_reposicion"];
+    $stmtDetalle->bind_param("i", $idReposicion);
+    $stmtDetalle->execute();
+    $resultDetalle = $stmtDetalle->get_result();
+    $filas = array();
+    while ($fila = $resultDetalle->fetch_assoc()) {
+        foreach (array("nombre_insumo", "nombre_variante", "unidad_medida", "nombre_consultorio") as $campo) {
+            $fila[$campo] = mb_convert_encoding((string)$fila[$campo], "UTF-8", "ISO-8859-1");
+        }
+        $filas[] = $fila;
+    }
+    return array("cabecera" => $cabecera, "filas" => $filas);
+}
+
+function detalleReposicionInsumos()
+{
+    $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
+    $codigo = isset($_POST["codigo"]) ? trim((string)$_POST["codigo"]) : "";
+    $datos = obtenerDatosReposicionInsumos($mysqli, $codigo);
+    if (!$datos["cabecera"]) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "Reposicion no encontrada."));
+        exit;
+    }
+    echo json_encode(array("1" => "exito", "cabecera" => $datos["cabecera"], "filas" => $datos["filas"]), JSON_INVALID_UTF8_SUBSTITUTE);
+    exit;
+}
+
+function recibirReposicionInsumos()
+{
+    $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
+    $codigo = isset($_POST["codigo"]) ? trim((string)$_POST["codigo"]) : "";
+    $codInterConsultaOrigen = isset($_POST["cod_interConsulta"]) ? (int)$_POST["cod_interConsulta"] : 0;
+    $desdeHilo = isset($_POST["desde_hilo"]) && (string)$_POST["desde_hilo"] === "1";
+    $usuario = obtenerUsuarioIdInsumos();
+    if ($codigo === "") {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "Reposicion no seleccionada."));
+        exit;
+    }
+
+    $mysqli->begin_transaction();
+    try {
+        $stmtCabecera = $mysqli->prepare("SELECT * FROM reposiciones_insumos WHERE codigo=? FOR UPDATE");
+        $stmtCabecera->bind_param("s", $codigo);
+        $stmtCabecera->execute();
+        $cabecera = $stmtCabecera->get_result()->fetch_assoc();
+        if (!$cabecera) {
+            throw new Exception("Reposicion no encontrada.");
+        }
+        if (strtolower((string)$cabecera["estado"]) !== "pendiente") {
+            throw new Exception("Esta reposicion ya fue recibida.");
+        }
+        $codInterConsulta = (int)$cabecera["cod_interConsultaFK"];
+        if ($desdeHilo && ($codInterConsulta <= 0 || $codInterConsultaOrigen !== $codInterConsulta)) {
+            throw new Exception("La reposicion no pertenece a este Hilo.");
+        }
+        if ($codInterConsulta > 0
+            && !interconsultaAccesoUsuarioPuedeAccederHilo($codInterConsulta, $usuario, false, $mysqli)) {
+            throw new Exception("No tiene acceso al Hilo vinculado con esta reposicion.");
+        }
+
+        $idReposicion = (int)$cabecera["id_reposicion"];
+        $stmtDetalle = $mysqli->prepare("SELECT * FROM reposiciones_insumos_detalle WHERE id_reposicion=? ORDER BY id_detalle ASC");
+        $stmtDetalle->bind_param("i", $idReposicion);
+        $stmtDetalle->execute();
+        $resultDetalle = $stmtDetalle->get_result();
+        $detalles = array();
+        while ($detalle = $resultDetalle->fetch_assoc()) {
+            $detalles[] = $detalle;
+        }
+        if (count($detalles) === 0) {
+            throw new Exception("La reposicion no tiene insumos.");
+        }
+
+        $codLocal = (int)$cabecera["sucursal_id"];
+        $tipo = "entrada";
+        $grupoMovimiento = $codigo;
+        $motivoMovimiento = "Recepcion de reposicion ".$codigo;
+        $stmtMovimiento = $mysqli->prepare("INSERT INTO movimientos_insumos
+            (grupo_movimiento, tipo, insumo_id, id_variante, sucursal_id, consultorio_id, cantidad, motivo, usuario_id, fecha)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+
+        foreach ($detalles as $detalle) {
+            $idConsultorio = (int)$detalle["consultorio_id"];
+            $idInsumo = (int)$detalle["insumo_id"];
+            $idVariante = (int)$detalle["id_variante"];
+            $cantidad = (float)$detalle["cantidad"];
+            if (!incrementarCantidadStockInsumo($mysqli, $idInsumo, $codLocal, $idConsultorio, $cantidad, $idVariante)) {
+                throw new Exception("No se pudo actualizar el stock recibido.");
+            }
+            $stmtMovimiento->bind_param(
+                "ssiiiidsi",
+                $grupoMovimiento,
+                $tipo,
+                $idInsumo,
+                $idVariante,
+                $codLocal,
+                $idConsultorio,
+                $cantidad,
+                $motivoMovimiento,
+                $usuario
+            );
+            if (!$stmtMovimiento->execute()) {
+                throw new Exception("No se pudo registrar la entrada de stock.");
+            }
+        }
+
+        $stmtActualizar = $mysqli->prepare("UPDATE reposiciones_insumos
+            SET estado='recibida', usuario_recibio=?, fecha_recepcion=NOW()
+            WHERE id_reposicion=? AND estado='pendiente'");
+        $stmtActualizar->bind_param("ii", $usuario, $idReposicion);
+        if (!$stmtActualizar->execute() || $stmtActualizar->affected_rows !== 1) {
+            throw new Exception("No se pudo confirmar la recepcion.");
+        }
+
+        if ($codInterConsulta > 0) {
+            $nombreUsuario = "Usuario #".$usuario;
+            $stmtNombre = $mysqli->prepare("SELECT nombre_persona FROM persona WHERE cod_persona=? LIMIT 1");
+            if ($stmtNombre) {
+                $stmtNombre->bind_param("i", $usuario);
+                if ($stmtNombre->execute()) {
+                    $filaNombre = $stmtNombre->get_result()->fetch_assoc();
+                    if ($filaNombre && trim((string)$filaNombre["nombre_persona"]) !== "") {
+                        $nombreUsuario = trim((string)$filaNombre["nombre_persona"]);
+                    }
+                }
+                $stmtNombre->close();
+            }
+            $contenidoConfirmacion = "Recepcion de insumos ".$codigo." confirmada por ".$nombreUsuario.".";
+            $usuarioSistema = null;
+            $stmtMensajeConfirmacion = $mysqli->prepare("INSERT INTO mensaje
+                (contenido, fecha_creacion, cod_interConsultaFK, cod_usuarioFK, cod_dictamenFK, estado)
+                VALUES (?, NOW(), ?, ?, NULL, 'activo')");
+            if (!$stmtMensajeConfirmacion) {
+                throw new Exception("No se pudo preparar el aviso de confirmacion en el Hilo.");
+            }
+            $stmtMensajeConfirmacion->bind_param(
+                "sii",
+                $contenidoConfirmacion,
+                $codInterConsulta,
+                $usuarioSistema
+            );
+            if (!$stmtMensajeConfirmacion->execute()) {
+                throw new Exception("No se pudo publicar la confirmacion en el Hilo.");
+            }
+            $stmtMensajeConfirmacion->close();
+        }
+        $mysqli->commit();
+        echo json_encode(array("1" => "exito", "mensaje" => "Recepcion confirmada y stock actualizado."), JSON_INVALID_UTF8_SUBSTITUTE);
+        exit;
+    } catch (Exception $e) {
+        $mysqli->rollback();
+        echo json_encode(array("1" => "ERROR", "mensaje" => $e->getMessage()));
+        exit;
+    }
+}
+
+function generarInformeReposicionInsumos()
+{
+    $mysqli = conectar_al_servidor();
+    asegurarEstructuraInsumos($mysqli);
+    $codigo = isset($_POST["codigo"]) ? trim((string)$_POST["codigo"]) : "";
+    $datos = obtenerDatosReposicionInsumos($mysqli, $codigo);
+    if (!$datos["cabecera"] || count($datos["filas"]) === 0) {
+        echo json_encode(array("1" => "ERROR", "mensaje" => "No se encontro la reposicion seleccionada."));
+        exit;
+    }
+
+    $cabecera = $datos["cabecera"];
+    $filas = $datos["filas"];
+    $html = "<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'><title>Reposicion de insumos</title>";
+    $html .= "<style>";
+    $html .= "body{font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;padding:20px;color:#19324a;font-size:11px;line-height:1.25;}";
+    $html .= ".wrap{max-width:960px;margin:0 auto;background:#fff;padding:16px;border:1px solid #d6e0ea;border-radius:12px;}";
+    $html .= ".acciones{text-align:right;margin-bottom:12px}.acciones button{padding:9px 18px;border:0;border-radius:8px;background:#0d6fb8;color:#fff;font-weight:700;cursor:pointer;}";
+    $html .= "h1{margin:0 0 6px;font-size:20px;color:#0d3f78;}h2{margin:14px 0 4px;font-size:14px;color:#0d4f86;break-after:avoid;page-break-after:avoid;}p{margin:2px 0;color:#35516f;font-size:11px;}";
+    $html .= ".estado{display:inline-block;padding:3px 7px;border-radius:999px;background:#eaf2fb;font-size:10px;font-weight:700;text-transform:uppercase;}";
+    $html .= "table{width:100%;border-collapse:collapse;margin-top:5px;font-size:10.5px;line-height:1.18;}th,td{border:1px solid #dce4ee;padding:5px 7px;text-align:left;}th{background:#f0f6ff;}thead{display:table-header-group;}tr{break-inside:avoid;page-break-inside:avoid;}tfoot td{font-size:10.5px;font-weight:700;background:#f7fafc;}";
+    $html .= ".cantidad-total{margin-top:12px;font-size:11px;}";
+    $html .= "@page{margin:9mm;}@media print{body{background:#fff;padding:0}.wrap{border:0;box-shadow:none;max-width:none;padding:0}.acciones{display:none;}}";
+    $html .= "</style></head><body><div class='wrap'>";
+    $html .= "<div class='acciones'><button onclick='window.print()'>Imprimir</button></div>";
+    $html .= "<h1>Envio de reposicion de insumos</h1>";
+    $html .= "<p><strong>Codigo:</strong> ".htmlspecialchars($cabecera["codigo"], ENT_QUOTES, "UTF-8")."</p>";
+    $html .= "<p><strong>Fecha:</strong> ".htmlspecialchars(date("d/m/Y H:i", strtotime($cabecera["fecha_envio"])), ENT_QUOTES, "UTF-8")."</p>";
+    $html .= "<p><strong>Sucursal destino:</strong> ".htmlspecialchars($cabecera["nombre_local"], ENT_QUOTES, "UTF-8")."</p>";
+    if (!empty($cabecera["cod_interConsultaFK"])) {
+        $html .= "<p><strong>Hilo vinculado:</strong> "
+            .htmlspecialchars($cabecera["asunto_hilo"], ENT_QUOTES, "UTF-8")
+            ." (#".intval($cabecera["cod_interConsultaFK"]).")</p>";
+    }
+    $html .= "<p><strong>Estado:</strong> <span class='estado'>".htmlspecialchars($cabecera["estado"], ENT_QUOTES, "UTF-8")."</span></p>";
+    $html .= "<p><strong>Motivo:</strong> ".htmlspecialchars($cabecera["motivo"], ENT_QUOTES, "UTF-8")."</p>";
+    $totalCantidad = 0;
+    $filasPorConsultorio = array();
+    foreach ($filas as $fila) {
+        $idConsultorio = (int)$fila["consultorio_id"];
+        if (!isset($filasPorConsultorio[$idConsultorio])) {
+            $filasPorConsultorio[$idConsultorio] = array(
+                "nombre" => $fila["nombre_consultorio"],
+                "filas" => array()
+            );
+        }
+        $filasPorConsultorio[$idConsultorio]["filas"][] = $fila;
+    }
+    foreach ($filasPorConsultorio as $grupoConsultorio) {
+        $html .= "<h2>Consultorio: ".htmlspecialchars($grupoConsultorio["nombre"], ENT_QUOTES, "UTF-8")."</h2>";
+        $html .= "<table><thead><tr><th>Codigo</th><th>Insumo</th><th>Variante</th><th style='text-align:center'>Cantidad</th><th>Unidad</th></tr></thead><tbody>";
+        $totalConsultorio = 0;
+        foreach ($grupoConsultorio["filas"] as $fila) {
+        $cantidad = (float)$fila["cantidad"];
+        $totalCantidad += $cantidad;
+        $totalConsultorio += $cantidad;
+        $html .= "<tr><td>".(int)$fila["insumo_id"]."</td>";
+        $html .= "<td>".htmlspecialchars($fila["nombre_insumo"], ENT_QUOTES, "UTF-8")."</td>";
+        $html .= "<td>".htmlspecialchars($fila["nombre_variante"], ENT_QUOTES, "UTF-8")."</td>";
+        $html .= "<td style='text-align:center'>".formatearCantidadReposicionInsumos($cantidad)."</td>";
+        $html .= "<td>".htmlspecialchars($fila["unidad_medida"], ENT_QUOTES, "UTF-8")."</td></tr>";
+        }
+        $html .= "</tbody><tfoot><tr><td colspan='3'>Total del consultorio</td><td style='text-align:center'>".formatearCantidadReposicionInsumos($totalConsultorio)."</td><td></td></tr></tfoot></table>";
+    }
+    $html .= "<p class='cantidad-total'><strong>Cantidad total del envio:</strong> ".formatearCantidadReposicionInsumos($totalCantidad)."</p>";
+    $html .= "</div></body></html>";
     echo json_encode(array("1" => "exito", "html" => $html), JSON_INVALID_UTF8_SUBSTITUTE);
     exit;
 }

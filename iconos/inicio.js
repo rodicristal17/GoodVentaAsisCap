@@ -466,7 +466,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 			}
 	
 
-		
+		|
 	
 	
 }

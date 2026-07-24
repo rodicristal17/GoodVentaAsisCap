@@ -1650,6 +1650,10 @@ let contextoAtencionAgendaConsulta = {
 	tratamientos_texto: [],
 	autoseleccionPendiente: false
 };
+var insumosFichaClinicaConsultaSeleccionados = {};
+var insumosFichaClinicaConsultaCatalogo = [];
+var temporizadorBuscarInsumosFichaClinicaConsulta = null;
+var solicitudInsumosFichaClinicaConsulta = 0;
 
 function normalizarIdsAgendaConsulta(ids) {
 	var salida = [];
@@ -1693,6 +1697,8 @@ function limpiarContextoAtencionAgendaConsulta() {
 		tratamientos_texto: [],
 		autoseleccionPendiente: false
 	};
+	insumosFichaClinicaConsultaSeleccionados = {};
+	insumosFichaClinicaConsultaCatalogo = [];
 	contextoAgendaPlanMadreConsulta = {
 		id_agenda: "",
 		cargado: false,
@@ -1734,6 +1740,8 @@ function prepararAtencionAgendaParaConsulta(evento, autoseleccionar) {
 		tratamientos_texto: textosTratamientosAgendaConsulta(evento.nombres_tratamiento || evento.nombre_tratamiento_pendiente || ""),
 		autoseleccionPendiente: autoseleccionar === true
 	};
+	insumosFichaClinicaConsultaSeleccionados = {};
+	insumosFichaClinicaConsultaCatalogo = [];
 	if (typeof idAbmAgenda !== "undefined" && contextoAtencionAgendaConsulta.id_agenda != "") {
 		idAbmAgenda = contextoAtencionAgendaConsulta.id_agenda;
 	}
@@ -1798,11 +1806,277 @@ function renderizarGuiaAtencionAgendaConsulta() {
 		+ "	<div class='consulta-agenda-guide__treatments'>" + tratamientos + "</div>"
 		+ "</div>"
 		+ "<div class='consulta-agenda-guide__actions'>"
+		+ "	<button type='button' class='consulta-agenda-guide__insumos-btn' onclick='toggleInsumosFichaClinicaConsulta()'><i class='fa-solid fa-box-open' aria-hidden='true'></i> Insumos utilizados <b id='contadorInsumosFichaClinicaConsulta'>...</b></button>"
 		+ "	<button type='button' class='consulta-agenda-guide__primary' onclick='abrirNuevaConsultaGuiadaDesdeAgendaConsulta()'>Registrar evolucion</button>"
 		+ "	<button type='button' onclick='cambiarTabFichaClinicaConsulta(\"plan\")'>Ver plan madre</button>"
 		+ "	<button type='button' onclick='cambiarTabFichaClinicaConsulta(\"evolucion\")'>Ver historial</button>"
-		+ "</div>";
+		+ "</div>"
+		+ "<section class='consulta-insumos-clinica' id='panelInsumosFichaClinicaConsulta' hidden>"
+		+ "	<header><div><span>Consumo de esta cita</span><strong>Insumos utilizados</strong></div><button type='button' onclick='toggleInsumosFichaClinicaConsulta()' aria-label='Cerrar insumos'><i class='fa-solid fa-xmark'></i></button></header>"
+		+ "	<div class='consulta-insumos-clinica__lista' id='listaInsumosFichaClinicaConsulta'><div class='consulta-insumos-clinica__vacio'>Cargando insumos...</div></div>"
+		+ "	<div class='consulta-insumos-clinica__acciones'><button type='button' onclick='toggleAgregarInsumosFichaClinicaConsulta(true)'><i class='fa-solid fa-plus'></i> Agregar insumos</button></div>"
+		+ "	<div class='consulta-insumos-clinica__editor' id='editorInsumosFichaClinicaConsulta' hidden>"
+		+ "		<div class='consulta-insumos-clinica__buscador'><label>Buscar insumos disponibles</label><input type='search' id='buscarInsumosFichaClinicaConsulta' placeholder='Nombre, codigo, descripcion o variante' oninput='programarBusquedaInsumosFichaClinicaConsulta(this.value)'></div>"
+		+ "		<div class='consulta-insumos-clinica__catalogo' id='catalogoInsumosFichaClinicaConsulta'></div>"
+		+ "		<div class='consulta-insumos-clinica__seleccion' id='resumenSeleccionInsumosFichaClinicaConsulta'>0 insumos seleccionados</div>"
+		+ "		<footer><button type='button' onclick='toggleAgregarInsumosFichaClinicaConsulta(false)'>Cancelar</button><button type='button' class='is-primary' id='guardarInsumosFichaClinicaConsulta' onclick='guardarInsumosFichaClinicaConsulta()'>Guardar insumos</button></footer>"
+		+ "	</div>"
+		+ "</section>";
 	guia.style.display = "";
+	setTimeout(function () { cargarInsumosFichaClinicaConsulta(false); }, 0);
+}
+
+function formatearCantidadInsumosFichaClinicaConsulta(valor) {
+	var numero = parseFloat(String(valor == null ? 0 : valor).replace(",", "."));
+	if (isNaN(numero)) { return "0"; }
+	return numero.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+function toggleInsumosFichaClinicaConsulta() {
+	var panel = document.getElementById("panelInsumosFichaClinicaConsulta");
+	if (!panel || !contextoAtencionAgendaConsulta.activo || contextoAtencionAgendaConsulta.id_agenda == "") {
+		ver_vetana_informativa("No se pudo identificar la cita.", "", "error");
+		return;
+	}
+	panel.hidden = !panel.hidden;
+	if (!panel.hidden) {
+		cargarInsumosFichaClinicaConsulta(true);
+	}
+}
+
+function cargarInsumosFichaClinicaConsulta(mostrarCargando) {
+	var idAgenda = contextoAtencionAgendaConsulta.id_agenda;
+	var lista = document.getElementById("listaInsumosFichaClinicaConsulta");
+	if (!idAgenda) { return; }
+	if (lista && mostrarCargando) {
+		lista.innerHTML = "<div class='consulta-insumos-clinica__vacio'>Cargando insumos...</div>";
+	}
+	obtener_datos_user();
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"id_agenda": idAgenda,
+			"funt": "listarConsumosFichaClinica"
+		},
+		url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+		type: "post",
+		success: function (responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) != true) {
+					if (lista) { lista.innerHTML = "<div class='consulta-insumos-clinica__vacio'>" + escaparHtmlConsulta(respuesta.mensaje || "No se pudieron cargar los insumos.") + "</div>"; }
+					return;
+				}
+				var filas = respuesta.filas || [];
+				var contador = document.getElementById("contadorInsumosFichaClinicaConsulta");
+				if (contador) { contador.textContent = filas.length; }
+				if (!lista) { return; }
+				var html = "";
+				for (var i = 0; i < filas.length; i++) {
+					var fila = filas[i];
+					var nombre = fila.nombre_insumo + (fila.nombre_variante ? " - " + fila.nombre_variante : "");
+					var estado = fila.estado_stock || "previsto";
+					var etiquetaEstado = estado == "descontado" ? "Descontado"
+						: (estado == "sin_stock" ? "Sin stock" : (estado == "pendiente_atencion" ? "Pendiente de atencion" : "Previsto"));
+					html += "<article class='consulta-insumos-clinica__item is-" + escaparHtmlConsulta(estado) + "'>";
+					html += "<div><strong>" + escaparHtmlConsulta(nombre) + "</strong><small>Stock actual: " + escaparHtmlConsulta(formatearCantidadInsumosFichaClinicaConsulta(fila.stock_actual)) + "</small></div>";
+					html += "<b>" + escaparHtmlConsulta(formatearCantidadInsumosFichaClinicaConsulta(fila.cantidad)) + (fila.unidad_medida ? " " + escaparHtmlConsulta(fila.unidad_medida) : "") + "</b>";
+					html += "<span>" + escaparHtmlConsulta(etiquetaEstado) + "</span></article>";
+				}
+				lista.innerHTML = html || "<div class='consulta-insumos-clinica__vacio'>Todavia no hay insumos registrados para esta cita.</div>";
+			} catch (error) {
+				if (lista) { lista.innerHTML = "<div class='consulta-insumos-clinica__vacio'>No se pudieron cargar los insumos.</div>"; }
+			}
+		}
+	});
+}
+
+function toggleAgregarInsumosFichaClinicaConsulta(mostrar) {
+	var editor = document.getElementById("editorInsumosFichaClinicaConsulta");
+	if (!editor) { return; }
+	editor.hidden = !mostrar;
+	if (mostrar) {
+		insumosFichaClinicaConsultaSeleccionados = {};
+		actualizarResumenSeleccionInsumosFichaClinicaConsulta();
+		var buscador = document.getElementById("buscarInsumosFichaClinicaConsulta");
+		if (buscador) { buscador.value = ""; }
+		buscarInsumosFichaClinicaConsulta("");
+	} else {
+		insumosFichaClinicaConsultaSeleccionados = {};
+	}
+}
+
+function programarBusquedaInsumosFichaClinicaConsulta(texto) {
+	if (temporizadorBuscarInsumosFichaClinicaConsulta) {
+		clearTimeout(temporizadorBuscarInsumosFichaClinicaConsulta);
+	}
+	temporizadorBuscarInsumosFichaClinicaConsulta = setTimeout(function () {
+		buscarInsumosFichaClinicaConsulta(texto);
+	}, 250);
+}
+
+function buscarInsumosFichaClinicaConsulta(texto) {
+	var idAgenda = contextoAtencionAgendaConsulta.id_agenda;
+	var catalogo = document.getElementById("catalogoInsumosFichaClinicaConsulta");
+	if (!idAgenda || !catalogo) { return; }
+	var solicitud = ++solicitudInsumosFichaClinicaConsulta;
+	catalogo.innerHTML = "<div class='consulta-insumos-clinica__vacio'>Buscando insumos...</div>";
+	obtener_datos_user();
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"id_agenda": idAgenda,
+			"buscar": texto || "",
+			"funt": "buscarInsumosFichaClinica"
+		},
+		url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+		type: "post",
+		success: function (responseText) {
+			if (solicitud != solicitudInsumosFichaClinicaConsulta) { return; }
+			try {
+				var respuesta = $.parseJSON(responseText);
+				insumosFichaClinicaConsultaCatalogo = respuesta.filas || [];
+				renderCatalogoInsumosFichaClinicaConsulta();
+			} catch (error) {
+				catalogo.innerHTML = "<div class='consulta-insumos-clinica__vacio'>No se pudo cargar el catalogo.</div>";
+			}
+		}
+	});
+}
+
+function renderCatalogoInsumosFichaClinicaConsulta() {
+	var catalogo = document.getElementById("catalogoInsumosFichaClinicaConsulta");
+	if (!catalogo) { return; }
+	var html = "";
+	for (var i = 0; i < insumosFichaClinicaConsultaCatalogo.length; i++) {
+		var fila = insumosFichaClinicaConsultaCatalogo[i];
+		var clave = String(fila.id_insumo) + ":" + String(fila.id_variante || 0);
+		var seleccionado = !!insumosFichaClinicaConsultaSeleccionados[clave];
+		var bloqueado = String(fila.ya_registrado) == "1";
+		var nombre = fila.nombre_insumo + (fila.nombre_variante ? " - " + fila.nombre_variante : "");
+		var cantidad = seleccionado ? insumosFichaClinicaConsultaSeleccionados[clave].cantidad : "";
+		html += "<article class='consulta-insumos-clinica__catalogo-item" + (seleccionado ? " is-selected" : "") + (bloqueado ? " is-disabled" : "") + "'>";
+		html += "<input type='checkbox' " + (seleccionado ? "checked" : "") + " onchange='seleccionarInsumoFichaClinicaConsulta(" + parseInt(fila.id_insumo, 10) + "," + parseInt(fila.id_variante || 0, 10) + ",this.checked)'>";
+		html += "<div><strong>" + escaparHtmlConsulta(nombre) + "</strong><small>" + escaparHtmlConsulta(fila.descripcion || "Sin descripcion") + " &middot; Stock " + escaparHtmlConsulta(formatearCantidadInsumosFichaClinicaConsulta(fila.stock_actual)) + "</small></div>";
+		html += bloqueado ? "<em>Ya registrado</em>" : "<input type='number' min='0.001' step='any' placeholder='Cantidad' value='" + escaparHtmlConsulta(cantidad) + "' " + (seleccionado ? "" : "disabled") + " oninput='actualizarCantidadInsumoFichaClinicaConsulta(\"" + clave + "\",this.value)'>";
+		html += "</article>";
+	}
+	catalogo.innerHTML = html || "<div class='consulta-insumos-clinica__vacio'>No se encontraron insumos disponibles.</div>";
+}
+
+function seleccionarInsumoFichaClinicaConsulta(idInsumo, idVariante, seleccionado) {
+	var clave = String(idInsumo) + ":" + String(idVariante || 0);
+	if (seleccionado) {
+		var fila = null;
+		for (var i = 0; i < insumosFichaClinicaConsultaCatalogo.length; i++) {
+			if (String(insumosFichaClinicaConsultaCatalogo[i].id_insumo) == String(idInsumo)
+				&& String(insumosFichaClinicaConsultaCatalogo[i].id_variante || 0) == String(idVariante || 0)) {
+				fila = insumosFichaClinicaConsultaCatalogo[i];
+				break;
+			}
+		}
+		if (!fila || String(fila.ya_registrado) == "1") {
+			ver_vetana_informativa("Ese insumo ya existe en esta consulta.", "", "error");
+			renderCatalogoInsumosFichaClinicaConsulta();
+			return;
+		}
+		var claves = Object.keys(insumosFichaClinicaConsultaSeleccionados);
+		for (var c = 0; c < claves.length; c++) {
+			if (String(insumosFichaClinicaConsultaSeleccionados[claves[c]].id_insumo) == String(idInsumo)) {
+				delete insumosFichaClinicaConsultaSeleccionados[claves[c]];
+			}
+		}
+		insumosFichaClinicaConsultaSeleccionados[clave] = {
+			id_insumo: idInsumo,
+			id_variante: idVariante || 0,
+			nombre: fila.nombre_insumo + (fila.nombre_variante ? " - " + fila.nombre_variante : ""),
+			unidad_medida: fila.unidad_medida || "",
+			cantidad: ""
+		};
+	} else {
+		delete insumosFichaClinicaConsultaSeleccionados[clave];
+	}
+	renderCatalogoInsumosFichaClinicaConsulta();
+	actualizarResumenSeleccionInsumosFichaClinicaConsulta();
+}
+
+function actualizarCantidadInsumoFichaClinicaConsulta(clave, cantidad) {
+	if (insumosFichaClinicaConsultaSeleccionados[clave]) {
+		insumosFichaClinicaConsultaSeleccionados[clave].cantidad = cantidad;
+	}
+}
+
+function actualizarResumenSeleccionInsumosFichaClinicaConsulta() {
+	var total = Object.keys(insumosFichaClinicaConsultaSeleccionados).length;
+	var resumen = document.getElementById("resumenSeleccionInsumosFichaClinicaConsulta");
+	if (resumen) {
+		resumen.textContent = total + (total == 1 ? " insumo seleccionado" : " insumos seleccionados");
+	}
+}
+
+function guardarInsumosFichaClinicaConsulta() {
+	var claves = Object.keys(insumosFichaClinicaConsultaSeleccionados);
+	if (claves.length == 0) {
+		ver_vetana_informativa("Seleccione al menos un insumo.", "", "error");
+		return;
+	}
+	var detalleConfirmacion = [];
+	for (var i = 0; i < claves.length; i++) {
+		var item = insumosFichaClinicaConsultaSeleccionados[claves[i]];
+		if (Number(item.cantidad) <= 0) {
+			ver_vetana_informativa("Ingrese una cantidad valida para todos los insumos.", "", "error");
+			return;
+		}
+		detalleConfirmacion.push("- " + item.nombre + ": " + formatearCantidadInsumosFichaClinicaConsulta(item.cantidad) + (item.unidad_medida ? " " + item.unidad_medida : ""));
+	}
+	if (!confirm("Revise los insumos utilizados:\n\n" + detalleConfirmacion.join("\n") + "\n\nTodo esta correcto? Al confirmar no podra editar ni eliminar directamente este registro.")) {
+		return;
+	}
+	var datos = new FormData();
+	obtener_datos_user();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("id_agenda", contextoAtencionAgendaConsulta.id_agenda);
+	datos.append("funt", "guardarInsumosFichaClinica");
+	for (var d = 0; d < claves.length; d++) {
+		var seleccionado = insumosFichaClinicaConsultaSeleccionados[claves[d]];
+		datos.append("id_insumo[]", seleccionado.id_insumo);
+		datos.append("id_variante[]", seleccionado.id_variante || 0);
+		datos.append("cantidad[]", seleccionado.cantidad);
+	}
+	var boton = document.getElementById("guardarInsumosFichaClinicaConsulta");
+	if (boton) { boton.disabled = true; }
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		complete: function () { if (boton) { boton.disabled = false; } },
+		success: function (responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(respuesta["1"]) == true) {
+					ver_vetana_informativa(respuesta.mensaje || "Insumos registrados.");
+					insumosFichaClinicaConsultaSeleccionados = {};
+					toggleAgregarInsumosFichaClinicaConsulta(false);
+					cargarInsumosFichaClinicaConsulta(true);
+					if (typeof buscarDashboardInsumosStock == "function") { buscarDashboardInsumosStock(); }
+					if (typeof listarAlertasStockInsumos == "function") { listarAlertasStockInsumos(); }
+				} else {
+					ver_vetana_informativa(respuesta.mensaje || "No se pudieron guardar los insumos.", "", "error");
+				}
+			} catch (error) {
+				GuardarArchivosLog("Error guardarInsumosFichaClinicaConsulta: " + error + " \r\n Consola: " + responseText);
+			}
+		}
+	});
 }
 
 function destacarTratamientosAgendaEnPlanConsulta() {

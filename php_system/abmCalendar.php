@@ -149,6 +149,18 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
             guardarVarianteInsumoAgenda($mysqli, $useru);
             break;
 
+        case 'listarConsumosFichaClinica':
+            listarConsumosFichaClinicaAgenda($mysqli, $useru);
+            break;
+
+        case 'buscarInsumosFichaClinica':
+            buscarInsumosFichaClinicaAgenda($mysqli, $useru);
+            break;
+
+        case 'guardarInsumosFichaClinica':
+            guardarInsumosFichaClinicaAgenda($mysqli, $useru);
+            break;
+
         case 'generarInformeInsumosAgenda':
             generarInformeInsumosAgendaEndpoint($mysqli, $useru);
             break;
@@ -883,11 +895,10 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru, $estadoForza
         }
 
         $motivo = "Salida automatica por cita atendida #".$idAgenda;
-        $fecha = date("Y-m-d H:i:s");
         $tipo = "salida";
         $stmtMov = $mysqli->prepare("INSERT INTO movimientos_insumos (grupo_movimiento, tipo, insumo_id, id_variante, sucursal_id, consultorio_id, cantidad, motivo, usuario_id, fecha)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmtMov->bind_param("ssiiiidsis", $grupoMovimiento, $tipo, $idInsumo, $idVariante, $codLocal, $consultorio, $cantidad, $motivo, $usuario, $fecha);
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+        $stmtMov->bind_param("ssiiiidsi", $grupoMovimiento, $tipo, $idInsumo, $idVariante, $codLocal, $consultorio, $cantidad, $motivo, $usuario);
         if (!$stmtMov->execute()) {
             throw new Exception("No se pudo registrar el movimiento de insumo.");
         }
@@ -1025,6 +1036,281 @@ function guardarVarianteInsumoAgenda($mysqli, $useru)
         responderJsonCalendar(array("1" => "Error", "mensaje" => $stmt->error));
     }
     responderJsonCalendar(array("1" => "exito", "mensaje" => "Variante guardada."));
+}
+
+function obtenerContextoInsumosFichaClinicaAgenda($mysqli, $idAgenda, $useru, $bloquear = false)
+{
+    $idAgenda = (int)$idAgenda;
+    $useru = (int)$useru;
+    if ($idAgenda <= 0 || $useru <= 0) {
+        return array("ok" => false, "mensaje" => "No se pudo identificar la cita.");
+    }
+    $sql = "SELECT a.id_agenda,a.estado,a.id_consultorio,a.id_paciente,c.cod_localFk AS cod_local
+        FROM agenda a
+        INNER JOIN consultorios c ON c.id_consultorio=a.id_consultorio
+        WHERE a.id_agenda=? LIMIT 1".($bloquear ? " FOR UPDATE" : "");
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        return array("ok" => false, "mensaje" => "No se pudo validar la cita.");
+    }
+    $stmt->bind_param("i", $idAgenda);
+    $stmt->execute();
+    $agenda = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$agenda) {
+        return array("ok" => false, "mensaje" => "La cita no existe.");
+    }
+    if (strtoupper(trim((string)$agenda["estado"])) === "CANCELADO") {
+        return array("ok" => false, "mensaje" => "No se pueden registrar insumos en una cita cancelada.");
+    }
+
+    $codLocalUsuario = 0;
+    $stmtUsuario = $mysqli->prepare("SELECT cod_localFK FROM usuario WHERE cod_usuario=? AND estado='Activo' LIMIT 1");
+    if ($stmtUsuario) {
+        $stmtUsuario->bind_param("i", $useru);
+        if ($stmtUsuario->execute()) {
+            $filaUsuario = $stmtUsuario->get_result()->fetch_assoc();
+            $codLocalUsuario = $filaUsuario ? (int)$filaUsuario["cod_localFK"] : 0;
+        }
+        $stmtUsuario->close();
+    }
+    $puedeCambiarLocal = function_exists("controldeaccesoacasas")
+        && controldeaccesoacasas($useru, "CAMBIARLOCAL", " u.accion='SI' ") == 1;
+    if (!$puedeCambiarLocal && ($codLocalUsuario <= 0 || $codLocalUsuario !== (int)$agenda["cod_local"])) {
+        return array("ok" => false, "mensaje" => "No tiene acceso al consultorio de esta cita.");
+    }
+    $agenda["ok"] = true;
+    return $agenda;
+}
+
+function listarConsumosFichaClinicaAgenda($mysqli, $useru)
+{
+    asegurarEstructuraAgendaInsumos($mysqli);
+    $idAgenda = isset($_POST["id_agenda"]) ? (int)$_POST["id_agenda"] : 0;
+    $contexto = obtenerContextoInsumosFichaClinicaAgenda($mysqli, $idAgenda, $useru, false);
+    if (empty($contexto["ok"])) {
+        responderJsonCalendar(array("1" => "NI", "mensaje" => $contexto["mensaje"]));
+    }
+    $stmt = $mysqli->prepare("SELECT ac.id,ac.id_insumo,IFNULL(ac.id_variante,0) AS id_variante,
+            ac.cantidad_prevista,ac.cantidad_confirmada,ac.unidad_medida,ac.estado,
+            IFNULL(ac.stock_descontado,0) AS stock_descontado,IFNULL(ac.cantidad_descontada,0) AS cantidad_descontada,
+            i.nombre AS nombre_insumo,COALESCE(v.nombre_variante,'') AS nombre_variante,
+            COALESCE(s.cantidad,0) AS stock_actual
+        FROM agenda_consumo_insumos ac
+        INNER JOIN insumosconsl i ON i.id_insumo=ac.id_insumo
+        LEFT JOIN insumo_variantes v ON v.id_variante=ac.id_variante
+        LEFT JOIN insumo_stock_consultorio s
+          ON s.id_insumo=ac.id_insumo AND s.id_variante=IFNULL(ac.id_variante,0)
+         AND s.cod_local=? AND s.id_consultorio=?
+        WHERE ac.id_agenda=?
+        ORDER BY i.nombre,v.nombre_variante,ac.id");
+    $codLocal = (int)$contexto["cod_local"];
+    $idConsultorio = (int)$contexto["id_consultorio"];
+    $stmt->bind_param("iii", $codLocal, $idConsultorio, $idAgenda);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+    $filas = array();
+    $agendaAtendida = strtoupper(trim((string)$contexto["estado"])) === "ATENDIDO";
+    while ($fila = $resultado->fetch_assoc()) {
+        $cantidad = $fila["cantidad_confirmada"] === null
+            ? (float)$fila["cantidad_prevista"] : (float)$fila["cantidad_confirmada"];
+        $estadoStock = "previsto";
+        if ($agendaAtendida) {
+            $estadoStock = (int)$fila["stock_descontado"] === 1 ? "descontado" : "sin_stock";
+        } elseif (strtolower((string)$fila["estado"]) !== "previsto") {
+            $estadoStock = "pendiente_atencion";
+        }
+        $filas[] = array(
+            "id" => (int)$fila["id"],
+            "id_insumo" => (int)$fila["id_insumo"],
+            "id_variante" => (int)$fila["id_variante"],
+            "nombre_insumo" => normalizarTextoUtf8($fila["nombre_insumo"]),
+            "nombre_variante" => normalizarTextoUtf8($fila["nombre_variante"]),
+            "unidad_medida" => normalizarTextoUtf8($fila["unidad_medida"]),
+            "cantidad" => $cantidad,
+            "stock_actual" => (float)$fila["stock_actual"],
+            "estado_stock" => $estadoStock
+        );
+    }
+    $stmt->close();
+    responderJsonCalendar(array(
+        "1" => "exito",
+        "filas" => $filas,
+        "total" => count($filas),
+        "estado_agenda" => (string)$contexto["estado"]
+    ));
+}
+
+function buscarInsumosFichaClinicaAgenda($mysqli, $useru)
+{
+    asegurarEstructuraAgendaInsumos($mysqli);
+    $idAgenda = isset($_POST["id_agenda"]) ? (int)$_POST["id_agenda"] : 0;
+    $buscar = trim((string)(isset($_POST["buscar"]) ? $_POST["buscar"] : ""));
+    $contexto = obtenerContextoInsumosFichaClinicaAgenda($mysqli, $idAgenda, $useru, false);
+    if (empty($contexto["ok"])) {
+        responderJsonCalendar(array("1" => "NI", "mensaje" => $contexto["mensaje"]));
+    }
+    $patron = "%".$buscar."%";
+    $stmt = $mysqli->prepare("SELECT i.id_insumo,i.nombre,i.descripcion,i.unidad_medida,i.tiene_variantes,
+            IFNULL(v.id_variante,0) AS id_variante,COALESCE(v.nombre_variante,'') AS nombre_variante,
+            COALESCE(s.cantidad,0) AS stock_actual,
+            IF(ac.id IS NULL,0,1) AS ya_registrado
+        FROM insumosconsl i
+        LEFT JOIN insumo_variantes v
+          ON v.insumo_id=i.id_insumo AND i.tiene_variantes=1 AND v.estado='Activo'
+        LEFT JOIN insumo_stock_consultorio s
+          ON s.id_insumo=i.id_insumo AND s.id_variante=IFNULL(v.id_variante,0)
+         AND s.cod_local=? AND s.id_consultorio=?
+        LEFT JOIN agenda_consumo_insumos ac
+          ON ac.id_agenda=? AND ac.id_insumo=i.id_insumo
+        WHERE i.estado=1
+          AND (i.tiene_variantes=0 OR v.id_variante IS NOT NULL)
+          AND (?='' OR CAST(i.id_insumo AS CHAR)=? OR i.nombre LIKE ? OR i.descripcion LIKE ? OR v.nombre_variante LIKE ?)
+        ORDER BY ya_registrado ASC,i.nombre ASC,v.nombre_variante ASC
+        LIMIT 100");
+    $codLocal = (int)$contexto["cod_local"];
+    $idConsultorio = (int)$contexto["id_consultorio"];
+    $stmt->bind_param("iiisssss", $codLocal, $idConsultorio, $idAgenda, $buscar, $buscar, $patron, $patron, $patron);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+    $filas = array();
+    while ($fila = $resultado->fetch_assoc()) {
+        $filas[] = array(
+            "id_insumo" => (int)$fila["id_insumo"],
+            "id_variante" => (int)$fila["id_variante"],
+            "nombre_insumo" => normalizarTextoUtf8($fila["nombre"]),
+            "nombre_variante" => normalizarTextoUtf8($fila["nombre_variante"]),
+            "descripcion" => normalizarTextoUtf8($fila["descripcion"]),
+            "unidad_medida" => normalizarTextoUtf8($fila["unidad_medida"]),
+            "stock_actual" => (float)$fila["stock_actual"],
+            "ya_registrado" => (int)$fila["ya_registrado"]
+        );
+    }
+    $stmt->close();
+    responderJsonCalendar(array("1" => "exito", "filas" => $filas));
+}
+
+function guardarInsumosFichaClinicaAgenda($mysqli, $useru)
+{
+    asegurarEstructuraAgendaInsumos($mysqli);
+    $idAgenda = isset($_POST["id_agenda"]) ? (int)$_POST["id_agenda"] : 0;
+    $idsInsumos = isset($_POST["id_insumo"]) && is_array($_POST["id_insumo"]) ? $_POST["id_insumo"] : array();
+    $idsVariantes = isset($_POST["id_variante"]) && is_array($_POST["id_variante"]) ? $_POST["id_variante"] : array();
+    $cantidades = isset($_POST["cantidad"]) && is_array($_POST["cantidad"]) ? $_POST["cantidad"] : array();
+    if ($idAgenda <= 0 || count($idsInsumos) === 0
+        || count($idsInsumos) !== count($idsVariantes)
+        || count($idsInsumos) !== count($cantidades)
+        || count($idsInsumos) > 100) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "Seleccione insumos y cantidades validas."));
+    }
+
+    $mysqli->begin_transaction();
+    try {
+        $contexto = obtenerContextoInsumosFichaClinicaAgenda($mysqli, $idAgenda, $useru, true);
+        if (empty($contexto["ok"])) {
+            throw new Exception($contexto["mensaje"]);
+        }
+        $seleccion = array();
+        $nombres = array();
+        $stmtValidar = $mysqli->prepare("SELECT i.id_insumo,i.nombre,i.unidad_medida,i.tiene_variantes,
+                IFNULL(v.id_variante,0) AS id_variante
+            FROM insumosconsl i
+            LEFT JOIN insumo_variantes v
+              ON v.id_variante=? AND v.insumo_id=i.id_insumo AND v.estado='Activo'
+            WHERE i.id_insumo=? AND i.estado=1 LIMIT 1");
+        foreach ($idsInsumos as $indice => $valorInsumo) {
+            $idInsumo = (int)$valorInsumo;
+            $idVariante = (int)$idsVariantes[$indice];
+            $cantidad = normalizarNumeroAgenda(str_replace(",", ".", (string)$cantidades[$indice]));
+            if ($idInsumo <= 0 || $cantidad <= 0 || isset($seleccion[$idInsumo])) {
+                throw new Exception("La seleccion contiene cantidades invalidas o un insumo repetido.");
+            }
+            $stmtValidar->bind_param("ii", $idVariante, $idInsumo);
+            $stmtValidar->execute();
+            $filaInsumo = $stmtValidar->get_result()->fetch_assoc();
+            if (!$filaInsumo || ((int)$filaInsumo["tiene_variantes"] === 1 && (int)$filaInsumo["id_variante"] <= 0)
+                || ((int)$filaInsumo["tiene_variantes"] === 0 && $idVariante !== 0)) {
+                throw new Exception("Uno de los insumos o variantes ya no esta disponible.");
+            }
+            $seleccion[$idInsumo] = array(
+                "id_insumo" => $idInsumo,
+                "id_variante" => $idVariante,
+                "cantidad" => $cantidad,
+                "unidad" => (string)$filaInsumo["unidad_medida"]
+            );
+            $nombres[$idInsumo] = normalizarTextoUtf8($filaInsumo["nombre"]);
+        }
+        $stmtValidar->close();
+
+        $listaIds = implode(",", array_map("intval", array_keys($seleccion)));
+        $resultadoExistentes = $mysqli->query("SELECT ac.id_insumo,i.nombre
+            FROM agenda_consumo_insumos ac
+            INNER JOIN insumosconsl i ON i.id_insumo=ac.id_insumo
+            WHERE ac.id_agenda='".$idAgenda."' AND ac.id_insumo IN (".$listaIds.") FOR UPDATE");
+        $duplicados = array();
+        while ($resultadoExistentes && $filaExistente = $resultadoExistentes->fetch_assoc()) {
+            $duplicados[] = normalizarTextoUtf8($filaExistente["nombre"]);
+        }
+        if (count($duplicados) > 0) {
+            throw new Exception("El insumo ".implode(", ", $duplicados)." ya existe en esta consulta.");
+        }
+
+        $stmtInsertar = $mysqli->prepare("INSERT INTO agenda_consumo_insumos
+            (id_agenda,id_insumo,id_variante,cantidad_prevista,cantidad_confirmada,unidad_medida,
+             estado,usuario_confirmo,fecha_confirmo)
+            VALUES (?,?,?,?,?,?,'confirmado',?,NOW())");
+        foreach ($seleccion as $item) {
+            $unidad = limpiar($mysqli, $item["unidad"]);
+            $stmtInsertar->bind_param(
+                "iiiddsi",
+                $idAgenda,
+                $item["id_insumo"],
+                $item["id_variante"],
+                $item["cantidad"],
+                $item["cantidad"],
+                $unidad,
+                $useru
+            );
+            if (!$stmtInsertar->execute()) {
+                throw new Exception("No se pudo registrar uno de los insumos.");
+            }
+        }
+        $stmtInsertar->close();
+
+        $agendaAtendida = strtoupper(trim((string)$contexto["estado"])) === "ATENDIDO";
+        if ($agendaAtendida) {
+            descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru);
+        }
+        $resultadoSinStock = $mysqli->query("SELECT COUNT(*) AS total
+            FROM agenda_consumo_insumos
+            WHERE id_agenda='".$idAgenda."' AND id_insumo IN (".$listaIds.")
+              AND IFNULL(stock_descontado,0)=0");
+        $filaSinStock = $resultadoSinStock ? $resultadoSinStock->fetch_assoc() : array("total" => 0);
+        $sinStock = $agendaAtendida ? (int)$filaSinStock["total"] : 0;
+
+        if (tablaAgendaExiste($mysqli, "comentarios_agenda")) {
+            $comentario = "@{0}: @{".(int)$useru."} registro ".count($seleccion)." insumo"
+                .(count($seleccion) === 1 ? "" : "s")." utilizado"
+                .(count($seleccion) === 1 ? "" : "s")." desde la ficha clinica.";
+            $stmtComentario = $mysqli->prepare("INSERT INTO comentarios_agenda (comentario,cod_agendaFK) VALUES (?,?)");
+            if ($stmtComentario) {
+                $stmtComentario->bind_param("si", $comentario, $idAgenda);
+                $stmtComentario->execute();
+                $stmtComentario->close();
+            }
+        }
+        $mysqli->commit();
+        $mensaje = "Insumos registrados correctamente.";
+        if ($agendaAtendida && $sinStock > 0) {
+            $mensaje .= " ".$sinStock." quedaron marcados Sin stock y no generaron inventario negativo.";
+        } elseif (!$agendaAtendida) {
+            $mensaje .= " Se descontaran cuando la cita sea marcada como atendida.";
+        }
+        responderJsonCalendar(array("1" => "exito", "mensaje" => $mensaje, "sin_stock" => $sinStock));
+    } catch (Exception $e) {
+        $mysqli->rollback();
+        responderJsonCalendar(array("1" => "Error", "mensaje" => $e->getMessage()));
+    }
 }
 
 function buscarVentasPacienteAgenda($mysqli)
@@ -1800,7 +2086,7 @@ function obtenerInsumosPrevistosAgenda($mysqli, $idAgenda, $codVenta = 0, $detal
             $stockDespues = $stock - normalizarNumeroAgenda($insumos[$id]["cantidad"]);
             $insumos[$id]["stock"] = $stock;
             $insumos[$id]["stock_minimo"] = $stockMinimo;
-            $insumos[$id]["faltante"] = $stockMinimo > 0 ? max(0, $stockMinimo - $stockDespues) : 0;
+            $insumos[$id]["faltante"] = max(0, 0 - $stockDespues);
         }
     }
 
@@ -1910,13 +2196,12 @@ function generarInformeInsumosAgendaEndpoint($mysqli, $useru)
 
     $periodo = isset($_POST["periodo"]) ? strtolower(limpiar($mysqli, $_POST["periodo"])) : "dia";
     $fechaBase = isset($_POST["fecha_base"]) ? limpiar($mysqli, $_POST["fecha_base"]) : date("Y-m-d");
+    $fechaInicio = isset($_POST["fecha_inicio"]) ? limpiar($mysqli, $_POST["fecha_inicio"]) : "";
+    $fechaFinal = isset($_POST["fecha_final"]) ? limpiar($mysqli, $_POST["fecha_final"]) : "";
     $tipoAlcance = isset($_POST["tipo_alcance"]) ? strtolower(limpiar($mysqli, $_POST["tipo_alcance"])) : "sucursal";
     $idSucursal = isset($_POST["id_sucursal"]) ? (int)$_POST["id_sucursal"] : 0;
     $idConsultorio = isset($_POST["id_consultorio"]) ? (int)$_POST["id_consultorio"] : 0;
 
-    if ($periodo !== "semana") {
-        $periodo = "dia";
-    }
     if ($tipoAlcance !== "consultorio") {
         $tipoAlcance = "sucursal";
         $idConsultorio = 0;
@@ -1927,11 +2212,25 @@ function generarInformeInsumosAgendaEndpoint($mysqli, $useru)
     if ($tipoAlcance === "consultorio" && $idConsultorio <= 0) {
         responderJsonCalendar(array("1" => "Error", "mensaje" => "Seleccione un consultorio."));
     }
-    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaBase)) {
-        $fechaBase = date("Y-m-d");
+    if ($fechaInicio !== "" || $fechaFinal !== "") {
+        if (!fechaValidaInformeInsumosAgenda($fechaInicio) || !fechaValidaInformeInsumosAgenda($fechaFinal)) {
+            responderJsonCalendar(array("1" => "Error", "mensaje" => "Seleccione fechas de inicio y final validas."));
+        }
+        if ($fechaInicio > $fechaFinal) {
+            responderJsonCalendar(array("1" => "Error", "mensaje" => "La fecha de inicio no puede ser posterior a la fecha final."));
+        }
+        $periodo = "rango";
+        $rango = array("desde" => $fechaInicio, "hasta" => $fechaFinal);
+    } else {
+        if (!fechaValidaInformeInsumosAgenda($fechaBase)) {
+            $fechaBase = date("Y-m-d");
+        }
+        if ($periodo !== "semana") {
+            $periodo = "dia";
+        }
+        $rango = obtenerRangoInformeInsumosAgenda($fechaBase, $periodo);
     }
 
-    $rango = obtenerRangoInformeInsumosAgenda($fechaBase, $periodo);
     $historicoCache = array();
     $contexto = array(
         "cod_local" => $idSucursal,
@@ -1969,15 +2268,14 @@ function generarInformeInsumosAgendaEndpoint($mysqli, $useru)
         ordenarItemsInformeInsumosAgenda($detalleDias[$fecha]);
     }
 
-    $hoy = date("Y-m-d");
-    $ultimaFecha = obtenerUltimaFechaFuturaInformeInsumosAgenda($mysqli, $hoy, $idSucursal, $idConsultorio);
+    $ultimaFecha = $rango["hasta"];
     $proyeccion = array();
     $compras = array();
     $consumoFuturo = array();
     $consumoDiarioFuturo = array();
 
     if ($ultimaFecha !== "") {
-        $citasFuturas = obtenerCitasInsumosInformeAgenda($mysqli, $hoy, $ultimaFecha, $idSucursal, $idConsultorio);
+        $citasFuturas = obtenerCitasInsumosInformeAgenda($mysqli, $rango["desde"], $ultimaFecha, $idSucursal, $idConsultorio);
         foreach ($citasFuturas as $cita) {
             $insumos = obtenerInsumosPrevistosAgenda($mysqli, (int)$cita["id_agenda"], (int)$cita["cod_ventaFK"], $cita["tratamientos_ids"], (int)$cita["id_consultorio"]);
             foreach ($insumos as $insumo) {
@@ -2058,8 +2356,17 @@ function generarInformeInsumosAgendaEndpoint($mysqli, $useru)
     responderJsonCalendar(array(
         "1" => "exito",
         "html" => $html,
-        "archivo" => "informe_insumos_".$periodo."_".$rango["desde"].".pdf"
+        "archivo" => "informe_insumos_".$rango["desde"]."_al_".$rango["hasta"].".pdf"
     ));
+}
+
+function fechaValidaInformeInsumosAgenda($fecha)
+{
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$fecha)) {
+        return false;
+    }
+    $partes = explode('-', $fecha);
+    return count($partes) === 3 && checkdate((int)$partes[1], (int)$partes[2], (int)$partes[0]);
 }
 
 function catalogosInformeInsumosAgendaEndpoint($mysqli, $useru)
@@ -2239,7 +2546,7 @@ function obtenerRangoInformeInsumosAgenda($fechaBase, $periodo)
 function obtenerCitasInsumosInformeAgenda($mysqli, $desde, $hasta, $codLocal, $idConsultorio)
 {
     $condicionConsultorio = $idConsultorio > 0 ? " AND a.id_consultorio = '".(int)$idConsultorio."'" : "";
-    $sql = "SELECT a.id_agenda, a.id_consultorio, a.cod_ventaFK, a.cod_detalle_ventaFK, a.fecha,
+    $sql = "SELECT a.id_agenda, a.id_consultorio, a.cod_ventaFK, a.cod_detalle_ventaFK, a.fecha, a.estado,
                    (SELECT GROUP_CONCAT(at.cod_detalle_ventaFK ORDER BY at.id ASC SEPARATOR ',')
                     FROM agenda_tratamientos at
                     WHERE at.id_agenda = a.id_agenda AND at.estado <> 'cancelado') AS tratamientos_ids
@@ -2265,7 +2572,7 @@ function obtenerCitasInsumosInformeAgenda($mysqli, $desde, $hasta, $codLocal, $i
             } elseif ((int)$row["cod_detalle_ventaFK"] > 0) {
                 $ids[] = (int)$row["cod_detalle_ventaFK"];
             }
-            if (count($ids) == 0) {
+            if (count($ids) == 0 && !esEstadoPrimeraConsultaAgenda($row["estado"])) {
                 continue;
             }
             $row["tratamientos_ids"] = $ids;
@@ -4209,6 +4516,7 @@ function cargarAgendaBasica($mysqli, $useru)
                 "sin_tratamiento" => count($tratamientosIds) === 0 && !$esPrimera,
                 "riesgo_insumos" => false,
                 "insumos_previstos" => array(),
+                "insumos_previstos_resueltos" => array(),
                 "insumos_faltantes" => array(),
                 "motivo" => normalizarTextoUtf8($row['motivo']),
                 "motivo_limpio" => '',
@@ -4631,6 +4939,7 @@ function cargarAgenda($mysqli, $useru){
             "sin_tratamiento" => count($tratamientosIds) == 0 && !$esPrimeraConsultaEvento,
             "riesgo_insumos" => false,
             "insumos_previstos" => array(),
+            "insumos_previstos_resueltos" => array(),
             "insumos_faltantes" => array(),
             "motivo" => normalizarTextoUtf8($row["motivo"]),
             "motivo_limpio" => $motivoLimpio
@@ -4638,6 +4947,8 @@ function cargarAgenda($mysqli, $useru){
     }
 
     $stockProyectado = array();
+    $stockActualAgenda = array();
+    $historicoVariantesAgendaCache = array();
     for ($i = 0; $i < count($eventos); $i++) {
         $estadoEvento = strtoupper((string)$eventos[$i]["estado"]);
         $entraProyeccion = in_array($estadoEvento, array("AGENDADO", "CONFIRMADO", "CONFIRMADOCONDEUDA", "PRIMERACONSULTA"));
@@ -4656,28 +4967,81 @@ function cargarAgenda($mysqli, $useru){
         );
 
         $faltantes = array();
-        foreach ($insumosPrevistos as $indiceInsumo => $insumo) {
-            $clave = $eventos[$i]["consultorio"]."-".$insumo["id_insumo"]."-".(isset($insumo["id_variante"]) ? (int)$insumo["id_variante"] : 0);
-            if (!isset($stockProyectado[$clave])) {
-                $stockProyectado[$clave] = normalizarNumeroAgenda($insumo["stock"]);
-            }
-            $cantidad = normalizarNumeroAgenda($insumo["cantidad"]);
-            $stockMinimo = normalizarNumeroAgenda($insumo["stock_minimo"]);
-            $faltante = 0;
-            if ($entraProyeccion) {
-                $stockDespues = $stockProyectado[$clave] - $cantidad;
-                $faltante = $stockMinimo > 0 ? max(0, $stockMinimo - $stockDespues) : 0;
-                $stockProyectado[$clave] = $stockDespues;
-            } else {
-                $faltante = normalizarNumeroAgenda($insumo["faltante"]);
-            }
-            $insumosPrevistos[$indiceInsumo]["faltante"] = $faltante;
-            if ($faltante > 0) {
-                $faltantes[] = $insumosPrevistos[$indiceInsumo];
-            }
+        $insumosPrevistosResueltos = array();
+        $codLocalEvento = obtenerCodLocalConsultorioAgenda($mysqli, (int)$eventos[$i]["consultorio"]);
+        $contextoVariantes = array(
+            "cod_local" => $codLocalEvento,
+            "id_consultorio" => (int)$eventos[$i]["consultorio"]
+        );
+        $claveContextoVariantes = $codLocalEvento."-".(int)$eventos[$i]["consultorio"];
+        if (!isset($historicoVariantesAgendaCache[$claveContextoVariantes])) {
+            $historicoVariantesAgendaCache[$claveContextoVariantes] = array();
         }
+        $cacheVariantesConsultorio =& $historicoVariantesAgendaCache[$claveContextoVariantes];
+        foreach ($insumosPrevistos as $indiceInsumo => $insumo) {
+            $itemsEvaluar = resolverVariantesInformeInsumosAgenda($mysqli, $insumo, $contextoVariantes, $cacheVariantesConsultorio);
+            $faltanteInsumo = 0;
+            foreach ($itemsEvaluar as $itemEvaluar) {
+                $idVarianteEvaluar = (int)$itemEvaluar["id_variante"];
+                $clave = $eventos[$i]["fecha"]."-".$eventos[$i]["consultorio"]."-".$itemEvaluar["id_insumo"]."-".$idVarianteEvaluar;
+                if (!isset($stockActualAgenda[$clave])) {
+                    $stockActualAgenda[$clave] = obtenerStockActualInformeInsumosAgenda(
+                        $mysqli,
+                        (int)$itemEvaluar["id_insumo"],
+                        $idVarianteEvaluar,
+                        $codLocalEvento,
+                        (int)$eventos[$i]["consultorio"]
+                    );
+                    $stockProyectado[$clave] = $stockActualAgenda[$clave];
+                }
+                $cantidad = normalizarNumeroAgenda($itemEvaluar["cantidad"]);
+                $faltante = 0;
+                if ($entraProyeccion) {
+                    $stockDespues = $stockProyectado[$clave] - $cantidad;
+                    $faltante = max(0, 0 - $stockDespues);
+                    $stockProyectado[$clave] = $stockDespues;
+                } else {
+                    $faltante = max(0, $cantidad - $stockProyectado[$clave]);
+                }
+                $varianteSinDeterminar = (int)$insumo["tiene_variantes"] === 1 && $idVarianteEvaluar <= 0;
+                $nombreVarianteResuelta = "";
+                if ($idVarianteEvaluar > 0) {
+                    $nombreVarianteResuelta = str_replace($insumo["nombre"]." - ", "", $itemEvaluar["nombre"]);
+                } elseif ($varianteSinDeterminar) {
+                    $nombreVarianteResuelta = "Variante sin determinar";
+                }
+                $insumosPrevistosResueltos[] = array(
+                    "id_insumo" => (int)$itemEvaluar["id_insumo"],
+                    "id_variante" => $idVarianteEvaluar,
+                    "nombre" => $insumo["nombre"],
+                    "nombre_variante" => $nombreVarianteResuelta,
+                    "cantidad" => $cantidad,
+                    "unidad_medida" => $itemEvaluar["unidad"],
+                    "stock" => $varianteSinDeterminar ? 0 : $stockActualAgenda[$clave],
+                    "faltante" => $faltante,
+                    "estimado" => (bool)$itemEvaluar["estimado"],
+                    "sin_stock" => $varianteSinDeterminar
+                );
+                if ($faltante > 0) {
+                    $faltanteInsumo += $faltante;
+                    $faltantes[] = array(
+                        "id_insumo" => (int)$itemEvaluar["id_insumo"],
+                        "id_variante" => $idVarianteEvaluar,
+                        "nombre" => $insumo["nombre"],
+                        "nombre_variante" => $idVarianteEvaluar > 0 ? str_replace($insumo["nombre"]." - ", "", $itemEvaluar["nombre"]) : "",
+                        "cantidad" => $cantidad,
+                        "unidad_medida" => $itemEvaluar["unidad"],
+                        "faltante" => $faltante,
+                        "estimado" => $itemEvaluar["estimado"]
+                    );
+                }
+            }
+            $insumosPrevistos[$indiceInsumo]["faltante"] = $faltanteInsumo;
+        }
+        unset($cacheVariantesConsultorio);
 
         $eventos[$i]["insumos_previstos"] = $insumosPrevistos;
+        $eventos[$i]["insumos_previstos_resueltos"] = $insumosPrevistosResueltos;
         $eventos[$i]["insumos_faltantes"] = $faltantes;
         $eventos[$i]["riesgo_insumos"] = count($faltantes) > 0;
     }

@@ -44914,7 +44914,9 @@ var productosSeleccionadosAbmInsumos = {};
 var abmInsumosFilasPorId = {};
 var dashboardInsumosStockFilaPendiente = null;
 var variantesAbmInsumos = [];
-var grupoMovimientoInsumoSeleccionado = "";
+var codigoReposicionInsumoSeleccionada = "";
+var temporizadorBusquedaHilosReposicionInsumos = null;
+var solicitudBusquedaHilosReposicionInsumos = 0;
 
 function verTabInsumos(tab) {
 	var tabs = ["abm", "stock", "movimientos", "alertas"];
@@ -44933,8 +44935,8 @@ function verTabInsumos(tab) {
 	}
 	if (tab == "movimientos") {
 		cargarCatalogosDashboardInsumos(function () {
-			prepararCombosOperativosInsumos();
-			listarMovimientosInsumos();
+			prepararReposicionInsumos();
+			listarReposicionesInsumos();
 		});
 	}
 	if (tab == "alertas") {
@@ -44959,7 +44961,7 @@ function toggleHistorialMovimientosInsumos(mostrar) {
 function actualizarEstadoBotonPdfMovimientoInsumos() {
 	var botonPdf = document.getElementById("btnGenerarPdfMovimientoInsumos");
 	if (botonPdf) {
-		botonPdf.disabled = grupoMovimientoInsumoSeleccionado == "";
+		botonPdf.disabled = codigoReposicionInsumoSeleccionada == "";
 	}
 }
 
@@ -45669,11 +45671,23 @@ function escaparHtmlAbmInsumos(valor) {
 		.replace(/'/g, "&#039;");
 }
 
+function formatearCantidadReposicionInsumos(valor) {
+	var numero = parseFloat(String(valor == null ? 0 : valor).replace(",", "."));
+	if (isNaN(numero)) {
+		return "0";
+	}
+	if (Math.abs(numero - Math.round(numero)) < 0.0001) {
+		return String(Math.round(numero));
+	}
+	return numero.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+}
+
 var dashboardInsumosLocales = [];
 var dashboardInsumosConsultorios = [];
 var dashboardInsumosInsumos = [];
 var dashboardInsumosCatalogosCargados = false;
-var movimientoInsumosDetalle = [];
+var reposicionInsumosSeleccionados = {};
+var reposicionInsumosPorConsultorio = {};
 
 function verCerrarDashboardInsumos() {
 	if (document.getElementById("divAbmInsumos") && document.getElementById("divAbmInsumos").style.display != "") {
@@ -46029,46 +46043,24 @@ function opcionesInsumosInsumos(textoInicial, filtro) {
 	return html;
 }
 
-function actualizarComboMovimientoDetalleInsumo() {
-	if (!document.getElementById("inptMovimientoDetalleInsumo")) {
-		return;
-	}
-	var filtro = document.getElementById("inptMovimientoBuscarInsumo") ? document.getElementById("inptMovimientoBuscarInsumo").value : "";
-	document.getElementById("inptMovimientoDetalleInsumo").innerHTML = opcionesInsumosInsumos("Seleccionar", filtro);
-}
-
-function filtrarComboMovimientoDetalleInsumo(evento) {
-	actualizarComboMovimientoDetalleInsumo();
-	if (evento && evento.keyCode == 13) {
-		var select = document.getElementById("inptMovimientoDetalleInsumo");
-		if (select && select.options.length > 1) {
-			select.selectedIndex = 1;
-			if (document.getElementById("inptMovimientoDetalleCantidad")) {
-				document.getElementById("inptMovimientoDetalleCantidad").focus();
-			}
-		}
-	}
-}
-
-function prepararCombosOperativosInsumos() {
-	var locales = ["inptMovimientoInsumoLocal", "filtroMovimientoLocal"];
+function prepararReposicionInsumos() {
+	var locales = ["inptMovimientoInsumoLocal"];
 	for (var i = 0; i < locales.length; i++) {
 		if (document.getElementById(locales[i])) {
 			document.getElementById(locales[i]).innerHTML = opcionesLocalesInsumos(locales[i].indexOf("filtro") === 0 ? "Todos" : "Seleccionar");
 		}
-	}
-	if (document.getElementById("inptMovimientoDetalleInsumo")) {
-		actualizarComboMovimientoDetalleInsumo();
-	}
-	if (document.getElementById("filtroMovimientoInsumo")) {
-		document.getElementById("filtroMovimientoInsumo").innerHTML = opcionesInsumosInsumos("Todos");
 	}
 	var hoy = new Date().toISOString().slice(0, 10);
 	if (document.getElementById("inptMovimientoInsumoFecha") && document.getElementById("inptMovimientoInsumoFecha").value == "") {
 		document.getElementById("inptMovimientoInsumoFecha").value = hoy;
 	}
 	filtrarConsultoriosGenericoInsumos("inptMovimientoInsumoLocal", "inptMovimientoInsumoConsultorio");
-	renderDetalleCargaMovimientoInsumo();
+	reposicionInsumosSeleccionados = {};
+	reposicionInsumosPorConsultorio = {};
+	renderListaReposicionInsumos();
+	actualizarContadorReposicionInsumos();
+	renderResumenConsultoriosReposicionInsumos();
+	limpiarHiloReposicionInsumos();
 }
 
 function filtrarConsultoriosGenericoInsumos(idLocal, idConsultorio) {
@@ -46087,99 +46079,339 @@ function filtrarConsultoriosGenericoInsumos(idLocal, idConsultorio) {
 	document.getElementById(idConsultorio).innerHTML = html;
 }
 
-function agregarDetalleMovimientoInsumo() {
-	var seleccion = parseValorInsumoVariante(document.getElementById("inptMovimientoDetalleInsumo").value);
-	var idInsumo = seleccion.id_insumo;
-	var idVariante = seleccion.id_variante || "0";
-	var cantidad = document.getElementById("inptMovimientoDetalleCantidad").value;
-	if (idInsumo == "" && document.getElementById("inptMovimientoBuscarInsumo") && document.getElementById("inptMovimientoBuscarInsumo").value.trim() != "") {
-		var selectInsumo = document.getElementById("inptMovimientoDetalleInsumo");
-		if (selectInsumo && selectInsumo.options.length > 1) {
-			selectInsumo.selectedIndex = 1;
-			seleccion = parseValorInsumoVariante(selectInsumo.value);
-			idInsumo = seleccion.id_insumo;
-			idVariante = seleccion.id_variante || "0";
-		}
+function cambiarSucursalReposicionInsumos() {
+	reposicionInsumosSeleccionados = {};
+	reposicionInsumosPorConsultorio = {};
+	filtrarConsultoriosGenericoInsumos("inptMovimientoInsumoLocal", "inptMovimientoInsumoConsultorio");
+	renderListaReposicionInsumos();
+	renderResumenConsultoriosReposicionInsumos();
+	limpiarHiloReposicionInsumos();
+}
+
+function limpiarHiloReposicionInsumos() {
+	var input = document.getElementById("inptReposicionBuscarHilo");
+	var id = document.getElementById("inptReposicionHiloId");
+	var lista = document.getElementById("listaHilosReposicionInsumos");
+	var etiqueta = document.getElementById("lblReposicionHiloSeleccionado");
+	if (input) { input.value = ""; }
+	if (id) { id.value = ""; }
+	if (lista) {
+		lista.innerHTML = "";
+		lista.style.display = "none";
 	}
-	if (idInsumo == "" || cantidad == "" || Number(cantidad) <= 0) {
-		ver_vetana_informativa("Seleccione un insumo y una cantidad valida.", "", "error");
+	if (etiqueta) {
+		etiqueta.innerHTML = "Seleccione obligatoriamente el Hilo que recibir&aacute; el borrador.";
+		etiqueta.classList.remove("seleccionado");
+	}
+}
+
+function programarBusquedaHilosReposicionInsumos(texto) {
+	var id = document.getElementById("inptReposicionHiloId");
+	var etiqueta = document.getElementById("lblReposicionHiloSeleccionado");
+	if (id) { id.value = ""; }
+	if (etiqueta) {
+		etiqueta.innerHTML = "Seleccione un resultado para vincular el borrador.";
+		etiqueta.classList.remove("seleccionado");
+	}
+	if (temporizadorBusquedaHilosReposicionInsumos) {
+		clearTimeout(temporizadorBusquedaHilosReposicionInsumos);
+	}
+	temporizadorBusquedaHilosReposicionInsumos = setTimeout(function () {
+		buscarHilosReposicionInsumos(texto, true);
+	}, 250);
+}
+
+function buscarHilosReposicionInsumos(texto, mostrarLista) {
+	var local = document.getElementById("inptMovimientoInsumoLocal");
+	var lista = document.getElementById("listaHilosReposicionInsumos");
+	if (!local || local.value == "" || !lista) {
+		if (lista) {
+			lista.innerHTML = "<div class='insumos-reposicion-hilo-vacio'>Seleccione primero la sucursal destino.</div>";
+			lista.style.display = mostrarLista ? "" : "none";
+		}
 		return;
 	}
-	var nombre = "";
-	var unidad = "";
-	var nombreVariante = "";
-	for (var i = 0; i < dashboardInsumosInsumos.length; i++) {
-		if (String(dashboardInsumosInsumos[i].id_insumo) == String(idInsumo)) {
-			nombre = dashboardInsumosInsumos[i].nombre;
-			unidad = dashboardInsumosInsumos[i].unidad_medida || "";
-			var variantes = dashboardInsumosInsumos[i].variantes || [];
-			for (var v = 0; v < variantes.length; v++) {
-				if (String(variantes[v].id_variante || "0") == String(idVariante)) {
-					nombreVariante = variantes[v].nombre_variante || "";
-					break;
-				}
+	var numeroSolicitud = ++solicitudBusquedaHilosReposicionInsumos;
+	lista.innerHTML = "<div class='insumos-reposicion-hilo-vacio'>Buscando Hilos...</div>";
+	lista.style.display = mostrarLista ? "" : "none";
+	obtener_datos_user();
+	$.ajax({
+		data: {
+			"useru": userid,
+			"passu": passuser,
+			"navegador": navegador,
+			"cod_local": local.value,
+			"buscar": texto || "",
+			"funt": "buscar_hilos_reposicion"
+		},
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
+		type: "post",
+		success: function (responseText) {
+			if (numeroSolicitud != solicitudBusquedaHilosReposicionInsumos) {
+				return;
 			}
-			break;
+			try {
+				var respuesta = $.parseJSON(responseText);
+				var filas = respuesta.filas || [];
+				var html = "";
+				for (var i = 0; i < filas.length; i++) {
+					html += "<button type='button' data-hilo-id='" + escaparHtmlAbmInsumos(filas[i].cod_interConsulta) + "' data-hilo-asunto='" + escaparHtmlAbmInsumos(filas[i].asunto || "") + "'>";
+					html += "<b>" + escaparHtmlAbmInsumos(filas[i].asunto || "Hilo sin asunto") + "</b><span>Hilo #" + escaparHtmlAbmInsumos(filas[i].cod_interConsulta) + "</span></button>";
+				}
+				lista.innerHTML = html || "<div class='insumos-reposicion-hilo-vacio'>No se encontraron Hilos activos en esta sucursal.</div>";
+				var botones = lista.querySelectorAll("button[data-hilo-id]");
+				for (var b = 0; b < botones.length; b++) {
+					botones[b].onclick = function () {
+						seleccionarHiloReposicionInsumos(this.getAttribute("data-hilo-id"), this.getAttribute("data-hilo-asunto"));
+					};
+				}
+				lista.style.display = mostrarLista ? "" : "none";
+			} catch (error) {
+				lista.innerHTML = "<div class='insumos-reposicion-hilo-vacio'>No se pudo cargar la lista de Hilos.</div>";
+			}
+		}
+	});
+}
+
+function seleccionarHiloReposicionInsumos(codigo, asunto) {
+	var input = document.getElementById("inptReposicionBuscarHilo");
+	var id = document.getElementById("inptReposicionHiloId");
+	var lista = document.getElementById("listaHilosReposicionInsumos");
+	var etiqueta = document.getElementById("lblReposicionHiloSeleccionado");
+	if (input) { input.value = asunto; }
+	if (id) { id.value = codigo; }
+	if (lista) { lista.style.display = "none"; }
+	if (etiqueta) {
+		etiqueta.innerHTML = "Vinculado con <b>" + escaparHtmlAbmInsumos(asunto) + "</b> &middot; Hilo #" + escaparHtmlAbmInsumos(codigo);
+		etiqueta.classList.add("seleccionado");
+	}
+}
+
+function cambiarConsultorioReposicionInsumos() {
+	var select = document.getElementById("inptMovimientoInsumoConsultorio");
+	var idConsultorio = select ? String(select.value || "") : "";
+	if (idConsultorio == "") {
+		reposicionInsumosSeleccionados = {};
+	} else {
+		if (!reposicionInsumosPorConsultorio[idConsultorio]) {
+			reposicionInsumosPorConsultorio[idConsultorio] = {
+				id_consultorio: idConsultorio,
+				nombre: select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "Consultorio",
+				items: {}
+			};
+		}
+		reposicionInsumosSeleccionados = reposicionInsumosPorConsultorio[idConsultorio].items;
+	}
+	renderListaReposicionInsumos();
+	renderResumenConsultoriosReposicionInsumos();
+}
+
+function seleccionarConsultorioCargadoReposicion(idConsultorio) {
+	var select = document.getElementById("inptMovimientoInsumoConsultorio");
+	if (!select || !select.querySelector("option[value='" + String(idConsultorio).replace(/'/g, "\\'") + "']")) {
+		return;
+	}
+	select.value = String(idConsultorio);
+	cambiarConsultorioReposicionInsumos();
+}
+
+function renderResumenConsultoriosReposicionInsumos() {
+	var contenedor = document.getElementById("resumenConsultoriosReposicionInsumos");
+	if (!contenedor) {
+		return;
+	}
+	var ids = Object.keys(reposicionInsumosPorConsultorio);
+	var activo = document.getElementById("inptMovimientoInsumoConsultorio") ? String(document.getElementById("inptMovimientoInsumoConsultorio").value || "") : "";
+	var html = "";
+	for (var i = 0; i < ids.length; i++) {
+		var grupo = reposicionInsumosPorConsultorio[ids[i]];
+		var total = Object.keys(grupo.items || {}).length;
+		if (total == 0) {
+			continue;
+		}
+		html += "<button type='button' class='insumos-reposicion-consultorio-chip" + (String(ids[i]) == activo ? " activo" : "") + "' onclick='seleccionarConsultorioCargadoReposicion(\"" + escaparHtmlAbmInsumos(ids[i]) + "\")'>";
+		html += escaparHtmlAbmInsumos(grupo.nombre) + " <b>" + total + "</b></button>";
+	}
+	contenedor.innerHTML = html || "<span>Seleccione un consultorio y cargue sus insumos. Puede cambiar de consultorio sin perder lo ya cargado.</span>";
+}
+
+function obtenerFilasDisponiblesReposicionInsumos() {
+	var filas = [];
+	for (var i = 0; i < dashboardInsumosInsumos.length; i++) {
+		var insumo = dashboardInsumosInsumos[i];
+		var variantes = insumo.variantes || [];
+		if (String(insumo.tiene_variantes || "0") == "1") {
+			for (var v = 0; v < variantes.length; v++) {
+				if (String(variantes[v].estado || "").toLowerCase() == "inactivo") {
+					continue;
+				}
+				filas.push({
+					clave: String(insumo.id_insumo) + ":" + String(variantes[v].id_variante || 0),
+					id_insumo: insumo.id_insumo,
+					id_variante: variantes[v].id_variante || 0,
+					nombre: insumo.nombre || "",
+					nombre_variante: variantes[v].nombre_variante || "",
+					descripcion: insumo.descripcion || "",
+					unidad_medida: insumo.unidad_medida || ""
+				});
+			}
+		} else {
+			filas.push({
+				clave: String(insumo.id_insumo) + ":0",
+				id_insumo: insumo.id_insumo,
+				id_variante: 0,
+				nombre: insumo.nombre || "",
+				nombre_variante: "",
+				descripcion: insumo.descripcion || "",
+				unidad_medida: insumo.unidad_medida || ""
+			});
 		}
 	}
-	for (var j = 0; j < movimientoInsumosDetalle.length; j++) {
-		if (String(movimientoInsumosDetalle[j].id_insumo) == String(idInsumo) && String(movimientoInsumosDetalle[j].id_variante || "0") == String(idVariante)) {
-			movimientoInsumosDetalle[j].cantidad = Number(movimientoInsumosDetalle[j].cantidad) + Number(cantidad);
-			renderDetalleCargaMovimientoInsumo();
-			document.getElementById("inptMovimientoDetalleCantidad").value = "";
-			document.getElementById("inptMovimientoDetalleInsumo").value = "";
+	return filas;
+}
+
+function renderListaReposicionInsumos() {
+	var contenedor = document.getElementById("listaReposicionInsumos");
+	if (!contenedor) {
+		return;
+	}
+	var idConsultorioActivo = document.getElementById("inptMovimientoInsumoConsultorio") ? document.getElementById("inptMovimientoInsumoConsultorio").value : "";
+	if (idConsultorioActivo == "") {
+		contenedor.innerHTML = "<div class='insumos-reposicion-vacio'>Seleccione el consultorio que desea cargar.</div>";
+		actualizarContadorReposicionInsumos();
+		return;
+	}
+	var buscar = document.getElementById("inptReposicionBuscarInsumo") ? document.getElementById("inptReposicionBuscarInsumo").value.toLowerCase().trim() : "";
+	var mostrar = document.getElementById("inptReposicionFiltroLista") ? document.getElementById("inptReposicionFiltroLista").value : "todos";
+	var filas = obtenerFilasDisponiblesReposicionInsumos();
+	var html = "";
+	for (var i = 0; i < filas.length; i++) {
+		var fila = filas[i];
+		var seleccionado = !!reposicionInsumosSeleccionados[fila.clave];
+		var texto = [fila.id_insumo, fila.nombre, fila.nombre_variante, fila.descripcion, fila.unidad_medida].join(" ").toLowerCase();
+		if ((buscar != "" && texto.indexOf(buscar) < 0) || (mostrar == "seleccionados" && !seleccionado)) {
+			continue;
+		}
+		var cantidad = seleccionado ? reposicionInsumosSeleccionados[fila.clave].cantidad : "";
+		var nombreCompleto = fila.nombre + (fila.nombre_variante ? " - " + fila.nombre_variante : "");
+		html += "<div class='insumos-reposicion-item" + (seleccionado ? " seleccionado" : "") + "'>";
+		html += "<label class='insumos-reposicion-check'><input type='checkbox' " + (seleccionado ? "checked" : "") + " onchange='seleccionarInsumoReposicion(\"" + fila.clave + "\",this.checked)'><span></span></label>";
+		html += "<div class='insumos-reposicion-info'><b>" + escaparHtmlAbmInsumos(nombreCompleto) + "</b>";
+		html += "<small>C&oacute;digo " + escaparHtmlAbmInsumos(fila.id_insumo) + (fila.descripcion ? " &middot; " + escaparHtmlAbmInsumos(fila.descripcion) : "") + "</small></div>";
+		html += "<span class='insumos-reposicion-unidad'>" + escaparHtmlAbmInsumos(fila.unidad_medida) + "</span>";
+		html += "<input class='inputText insumos-reposicion-cantidad' type='number' min='0.001' step='any' placeholder='Cantidad' value='" + escaparHtmlAbmInsumos(cantidad) + "' " + (seleccionado ? "" : "disabled") + " oninput='actualizarCantidadReposicionInsumo(\"" + fila.clave + "\",this.value)'>";
+		html += "</div>";
+	}
+	contenedor.innerHTML = html || "<div class='insumos-reposicion-vacio'>No hay insumos que coincidan con los filtros.</div>";
+	actualizarContadorReposicionInsumos();
+}
+
+function seleccionarInsumoReposicion(clave, seleccionado) {
+	var filas = obtenerFilasDisponiblesReposicionInsumos();
+	if (seleccionado) {
+		for (var i = 0; i < filas.length; i++) {
+			if (filas[i].clave == clave) {
+				reposicionInsumosSeleccionados[clave] = {
+					id_insumo: filas[i].id_insumo,
+					id_variante: filas[i].id_variante,
+					nombre: filas[i].nombre,
+					nombre_variante: filas[i].nombre_variante,
+					unidad_medida: filas[i].unidad_medida,
+					cantidad: ""
+				};
+				break;
+			}
+		}
+	} else {
+		delete reposicionInsumosSeleccionados[clave];
+	}
+	renderListaReposicionInsumos();
+	renderResumenConsultoriosReposicionInsumos();
+}
+
+function actualizarCantidadReposicionInsumo(clave, cantidad) {
+	if (reposicionInsumosSeleccionados[clave]) {
+		reposicionInsumosSeleccionados[clave].cantidad = cantidad;
+	}
+}
+
+function actualizarContadorReposicionInsumos() {
+	var total = Object.keys(reposicionInsumosSeleccionados).length;
+	var etiqueta = document.getElementById("lblReposicionInsumosSeleccionados");
+	if (etiqueta) {
+		var select = document.getElementById("inptMovimientoInsumoConsultorio");
+		var nombre = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex].text : "";
+		etiqueta.innerHTML = total + (total == 1 ? " seleccionado" : " seleccionados") + (nombre && select.value ? " en " + escaparHtmlAbmInsumos(nombre) : "");
+	}
+}
+
+function limpiarReposicionInsumos() {
+	var select = document.getElementById("inptMovimientoInsumoConsultorio");
+	var idConsultorio = select ? String(select.value || "") : "";
+	if (idConsultorio != "") {
+		reposicionInsumosPorConsultorio[idConsultorio] = {
+			id_consultorio: idConsultorio,
+			nombre: select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "Consultorio",
+			items: {}
+		};
+		reposicionInsumosSeleccionados = reposicionInsumosPorConsultorio[idConsultorio].items;
+	} else {
+		reposicionInsumosSeleccionados = {};
+	}
+	renderListaReposicionInsumos();
+	renderResumenConsultoriosReposicionInsumos();
+}
+
+function guardarReposicionInsumos() {
+	var local = document.getElementById("inptMovimientoInsumoLocal").value;
+	var codInterConsulta = document.getElementById("inptReposicionHiloId").value;
+	var fecha = document.getElementById("inptMovimientoInsumoFecha").value;
+	var motivo = document.getElementById("inptMovimientoInsumoMotivo").value.trim();
+	var detallesReposicion = [];
+	var idsConsultorios = Object.keys(reposicionInsumosPorConsultorio);
+	for (var g = 0; g < idsConsultorios.length; g++) {
+		var grupo = reposicionInsumosPorConsultorio[idsConsultorios[g]];
+		var clavesGrupo = Object.keys(grupo.items || {});
+		for (var d = 0; d < clavesGrupo.length; d++) {
+			detallesReposicion.push({
+				id_consultorio: grupo.id_consultorio,
+				detalle: grupo.items[clavesGrupo[d]]
+			});
+		}
+	}
+	if (local == "" || codInterConsulta == "" || fecha == "" || motivo == "") {
+		ver_vetana_informativa("Complete la sucursal, seleccione un Hilo, la fecha y el motivo.", "", "error");
+		return;
+	}
+	if (detallesReposicion.length == 0) {
+		ver_vetana_informativa("Cargue al menos un insumo para uno de los consultorios.", "", "error");
+		return;
+	}
+	for (var c = 0; c < detallesReposicion.length; c++) {
+		if (Number(detallesReposicion[c].detalle.cantidad) <= 0) {
+			ver_vetana_informativa("Ingrese una cantidad valida para todos los insumos de cada consultorio.", "", "error");
 			return;
 		}
-	}
-	movimientoInsumosDetalle.push({ id_insumo: idInsumo, id_variante: idVariante, nombre: nombre, nombre_variante: nombreVariante, unidad_medida: unidad, cantidad: cantidad });
-	renderDetalleCargaMovimientoInsumo();
-	document.getElementById("inptMovimientoDetalleCantidad").value = "";
-	document.getElementById("inptMovimientoDetalleInsumo").value = "";
-}
-
-function quitarDetalleMovimientoInsumo(indice) {
-	movimientoInsumosDetalle.splice(indice, 1);
-	renderDetalleCargaMovimientoInsumo();
-}
-
-function renderDetalleCargaMovimientoInsumo() {
-	if (!document.getElementById("tableMovimientoInsumosDetalle")) {
-		return;
-	}
-	var html = "";
-	for (var i = 0; i < movimientoInsumosDetalle.length; i++) {
-		var fila = movimientoInsumosDetalle[i];
-		var nombre = fila.nombre + (fila.nombre_variante ? " - " + fila.nombre_variante : "");
-		html += "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5' style='width:100%'><tr>";
-		html += "<td class='tdRegistroSearch' style='width:70%'>" + escaparHtmlAbmInsumos(nombre) + "</td>";
-		html += "<td class='tdRegistroSearch' style='width:20%;text-align:center'>" + escaparHtmlAbmInsumos(fila.cantidad) + "</td>";
-		html += "<td class='tdRegistroSearch' style='width:10%;text-align:center'><input type='button' class='btn2' value='X' style='width:36px;height:26px;padding:0;border-radius:7px;background:#dc2626' onclick='quitarDetalleMovimientoInsumo(" + i + ")'></td>";
-		html += "</tr></table>";
-	}
-	document.getElementById("tableMovimientoInsumosDetalle").innerHTML = html || "<p class='pTituloC' style='padding:12px;text-align:center'>Agregue los insumos del movimiento.</p>";
-}
-
-function guardarMovimientoInsumo() {
-	if (movimientoInsumosDetalle.length == 0) {
-		ver_vetana_informativa("Agregue al menos un insumo al movimiento.", "", "error");
-		return;
 	}
 	obtener_datos_user();
 	var datos = new FormData();
 	datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
-	datos.append("tipo", document.getElementById("inptMovimientoInsumoTipo").value);
-	datos.append("cod_local", document.getElementById("inptMovimientoInsumoLocal").value);
-	datos.append("id_consultorio", document.getElementById("inptMovimientoInsumoConsultorio").value);
-	datos.append("motivo", document.getElementById("inptMovimientoInsumoMotivo").value);
-	datos.append("fecha", document.getElementById("inptMovimientoInsumoFecha").value);
-	datos.append("funt", "guardar_movimiento");
-	for (var i = 0; i < movimientoInsumosDetalle.length; i++) {
-		datos.append("id_insumo[]", movimientoInsumosDetalle[i].id_insumo);
-		datos.append("id_variante[]", movimientoInsumosDetalle[i].id_variante || "0");
-		datos.append("cantidad[]", movimientoInsumosDetalle[i].cantidad);
+	datos.append("cod_local", local);
+	datos.append("cod_interConsulta", codInterConsulta);
+	datos.append("motivo", motivo);
+	datos.append("fecha", fecha);
+	datos.append("funt", "guardar_reposicion");
+	for (var i = 0; i < detallesReposicion.length; i++) {
+		var detalle = detallesReposicion[i].detalle;
+		datos.append("id_consultorio[]", detallesReposicion[i].id_consultorio);
+		datos.append("id_insumo[]", detalle.id_insumo);
+		datos.append("id_variante[]", detalle.id_variante || "0");
+		datos.append("cantidad[]", detalle.cantidad);
 	}
+	var boton = document.getElementById("btnGuardarReposicionInsumos");
+	if (boton) { boton.disabled = true; }
 	$.ajax({
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
@@ -46187,19 +46419,25 @@ function guardarMovimientoInsumo() {
 		cache: false,
 		contentType: false,
 		processData: false,
+		complete: function () {
+			if (boton) { boton.disabled = false; }
+		},
 		success: function (responseText) {
 			try {
 				var datos = $.parseJSON(responseText);
 				if (respuestaJqueryAjax(datos["1"]) == true) {
-					ver_vetana_informativa(datos.mensaje || "Movimiento guardado.");
+					ver_vetana_informativa(datos.mensaje || "Reposicion guardada.");
+					codigoReposicionInsumoSeleccionada = datos.codigo || "";
+					actualizarEstadoBotonPdfMovimientoInsumos();
 					document.getElementById("inptMovimientoInsumoMotivo").value = "";
-					movimientoInsumosDetalle = [];
-					renderDetalleCargaMovimientoInsumo();
-					listarMovimientosInsumos();
-					buscarDashboardInsumosStock();
-					listarAlertasStockInsumos();
+					limpiarHiloReposicionInsumos();
+					reposicionInsumosSeleccionados = {};
+					reposicionInsumosPorConsultorio = {};
+					cambiarConsultorioReposicionInsumos();
+					toggleHistorialMovimientosInsumos(true);
+					listarReposicionesInsumos();
 				} else {
-					ver_vetana_informativa(datos.mensaje || "No se pudo guardar el movimiento.", "", "error");
+					ver_vetana_informativa(datos.mensaje || "No se pudo guardar la reposicion.", "", "error");
 				}
 			} catch (error) {
 				GuardarArchivosLog("Error: " + error + " \r\n Consola: " + responseText);
@@ -46208,9 +46446,7 @@ function guardarMovimientoInsumo() {
 	});
 }
 
-function listarMovimientosInsumos() {
-	grupoMovimientoInsumoSeleccionado = "";
-	actualizarEstadoBotonPdfMovimientoInsumos();
+function listarReposicionesInsumos() {
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -46218,10 +46454,8 @@ function listarMovimientosInsumos() {
 		"navegador": navegador,
 		"fecha_desde": document.getElementById("filtroMovimientoDesde").value,
 		"fecha_hasta": document.getElementById("filtroMovimientoHasta").value,
-		"tipo": document.getElementById("filtroMovimientoTipo").value,
-		"cod_local": document.getElementById("filtroMovimientoLocal").value,
-		"id_insumo": document.getElementById("filtroMovimientoInsumo").value,
-		"funt": "listar_movimientos"
+		"estado": document.getElementById("filtroReposicionEstado").value,
+		"funt": "listar_reposiciones"
 	};
 	document.getElementById("tableMovimientosInsumos").innerHTML = paginacargando;
 	$.ajax({
@@ -46235,17 +46469,21 @@ function listarMovimientosInsumos() {
 				var html = "";
 				for (var i = 0; i < filas.length; i++) {
 					var f = filas[i];
-					html += "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5' style='width:100%'><tr onclick='verDetalleMovimientoInsumos(\"" + escaparHtmlAbmInsumos(f.grupo_movimiento) + "\")'>";
-					html += "<td class='tdRegistroSearch' style='width:18%'>" + escaparHtmlAbmInsumos(f.fecha) + "</td>";
-					html += "<td class='tdRegistroSearch' style='width:12%'>" + escaparHtmlAbmInsumos(f.tipo) + "</td>";
-					html += "<td class='tdRegistroSearch' style='width:25%'>" + escaparHtmlAbmInsumos(f.nombre_local) + "</td>";
+					var pendiente = String(f.estado).toLowerCase() == "pendiente";
+					html += "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5' style='width:100%'><tr onclick='verDetalleReposicionInsumos(\"" + escaparHtmlAbmInsumos(f.codigo) + "\")'>";
+					html += "<td class='tdRegistroSearch' style='width:16%'>" + escaparHtmlAbmInsumos(f.fecha_envio) + "</td>";
+					html += "<td class='tdRegistroSearch' style='width:12%'><span class='reposicion-estado reposicion-estado-" + escaparHtmlAbmInsumos(f.estado) + "'>" + escaparHtmlAbmInsumos(f.estado) + "</span></td>";
+					html += "<td class='tdRegistroSearch' style='width:18%'>" + escaparHtmlAbmInsumos(f.nombre_local) + (f.asunto_hilo ? "<small class='insumos-reposicion-hilo-tabla'>Hilo: " + escaparHtmlAbmInsumos(f.asunto_hilo) + "</small>" : "") + "</td>";
 					html += "<td class='tdRegistroSearch' style='width:20%'>" + escaparHtmlAbmInsumos(f.nombre_consultorio) + "</td>";
-					html += "<td class='tdRegistroSearch' style='width:10%;text-align:center'>" + escaparHtmlAbmInsumos(f.total_insumos) + "</td>";
+					html += "<td class='tdRegistroSearch' style='width:9%;text-align:center'>" + escaparHtmlAbmInsumos(f.total_insumos) + "</td>";
 					html += "<td class='tdRegistroSearch' style='width:15%'>" + escaparHtmlAbmInsumos(f.motivo) + "</td>";
+					html += "<td class='tdRegistroSearch' style='width:10%;text-align:center'>" + (pendiente ? "<button type='button' class='btn4 reposicion-recibir-btn' onclick='event.stopPropagation();recibirReposicionInsumos(\"" + escaparHtmlAbmInsumos(f.codigo) + "\")'>Recibir</button>" : "Recibida") + "</td>";
 					html += "</tr></table>";
 				}
-				document.getElementById("tableMovimientosInsumos").innerHTML = html || "<p class='pTituloC' style='padding:14px;text-align:center'>Sin movimientos.</p>";
-				document.getElementById("tableDetalleMovimientoInsumos").innerHTML = "<p class='pTituloC' style='padding:14px;text-align:center'>Seleccione un movimiento para ver el detalle.</p>";
+				document.getElementById("tableMovimientosInsumos").innerHTML = html || "<p class='pTituloC' style='padding:14px;text-align:center'>Sin reposiciones.</p>";
+				if (codigoReposicionInsumoSeleccionada == "") {
+					document.getElementById("tableDetalleMovimientoInsumos").innerHTML = "<p class='pTituloC' style='padding:14px;text-align:center'>Seleccione una reposicion para ver el detalle.</p>";
+				}
 			} catch (error) {
 				document.getElementById("tableMovimientosInsumos").innerHTML = "";
 			}
@@ -46253,26 +46491,34 @@ function listarMovimientosInsumos() {
 	});
 }
 
-function verDetalleMovimientoInsumos(grupoMovimiento) {
-	grupoMovimientoInsumoSeleccionado = grupoMovimiento || "";
+function verDetalleReposicionInsumos(codigo) {
+	codigoReposicionInsumoSeleccionada = codigo || "";
 	actualizarEstadoBotonPdfMovimientoInsumos();
 	obtener_datos_user();
 	document.getElementById("tableDetalleMovimientoInsumos").innerHTML = paginacargando;
 	$.ajax({
-		data: {"useru": userid, "passu": passuser, "navegador": navegador, "grupo_movimiento": grupoMovimiento, "funt": "detalle_movimiento"},
+		data: {"useru": userid, "passu": passuser, "navegador": navegador, "codigo": codigo, "funt": "detalle_reposicion"},
 		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		success: function (responseText) {
 			try {
 				var datos = $.parseJSON(responseText);
 				var filas = datos.filas || [];
+				var cabecera = datos.cabecera || {};
+				var etiquetaHilo = document.getElementById("lblDetalleReposicionHilo");
+				if (etiquetaHilo) {
+					etiquetaHilo.innerHTML = cabecera.cod_interConsultaFK
+						? "Hilo vinculado: <b>" + escaparHtmlAbmInsumos(cabecera.asunto_hilo || ("#" + cabecera.cod_interConsultaFK)) + "</b> &middot; #" + escaparHtmlAbmInsumos(cabecera.cod_interConsultaFK)
+						: "Reposici&oacute;n hist&oacute;rica sin Hilo vinculado.";
+				}
 				var html = "";
 				for (var i = 0; i < filas.length; i++) {
 					var f = filas[i];
 					var nombreDetalle = f.nombre_insumo + (f.nombre_variante ? " - " + f.nombre_variante : "");
 					html += "<table class='tableRegistroSearch' border='1' cellspacing='1' cellpadding='5' style='width:100%'><tr>";
-					html += "<td class='tdRegistroSearch' style='width:55%'>" + escaparHtmlAbmInsumos(nombreDetalle) + "</td>";
-					html += "<td class='tdRegistroSearch' style='width:20%;text-align:center'>" + escaparHtmlAbmInsumos(f.cantidad) + "</td>";
+					html += "<td class='tdRegistroSearch' style='width:22%'>" + escaparHtmlAbmInsumos(f.nombre_consultorio) + "</td>";
+					html += "<td class='tdRegistroSearch' style='width:38%'>" + escaparHtmlAbmInsumos(nombreDetalle) + "</td>";
+					html += "<td class='tdRegistroSearch' style='width:15%;text-align:center'>" + escaparHtmlAbmInsumos(formatearCantidadReposicionInsumos(f.cantidad)) + "</td>";
 					html += "<td class='tdRegistroSearch' style='width:15%'>" + escaparHtmlAbmInsumos(f.unidad_medida) + "</td>";
 					html += "<td class='tdRegistroSearch' style='width:10%;text-align:center'>" + escaparHtmlAbmInsumos(f.insumo_id) + "</td>";
 					html += "</tr></table>";
@@ -46285,9 +46531,39 @@ function verDetalleMovimientoInsumos(grupoMovimiento) {
 	});
 }
 
-function generarPdfMovimientoInsumos() {
-	if (grupoMovimientoInsumoSeleccionado == "") {
-		ver_vetana_informativa("Seleccione un movimiento para generar el informe.", "", "error");
+function recibirReposicionInsumos(codigo) {
+	if (!confirm("Confirma la recepcion de esta reposicion?\nEl stock de todos los consultorios incluidos se actualizara inmediatamente.")) {
+		return;
+	}
+	obtener_datos_user();
+	$.ajax({
+		data: {"useru": userid, "passu": passuser, "navegador": navegador, "codigo": codigo, "funt": "recibir_reposicion"},
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
+		type: "post",
+		success: function (responseText) {
+			try {
+				var datos = $.parseJSON(responseText);
+				if (respuestaJqueryAjax(datos["1"]) == true) {
+					ver_vetana_informativa(datos.mensaje || "Recepcion confirmada.");
+					codigoReposicionInsumoSeleccionada = codigo;
+					listarReposicionesInsumos();
+					verDetalleReposicionInsumos(codigo);
+					buscarDashboardInsumosStock();
+					listarAlertasStockInsumos();
+				} else {
+					ver_vetana_informativa(datos.mensaje || "No se pudo confirmar la recepcion.", "", "error");
+				}
+			} catch (error) {
+				GuardarArchivosLog("Error recibirReposicionInsumos: " + error + " \r\n Consola: " + responseText);
+			}
+		}
+	});
+}
+
+function generarPdfReposicionInsumos(codigo) {
+	var codigoInforme = codigo || codigoReposicionInsumoSeleccionada;
+	if (codigoInforme == "") {
+		ver_vetana_informativa("Seleccione una reposicion para generar el informe.", "", "error");
 		return;
 	}
 	var ventana = window.open('', '_blank');
@@ -46296,13 +46572,13 @@ function generarPdfMovimientoInsumos() {
 		return;
 	}
 	ventana.document.open();
-	ventana.document.write("<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'><title>Preparando informe</title></head><body style='font-family:Arial,sans-serif;padding:18px;color:#172033;'>Preparando informe de movimiento de insumos...</body></html>");
+	ventana.document.write("<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'><title>Preparando informe</title></head><body style='font-family:Arial,sans-serif;padding:18px;color:#172033;'>Preparando informe de reposicion...</body></html>");
 	ventana.document.close();
 
 	obtener_datos_user();
 	verCerrarEfectoCargando("1");
 	$.ajax({
-		data: {"useru": userid, "passu": passuser, "navegador": navegador, "grupo_movimiento": grupoMovimientoInsumoSeleccionado, "funt": "reporte_movimiento"},
+		data: {"useru": userid, "passu": passuser, "navegador": navegador, "codigo": codigoInforme, "funt": "reporte_reposicion"},
 		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		success: function (responseText) {
@@ -46330,8 +46606,8 @@ function generarPdfMovimientoInsumos() {
 					ventana.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Error</title></head><body style='font-family:Arial,sans-serif;padding:18px;color:#991b1b;'><h3>No se pudo generar el informe.</h3></body></html>");
 					ventana.document.close();
 				}
-				ver_vetana_informativa("No se pudo preparar el informe de movimiento.", "", "error");
-				GuardarArchivosLog("Error generarPdfMovimientoInsumos: " + error + " \r\n Consola: " + responseText);
+				ver_vetana_informativa("No se pudo preparar el informe de reposicion.", "", "error");
+				GuardarArchivosLog("Error generarPdfReposicionInsumos: " + error + " \r\n Consola: " + responseText);
 			}
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {

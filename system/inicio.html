@@ -32,8 +32,8 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=gestor-accesos-20260723-1" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=gestor-accesos-20260723-1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ficha-insumos-20260724-1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=ficha-insumos-20260724-1" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-4" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=trabajo-laboratorio-20260723-mini-hilo-1" />
@@ -57,10 +57,10 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 
 <script src="/GoodVentaAsisCap/js/jquery.js"></script>
 <script src="/GoodVentaAsisCap/js_system/agendamiento.js?x=performance-polling-20260718"></script>
-<script src="/GoodVentaAsisCap/js_system/consulta.js?x=trabajo-laboratorio-20260723-6"></script>
+<script src="/GoodVentaAsisCap/js_system/consulta.js?x=ficha-insumos-20260724-1"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=gestor-accesos-20260723-1"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=reposiciones-hilos-20260724-1"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=gestor-accesos-20260723-1"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -79,7 +79,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="../js_system/abmTrabajoMecanicoDental.js?x=historico-solo-consulta-20260721"></script>
 <script src="../js_system/trabajo_laboratorio.js?x=trabajo-laboratorio-20260723-20"></script>
 <script src="../js_system/abmMecanicoDental.js?x=cuenta-telar-20260721-3"></script>
-<script src="../js_system/abmInterConsulta.js?x=trabajo-laboratorio-20260723-mini-hilo-1"></script>
+<script src="../js_system/abmInterConsulta.js?x=reposiciones-hilos-20260724-1"></script>
 <script src="../js_system/abmCentroFacturas.js?x=nomenclatura-legajos-20260721-1"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
@@ -12237,34 +12237,59 @@ style='background-color: #FF5722;'>
 
 <div class='insumos-tab-contenido' id='tabInsumosMovimientos'>
   <section class='presupuesto-panel dashboard-insumos-carga insumos-movimiento-carga'>
-    <div class='panel-title'>Registrar movimiento</div>
+    <div class='dashboard-insumos-listado-head'>
+      <div>
+        <div class='panel-title'>Nuevo env&iacute;o de reposici&oacute;n</div>
+        <span class='panel-subtitle'>Seleccione el destino y cargue todos los insumos incluidos en el env&iacute;o. El stock se actualizar&aacute; al confirmar la recepci&oacute;n.</span>
+      </div>
+    </div>
     <div class='insumos-form-grid insumos-movimiento-datos'>
-      <div class='form-row'><label>Tipo</label><select class='inputSelect' id='inptMovimientoInsumoTipo'><option value='entrada'>Entrada</option><option value='salida'>Salida</option><option value='ajuste'>Ajuste</option></select></div>
-      <div class='form-row'><label>Sucursal</label><select class='inputSelect' id='inptMovimientoInsumoLocal' onchange='filtrarConsultoriosGenericoInsumos("inptMovimientoInsumoLocal","inptMovimientoInsumoConsultorio")'></select></div>
-      <div class='form-row'><label>Consultorio</label><select class='inputSelect' id='inptMovimientoInsumoConsultorio'></select></div>
-      <div class='form-row'><label>Fecha</label><input class='inputText' type='date' id='inptMovimientoInsumoFecha'></div>
-      <div class='form-row insumos-grid-span'><label>Motivo</label><input class='inputText' type='text' id='inptMovimientoInsumoMotivo' placeholder='Obligatorio'></div>
-      <div class='form-row insumos-selector-movimiento'><label>Insumo</label><input class='inputText' type='text' id='inptMovimientoBuscarInsumo' placeholder='Buscar por codigo o nombre' onkeyup='filtrarComboMovimientoDetalleInsumo(event)'><select class='inputSelect' id='inptMovimientoDetalleInsumo'></select></div>
-      <div class='form-row'><label>Cantidad</label><input class='inputText' type='number' min='0.001' step='any' id='inptMovimientoDetalleCantidad'></div>
+      <div class='form-row'><label>Sucursal destino</label><select class='inputSelect' id='inptMovimientoInsumoLocal' onchange='cambiarSucursalReposicionInsumos()'></select></div>
+      <div class='form-row'><label>Consultorio a cargar</label><select class='inputSelect' id='inptMovimientoInsumoConsultorio' onchange='cambiarConsultorioReposicionInsumos()'></select></div>
+      <div class='form-row'><label>Fecha del env&iacute;o</label><input class='inputText' type='date' id='inptMovimientoInsumoFecha'></div>
+      <div class='form-row'><label>Motivo</label><input class='inputText' type='text' id='inptMovimientoInsumoMotivo' maxlength='255' placeholder='Ej.: reposici&oacute;n semanal'></div>
+      <div class='form-row insumos-reposicion-hilo-campo'>
+        <label>Hilo vinculado <span aria-hidden='true'>*</span></label>
+        <div class='insumos-reposicion-hilo-buscador'>
+          <input class='inputText' type='text' id='inptReposicionBuscarHilo' autocomplete='off' placeholder='Buscar por nombre o c&oacute;digo del Hilo' onfocus='buscarHilosReposicionInsumos(this.value, true)' oninput='programarBusquedaHilosReposicionInsumos(this.value)'>
+          <input type='hidden' id='inptReposicionHiloId'>
+          <div class='insumos-reposicion-hilo-resultados' id='listaHilosReposicionInsumos' style='display:none;'></div>
+        </div>
+        <small id='lblReposicionHiloSeleccionado'>Seleccione obligatoriamente el Hilo que recibir&aacute; el borrador.</small>
+      </div>
     </div>
+    <div class='insumos-reposicion-consultorios' id='resumenConsultoriosReposicionInsumos'>
+      <span>Seleccione un consultorio y cargue sus insumos.</span>
+    </div>
+    <div class='insumos-reposicion-filtros'>
+      <div class='form-row'>
+        <label>Buscar insumos</label>
+        <input class='inputText' type='text' id='inptReposicionBuscarInsumo' placeholder='C&oacute;digo, nombre, descripci&oacute;n o variante' oninput='renderListaReposicionInsumos()'>
+      </div>
+      <div class='form-row'>
+        <label>Mostrar</label>
+        <select class='inputSelect' id='inptReposicionFiltroLista' onchange='renderListaReposicionInsumos()'>
+          <option value='todos'>Todos los disponibles</option>
+          <option value='seleccionados'>Solo seleccionados</option>
+        </select>
+      </div>
+      <div class='insumos-reposicion-contador' id='lblReposicionInsumosSeleccionados'>0 seleccionados</div>
+    </div>
+    <div class='insumos-reposicion-lista' id='listaReposicionInsumos'></div>
     <div class='insumos-movimiento-acciones'>
-      <div class='form-row'><input type='button' value='Agregar insumo' class='btn4' onclick='agregarDetalleMovimientoInsumo()' style='width:145px'></div>
-      <div class='form-row'><input type='button' value='Guardar movimiento' class='btn4' onclick='guardarMovimientoInsumo()' style='width:170px'></div>
-    </div>
-    <div class='insumos-movimiento-lista'>
-      <table class='tableCabeceraRegistro' style='width:100%;margin-top:12px'><tr><td class='td_registro' style='width:70%'>INSUMO / VARIANTE</td><td class='td_registro' style='width:20%'>CANTIDAD</td><td class='td_registro' style='width:10%'></td></tr></table>
-      <div class='div_cuerpo_table' id='tableMovimientoInsumosDetalle' style='height:120px;width:100%;box-sizing:border-box;'></div>
+      <input type='button' value='Limpiar consultorio' class='btn2' onclick='limpiarReposicionInsumos()' style='width:165px'>
+      <input type='button' value='Guardar reposici&oacute;n' class='btn4' id='btnGuardarReposicionInsumos' onclick='guardarReposicionInsumos()' style='width:185px'>
     </div>
   </section>
   <section class='presupuesto-panel dashboard-insumos-listado insumos-movimientos-historial-panel'>
     <div class='insumos-movimientos-toggle-head'>
       <div>
-        <div class='panel-title'>Historial de movimientos</div>
-        <span class='panel-subtitle'>Consulte movimientos anteriores solo cuando lo necesite.</span>
+        <div class='panel-title'>Historial de reposiciones</div>
+        <span class='panel-subtitle'>Controle env&iacute;os pendientes y confirme la recepci&oacute;n para actualizar el stock.</span>
       </div>
       <div style='display:flex; gap:8px; align-items:center;'>
         <input type='button' value='Ver historial' class='btn4 insumos-action-btn' id='btnToggleHistorialMovimientosInsumos' onclick='toggleHistorialMovimientosInsumos()' style='width:135px'>
-        <input type='button' value='Generar PDF de movimiento' class='btn4 insumos-action-btn' id='btnGenerarPdfMovimientoInsumos' onclick='generarPdfMovimientoInsumos()' style='width:200px' disabled>
+        <input type='button' value='Generar informe' class='btn4 insumos-action-btn' id='btnGenerarPdfMovimientoInsumos' onclick='generarPdfReposicionInsumos()' style='width:155px' disabled>
       </div>
     </div>
     <div class='insumos-movimientos-layout' id='contenedorHistorialMovimientosInsumos' style='display:none;'>
@@ -12272,17 +12297,16 @@ style='background-color: #FF5722;'>
         <div class='insumos-form-grid insumos-filtros-compactos insumos-movimientos-filtros'>
           <div class='form-row'><label>Desde</label><input class='inputText' type='date' id='filtroMovimientoDesde'></div>
           <div class='form-row'><label>Hasta</label><input class='inputText' type='date' id='filtroMovimientoHasta'></div>
-          <div class='form-row'><label>Tipo</label><select class='inputSelect' id='filtroMovimientoTipo'><option value=''>Todos</option><option value='entrada'>Entrada</option><option value='salida'>Salida</option><option value='ajuste'>Ajuste</option></select></div>
-          <div class='form-row'><label>Sucursal</label><select class='inputSelect' id='filtroMovimientoLocal'></select></div>
-          <div class='form-row'><label>Insumo</label><select class='inputSelect' id='filtroMovimientoInsumo'></select></div>
-          <div class='form-row'><input type='button' value='Buscar' class='btn4' onclick='listarMovimientosInsumos()' style='width:110px'></div>
+          <div class='form-row'><label>Estado</label><select class='inputSelect' id='filtroReposicionEstado'><option value=''>Todos</option><option value='pendiente'>Pendientes</option><option value='recibida'>Recibidas</option></select></div>
+          <div class='form-row'><input type='button' value='Buscar' class='btn4' onclick='listarReposicionesInsumos()' style='width:110px'></div>
         </div>
-        <table class='tableCabeceraRegistro' style='width:100%'><tr><td class='td_registro' style='width:18%'>FECHA</td><td class='td_registro' style='width:12%'>TIPO</td><td class='td_registro' style='width:25%'>SUCURSAL</td><td class='td_registro' style='width:20%'>CONSULTORIO</td><td class='td_registro' style='width:10%'>INSUMOS</td><td class='td_registro' style='width:15%'>MOTIVO</td></tr></table>
+        <table class='tableCabeceraRegistro' style='width:100%'><tr><td class='td_registro' style='width:16%'>FECHA</td><td class='td_registro' style='width:12%'>ESTADO</td><td class='td_registro' style='width:18%'>SUCURSAL</td><td class='td_registro' style='width:20%'>CONSULTORIOS</td><td class='td_registro' style='width:9%'>INSUMOS</td><td class='td_registro' style='width:15%'>MOTIVO</td><td class='td_registro' style='width:10%'>ACCI&Oacute;N</td></tr></table>
         <div class='div_cuerpo_table dashboard-insumos-tabla insumos-movimientos-tabla' id='tableMovimientosInsumos'></div>
       </div>
       <div class='insumos-movimientos-detalle'>
-        <div class='panel-title'>Detalle del movimiento</div>
-        <table class='tableCabeceraRegistro' style='width:100%'><tr><td class='td_registro' style='width:55%'>INSUMO</td><td class='td_registro' style='width:20%'>CANTIDAD</td><td class='td_registro' style='width:15%'>UNIDAD</td><td class='td_registro' style='width:10%'>CODIGO</td></tr></table>
+        <div class='panel-title'>Detalle de la reposici&oacute;n</div>
+        <div class='insumos-reposicion-detalle-hilo' id='lblDetalleReposicionHilo'>Seleccione una reposici&oacute;n para ver su Hilo vinculado.</div>
+        <table class='tableCabeceraRegistro' style='width:100%'><tr><td class='td_registro' style='width:22%'>CONSULTORIO</td><td class='td_registro' style='width:38%'>INSUMO</td><td class='td_registro' style='width:15%'>CANTIDAD</td><td class='td_registro' style='width:15%'>UNIDAD</td><td class='td_registro' style='width:10%'>CODIGO</td></tr></table>
         <div class='div_cuerpo_table insumos-movimientos-detalle-tabla' id='tableDetalleMovimientoInsumos'></div>
       </div>
     </div>
@@ -28549,15 +28573,12 @@ onclick='buscarvistaaperturacierrecaja()' />
         </div>
         <div class='modal-filtros-body agenda-filtros-grid' style='grid-template-columns:1fr 1fr;'>
             <div class='filtro-grupo'>
-                <label>Periodo</label>
-                <select id='inptInformeInsumosPeriodo' class='catalogo-selectBuscador'>
-                    <option value='dia'>Dia</option>
-                    <option value='semana'>Semana</option>
-                </select>
+                <label>Fecha inicio</label>
+                <input type='date' id='inptInformeInsumosFechaInicio' class='catalogo-selectBuscador' />
             </div>
             <div class='filtro-grupo'>
-                <label>Fecha base</label>
-                <input type='date' id='inptInformeInsumosFechaBase' class='catalogo-selectBuscador' />
+                <label>Fecha final</label>
+                <input type='date' id='inptInformeInsumosFechaFinal' class='catalogo-selectBuscador' />
             </div>
             <div class='filtro-grupo'>
                 <label>Alcance</label>
@@ -28587,16 +28608,17 @@ window.abrirModalInformeInsumosAgenda = function(){
     var modal = document.getElementById('modalInformeInsumosAgenda');
     var overlay = document.getElementById('overlayInformeInsumosAgenda');
     var fechaAgenda = document.getElementById('inptFechaAgenda');
-    var fechaBase = document.getElementById('inptInformeInsumosFechaBase');
-    var periodo = document.getElementById('inptInformeInsumosPeriodo');
+    var fechaInicio = document.getElementById('inptInformeInsumosFechaInicio');
+    var fechaFinal = document.getElementById('inptInformeInsumosFechaFinal');
     var alcance = document.getElementById('inptInformeInsumosAlcance');
 
     if(!modal || !overlay){
         alert('No se encontro el modal de informe de insumos.');
         return;
     }
-    if(periodo){ periodo.value = 'dia'; }
-    if(fechaBase){ fechaBase.value = (fechaAgenda && fechaAgenda.value) ? fechaAgenda.value : obtenerFechaHoyInformeInsumosAgenda(); }
+    var fechaInicial = (fechaAgenda && fechaAgenda.value) ? fechaAgenda.value : obtenerFechaHoyInformeInsumosAgenda();
+    if(fechaInicio){ fechaInicio.value = fechaInicial; }
+    if(fechaFinal){ fechaFinal.value = fechaInicial; }
     if(alcance){ alcance.value = 'sucursal'; }
 
     cargarCatalogosInformeInsumosAgendaSimple(function(){
@@ -28721,14 +28743,16 @@ function renderSucursalesDesdeAgendaInformeInsumosAgendaSimple(){
 }
 
 window.generarInformeInsumosAgendaPdf = function(){
-    var periodo = document.getElementById('inptInformeInsumosPeriodo');
-    var fechaBase = document.getElementById('inptInformeInsumosFechaBase');
+    var fechaInicio = document.getElementById('inptInformeInsumosFechaInicio');
+    var fechaFinal = document.getElementById('inptInformeInsumosFechaFinal');
     var alcance = document.getElementById('inptInformeInsumosAlcance');
     var sucursal = document.getElementById('inptInformeInsumosSucursal');
     var consultorio = document.getElementById('inptInformeInsumosConsultorio');
     var ventanaInforme;
 
-    if(!fechaBase || fechaBase.value === ''){ alert('Seleccione una fecha base.'); return; }
+    if(!fechaInicio || fechaInicio.value === ''){ alert('Seleccione una fecha de inicio.'); return; }
+    if(!fechaFinal || fechaFinal.value === ''){ alert('Seleccione una fecha final.'); return; }
+    if(fechaInicio.value > fechaFinal.value){ alert('La fecha de inicio no puede ser posterior a la fecha final.'); return; }
     if(!sucursal || sucursal.value === ''){ alert('Seleccione una sucursal.'); return; }
     if(alcance && alcance.value === 'consultorio' && (!consultorio || consultorio.value === '')){ alert('Seleccione un consultorio.'); return; }
 
@@ -28744,8 +28768,8 @@ window.generarInformeInsumosAgendaPdf = function(){
             useru: typeof userid !== 'undefined' ? userid : '',
             passu: typeof passuser !== 'undefined' ? passuser : '',
             navegador: typeof navegador !== 'undefined' ? navegador : '',
-            periodo: periodo ? periodo.value : 'dia',
-            fecha_base: fechaBase.value,
+            fecha_inicio: fechaInicio.value,
+            fecha_final: fechaFinal.value,
             tipo_alcance: alcance ? alcance.value : 'sucursal',
             id_sucursal: sucursal.value,
             id_consultorio: (alcance && alcance.value === 'consultorio' && consultorio) ? consultorio.value : '',

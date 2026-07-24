@@ -1538,6 +1538,132 @@ function obtenerVistaMiniHiloLaboratorioInterconsulta($miniHilo, $idTrabajo) {
         .'</span></div></section>';
 }
 
+function obtenerTarjetasReposicionInsumosInterconsulta($codigos, $codInterConsulta) {
+    $codInterConsulta= intval($codInterConsulta);
+    $codigosSeguros= array();
+    foreach ((array)$codigos as $codigo) {
+        $codigo= strtoupper(trim((string)$codigo));
+        if (preg_match('/^REP_[A-Z0-9_]{1,36}$/', $codigo)) {
+            $codigosSeguros[$codigo]= $codigo;
+        }
+    }
+    if ($codInterConsulta <= 0 || count($codigosSeguros) === 0) {
+        return array();
+    }
+
+    $mysqli= conectar_al_servidor();
+    $tabla= $mysqli->query("SHOW TABLES LIKE 'reposiciones_insumos'");
+    $columna= $mysqli->query("SHOW COLUMNS FROM reposiciones_insumos LIKE 'cod_interConsultaFK'");
+    if (!$tabla || $tabla->num_rows === 0 || !$columna || $columna->num_rows === 0) {
+        $mysqli->close();
+        return array();
+    }
+
+    $lista= array();
+    foreach ($codigosSeguros as $codigo) {
+        $lista[]= "'".$mysqli->real_escape_string($codigo)."'";
+    }
+    $sql= "SELECT r.codigo,r.cod_interConsultaFK,r.fecha_envio,r.fecha_recepcion,r.estado,r.motivo,
+                l.Nombre AS nombre_local,c.nombre AS nombre_consultorio,
+                i.nombre AS nombre_insumo,i.unidad_medida,
+                COALESCE(v.nombre_variante,'') AS nombre_variante,d.cantidad
+            FROM reposiciones_insumos r
+            INNER JOIN reposiciones_insumos_detalle d ON d.id_reposicion=r.id_reposicion
+            INNER JOIN local l ON l.cod_local=r.sucursal_id
+            INNER JOIN consultorios c ON c.id_consultorio=d.consultorio_id
+            INNER JOIN insumosconsl i ON i.id_insumo=d.insumo_id
+            LEFT JOIN insumo_variantes v ON v.id_variante=d.id_variante
+            WHERE r.codigo IN (".implode(",", $lista).")
+              AND r.cod_interConsultaFK=".$codInterConsulta."
+            ORDER BY r.codigo,c.nombre,i.nombre,v.nombre_variante";
+    $resultado= $mysqli->query($sql);
+    $salida= array();
+    while ($resultado && $fila= $resultado->fetch_assoc()) {
+        $codigo= strtoupper(trim((string)$fila['codigo']));
+        if (!isset($salida[$codigo])) {
+            $salida[$codigo]= array(
+                'codigo' => $codigo,
+                'cod_interConsultaFK' => intval($fila['cod_interConsultaFK']),
+                'fecha_envio' => (string)$fila['fecha_envio'],
+                'fecha_recepcion' => (string)$fila['fecha_recepcion'],
+                'estado' => strtolower(trim((string)$fila['estado'])),
+                'motivo' => mb_convert_encoding((string)$fila['motivo'], 'UTF-8', 'ISO-8859-1'),
+                'nombre_local' => mb_convert_encoding((string)$fila['nombre_local'], 'UTF-8', 'ISO-8859-1'),
+                'consultorios' => array()
+            );
+        }
+        $nombreConsultorio= mb_convert_encoding((string)$fila['nombre_consultorio'], 'UTF-8', 'ISO-8859-1');
+        if (!isset($salida[$codigo]['consultorios'][$nombreConsultorio])) {
+            $salida[$codigo]['consultorios'][$nombreConsultorio]= array();
+        }
+        $salida[$codigo]['consultorios'][$nombreConsultorio][]= array(
+            'nombre_insumo' => mb_convert_encoding((string)$fila['nombre_insumo'], 'UTF-8', 'ISO-8859-1'),
+            'nombre_variante' => mb_convert_encoding((string)$fila['nombre_variante'], 'UTF-8', 'ISO-8859-1'),
+            'unidad_medida' => mb_convert_encoding((string)$fila['unidad_medida'], 'UTF-8', 'ISO-8859-1'),
+            'cantidad' => (float)$fila['cantidad']
+        );
+    }
+    if ($resultado) {
+        $resultado->free();
+    }
+    $mysqli->close();
+    return $salida;
+}
+
+function formatearCantidadTarjetaReposicionInterconsulta($cantidad) {
+    $texto= number_format((float)$cantidad, 3, '.', '');
+    return rtrim(rtrim($texto, '0'), '.');
+}
+
+function obtenerVistaTarjetaReposicionInsumosInterconsulta($reposicion) {
+    if (!is_array($reposicion) || empty($reposicion['codigo'])) {
+        return '';
+    }
+    $codigo= (string)$reposicion['codigo'];
+    $estado= isset($reposicion['estado']) ? strtolower((string)$reposicion['estado']) : 'pendiente';
+    $pendiente= $estado === 'pendiente';
+    $fecha= !empty($reposicion['fecha_envio']) && strtotime($reposicion['fecha_envio']) !== false
+        ? date('d/m/Y H:i', strtotime($reposicion['fecha_envio'])) : '';
+    $htmlConsultorios= '';
+    $totalInsumos= 0;
+    foreach ((array)$reposicion['consultorios'] as $consultorio => $insumos) {
+        $htmlConsultorios.= '<section class="interconsulta-reposicion-card__consultorio">'
+            .'<strong>'.escaparHtmlInterconsulta($consultorio).'</strong><ul>';
+        foreach ((array)$insumos as $insumo) {
+            $totalInsumos++;
+            $nombre= trim((string)$insumo['nombre_insumo']);
+            if (trim((string)$insumo['nombre_variante']) !== '') {
+                $nombre.= ' - '.trim((string)$insumo['nombre_variante']);
+            }
+            $cantidad= formatearCantidadTarjetaReposicionInterconsulta($insumo['cantidad']);
+            $unidad= trim((string)$insumo['unidad_medida']);
+            $htmlConsultorios.= '<li><span>'.escaparHtmlInterconsulta($nombre).'</span>'
+                .'<b>'.escaparHtmlInterconsulta($cantidad.($unidad !== '' ? ' '.$unidad : '')).'</b></li>';
+        }
+        $htmlConsultorios.= '</ul></section>';
+    }
+    $accion= $pendiente
+        ? '<button type="button" class="interconsulta-reposicion-card__confirmar" '
+            .'data-hilo-action="confirmar_reposicion" '
+            .'data-reposicion-codigo="'.escaparHtmlInterconsulta($codigo).'" '
+            .'data-cod-interconsulta="'.intval($reposicion['cod_interConsultaFK']).'">'
+            .'<i class="fa-solid fa-check" aria-hidden="true"></i> Confirmar recepción</button>'
+        : '<span class="interconsulta-reposicion-card__recibida"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Recepción confirmada</span>';
+
+    return '<section class="interconsulta-reposicion-card is-'.($pendiente ? 'pendiente' : 'recibida').'">'
+        .'<header><span><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Reposición de insumos</span>'
+        .'<b>'.escaparHtmlInterconsulta($codigo).'</b></header>'
+        .'<div class="interconsulta-reposicion-card__meta">'
+        .'<span><b>Sucursal:</b> '.escaparHtmlInterconsulta($reposicion['nombre_local']).'</span>'
+        .'<span><b>Fecha:</b> '.escaparHtmlInterconsulta($fecha).'</span>'
+        .'<span><b>Motivo:</b> '.escaparHtmlInterconsulta($reposicion['motivo']).'</span>'
+        .'</div><details class="interconsulta-reposicion-card__desplegable">'
+        .'<summary><span class="is-closed"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i> Ver insumos ('.$totalInsumos.')</span>'
+        .'<span class="is-open"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i> Ocultar insumos ('.$totalInsumos.')</span></summary>'
+        .'<div class="interconsulta-reposicion-card__detalle">'.$htmlConsultorios.'</div></details>'
+        .'<footer>'.$accion.'</footer></section>';
+}
+
 function convertirTextoDocumentoInterconsulta($texto) {
     $texto = trim((string)(isset($texto) ? $texto : ''));
     if ($texto === '') {
@@ -2975,6 +3101,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         $regMensaje= obtenerMensaje($filtrosMensajeTarjeta, $limite);
         $resumenLecturasMensajes= interconsultaLecturasResumenMensajes($filtros["cod_interConsultaFK"], $regMensaje);
         $referenciasTrabajoLaboratorio= array();
+        $referenciasReposicionInsumos= array();
         foreach ($regMensaje as $mensajeTrabajoLaboratorio) {
             $contenidoReferencia= isset($mensajeTrabajoLaboratorio['contenido'])
                 ? (string)$mensajeTrabajoLaboratorio['contenido'] : '';
@@ -2984,7 +3111,14 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                     'id_trabajo' => intval($coincidenciaReferencia[1])
                 );
             }
+            if (preg_match('/\[REPOSICION_INSUMOS:(REP_[A-Z0-9_]+)\]/i', $contenidoReferencia, $coincidenciaReposicion)) {
+                $referenciasReposicionInsumos[]= strtoupper($coincidenciaReposicion[1]);
+            }
         }
+        $tarjetasReposicionInsumos= obtenerTarjetasReposicionInsumosInterconsulta(
+            $referenciasReposicionInsumos,
+            $filtros["cod_interConsultaFK"]
+        );
         $miniHilosTrabajoLaboratorio= array();
         if (count($referenciasTrabajoLaboratorio) > 0) {
             $mysqliMiniHilos= conectar_al_servidor();
@@ -3030,9 +3164,19 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
 
             $contenidoOriginalMensaje= (string)$valueMens['contenido'];
             $idTrabajoLaboratorioMensaje= 0;
+            $codigoReposicionInsumosMensaje= '';
             if (preg_match('/\[TRABAJO_LAB:(\d+)\]/', $contenidoOriginalMensaje, $coincidenciaTrabajoLaboratorio)) {
                 $idTrabajoLaboratorioMensaje= intval($coincidenciaTrabajoLaboratorio[1]);
                 $contenidoOriginalMensaje= trim(preg_replace('/\[TRABAJO_LAB:\d+\]\s*/', '', $contenidoOriginalMensaje, 1));
+            }
+            if (preg_match('/\[REPOSICION_INSUMOS:(REP_[A-Z0-9_]+)\]/i', $contenidoOriginalMensaje, $coincidenciaReposicionMensaje)) {
+                $codigoReposicionInsumosMensaje= strtoupper($coincidenciaReposicionMensaje[1]);
+                $contenidoOriginalMensaje= trim(preg_replace(
+                    '/\[REPOSICION_INSUMOS:REP_[A-Z0-9_]+\]\s*/i',
+                    '',
+                    $contenidoOriginalMensaje,
+                    1
+                ));
             }
             $contenidoMensaje= escaparHtmlInterconsulta($contenidoOriginalMensaje);
             // Transforma las menciones con el mapa de usuarios cargado una sola vez por solicitud.
@@ -3053,6 +3197,12 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 ? obtenerVistaMiniHiloLaboratorioInterconsulta(
                     $miniHiloMensaje,
                     $idTrabajoLaboratorioMensaje
+                )
+                : '';
+            $accionReposicionInsumosMensaje= $codigoReposicionInsumosMensaje !== ''
+                && isset($tarjetasReposicionInsumos[$codigoReposicionInsumosMensaje])
+                ? obtenerVistaTarjetaReposicionInsumosInterconsulta(
+                    $tarjetasReposicionInsumos[$codigoReposicionInsumosMensaje]
                 )
                 : '';
 
@@ -3208,6 +3358,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                             '.$respuestaCitada.'
                             <p>'.$contenidoMensaje.'</p>
                             '.$accionTrabajoLaboratorioMensaje.'
+                            '.$accionReposicionInsumosMensaje.'
                             '.$tarjetaDocumento.'
                         </div>
                         <footer class="interconsulta-message-footer">'.$palomitasMensaje.'</footer>

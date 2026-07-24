@@ -951,6 +951,8 @@ function manejarAccionSeguimientoHilo(event) {
         abrirCitaSeguimientoDesdeHilo(objetivo);
     } else if (accion == "abrir_pago_mora") {
         abrirPagoMoraSeguimientoDesdeHilo(objetivo);
+    } else if (accion == "confirmar_reposicion") {
+        confirmarReposicionInsumosDesdeHilo(objetivo);
     }
 }
 
@@ -958,6 +960,64 @@ if (!window.accionesSeguimientoHiloEventosInicializados) {
     document.addEventListener("click", manejarAccionSeguimientoHilo, true);
     document.addEventListener("keydown", manejarAccionSeguimientoHilo, true);
     window.accionesSeguimientoHiloEventosInicializados= true;
+}
+
+function confirmarReposicionInsumosDesdeHilo(elemento) {
+    var codigo= textoDetalleHilo(elemento.getAttribute("data-reposicion-codigo"), "");
+    var codigoHilo= textoDetalleHilo(elemento.getAttribute("data-cod-interconsulta"), "");
+    if (codigo == "" || codigoHilo == "") {
+        ver_vetana_informativa("Reposicion no disponible", "No se pudo identificar la reposicion vinculada.", "info");
+        return;
+    }
+    if (!confirm("Confirma la recepcion de esta reposicion?\nEl stock de todos los consultorios incluidos se actualizara inmediatamente.")) {
+        return;
+    }
+
+    obtener_datos_user();
+    elemento.disabled= true;
+    $.ajax({
+        data: {
+            "useru": userid,
+            "passu": passuser,
+            "navegador": navegador,
+            "codigo": codigo,
+            "cod_interConsulta": codigoHilo,
+            "desde_hilo": "1",
+            "funt": "recibir_reposicion"
+        },
+        url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
+        type: "post",
+        success: function(responseText) {
+            try {
+                var respuesta= $.parseJSON(responseText);
+                if (respuestaJqueryAjax(respuesta["1"]) == true) {
+                    ver_vetana_informativa(respuesta.mensaje || "Recepcion confirmada.");
+                    if (String(cod_interConsulta) === String(codigoHilo)) {
+                        buscarInterConsultasYContenido(codigoHilo);
+                    }
+                    if (typeof listarReposicionesInsumos == "function") {
+                        listarReposicionesInsumos();
+                    }
+                    if (typeof buscarDashboardInsumosStock == "function") {
+                        buscarDashboardInsumosStock();
+                    }
+                    if (typeof listarAlertasStockInsumos == "function") {
+                        listarAlertasStockInsumos();
+                    }
+                } else {
+                    elemento.disabled= false;
+                    ver_vetana_informativa(respuesta.mensaje || "No se pudo confirmar la recepcion.", "", "error");
+                }
+            } catch (error) {
+                elemento.disabled= false;
+                GuardarArchivosLog("Error confirmarReposicionInsumosDesdeHilo: " + error + " \r\n Consola: " + responseText);
+            }
+        },
+        error: function() {
+            elemento.disabled= false;
+            ver_vetana_informativa("No se pudo confirmar la recepcion.", "", "error");
+        }
+    });
 }
 
 function abrirCitaSeguimientoDesdeHilo(elemento) {
