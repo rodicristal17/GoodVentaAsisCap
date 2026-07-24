@@ -316,9 +316,14 @@ pruebaLabAfirmar(
     'El inicio agrupado y la asignacion posterior de tecnico son acciones normales dentro del local propio.'
 );
 pruebaLabAfirmar(
-    !trabajoLaboratorioAccionNaturalContexto('iniciarTrabajo', array('local_propio' => false))
-    && !trabajoLaboratorioAccionNaturalContexto('asignarTecnico', array('local_propio' => false)),
-    'El auditor conserva la justificacion cuando inicia o asigna tecnico fuera de su local.'
+    trabajoLaboratorioAccionNaturalContexto('iniciarTrabajo', array('local_propio' => false))
+    && trabajoLaboratorioAccionNaturalContexto('iniciarTrabajosAgrupados', array('local_propio' => false))
+    && trabajoLaboratorioAccionNaturalContexto('asignarTecnico', array('local_propio' => false)),
+    'El inicio simple, agrupado y la asignacion de tecnico son ordinarios en cualquier local autorizado.'
+);
+pruebaLabAfirmar(
+    !trabajoLaboratorioAccionNaturalContexto('guardarRegularizacionUnidades', array('local_propio' => false)),
+    'La regularizacion administrativa de unidades conserva el alcance del local propio.'
 );
 pruebaLabAfirmar(
     !trabajoLaboratorioAccionNaturalContexto('registrarInstalacion', array(
@@ -1309,6 +1314,8 @@ pruebaLabAfirmar(
     $bloqueRectificarCustodia !== ''
     && strpos($bloqueRectificarCustodia, "'rectificarCustodia'") !== false
     && strpos($bloqueRectificarCustodia, "'justificacion_rectificacion_requerida'") !== false
+    && strpos($bloqueRectificarCustodia, "if (".'$justificacion'." === '')") !== false
+    && strpos($bloqueRectificarCustodia, 'strlen($justificacion) < 5') === false
     && strpos($bloqueRectificarCustodia, 'trabajoLaboratorioUsuario($mysqli, $codCustodioNuevo)') !== false
     && strpos($bloqueRectificarCustodia, "'custodio_rectificacion_invalido'") !== false
     && strpos($bloqueRectificarCustodia, "'custodia_rectificada'") !== false
@@ -1697,16 +1704,23 @@ $bloqueExigirMotivoAuditor = pruebaLabBloqueFuncion(
 pruebaLabAfirmar(
     strpos($bloqueAccionNatural, "'iniciarTrabajosAgrupados'") !== false
     && strpos($bloqueAccionNatural, "'asignarTecnico'") !== false
+    && strpos($bloqueAccionNatural, 'return true;') !== false
+    && strpos($bloqueAccionNatural, "if (".'$accion'." === 'guardarRegularizacionUnidades')") !== false
     && strpos($bloqueAccionNatural, 'return $localPropio;') !== false
     && strpos($bloqueExigirMotivoAuditor, 'trabajoLaboratorioAccionRequiereMotivoExcepcionAuditor') !== false
+    && strpos($bloqueExigirMotivoAuditor, "if (".'$motivo'." === '')") !== false
+    && strpos($bloqueExigirMotivoAuditor, 'al menos cinco caracteres') === false
     && strpos($bloqueInicioTrabajo, '$accionComando') !== false,
-    'El servidor libera las acciones rutinarias del local y conserva el motivo para una excepcion real.'
+    'El servidor libera la preparacion inicial entre locales y exige una observacion sin minimo para otras excepciones.'
 );
 pruebaLabAfirmar(
     strpos($fuenteTrabajoLaboratorioJs, 'if (boolValue(config.requiere_motivo_excepcion))') !== false
-    && strpos($fuenteTrabajoLaboratorioJs, 'motivo_excepcion).trim().length < 5') !== false
-    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260723-20') !== false,
-    'La interfaz muestra y valida el motivo solo cuando el servidor identifica una intervencion excepcional.'
+    && strpos($fuenteTrabajoLaboratorioJs, 'Observación administrativa') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, '!toStringSafe(values.motivo_excepcion).trim()') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'motivo_excepcion).trim().length < 5') === false
+    && strpos($fuenteTrabajoLaboratorioJs, 'action.code === "rectificarCustodia" && toStringSafe(values.justificacion).trim().length < 5') === false
+    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260724-01') !== false,
+    'La interfaz ofrece una observacion inicial opcional y solo exige contenido, sin minimo, en otras excepciones.'
 );
 $bloqueGuardarRegularizacion = pruebaLabBloqueFuncion(
     $fuenteHelper,
@@ -1881,6 +1895,13 @@ $bloqueRecepcion = $bloquesTransicion['trabajoLaboratorioTomarHilo'];
 $bloqueDevolucion = $bloquesTransicion['trabajoLaboratorioIniciarDevolucion'];
 $bloqueAprobacion = $bloquesTransicion['trabajoLaboratorioAprobar'];
 $bloqueCancelacion = $bloquesTransicion['trabajoLaboratorioCancelar'];
+pruebaLabAfirmar(
+    strpos($bloqueAjuste, "if (".'$justificacion'." === '')") !== false
+    && strpos($bloqueAjuste, 'strlen($justificacion) < 5') === false
+    && strpos($bloqueCancelacion, "if (".'$motivo'." === '')") !== false
+    && strpos($bloqueCancelacion, 'strlen($motivo) < 5') === false,
+    'Ajustes y cancelaciones conservan texto obligatorio sin imponer una cantidad minima.'
+);
 pruebaLabAfirmar(
     substr_count($bloqueInicio, 'DATE_ADD(NOW(),INTERVAL ? DAY)') >= 2
     && strpos($bloqueInicio, '$dias = 30;') !== false
