@@ -1743,7 +1743,7 @@ function trabajoLaboratorioEstadoPermiteAccion($estado, $accion)
         'confirmarDevolucion' => array('en_transferencia_clinica'),
         'solicitarAjuste' => array('pendiente_revision'),
         'aprobarTrabajo' => array('pendiente_revision'),
-        'registrarInstalacion' => array('listo_instalacion')
+        'registrarInstalacion' => array('pendiente_revision', 'listo_instalacion')
     );
     if (in_array($accion, array(
         'agregarEvidencia',
@@ -1830,8 +1830,7 @@ function trabajoLaboratorioResolverAcciones($estado, $contexto)
         && $tiene('APROBARTRABAJOLABORATORIO');
     $acciones['registrarInstalacion'] = trabajoLaboratorioEstadoPermiteAccion($estado, 'registrarInstalacion')
         && $custodio
-        && (($doctor && $local) || $auditor)
-        && $tiene('INSTALARTRABAJOLABORATORIO');
+        && ($tiene('ENTREGARTRABAJOLABORATORIO') || $tiene('INSTALARTRABAJOLABORATORIO'));
     $acciones['cancelarTrabajo'] = trabajoLaboratorioEstadoPermiteAccion($estado, 'cancelarTrabajo')
         && (($local && !$tecnicoFormal) || $auditor)
         && $tiene('CANCELARTRABAJOLABORATORIO');
@@ -2757,9 +2756,11 @@ function trabajoLaboratorioAccionNaturalContexto($accion, $contexto)
     if ($accion === 'confirmarDevolucion') {
         return $localPropio && !$tecnicoFormal;
     }
-    if ($accion === 'solicitarAjuste' || $accion === 'aprobarTrabajo'
-        || $accion === 'registrarInstalacion') {
+    if ($accion === 'solicitarAjuste' || $accion === 'aprobarTrabajo') {
         return $doctor && $localPropio;
+    }
+    if ($accion === 'registrarInstalacion') {
+        return $custodio;
     }
     if ($accion === 'cancelarTrabajo') {
         return $localPropio && !$tecnicoFormal;
@@ -8407,7 +8408,43 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
 {
     return trabajoLaboratorioEjecutarComando(
         $mysqli, $codUsuario, 'registrarInstalacion', $entrada,
-        function ($idIdempotencia) use ($mysqli, $codUsuario, $entrada) {
+        function ($idIdempotencia, $contexto) use ($mysqli, $codUsuario, $entrada) {
+            $modoResolucion = trabajoLaboratorioNormalizarTexto(
+                isset($entrada['modo_resolucion']) ? $entrada['modo_resolucion'] : ''
+            );
+            if ($modoResolucion !== '' && $modoResolucion !== 'instalado_entregado') {
+                trabajoLaboratorioLanzar(
+                    'modo_resolucion_invalido',
+                    'Seleccione Instalado y entregado para cerrar el trabajo.'
+                );
+            }
+            $condicion = trabajoLaboratorioNormalizarTexto(
+                isset($entrada['condicion_pre_entrega']) ? $entrada['condicion_pre_entrega'] : ''
+            );
+            if (!in_array($condicion, array('conforme', 'con_observaciones'), true)) {
+                trabajoLaboratorioLanzar(
+                    'condicion_entrega_requerida',
+                    'Indique la situacion del trabajo antes de confirmar la entrega.'
+                );
+            }
+            $observacionEntrega = trabajoLaboratorioTextoEntrada(
+                isset($entrada['observacion_entrega']) ? $entrada['observacion_entrega'] : '',
+                1000
+            );
+            if ($condicion === 'con_observaciones' && $observacionEntrega === '') {
+                trabajoLaboratorioLanzar(
+                    'observacion_entrega_requerida',
+                    'Describa la situacion observada antes de la entrega.'
+                );
+            }
+            $evidencias = trabajoLaboratorioEvidenciasFinales($entrada);
+            $maximoEvidencias = trabajoLaboratorioMaximoArchivosMedia();
+            if (count($evidencias) < 1 || count($evidencias) > $maximoEvidencias) {
+                trabajoLaboratorioLanzar(
+                    'evidencia_instalacion_requerida',
+                    'Adjunte entre una y '.$maximoEvidencias.' fotos para confirmar la instalacion y entrega.'
+                );
+            }
             $idTrabajo = trabajoLaboratorioIdEntrada($entrada);
             $trabajo = trabajoLaboratorioObtenerTrabajo($mysqli, $idTrabajo, true);
             $motivoExcepcion = trabajoLaboratorioExigirAccion(
@@ -8416,21 +8453,24 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
             trabajoLaboratorioExigirVersion($trabajo, $entrada);
             $esExcepcionAuditor = trabajoLaboratorioUsuarioEsAuditor($mysqli, $codUsuario)
                 && $motivoExcepcion !== '';
-            if (trabajoLaboratorioEntero(isset($entrada['cod_evolucion_origen'])
-                ? $entrada['cod_evolucion_origen'] : 0) <= 0) {
-                trabajoLaboratorioLanzar(
-                    'evolucion_origen_requerida',
-                    'La instalacion debe registrarse expresamente dentro de una evolucion clinica.'
+            $codEvolucionOrigen = trabajoLaboratorioEntero(
+                isset($entrada['cod_evolucion_origen']) ? $entrada['cod_evolucion_origen'] : 0
+            );
+            $origen = array(
+                'cod_consulta_origen' => null,
+                'cod_evolucion_origen' => null,
+                'cod_usuario_evolucion' => 0
+            );
+            if ($codEvolucionOrigen > 0) {
+                $origen = trabajoLaboratorioValidarEvolucionInstalacion(
+                    $mysqli,
+                    $trabajo,
+                    $codUsuario,
+                    isset($entrada['cod_consulta_origen']) ? $entrada['cod_consulta_origen'] : 0,
+                    $codEvolucionOrigen,
+                    $esExcepcionAuditor
                 );
             }
-            $origen = trabajoLaboratorioValidarEvolucionInstalacion(
-                $mysqli,
-                $trabajo,
-                $codUsuario,
-                isset($entrada['cod_consulta_origen']) ? $entrada['cod_consulta_origen'] : 0,
-                isset($entrada['cod_evolucion_origen']) ? $entrada['cod_evolucion_origen'] : 0,
-                $esExcepcionAuditor
-            );
             $ciclo = trabajoLaboratorioObtenerCicloActual($mysqli, $trabajo);
             $versionAnterior = intval($trabajo['version']);
             $versionNueva = $versionAnterior + 1;
@@ -8458,13 +8498,23 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
             }
             $stmt->close();
             $actual = trabajoLaboratorioObtenerTrabajo($mysqli, $idTrabajo, true);
-            $observacion = isset($entrada['observacion']) ? $entrada['observacion'] : '';
-            trabajoLaboratorioRegistrarEvento(
+            $observacion = $condicion === 'con_observaciones'
+                ? $observacionEntrega
+                : trabajoLaboratorioTextoEntrada(
+                    isset($entrada['observacion']) ? $entrada['observacion'] : '',
+                    1000
+                );
+            $idEvento = trabajoLaboratorioRegistrarEvento(
                 $mysqli, $actual, intval($ciclo['id']), $idIdempotencia, 'instalacion_registrada',
                 $codUsuario, $versionNueva, $observacion,
                 trabajoLaboratorioMetadataExcepcionAuditor(
                     array(
-                        'evolucion_clinica_explicita' => 1,
+                        'resolucion_operativa' => 1,
+                        'modo_resolucion' => 'instalado_entregado',
+                        'condicion_pre_entrega' => $condicion,
+                        'observacion_entrega' => $observacionEntrega,
+                        'cantidad_evidencias' => count($evidencias),
+                        'evolucion_clinica_explicita' => $codEvolucionOrigen > 0 ? 1 : 0,
                         'cod_usuario_evolucion' => intval($origen['cod_usuario_evolucion']),
                         'cierra_custodia' => 1,
                         'id_evento_custodia' => trabajoLaboratorioEventoCustodiaActual(
@@ -8479,8 +8529,28 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
                 intval($trabajo['cod_custodio_actualFK']), null, null, null,
                 $origen['cod_consulta_origen'], $origen['cod_evolucion_origen']
             );
+            foreach ($evidencias as $evidencia) {
+                $media = trabajoLaboratorioGuardarMediaProtegida(
+                    $evidencia,
+                    $idTrabajo,
+                    $contexto
+                );
+                trabajoLaboratorioInsertarMedia(
+                    $mysqli,
+                    $actual,
+                    intval($ciclo['id']),
+                    $idEvento,
+                    $codUsuario,
+                    $media,
+                    'instalacion_final'
+                );
+            }
             $respuesta = trabajoLaboratorioRespuestaActualizada(
-                $mysqli, $codUsuario, $idTrabajo, 'instalacion_registrada', 'La instalacion quedo vinculada a la evolucion clinica.'
+                $mysqli,
+                $codUsuario,
+                $idTrabajo,
+                'instalacion_registrada',
+                'El trabajo quedo instalado y entregado. El hilo fue cerrado.'
             );
             return array('id_trabajo' => $idTrabajo, 'respuesta' => $respuesta);
         }

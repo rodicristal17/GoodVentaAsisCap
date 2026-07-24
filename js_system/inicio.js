@@ -5004,7 +5004,10 @@ $("div[id=divPresentacion]").fadeOut(500);
       cajapredeterminada=buscar_datos_url_usuario('c');
 
 	 if(accesosuser["CAMBIARCAJA"]["accion"]!="SI"){
-	         document.getElementById('inptcajaAperturaCierreCaja').disabled=true
+	         var selectCajaSesion=document.getElementById('inptcajaAperturaCierreCaja');
+	         if(selectCajaSesion){
+		         selectCajaSesion.disabled=true
+	         }
 	         }
 		 buscarVendedorSelec() 
 
@@ -17361,9 +17364,28 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 	});
 }
 
-function buscarOptionCaja() {	
-	document.getElementById("inptcajaAperturaCierreCaja").innerHTML = ""
-	document.getElementById("inptSeleccPuntoExpedicionVenta").innerHTML = ""
+function obtenerDestinosOptionCaja(){
+	return {
+		caja: document.getElementById("inptcajaAperturaCierreCaja"),
+		puntoExpedicion: document.getElementById("inptSeleccPuntoExpedicionVenta")
+	};
+}
+
+function limpiarDestinosOptionCaja(destinos){
+	if(destinos.caja){
+		destinos.caja.innerHTML = "";
+	}
+	if(destinos.puntoExpedicion){
+		destinos.puntoExpedicion.innerHTML = "";
+	}
+}
+
+function buscarOptionCaja() {
+	var destinos = obtenerDestinosOptionCaja();
+	if(!destinos.caja && !destinos.puntoExpedicion){
+		return;
+	}
+	limpiarDestinosOptionCaja(destinos);
 	//document.getElementById("inptCajalNroFactura").innerHTML = ""
 	obtener_datos_user();
 	var datos = {
@@ -17404,16 +17426,18 @@ function buscarOptionCaja() {
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			document.getElementById("inptcajaAperturaCierreCaja").innerHTML = ''
-			document.getElementById("inptSeleccPuntoExpedicionVenta").innerHTML = ''
+			limpiarDestinosOptionCaja(obtenerDestinosOptionCaja());
 			//document.getElementById("inptCajalNroFactura").innerHTML = ''
 		},
 		success: function (responseText) {
 
 			var Respuesta = responseText;
 			console.log(Respuesta)
-			document.getElementById("inptcajaAperturaCierreCaja").innerHTML = ''
-			document.getElementById("inptSeleccPuntoExpedicionVenta").innerHTML = ''
+			var destinosActuales = obtenerDestinosOptionCaja();
+			if(!destinosActuales.caja && !destinosActuales.puntoExpedicion){
+				return;
+			}
+			limpiarDestinosOptionCaja(destinosActuales);
 			//document.getElementById("inptCajalNroFactura").innerHTML = ''
 			try {
 				var datos = $.parseJSON(Respuesta);
@@ -17422,14 +17446,18 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
 					var datos_expedicion = datos[4];
-					document.getElementById("inptcajaAperturaCierreCaja").innerHTML = datos_buscados
-					document.getElementById("inptSeleccPuntoExpedicionVenta").innerHTML = datos_expedicion
+					if(destinosActuales.caja){
+						destinosActuales.caja.innerHTML = datos_buscados
+					}
+					if(destinosActuales.puntoExpedicion){
+						destinosActuales.puntoExpedicion.innerHTML = datos_expedicion
+						destinosActuales.puntoExpedicion.value="";
+					}
 					//document.getElementById("inptCajalNroFactura").innerHTML = datos_expedicion
-					document.getElementById("inptSeleccPuntoExpedicionVenta").value="";
-					seleccionarcaja()
-					
-					controldecaja()
-					
+					if(destinosActuales.caja){
+						seleccionarcaja()
+						controldecaja()
+					}
 				}
 			} catch (error) {
 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
@@ -17444,17 +17472,29 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 
 
 function seleccionarcaja(){
-	document.getElementById("inptcajaAperturaCierreCaja").value=cajapredeterminada
-
-	document.getElementById("pCaja").innerHTML = $("select[id=inptcajaAperturaCierreCaja]").children(":selected").text()
+	var selectCaja=document.getElementById("inptcajaAperturaCierreCaja");
+	if(!selectCaja){
+		return;
+	}
+	selectCaja.value=cajapredeterminada
+	var etiquetaCaja=document.getElementById("pCaja");
+	if(etiquetaCaja){
+		var opcionCaja=selectCaja.options[selectCaja.selectedIndex];
+		etiquetaCaja.innerHTML = opcionCaja ? opcionCaja.text : "";
+	}
 	
 }
 function buscarOptionCaja2(d) {
 
 	var codLocal="";
 	if(d=="1"){
-		var codLocal=document.getElementById("inptlocalAperturaCierre").value;
-		document.getElementById("inptcajaAperturaCierreCaja").innerHTML = ""
+		var selectLocalCaja=document.getElementById("inptlocalAperturaCierre");
+		var selectCajaLocal=document.getElementById("inptcajaAperturaCierreCaja");
+		if(!selectLocalCaja || !selectCajaLocal){
+			return;
+		}
+		codLocal=selectLocalCaja.value;
+		selectCajaLocal.innerHTML = ""
 	}
 	
 	obtener_datos_user();
@@ -17496,17 +17536,19 @@ function buscarOptionCaja2(d) {
 		},
 		error: function (jqXHR, textstatus, errorThrowm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-				if(d=="1"){
-		document.getElementById("inptcajaAperturaCierreCaja").innerHTML = ""
-	}
+			var selectCajaError=document.getElementById("inptcajaAperturaCierreCaja");
+			if(d=="1" && selectCajaError){
+				selectCajaError.innerHTML = ""
+			}
 		},
 		success: function (responseText) {
 
 			var Respuesta = responseText;
 			console.log(Respuesta)
-						if(d=="1"){
-		document.getElementById("inptcajaAperturaCierreCaja").innerHTML = ""
-	}
+			var selectCajaActual=document.getElementById("inptcajaAperturaCierreCaja");
+			if(d=="1" && selectCajaActual){
+				selectCajaActual.innerHTML = ""
+			}
 			try {
 				var datos = $.parseJSON(Respuesta);
 				Respuesta = datos["1"];
@@ -17514,10 +17556,10 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 				if (Respuesta == true) {
 					var datos_buscados = datos[2];
 				
-							if(d=="1"){
-			document.getElementById("inptcajaAperturaCierreCaja").innerHTML = datos_buscados
-			controldecaja()
-	}
+					if(d=="1" && selectCajaActual){
+						selectCajaActual.innerHTML = datos_buscados
+						controldecaja()
+					}
 					
 				}
 			} catch (error) {

@@ -326,11 +326,11 @@ pruebaLabAfirmar(
     'La regularizacion administrativa de unidades conserva el alcance del local propio.'
 );
 pruebaLabAfirmar(
-    !trabajoLaboratorioAccionNaturalContexto('registrarInstalacion', array(
-        'local_propio' => true,
+    trabajoLaboratorioAccionNaturalContexto('registrarInstalacion', array(
+        'custodio' => true,
         'doctor' => false
     )),
-    'La liberacion no convierte una instalacion fuera del rol profesional en una accion ordinaria.'
+    'El custodio vigente puede cerrar el hilo sin depender del rango de doctor ni justificar una excepcion.'
 );
 pruebaLabAfirmar(
     trabajoLaboratorioAccionNaturalContexto('tomarHilo', array(
@@ -389,7 +389,8 @@ $matrizEstados = array(
     ),
     'pendiente_revision' => array(
         'tomarHilo', 'agregarEvidencia', 'agregarNota', 'registrarNovedad',
-        'rectificarCustodia', 'solicitarAjuste', 'aprobarTrabajo', 'cancelarTrabajo'
+        'rectificarCustodia', 'solicitarAjuste', 'aprobarTrabajo',
+        'registrarInstalacion', 'cancelarTrabajo'
     ),
     'ajuste_solicitado' => array(
         'iniciarTransferencia', 'tomarHilo', 'agregarEvidencia', 'agregarNota',
@@ -510,7 +511,24 @@ $casosRoles = array(
         ),
         'esperadas' => array(
             'agregarEvidencia', 'agregarNota', 'registrarNovedad', 'solicitarAjuste',
-            'aprobarTrabajo', 'cancelarTrabajo'
+            'aprobarTrabajo', 'registrarInstalacion', 'cancelarTrabajo'
+        )
+    ),
+    'custodio_no_doctor_cierre_operativo' => array(
+        'estado' => 'pendiente_revision',
+        'contexto' => array(
+            'auditor' => false, 'local' => false, 'custodio' => true,
+            'tecnico' => false, 'tecnico_formal' => true, 'doctor' => false,
+            'permisos' => array(
+                'VERTRABAJOSLABORATORIO' => true,
+                'RECIBIRTRABAJOLABORATORIO' => true,
+                'ENTREGARTRABAJOLABORATORIO' => true,
+                'EVIDENCIATRABAJOLABORATORIO' => true
+            )
+        ),
+        'esperadas' => array(
+            'agregarEvidencia', 'agregarNota', 'registrarNovedad',
+            'registrarInstalacion'
         )
     ),
     'doctor_instalacion' => array(
@@ -1025,7 +1043,7 @@ pruebaLabAfirmar(
     'Migrar ubicaciones autoriza antes de escribir, usa transaccion completa y comunica rechazos.'
 );
 pruebaLabAfirmar(
-    strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260723-11') !== false,
+    strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260724-13') !== false,
     'La carga dinamica usa la misma version vigente de estilos del modulo.'
 );
 pruebaLabAfirmar(
@@ -1569,6 +1587,37 @@ pruebaLabAfirmar(
     && strpos($bloqueAbrirNodo, 'loadHistoricalNodeEnvelope(historicalId || rowId)') !== false,
     'El cierre es un resumen consultable y el nodo original integrado abre su ficha historica propia.'
 );
+$bloqueCamposCierreOperativo = pruebaLabBloqueJavascript(
+    $fuenteTrabajoLaboratorioJs,
+    'renderActionFields'
+);
+$bloqueValidarCierreOperativo = pruebaLabBloqueJavascript(
+    $fuenteTrabajoLaboratorioJs,
+    'validateActionStep'
+);
+$bloquePayloadCierreOperativo = pruebaLabBloqueJavascript(
+    $fuenteTrabajoLaboratorioJs,
+    'actionPayload'
+);
+$bloqueSubmitCierreOperativo = pruebaLabBloqueJavascript(
+    $fuenteTrabajoLaboratorioJs,
+    'submitAction'
+);
+pruebaLabAfirmar(
+    strpos($bloqueFinHilo, 'data-tlab-action="registrarInstalacion"') !== false
+    && strpos($bloqueFinHilo, 'Instalado y entregado') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'submitLabel: "Confirmar instalación y entrega"') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'registrarInstalacion: {') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'evidence: true') !== false
+    && strpos($bloqueCamposCierreOperativo, 'name="condicion_pre_entrega"') !== false
+    && strpos($bloqueCamposCierreOperativo, 'name="observacion_entrega"') !== false
+    && strpos($bloqueCamposCierreOperativo, 'cantidad mínima de caracteres') !== false
+    && strpos($bloqueValidarCierreOperativo, 'values.observacion_entrega).trim()') !== false
+    && strpos($bloquePayloadCierreOperativo, 'payload.modo_resolucion = "instalado_entregado"') !== false
+    && strpos($bloqueSubmitCierreOperativo, 'closeDetail(true)') !== false
+    && substr_count($bloqueSubmitCierreOperativo, '"finalizados"') >= 2,
+    'Vista operativa y Mi bandeja muestran el nodo final y guian un cierre con condicion, foto y observacion sin minimo.'
+);
 $bloqueBindEvents = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'bindEvents');
 $bloqueNodeEditor = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'nodeEditorHtml');
 $bloqueVersionOperativa = pruebaLabBloqueJavascript(
@@ -1804,7 +1853,7 @@ pruebaLabAfirmar(
     && strpos($fuenteTrabajoLaboratorioJs, '!toStringSafe(values.motivo_excepcion).trim()') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'motivo_excepcion).trim().length < 5') === false
     && strpos($fuenteTrabajoLaboratorioJs, 'action.code === "rectificarCustodia" && toStringSafe(values.justificacion).trim().length < 5') === false
-    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260724-02') !== false,
+    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260724-03') !== false,
     'La interfaz ofrece una observacion inicial opcional y solo exige contenido, sin minimo, en otras excepciones.'
 );
 $bloqueGuardarRegularizacion = pruebaLabBloqueFuncion(
@@ -1924,14 +1973,22 @@ $bloqueValidacionInstalacion = pruebaLabBloqueFuncion(
     'trabajoLaboratorioValidarEvolucionInstalacion'
 );
 pruebaLabAfirmar(
-    strpos($bloqueInstalacion, "'evolucion_origen_requerida'") !== false
+    strpos($bloqueInstalacion, "'evolucion_origen_requerida'") === false
+    && strpos($bloqueInstalacion, 'if ($codEvolucionOrigen > 0)') !== false
     && strpos($bloqueInstalacion, 'trabajoLaboratorioValidarEvolucionInstalacion') !== false
+    && strpos($bloqueInstalacion, 'trabajoLaboratorioEvidenciasFinales') !== false
+    && strpos($bloqueInstalacion, "'evidencia_instalacion_requerida'") !== false
+    && strpos($bloqueInstalacion, "'condicion_entrega_requerida'") !== false
+    && strpos($bloqueInstalacion, "'observacion_entrega_requerida'") !== false
+    && strpos($bloqueInstalacion, 'trabajoLaboratorioGuardarMediaProtegida') !== false
+    && strpos($bloqueInstalacion, "'instalacion_final'") !== false
     && strpos($bloqueInstalacion, 'cod_detalle_activo_unico=NULL') === false
     && strpos($bloqueInstalacion, 'fecha_instalado=NOW()') !== false
-    && strpos($bloqueInstalacion, "'evolucion_clinica_explicita' => 1") !== false
+    && strpos($bloqueInstalacion, "'resolucion_operativa' => 1") !== false
+    && strpos($bloqueInstalacion, "'modo_resolucion' => 'instalado_entregado'") !== false
     && strpos($bloqueInstalacion, "\$origen['cod_consulta_origen']") !== false
     && strpos($bloqueInstalacion, "\$origen['cod_evolucion_origen']") !== false,
-    'La instalacion exige evolucion explicita, cierra el trabajo y conserva la reserva unica del tratamiento.'
+    'El cierre operativo exige condicion y evidencia final, admite una evolucion opcional y conserva la reserva unica del tratamiento.'
 );
 pruebaLabAfirmar(
     strpos($bloqueInstalacion, 'AND cod_custodio_actualFK=?') !== false

@@ -4670,6 +4670,23 @@ button[aria-pressed="true"] .tlab-group-count {
   background: linear-gradient(145deg, #00b3a6, #008b82);
   box-shadow: 0 0 0 5px rgba(0, 169, 157, .1);
 }
+.tlab-shell .tlab-thread-end.is-final-action .tlab-thread-end__icon {
+  background: linear-gradient(145deg, #00b3a6 0%, #008b82 62%, #6d55a6 100%);
+}
+.tlab-shell .tlab-thread-end__final-check {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  background: #6d55a6;
+  font-size: 8px;
+}
 .tlab-shell .tlab-historical-resolution-node .tlab-thread-end__icon {
   border-color: #8ed8d0;
   background: linear-gradient(145deg, #00b3a6 0%, #008b82 58%, #6d55a6 100%);
