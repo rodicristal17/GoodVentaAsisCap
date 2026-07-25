@@ -369,23 +369,23 @@ $accionesLaboratorio = array(
 $matrizEstados = array(
     'pendiente_tecnico' => array(
         'asignarTecnico', 'tomarHilo', 'agregarEvidencia', 'agregarNota',
-        'registrarNovedad', 'rectificarCustodia', 'cancelarTrabajo'
+        'registrarNovedad', 'rectificarCustodia', 'registrarInstalacion', 'cancelarTrabajo'
     ),
     'pendiente_entrega_mecanico' => array(
         'iniciarTransferencia', 'tomarHilo', 'agregarEvidencia', 'agregarNota',
-        'registrarNovedad', 'rectificarCustodia', 'cancelarTrabajo'
+        'registrarNovedad', 'rectificarCustodia', 'registrarInstalacion', 'cancelarTrabajo'
     ),
     'en_transferencia_mecanico' => array(
         'tomarHilo', 'agregarEvidencia', 'agregarNota', 'registrarNovedad',
-        'rectificarCustodia', 'cancelarTrabajo'
+        'rectificarCustodia', 'registrarInstalacion', 'cancelarTrabajo'
     ),
     'en_laboratorio' => array(
         'tomarHilo', 'agregarEvidencia', 'agregarNota', 'registrarNovedad',
-        'rectificarCustodia', 'iniciarDevolucion', 'cancelarTrabajo'
+        'rectificarCustodia', 'iniciarDevolucion', 'registrarInstalacion', 'cancelarTrabajo'
     ),
     'en_transferencia_clinica' => array(
         'tomarHilo', 'agregarEvidencia', 'agregarNota', 'registrarNovedad',
-        'rectificarCustodia', 'cancelarTrabajo'
+        'rectificarCustodia', 'registrarInstalacion', 'cancelarTrabajo'
     ),
     'pendiente_revision' => array(
         'tomarHilo', 'agregarEvidencia', 'agregarNota', 'registrarNovedad',
@@ -394,7 +394,7 @@ $matrizEstados = array(
     ),
     'ajuste_solicitado' => array(
         'iniciarTransferencia', 'tomarHilo', 'agregarEvidencia', 'agregarNota',
-        'registrarNovedad', 'rectificarCustodia', 'cancelarTrabajo'
+        'registrarNovedad', 'rectificarCustodia', 'registrarInstalacion', 'cancelarTrabajo'
     ),
     'listo_instalacion' => array(
         'tomarHilo', 'agregarEvidencia', 'agregarNota', 'registrarNovedad',
@@ -448,7 +448,8 @@ $casosRoles = array(
             'tecnico' => false, 'doctor' => true, 'permisos' => $permisosTodos
         ),
         'esperadas' => array(
-            'asignarTecnico', 'agregarEvidencia', 'agregarNota', 'registrarNovedad', 'cancelarTrabajo'
+            'asignarTecnico', 'agregarEvidencia', 'agregarNota', 'registrarNovedad',
+            'registrarInstalacion', 'cancelarTrabajo'
         )
     ),
     'clinica_custodia_inicial' => array(
@@ -458,7 +459,8 @@ $casosRoles = array(
             'tecnico' => false, 'doctor' => true, 'permisos' => $permisosTodos
         ),
         'esperadas' => array(
-            'iniciarTransferencia', 'agregarEvidencia', 'agregarNota', 'registrarNovedad', 'cancelarTrabajo'
+            'iniciarTransferencia', 'agregarEvidencia', 'agregarNota', 'registrarNovedad',
+            'registrarInstalacion', 'cancelarTrabajo'
         )
     ),
     'tecnico_por_recibir' => array(
@@ -475,7 +477,10 @@ $casosRoles = array(
             'auditor' => false, 'local' => false, 'custodio' => true,
             'tecnico' => true, 'doctor' => false, 'permisos' => $permisosTodos
         ),
-        'esperadas' => array('agregarEvidencia', 'agregarNota', 'registrarNovedad', 'iniciarDevolucion')
+        'esperadas' => array(
+            'agregarEvidencia', 'agregarNota', 'registrarNovedad',
+            'iniciarDevolucion', 'registrarInstalacion'
+        )
     ),
     'clinica_por_recibir' => array(
         'estado' => 'en_transferencia_clinica',
@@ -567,7 +572,7 @@ $casosRoles = array(
             'auditor' => false, 'local' => true, 'custodio' => true,
             'tecnico' => true, 'doctor' => true, 'permisos' => array()
         ),
-        'esperadas' => array()
+        'esperadas' => array('registrarInstalacion')
     ),
     'terminal' => array(
         'estado' => 'instalado',
@@ -596,9 +601,9 @@ $accionesSinEntrega = trabajoLaboratorioResolverAcciones(
     )
 );
 pruebaLabAfirmarIgual(
-    array('agregarEvidencia', 'agregarNota', 'registrarNovedad'),
+    array('agregarEvidencia', 'agregarNota', 'registrarNovedad', 'registrarInstalacion'),
     pruebaLabAccionesActivas($accionesSinEntrega, $accionesLaboratorio),
-    'Quitar el permiso de entrega conserva evidencia y novedades del custodio, pero impide la devolucion.'
+    'Quitar el permiso de entrega impide la devolucion, pero el custodio conserva el cierre del hilo.'
 );
 pruebaLabAfirmarIgual(
     'menos de 1 min',
@@ -1043,7 +1048,7 @@ pruebaLabAfirmar(
     'Migrar ubicaciones autoriza antes de escribir, usa transaccion completa y comunica rechazos.'
 );
 pruebaLabAfirmar(
-    strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260724-13') !== false,
+    strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260725-01') !== false,
     'La carga dinamica usa la misma version vigente de estilos del modulo.'
 );
 pruebaLabAfirmar(
@@ -1561,6 +1566,14 @@ $bloqueFinHilo = pruebaLabBloqueJavascript(
     $fuenteTrabajoLaboratorioJs,
     'pendingNodeHtml'
 );
+$bloqueAccionesNodo = pruebaLabBloqueJavascript(
+    $fuenteTrabajoLaboratorioJs,
+    'nodeActionsHtml'
+);
+$bloqueTarjetaTrabajo = pruebaLabBloqueJavascript(
+    $fuenteTrabajoLaboratorioJs,
+    'workCardHtml'
+);
 $bloquePopoverCierre = pruebaLabBloqueJavascript(
     $fuenteTrabajoLaboratorioJs,
     'closurePopoverHtml'
@@ -1604,19 +1617,32 @@ $bloqueSubmitCierreOperativo = pruebaLabBloqueJavascript(
     'submitAction'
 );
 pruebaLabAfirmar(
-    strpos($bloqueFinHilo, 'data-tlab-action="registrarInstalacion"') !== false
-    && strpos($bloqueFinHilo, 'Instalado y entregado') !== false
-    && strpos($fuenteTrabajoLaboratorioJs, 'submitLabel: "Confirmar instalación y entrega"') !== false
+    strpos($bloqueFinHilo, 'data-tlab-action="registrarInstalacion"') === false
+    && strpos($bloqueFinHilo, 'Cierre disponible') !== false
+    && strpos($bloqueFinHilo, 'ltimo nodo para finalizar') !== false
+    && strpos($bloqueAccionesNodo, 'data-tlab-popover-action="registrarInstalacion"') !== false
+    && strpos($bloqueAccionesNodo, 'CUSTODIO ACTUAL') !== false
+    && strpos($bloqueAccionesNodo, 'Instalado y finalizado') !== false
+    && strpos($bloqueAccionesNodo, 'Transferencia pendiente') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'submitLabel: "Confirmar instalaci') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'registrarInstalacion: {') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'evidence: true') !== false
     && strpos($bloqueCamposCierreOperativo, 'name="condicion_pre_entrega"') !== false
     && strpos($bloqueCamposCierreOperativo, 'name="observacion_entrega"') !== false
-    && strpos($bloqueCamposCierreOperativo, 'cantidad mínima de caracteres') !== false
+    && strpos($bloqueCamposCierreOperativo, 'name="sin_foto"') !== false
+    && strpos($bloqueCamposCierreOperativo, '"motivo_sin_foto"') !== false
+    && strpos($bloqueCamposCierreOperativo, 'name="detalle_sin_foto"') !== false
+    && strpos($bloqueCamposCierreOperativo, 'sin una cantidad') !== false
     && strpos($bloqueValidarCierreOperativo, 'values.observacion_entrega).trim()') !== false
+    && strpos($bloqueValidarCierreOperativo, 'values.motivo_sin_foto).trim()') !== false
+    && strpos($bloqueValidarCierreOperativo, 'values.detalle_sin_foto).trim()') !== false
     && strpos($bloquePayloadCierreOperativo, 'payload.modo_resolucion = "instalado_entregado"') !== false
+    && strpos($bloquePayloadCierreOperativo, 'state.action.code === "registrarInstalacion"') !== false
+    && strpos($bloqueTarjetaTrabajo, 'ltimo nodo para finalizar') !== false
+    && strpos($bloqueTarjetaTrabajo, 'action.code !== "cancelarTrabajo"') !== false
     && strpos($bloqueSubmitCierreOperativo, 'closeDetail(true)') !== false
     && substr_count($bloqueSubmitCierreOperativo, '"finalizados"') >= 2,
-    'Vista operativa y Mi bandeja muestran el nodo final y guian un cierre con condicion, foto y observacion sin minimo.'
+    'Vista operativa y Mi bandeja guian al custodio al ultimo nodo para cerrar con foto o excepcion justificada.'
 );
 $bloqueBindEvents = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'bindEvents');
 $bloqueNodeEditor = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'nodeEditorHtml');
@@ -1853,7 +1879,7 @@ pruebaLabAfirmar(
     && strpos($fuenteTrabajoLaboratorioJs, '!toStringSafe(values.motivo_excepcion).trim()') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'motivo_excepcion).trim().length < 5') === false
     && strpos($fuenteTrabajoLaboratorioJs, 'action.code === "rectificarCustodia" && toStringSafe(values.justificacion).trim().length < 5') === false
-    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260724-03') !== false,
+    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260725-01') !== false,
     'La interfaz ofrece una observacion inicial opcional y solo exige contenido, sin minimo, en otras excepciones.'
 );
 $bloqueGuardarRegularizacion = pruebaLabBloqueFuncion(
@@ -1978,6 +2004,8 @@ pruebaLabAfirmar(
     && strpos($bloqueInstalacion, 'trabajoLaboratorioValidarEvolucionInstalacion') !== false
     && strpos($bloqueInstalacion, 'trabajoLaboratorioEvidenciasFinales') !== false
     && strpos($bloqueInstalacion, "'evidencia_instalacion_requerida'") !== false
+    && strpos($bloqueInstalacion, "'motivo_sin_foto_requerido'") !== false
+    && strpos($bloqueInstalacion, "'detalle_sin_foto_requerido'") !== false
     && strpos($bloqueInstalacion, "'condicion_entrega_requerida'") !== false
     && strpos($bloqueInstalacion, "'observacion_entrega_requerida'") !== false
     && strpos($bloqueInstalacion, 'trabajoLaboratorioGuardarMediaProtegida') !== false
@@ -1986,16 +2014,23 @@ pruebaLabAfirmar(
     && strpos($bloqueInstalacion, 'fecha_instalado=NOW()') !== false
     && strpos($bloqueInstalacion, "'resolucion_operativa' => 1") !== false
     && strpos($bloqueInstalacion, "'modo_resolucion' => 'instalado_entregado'") !== false
+    && strpos($bloqueInstalacion, "'sin_foto' => \$sinFoto ? 1 : 0") !== false
+    && strpos($bloqueInstalacion, "'motivo_sin_foto'") !== false
+    && strpos($bloqueInstalacion, "'detalle_sin_foto'") !== false
     && strpos($bloqueInstalacion, "\$origen['cod_consulta_origen']") !== false
     && strpos($bloqueInstalacion, "\$origen['cod_evolucion_origen']") !== false,
-    'El cierre operativo exige condicion y evidencia final, admite una evolucion opcional y conserva la reserva unica del tratamiento.'
+    'El cierre operativo exige condicion y una foto o excepcion justificada, admite una evolucion opcional y conserva la reserva unica.'
 );
 pruebaLabAfirmar(
     strpos($bloqueInstalacion, 'AND cod_custodio_actualFK=?') !== false
     && strpos($bloqueInstalacion, "'cierra_custodia' => 1") !== false
     && strpos($bloqueInstalacion, "'id_evento_custodia'") !== false
+    && strpos($bloqueInstalacion, 'trabajoLaboratorioObtenerTransferenciaPendiente') !== false
+    && strpos($bloqueInstalacion, 'id_transferencia_pendienteFK=NULL') !== false
+    && strpos($bloqueInstalacion, "'transferencia_pendiente_cerrada'") !== false
+    && strpos($bloqueInstalacion, '$idTransferencia,') !== false
     && strpos($bloqueInstalacion, 'SET cod_custodio_actualFK=') === false,
-    'La instalacion debe realizarla el custodio vigente y cierra su periodo sin reasignar implicitamente el trabajo.'
+    'El custodio vigente cierra el hilo y cualquier transferencia pendiente queda vinculada al evento sin reasignar el trabajo.'
 );
 $bloquePromocionHistoricaUnica = pruebaLabBloqueFuncion(
     $fuenteHistoricoHelper,

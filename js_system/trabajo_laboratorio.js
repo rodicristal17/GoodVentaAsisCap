@@ -34,7 +34,7 @@
   "use strict";
 
   var ENDPOINT = "/GoodVentaAsisCap/php_system/abmTrabajoLaboratorio.php";
-  var STYLE_URL = "/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260724-13";
+  var STYLE_URL = "/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260725-01";
   var BRAND_MARK = "/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2";
   var ROOT_ID = "telarTrabajoLaboratorio";
   var PAGE_SIZE = 18;
@@ -154,11 +154,11 @@
       confirmation: "Confirmo la aprobación clínica del trabajo."
     },
     registrarInstalacion: {
-      label: "Instalado y entregado",
+      label: "Instalado y finalizado",
       icon: "fa-tooth",
       evidence: true,
-      submitLabel: "Confirmar instalación y entrega",
-      confirmation: "Confirmo que el trabajo fue instalado y entregado, y que la evidencia final corresponde a este tratamiento."
+      submitLabel: "Confirmar instalación y finalización",
+      confirmation: "Confirmo que el trabajo fue instalado y finalizado, y que la evidencia o excepción declarada corresponde a este tratamiento."
     },
     cancelarTrabajo: {
       label: "Cancelar trabajo",
@@ -885,13 +885,14 @@
           && event.target.value === "conforme") {
         state.action.values.observacion = "";
       }
-      if (state.action.code === "tomarHilo" && event.target.name === "sin_foto" && event.target.checked) {
+      if ((state.action.code === "tomarHilo" || state.action.code === "registrarInstalacion")
+          && event.target.name === "sin_foto" && event.target.checked) {
         revokeObjectUrls();
         state.action.files = [];
       }
       if ((state.action.code === "solicitarAjuste" && event.target.name === "motivo")
           || (state.action.code === "tomarHilo" && (event.target.name === "condicion_recepcion" || event.target.name === "sin_foto" || event.target.name === "motivo_sin_foto"))
-          || (state.action.code === "registrarInstalacion" && event.target.name === "condicion_pre_entrega")) {
+          || (state.action.code === "registrarInstalacion" && (event.target.name === "condicion_pre_entrega" || event.target.name === "sin_foto" || event.target.name === "motivo_sin_foto"))) {
         renderActionDialog();
       }
       return;
@@ -1861,6 +1862,8 @@
     var classes = record.lane === "custodia" ? " tlab-custody-node" : "";
     var evidence;
     var indicators = "";
+    var ownCustody = record.lane === "custodia" && event.current
+      && !!workActionByCode(work, "registrarInstalacion");
     if (record.lane === "custodia") {
       classes += (event.current ? " is-current" : "") + (event.final ? " is-final" : "")
         + (event.cancelled ? " is-cancelled" : "") + (event.closed ? " is-closed" : "")
@@ -1885,6 +1888,7 @@
       + '<span class="tlab-route-node__avatar">' + avatarHtml(event.actor) + evidence + '</span>'
       + '<strong title="' + escapeAttr(event.title) + '">' + escapeHtml(event.title) + '</strong>'
       + '<time datetime="' + escapeAttr(event.date) + '">' + escapeHtml(formatDate(event.date, true)) + '</time>'
+      + (ownCustody ? '<span class="tlab-current-custody-badge">TU CUSTODIA</span>' : '')
       + (indicators ? '<span class="tlab-custody-node__indicators">' + indicators + '</span>' : '') + '</button>'
       + (index < length - 1 || hasEnd ? '<span class="tlab-route-node__connector" aria-hidden="true"></span>' : '') + '</li>';
   }
@@ -1915,8 +1919,8 @@
       ciclo_etiqueta: "Resultado final",
       observacion: cancelled
         ? "La custodia termino por cancelacion del trabajo."
-        : "El seguimiento de laboratorio quedo instalado, entregado y cerrado.",
-      resultado: cancelled ? "Trabajo cancelado" : "Instalado y entregado",
+        : "El seguimiento de laboratorio quedó instalado, finalizado y cerrado.",
+      resultado: cancelled ? "Trabajo cancelado" : "Instalado y finalizado",
       tratamiento_porcentaje: cancelled ? null : 100,
       referencia_nodo_anterior: previousEvent ? previousEvent.title : "Ultimo nodo registrado",
       terminal: true,
@@ -1936,7 +1940,7 @@
       return '<li class="tlab-route-node tlab-thread-end is-action"><button type="button" data-tlab-take-node data-tlab-node-row-id="' + escapeAttr(work.id) + '" aria-haspopup="dialog" aria-expanded="false" aria-controls="tlabNodePopover" aria-label="Revisar y tomar el hilo"><span class="tlab-thread-end__icon"><i class="fa-solid fa-hand-holding" aria-hidden="true"></i><i class="fa-solid fa-minus tlab-thread-end__thread" aria-hidden="true"></i></span><strong>Tomar el hilo</strong><small>Revisar antes de recibir</small></button></li>';
     }
     if (finish) {
-      return '<li class="tlab-route-node tlab-thread-end is-action is-final-action"><button type="button" data-tlab-action="registrarInstalacion" data-tlab-row-work-id="' + escapeAttr(work.id) + '" aria-label="Confirmar instalación y entrega"><span class="tlab-thread-end__icon"><i class="fa-solid fa-tooth" aria-hidden="true"></i><i class="fa-solid fa-check tlab-thread-end__final-check" aria-hidden="true"></i></span><strong>Instalado y entregado</strong><small>Confirmar cierre del hilo</small></button></li>';
+      return '<li class="tlab-route-node tlab-thread-end is-closure-guide" aria-label="El cierre está disponible desde tu último nodo"><span class="tlab-thread-end__icon"><i class="fa-solid fa-tooth" aria-hidden="true"></i><i class="fa-solid fa-check tlab-thread-end__final-check" aria-hidden="true"></i></span><strong>Cierre disponible</strong><small>Abrí tu último nodo para finalizar</small></li>';
     }
     return '<li class="tlab-route-node tlab-thread-end"><span class="tlab-thread-end__icon"><i class="fa-solid fa-hand-holding" aria-hidden="true"></i></span><strong>Próximo relevo</strong><small>Otro usuario puede tomarlo</small></li>';
   }
@@ -2168,13 +2172,30 @@
 
   function nodeActionsHtml(work, raw) {
     var actions;
+    var closure;
+    var normalized;
+    var standard;
+    var html = "";
     if (!boolValue(pick(raw, ["actual", "es_actual", "custodia_actual"], false))) { return ""; }
     actions = normalizeActions(work.acciones_permitidas || []);
     actions = actions.filter(function (action) { return action.code !== "tomarHilo" && actionAllowedInCurrentContext(action); });
     if (!actions.length) { return ""; }
-    return '<div class="tlab-node-popover__actions" aria-label="Acciones del nodo actual">' + actions.map(function (action) {
+    closure = actions.filter(function (action) { return action.code === "registrarInstalacion"; })[0] || null;
+    standard = actions.filter(function (action) { return action.code !== "registrarInstalacion"; });
+    if (standard.length) {
+      html += '<div class="tlab-node-popover__actions" aria-label="Acciones del nodo actual">' + standard.map(function (action) {
       return '<button type="button" data-tlab-popover-action="' + escapeAttr(action.code) + '"><i class="fa-solid ' + escapeAttr(action.icon || "fa-arrow-right") + '" aria-hidden="true"></i>' + escapeHtml(action.label) + '</button>';
-    }).join("") + '</div>';
+      }).join("") + '</div>';
+    }
+    if (closure) {
+      normalized = normalizeWork(work);
+      html += '<section class="tlab-node-popover__closure" aria-label="Finalización del hilo">'
+        + '<div class="tlab-node-popover__closure-heading"><span>CUSTODIO ACTUAL</span><strong>Podés finalizar este hilo</strong><small>Sos responsable del último nodo.</small></div>'
+        + (normalized.pendingTransfer ? '<p class="tlab-node-popover__closure-warning"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span><strong>Transferencia pendiente</strong>Se cerrará junto con el hilo, dejando constancia.</span></p>' : '')
+        + '<button type="button" class="tlab-node-popover__closure-button" data-tlab-popover-action="registrarInstalacion"><i class="fa-solid fa-tooth" aria-hidden="true"></i>Instalado y finalizado</button>'
+        + '<small class="tlab-node-popover__closure-help"><i class="fa-solid fa-camera" aria-hidden="true"></i>Requiere una fotografía o una excepción justificada.</small></section>';
+    }
+    return html;
   }
 
   function nodeVersionPopoverHtml(record) {
@@ -3355,16 +3376,24 @@
 
   function workCardHtml(item, rowIndex) {
     var work = normalizeWork(item);
+    var take = workActionByCode(work, "tomarHilo");
+    var finish = workActionByCode(work, "registrarInstalacion");
     var next = work.actions.filter(function (action) {
-      return action.code !== "registrarNovedad" && action.code !== "rectificarCustodia" && action.code !== "agregarEvidencia" && action.code !== "agregarNota";
+      return action.code !== "registrarNovedad" && action.code !== "rectificarCustodia"
+        && action.code !== "agregarEvidencia" && action.code !== "agregarNota"
+        && action.code !== "registrarInstalacion" && action.code !== "cancelarTrabajo";
     })[0] || null;
+    var nextText = work.terminal ? "Proceso finalizado"
+      : (take ? "Próxima: Tomar el hilo"
+        : (finish ? "Próxima: Abrí el último nodo para finalizar"
+          : (next ? "Próxima: " + next.label : "El avance continúa desde los nodos")));
     return '<article class="tlab-thread-record"><div class="tlab-thread-row tlab-thread-row--unified">'
       + '<div class="tlab-thread-identity tlab-thread-identity--summary" aria-label="Datos generales del trabajo ' + escapeAttr(work.code) + '">'
       + '<span class="tlab-thread-identity__code"><span>Venta ' + escapeHtml(work.sale || "-") + '</span><b aria-hidden="true">·</b><strong>Trabajo ' + escapeHtml(work.code) + '</strong><em class="tlab-status tlab-status--' + work.deadlineClass + '">' + escapeHtml(work.deadlineText) + '</em>'
       + (work.originTotal > 1 ? '<small class="tlab-origin-badge">Origen ' + escapeHtml(work.originCode) + ' · Trabajo ' + work.originUnit + ' de ' + work.originTotal + '</small>' : '') + '</span>'
       + '<span class="tlab-thread-identity__patient">' + escapeHtml(work.patient) + '</span><span class="tlab-thread-identity__product">' + escapeHtml(work.product) + '</span><span class="tlab-thread-identity__branch"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>' + escapeHtml(work.branch) + '</span>'
       + identityPeopleHtml(work.doctor, work.mechanic)
-      + '<span class="tlab-thread-identity__next"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>' + escapeHtml(next ? "Próxima: " + next.label : (work.terminal ? "Proceso finalizado" : "El avance continúa desde los nodos")) + '</span></div>'
+      + '<span class="tlab-thread-identity__next"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>' + escapeHtml(nextText) + '</span></div>'
       + '<div class="tlab-thread-route tlab-thread-route--unified">' + unifiedLaneHtml(work, rowIndex) + '</div></div></article>';
   }
 
@@ -4296,7 +4325,7 @@
       iniciarDevolucion: "Se registrará la entrega del trabajo terminado y quedará pendiente de recepción en clínica.",
       solicitarAjuste: "Se abrirá un nuevo ciclo de ajuste sin borrar la historia original.",
       aprobarTrabajo: "El tiempo de laboratorio quedará cerrado y el trabajo esperará su instalación.",
-      registrarInstalacion: "Confirmará la instalación y entrega, conservará la evidencia final y cerrará visualmente el hilo. Sólo puede hacerlo quien recibió y mantiene la custodia actual.",
+      registrarInstalacion: "Confirmará la instalación y finalización, llevará el tratamiento al 100 % y cerrará el hilo. Sólo puede hacerlo el custodio actual; si hay una transferencia pendiente, también se cerrará dejando constancia.",
       cancelarTrabajo: "La cancelación requiere motivo y conserva todos los eventos anteriores."
     };
     return help[code] || "La operación quedará registrada en la trazabilidad.";
@@ -4357,6 +4386,8 @@
     var raw = action.work || {};
     var recipients;
     var reasons;
+    var noPhoto = action.code === "registrarInstalacion" && boolValue(values.sin_foto);
+    var evidenceHtml;
     if (isStartAction(action.code)) {
       var tieneCatalogoContextual = Object.prototype.hasOwnProperty.call(raw, "tecnicos_disponibles")
         || Object.prototype.hasOwnProperty.call(raw, "mecanicos");
@@ -4410,6 +4441,11 @@
       if (deliveryCondition === "con_observaciones") {
         fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionDeliveryNote">Detalle de la situación <span aria-hidden="true">*</span></label><textarea id="tlabActionDeliveryNote" name="observacion_entrega" required maxlength="1000" placeholder="Describí la situación observada antes de la entrega">' + escapeHtml(values.observacion_entrega || "") + '</textarea><small>Es obligatorio, sin una cantidad mínima de caracteres, y quedará en el último nodo.</small></div>');
       }
+      fields.push('<label class="tlab-field tlab-field--wide tlab-photo-exception"><input type="checkbox" name="sin_foto" value="1"' + (noPhoto ? " checked" : "") + '><span><strong>No existe evidencia fotográfica</strong><small>Usá esta excepción sólo cuando realmente no sea posible adjuntar una foto. La justificación quedará auditada.</small></span></label>');
+      if (noPhoto) {
+        fields.push(selectField("Motivo de la excepción", "motivo_sin_foto", noPhotoReasons(), values.motivo_sin_foto, true, "Seleccionar motivo", "La excepción no reemplaza el cierre ni elimina su trazabilidad."));
+        fields.push('<div class="tlab-field"><label for="tlabActionNoPhotoDetail">Justificación de la excepción <span aria-hidden="true">*</span></label><textarea id="tlabActionNoPhotoDetail" name="detalle_sin_foto" required maxlength="750" placeholder="Explicá por qué no fue posible obtener la fotografía">' + escapeHtml(values.detalle_sin_foto || "") + '</textarea><small>Este detalle será parte del evento final.</small></div>');
+      }
     }
     if (action.code === "registrarNovedad") {
       fields.push(selectField("Tipo de novedad", "tipo_novedad", noveltyTypes(), values.tipo_novedad || "observacion_general", false, "Observación general", "Ayuda a identificar la novedad sin cambiar la custodia."));
@@ -4437,7 +4473,17 @@
     if (action.code === "solicitarAjuste" && values.motivo && toStringSafe(values.motivo).toLowerCase() === "otro") {
       fields.push('<div class="tlab-field tlab-field--wide"><label for="tlabActionOtherReason">Descripción de “Otro”</label><input id="tlabActionOtherReason" name="motivo_otro" type="text" required maxlength="180" value="' + escapeAttr(values.motivo_otro || "") + '"></div>');
     }
-    return '<div class="tlab-form-grid">' + fields.join("") + '</div>' + ((config.evidence || config.evidenceOptional || boolValue(config.requiere_evidencia) || boolValue(config.permite_evidencia)) ? renderEvidencePicker(config.evidence || boolValue(config.requiere_evidencia), boolValue(config.documents)) : '');
+    if (noPhoto) {
+      evidenceHtml = '<section class="tlab-photo-exception-note"><i class="fa-solid fa-camera-slash" aria-hidden="true"></i><span><strong>Cierre sin fotografía</strong><small>El motivo y la justificación reemplazarán únicamente la evidencia faltante.</small></span></section>';
+    } else if (config.evidence || config.evidenceOptional || boolValue(config.requiere_evidencia) || boolValue(config.permite_evidencia)) {
+      evidenceHtml = renderEvidencePicker(
+        config.evidence || boolValue(config.requiere_evidencia),
+        boolValue(config.documents)
+      );
+    } else {
+      evidenceHtml = "";
+    }
+    return '<div class="tlab-form-grid">' + fields.join("") + '</div>' + evidenceHtml;
   }
 
   function selectField(label, name, items, selected, required, placeholder, helper) {
@@ -4482,6 +4528,8 @@
     if (values.condicion_pre_entrega) { items.push("Situación antes de entregar: " + humanizeHistoricalValue(values.condicion_pre_entrega)); }
     if (values.observacion_entrega) { items.push("Detalle de la situación: " + toStringSafe(values.observacion_entrega).slice(0, 180)); }
     if (boolValue(values.sin_foto)) { items.push("Foto: excepción auditada · " + humanizeHistoricalValue(values.motivo_sin_foto)); }
+    if (boolValue(values.sin_foto) && values.detalle_sin_foto) { items.push("Justificación sin foto: " + toStringSafe(values.detalle_sin_foto).slice(0, 180)); }
+    if (action.code === "registrarInstalacion" && normalizeWork(work).pendingTransfer) { items.push("Transferencia pendiente: se cerrará con el hilo y quedará vinculada al evento final"); }
     if (values.tipo_novedad) { items.push("Tipo de novedad: " + humanizeHistoricalValue(values.tipo_novedad)); }
     if (values.motivo) { items.push("Motivo: " + values.motivo + (values.motivo_otro ? " · " + values.motivo_otro : "")); }
     if (values.observacion) { items.push((action.code === "registrarNovedad" ? "Descripción: " : (isInitialPreparationAction(action.code) ? "Observación administrativa: " : "Observación: ")) + toStringSafe(values.observacion).slice(0, 180)); }
@@ -4523,8 +4571,6 @@
       if (!noPhoto.checked) {
         state.action.values.motivo_sin_foto = "";
         state.action.values.detalle_sin_foto = "";
-      } else if (state.action.values.motivo_sin_foto !== "otro") {
-        state.action.values.detalle_sin_foto = "";
       }
     }
   }
@@ -4561,10 +4607,13 @@
     if (action.code === "tomarHilo" && values.condicion_recepcion === "con_observaciones" && toStringSafe(values.observacion).trim().length < 5) { return "Describí la observación de recepción con al menos cinco caracteres."; }
     if (action.code === "registrarInstalacion" && values.condicion_pre_entrega !== "conforme" && values.condicion_pre_entrega !== "con_observaciones") { return "Indicá la situación del trabajo antes de entregarlo."; }
     if (action.code === "registrarInstalacion" && values.condicion_pre_entrega === "con_observaciones" && !toStringSafe(values.observacion_entrega).trim()) { return "Describí la situación observada antes de la entrega."; }
+    if (action.code === "registrarInstalacion" && boolValue(values.sin_foto) && !toStringSafe(values.motivo_sin_foto).trim()) { return "Seleccioná el motivo de la excepción fotográfica."; }
+    if (action.code === "registrarInstalacion" && boolValue(values.sin_foto) && !toStringSafe(values.detalle_sin_foto).trim()) { return "Justificá por qué no fue posible adjuntar la fotografía."; }
     if (action.code === "registrarNovedad" && toStringSafe(values.observacion).trim().length < 3) { return "Describí la novedad con al menos tres caracteres."; }
     if (action.code === "rectificarCustodia" && !values.cod_custodio_rectificado) { return "Seleccioná el nuevo custodio interno."; }
     if (action.code === "solicitarAjuste" && toStringSafe(values.motivo).toLowerCase() === "otro" && !toStringSafe(values.motivo_otro).trim()) { return "Describí el motivo seleccionado como “Otro”."; }
-    if ((config.evidence || boolValue(config.requiere_evidencia)) && !action.files.length) { return "Agregá al menos una fotografía para continuar."; }
+    if ((config.evidence || boolValue(config.requiere_evidencia)) && !action.files.length
+        && !(action.code === "registrarInstalacion" && boolValue(values.sin_foto))) { return "Agregá al menos una fotografía para continuar."; }
     return "";
   }
 
@@ -4643,7 +4692,8 @@
       motivo_excepcion: values.motivo_excepcion || "",
       justificacion: values.justificacion || "",
       condicion_recepcion: values.condicion_recepcion || "",
-      sin_foto: state.action.code === "tomarHilo" ? (boolValue(values.sin_foto) ? "1" : "0") : "",
+      sin_foto: state.action.code === "tomarHilo" || state.action.code === "registrarInstalacion"
+        ? (boolValue(values.sin_foto) ? "1" : "0") : "",
       motivo_sin_foto: values.motivo_sin_foto || "",
       detalle_sin_foto: values.detalle_sin_foto || "",
       tipo_novedad: state.action.code === "registrarNovedad" ? (values.tipo_novedad || "observacion_general") : "",

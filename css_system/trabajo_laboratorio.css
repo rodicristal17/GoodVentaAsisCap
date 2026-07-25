@@ -4291,6 +4291,21 @@ button[aria-pressed="true"] .tlab-group-count {
 }
 
 .tlab-shell .tlab-custody-node.is-current .tlab-route-node__trigger { background: #eefaf8; }
+.tlab-shell .tlab-current-custody-badge {
+  display: inline-flex;
+  min-height: 13px;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 5px;
+  border: 1px solid #78cfc5;
+  border-radius: 999px;
+  color: #006e67;
+  background: #e7f8f5;
+  font-size: 6px;
+  font-weight: 950;
+  letter-spacing: .04em;
+  line-height: 10px;
+}
 .tlab-shell .tlab-custody-node.is-closed .tlab-route-node__avatar .tlab-avatar { background: linear-gradient(145deg, #527184, #78909d); box-shadow: 0 0 0 2px #c8d7de; }
 .tlab-shell .tlab-custody-node.is-final .tlab-route-node__avatar .tlab-avatar { background: linear-gradient(145deg, #684ab8, #8b72d8); box-shadow: 0 0 0 2px #d6cef2; }
 .tlab-shell .tlab-custody-node.is-cancelled .tlab-route-node__avatar .tlab-avatar { background: linear-gradient(145deg, #8f4545, #b85a58); box-shadow: 0 0 0 2px #efd0cf; }
@@ -4673,6 +4688,26 @@ button[aria-pressed="true"] .tlab-group-count {
 .tlab-shell .tlab-thread-end.is-final-action .tlab-thread-end__icon {
   background: linear-gradient(145deg, #00b3a6 0%, #008b82 62%, #6d55a6 100%);
 }
+.tlab-shell .tlab-thread-end.is-closure-guide {
+  align-content: center;
+  padding-right: 8px;
+  padding-left: 8px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(232, 248, 245, .9), rgba(244, 241, 251, .72));
+}
+.tlab-shell .tlab-thread-end.is-closure-guide .tlab-thread-end__icon {
+  border-style: solid;
+  border-color: #70cfc5;
+  color: #fff;
+  background: linear-gradient(145deg, #00b3a6 0%, #008b82 62%, #6d55a6 100%);
+  box-shadow: 0 0 0 5px rgba(0, 169, 157, .1);
+}
+.tlab-shell .tlab-thread-end.is-closure-guide strong { color: #006f68; }
+.tlab-shell .tlab-thread-end.is-closure-guide small {
+  max-width: 122px;
+  color: #5d667d;
+  line-height: 1.25;
+}
 .tlab-shell .tlab-thread-end__final-check {
   position: absolute;
   right: -3px;
@@ -4800,6 +4835,70 @@ button[aria-pressed="true"] .tlab-group-count {
 .tlab-shell .tlab-node-popover__actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e3ecf1; }
 .tlab-shell .tlab-node-popover__actions button:hover,
 .tlab-shell .tlab-node-popover__edit button:hover { border-color: var(--tlab-teal); background: #eefaf8; }
+
+.tlab-shell .tlab-node-popover__closure {
+  display: grid;
+  gap: 8px;
+  margin-top: 9px;
+  padding: 10px;
+  border: 1px solid #b9dfda;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #effaf8, #f6f3fc);
+}
+.tlab-shell .tlab-node-popover__closure-heading { display: grid; gap: 2px; }
+.tlab-shell .tlab-node-popover__closure-heading > span {
+  width: max-content;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #006f68;
+  background: #d9f3ef;
+  font-size: 7px;
+  font-weight: 950;
+  letter-spacing: .04em;
+}
+.tlab-shell .tlab-node-popover__closure-heading strong { color: var(--tlab-navy); font-size: 12px; }
+.tlab-shell .tlab-node-popover__closure-heading small { color: #617988; font-size: 8px; }
+.tlab-shell .tlab-node-popover__closure-warning {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 7px 8px;
+  border: 1px solid #edcc8e;
+  border-radius: 8px;
+  color: #76500d;
+  background: #fff5df;
+  font-size: 8px;
+}
+.tlab-shell .tlab-node-popover__closure-warning > i { color: #b87305; font-size: 13px; }
+.tlab-shell .tlab-node-popover__closure-warning span { display: grid; gap: 1px; }
+.tlab-shell .tlab-node-popover__closure-button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 9px;
+  color: #fff;
+  background: linear-gradient(135deg, #008f86, #0875c9 70%, #6d55a6);
+  box-shadow: 0 6px 14px rgba(8, 84, 121, .16);
+  font-size: 9px;
+  font-weight: 950;
+  cursor: pointer;
+}
+.tlab-shell .tlab-node-popover__closure-button:hover { filter: brightness(1.04); }
+.tlab-shell .tlab-node-popover__closure-button:focus-visible { box-shadow: 0 0 0 3px rgba(0, 169, 157, .22); }
+.tlab-shell .tlab-node-popover__closure-help {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #617988;
+  font-size: 7px;
+  text-align: center;
+}
 
 .tlab-shell .tlab-node-readonly {
   display: grid;

@@ -1735,6 +1735,11 @@ function trabajoLaboratorioPuedeVer($mysqli, $codUsuario, $trabajo)
 function trabajoLaboratorioEstadoPermiteAccion($estado, $accion)
 {
     $estado = (string)$estado;
+    $estadosActivos = array(
+        'pendiente_tecnico', 'pendiente_entrega_mecanico', 'en_transferencia_mecanico', 'en_laboratorio',
+        'en_transferencia_clinica', 'pendiente_revision', 'ajuste_solicitado',
+        'listo_instalacion'
+    );
     $mapa = array(
         'asignarTecnico' => array('pendiente_tecnico'),
         'iniciarTransferencia' => array('pendiente_entrega_mecanico', 'ajuste_solicitado'),
@@ -1742,9 +1747,11 @@ function trabajoLaboratorioEstadoPermiteAccion($estado, $accion)
         'iniciarDevolucion' => array('en_laboratorio'),
         'confirmarDevolucion' => array('en_transferencia_clinica'),
         'solicitarAjuste' => array('pendiente_revision'),
-        'aprobarTrabajo' => array('pendiente_revision'),
-        'registrarInstalacion' => array('pendiente_revision', 'listo_instalacion')
+        'aprobarTrabajo' => array('pendiente_revision')
     );
+    if ($accion === 'registrarInstalacion') {
+        return in_array($estado, $estadosActivos, true);
+    }
     if (in_array($accion, array(
         'agregarEvidencia',
         'agregarNota',
@@ -1753,15 +1760,7 @@ function trabajoLaboratorioEstadoPermiteAccion($estado, $accion)
         'registrarNovedad',
         'rectificarCustodia'
     ), true)) {
-        return in_array(
-            $estado,
-            array(
-                'pendiente_tecnico', 'pendiente_entrega_mecanico', 'en_transferencia_mecanico', 'en_laboratorio',
-                'en_transferencia_clinica', 'pendiente_revision', 'ajuste_solicitado',
-                'listo_instalacion'
-            ),
-            true
-        );
+        return in_array($estado, $estadosActivos, true);
     }
     return isset($mapa[$accion]) && in_array($estado, $mapa[$accion], true);
 }
@@ -1829,8 +1828,7 @@ function trabajoLaboratorioResolverAcciones($estado, $contexto)
         && (($doctor && $local) || $auditor)
         && $tiene('APROBARTRABAJOLABORATORIO');
     $acciones['registrarInstalacion'] = trabajoLaboratorioEstadoPermiteAccion($estado, 'registrarInstalacion')
-        && $custodio
-        && ($tiene('ENTREGARTRABAJOLABORATORIO') || $tiene('INSTALARTRABAJOLABORATORIO'));
+        && $custodio;
     $acciones['cancelarTrabajo'] = trabajoLaboratorioEstadoPermiteAccion($estado, 'cancelarTrabajo')
         && (($local && !$tecnicoFormal) || $auditor)
         && $tiene('CANCELARTRABAJOLABORATORIO');
@@ -8415,7 +8413,7 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
             if ($modoResolucion !== '' && $modoResolucion !== 'instalado_entregado') {
                 trabajoLaboratorioLanzar(
                     'modo_resolucion_invalido',
-                    'Seleccione Instalado y entregado para cerrar el trabajo.'
+                    'Seleccione Instalado y finalizado para cerrar el trabajo.'
                 );
             }
             $condicion = trabajoLaboratorioNormalizarTexto(
@@ -8439,11 +8437,46 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
             }
             $evidencias = trabajoLaboratorioEvidenciasFinales($entrada);
             $maximoEvidencias = trabajoLaboratorioMaximoArchivosMedia();
-            if (count($evidencias) < 1 || count($evidencias) > $maximoEvidencias) {
+            $sinFoto = isset($entrada['sin_foto']) && (string)$entrada['sin_foto'] === '1';
+            $motivoSinFoto = trabajoLaboratorioNormalizarTexto(
+                isset($entrada['motivo_sin_foto']) ? $entrada['motivo_sin_foto'] : ''
+            );
+            $detalleSinFoto = trabajoLaboratorioTextoEntrada(
+                isset($entrada['detalle_sin_foto']) ? $entrada['detalle_sin_foto'] : '',
+                750
+            );
+            $motivosSinFoto = array(
+                'falla_dispositivo', 'imposibilidad_operativa', 'foto_no_disponible', 'otro'
+            );
+            if (count($evidencias) > $maximoEvidencias) {
                 trabajoLaboratorioLanzar(
-                    'evidencia_instalacion_requerida',
-                    'Adjunte entre una y '.$maximoEvidencias.' fotos para confirmar la instalacion y entrega.'
+                    'cantidad_evidencias_invalida',
+                    'Puede adjuntar hasta '.$maximoEvidencias.' fotos para confirmar la instalacion.'
                 );
+            }
+            if (count($evidencias) < 1) {
+                if (!$sinFoto) {
+                    trabajoLaboratorioLanzar(
+                        'evidencia_instalacion_requerida',
+                        'Adjunte al menos una foto o declare una excepcion justificada.'
+                    );
+                }
+                if (!in_array($motivoSinFoto, $motivosSinFoto, true)) {
+                    trabajoLaboratorioLanzar(
+                        'motivo_sin_foto_requerido',
+                        'Seleccione el motivo por el que no existe evidencia fotografica.'
+                    );
+                }
+                if ($detalleSinFoto === '') {
+                    trabajoLaboratorioLanzar(
+                        'detalle_sin_foto_requerido',
+                        'Explique por que no fue posible adjuntar la evidencia fotografica.'
+                    );
+                }
+            } else {
+                $sinFoto = false;
+                $motivoSinFoto = '';
+                $detalleSinFoto = '';
             }
             $idTrabajo = trabajoLaboratorioIdEntrada($entrada);
             $trabajo = trabajoLaboratorioObtenerTrabajo($mysqli, $idTrabajo, true);
@@ -8471,13 +8504,30 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
                     $esExcepcionAuditor
                 );
             }
+            $estadoAnterior = (string)$trabajo['estado_derivado'];
+            $transferenciaPendiente = null;
+            $idTransferencia = null;
+            $remitenteTransferencia = null;
+            $destinatarioTransferencia = null;
+            if (intval($trabajo['id_transferencia_pendienteFK']) > 0) {
+                $transferenciaPendiente = trabajoLaboratorioObtenerTransferenciaPendiente(
+                    $mysqli,
+                    $trabajo
+                );
+                $idTransferencia = intval($transferenciaPendiente['id']);
+                $remitenteTransferencia = intval($transferenciaPendiente['cod_remitenteFK']);
+                $destinatarioTransferencia = intval(
+                    $transferenciaPendiente['cod_destinatario_previstoFK']
+                );
+            }
             $ciclo = trabajoLaboratorioObtenerCicloActual($mysqli, $trabajo);
             $versionAnterior = intval($trabajo['version']);
             $versionNueva = $versionAnterior + 1;
             $estado = 'instalado';
             $stmt = $mysqli->prepare(
                 'UPDATE trabajo_laboratorio SET estado_derivado=?,'
-                .'fecha_instalado=NOW(),version=?,fecha_actualizacion=NOW(),cod_usuarioFK_update=? '
+                .'id_transferencia_pendienteFK=NULL,fecha_instalado=NOW(),version=?,'
+                .'fecha_actualizacion=NOW(),cod_usuarioFK_update=? '
                 .'WHERE id=? AND version=? AND cod_custodio_actualFK=? LIMIT 1'
             );
             if (!$stmt) {
@@ -8514,6 +8564,14 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
                         'condicion_pre_entrega' => $condicion,
                         'observacion_entrega' => $observacionEntrega,
                         'cantidad_evidencias' => count($evidencias),
+                        'sin_foto' => $sinFoto ? 1 : 0,
+                        'motivo_sin_foto' => $sinFoto ? $motivoSinFoto : null,
+                        'detalle_sin_foto' => $sinFoto ? $detalleSinFoto : null,
+                        'estado_anterior' => $estadoAnterior,
+                        'transferencia_pendiente_cerrada' => $idTransferencia !== null ? 1 : 0,
+                        'tipo_transferencia_cerrada' => $transferenciaPendiente
+                            && isset($transferenciaPendiente['tipo_transferencia'])
+                            ? (string)$transferenciaPendiente['tipo_transferencia'] : null,
                         'evolucion_clinica_explicita' => $codEvolucionOrigen > 0 ? 1 : 0,
                         'cod_usuario_evolucion' => intval($origen['cod_usuario_evolucion']),
                         'cierra_custodia' => 1,
@@ -8525,8 +8583,9 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
                     ),
                     $motivoExcepcion
                 ),
-                null,
-                intval($trabajo['cod_custodio_actualFK']), null, null, null,
+                $idTransferencia,
+                intval($trabajo['cod_custodio_actualFK']), null,
+                $remitenteTransferencia, $destinatarioTransferencia,
                 $origen['cod_consulta_origen'], $origen['cod_evolucion_origen']
             );
             foreach ($evidencias as $evidencia) {
@@ -8550,7 +8609,7 @@ function trabajoLaboratorioRegistrarInstalacion($mysqli, $codUsuario, $entrada)
                 $codUsuario,
                 $idTrabajo,
                 'instalacion_registrada',
-                'El trabajo quedo instalado y entregado. El hilo fue cerrado.'
+                'El trabajo quedo instalado y finalizado. El hilo fue cerrado.'
             );
             return array('id_trabajo' => $idTrabajo, 'respuesta' => $respuesta);
         }
