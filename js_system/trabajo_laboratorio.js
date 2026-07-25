@@ -38,6 +38,7 @@
   var BRAND_MARK = "/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2";
   var ROOT_ID = "telarTrabajoLaboratorio";
   var PAGE_SIZE = 18;
+  var CATALOG_CACHE_MS = 5 * 60 * 1000;
   var MAX_FILES = 3;
   var MAX_FILE_SIZE = 2 * 1024 * 1024;
   var IMAGE_TYPES = { "image/jpeg": true, "image/png": true, "image/webp": true };
@@ -216,6 +217,11 @@
     summary: {},
     historicalSummary: {},
     catalogs: {},
+    catalogsLoadedAt: 0,
+    catalogsLoading: null,
+    mediaCache: {},
+    mediaRequests: {},
+    thumbnailObserver: null,
     context: {},
     filtersOpen: false,
     detail: null,
@@ -789,6 +795,11 @@
         filters = currentFilterForm();
         state.filtersOpen = filters ? filters.hidden : false;
         renderFilterPresentation();
+        if (state.filtersOpen) {
+          loadCatalogs(false).then(null, function (error) {
+            notify(error.message, "error");
+          });
+        }
         break;
       case "clear-filters": clearFilters(); break;
       case "load-more": loadWorks(true); break;
@@ -1120,17 +1131,15 @@
   function loadInitialData() {
     var results = state.root.querySelector("#tlabResults");
     results.innerHTML = '<div class="tlab-results-state">' + loaderHtml("Buscando trabajos...", "content") + '</div>';
-    Promise.all([
-      loadCatalogs().then(null, function (error) { notify(error.message, "error"); }),
-      loadSummary().then(null, function (error) { notify(error.message, "error"); })
-    ]).then(function () {
-      if (state.open) { loadWorks(false); }
-    });
+    loadWorks(false);
+    loadSummary().then(null, function (error) { notify(error.message, "error"); });
   }
 
   function refreshAll() {
     loadSummary().then(null, function (error) { notify(error.message, "error"); });
-    loadCatalogs().then(null, function () {});
+    if (state.filtersOpen || state.catalogsLoadedAt > 0) {
+      loadCatalogs(true).then(null, function () {});
+    }
     loadWorks(false);
     if (state.detailId) {
       if (state.detailKind === "historico") { openHistoricalDetail(state.detailId, true); }
@@ -1198,17 +1207,37 @@
     renderGroupNavigation();
   }
 
-  function loadCatalogs() {
-    return request("obtenerCatalogos", {}).then(function (response) {
+  function catalogsAreFresh() {
+    return state.catalogsLoadedAt > 0
+      && (Date.now() - state.catalogsLoadedAt) < CATALOG_CACHE_MS
+      && Object.keys(state.catalogs || {}).length > 0;
+  }
+
+  function loadCatalogs(force) {
+    var pending;
+    if (!force && catalogsAreFresh()) {
+      renderCatalogs();
+      return Promise.resolve({ data: { catalogos: state.catalogs } });
+    }
+    if (state.catalogsLoading) { return state.catalogsLoading; }
+    pending = request("obtenerCatalogos", { respuesta_compacta: "1" }).then(function (response) {
       state.catalogs = response.data.catalogos || response.data;
+      state.catalogsLoadedAt = Date.now();
       mergeContext(response.data);
       renderCatalogs();
       return response;
     });
+    state.catalogsLoading = pending;
+    pending.then(function () {
+      state.catalogsLoading = null;
+    }, function () {
+      state.catalogsLoading = null;
+    });
+    return pending;
   }
 
   function loadSummary() {
-    return request("obtenerResumen", {}).then(function (response) {
+    return request("obtenerResumen", { respuesta_compacta: "1" }).then(function (response) {
       state.summary = response.data.resumen || response.data;
       state.historicalSummary = pick(state.summary, ["historicos"], response.data.historicos || state.historicalSummary || {});
       mergeContext(response.data);
@@ -1551,6 +1580,7 @@
     payload.pagina = state.page;
     payload.limite = PAGE_SIZE;
     payload.por_pagina = PAGE_SIZE;
+    payload.respuesta_compacta = "1";
     results = state.root.querySelector("#tlabResults");
     results.setAttribute("aria-busy", "true");
     if (!append) {
@@ -1933,8 +1963,9 @@
     var classes = (event.current ? " is-current" : "") + (event.final ? " is-final" : "") + (event.cancelled ? " is-cancelled" : "") + (event.closed ? " is-closed" : "") + (event.inTransport ? " is-in-transport" : "") + (event.photoException ? " has-photo-exception" : "");
     var evidence = event.image
       ? '<span class="tlab-route-node__evidence" aria-label="Con evidencia"><img src="' + escapeAttr(event.image) + '" alt="" loading="lazy"></span>'
-      : (event.mediaId || event.evidenceCount ? '<span class="tlab-route-node__evidence" aria-label="Con evidencia"><i class="fa-solid fa-camera"></i></span>'
-        : (event.photoException ? '<span class="tlab-route-node__evidence tlab-route-node__evidence--exception" aria-label="Sin foto por excepción"><i class="fa-solid fa-camera-slash"></i></span>' : ''));
+      : (event.mediaId ? '<span class="tlab-route-node__evidence" data-tlab-thumbnail-id="' + escapeAttr(event.mediaId) + '" aria-label="Cargando evidencia autorizada"><i class="fa-solid fa-camera"></i></span>'
+        : (event.evidenceCount ? '<span class="tlab-route-node__evidence" aria-label="Con evidencia"><i class="fa-solid fa-camera"></i></span>'
+          : (event.photoException ? '<span class="tlab-route-node__evidence tlab-route-node__evidence--exception" aria-label="Sin foto por excepción"><i class="fa-solid fa-camera-slash"></i></span>' : '')));
     var indicators = (event.noveltyCount ? '<span title="Novedades registradas"><i class="fa-solid fa-message" aria-hidden="true"></i>' + event.noveltyCount + '</span>' : '')
       + (event.inTransport ? '<span title="Trabajo en transporte"><i class="fa-solid fa-truck" aria-hidden="true"></i></span>' : '')
       + (event.historical ? '<span title="Registro anterior conservado"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i></span>' : '')
@@ -2022,8 +2053,9 @@
     }
     evidence = event.image
       ? '<span class="tlab-route-node__evidence" aria-label="Con fotografía"><img src="' + escapeAttr(event.image) + '" alt="" loading="lazy"></span>'
-      : (event.mediaId || event.evidenceCount ? '<span class="tlab-route-node__evidence" aria-label="Con fotografía"><i class="fa-solid fa-camera" aria-hidden="true"></i></span>'
-        : (event.photoException ? '<span class="tlab-route-node__evidence tlab-route-node__evidence--exception" aria-label="Sin foto por excepción"><i class="fa-solid fa-camera-slash" aria-hidden="true"></i></span>' : ''));
+      : (event.mediaId ? '<span class="tlab-route-node__evidence" data-tlab-thumbnail-id="' + escapeAttr(event.mediaId) + '" aria-label="Cargando fotografía autorizada"><i class="fa-solid fa-camera" aria-hidden="true"></i></span>'
+        : (event.evidenceCount ? '<span class="tlab-route-node__evidence" aria-label="Con fotografía"><i class="fa-solid fa-camera" aria-hidden="true"></i></span>'
+          : (event.photoException ? '<span class="tlab-route-node__evidence tlab-route-node__evidence--exception" aria-label="Sin foto por excepción"><i class="fa-solid fa-camera-slash" aria-hidden="true"></i></span>' : '')));
     return '<li class="tlab-route-node tlab-unified-node' + classes + '">'
       + (event.elapsed ? '<span class="tlab-route-node__elapsed">' + escapeHtml(event.elapsed) + '</span>' : '<span class="tlab-route-node__elapsed tlab-route-node__elapsed--empty" aria-hidden="true"></span>')
       + '<button type="button" class="tlab-route-node__trigger" data-tlab-node-trigger data-tlab-node-lane="unificado" data-tlab-node-kind="operativo" data-tlab-node-row-id="' + escapeAttr(work.id) + '" data-tlab-node-index="' + index + '" aria-haspopup="dialog" aria-expanded="false" aria-controls="tlabNodePopover" aria-label="Ver nodo: ' + escapeAttr(event.title) + '">'
@@ -2557,6 +2589,15 @@
     var record = state.nodePopoverRecord;
     var snapshot;
     if (!record || !record.work || !record.raw) { return; }
+    if (!catalogsAreFresh()) {
+      notify("Preparando las opciones editables...", "info");
+      loadCatalogs(false).then(function () {
+        if (state.nodePopoverRecord === record) { beginCurrentNodeEdit(); }
+      }).then(null, function (error) {
+        notify(error.message || "No se pudieron cargar las opciones editables.", "error");
+      });
+      return;
+    }
     snapshot = nodeSnapshot(record.raw, record.work, false);
     if (!snapshot) { notify("Este nodo histórico no tiene una versión completa editable.", "info"); return; }
     state.nodeEditor = { mode: "edit", values: snapshot, idempotencyKey: makeIdempotencyKey(), saving: false, error: "" };
@@ -2706,7 +2747,8 @@
     popover.innerHTML = loaderHtml("Recuperando la versión vigente...", "compact");
     popover.hidden = false;
     positionNodePopover(trigger, popover);
-    loadNodeEnvelope(rowId).then(function (loaded) {
+    Promise.all([loadNodeEnvelope(rowId), loadCatalogs(false)]).then(function (responses) {
+      var loaded = responses[0];
       var action = normalizeActions(loaded.work.acciones_permitidas || loaded.envelope.acciones_permitidas || []).filter(function (item) { return item.code === "tomarHilo"; })[0];
       var chain = normalizeWork(loaded.work).custodyChain;
       var currentNode = chain.filter(function (node) { return boolValue(pick(node, ["actual", "es_actual", "custodia_actual"], false)); })[0]
@@ -3105,7 +3147,8 @@
     popover.innerHTML = loaderHtml("Recuperando el trabajo histórico...", "compact");
     popover.hidden = false;
     positionNodePopover(trigger, popover);
-    loadHistoricalNodeEnvelope(rowId).then(function (loaded) {
+    Promise.all([loadHistoricalNodeEnvelope(rowId), loadCatalogs(false)]).then(function (responses) {
+      var loaded = responses[0];
       if (state.nodePopover !== trigger) { return; }
       if (!boolValue(loaded.envelope.puede_resolver)
           && !boolValue(pick(loaded.historical.acciones || {}, ["puede_resolver"], false))) {
@@ -3549,6 +3592,7 @@
       results.innerHTML = '<div class="tlab-empty"><div><i class="fa-solid fa-diagram-project" aria-hidden="true"></i><strong>No hay trabajos en esta bandeja</strong><span>Probá otro grupo o ajustá los filtros de búsqueda.</span></div></div>';
     } else {
       results.innerHTML = '<div class="tlab-thread-list">' + state.works.map(workCardHtml).join("") + '</div>';
+      hydrateAuthorizedThumbnails(results);
     }
     more.hidden = !state.hasMore;
   }
@@ -4730,6 +4774,21 @@
     captureActionValues();
     error = validateActionStep(state.action.step);
     if (error) { showActionError(error); return; }
+    if (state.action.step === 1 && !catalogsAreFresh()) {
+      if (state.action.loadingCatalogs) { return; }
+      state.action.loadingCatalogs = true;
+      notify("Preparando las opciones de la acción...", "info");
+      loadCatalogs(false).then(function () {
+        if (!state.action) { return; }
+        state.action.loadingCatalogs = false;
+        state.action.step = 2;
+        renderActionDialog();
+      }).then(null, function (catalogError) {
+        if (state.action) { state.action.loadingCatalogs = false; }
+        showActionError(catalogError.message || "No se pudieron preparar las opciones.");
+      });
+      return;
+    }
     state.action.step = Math.min(3, state.action.step + 1);
     renderActionDialog();
   }
@@ -4969,18 +5028,90 @@
     focusFirst(layer);
   }
 
-  function loadAuthorizedMedia(mediaId) {
+  function loadAuthorizedMedia(mediaId, thumbnail) {
+    var cacheKey;
+    var pending;
     if (!mediaId) { return Promise.reject(new Error("No se pudo identificar la evidencia.")); }
-    return request("descargarMedia", { id_media: mediaId }).then(function (response) {
+    cacheKey = (thumbnail ? "miniatura:" : "original:") + toStringSafe(mediaId);
+    if (state.mediaCache[cacheKey]) {
+      return Promise.resolve(state.mediaCache[cacheKey]);
+    }
+    if (state.mediaRequests[cacheKey]) {
+      return state.mediaRequests[cacheKey];
+    }
+    pending = request("descargarMedia", {
+      id_media: mediaId,
+      miniatura: thumbnail ? "1" : "0"
+    }).then(function (response) {
       var media = response.data.media || response.data;
       var encoded = pick(media, ["data_base64", "base64"], "");
       var mime = pick(media, ["mime", "mime_type", "tipo_mime"], "image/jpeg");
+      var loaded;
       if (!encoded) { throw new Error("La evidencia protegida no está disponible."); }
-      return {
+      loaded = {
         src: "data:" + mime + ";base64," + encoded,
         mime: mime,
         nombre: pick(media, ["nombre", "nombre_original"], "Evidencia del trabajo")
       };
+      state.mediaCache[cacheKey] = loaded;
+      return loaded;
+    });
+    state.mediaRequests[cacheKey] = pending;
+    pending.then(function () {
+      delete state.mediaRequests[cacheKey];
+    }, function () {
+      delete state.mediaRequests[cacheKey];
+    });
+    return pending;
+  }
+
+  function loadAuthorizedThumbnail(element) {
+    var mediaId;
+    if (!element || element.getAttribute("data-tlab-thumbnail-loading") === "1") { return; }
+    mediaId = element.getAttribute("data-tlab-thumbnail-id");
+    if (!mediaId) { return; }
+    element.setAttribute("data-tlab-thumbnail-loading", "1");
+    loadAuthorizedMedia(mediaId, true).then(function (media) {
+      if (!document.documentElement.contains(element)
+          || element.getAttribute("data-tlab-thumbnail-id") !== toStringSafe(mediaId)) {
+        return;
+      }
+      element.innerHTML = '<img src="' + escapeAttr(media.src) + '" alt="" loading="lazy">';
+      element.setAttribute("aria-label", "Evidencia autorizada");
+      element.removeAttribute("data-tlab-thumbnail-loading");
+      element.setAttribute("data-tlab-thumbnail-loaded", "1");
+    }).then(null, function () {
+      if (document.documentElement.contains(element)) {
+        element.removeAttribute("data-tlab-thumbnail-loading");
+        element.setAttribute("data-tlab-thumbnail-error", "1");
+      }
+    });
+  }
+
+  function ensureThumbnailObserver() {
+    if (state.thumbnailObserver || !window.IntersectionObserver) {
+      return state.thumbnailObserver;
+    }
+    state.thumbnailObserver = new window.IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) { return; }
+        state.thumbnailObserver.unobserve(entry.target);
+        loadAuthorizedThumbnail(entry.target);
+      });
+    }, { root: null, rootMargin: "160px" });
+    return state.thumbnailObserver;
+  }
+
+  function hydrateAuthorizedThumbnails(scope) {
+    var observer;
+    var elements;
+    if (!scope || !scope.querySelectorAll) { return; }
+    elements = scope.querySelectorAll("[data-tlab-thumbnail-id]:not([data-tlab-thumbnail-loaded])");
+    observer = ensureThumbnailObserver();
+    if (observer) { observer.disconnect(); }
+    Array.prototype.forEach.call(elements, function (element) {
+      if (observer) { observer.observe(element); }
+      else { loadAuthorizedThumbnail(element); }
     });
   }
 

@@ -136,6 +136,8 @@ try {
         );
     }
     $entrada = $_POST;
+    $respuestaCompacta = !empty($entrada['respuesta_compacta'])
+        && trabajoLaboratorioEntero($entrada['respuesta_compacta']) === 1;
     $accion = trabajoLaboratorioTextoEntrada(isset($entrada['accion']) ? $entrada['accion'] : '', 50);
     if ($accion === '') {
         $accion = trabajoLaboratorioTextoEntrada(isset($entrada['funt']) ? $entrada['funt'] : '', 50);
@@ -315,9 +317,16 @@ try {
             if (!trabajoLaboratorioEstructuraDisponible($mysqli)) {
                 trabajoLaboratorioLanzar('estructura_laboratorio_no_instalada', 'El modulo de laboratorio todavia no esta instalado.');
             }
-            $datos = trabajoLaboratorioListar($mysqli, $codUsuario, $entrada);
+            $datos = trabajoLaboratorioListar(
+                $mysqli,
+                $codUsuario,
+                $entrada,
+                array('respuesta_compacta' => $respuestaCompacta)
+            );
             $datos['contexto_usuario'] = $contextoUsuario;
-            $datos = array_merge($datos, $contextoUsuario);
+            if (!$respuestaCompacta) {
+                $datos = array_merge($datos, $contextoUsuario);
+            }
             $respuesta = trabajoLaboratorioRespuesta(true, 'trabajos_listados', 'Trabajos listados.', $datos, null);
             break;
         case 'listarImpresionTecnica':
@@ -380,7 +389,13 @@ try {
                     ? intval($resumenHistorico['por_actualizar']) : 0;
                 $resumen['grupos']['historicos'] = $resumen['historicos_total'];
             }
-            $datos = array_merge($resumen, array('resumen' => $resumen, 'contexto_usuario' => $contextoUsuario), $contextoUsuario);
+            $datos = $respuestaCompacta
+                ? array('resumen' => $resumen, 'contexto_usuario' => $contextoUsuario)
+                : array_merge(
+                    $resumen,
+                    array('resumen' => $resumen, 'contexto_usuario' => $contextoUsuario),
+                    $contextoUsuario
+                );
             $respuesta = trabajoLaboratorioRespuesta(true, 'resumen_obtenido', 'Resumen obtenido.', $datos, null);
             break;
         case 'obtenerCatalogos':
@@ -388,7 +403,13 @@ try {
                 trabajoLaboratorioLanzar('estructura_laboratorio_no_instalada', 'El modulo de laboratorio todavia no esta instalado.');
             }
             $catalogos = trabajoLaboratorioCatalogos($mysqli, $codUsuario);
-            $datos = array_merge($catalogos, array('catalogos' => $catalogos, 'contexto_usuario' => $contextoUsuario), $contextoUsuario);
+            $datos = $respuestaCompacta
+                ? array('catalogos' => $catalogos, 'contexto_usuario' => $contextoUsuario)
+                : array_merge(
+                    $catalogos,
+                    array('catalogos' => $catalogos, 'contexto_usuario' => $contextoUsuario),
+                    $contextoUsuario
+                );
             $respuesta = trabajoLaboratorioRespuesta(true, 'catalogos_obtenidos', 'Catalogos obtenidos.', $datos, null);
             break;
         case 'descargarMedia':

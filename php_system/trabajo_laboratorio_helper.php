@@ -4872,6 +4872,12 @@ function trabajoLaboratorioCadenasCustodiaPorTrabajos($mysqli, $trabajos, $inclu
     }
 
     $marcas = implode(',', array_fill(0, count($ids), '?'));
+    $seleccionMiniatura = $incluirMiniaturas
+        ? '(SELECT me.miniatura_relativa FROM trabajo_laboratorio_media me '
+            .'WHERE me.id_eventoFK=e.id ORDER BY me.id ASC LIMIT 1) AS media_miniatura,'
+            .'(SELECT me.mime FROM trabajo_laboratorio_media me '
+            .'WHERE me.id_eventoFK=e.id ORDER BY me.id ASC LIMIT 1) AS media_mime,'
+        : 'NULL AS media_miniatura,NULL AS media_mime,';
     $sql = 'SELECT e.id,e.id_trabajoFK,e.id_cicloFK,e.tipo_evento,e.cod_usuario_actorFK,'
         .'e.cod_custodio_anteriorFK,e.cod_custodio_nuevoFK,e.cod_localFK,e.fecha_servidor,'
         .'e.observacion,e.metadata_json,e.version_resultante,e.actor_nombre_snapshot,'
@@ -4881,10 +4887,7 @@ function trabajoLaboratorioCadenasCustodiaPorTrabajos($mysqli, $trabajos, $inclu
         .'pca.nombre_persona AS custodio_anterior_nombre,l.Nombre AS local_nombre,'
         .'(SELECT MIN(me.id) FROM trabajo_laboratorio_media me WHERE me.id_eventoFK=e.id) AS media_id,'
         .'(SELECT COUNT(*) FROM trabajo_laboratorio_media me WHERE me.id_eventoFK=e.id) AS media_cantidad,'
-        .'(SELECT me.miniatura_relativa FROM trabajo_laboratorio_media me '
-        .'WHERE me.id_eventoFK=e.id ORDER BY me.id ASC LIMIT 1) AS media_miniatura,'
-        .'(SELECT me.mime FROM trabajo_laboratorio_media me '
-        .'WHERE me.id_eventoFK=e.id ORDER BY me.id ASC LIMIT 1) AS media_mime,'
+        .$seleccionMiniatura
         .'(SELECT COUNT(*) FROM trabajo_laboratorio_evento nv '
         ."WHERE nv.id_evento_custodiaFK=e.id AND nv.tipo_evento='novedad_custodia') AS novedades_cantidad "
         .'FROM trabajo_laboratorio_evento e '
@@ -5606,6 +5609,7 @@ function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada, $opciones = ar
     }
     $opciones = is_array($opciones) ? $opciones : array();
     $resumenTecnicoInterno = !empty($opciones['resumen_tecnico']);
+    $respuestaCompacta = !empty($opciones['respuesta_compacta']);
     $pagina = max(1, trabajoLaboratorioEntero(isset($entrada['pagina']) ? $entrada['pagina'] : 1));
     $porPagina = trabajoLaboratorioEntero(isset($entrada['por_pagina']) ? $entrada['por_pagina']
         : (isset($entrada['limite']) ? $entrada['limite'] : 20));
@@ -5831,6 +5835,20 @@ function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada, $opciones = ar
     $total = intval($stmtTotal->get_result()->fetch_assoc()['total']);
     $stmtTotal->close();
 
+    $seleccionMedia = '(SELECT mm.id FROM trabajo_laboratorio_media mm WHERE mm.id_trabajoFK=tl.id '
+        .'ORDER BY mm.fecha_creacion ASC,mm.id ASC LIMIT 1) AS id_media_principal,';
+    if ($respuestaCompacta) {
+        $seleccionMedia .= 'NULL AS miniatura_relativa_principal,'
+            .'NULL AS ruta_relativa_principal,NULL AS mime_media_principal';
+    } else {
+        $seleccionMedia .= '(SELECT mm.miniatura_relativa FROM trabajo_laboratorio_media mm '
+            .'WHERE mm.id_trabajoFK=tl.id ORDER BY mm.fecha_creacion ASC,mm.id ASC LIMIT 1) '
+            .'AS miniatura_relativa_principal,'
+            .'(SELECT mm.ruta_relativa FROM trabajo_laboratorio_media mm WHERE mm.id_trabajoFK=tl.id '
+            .'ORDER BY mm.fecha_creacion ASC,mm.id ASC LIMIT 1) AS ruta_relativa_principal,'
+            .'(SELECT mm.mime FROM trabajo_laboratorio_media mm WHERE mm.id_trabajoFK=tl.id '
+            .'ORDER BY mm.fecha_creacion ASC,mm.id ASC LIMIT 1) AS mime_media_principal';
+    }
     $sql = 'SELECT tl.*,p.nombre_producto,l.Nombre AS nombre_local,pp.nombre_persona AS nombre_paciente,'
         .'pt.nombre_persona AS nombre_tecnico,utec.tipo AS tecnico_rol,utec.url AS tecnico_avatar,'
         .'pcu.nombre_persona AS nombre_custodio,ucu.tipo AS custodio_rol,ucu.url AS custodio_avatar,'
@@ -5840,14 +5858,7 @@ function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada, $opciones = ar
         .'uini.tipo AS iniciador_rol,uini.url AS iniciador_avatar,tt.descripcion AS tipo_trabajo,'
         .'(SELECT MAX(ev.fecha_servidor) FROM trabajo_laboratorio_evento ev '
         .'WHERE ev.id_trabajoFK=tl.id AND ev.cod_custodio_nuevoFK=tl.cod_custodio_actualFK) AS fecha_custodio_actual,'
-        .'(SELECT mm.id FROM trabajo_laboratorio_media mm WHERE mm.id_trabajoFK=tl.id '
-        .'ORDER BY mm.fecha_creacion ASC,mm.id ASC LIMIT 1) AS id_media_principal,'
-        .'(SELECT mm.miniatura_relativa FROM trabajo_laboratorio_media mm WHERE mm.id_trabajoFK=tl.id '
-        .'ORDER BY mm.fecha_creacion ASC,mm.id ASC LIMIT 1) AS miniatura_relativa_principal,'
-        .'(SELECT mm.ruta_relativa FROM trabajo_laboratorio_media mm WHERE mm.id_trabajoFK=tl.id '
-        .'ORDER BY mm.fecha_creacion ASC,mm.id ASC LIMIT 1) AS ruta_relativa_principal,'
-        .'(SELECT mm.mime FROM trabajo_laboratorio_media mm WHERE mm.id_trabajoFK=tl.id '
-        .'ORDER BY mm.fecha_creacion ASC,mm.id ASC LIMIT 1) AS mime_media_principal'
+        .$seleccionMedia
         .$base.' ORDER BY tl.fecha_actualizacion DESC,tl.id DESC LIMIT ?,?';
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
@@ -5873,7 +5884,11 @@ function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada, $opciones = ar
         : trabajoLaboratorioRecorridosPorTrabajos($mysqli, $filas);
     $cadenasCustodia = $resumenTecnicoInterno
         ? array()
-        : trabajoLaboratorioCadenasCustodiaPorTrabajos($mysqli, $filas);
+        : trabajoLaboratorioCadenasCustodiaPorTrabajos(
+            $mysqli,
+            $filas,
+            !$respuestaCompacta
+        );
     $origenesHistoricos = !$resumenTecnicoInterno
         && function_exists('trabajoLaboratorioHistoricoOriginalesPorTrabajos')
             ? trabajoLaboratorioHistoricoOriginalesPorTrabajos($mysqli, $filas)
@@ -5896,10 +5911,14 @@ function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada, $opciones = ar
         $idTrabajo = intval($fila['id']);
         if (!$resumenTecnicoInterno) {
             $item['recorrido'] = isset($recorridos[$idTrabajo]) ? $recorridos[$idTrabajo] : array();
-            $item['recorrido_operativo'] = $item['recorrido'];
+            if (!$respuestaCompacta) {
+                $item['recorrido_operativo'] = $item['recorrido'];
+            }
             $item['cadena_custodia'] = isset($cadenasCustodia[$idTrabajo])
                 ? $cadenasCustodia[$idTrabajo] : array();
-            $item['hilo_custodia'] = $item['cadena_custodia'];
+            if (!$respuestaCompacta) {
+                $item['hilo_custodia'] = $item['cadena_custodia'];
+            }
             $item['custodia_actual'] = trabajoLaboratorioResumenCustodiaActual(
                 $item['cadena_custodia'],
                 $fila
@@ -5910,9 +5929,8 @@ function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada, $opciones = ar
         $items[] = $item;
     }
     $hayMas = ($offset + count($items)) < $total;
-    return array(
+    $salida = array(
         'items' => $items,
-        'trabajos' => $items,
         'total' => $total,
         'hay_mas' => $hayMas,
         'paginacion' => array(
@@ -5922,6 +5940,10 @@ function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada, $opciones = ar
             'total_paginas' => $total > 0 ? intval(ceil($total / $porPagina)) : 0
         )
     );
+    if (!$respuestaCompacta) {
+        $salida['trabajos'] = $items;
+    }
+    return $salida;
 }
 
 function trabajoLaboratorioNombreAbreviadoImpresion($nombre)

@@ -868,6 +868,9 @@ $fuenteHistoricoHelper = file_get_contents(dirname(__DIR__).'/php_system/trabajo
 $fuenteMigracionHiloCustodia = file_get_contents(
     dirname(__DIR__).'/actualizacion_22072026_hilo_custodia_laboratorio.sql'
 );
+$fuenteMigracionPerformance = file_get_contents(
+    dirname(__DIR__).'/actualizacion_25072026_trabajo_laboratorio_performance.sql'
+);
 pruebaLabAfirmar(
     $fuenteConsultaJs !== false && $fuenteInicioJs !== false && $fuenteOdontogramaJs !== false
     && $fuenteDashboardShortcutsJs !== false && $fuenteDashboardShortcutsPhp !== false
@@ -875,7 +878,8 @@ pruebaLabAfirmar(
     && $fuenteInicioCss !== false && $fuenteInicioHtml !== false
     && $fuenteConsultaPhp !== false && $fuenteOdontogramaPhp !== false
     && $fuenteTrabajoLaboratorioPhp !== false
-    && $fuenteHistoricoHelper !== false && $fuenteMigracionHiloCustodia !== false,
+    && $fuenteHistoricoHelper !== false && $fuenteMigracionHiloCustodia !== false
+    && $fuenteMigracionPerformance !== false,
     'Se pudieron leer las integraciones clinicas para verificar sus resguardos.'
 );
 pruebaLabAfirmar(
@@ -1060,6 +1064,54 @@ pruebaLabAfirmar(
 pruebaLabAfirmar(
     strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260725-02') !== false,
     'La carga dinamica usa la misma version vigente de estilos del modulo.'
+);
+$bloqueCargaInicial = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'loadInitialData');
+$bloqueCargaTrabajos = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'loadWorks');
+$bloqueCargaCatalogos = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'loadCatalogs');
+pruebaLabAfirmar(
+    strpos($bloqueCargaInicial, 'loadWorks(false);') !== false
+    && strpos($bloqueCargaInicial, 'loadCatalogs(') === false
+    && strpos($bloqueCargaTrabajos, 'payload.respuesta_compacta = "1"') !== false
+    && strpos($bloqueCargaCatalogos, 'respuesta_compacta: "1"') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'CATALOG_CACHE_MS = 5 * 60 * 1000') !== false
+    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260725-03') !== false,
+    'La bandeja abre con su listado, difiere los catalogos y reutiliza su cache sin bloquear la vista.'
+);
+pruebaLabAfirmar(
+    strpos($fuenteTrabajoLaboratorioJs, 'data-tlab-thumbnail-id=') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'function loadAuthorizedMedia(mediaId, thumbnail)') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'miniatura: thumbnail ? "1" : "0"') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'state.mediaRequests[cacheKey]') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'new window.IntersectionObserver') !== false
+    && strpos($fuenteTrabajoLaboratorioPhp, "case 'descargarMedia':") !== false
+    && strpos($fuenteTrabajoLaboratorioPhp, "\$entrada['miniatura']") !== false,
+    'Las miniaturas se recuperan una vez, bajo autorizacion y solamente al acercarse a la vista.'
+);
+$bloqueListadoCompacto = pruebaLabBloqueFuncion($fuenteHelper, 'trabajoLaboratorioListar');
+$bloqueCustodiaCompacta = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioCadenasCustodiaPorTrabajos'
+);
+pruebaLabAfirmar(
+    strpos($fuenteTrabajoLaboratorioPhp, '$respuestaCompacta') !== false
+    && strpos(
+        $fuenteTrabajoLaboratorioPhp,
+        "array('respuesta_compacta' => \$respuestaCompacta)"
+    ) !== false
+    && strpos($bloqueListadoCompacto, '!$respuestaCompacta') !== false
+    && strpos($bloqueListadoCompacto, "\$salida['trabajos'] = \$items") !== false
+    && strpos($bloqueCustodiaCompacta, '$seleccionMiniatura = $incluirMiniaturas') !== false,
+    'El servidor conserva el contrato antiguo y ofrece una respuesta compacta sin aliases ni imagenes incrustadas.'
+);
+pruebaLabAfirmar(
+    strpos($fuenteMigracionPerformance, 'idx_tlab_estado_actualizacion') !== false
+    && strpos($fuenteMigracionPerformance, 'idx_tlab_tecnico_estado_actualizacion') !== false
+    && strpos($fuenteMigracionPerformance, 'idx_tlab_custodio_estado_actualizacion') !== false
+    && substr_count($fuenteMigracionPerformance, 'INFORMATION_SCHEMA.STATISTICS') >= 4
+    && stripos($fuenteMigracionPerformance, 'INSERT INTO') === false
+    && stripos($fuenteMigracionPerformance, 'UPDATE ') === false
+    && stripos($fuenteMigracionPerformance, 'DELETE FROM') === false,
+    'La migracion de rendimiento queda separada, idempotente y sin modificaciones de registros.'
 );
 pruebaLabAfirmar(
     strpos($fuenteMigracionHiloCustodia, 'ADD COLUMN IF NOT EXISTS') !== false
@@ -1889,7 +1941,7 @@ pruebaLabAfirmar(
     && strpos($fuenteTrabajoLaboratorioJs, '!toStringSafe(values.motivo_excepcion).trim()') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'motivo_excepcion).trim().length < 5') === false
     && strpos($fuenteTrabajoLaboratorioJs, 'action.code === "rectificarCustodia" && toStringSafe(values.justificacion).trim().length < 5') === false
-    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260725-02') !== false,
+    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260725-03') !== false,
     'La interfaz ofrece una observacion inicial opcional y solo exige contenido, sin minimo, en otras excepciones.'
 );
 $bloqueGuardarRegularizacion = pruebaLabBloqueFuncion(
