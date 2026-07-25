@@ -5030,7 +5030,7 @@ function obtenerResumenCuotasProgramadas($gastosSerie) {
 			$pagadas++;
 			continue;
 		}
-		if ($fechaObj && $fechaObj <= $hoy) {
+		if ($fechaObj && $fechaObj < $hoy) {
 			$vencidas++;
 			continue;
 		}
@@ -5089,7 +5089,7 @@ function obtenerEtiquetaCuotaProgramada($gasto) {
 		return array('tipo' => 'aprobado', 'texto' => 'Aprobado');
 	}
 	$fechaObj= flujoGastoFechaObjeto(isset($gasto['fecha']) ? $gasto['fecha'] : '');
-	if ($fechaObj && $fechaObj <= new DateTime('today')) {
+	if ($fechaObj && $fechaObj < new DateTime('today')) {
 		return array('tipo' => 'vencido', 'texto' => 'Vencido');
 	}
 	return array('tipo' => 'programado', 'texto' => 'Programado');
@@ -5552,7 +5552,7 @@ function construirPagoUnicoFlujoConcepto($gasto, $tituloZona= '', $codUsuarioAct
 	$styleEstado= "";
 	$fechaGasto= flujoGastoFechaObjeto($fecha);
 	$fechaHoy= new DateTime('today');
-	if (($estadoOriginal == 'solicitado' || $estadoOriginal == 'pendiente') && $fechaGasto && $fechaGasto <= $fechaHoy) {
+	if (($estadoOriginal == 'solicitado' || $estadoOriginal == 'pendiente') && $fechaGasto && $fechaGasto < $fechaHoy) {
 		$styleEstado= "background-color: #ff5050;color: #ffffff;";
 	} else if ($estadoOriginal == 'pendiente' || ($estadoOriginal == 'solicitado' && $fechaGasto && $fechaGasto > $fechaHoy)) {
 		$styleEstado= "background-color: #585f08;color: #ffffff;";
@@ -6002,9 +6002,9 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 				</td>";
 			}
 			$styleEstado = "";
-			$fechaHoy = new DateTime();
+			$fechaHoy = new DateTime('today');
 			$fechaGasto = DateTime::createFromFormat('Y-m-d', $fecha);
-			if (($estado == 'solicitado' || $estado == 'pendiente') && $fechaGasto <= $fechaHoy) {
+			if (($estado == 'solicitado' || $estado == 'pendiente') && $fechaGasto && $fechaGasto < $fechaHoy) {
 				$styleEstado= "background-color: #ff5050;color: #ffffff";
 				$estado= 'solicitado';
 				$registro_autorizacion_necesario= true;
