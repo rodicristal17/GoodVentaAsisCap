@@ -15370,12 +15370,44 @@ text-align: justify;
   cursor: pointer;
 }
 
-#divAbmDetallesInterConsulta .panel-flujo-gastos > span {
+#divAbmDetallesInterConsulta .interconsulta-flow-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+#divAbmDetallesInterConsulta .interconsulta-flow-head__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+#divAbmDetallesInterConsulta .interconsulta-flow-view {
+  min-height: 32px;
+  padding: 6px 11px;
+  border: 1px solid #b8d3e5;
+  border-radius: 999px;
+  background: #f2f8fc;
+  color: #245b80;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+#divAbmDetallesInterConsulta .interconsulta-flow-view:hover,
+#divAbmDetallesInterConsulta .interconsulta-flow-view:focus-visible {
+  border-color: #4d91bd;
+  background: #e6f3fb;
+  color: #174866;
+  outline: none;
 }
 
 #divAbmDetallesInterConsulta .panel-flujo-gastos .iconoBtn {
@@ -52261,6 +52293,315 @@ button.tratamiento-ubicacion-visual {
   margin: 0;
   accent-color: #b63232;
   cursor: pointer;
+}
+
+body.interconsulta-flow-modal-open {
+  overflow: hidden;
+}
+
+.interconsulta-flow-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000060;
+  padding: 14px;
+  background: rgba(8, 24, 39, 0.72);
+  backdrop-filter: blur(5px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.interconsulta-flow-modal.is-open {
+  display: flex;
+}
+
+.interconsulta-flow-modal__dialog {
+  width: min(1500px, calc(100vw - 28px));
+  height: min(900px, calc(100vh - 28px));
+  max-height: calc(100vh - 28px);
+  border: 1px solid rgba(205, 221, 233, .8);
+  border-radius: 18px;
+  background: #f4f7fa;
+  box-shadow: 0 32px 90px rgba(5, 19, 31, .48);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: interconsultaFlowModalEntrada .18s ease-out;
+}
+
+@keyframes interconsultaFlowModalEntrada {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.interconsulta-flow-modal__header {
+  min-height: 82px;
+  padding: 13px 18px 13px 22px;
+  background: linear-gradient(120deg, #153c59 0%, #0b7a7f 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.interconsulta-flow-modal__heading {
+  min-width: 0;
+}
+
+.interconsulta-flow-modal__header span {
+  display: block;
+  margin-bottom: 2px;
+  color: #c9f3f2;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.interconsulta-flow-modal__header h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.interconsulta-flow-modal__header p {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, .78);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.interconsulta-flow-modal__tools {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.interconsulta-flow-modal__count {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, .34);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .13);
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.interconsulta-flow-modal__close {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, .55);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .14);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.interconsulta-flow-modal__close:hover,
+.interconsulta-flow-modal__close:focus-visible {
+  background: #ffffff;
+  color: #a22a2a;
+  outline: 3px solid rgba(255, 255, 255, .25);
+  outline-offset: 2px;
+}
+
+.interconsulta-flow-modal__content {
+  min-height: 0;
+  padding: 14px;
+  overflow: auto;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(390px, 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 9px;
+  scrollbar-color: #90a7b9 #e5edf3;
+}
+
+.interconsulta-flow-modal__content .btn-menu-extracto.interconsulta-flow-expense {
+  --flow-expense-color:#64748b;
+  --flow-expense-soft:#f1f5f9;
+  width: 100%;
+  min-height: 70px;
+  margin: 0;
+  padding: 9px 11px;
+  border: 1px solid #d6e1e9;
+  border-left: 5px solid var(--flow-expense-bar-color, var(--flow-expense-color));
+  border-radius: 9px;
+  background: #ffffff;
+  color: #203a52;
+  box-shadow: 0 3px 10px rgba(29, 58, 82, .055);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  text-align: left;
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.interconsulta-flow-modal__content .btn-menu-extracto.interconsulta-flow-expense:hover,
+.interconsulta-flow-modal__content .btn-menu-extracto.interconsulta-flow-expense:focus-visible {
+  transform: translateY(-1px);
+  border-color: #9fc4dc;
+  border-left-color: var(--flow-expense-bar-color, var(--flow-expense-color));
+  background: #ffffff;
+  outline: 2px solid rgba(11, 122, 127, .16);
+  outline-offset: 1px;
+  box-shadow: 0 7px 18px rgba(29, 58, 82, .11);
+}
+
+.interconsulta-flow-modal .interconsulta-flow-expense__top {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.interconsulta-flow-modal .interconsulta-flow-expense__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #193a55;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.16;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.interconsulta-flow-modal .interconsulta-flow-expense__badge {
+  max-width: 44%;
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border: 1px solid #d8e3ee;
+  border-radius: 999px;
+  background: var(--flow-expense-soft);
+  color: var(--flow-expense-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.interconsulta-flow-modal .interconsulta-flow-expense__icon {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--flow-expense-color);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.interconsulta-flow-modal .interconsulta-flow-expense__meta {
+  color: #62788e;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.interconsulta-flow-modal .interconsulta-flow-expense--liquidado {
+  --flow-expense-color:#16834a;
+  --flow-expense-soft:#e9f8ef;
+}
+
+.interconsulta-flow-modal .interconsulta-flow-expense--en-cuotas,
+.interconsulta-flow-modal .interconsulta-flow-expense--pendiente {
+  --flow-expense-bar-color:#f6c343;
+  --flow-expense-color:#a86c13;
+  --flow-expense-soft:#fff5d6;
+}
+
+.interconsulta-flow-modal .interconsulta-flow-expense--vencido,
+.interconsulta-flow-modal .interconsulta-flow-expense--observado {
+  --flow-expense-color:#c0392b;
+  --flow-expense-soft:#fff0ee;
+}
+
+.interconsulta-flow-modal .interconsulta-flow-expense--sin-datos {
+  --flow-expense-color:#64748b;
+  --flow-expense-soft:#f1f5f9;
+}
+
+.interconsulta-flow-modal__content > .interconsulta-flow-state,
+.interconsulta-flow-modal__content > .text-secondary {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 760px) {
+  #divAbmDetallesInterConsulta .interconsulta-flow-head {
+    align-items: flex-start;
+  }
+
+  #divAbmDetallesInterConsulta .interconsulta-flow-head__actions {
+    flex-wrap: wrap;
+  }
+
+  .interconsulta-flow-modal {
+    padding: 7px;
+  }
+
+  .interconsulta-flow-modal__dialog {
+    width: calc(100vw - 14px);
+    height: calc(100vh - 14px);
+    max-height: calc(100vh - 14px);
+    border-radius: 13px;
+  }
+
+  .interconsulta-flow-modal__header {
+    min-height: 72px;
+    padding: 10px 12px 10px 15px;
+  }
+
+  .interconsulta-flow-modal__header h2 {
+    font-size: 18px;
+  }
+
+  .interconsulta-flow-modal__header p,
+  .interconsulta-flow-modal__count {
+    display: none;
+  }
+
+  .interconsulta-flow-modal__content {
+    padding: 9px;
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .interconsulta-flow-modal__content .btn-menu-extracto.interconsulta-flow-expense {
+    min-height: 66px;
+  }
 }
 
 #divAbmGasto1 .flujo-pendientes-filtro b {

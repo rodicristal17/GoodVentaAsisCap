@@ -2737,7 +2737,7 @@ function cerrarExtractoGasto() {
 	instancia.hide();
 }
 
-function mostrarExtractoGasto(id_gastos) {
+function mostrarExtractoGasto(id_gastos, serie_estricta) {
 	const panelExtracto = document.getElementById("collapseExtracto");
 	if (!panelExtracto) {
 		return;
@@ -2775,7 +2775,9 @@ function mostrarExtractoGasto(id_gastos) {
 	datos.append("navegador", navegador);
 	datos.append("funt", 'obtenerGastosAsociados');
     datos.append("idgastos", id_gastos);
-	datos.append("serie_estricta", "1");
+	if (serie_estricta !== false) {
+		datos.append("serie_estricta", "1");
+	}
 
 	extractoGastoSolicitud = $.ajax({
 		data: datos,

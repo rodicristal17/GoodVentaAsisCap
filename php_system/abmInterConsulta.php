@@ -2823,6 +2823,49 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         );
     }
 
+    function interConsultaFlujoGastoEstadoProyecto($gastosProyecto) {
+        if (count($gastosProyecto) < 1) {
+            return array(
+                'tipo' => 'sin-datos',
+                'texto' => 'Sin movimientos',
+                'detalle' => '',
+                'icono' => '?',
+                'resumen' => array(),
+            );
+        }
+
+        $resumen= obtenerResumenCuotasProgramadas($gastosProyecto);
+        $totalVigente= max(0, intval($resumen['total']) - intval($resumen['anuladas']));
+        $pagadas= intval($resumen['pagadas']);
+        $avance= $pagadas."/".$totalVigente." pagados";
+
+        if ($totalVigente > 0 && $pagadas >= $totalVigente) {
+            return array(
+                'tipo' => 'liquidado',
+                'texto' => 'Liquidado',
+                'detalle' => $avance,
+                'icono' => '&#10003;',
+                'resumen' => $resumen,
+            );
+        }
+        if (intval($resumen['vencidas']) > 0) {
+            return array(
+                'tipo' => 'vencido',
+                'texto' => 'Con vencimientos',
+                'detalle' => $avance,
+                'icono' => '!',
+                'resumen' => $resumen,
+            );
+        }
+        return array(
+            'tipo' => 'en-cuotas',
+            'texto' => 'En curso',
+            'detalle' => $avance,
+            'icono' => '&#9203;',
+            'resumen' => $resumen,
+        );
+    }
+
     function interConsultaFlujoGastoObtenerSerieEstricta($gastoBase, $registrosGastos) {
         $idBase= isset($gastoBase['idgastos']) ? intval($gastoBase['idgastos']) : 0;
         $idPadreBase= isset($gastoBase['cod_gasto_padre']) ? intval($gastoBase['cod_gasto_padre']) : 0;
@@ -2854,9 +2897,12 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         return $serie;
     }
 
-    function interConsultaFlujoGastoFicha($gasto, $estadoVisual, $gastosSerie= array()) {
+    function interConsultaFlujoGastoFicha($gasto, $estadoVisual, $gastosSerie= array(), $tituloRegistro= "", $esProyecto= false, $idProyecto= 0) {
         $idGasto= isset($gasto['idgastos']) ? $gasto['idgastos'] : '';
-        $descripcion= trim((string)(isset($gasto['descripcion']) ? $gasto['descripcion'] : ''));
+        $descripcion= trim((string)$tituloRegistro);
+        if ($descripcion == "") {
+            $descripcion= trim((string)(isset($gasto['descripcion']) ? $gasto['descripcion'] : ''));
+        }
         if ($descripcion == "" && isset($gasto['motivo'])) {
             $descripcion= trim((string)$gasto['motivo']);
         }
@@ -2886,14 +2932,29 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         }
 
         $titulo= flujoGastoTextoSeguro($estadoVisual['texto'].($detalleEstado != "" ? " - ".$detalleEstado : ""));
+        $atributosProyecto= "";
+        $onclick= "";
+        if ($esProyecto) {
+            $atributosProyecto= ' data-project-id="'.intval($idProyecto).'"';
+            if (intval($idGasto) > 0) {
+                $onclick= ' onclick="mostrarExtractoGasto('.intval($idGasto).', false)"';
+            }
+        } else if (intval($idGasto) > 0) {
+            $onclick= ' onclick="mostrarExtractoGasto('.intval($idGasto).')"';
+        }
+        $claseSinMovimientos= intval($idGasto) > 0 ? "" : " interconsulta-flow-expense--disabled";
+        $metaMovimientos= $esProyecto
+            ? '<span>Movimientos: '.intval(count($gastosSerie)).'</span>'
+            : '';
 
-        return '<button type="button" class="btn-menu-extracto interconsulta-flow-expense interconsulta-flow-expense--'.flujoGastoTextoSeguro($estadoVisual['tipo']).' w-100" data-id="'.flujoGastoTextoSeguro($idGasto).'" title="'.$titulo.'" onclick="mostrarExtractoGasto('.intval($idGasto).')">
+        return '<button type="button" class="btn-menu-extracto interconsulta-flow-expense interconsulta-flow-expense--'.flujoGastoTextoSeguro($estadoVisual['tipo']).$claseSinMovimientos.' w-100" data-id="'.flujoGastoTextoSeguro($idGasto).'"'.$atributosProyecto.' title="'.$titulo.'"'.$onclick.'>
             <span class="interconsulta-flow-expense__top">
                 <span class="interconsulta-flow-expense__title">'.flujoGastoTextoSeguro($descripcion).'</span>
                 <span class="interconsulta-flow-expense__badge"><span class="interconsulta-flow-expense__icon">'.$estadoVisual['icono'].'</span>'.$textoBadge.'</span>
             </span>
             <span class="interconsulta-flow-expense__meta">
                 <span>Total: '.interConsultaFlujoGastoMonto($total).'</span>
+                '.$metaMovimientos.'
                 '.$metaExtra.'
             </span>
         </button>';
@@ -2906,36 +2967,52 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
 
         $gastosElemento= "";
         $registrosGastos = buscarGasto("","","",'','','Egreso','','','true','', $cod_interConsulta, '', '','','');
-        foreach ($registrosGastos as $key => $gast) {
-            $gasto= $gast;
-            $gastosSerie= array();
-            if (!empty($registrosGastos[$key]['mostrado'])) {continue;}
+        $proyectos= obtenerProyectoGasto(array(
+            'cod_interConsultaFK' => intval($cod_interConsulta),
+            'ocultar_inactivo' => 'true',
+        ));
 
-            $registrosGastos[$key]['mostrado'] = true;
+        foreach ($proyectos as $proyecto) {
+            $idProyecto= isset($proyecto['id']) ? intval($proyecto['id']) : 0;
+            if ($idProyecto <= 0) {continue;}
 
-            if (strtolower(trim((string)$gasto['modalidad'])) == 'credito') {
-                // Cada tarjeta representa exclusivamente una raiz y sus cuotas.
-                // No se agrupa por proyecto: un proyecto puede contener series
-                // historicas o independientes que no deben mezclarse.
-                $gastosSerie= interConsultaFlujoGastoObtenerSerieEstricta($gasto, $registrosGastos);
-                if (count($gastosSerie) < 1) {continue;}
-
-                foreach ($gastosSerie as $value) {
-                    foreach ($registrosGastos as &$value2) {
-                        if ($value['idgastos'] == $value2['idgastos']) {
-                            $value2['mostrado'] = true;
-                        }
-                    }
-                    unset($value2);
+            $gastosProyecto= array();
+            foreach ($registrosGastos as $gastoHilo) {
+                $idProyectoGasto= isset($gastoHilo['cod_proyecto_gastoFK'])
+                    ? intval($gastoHilo['cod_proyecto_gastoFK']) : 0;
+                if ($idProyectoGasto === $idProyecto) {
+                    $gastosProyecto[]= $gastoHilo;
                 }
-
-                $gasto= $gastosSerie[0];
-                $estadoVisual= interConsultaFlujoGastoEstadoCuotas($gastosSerie);
-            } else {
-                $estadoVisual= interConsultaFlujoGastoEstadoPagoUnico($gasto);
             }
 
-            $gastosElemento.= interConsultaFlujoGastoFicha($gasto, $estadoVisual, $gastosSerie);
+            usort($gastosProyecto, function($a, $b) {
+                $fechaA= isset($a['fecha']) ? (string)$a['fecha'] : '';
+                $fechaB= isset($b['fecha']) ? (string)$b['fecha'] : '';
+                if ($fechaA === $fechaB) {
+                    return intval(isset($a['idgastos']) ? $a['idgastos'] : 0)
+                        - intval(isset($b['idgastos']) ? $b['idgastos'] : 0);
+                }
+                return strcmp($fechaA, $fechaB);
+            });
+
+            $gastoBase= count($gastosProyecto) > 0 ? $gastosProyecto[0] : array(
+                'idgastos' => 0,
+                'monto' => 0,
+                'fecha' => '',
+            );
+            $nombreProyecto= trim((string)(isset($proyecto['nombre']) ? $proyecto['nombre'] : ''));
+            if ($nombreProyecto == "") {
+                $nombreProyecto= "Proyecto ".$idProyecto;
+            }
+            $estadoVisual= interConsultaFlujoGastoEstadoProyecto($gastosProyecto);
+            $gastosElemento.= interConsultaFlujoGastoFicha(
+                $gastoBase,
+                $estadoVisual,
+                $gastosProyecto,
+                $nombreProyecto,
+                true,
+                $idProyecto
+            );
         }
 
         if (empty($gastosElemento)) {

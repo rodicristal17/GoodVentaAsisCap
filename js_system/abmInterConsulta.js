@@ -6333,12 +6333,102 @@ function buscarInterConsultasYContenido(codInterConsulta, elemento = null, despu
     solicitudDetalleInterConsultaActiva= OpAjax;
 }
 
+var padreOriginalModalFlujoGastosInterConsulta= null;
+var referenciaOriginalModalFlujoGastosInterConsulta= null;
+var focoOriginalModalFlujoGastosInterConsulta= null;
+
+function actualizarCantidadModalFlujoGastosInterConsulta() {
+    const destino= document.getElementById("contenedorFlujoGastosInterConsultaModal");
+    const cantidad= document.getElementById("cantidadModalFlujoGastosInterConsulta");
+    if (!destino || !cantidad) {
+        return;
+    }
+    const total= destino.querySelectorAll(".interconsulta-flow-expense").length;
+    cantidad.textContent= total + (total === 1 ? " registro" : " registros");
+}
+
+function sincronizarModalFlujoGastosInterConsulta() {
+    const modal= document.getElementById("modalFlujoGastosInterConsulta");
+    const origen= document.getElementById("contenedorFlujoGastosInterConsulta");
+    const destino= document.getElementById("contenedorFlujoGastosInterConsultaModal");
+    if (!modal || !origen || !destino || !modal.classList.contains("is-open")) {
+        return;
+    }
+    destino.innerHTML= origen.innerHTML;
+    actualizarCantidadModalFlujoGastosInterConsulta();
+}
+
+function abrirModalFlujoGastosInterConsulta() {
+    const modal= document.getElementById("modalFlujoGastosInterConsulta");
+    const origen= document.getElementById("contenedorFlujoGastosInterConsulta");
+    const destino= document.getElementById("contenedorFlujoGastosInterConsultaModal");
+    if (!modal || !origen || !destino) {
+        return;
+    }
+    focoOriginalModalFlujoGastosInterConsulta= document.activeElement;
+    if (modal.parentNode !== document.body) {
+        padreOriginalModalFlujoGastosInterConsulta= modal.parentNode;
+        referenciaOriginalModalFlujoGastosInterConsulta= modal.nextSibling;
+        document.body.appendChild(modal);
+    }
+    const codigo= document.getElementById("txtCodInterConsulta");
+    const titulo= document.getElementById("tituloModalFlujoGastosInterConsulta");
+    if (titulo) {
+        titulo.textContent= "Gastos del hilo" + (codigo && codigo.textContent.trim() ? " #" + codigo.textContent.trim() : "");
+    }
+    destino.innerHTML= origen.innerHTML;
+    actualizarCantidadModalFlujoGastosInterConsulta();
+    if (destino.getAttribute("data-cierre-detalle") !== "activo") {
+        destino.setAttribute("data-cierre-detalle", "activo");
+        destino.addEventListener("click", function (evento) {
+            const registro= evento.target.closest(".interconsulta-flow-expense");
+            if (registro) {
+                window.setTimeout(cerrarModalFlujoGastosInterConsulta, 0);
+            }
+        });
+    }
+    modal.classList.add("is-open");
+    document.body.classList.add("interconsulta-flow-modal-open");
+    const cerrar= modal.querySelector(".interconsulta-flow-modal__close");
+    if (cerrar) {
+        cerrar.focus();
+    }
+}
+
+function cerrarModalFlujoGastosInterConsulta() {
+    const modal= document.getElementById("modalFlujoGastosInterConsulta");
+    if (modal) {
+        modal.classList.remove("is-open");
+        if (padreOriginalModalFlujoGastosInterConsulta && document.documentElement.contains(padreOriginalModalFlujoGastosInterConsulta)) {
+            if (referenciaOriginalModalFlujoGastosInterConsulta && referenciaOriginalModalFlujoGastosInterConsulta.parentNode === padreOriginalModalFlujoGastosInterConsulta) {
+                padreOriginalModalFlujoGastosInterConsulta.insertBefore(modal, referenciaOriginalModalFlujoGastosInterConsulta);
+            } else {
+                padreOriginalModalFlujoGastosInterConsulta.appendChild(modal);
+            }
+        }
+    }
+    document.body.classList.remove("interconsulta-flow-modal-open");
+    if (focoOriginalModalFlujoGastosInterConsulta && document.documentElement.contains(focoOriginalModalFlujoGastosInterConsulta)) {
+        focoOriginalModalFlujoGastosInterConsulta.focus();
+    }
+    padreOriginalModalFlujoGastosInterConsulta= null;
+    referenciaOriginalModalFlujoGastosInterConsulta= null;
+    focoOriginalModalFlujoGastosInterConsulta= null;
+}
+
+document.addEventListener("keydown", function (evento) {
+    if (evento.key === "Escape") {
+        cerrarModalFlujoGastosInterConsulta();
+    }
+});
+
 function cargarFlujoGastosInterConsulta(codInterConsulta) {
     const contenedor= document.getElementById("contenedorFlujoGastosInterConsulta");
     if (!contenedor) {
         return;
     }
     contenedor.innerHTML = '<div class="interconsulta-flow-state">Cargando gastos...</div>';
+    sincronizarModalFlujoGastosInterConsulta();
 
     obtener_datos_user();
     var datos = new FormData();
@@ -6358,6 +6448,7 @@ function cargarFlujoGastosInterConsulta(codInterConsulta) {
         error: function () {
             if (String(cod_interConsulta) !== String(codInterConsulta)) {return;}
             contenedor.innerHTML = '<div class="interconsulta-flow-state interconsulta-flow-state--error">No se pudo cargar el flujo de gastos.</div>';
+            sincronizarModalFlujoGastosInterConsulta();
         },
         success: function (responseText) {console.log(responseText);
             try {
@@ -6368,9 +6459,11 @@ function cargarFlujoGastosInterConsulta(codInterConsulta) {
                 } else {
                     contenedor.innerHTML = '<div class="interconsulta-flow-state interconsulta-flow-state--error">No se pudo cargar el flujo de gastos.</div>';
                 }
+                sincronizarModalFlujoGastosInterConsulta();
             } catch (error) {
                 if (String(cod_interConsulta) !== String(codInterConsulta)) {return;}
                 contenedor.innerHTML = '<div class="interconsulta-flow-state interconsulta-flow-state--error">No se pudo cargar el flujo de gastos.</div>';
+                sincronizarModalFlujoGastosInterConsulta();
             }
         }
     });

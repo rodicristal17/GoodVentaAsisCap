@@ -32,8 +32,8 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=flujo-aprobado-20260724-2" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=flujo-aprobado-20260724-2" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=modal-flujo-gastos-20260724-2" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=modal-flujo-gastos-20260724-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-4" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=trabajo-laboratorio-20260723-mini-hilo-1" />
@@ -73,15 +73,15 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-seleccion-incremental-20260716"></script>   
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js?x=performance-polling-20260718"></script>
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
-<script src="../js_system/abmGasto_ingresosEgresos.js?x=aprobacion-caja-origen-20260724-3"></script>
-<script src="../js_system/abmGasto_ingresosEgresos.js?x=aprobacion-caja-origen-20260724-3"></script>
+<script src="../js_system/abmGasto_ingresosEgresos.js?x=proyectos-flujo-hilo-20260724-1"></script>
+<script src="../js_system/abmGasto_ingresosEgresos.js?x=proyectos-flujo-hilo-20260724-1"></script>
 <script src="../js_system/abmAsistencia.js?x=presencia-segura-20260717-1"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=performance-polling-20260718"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js?x=historico-solo-consulta-20260721"></script>
 <script src="../js_system/trabajo_laboratorio.js?x=trabajo-laboratorio-20260725-01"></script>
 <script src="../js_system/abmMecanicoDental.js?x=cuenta-telar-20260721-3"></script>
-<script src="../js_system/abmInterConsulta.js?x=flujo-series-estrictas-20260724-1"></script>
+<script src="../js_system/abmInterConsulta.js?x=modal-flujo-gastos-20260724-2"></script>
 <script src="../js_system/abmCentroFacturas.js?x=nomenclatura-legajos-20260721-1"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
@@ -8299,15 +8299,37 @@ style='background-color:#5bc572'>
                     </div>
                   </div>
                   <div class="panel-flujo-gastos">
-                    <span onclick="verCerrarAbmGasto()">
-                    <strong class="interconsulta-detail-card-label">Flujo de gastos</strong>
-                    <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Agregar gasto al hilo" onclick="verCerrarVentanaAbmGasto(true, true, false); cod_interConsulta= '.$valueInter['cod_interConsulta'].'; document.getElementById(\'inptAbmInterConsultaGasto\').value= \''.$valueInter['asunto'].'\'; buscarProyectosVistaSelecc();">
-                    <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Crear proyecto del hilo" onclick="event.stopPropagation(); cod_interConsulta= '.$valueInter['cod_interConsulta'].'; crearProyectoGastoDesdeHilo();">
-                    </span>
+                    <div class="interconsulta-flow-head">
+                      <strong class="interconsulta-detail-card-label" onclick="verCerrarAbmGasto()">Flujo de gastos</strong>
+                      <div class="interconsulta-flow-head__actions">
+                        <button type="button" class="interconsulta-flow-view" onclick="abrirModalFlujoGastosInterConsulta()" aria-label="Ver todos los gastos del hilo">
+                          <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                          <span>Ver gastos</span>
+                        </button>
+                        <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Agregar gasto al hilo" onclick="event.stopPropagation(); verCerrarVentanaAbmGasto(true, true, false); cod_interConsulta= '.$valueInter['cod_interConsulta'].'; document.getElementById(\'inptAbmInterConsultaGasto\').value= \''.$valueInter['asunto'].'\'; buscarProyectosVistaSelecc();">
+                        <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Crear proyecto del hilo" onclick="event.stopPropagation(); cod_interConsulta= '.$valueInter['cod_interConsulta'].'; crearProyectoGastoDesdeHilo();">
+                      </div>
+                    </div>
                     <div id="contenedorFlujoGastosInterConsulta" class="interconsulta-flow-content">
                       <div class="text-secondary">Cargando gastos...</div>
                     </div>
                     <button type="button" class="interconsulta-flow-retry" onclick="cargarFlujoGastosInterConsulta(cod_interConsulta)">Reintentar</button>
+                  </div>
+                  <div id="modalFlujoGastosInterConsulta" class="interconsulta-flow-modal" role="dialog" aria-modal="true" aria-labelledby="tituloModalFlujoGastosInterConsulta" onclick="if(event.target===this){cerrarModalFlujoGastosInterConsulta();}">
+                    <section class="interconsulta-flow-modal__dialog">
+                      <header class="interconsulta-flow-modal__header">
+                        <div class="interconsulta-flow-modal__heading">
+                          <span>Flujo de gastos</span>
+                          <h2 id="tituloModalFlujoGastosInterConsulta">Gastos del hilo</h2>
+                          <p>Seleccione un registro para consultar sus cuotas y movimientos.</p>
+                        </div>
+                        <div class="interconsulta-flow-modal__tools">
+                          <strong id="cantidadModalFlujoGastosInterConsulta" class="interconsulta-flow-modal__count">0 registros</strong>
+                          <button type="button" class="interconsulta-flow-modal__close" onclick="cerrarModalFlujoGastosInterConsulta()" aria-label="Cerrar gastos del hilo">&times;</button>
+                        </div>
+                      </header>
+                      <div id="contenedorFlujoGastosInterConsultaModal" class="interconsulta-flow-modal__content"></div>
+                    </section>
                   </div>
                 </div>
               </div>
