@@ -1645,6 +1645,8 @@ if($operacion=="buscar")
 	$cod_interConsultaFK = mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8859-1', 'UTF-8');
 	$nombre_interConsulta=$_POST['nombre_interConsulta'];
 	$nombre_interConsulta = mb_convert_encoding((string)($nombre_interConsulta), 'ISO-8859-1', 'UTF-8');
+	$motivo= isset($_POST['motivo']) ? $_POST['motivo'] : '';
+	$motivo= mb_convert_encoding((string)$motivo, 'ISO-8859-1', 'UTF-8');
 	$cod_motivoFK= $_POST['cod_motivoFK'];
 	$cod_motivoFK= mb_convert_encoding((string)($cod_motivoFK), 'ISO-8859-1', 'UTF-8');
 	$ocultar_inactivos= $_POST['ocultar_inactivos'];
@@ -1679,7 +1681,7 @@ if($operacion=="buscar")
 	if (!in_array(strtolower(trim((string)$ocultar_inactivos)), array('true','false',''), true)) {
 		$errorFiltroBusqueda= 'El filtro de movimientos inactivos no es valido.';
 	}
-	if (strlen((string)$usuario) > 200 || strlen((string)$nombre_interConsulta) > 200) {
+	if (strlen((string)$usuario) > 200 || strlen((string)$nombre_interConsulta) > 200 || strlen((string)$motivo) > 200) {
 		$errorFiltroBusqueda= 'El texto de busqueda es demasiado largo.';
 	}
 	if ($errorFiltroBusqueda !== '') {
@@ -1706,7 +1708,7 @@ if($operacion=="buscar")
 	}
 	$idgastos= "";
 
-	$informacion = buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, '', '', $idgastos, 'DESC', $user);
+	$informacion = buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,$fecha,$ocultar_inactivos,$cod_motivoFK, $cod_interConsultaFK, $nombre_interConsulta, $motivo, '', $idgastos, 'DESC', $user);
 	echo json_encode($informacion);
 	exit;
 }	
@@ -4455,6 +4457,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 	g.cod_usuario_autoriz, g.fecha_autoriz, g.cod_motivoIngresoEgresoFK, g.cod_usuarioFK_edit,g.cod_gasto_padre,g.cod_mensajeFK,
 	(Select asunto from interconsulta where cod_interConsulta=g.cod_interConsultaFK) as interconsulta_nombre,
 	(Select nombre_persona from persona where cod_persona=g.cod_usuario) as usuarionombre,
+	(Select url from usuario where cod_usuario=g.cod_usuario) as usuario_url,
 	(Select nombre_persona from persona where cod_persona=g.cod_usuarioFK_edit) as nombre_usuario_edit,
 	(Select nombre_persona from persona where cod_persona=g.cod_usuario_autoriz) as usuario_autoriz_nombre,
 	m.descripcion AS motivo, m.categoria, m.estado AS estado_motivo,
@@ -4492,6 +4495,7 @@ function buscarGasto($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo,$usuario,
 				'interconsulta_nombre' => mb_convert_encoding((string)($valor['interconsulta_nombre']), 'UTF-8', 'ISO-8859-1'),
 				'cod_interConsultaFK' => mb_convert_encoding((string)($valor['cod_interConsultaFK']), 'UTF-8', 'ISO-8859-1'),
 				'usuarionombre' => mb_convert_encoding((string)($valor['usuarionombre']), 'UTF-8', 'ISO-8859-1'),
+				'usuario_url' => mb_convert_encoding((string)($valor['usuario_url']), 'UTF-8', 'ISO-8859-1'),
 				'monto' => mb_convert_encoding((string)($montoVisible), 'UTF-8', 'ISO-8859-1'),
 				'monto_total_padre' => mb_convert_encoding((string)($valor['monto_total_padre']), 'UTF-8', 'ISO-8859-1'),
 				'motivo' => mb_convert_encoding((string)($valor['motivo']), 'UTF-8', 'ISO-8859-1'),
@@ -5088,6 +5092,12 @@ function obtenerEtiquetaCuotaProgramada($gasto) {
 	if ($estado == 'aprobado') {
 		return array('tipo' => 'aprobado', 'texto' => 'Aprobado');
 	}
+	if ($estado == 'solicitado') {
+		return array('tipo' => 'solicitado', 'texto' => 'Solicitado');
+	}
+	if ($estado == 'pendiente') {
+		return array('tipo' => 'pendiente', 'texto' => 'Pendiente');
+	}
 	$fechaObj= flujoGastoFechaObjeto(isset($gasto['fecha']) ? $gasto['fecha'] : '');
 	if ($fechaObj && $fechaObj < new DateTime('today')) {
 		return array('tipo' => 'vencido', 'texto' => 'Vencido');
@@ -5312,7 +5322,7 @@ function flujoGastoPrepararReferenciasGestionOrigen($candidatos)
 	return $salida;
 }
 
-function construirPanelReferenciasGestionOrigen($referencias, $puedeGestionarOrigen)
+function construirPanelReferenciasGestionOrigen($referencias, $puedeGestionarOrigen, $puedeAutorizarOrigen)
 {
 	if (count($referencias) < 1) {
 		return '';
@@ -5329,9 +5339,26 @@ function construirPanelReferenciasGestionOrigen($referencias, $puedeGestionarOri
 		$concepto= trim((string)(isset($referencia['motivo']) ? $referencia['motivo'] : ''));
 		$descripcion= trim((string)(isset($referencia['descripcion_original']) ? $referencia['descripcion_original'] : (isset($referencia['descripcion']) ? $referencia['descripcion'] : '')));
 		$estado= obtenerEtiquetaCuotaProgramada($referencia);
+		$estadoReal= strtolower(trim((string)(isset($referencia['estado']) ? $referencia['estado'] : '')));
+		$tipoReal= strtolower(trim((string)(isset($referencia['tipo']) ? $referencia['tipo'] : '')));
+		$usuarioNombre= trim((string)(isset($referencia['usuarionombre']) ? $referencia['usuarionombre'] : ''));
+		$usuarioFoto= trim((string)(isset($referencia['usuario_url']) ? $referencia['usuario_url'] : ''));
+		if ($usuarioFoto === '') {
+			$usuarioFoto= '/GoodVentaAsisCap/iconos/sinperfil.png';
+		}
+		$usuarioCreador= "<div class='flujo-gestion-origen__usuario'>"
+			."<img src='".flujoGastoTextoSeguro($usuarioFoto)."' alt='Foto de ".flujoGastoTextoSeguro($usuarioNombre != '' ? $usuarioNombre : 'usuario')."' onerror=\"this.onerror=null;this.src='/GoodVentaAsisCap/iconos/sinperfil.png';\">"
+			."<span>".flujoGastoTextoSeguro($usuarioNombre != '' ? $usuarioNombre : 'Sin identificar')."</span>"
+			."</div>";
 		$accion= "<span class='flujo-pago-unico-solo-lectura'>Hist&oacute;rico &middot; solo lectura</span>";
 		if (!$esHistorico && $puedeGestionarOrigen) {
 			$accion= "<button type='button' class='flujo-pago-unico-origen' title='Abrir el gasto padre completo' onclick='event.stopPropagation();if(confirm(\"Esta referencia no integra los totales. Se abrira el gasto padre completo por ".number_format($montoTotal, 0, ',', '.')." Gs. Desea continuar?\")){editarGastoDesdeFila(event, this);}'>Ver/gestionar gasto origen</button>";
+			if ($puedeAutorizarOrigen && $tipoReal === 'egreso' && ($estadoReal === 'solicitado' || $estadoReal === 'pendiente')) {
+				$accion= "<div class='flujo-ueno-acciones'>"
+					."<button type='button' class='flujo-aprobar-pendiente' title='Aprobar el egreso ya pagado y descontarlo de la caja de quien lo registro' aria-label='Aprobar egreso' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement.parentElement)'>Aprobar</button>"
+					.$accion
+					."</div>";
+			}
 		}
 		$filas .= "<tr id='tbGestionGastoOrigen'>"
 			."<td id='td_id'>".flujoGastoTextoSeguro($idgastos)."</td>"
@@ -5339,6 +5366,7 @@ function construirPanelReferenciasGestionOrigen($referencias, $puedeGestionarOri
 			."<td>".number_format($montoTotal, 0, ',', '.')." Gs.<small>Monto total del gasto padre</small></td>"
 			."<td>".flujoGastoFechaCorta(isset($referencia['fecha']) ? $referencia['fecha'] : '')."</td>"
 			."<td><span class='cuotas-programadas-estado cuotas-programadas-estado--".$estado['tipo']."'>".$estado['texto']."</span></td>"
+			."<td>".$usuarioCreador."</td>"
 			."<td>".$accion."</td>"
 			.construirCeldasOcultasGastoFila($referencia)
 			."</tr>";
@@ -5348,7 +5376,7 @@ function construirPanelReferenciasGestionOrigen($referencias, $puedeGestionarOri
 	}
 	return "<section class='flujo-gestion-origen'>"
 		."<div class='flujo-gestion-origen__head'><div><strong>Gastos gestionados por este local</strong><p>Referencias operativas del gasto padre. No se suman al flujo, informes ni exportaciones.</p></div><span>Gesti&oacute;n</span></div>"
-		."<div class='flujo-gestion-origen__table-wrap'><table><thead><tr><th>Ref.</th><th>Concepto</th><th>Total padre</th><th>Fecha</th><th>Estado</th><th>Acci&oacute;n</th></tr></thead><tbody>".$filas."</tbody></table></div>"
+		."<div class='flujo-gestion-origen__table-wrap'><table><thead><tr><th>Ref.</th><th>Concepto</th><th>Total padre</th><th>Fecha</th><th>Estado</th><th>Cargado por</th><th>Acci&oacute;n</th></tr></thead><tbody>".$filas."</tbody></table></div>"
 		."</section>";
 }
 
@@ -5445,7 +5473,7 @@ function construirTablaCuotasProyectoFlujo($gastosSerie, $resumen) {
 		if (!$soloLecturaFila && $estadoOriginal != 'activo') {
 			$acciones= "<button type='button' title='Editar cuota' onclick='editarGastoDesdeFila(event, this)' style='border:0;background:#2f80ed;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>Editar</button>";
 			if ($estadoOriginal == 'pendiente' || $estadoOriginal == 'solicitado') {
-				$acciones .= " <button type='button' title='Aprobar y descontar de la caja de origen' aria-label='Aprobar y pagar cuota' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)' class='flujo-aprobar-pendiente'>Aprobar y pagar</button>"
+				$acciones .= " <button type='button' title='Aprobar el egreso ya pagado y descontarlo de la caja de origen' aria-label='Aprobar cuota' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement)' class='flujo-aprobar-pendiente'>Aprobar</button>"
 					." <button type='button' title='Rechazar cuota' onclick='event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement)' style='border:0;background:#c92323;color:#fff;border-radius:4px;padding:3px 7px;font-size:8pt;cursor:pointer;'>X</button>";
 			}
 		}
@@ -5536,7 +5564,7 @@ function construirPagoUnicoFlujoConcepto($gasto, $tituloZona= '', $codUsuarioAct
 			."<img src='/GoodVentaAsisCap/iconos/editar.png' alt='Editar'>"
 			."</button>".$botonConciliarUeno;
 	if (!$soloLecturaMovimiento && ($estadoOriginal == 'pendiente' || $estadoOriginal == 'solicitado')) {
-		$acciones .= "<button type='button' title='Aprobar y descontar de la caja de origen' aria-label='Aprobar y pagar' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement.parentElement)' class='flujo-pago-unico-validar flujo-pago-unico-validar--ok flujo-aprobar-pendiente'>Aprobar y pagar</button>"
+		$acciones .= "<button type='button' title='Aprobar el egreso ya pagado y descontarlo de la caja de origen' aria-label='Aprobar egreso' onclick='event.stopPropagation();aprobarMovimiento(true, this.parentElement.parentElement.parentElement)' class='flujo-pago-unico-validar flujo-pago-unico-validar--ok flujo-aprobar-pendiente'>Aprobar</button>"
 			."<button type='button' title='Rechazar pago' onclick='event.stopPropagation();aprobarMovimiento(false, this.parentElement.parentElement.parentElement)' class='flujo-pago-unico-validar flujo-pago-unico-validar--rechazar'>X</button>";
 	}
 	$claseFila= flujoGastoEstaAnulado($gasto) ? " flujo-pago-unico-table__row--anulado" : "";
@@ -5611,7 +5639,12 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	// Agrega el ingreso de los cierres de caja
 	$registroMontosCobrados= Arqueo($fecha1,$fecha2,'','',$cod_local,"","","","",$usuario,"","","")[7];
 	$registrosZona['ingreso'][-1]= array();
+	$incluirMovimientosCaja= trim((string)$motivo) === ''
+		|| stripos('Movimiento de caja', trim((string)$motivo)) !== false;
 	foreach ($registroMontosCobrados as $key => $value) {
+		if (!$incluirMovimientosCaja) {
+			continue;
+		}
 		// Crea un registro ficticio
 		$valor= array(
 			'idgastos' => "",
@@ -5696,6 +5729,8 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	$puedeGestionarOrigen= (int)$codUsuarioActual > 0
 		&& (int)$codLocalSeleccionadoFlujo > 0
 		&& usuarioPuedeGestionarLocalGasto($codUsuarioActual, $codLocalSeleccionadoFlujo);
+	$puedeAutorizarOrigen= $puedeGestionarOrigen
+		&& controldeaccesoacasas($codUsuarioActual, 'AUTORIZAREGRESOINGRESO', " u.accion='SI' ") == 1;
 	$referenciasGestionOrigen= array();
 	if ($puedeGestionarOrigen) {
 		foreach ($datosGestionOrigen['referencias'] as $referenciaGestion) {
@@ -6198,7 +6233,7 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 		'</div>'.
 	'</div>';
  }
-	$pagina= construirPanelReferenciasGestionOrigen($referenciasGestionOrigen, $puedeGestionarOrigen).$pagina;
+	$pagina= construirPanelReferenciasGestionOrigen($referenciasGestionOrigen, $puedeGestionarOrigen, $puedeAutorizarOrigen).$pagina;
  
 /*Retornamos los datos obtenidos mediante el JSON */      
 $resumenComposicionFlujo= flujoGastoFinalizarResumenComposicion($resumenComposicionFlujo, $totalZonaIngresos, $totalZonaCostosDirectos, $totalZonaGastosOperativos, $totalZonaSinCategorizar, $totalZonaAdministracionAsignada, $administracionCompartida);

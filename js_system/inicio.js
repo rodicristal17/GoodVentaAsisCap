@@ -5178,7 +5178,6 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 				}
 			control=control+1;
 			}
-	
 }
 
 var codigodeactualizacion="X-GT-1-JMTG-V1.90";

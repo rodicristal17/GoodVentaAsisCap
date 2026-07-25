@@ -1828,7 +1828,7 @@ function verCerrarAutorizacionEgreso(mostrar) {
 
 function aprobarMovimiento(opcion, elemento= null) {
 	if(controlacceso("AUTORIZAREGRESOINGRESO","accion")==false){return;}
-	if (opcion === true && !confirm("Al aprobar, el gasto pasara a Pagado y se descontara de la caja activa de la persona que lo registro. ¿Continuar?")) {
+	if (opcion === true && !confirm("Este egreso ya fue pagado. Al aprobarlo, se descontara de la caja activa de la persona que lo registro. ¿Continuar?")) {
 		return;
 	}
 
@@ -3954,6 +3954,7 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
 	var cod_local = document.getElementById('inptlocalMisGastosBusca').value
 	var usuario = document.getElementById('inptBuscarIngresoEgreso1').value
 	var fecha = document.getElementById('inptBuscarIngresoEgreso2').value
+	var motivo = String(document.getElementById('inptBuscarMotivoGasto').value || "").trim()
     let cod_motivoFK= '';
 	const interConsulta= document.getElementById('inptBuscarIngresoEgreso4').value;
     $("input[id=inptBuscarIngresoEgreso3]").each(function (i, Elemento) {
@@ -3988,6 +3989,7 @@ if(controlacceso("BUSCARLISTADOEGRESOINGRESO","accion")==false){return;}
 		"tipo": tipo,
 		"usuario": usuario,
 		"fecha": fecha,
+		"motivo": motivo,
 		"arreglo": arreglo,
         "cod_motivoFK": cod_motivoFK,
 		"cod_interConsultaFK": "",

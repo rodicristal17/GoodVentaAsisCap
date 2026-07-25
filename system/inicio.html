@@ -9063,12 +9063,22 @@ Todos</p>
 </tr>
 <tr>
 <td colspan="8" class="flujo-pendientes-filtro-celda">
-  <label class="flujo-pendientes-filtro" for="inptSoloPendientesPagoGasto">
-    <input type="checkbox" id="inptSoloPendientesPagoGasto" onchange="aplicarFiltroPendientesFlujoGasto()">
-    <span>Solo pendientes de pago</span>
-    <b id="cantidadPendientesPagoGasto" aria-live="polite">0</b>
-  </label>
-  <small>Muestra egresos solicitados, aprobados o pendientes de pago. Al aprobar, se descuentan de la caja activa de quien los registró.</small>
+  <div class="flujo-filtros-secundarios">
+    <label class="flujo-motivo-filtro" for="inptBuscarMotivoGasto">
+      <span>Motivo</span>
+      <input class="inputText" type="search" id="inptBuscarMotivoGasto" maxlength="200"
+        placeholder="Ej.: combustible" aria-label="Buscar movimientos por motivo"
+        onkeydown="if(event.key === 'Enter'){event.preventDefault();buscarabmGasto();}">
+    </label>
+    <div class="flujo-pendientes-filtro-grupo">
+      <label class="flujo-pendientes-filtro" for="inptSoloPendientesPagoGasto">
+        <input type="checkbox" id="inptSoloPendientesPagoGasto" onchange="aplicarFiltroPendientesFlujoGasto()">
+        <span>Solo pendientes de pago</span>
+        <b id="cantidadPendientesPagoGasto" aria-live="polite">0</b>
+      </label>
+      <small>Muestra egresos solicitados, aprobados o pendientes de pago. Al aprobar, se descuentan de la caja activa de quien los registró.</small>
+    </div>
+  </div>
 </td>
 </tr>
 </table>

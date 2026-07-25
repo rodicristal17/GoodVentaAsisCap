@@ -52263,11 +52263,67 @@ button.tratamiento-ubicacion-visual {
   vertical-align: middle;
 }
 
-#divAbmGasto1 .flujo-pendientes-filtro-celda > small {
+#divAbmGasto1 .flujo-filtros-secundarios {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+#divAbmGasto1 .flujo-motivo-filtro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #294158;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+#divAbmGasto1 .flujo-motivo-filtro .inputText {
+  width: min(280px, 72vw);
+  height: 34px;
+  margin: 0;
+  padding: 6px 10px;
+  border-color: #c6d7e4;
+  border-radius: 9px;
+  box-sizing: border-box;
+}
+
+#divAbmGasto1 .flujo-motivo-filtro .inputText:focus {
+  border-color: #168a68;
+  box-shadow: 0 0 0 2px rgba(22, 138, 104, 0.12);
+  outline: none;
+}
+
+#divAbmGasto1 .flujo-pendientes-filtro-grupo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#divAbmGasto1 .flujo-pendientes-filtro-grupo > small {
   margin-left: 8px;
   color: #687d90;
   font-size: 9px;
   font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  #divAbmGasto1 .flujo-filtros-secundarios,
+  #divAbmGasto1 .flujo-pendientes-filtro-grupo {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  #divAbmGasto1 .flujo-motivo-filtro .inputText {
+    width: 100%;
+  }
+
+  #divAbmGasto1 .flujo-pendientes-filtro-grupo > small {
+    margin-left: 0;
+  }
 }
 
 #divAbmGasto1 .flujo-pendientes-filtro {
@@ -54833,6 +54889,16 @@ body.interconsulta-flow-modal-open {
   color: #245f9e;
 }
 
+#table_abm_gasto.flujo-caja-cascada .cuotas-programadas-estado--solicitado {
+  background: #fff0e5;
+  color: #a45112;
+}
+
+#table_abm_gasto.flujo-caja-cascada .cuotas-programadas-estado--pendiente {
+  background: #fff7db;
+  color: #8a6500;
+}
+
 #table_abm_gasto.flujo-caja-cascada .cuotas-programadas-estado--programado {
   background: #fff7db;
   color: #8a6500;
@@ -55436,7 +55502,7 @@ body.interconsulta-read-dialog-open {
 
 #table_abm_gasto.flujo-caja-cascada .flujo-gestion-origen table {
   width: 100%;
-  min-width: 720px;
+  min-width: 860px;
   border-collapse: collapse;
 }
 
@@ -55461,6 +55527,36 @@ body.interconsulta-read-dialog-open {
   margin-top: 2px;
   color: #687a90;
   font-size: 8px;
+}
+
+#table_abm_gasto.flujo-caja-cascada .flujo-gestion-origen__usuario {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+#table_abm_gasto.flujo-caja-cascada .flujo-gestion-origen__usuario img {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #e8eef5;
+  box-shadow: 0 0 0 1px #b8c8dc;
+  object-fit: cover;
+}
+
+#table_abm_gasto.flujo-caja-cascada .flujo-gestion-origen__usuario span {
+  display: block;
+  max-width: 150px;
+  overflow: hidden;
+  color: #294158;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Consulta clinica: doble seguimiento de protesis/laboratorio. */
