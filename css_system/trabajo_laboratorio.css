@@ -4159,6 +4159,240 @@ button[aria-pressed="true"] .tlab-group-count {
   .tlab-row-detail__header { margin: -8px -8px 8px; }
 }
 
+.tlab-print-sheet {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  body.tlab-technical-print {
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body.tlab-technical-print > * {
+    display: none !important;
+  }
+
+  body.tlab-technical-print > #telarTrabajoLaboratorio {
+    position: static !important;
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    inset: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #172b3a !important;
+    font-family: Arial, sans-serif !important;
+  }
+
+  body.tlab-technical-print #telarTrabajoLaboratorio > *:not(#tlabPrintSheet) {
+    display: none !important;
+  }
+
+  body.tlab-technical-print #tlabPrintSheet {
+    display: block !important;
+  }
+
+  .tlab-print-document {
+    width: 100%;
+    color: #172b3a;
+    font-family: Arial, sans-serif;
+    font-size: 8pt;
+    line-height: 1.25;
+  }
+
+  .tlab-print-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8mm;
+    padding-bottom: 3mm;
+    border-bottom: 2px solid #087f75;
+  }
+
+  .tlab-print-header > div:first-child {
+    flex: 1 1 auto;
+  }
+
+  .tlab-print-header > div:first-child > span {
+    display: block;
+    margin-bottom: 1mm;
+    color: #087f75;
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: .08em;
+  }
+
+  .tlab-print-header h1 {
+    margin: 0;
+    color: #0b3558;
+    font-size: 17pt;
+    line-height: 1.05;
+  }
+
+  .tlab-print-header p {
+    margin: 1.5mm 0 0;
+    color: #566c7c;
+    font-size: 7.5pt;
+  }
+
+  .tlab-print-meta {
+    display: grid;
+    min-width: 58mm;
+    gap: 1mm;
+    text-align: right;
+    font-size: 7.5pt;
+  }
+
+  .tlab-print-meta strong {
+    color: #0b3558;
+    font-size: 9pt;
+  }
+
+  .tlab-print-summary {
+    display: grid;
+    grid-template-columns: 31mm minmax(0, 1fr);
+    gap: 4mm;
+    margin: 3mm 0;
+    padding: 2.5mm 3mm;
+    border: 1px solid #c9dce4;
+    border-radius: 2mm;
+    background: #f2f8fa;
+  }
+
+  .tlab-print-summary > div:first-child {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5mm;
+    color: #0b3558;
+  }
+
+  .tlab-print-summary > div:first-child strong {
+    font-size: 15pt;
+    line-height: 1;
+  }
+
+  .tlab-print-summary > div:first-child span {
+    font-size: 7pt;
+    font-weight: 700;
+  }
+
+  .tlab-print-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.2mm;
+  }
+
+  .tlab-print-filters span {
+    display: inline-block;
+    padding: .7mm 1.5mm;
+    border: 1px solid #c3d9e1;
+    border-radius: 4mm;
+    background: #fff;
+    font-size: 6.5pt;
+  }
+
+  .tlab-print-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 7.2pt;
+  }
+
+  .tlab-print-table thead {
+    display: table-header-group;
+  }
+
+  .tlab-print-table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .tlab-print-table th,
+  .tlab-print-table td {
+    overflow-wrap: anywhere;
+    padding: 1.5mm 1.3mm;
+    border: 1px solid #bccfd8;
+    vertical-align: top;
+    text-align: left;
+  }
+
+  .tlab-print-table th {
+    color: #fff;
+    background: #0b3558 !important;
+    font-size: 6.7pt;
+    font-weight: 700;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .tlab-print-table tbody tr:nth-child(even) td {
+    background: #f7fafb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .tlab-print-table td strong,
+  .tlab-print-table td small {
+    display: block;
+  }
+
+  .tlab-print-table td small {
+    margin-top: .8mm;
+    color: #5c7080;
+    font-size: 6.2pt;
+  }
+
+  .tlab-print-table .is-code { width: 11%; }
+  .tlab-print-table .is-patient { width: 9%; }
+  .tlab-print-table .is-tooth { width: 8%; }
+  .tlab-print-table .is-product { width: 13%; }
+  .tlab-print-table .is-color { width: 8%; }
+  .tlab-print-table .is-instructions { width: 20%; }
+  .tlab-print-table .is-status { width: 10%; }
+  .tlab-print-table .is-technician { width: 10%; }
+  .tlab-print-table .is-signature { width: 11%; }
+
+  .tlab-print-instructions {
+    white-space: normal;
+  }
+
+  .tlab-print-signature {
+    height: 17mm;
+    vertical-align: bottom !important;
+    text-align: center !important;
+  }
+
+  .tlab-print-signature span {
+    display: block;
+    width: 100%;
+    margin-top: 9mm;
+    border-top: 1px solid #506574;
+  }
+
+  .tlab-print-signature small {
+    margin-top: 1mm !important;
+  }
+
+  .tlab-print-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 5mm;
+    margin-top: 3mm;
+    padding-top: 2mm;
+    border-top: 1px solid #c9dce4;
+    color: #607585;
+    font-size: 6.5pt;
+  }
+}
+
 /* Hilo de custodia: segunda pista visual, separada del recorrido operativo. */
 .tlab-shell .tlab-thread-row--dual {
   height: 274px;

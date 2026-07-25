@@ -9,7 +9,7 @@
  *                   datos: Object, version: Number|String }.
  *
  * Acciones de negocio consumidas:
- *   listarTrabajos, obtenerTrabajo, obtenerResumen, obtenerCatalogos,
+ *   listarTrabajos, listarImpresionTecnica, obtenerTrabajo, obtenerResumen, obtenerCatalogos,
  *   obtenerContextoDetalle, iniciarTrabajo, asignarTecnico, iniciarTransferencia,
  *   tomarHilo, registrarNovedad, rectificarCustodia, agregarEvidencia,
  *   agregarNota, iniciarDevolucion, solicitarAjuste, aprobarTrabajo,
@@ -34,7 +34,7 @@
   "use strict";
 
   var ENDPOINT = "/GoodVentaAsisCap/php_system/abmTrabajoLaboratorio.php";
-  var STYLE_URL = "/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260725-01";
+  var STYLE_URL = "/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260725-02";
   var BRAND_MARK = "/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2";
   var ROOT_ID = "telarTrabajoLaboratorio";
   var PAGE_SIZE = 18;
@@ -205,6 +205,7 @@
     root: null,
     open: false,
     loadingList: false,
+    printing: false,
     listRequest: 0,
     page: 1,
     hasMore: false,
@@ -575,6 +576,7 @@
       + '    <section class="tlab-toolbar" aria-label="Búsqueda y filtros">'
       + '      <div class="tlab-toolbar__main"><div class="tlab-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><label class="sr-only" for="tlabSearch">Buscar trabajos</label><input id="tlabSearch" type="search" autocomplete="off" placeholder="Venta, código del trabajo, paciente o producto"></div>'
       + '        <button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="toggle-filters" aria-expanded="false" aria-controls="tlabFilters"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Filtros <span class="tlab-filter-count" id="tlabFilterCount" hidden>0</span></button>'
+      + '        <button type="button" class="tlab-button tlab-button--secondary tlab-print-command" id="tlabPrintTechnicalButton" data-tlab-command="print-technical"><i class="fa-solid fa-print" aria-hidden="true"></i><span>Imprimir listado</span></button>'
       + '      </div>'
       + '      <form class="tlab-filters" id="tlabFilters" hidden><div class="tlab-filters__grid">'
       + '        <div class="tlab-field"><label for="tlabFilterSituation">Situación calculada</label><select id="tlabFilterSituation" name="situacion"><option value="">Todas</option></select></div>'
@@ -603,6 +605,7 @@
       + '    <div class="tlab-load-more" id="tlabLoadMore" hidden><button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="load-more">Cargar más trabajos</button></div>'
       + '  </main>'
       + '</div>'
+      + '<section class="tlab-print-sheet" id="tlabPrintSheet" aria-label="Listado técnico de trabajos de laboratorio" hidden></section>'
       + '<div class="tlab-node-popover" id="tlabNodePopover" role="dialog" aria-modal="false" aria-label="Detalle del evento" hidden></div>'
       + '<div class="tlab-dialog-layer" id="tlabActionLayer" hidden></div>'
       + '<div class="tlab-viewer-layer" id="tlabViewerLayer" hidden></div>'
@@ -781,6 +784,7 @@
     switch (command) {
       case "close": closeModule(); break;
       case "refresh": refreshAll(); break;
+      case "print-technical": printTechnicalList(); break;
       case "toggle-filters":
         filters = currentFilterForm();
         state.filtersOpen = filters ? filters.hidden : false;
@@ -1324,18 +1328,23 @@
     var historical;
     var current;
     var button;
+    var printButton;
     var search;
     if (!state.root) { return; }
     standard = state.root.querySelector("#tlabFilters");
     historical = state.root.querySelector("#tlabHistoricalFilters");
     current = state.view === "historicos" ? historical : standard;
     button = state.root.querySelector('[data-tlab-command="toggle-filters"]');
+    printButton = state.root.querySelector('[data-tlab-command="print-technical"]');
     search = state.root.querySelector("#tlabSearch");
     if (standard) { standard.hidden = standard !== current || !state.filtersOpen; }
     if (historical) { historical.hidden = historical !== current || !state.filtersOpen; }
     if (button && current) {
       button.setAttribute("aria-controls", current.id);
       button.setAttribute("aria-expanded", state.filtersOpen ? "true" : "false");
+    }
+    if (printButton) {
+      printButton.hidden = state.view === "historicos";
     }
     if (search) {
       search.placeholder = state.view === "historicos"
@@ -1369,6 +1378,139 @@
       payload.cod_detalle_venta = state.moduleOptions.cod_detalle_operativo;
     }
     return payload;
+  }
+
+  function technicalPrintViewTitle() {
+    var title;
+    if (!state.root) { return "Trabajos de laboratorio"; }
+    title = state.root.querySelector("#tlabListTitle");
+    return title ? title.textContent : "Trabajos de laboratorio";
+  }
+
+  function technicalPrintFilterLabels() {
+    var labels = ["Pestaña: " + technicalPrintViewTitle()];
+    var form = currentFilterForm();
+    var search = state.root ? state.root.querySelector("#tlabSearch") : null;
+    if (search && search.value.trim()) {
+      labels.push("Búsqueda: " + search.value.trim());
+    }
+    Array.prototype.forEach.call(form ? form.elements : [], function (field) {
+      var type;
+      var label;
+      var value;
+      var option;
+      if (!field || !field.name || field.disabled) { return; }
+      type = toStringSafe(field.type).toLowerCase();
+      if ((type === "checkbox" || type === "radio") && !field.checked) { return; }
+      value = type === "checkbox" ? "Sí" : toStringSafe(field.value).trim();
+      if (!value) { return; }
+      label = field.id && state.root
+        ? state.root.querySelector('label[for="' + escapeAttr(field.id) + '"]') : null;
+      if (!label && field.closest) { label = field.closest("label"); }
+      label = label ? label.textContent.trim() : field.name.replace(/_/g, " ");
+      if (field.tagName && field.tagName.toLowerCase() === "select") {
+        option = field.options[field.selectedIndex];
+        value = option ? option.text : value;
+      } else if (type === "date") {
+        value = formatDate(value, false);
+      }
+      labels.push(label + ": " + value);
+    });
+    return labels;
+  }
+
+  function technicalPrintText(value, fallback) {
+    var text = toStringSafe(value).trim();
+    return escapeHtml(text || fallback || "Sin registrar").replace(/\r?\n/g, "<br>");
+  }
+
+  function technicalPrintRowHtml(item) {
+    item = item || {};
+    return '<tr>'
+      + '<td class="tlab-print-code"><strong>' + technicalPrintText(item.codigo_visible, "-") + '</strong><small>Venta ' + technicalPrintText(item.nro_venta, "-") + '</small></td>'
+      + '<td>' + technicalPrintText(item.paciente_abreviado, "Sin identificar") + '</td>'
+      + '<td>' + technicalPrintText(item.pieza_dental, "Sin registrar") + '</td>'
+      + '<td><strong>' + technicalPrintText(item.producto, "Sin producto") + '</strong><small>' + technicalPrintText(item.ciclo, "Original") + '</small></td>'
+      + '<td>' + technicalPrintText(item.colorimetro, "Sin registrar") + '</td>'
+      + '<td class="tlab-print-instructions">' + technicalPrintText(item.instrucciones, "Sin instrucciones") + '</td>'
+      + '<td><strong>' + technicalPrintText(item.estado, "Sin estado") + '</strong><small>Objetivo: ' + technicalPrintText(formatDate(item.fecha_objetivo, false), "Sin registrar") + '</small></td>'
+      + '<td>' + technicalPrintText(item.tecnico, "Técnico pendiente") + '<small>' + technicalPrintText(item.local, "Sin local") + '</small></td>'
+      + '<td class="tlab-print-signature"><span></span><small>Firma</small></td>'
+      + '</tr>';
+  }
+
+  function technicalPrintDocumentHtml(data, filterLabels) {
+    var items = asArray(data.items || data.trabajos);
+    var context = data.contexto_usuario || {};
+    var userName = pick(context, ["nombre", "nombre_usuario", "usuario_nombre"], pick(state.context, ["nombre", "nombre_usuario", "usuario_nombre"], "Usuario autorizado"));
+    var localName = pick(context, ["nombre_local", "local_nombre"], pick(state.context, ["nombre_local", "local_nombre"], "Local autorizado"));
+    var filterHtml = asArray(filterLabels).map(function (label) {
+      return '<span>' + escapeHtml(label) + '</span>';
+    }).join("");
+    return '<div class="tlab-print-document">'
+      + '<header class="tlab-print-header"><div><span>SISTEMA TELAR · CLINIDENT SALUD</span><h1>Listado técnico de trabajos de laboratorio</h1><p>Documento operativo de consulta. No modifica estados ni custodias.</p></div>'
+      + '<div class="tlab-print-meta"><strong>' + escapeHtml(formatDate(data.generado_en, true)) + '</strong><span>Generado por: ' + escapeHtml(userName) + '</span><span>Local: ' + escapeHtml(localName) + '</span></div></header>'
+      + '<section class="tlab-print-summary"><div><strong>' + items.length + '</strong><span>' + (items.length === 1 ? "trabajo coincidente" : "trabajos coincidentes") + '</span></div><div class="tlab-print-filters">' + filterHtml + '</div></section>'
+      + '<table class="tlab-print-table"><colgroup><col class="is-code"><col class="is-patient"><col class="is-tooth"><col class="is-product"><col class="is-color"><col class="is-instructions"><col class="is-status"><col class="is-technician"><col class="is-signature"></colgroup>'
+      + '<thead><tr><th>Trabajo</th><th>Paciente</th><th>Pieza dental</th><th>Producto</th><th>Colorímetro</th><th>Instrucciones técnicas</th><th>Estado y fecha</th><th>Técnico</th><th>Firma</th></tr></thead>'
+      + '<tbody>' + items.map(technicalPrintRowHtml).join("") + '</tbody></table>'
+      + '<footer class="tlab-print-footer"><span>Pacientes identificados de forma abreviada por privacidad.</span><span>Hoja técnica · ' + escapeHtml(technicalPrintViewTitle()) + '</span></footer>'
+      + '</div>';
+  }
+
+  function setTechnicalPrintLoading(active) {
+    var button = state.root ? state.root.querySelector("#tlabPrintTechnicalButton") : null;
+    if (!button) { return; }
+    button.disabled = active;
+    button.innerHTML = active
+      ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Preparando...</span>'
+      : '<i class="fa-solid fa-print" aria-hidden="true"></i><span>Imprimir listado</span>';
+  }
+
+  function finishTechnicalPrint() {
+    var sheet = state.root ? state.root.querySelector("#tlabPrintSheet") : null;
+    document.body.classList.remove("tlab-technical-print");
+    window.removeEventListener("afterprint", finishTechnicalPrint);
+    if (sheet) {
+      sheet.hidden = true;
+      sheet.innerHTML = "";
+    }
+    state.printing = false;
+    setTechnicalPrintLoading(false);
+  }
+
+  function printTechnicalList() {
+    var payload;
+    var filterLabels;
+    var sheet;
+    if (!state.root || state.printing) { return; }
+    if (state.view === "historicos") {
+      notify("La impresión técnica está disponible en Vista operativa y Mi bandeja.", "info");
+      return;
+    }
+    payload = filterPayload();
+    filterLabels = technicalPrintFilterLabels();
+    sheet = state.root.querySelector("#tlabPrintSheet");
+    state.printing = true;
+    setTechnicalPrintLoading(true);
+    request("listarImpresionTecnica", payload).then(function (response) {
+      var items = asArray(response.data.items || response.data.trabajos);
+      if (!items.length) {
+        finishTechnicalPrint();
+        notify("No hay trabajos para imprimir con la pestaña y los filtros actuales.", "info");
+        return;
+      }
+      mergeContext(response.data);
+      sheet.innerHTML = technicalPrintDocumentHtml(response.data, filterLabels);
+      sheet.hidden = false;
+      document.body.classList.add("tlab-technical-print");
+      window.addEventListener("afterprint", finishTechnicalPrint);
+      window.print();
+      window.setTimeout(finishTechnicalPrint, 500);
+    }).then(null, function (error) {
+      finishTechnicalPrint();
+      notify(error.message || "No se pudo preparar el listado técnico.", "error");
+    });
   }
 
   function updateFilterCount() {

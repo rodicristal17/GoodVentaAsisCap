@@ -320,6 +320,21 @@ try {
             $datos = array_merge($datos, $contextoUsuario);
             $respuesta = trabajoLaboratorioRespuesta(true, 'trabajos_listados', 'Trabajos listados.', $datos, null);
             break;
+        case 'listarImpresionTecnica':
+            if (!trabajoLaboratorioEstructuraDisponible($mysqli)) {
+                trabajoLaboratorioLanzar('estructura_laboratorio_no_instalada', 'El modulo de laboratorio todavia no esta instalado.');
+            }
+            $datos = trabajoLaboratorioListarImpresionTecnica($mysqli, $codUsuario, $entrada);
+            $datos['contexto_usuario'] = $contextoUsuario;
+            $datos = array_merge($datos, $contextoUsuario);
+            $respuesta = trabajoLaboratorioRespuesta(
+                true,
+                'impresion_tecnica_listada',
+                'Listado tecnico preparado.',
+                $datos,
+                null
+            );
+            break;
         case 'listarHistoricos':
             $datos = trabajoLaboratorioHistoricoListarHistoricos($mysqli, $codUsuario, $entrada);
             $datos['contexto_usuario'] = $contextoUsuario;

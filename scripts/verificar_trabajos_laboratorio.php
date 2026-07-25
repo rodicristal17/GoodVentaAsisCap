@@ -236,6 +236,16 @@ pruebaLabAfirmar(trabajoLaboratorioValidarUbicacionesModo('pieza_individual', $u
 pruebaLabAfirmar(trabajoLaboratorioValidarUbicacionesModo('pieza_individual', $dosPiezas) === null, 'Un detalle de cantidad uno admite varias piezas dentro de un unico trabajo.');
 pruebaLabAfirmar(trabajoLaboratorioValidarUbicacionesModo('multipieza', $dosPiezas) === null, 'Un tratamiento multipieza conserva varias piezas en un trabajo.');
 pruebaLabAfirmar(trabajoLaboratorioValidarUbicacionesModo('multipieza', $unaPieza) !== null, 'Multipieza exige al menos dos piezas.');
+pruebaLabAfirmarIgual(
+    'ANA M. P. L.',
+    trabajoLaboratorioNombreAbreviadoImpresion('ANA MARIA PEREZ LOPEZ'),
+    'La impresion tecnica abrevia el paciente y no expone todos sus nombres.'
+);
+pruebaLabAfirmarIgual(
+    'Piezas 11, 12',
+    trabajoLaboratorioResumenUbicacionesImpresion($dosPiezas),
+    'La impresion tecnica resume todas las piezas dentales sin duplicarlas.'
+);
 $detalleTresUnidades = array('cantidad_detalle' => 3);
 pruebaLabAfirmarIgual(3, trabajoLaboratorioCantidadAgrupadaDetalle($detalleTresUnidades), 'Una cantidad entera de tres habilita tres trabajos independientes.');
 pruebaLabAfirmarIgual(0, trabajoLaboratorioCantidadAgrupadaDetalle(array('cantidad_detalle' => 2.5)), 'Una cantidad fraccionaria no se convierte automaticamente en trabajos.');
@@ -1048,7 +1058,7 @@ pruebaLabAfirmar(
     'Migrar ubicaciones autoriza antes de escribir, usa transaccion completa y comunica rechazos.'
 );
 pruebaLabAfirmar(
-    strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260725-01') !== false,
+    strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260725-02') !== false,
     'La carga dinamica usa la misma version vigente de estilos del modulo.'
 );
 pruebaLabAfirmar(
@@ -1879,7 +1889,7 @@ pruebaLabAfirmar(
     && strpos($fuenteTrabajoLaboratorioJs, '!toStringSafe(values.motivo_excepcion).trim()') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'motivo_excepcion).trim().length < 5') === false
     && strpos($fuenteTrabajoLaboratorioJs, 'action.code === "rectificarCustodia" && toStringSafe(values.justificacion).trim().length < 5') === false
-    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260725-01') !== false,
+    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260725-02') !== false,
     'La interfaz ofrece una observacion inicial opcional y solo exige contenido, sin minimo, en otras excepciones.'
 );
 $bloqueGuardarRegularizacion = pruebaLabBloqueFuncion(
@@ -1927,6 +1937,43 @@ pruebaLabAfirmar(
     && strpos($bloqueListarTrabajos, 'cod_local_destinoFK=?') !== false
     && strpos($bloqueListarTrabajos, '$bandeja === \'por_recibir\'') !== false,
     'Mi bandeja incluye los traslados por recibir destinados al local del usuario habilitado.'
+);
+$bloqueImpresionTecnica = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioListarImpresionTecnica'
+);
+pruebaLabAfirmar(
+    $bloqueImpresionTecnica !== ''
+    && strpos($bloqueImpresionTecnica, 'VERTRABAJOSLABORATORIO') !== false
+    && strpos($bloqueImpresionTecnica, "'por_pagina'] = 100") !== false
+    && strpos($bloqueImpresionTecnica, 'trabajoLaboratorioListar(') !== false
+    && strpos($bloqueImpresionTecnica, 'trabajoLaboratorioDatosTecnicosImpresion') !== false
+    && strpos($bloqueImpresionTecnica, 'do {') !== false
+    && strpos($bloqueImpresionTecnica, 'while ($pagina <= $totalPaginas)') !== false
+    && strpos($bloqueImpresionTecnica, 'INSERT INTO') === false
+    && strpos($bloqueImpresionTecnica, 'UPDATE ') === false
+    && strpos($bloqueImpresionTecnica, 'DELETE FROM') === false
+    && strpos($bloqueImpresionTecnica, 'begin_transaction') === false,
+    'El listado tecnico recorre todas las paginas y reutiliza filtros y autorizacion del listado operativo.'
+);
+$bloqueItemImpresionTecnica = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioItemImpresionTecnica'
+);
+pruebaLabAfirmar(
+    strpos($fuenteTrabajoLaboratorioPhp, "case 'listarImpresionTecnica':") !== false
+    && strpos($fuenteTrabajoLaboratorioPhp, 'trabajoLaboratorioListarImpresionTecnica') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'data-tlab-command="print-technical"') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'request("listarImpresionTecnica", payload)') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'technicalPrintFilterLabels') !== false
+    && strpos($fuenteTrabajoLaboratorioCss, 'size: A4 landscape') !== false
+    && strpos($fuenteTrabajoLaboratorioCss, '.tlab-print-signature') !== false
+    && strpos($bloqueItemImpresionTecnica, 'paciente_abreviado') !== false
+    && strpos($bloqueItemImpresionTecnica, 'pieza_dental') !== false
+    && strpos($bloqueItemImpresionTecnica, 'colorimetro') !== false
+    && strpos($bloqueItemImpresionTecnica, 'instrucciones') !== false
+    && strpos($bloqueItemImpresionTecnica, 'costo') === false,
+    'La interfaz prepara un A4 horizontal con filtros activos, datos tecnicos y espacio de firma.'
 );
 $bloqueObjetivoGrupo = pruebaLabBloqueFuncion($fuenteHelper, 'trabajoLaboratorioObjetivoAvanceClinicoGrupo');
 $bloqueSincronizarAvance = pruebaLabBloqueFuncion($fuenteHelper, 'trabajoLaboratorioSincronizarAvanceClinico');

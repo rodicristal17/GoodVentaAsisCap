@@ -5194,8 +5194,15 @@ function trabajoLaboratorioResumenCustodiaActual($cadena, $trabajo = array())
     );
 }
 
-function trabajoLaboratorioFormatearTrabajo($mysqli, $codUsuario, $trabajo, $completo = false)
+function trabajoLaboratorioFormatearTrabajo(
+    $mysqli,
+    $codUsuario,
+    $trabajo,
+    $completo = false,
+    $opciones = array()
+)
 {
+    $opciones = is_array($opciones) ? $opciones : array();
     $indicadores = trabajoLaboratorioCalcularIndicadoresPlazo(
         isset($trabajo['estado_derivado']) ? $trabajo['estado_derivado'] : '',
         isset($trabajo['fecha_creacion']) ? $trabajo['fecha_creacion'] : '',
@@ -5292,7 +5299,9 @@ function trabajoLaboratorioFormatearTrabajo($mysqli, $codUsuario, $trabajo, $com
         'miniatura_url' => $miniaturaUrl,
         'miniatura_fallback_original' => false,
         'version' => intval($trabajo['version']),
-        'acciones_permitidas' => trabajoLaboratorioAccionesPermitidas($mysqli, $codUsuario, $trabajo)
+        'acciones_permitidas' => !empty($opciones['sin_acciones'])
+            ? array()
+            : trabajoLaboratorioAccionesPermitidas($mysqli, $codUsuario, $trabajo)
     );
     if ($completo) {
         $salida['colorimetro'] = trabajoLaboratorioTextoUtf8($trabajo['colorimetro']);
@@ -5590,11 +5599,13 @@ function trabajoLaboratorioVincularParametros($stmt, $tipos, &$valores)
     call_user_func_array(array($stmt, 'bind_param'), $referencias);
 }
 
-function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada)
+function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada, $opciones = array())
 {
     if (!trabajoLaboratorioUsuario($mysqli, intval($codUsuario))) {
         trabajoLaboratorioLanzar('listado_no_autorizado', 'El usuario no puede listar trabajos de laboratorio.');
     }
+    $opciones = is_array($opciones) ? $opciones : array();
+    $resumenTecnicoInterno = !empty($opciones['resumen_tecnico']);
     $pagina = max(1, trabajoLaboratorioEntero(isset($entrada['pagina']) ? $entrada['pagina'] : 1));
     $porPagina = trabajoLaboratorioEntero(isset($entrada['por_pagina']) ? $entrada['por_pagina']
         : (isset($entrada['limite']) ? $entrada['limite'] : 20));
@@ -5857,26 +5868,45 @@ function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada)
         $filas[] = $fila;
     }
     $stmt->close();
-    $recorridos = trabajoLaboratorioRecorridosPorTrabajos($mysqli, $filas);
-    $cadenasCustodia = trabajoLaboratorioCadenasCustodiaPorTrabajos($mysqli, $filas);
-    $origenesHistoricos = function_exists('trabajoLaboratorioHistoricoOriginalesPorTrabajos')
-        ? trabajoLaboratorioHistoricoOriginalesPorTrabajos($mysqli, $filas)
-        : array();
+    $recorridos = $resumenTecnicoInterno
+        ? array()
+        : trabajoLaboratorioRecorridosPorTrabajos($mysqli, $filas);
+    $cadenasCustodia = $resumenTecnicoInterno
+        ? array()
+        : trabajoLaboratorioCadenasCustodiaPorTrabajos($mysqli, $filas);
+    $origenesHistoricos = !$resumenTecnicoInterno
+        && function_exists('trabajoLaboratorioHistoricoOriginalesPorTrabajos')
+            ? trabajoLaboratorioHistoricoOriginalesPorTrabajos($mysqli, $filas)
+            : array();
     $items = array();
     foreach ($filas as $fila) {
-        $item = trabajoLaboratorioFormatearTrabajo($mysqli, $codUsuario, $fila, false);
-        $idTrabajo = intval($fila['id']);
-        $item['recorrido'] = isset($recorridos[$idTrabajo]) ? $recorridos[$idTrabajo] : array();
-        $item['recorrido_operativo'] = $item['recorrido'];
-        $item['cadena_custodia'] = isset($cadenasCustodia[$idTrabajo])
-            ? $cadenasCustodia[$idTrabajo] : array();
-        $item['hilo_custodia'] = $item['cadena_custodia'];
-        $item['custodia_actual'] = trabajoLaboratorioResumenCustodiaActual(
-            $item['cadena_custodia'],
-            $fila
+        if ($resumenTecnicoInterno) {
+            $fila['id_media_principal'] = null;
+            $fila['miniatura_relativa_principal'] = '';
+            $fila['ruta_relativa_principal'] = '';
+            $fila['mime_media_principal'] = '';
+        }
+        $item = trabajoLaboratorioFormatearTrabajo(
+            $mysqli,
+            $codUsuario,
+            $fila,
+            false,
+            $resumenTecnicoInterno ? array('sin_acciones' => true) : array()
         );
-        $item['registro_historico_original'] = isset($origenesHistoricos[$idTrabajo])
-            ? $origenesHistoricos[$idTrabajo] : null;
+        $idTrabajo = intval($fila['id']);
+        if (!$resumenTecnicoInterno) {
+            $item['recorrido'] = isset($recorridos[$idTrabajo]) ? $recorridos[$idTrabajo] : array();
+            $item['recorrido_operativo'] = $item['recorrido'];
+            $item['cadena_custodia'] = isset($cadenasCustodia[$idTrabajo])
+                ? $cadenasCustodia[$idTrabajo] : array();
+            $item['hilo_custodia'] = $item['cadena_custodia'];
+            $item['custodia_actual'] = trabajoLaboratorioResumenCustodiaActual(
+                $item['cadena_custodia'],
+                $fila
+            );
+            $item['registro_historico_original'] = isset($origenesHistoricos[$idTrabajo])
+                ? $origenesHistoricos[$idTrabajo] : null;
+        }
         $items[] = $item;
     }
     $hayMas = ($offset + count($items)) < $total;
@@ -5891,6 +5921,283 @@ function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada)
             'total' => $total,
             'total_paginas' => $total > 0 ? intval(ceil($total / $porPagina)) : 0
         )
+    );
+}
+
+function trabajoLaboratorioNombreAbreviadoImpresion($nombre)
+{
+    $nombre = trim((string)trabajoLaboratorioTextoUtf8($nombre));
+    if ($nombre === '') {
+        return 'Sin identificar';
+    }
+    $partes = preg_split('/\s+/u', $nombre, -1, PREG_SPLIT_NO_EMPTY);
+    if (!is_array($partes) || count($partes) <= 1) {
+        return $nombre;
+    }
+    $abreviado = array_shift($partes);
+    foreach ($partes as $parte) {
+        $parte = trim((string)preg_replace('/[^\p{L}\p{N}]/u', '', (string)$parte));
+        if ($parte === '') {
+            continue;
+        }
+        $inicial = function_exists('mb_substr')
+            ? mb_substr($parte, 0, 1, 'UTF-8')
+            : substr($parte, 0, 1);
+        $inicial = function_exists('mb_strtoupper')
+            ? mb_strtoupper($inicial, 'UTF-8')
+            : strtoupper($inicial);
+        $abreviado .= ' '.$inicial.'.';
+    }
+    return $abreviado;
+}
+
+function trabajoLaboratorioResumenUbicacionesImpresion($ubicaciones)
+{
+    $piezas = array();
+    $descriptores = array();
+    foreach (is_array($ubicaciones) ? $ubicaciones : array() as $ubicacion) {
+        $listaPiezas = isset($ubicacion['piezas']) && is_array($ubicacion['piezas'])
+            ? $ubicacion['piezas'] : array();
+        if (isset($ubicacion['pieza']) && trim((string)$ubicacion['pieza']) !== '') {
+            array_unshift($listaPiezas, $ubicacion['pieza']);
+        }
+        foreach ($listaPiezas as $pieza) {
+            $pieza = trim((string)$pieza);
+            if ($pieza !== '' && !in_array($pieza, $piezas, true)) {
+                $piezas[] = $pieza;
+            }
+        }
+        if (!empty($ubicacion['boca_completa'])
+            && !in_array('Boca completa', $descriptores, true)) {
+            $descriptores[] = 'Boca completa';
+        }
+        foreach (array('arcada' => 'Arcada', 'cuadrante' => 'Cuadrante') as $clave => $etiqueta) {
+            $valor = isset($ubicacion[$clave]) ? trim((string)$ubicacion[$clave]) : '';
+            $descriptor = $valor !== '' ? $etiqueta.' '.$valor : '';
+            if ($descriptor !== '' && !in_array($descriptor, $descriptores, true)) {
+                $descriptores[] = $descriptor;
+            }
+        }
+        $alcance = isset($ubicacion['alcance'])
+            ? trim((string)$ubicacion['alcance']) : '';
+        if ($alcance !== '' && $alcance !== 'pieza_dental' && $alcance !== 'piezas_multiples') {
+            $descriptorAlcance = ucfirst(str_replace('_', ' ', $alcance));
+            if (!in_array($descriptorAlcance, $descriptores, true)) {
+                $descriptores[] = $descriptorAlcance;
+            }
+        }
+    }
+    if (count($piezas) > 0) {
+        return 'Pieza'.(count($piezas) === 1 ? '' : 's').' '.implode(', ', $piezas);
+    }
+    return count($descriptores) > 0 ? implode(' · ', $descriptores) : 'Sin registrar';
+}
+
+function trabajoLaboratorioDatosTecnicosImpresion($mysqli, $idsTrabajo)
+{
+    $ids = array();
+    foreach (is_array($idsTrabajo) ? $idsTrabajo : array() as $idTrabajo) {
+        $idTrabajo = intval($idTrabajo);
+        if ($idTrabajo > 0 && !in_array($idTrabajo, $ids, true)) {
+            $ids[] = $idTrabajo;
+        }
+    }
+    $salida = array();
+    foreach ($ids as $idTrabajo) {
+        $salida[$idTrabajo] = array(
+            'colorimetro' => '',
+            'instrucciones' => '',
+            'ubicaciones' => array()
+        );
+    }
+    if (count($ids) === 0) {
+        return $salida;
+    }
+    $marcas = implode(',', array_fill(0, count($ids), '?'));
+    $tipos = str_repeat('i', count($ids));
+    $valoresTrabajo = $ids;
+    $stmt = $mysqli->prepare(
+        'SELECT id,colorimetro,instrucciones FROM trabajo_laboratorio WHERE id IN ('.$marcas.')'
+    );
+    if (!$stmt) {
+        trabajoLaboratorioLanzar(
+            'impresion_tecnica_no_disponible',
+            'No se pudieron preparar los datos tecnicos para imprimir.'
+        );
+    }
+    trabajoLaboratorioVincularParametros($stmt, $tipos, $valoresTrabajo);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        trabajoLaboratorioLanzar(
+            'impresion_tecnica_no_disponible',
+            'No se pudieron consultar los datos tecnicos para imprimir.'
+        );
+    }
+    $resultado = $stmt->get_result();
+    while ($fila = $resultado->fetch_assoc()) {
+        $idTrabajo = intval($fila['id']);
+        if (!isset($salida[$idTrabajo])) {
+            continue;
+        }
+        $salida[$idTrabajo]['colorimetro'] = trabajoLaboratorioTextoUtf8($fila['colorimetro']);
+        $salida[$idTrabajo]['instrucciones'] = trabajoLaboratorioTextoUtf8($fila['instrucciones']);
+    }
+    $stmt->close();
+
+    if (!trabajoLaboratorioTablaExiste($mysqli, 'trabajo_laboratorio_ubicacion')) {
+        return $salida;
+    }
+    $valoresUbicacion = $ids;
+    $stmt = $mysqli->prepare(
+        'SELECT id_trabajoFK,pieza,piezas_json,arcada,cuadrante,boca_completa,alcance_odontologico '
+        .'FROM trabajo_laboratorio_ubicacion WHERE id_trabajoFK IN ('.$marcas.') '
+        .'ORDER BY id_trabajoFK ASC,id ASC'
+    );
+    if (!$stmt) {
+        trabajoLaboratorioLanzar(
+            'impresion_tecnica_no_disponible',
+            'No se pudieron preparar las piezas dentales para imprimir.'
+        );
+    }
+    trabajoLaboratorioVincularParametros($stmt, $tipos, $valoresUbicacion);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        trabajoLaboratorioLanzar(
+            'impresion_tecnica_no_disponible',
+            'No se pudieron consultar las piezas dentales para imprimir.'
+        );
+    }
+    $resultado = $stmt->get_result();
+    while ($fila = $resultado->fetch_assoc()) {
+        $idTrabajo = intval($fila['id_trabajoFK']);
+        if (!isset($salida[$idTrabajo])) {
+            continue;
+        }
+        $salida[$idTrabajo]['ubicaciones'][] = array(
+            'pieza' => trabajoLaboratorioTextoUtf8($fila['pieza']),
+            'piezas' => trabajoLaboratorioListaJson(
+                trabajoLaboratorioTextoUtf8($fila['piezas_json'])
+            ),
+            'arcada' => trabajoLaboratorioTextoUtf8($fila['arcada']),
+            'cuadrante' => trabajoLaboratorioTextoUtf8($fila['cuadrante']),
+            'boca_completa' => intval($fila['boca_completa']) === 1,
+            'alcance' => trabajoLaboratorioTextoUtf8($fila['alcance_odontologico'])
+        );
+    }
+    $stmt->close();
+    return $salida;
+}
+
+function trabajoLaboratorioItemImpresionTecnica($item, $datosTecnicos)
+{
+    $item = is_array($item) ? $item : array();
+    $datosTecnicos = is_array($datosTecnicos) ? $datosTecnicos : array();
+    $presentacion = trabajoLaboratorioPresentacionEstadoRecorrido(
+        isset($item['estado_derivado']) ? $item['estado_derivado'] : ''
+    );
+    $colorimetro = isset($datosTecnicos['colorimetro'])
+        ? trim((string)$datosTecnicos['colorimetro']) : '';
+    $instrucciones = isset($datosTecnicos['instrucciones'])
+        ? trim((string)$datosTecnicos['instrucciones']) : '';
+    return array(
+        'id' => intval(isset($item['id']) ? $item['id'] : 0),
+        'codigo_visible' => trabajoLaboratorioTextoUtf8(
+            isset($item['codigo_visible']) ? $item['codigo_visible'] : ''
+        ),
+        'nro_venta' => trabajoLaboratorioTextoUtf8(
+            isset($item['nro_venta']) ? $item['nro_venta'] : ''
+        ),
+        'paciente_abreviado' => trabajoLaboratorioNombreAbreviadoImpresion(
+            isset($item['nombre_paciente']) ? $item['nombre_paciente'] : ''
+        ),
+        'producto' => trabajoLaboratorioTextoUtf8(
+            isset($item['producto']) ? $item['producto'] : ''
+        ),
+        'pieza_dental' => trabajoLaboratorioResumenUbicacionesImpresion(
+            isset($datosTecnicos['ubicaciones']) ? $datosTecnicos['ubicaciones'] : array()
+        ),
+        'colorimetro' => $colorimetro !== ''
+            ? trabajoLaboratorioTextoUtf8($colorimetro) : 'Sin registrar',
+        'instrucciones' => $instrucciones !== ''
+            ? trabajoLaboratorioTextoUtf8($instrucciones) : 'Sin instrucciones',
+        'tecnico' => trabajoLaboratorioTextoUtf8(
+            isset($item['tecnico']) && trim((string)$item['tecnico']) !== ''
+                ? $item['tecnico'] : 'Tecnico pendiente'
+        ),
+        'estado' => trabajoLaboratorioTextoUtf8($presentacion['nombre']),
+        'fecha_objetivo' => isset($item['fecha_objetivo']) ? $item['fecha_objetivo'] : null,
+        'ciclo' => trabajoLaboratorioTextoUtf8(
+            isset($item['ciclo_etiqueta']) ? $item['ciclo_etiqueta'] : 'Original'
+        ),
+        'local' => trabajoLaboratorioTextoUtf8(
+            isset($item['local']) ? $item['local'] : ''
+        )
+    );
+}
+
+function trabajoLaboratorioListarImpresionTecnica($mysqli, $codUsuario, $entrada)
+{
+    if (!trabajoLaboratorioTienePermiso(
+        $mysqli,
+        intval($codUsuario),
+        'VERTRABAJOSLABORATORIO'
+    ) && !trabajoLaboratorioUsuarioEsAuditor($mysqli, intval($codUsuario))) {
+        trabajoLaboratorioLanzar(
+            'impresion_tecnica_no_autorizada',
+            'El usuario no puede imprimir trabajos de laboratorio.'
+        );
+    }
+    $entrada = is_array($entrada) ? $entrada : array();
+    $vista = trabajoLaboratorioNormalizarTexto(
+        isset($entrada['vista']) ? $entrada['vista'] : 'operativa'
+    );
+    if (!in_array($vista, array('operativa', 'mecanico'), true)) {
+        trabajoLaboratorioLanzar(
+            'impresion_tecnica_vista_invalida',
+            'La impresion tecnica solo esta disponible en Vista operativa y Mi bandeja.'
+        );
+    }
+    $entrada['vista'] = $vista;
+    $pagina = 1;
+    $totalPaginas = 1;
+    $itemsImpresion = array();
+    do {
+        $entradaPagina = $entrada;
+        $entradaPagina['pagina'] = $pagina;
+        $entradaPagina['por_pagina'] = 100;
+        $lote = trabajoLaboratorioListar(
+            $mysqli,
+            $codUsuario,
+            $entradaPagina,
+            array('resumen_tecnico' => true)
+        );
+        $items = isset($lote['items']) && is_array($lote['items'])
+            ? $lote['items'] : array();
+        $ids = array();
+        foreach ($items as $item) {
+            if (isset($item['id'])) {
+                $ids[] = intval($item['id']);
+            }
+        }
+        $datosTecnicos = trabajoLaboratorioDatosTecnicosImpresion($mysqli, $ids);
+        foreach ($items as $item) {
+            $idTrabajo = intval(isset($item['id']) ? $item['id'] : 0);
+            $itemsImpresion[] = trabajoLaboratorioItemImpresionTecnica(
+                $item,
+                isset($datosTecnicos[$idTrabajo]) ? $datosTecnicos[$idTrabajo] : array()
+            );
+        }
+        $totalPaginas = isset($lote['paginacion']['total_paginas'])
+            ? max(1, intval($lote['paginacion']['total_paginas'])) : 1;
+        $pagina++;
+    } while ($pagina <= $totalPaginas);
+
+    return array(
+        'items' => $itemsImpresion,
+        'trabajos' => $itemsImpresion,
+        'total' => count($itemsImpresion),
+        'generado_en' => date('Y-m-d H:i:s'),
+        'solo_lectura' => true
     );
 }
 
