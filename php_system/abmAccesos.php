@@ -177,6 +177,7 @@ function gestorAccesosIconoFormulario($formulario)
 		'ACCESO' => '/GoodVentaAsisCap/iconos/acceso.png',
 		'NIVELES' => '/GoodVentaAsisCap/iconos/nivelesacceso.png',
 		'CALENDARIO' => '/GoodVentaAsisCap/iconos/calendarioAgenda.png',
+		'PLANIFICACION' => '/GoodVentaAsisCap/iconos/calendarioAgenda.png',
 		'AGENDA' => '/GoodVentaAsisCap/iconos/agenda.png',
 		'CONSULTORIO' => '/GoodVentaAsisCap/iconos/consultamedica.png',
 		'HISTORIAL' => '/GoodVentaAsisCap/iconos/historialmedico.png',

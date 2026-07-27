@@ -91,10 +91,17 @@ function odontoAutorizarUbicacionLaboratorioDetalle($mysqli, $user, $detalleId, 
             $mysqli,
             $user,
             "VERFORMULARIOCONSULTORIO"
-        ) && trabajoLaboratorioUsuarioPuedeLocal(
-            $mysqli,
-            $user,
-            intval($detalle["cod_local"])
+        ) && (
+            trabajoLaboratorioUsuarioPuedeLocal(
+                $mysqli,
+                $user,
+                intval($detalle["cod_local"])
+            )
+            || trabajoLaboratorioUsuarioPuedePrepararLocal(
+                $mysqli,
+                $user,
+                intval($detalle["cod_local"])
+            )
         );
     } else {
         $autorizado = trabajoLaboratorioTienePermiso($mysqli, $user, "VERFORMULARIOCONSULTORIO")
@@ -102,7 +109,7 @@ function odontoAutorizarUbicacionLaboratorioDetalle($mysqli, $user, $detalleId, 
             && trabajoLaboratorioTienePermiso($mysqli, $user, "CREARTRABAJOLABORATORIO")
             && (trabajoLaboratorioUsuarioEsDoctor($mysqli, $user)
                 || trabajoLaboratorioUsuarioEsAuditor($mysqli, $user))
-            && trabajoLaboratorioUsuarioPuedeOperarLocal(
+            && trabajoLaboratorioUsuarioPuedePrepararLocal(
                 $mysqli,
                 $user,
                 intval($detalle["cod_local"])

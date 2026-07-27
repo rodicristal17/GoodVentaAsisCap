@@ -635,6 +635,133 @@
     -webkit-box-orient:vertical;
 }
 
+.agenda-plan-profesionales{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+}
+
+.agenda-plan-profesional{
+    --agenda-plan-color:#07899a;
+    position:relative;
+    width:100%;
+    min-width:0;
+    display:grid;
+    grid-template-columns:30px minmax(0, 1fr) 10px;
+    align-items:center;
+    gap:6px;
+    padding:4px 6px 4px 4px;
+    box-sizing:border-box;
+    border:1px solid color-mix(in srgb, var(--agenda-plan-color) 42%, var(--border-soft));
+    border-radius:10px;
+    background:color-mix(in srgb, var(--agenda-plan-color) 7%, var(--sticky-bg));
+}
+
+.agenda-plan-profesional--pendiente_horario{
+    border-style:dashed;
+}
+
+.agenda-plan-profesional--propuesta{
+    border-style:dotted;
+}
+
+.agenda-plan-avatar{
+    width:28px;
+    height:28px;
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+    border-radius:50%;
+    box-sizing:border-box;
+    border:2px solid var(--agenda-plan-color);
+    background:var(--sticky-bg);
+    box-shadow:0 0 0 2px color-mix(in srgb, var(--agenda-plan-color) 12%, transparent);
+}
+
+.agenda-plan-avatar img{
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:cover;
+}
+
+.agenda-plan-avatar__fallback{
+    width:100%;
+    height:100%;
+    display:grid;
+    place-items:center;
+    color:var(--agenda-plan-color);
+    background:color-mix(in srgb, var(--agenda-plan-color) 10%, var(--sticky-bg));
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.02em;
+}
+
+.agenda-plan-profesional__texto{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:1px;
+    line-height:1.1;
+}
+
+.agenda-plan-profesional__texto strong{
+    overflow:hidden;
+    color:var(--text-title);
+    font-size:11px;
+    font-weight:800;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.agenda-plan-profesional__texto small{
+    overflow:hidden;
+    color:var(--text-soft);
+    font-size:9px;
+    font-weight:600;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.agenda-plan-profesional__nodo{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:var(--agenda-plan-color);
+    box-shadow:0 0 0 2px var(--sticky-bg);
+}
+
+.agenda-plan-sin-asignacion{
+    min-height:28px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:var(--text-muted);
+    font-size:10px;
+    font-weight:600;
+}
+
+.agenda-plan-sin-asignacion i{
+    color:#94a3b8;
+}
+
+.agenda-plan-sin-asignacion--referencia span{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.agenda-plan-sin-asignacion--referencia small{
+    color:var(--text-muted);
+    font-size:8px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+}
+
 .agenda-ocupacion{
     --ocupacion-color:#80c583;
     --ocupacion-valor:0%;
@@ -938,6 +1065,46 @@
     box-shadow:inset 0 0 0 2px var(--slot-hover-border);
 }
 
+.agenda-plan-hilo{
+    --agenda-plan-color:#07899a;
+    --agenda-plan-offset:5px;
+    position:absolute;
+    top:-1px;
+    bottom:-1px;
+    left:var(--agenda-plan-offset);
+    z-index:3;
+    width:0;
+    pointer-events:none;
+    border-left:2px solid var(--agenda-plan-color);
+    filter:drop-shadow(0 0 1px rgba(255,255,255,.7));
+}
+
+.agenda-plan-hilo--pendiente{
+    border-left-style:dashed;
+    opacity:.88;
+}
+
+.agenda-plan-hilo--propuesta{
+    border-left-style:dotted;
+    opacity:.72;
+}
+
+.agenda-evento-plan-nodo{
+    --agenda-plan-color:#07899a;
+    position:absolute;
+    top:8px;
+    left:-9px;
+    z-index:14;
+    width:9px;
+    height:9px;
+    box-sizing:border-box;
+    border:2px solid #fff;
+    border-radius:50%;
+    background:var(--agenda-plan-color);
+    box-shadow:0 0 0 1px var(--agenda-plan-color), 0 2px 5px rgba(15,23,42,.24);
+    pointer-events:none;
+}
+
 .agenda-evento{
     position:absolute;
     box-sizing:border-box;
@@ -951,6 +1118,16 @@
     font-size:11px;
     min-height:18px;
     z-index:5;
+}
+
+.agenda-btn-planificacion{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+}
+
+.agenda-btn-planificacion i{
+    color:#07899a;
 }
 
 .agenda-evento-head{

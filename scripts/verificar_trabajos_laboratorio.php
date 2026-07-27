@@ -230,6 +230,79 @@ pruebaLabAfirmar(
     'La sigla de la sucursal no se repite.'
 );
 
+$autorizacionBase = trabajoLaboratorioResolverAutorizacionPreparacionLocal(array(
+    'usuario_activo' => true,
+    'es_doctor' => true,
+    'permiso_crear' => true,
+    'cod_local_base' => 9,
+    'cod_local_destino' => 9
+));
+pruebaLabAfirmar(
+    !empty($autorizacionBase['autorizado'])
+    && empty($autorizacionBase['multisucursal'])
+    && $autorizacionBase['origen'] === 'sucursal_base',
+    'Un doctor activo con permiso conserva la preparacion en su sucursal base.'
+);
+$autorizacionHorario = trabajoLaboratorioResolverAutorizacionPreparacionLocal(array(
+    'usuario_activo' => true,
+    'es_doctor' => true,
+    'permiso_crear' => true,
+    'cod_local_base' => 9,
+    'cod_local_destino' => 4,
+    'horario_local_activo' => true
+));
+pruebaLabAfirmar(
+    !empty($autorizacionHorario['autorizado'])
+    && !empty($autorizacionHorario['multisucursal'])
+    && $autorizacionHorario['origen'] === 'horario_local',
+    'Un horario vigente habilita solamente la preparacion multisucursal.'
+);
+$autorizacionPlanificacion = trabajoLaboratorioResolverAutorizacionPreparacionLocal(array(
+    'usuario_activo' => true,
+    'es_doctor' => true,
+    'permiso_crear' => true,
+    'cod_local_base' => 9,
+    'cod_local_destino' => 4,
+    'vinculo_planificacion_activo' => true
+));
+pruebaLabAfirmar(
+    !empty($autorizacionPlanificacion['autorizado'])
+    && $autorizacionPlanificacion['origen'] === 'planificacion_sucursal',
+    'Un vinculo activo de planificacion habilita la preparacion sin cambiar la base laboral.'
+);
+pruebaLabAfirmar(
+    empty(trabajoLaboratorioResolverAutorizacionPreparacionLocal(array(
+        'usuario_activo' => true,
+        'es_doctor' => true,
+        'permiso_crear' => true,
+        'cod_local_base' => 9,
+        'cod_local_destino' => 4
+    ))['autorizado']),
+    'Una sucursal ajena sin horario ni planificacion permanece bloqueada.'
+);
+pruebaLabAfirmar(
+    empty(trabajoLaboratorioResolverAutorizacionPreparacionLocal(array(
+        'usuario_activo' => true,
+        'es_doctor' => true,
+        'permiso_crear' => false,
+        'cod_local_base' => 9,
+        'cod_local_destino' => 4,
+        'vinculo_planificacion_activo' => true
+    ))['autorizado']),
+    'El vinculo de planificacion no reemplaza el permiso de crear trabajos.'
+);
+pruebaLabAfirmar(
+    empty(trabajoLaboratorioResolverAutorizacionPreparacionLocal(array(
+        'usuario_activo' => true,
+        'es_doctor' => false,
+        'permiso_crear' => true,
+        'cod_local_base' => 9,
+        'cod_local_destino' => 4,
+        'vinculo_planificacion_activo' => true
+    ))['autorizado']),
+    'Un usuario que no es doctor ni auditor no obtiene acceso por el vinculo.'
+);
+
 $unaPieza = array(array('pieza' => '11', 'piezas' => array('11'), 'alcance' => 'pieza_dental'));
 $dosPiezas = array(array('pieza' => '', 'piezas' => array('11', '12'), 'alcance' => 'piezas_multiples'));
 pruebaLabAfirmar(trabajoLaboratorioValidarUbicacionesModo('pieza_individual', $unaPieza) === null, 'Pieza individual acepta una pieza.');
@@ -882,6 +955,46 @@ pruebaLabAfirmar(
     && $fuenteMigracionPerformance !== false,
     'Se pudieron leer las integraciones clinicas para verificar sus resguardos.'
 );
+$bloqueAutorizacionPreparacion = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioAutorizacionPreparacionLocal'
+);
+$bloqueContextoDetalle = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioObtenerContextoDetalle'
+);
+$bloqueAsegurarHilo = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioAsegurarHiloDetalle'
+);
+$bloqueIniciarTrabajo = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioIniciar'
+);
+$bloqueAccionesTrabajo = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioAccionesPermitidas'
+);
+pruebaLabAfirmar(
+    strpos($bloqueAutorizacionPreparacion, 'horario_usuario') !== false
+    && strpos($bloqueAutorizacionPreparacion, 'planificacion_especialista_local') !== false
+    && strpos($bloqueAutorizacionPreparacion, "'CREARTRABAJOLABORATORIO'") !== false
+    && strpos($bloqueContextoDetalle, 'trabajoLaboratorioAutorizacionPreparacionLocal') !== false
+    && strpos($bloqueContextoDetalle, "'preparacion_multisucursal_autorizada'") !== false,
+    'La preparacion valida permiso, horario o vinculo activo y explica el acceso multisucursal.'
+);
+pruebaLabAfirmar(
+    strpos($bloqueAsegurarHilo, 'trabajoLaboratorioUsuarioPuedePrepararLocal') !== false
+    && strpos($bloqueIniciarTrabajo, 'trabajoLaboratorioAutorizacionPreparacionLocal') !== false
+    && strpos($bloqueIniciarTrabajo, "'preparacion_multisucursal'") !== false
+    && strpos($bloqueIniciarTrabajo, "'origen_autorizacion_local'") !== false,
+    'El inicio y el enlace del hilo aplican la misma autorizacion y dejan trazabilidad multisucursal.'
+);
+pruebaLabAfirmar(
+    strpos($bloqueAccionesTrabajo, 'trabajoLaboratorioUsuarioPuedeOperarLocal') !== false
+    && strpos($bloqueAccionesTrabajo, 'trabajoLaboratorioUsuarioPuedePrepararLocal') === false,
+    'Las entregas, ajustes y acciones posteriores conservan el alcance local estricto.'
+);
 pruebaLabAfirmar(
     strpos($fuenteInicioHtml, "id='divMenuTrabajoLaboratorio' data-access-key='trabajos_mecanicos_dentales'") !== false
     && strpos($fuenteInicioJs, 'permisoAccesoUser("VERTRABAJOSLABORATORIO","accion")==false') !== false
@@ -972,6 +1085,7 @@ pruebaLabAfirmar(
     strpos($fuenteOdontogramaPhp, 'odontoAutorizarUbicacionLaboratorioDetalle') !== false
     && strpos($fuenteOdontogramaPhp, '$permitirAccesoConsulta = false') !== false
     && strpos($fuenteOdontogramaPhp, 'trabajoLaboratorioUsuarioPuedeLocal') !== false
+    && strpos($fuenteOdontogramaPhp, 'trabajoLaboratorioUsuarioPuedePrepararLocal') !== false
     && preg_match('/odontoPost\("detalle_venta_id"\)\s*,\s*true/s', $fuenteOdontogramaPhp) === 1
     && strpos($fuenteOdontogramaPhp, 'EDITARFORMULARIOCONSULTORIO') !== false
     && strpos($fuenteOdontogramaPhp, 'CREARTRABAJOLABORATORIO') !== false
@@ -2280,6 +2394,34 @@ foreach ($tablasEsperadas as $tabla) {
 
 if ($aplicar || $estructuraPresente) {
     pruebaLabAfirmar($estructuraPresente, 'Existen las tablas operativas, historicas y de regularizacion por unidades.');
+    $resultadoDoctorMultisucursal = $mysqli->query(
+        "SELECT u.cod_usuario,u.cod_localFK,l.cod_local AS cod_local_destino
+         FROM usuario u
+         INNER JOIN local l
+           ON l.cod_local<>u.cod_localFK
+          AND UPPER(TRIM(l.estado))='ACTIVO'
+         WHERE UPPER(TRIM(u.estado))='ACTIVO'
+           AND UPPER(TRIM(u.tipo))='DOCTOR'
+         ORDER BY u.cod_usuario,l.cod_local
+         LIMIT 1"
+    );
+    if ($resultadoDoctorMultisucursal
+        && ($filaDoctorMultisucursal = $resultadoDoctorMultisucursal->fetch_assoc())) {
+        $autorizacionReal = trabajoLaboratorioAutorizacionPreparacionLocal(
+            $mysqli,
+            intval($filaDoctorMultisucursal['cod_usuario']),
+            intval($filaDoctorMultisucursal['cod_local_destino'])
+        );
+        pruebaLabAfirmar(
+            is_array($autorizacionReal)
+            && array_key_exists('autorizado', $autorizacionReal)
+            && array_key_exists('origen', $autorizacionReal),
+            'La autorizacion multisucursal consulta el horario y el vinculo real sin exponer identidades.'
+        );
+    }
+    if ($resultadoDoctorMultisucursal) {
+        $resultadoDoctorMultisucursal->free();
+    }
     $resultadoMecanicoCosto = $mysqli->query(
         "SELECT md.cod_usuarioFK FROM mecanico_dental md "
         ."INNER JOIN usuario u ON u.cod_usuario=md.cod_usuarioFK AND u.estado='Activo' "

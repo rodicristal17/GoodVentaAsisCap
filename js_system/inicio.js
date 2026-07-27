@@ -38111,6 +38111,12 @@ function removeToMenu(){
 	$("table[id=divMenuCalendario]").remove()
 	// controlAgendamientos=controlAgendamientos+1;		
 	}
+
+	if(typeof permisoAccesoUser != "function"
+		|| permisoAccesoUser("VERPLANIFICACIONESPECIALISTAS", "accion") == false)
+	{
+	$("table[id=divMenuPlanificacionEspecialistas]").remove()
+	}
 	
 	
 	

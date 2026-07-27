@@ -65,6 +65,7 @@ var DASHBOARD_ACCESS_REGISTRY = {
 	cargar_tratamientos: { sourceSelector: "#divMenuPresupuestoProductoDoc" },
 	historial_consulta: { sourceSelector: "#divMenuHistorialConsulta", permissionKey: "VERHISTORIALCONSULTA" },
 	calendario: { sourceSelector: "#divMenuCalendario", permissionKey: "VERFORMULARIOCALENDARIO" },
+	planificacion_especialistas: { sourceSelector: "#divMenuPlanificacionEspecialistas", permissionKey: "VERPLANIFICACIONESPECIALISTAS", allowHiddenTemplate: true },
 	asignar_tareas: { sourceSelector: "#divMenuAsignarTareas", permissionKey: "VERASIGNARTAREASUSUARIO" },
 
 	cargar_sueldo: { sourceSelector: "#divMenuAbmCargarSueldo", permissionKey: "VERCARGARSUELDO" },

@@ -1,0 +1,40 @@
+# Credenciales, conexiones y configuraciones locales sensibles
+.env
+.env.*
+php/conexion.php
+php_system/conexion.php
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Dumps, respaldos y datos operativos
+/backup_db_local/
+/syscvxco_ac*.sql
+/syscvxco_ac*.zip
+/tmp_justificaciones_presupuesto_20260619/
+
+# Archivos cargados por pacientes o funcionarios y evidencias operativas
+/fotos/
+/archivos/
+/archivoscheque/
+/archivox/
+
+# Salidas generadas, registros y formatos no útiles para el grafo de código
+/output/
+error_log
+*.log
+*.csv
+*.pdf
+*.gz
+*.zip
+
+# Recursos binarios y multimedia
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.ttf
+*.woff
+*.woff2

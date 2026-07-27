@@ -39,9 +39,10 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=trabajo-laboratorio-20260723-mini-hilo-1" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=buscador-pagare-20260721-1" />
 <link id="telarTrabajoLaboratorioCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260725-02" />
+<link id="telarPlanificacionEspecialistasCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/planificacion_especialistas.css?v=20260727-08" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
-<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=detalle-turno-horizontal-ios-20260713" />
+<link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-hilos-planificacion-20260727-02" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -70,7 +71,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=egresos-multilocal-20260721"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-ueno-fechas-servidor-v2-20260708"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-seleccion-incremental-20260716"></script>   
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-hilos-planificacion-20260727-02"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js?x=performance-polling-20260718"></script>
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
 <script src="../js_system/abmGasto_ingresosEgresos.js?x=proyectos-flujo-hilo-20260724-1"></script>
@@ -80,6 +81,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=performance-polling-20260718"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js?x=historico-solo-consulta-20260721"></script>
 <script src="../js_system/trabajo_laboratorio.js?x=trabajo-laboratorio-20260725-03"></script>
+<script src="../js_system/planificacion_especialistas.js?x=20260727-08"></script>
 <script src="../js_system/abmMecanicoDental.js?x=cuenta-telar-20260721-3"></script>
 <script src="../js_system/abmInterConsulta.js?x=modal-flujo-gastos-20260724-2"></script>
 <script src="../js_system/abmCentroFacturas.js?x=nomenclatura-legajos-20260721-1"></script>
@@ -3337,6 +3339,18 @@ style='display:none' class='divMinimizado'>
 <center>
 <div id='divMinimizadoCalendario' style='display:none' class='divMinimizado'>
 </div>
+</center>
+</td>
+</tr>
+</table>
+
+<table class='divMenub' id='divMenuPlanificacionEspecialistas' data-access-key='planificacion_especialistas' title='Planificación visual de especialistas' onclick='abrirPlanificacionEspecialistas()' style='text-align:center;'>
+<tr>
+<td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/calendarioAgenda.png' />
+<p class='pTitulo4'>Planificación</p>
+<center>
+<div id='divMinimizadoPlanificacionEspecialistas' style='display:none' class='divMinimizado'></div>
 </center>
 </td>
 </tr>
@@ -28509,6 +28523,10 @@ onclick='buscarvistaaperturacierrecaja()' />
 
 </tr>
 </table>
+</div>
+
+<div id='divPlanificacionEspecialistas' class='divAbms' style='width:100%;height:100vh;position:fixed;display:none;'>
+    <div id='telarPlanificacionEspecialistas'></div>
 </div>
 
 <div id='divAgendaConsultorios' class='divAbms agenda-ventana' style='width:100%;height:100vh;position: absolute;display:none;'>

@@ -98,6 +98,7 @@ function dashboard_permission_key($accessKey, $catalogPermission)
         'pagos_programados' => 'VERPAGOPROGRAMADO',
         'historial_consulta' => 'VERHISTORIALCONSULTA',
         'calendario' => 'VERFORMULARIOCALENDARIO',
+        'planificacion_especialistas' => 'VERPLANIFICACIONESPECIALISTAS',
         'asignar_tareas' => 'VERASIGNARTAREASUSUARIO',
         'cargar_sueldo' => 'VERCARGARSUELDO',
         'cuentas_a_pagar' => 'VERCUENTASAPAGAR',

@@ -1,0 +1,2840 @@
+#divPlanificacionEspecialistas {
+    inset: 0;
+    z-index: 2860;
+    overflow: hidden;
+    background: #f7f9fc;
+    color: #10233f;
+    font-family: "Segoe UI", Inter, Arial, sans-serif;
+}
+
+#telarPlanificacionEspecialistas,
+#telarPlanificacionEspecialistas .plan-app {
+    width: 100%;
+    height: 100%;
+}
+
+#telarPlanificacionEspecialistas * {
+    box-sizing: border-box;
+}
+
+#telarPlanificacionEspecialistas button,
+#telarPlanificacionEspecialistas input,
+#telarPlanificacionEspecialistas select,
+#telarPlanificacionEspecialistas textarea {
+    font: inherit;
+}
+
+#telarPlanificacionEspecialistas button {
+    cursor: pointer;
+}
+
+#telarPlanificacionEspecialistas .plan-app {
+    --plan-navy: #10233f;
+    --plan-blue: #1c5b83;
+    --plan-teal: #07899a;
+    --plan-teal-soft: #e7f6f7;
+    --plan-violet: #7357d9;
+    --plan-border: #dce4ed;
+    --plan-muted: #61738c;
+    position: relative;
+    display: grid;
+    grid-template-rows: 62px auto auto minmax(0, 1fr) 40px;
+    min-height: 0;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 85% -20%, rgba(7, 137, 154, 0.08), transparent 30%),
+        #f8fafc;
+}
+
+#telarPlanificacionEspecialistas .plan-sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+#telarPlanificacionEspecialistas .plan-topbar {
+    position: relative;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    min-width: 0;
+    padding: 8px 24px;
+    border-bottom: 1px solid var(--plan-border);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 4px 14px rgba(15, 35, 63, 0.045);
+}
+
+#telarPlanificacionEspecialistas .plan-branch {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+    color: var(--plan-navy);
+}
+
+#telarPlanificacionEspecialistas .plan-branch > i {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 10px;
+    background: #eef5f9;
+    color: var(--plan-blue);
+    font-size: 17px;
+}
+
+#telarPlanificacionEspecialistas .plan-branch select {
+    max-width: 310px;
+    min-width: 210px;
+    height: 38px;
+    padding: 0 34px 0 4px;
+    border: 0;
+    outline: none;
+    background-color: transparent;
+    color: var(--plan-navy);
+    font-size: 15px;
+    font-weight: 650;
+    text-overflow: ellipsis;
+}
+
+#telarPlanificacionEspecialistas .plan-branch select:disabled {
+    cursor: default;
+    opacity: 1;
+}
+
+#telarPlanificacionEspecialistas .plan-topbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 0 0 auto;
+}
+
+#telarPlanificacionEspecialistas .plan-icon-button {
+    position: relative;
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    background: transparent;
+    color: var(--plan-navy);
+    font-size: 17px;
+}
+
+#telarPlanificacionEspecialistas .plan-icon-button:hover,
+#telarPlanificacionEspecialistas .plan-icon-button:focus-visible {
+    border-color: #cde0e7;
+    outline: none;
+    background: #eff7f8;
+    color: var(--plan-teal);
+}
+
+#telarPlanificacionEspecialistas .plan-icon-button--close:hover {
+    border-color: #fecaca;
+    background: #fff1f2;
+    color: #c62828;
+}
+
+#telarPlanificacionEspecialistas .plan-alert-dot {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 7px;
+    height: 7px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #ec5b28;
+}
+
+#telarPlanificacionEspecialistas .plan-user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin: 0 4px 0 8px;
+    padding-left: 9px;
+    border-left: 1px solid var(--plan-border);
+}
+
+#telarPlanificacionEspecialistas .plan-user-chip__avatar {
+    display: grid;
+    width: 33px;
+    height: 33px;
+    flex: 0 0 33px;
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #0b9bab, #07798b);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+#telarPlanificacionEspecialistas .plan-user-chip__name {
+    max-width: 150px;
+    overflow: hidden;
+    color: #233650;
+    font-size: 13px;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-heading {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    min-width: 0;
+    padding: 18px 26px 14px;
+    background: #fff;
+}
+
+#telarPlanificacionEspecialistas .plan-heading__copy {
+    min-width: 270px;
+}
+
+#telarPlanificacionEspecialistas .plan-heading__title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-heading h1 {
+    margin: 0;
+    color: #0d1728;
+    font-size: clamp(21px, 2vw, 28px);
+    font-weight: 760;
+    letter-spacing: -0.6px;
+    line-height: 1.15;
+}
+
+#telarPlanificacionEspecialistas .plan-heading__title > i {
+    color: var(--plan-blue);
+    font-size: 14px;
+}
+
+#telarPlanificacionEspecialistas .plan-heading p {
+    margin: 7px 0 0;
+    color: var(--plan-muted);
+    font-size: 13px;
+}
+
+#telarPlanificacionEspecialistas .plan-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 9px;
+    min-width: 0;
+}
+
+#telarPlanificacionEspecialistas .plan-view-switch,
+#telarPlanificacionEspecialistas .plan-stepper {
+    display: inline-flex;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid #cfdae6;
+    border-radius: 9px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(15, 35, 63, 0.04);
+}
+
+#telarPlanificacionEspecialistas .plan-view-switch button {
+    height: 38px;
+    padding: 0 15px;
+    border: 0;
+    background: #fff;
+    color: #41536b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+#telarPlanificacionEspecialistas .plan-view-switch button.is-active {
+    background: var(--plan-teal);
+    color: #fff;
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.09);
+}
+
+#telarPlanificacionEspecialistas .plan-view-switch button:disabled {
+    cursor: not-allowed;
+    color: #a0adbc;
+    background: #f3f6f9;
+    box-shadow: none;
+}
+
+#telarPlanificacionEspecialistas .plan-date-button,
+#telarPlanificacionEspecialistas .plan-today-button {
+    display: inline-flex;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 13px;
+    border: 1px solid #cfdae6;
+    border-radius: 9px;
+    background: #fff;
+    color: #243750;
+    box-shadow: 0 2px 6px rgba(15, 35, 63, 0.04);
+    font-size: 12px;
+    font-weight: 650;
+}
+
+#telarPlanificacionEspecialistas .plan-date-button {
+    min-width: 150px;
+}
+
+#telarPlanificacionEspecialistas .plan-date-button i:first-child {
+    color: var(--plan-blue);
+}
+
+#telarPlanificacionEspecialistas .plan-date-button i:last-child {
+    margin-left: auto;
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-date-picker {
+    position: absolute;
+    z-index: -1;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#telarPlanificacionEspecialistas .plan-stepper button {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-right: 1px solid #d7e0e9;
+    background: #fff;
+    color: #25435f;
+    font-size: 11px;
+}
+
+#telarPlanificacionEspecialistas .plan-stepper button:last-child {
+    border-right: 0;
+}
+
+#telarPlanificacionEspecialistas .plan-stepper button:hover,
+#telarPlanificacionEspecialistas .plan-today-button:hover,
+#telarPlanificacionEspecialistas .plan-date-button:hover {
+    background: #f0f7f9;
+    color: var(--plan-teal);
+}
+
+#telarPlanificacionEspecialistas .plan-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 26px 10px;
+    padding: 8px 12px;
+    border: 1px solid #cfe0ed;
+    border-radius: 9px;
+    background: #f1f8fc;
+    color: #38546d;
+    font-size: 12px;
+}
+
+#telarPlanificacionEspecialistas .plan-notice[hidden] {
+    display: none;
+}
+
+#telarPlanificacionEspecialistas .plan-notice--warning {
+    border-color: #f2cf91;
+    background: #fff9ed;
+    color: #795622;
+}
+
+#telarPlanificacionEspecialistas .plan-body {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(255px, 310px) minmax(0, 1fr);
+    gap: 16px;
+    min-width: 0;
+    min-height: 0;
+    padding: 0 26px 10px;
+    overflow: auto;
+    scrollbar-color: #b9c6d3 transparent;
+    scrollbar-width: thin;
+}
+
+#telarPlanificacionEspecialistas .plan-professionals {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    align-self: start;
+    min-width: 0;
+    padding-right: 2px;
+    background: linear-gradient(90deg, #f8fafc 94%, rgba(248, 250, 252, 0));
+}
+
+#telarPlanificacionEspecialistas .plan-column-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 36px;
+    padding: 0 8px;
+    color: #28394f;
+    font-size: 13px;
+}
+
+#telarPlanificacionEspecialistas .plan-column-title > div {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+}
+
+#telarPlanificacionEspecialistas .plan-column-title > div > span {
+    display: grid;
+    min-width: 24px;
+    height: 22px;
+    place-items: center;
+    border-radius: 11px;
+    background: #e8eff5;
+    color: #566a82;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#telarPlanificacionEspecialistas .plan-column-title > button {
+    display: inline-flex;
+    min-height: 27px;
+    align-items: center;
+    gap: 5px;
+    padding: 0 8px;
+    border: 1px solid #9dcbd1;
+    border-radius: 8px;
+    color: #087f8e;
+    background: #eff9fa;
+    font-size: 8px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-column-title > button:hover {
+    border-color: var(--plan-teal);
+    background: #e4f6f8;
+}
+
+#telarPlanificacionEspecialistas .plan-column-title > button[hidden] {
+    display: none;
+}
+
+#telarPlanificacionEspecialistas .plan-professional-list {
+    display: grid;
+    gap: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 50px minmax(0, 1fr);
+    align-items: center;
+    min-height: 84px;
+    padding: 11px 22px 11px 12px;
+    border: 1px solid #dce4ec;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 3px 9px rgba(15, 35, 63, 0.055);
+    cursor: pointer;
+    transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card:hover {
+    border-color: color-mix(in srgb, var(--professional-color), #fff 50%);
+    box-shadow: 0 7px 18px rgba(15, 35, 63, 0.09);
+    transform: translateY(-1px);
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card.is-selected {
+    border-color: var(--professional-color);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--professional-color), transparent 84%),
+        0 7px 18px rgba(15, 35, 63, 0.09);
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card.is-dragging {
+    opacity: 0.48;
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card.is-external-link {
+    min-height: 94px;
+    background: linear-gradient(135deg, #fff 0%, #f5fbfc 100%);
+}
+
+#telarPlanificacionEspecialistas .plan-avatar {
+    position: relative;
+    display: grid;
+    width: 43px;
+    height: 43px;
+    flex: 0 0 43px;
+    place-items: center;
+    overflow: hidden;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #d9e7ef;
+    color: #31556c;
+    box-shadow: 0 0 0 1px #d4dfe8;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+#telarPlanificacionEspecialistas .plan-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#telarPlanificacionEspecialistas .plan-avatar--small {
+    width: 23px;
+    height: 23px;
+    flex-basis: 23px;
+    border-width: 1px;
+    font-size: 8px;
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card__copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card__copy strong {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    overflow: hidden;
+    color: #14233a;
+    font-size: 13px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card__copy strong i {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    border-radius: 50%;
+    background: var(--professional-color);
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card__copy > span {
+    overflow: hidden;
+    color: var(--professional-color);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card__copy small {
+    margin-top: 3px;
+    color: #8090a4;
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card__copy .plan-professional-card__base {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    gap: 4px;
+    color: #087f8e;
+    font-size: 7.5px;
+    font-style: normal;
+    font-weight: 750;
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card__remove {
+    position: absolute;
+    right: 7px;
+    top: 7px;
+    z-index: 3;
+    display: grid;
+    width: 22px;
+    height: 22px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid #e2e8ef;
+    border-radius: 50%;
+    color: #718196;
+    background: #fff;
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card__remove:hover {
+    border-color: #efb4b8;
+    color: #bd3039;
+    background: #fff4f5;
+}
+
+#telarPlanificacionEspecialistas .plan-professional-card__node {
+    position: absolute;
+    right: -5px;
+    top: calc(50% - 5px);
+    z-index: 3;
+    width: 10px;
+    height: 10px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--professional-color);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--professional-color), #000 12%);
+}
+
+#telarPlanificacionEspecialistas .plan-calendar {
+    position: relative;
+    z-index: 2;
+    min-width: 760px;
+    padding-bottom: 2px;
+}
+
+#telarPlanificacionEspecialistas .plan-calendar-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 36px;
+    padding: 0 5px;
+    color: #3f5269;
+}
+
+#telarPlanificacionEspecialistas .plan-calendar-heading > div {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+}
+
+#telarPlanificacionEspecialistas .plan-calendar-heading__aside {
+    justify-content: flex-end;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #a76008 !important;
+    font-weight: 750;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-legend i {
+    color: #e88715;
+}
+
+#telarPlanificacionEspecialistas .plan-calendar-heading strong {
+    color: #23364e;
+    font-size: 12px;
+}
+
+#telarPlanificacionEspecialistas .plan-calendar-heading span {
+    color: #7b8ba0;
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-month-weeks {
+    display: grid;
+    gap: 8px;
+}
+
+#telarPlanificacionEspecialistas .plan-month-week {
+    overflow: hidden;
+    border: 1px solid #dbe4ec;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 2px 7px rgba(15, 35, 63, 0.04);
+}
+
+#telarPlanificacionEspecialistas .plan-month-week > header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 29px;
+    padding: 0 10px;
+    border-bottom: 1px solid #edf1f5;
+    background: linear-gradient(90deg, #fbfdfe, #f7fafc);
+}
+
+#telarPlanificacionEspecialistas .plan-month-week > header strong {
+    color: #30445e;
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-month-week > header span {
+    color: #8391a3;
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-month-week__days,
+#telarPlanificacionEspecialistas .plan-week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(97px, 1fr));
+    gap: 6px;
+    padding: 6px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid {
+    align-items: start;
+    min-height: calc(100% - 36px);
+    gap: 9px;
+    padding: 0;
+}
+
+#telarPlanificacionEspecialistas .plan-day-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #e0e7ee;
+    border-radius: 8px;
+    background: #fff;
+}
+
+#telarPlanificacionEspecialistas .plan-day-card > header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 25px;
+    border-bottom: 1px solid #edf1f5;
+    background: #fbfcfd;
+    color: #40536b;
+}
+
+#telarPlanificacionEspecialistas .plan-day-card > header span {
+    font-size: 9px;
+    font-weight: 650;
+}
+
+#telarPlanificacionEspecialistas .plan-day-card > header strong {
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-day-card.is-today {
+    border-color: #59b7c2;
+    box-shadow: 0 0 0 1px rgba(7, 137, 154, 0.12);
+}
+
+#telarPlanificacionEspecialistas .plan-day-card.is-today > header {
+    background: #eaf8f9;
+    color: #087787;
+}
+
+#telarPlanificacionEspecialistas .plan-day-card.is-outside {
+    opacity: 0.47;
+    background: #f7f8fa;
+}
+
+#telarPlanificacionEspecialistas .plan-day-card.is-holiday {
+    border-color: #ffabb3;
+    background: #fff8f8;
+}
+
+#telarPlanificacionEspecialistas .plan-day-card.is-holiday > header {
+    background: #fff0f1;
+    color: #c43c48;
+}
+
+#telarPlanificacionEspecialistas .plan-day-card.has-remote-commitment {
+    border-color: #efbd79;
+}
+
+#telarPlanificacionEspecialistas .plan-day-card.has-remote-commitment > header {
+    background: #fffaf1;
+    color: #995b0c;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-commitment {
+    display: flex;
+    width: calc(100% - 8px);
+    min-height: 35px;
+    align-items: center;
+    gap: 5px;
+    margin: 4px 4px 0;
+    padding: 3px 5px;
+    overflow: hidden;
+    border: 1px solid #edaa50;
+    border-radius: 6px;
+    background: #fff8ec;
+    color: #7c4908;
+    text-align: left;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-commitment:hover,
+#telarPlanificacionEspecialistas .plan-remote-commitment:focus-visible {
+    border-color: #da851a;
+    outline: none;
+    background: #fff2dc;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-commitment__icon {
+    position: relative;
+    display: grid;
+    width: 23px;
+    height: 23px;
+    flex: 0 0 23px;
+    place-items: center;
+    border-radius: 5px;
+    background: #fff0d8;
+    color: #df7910;
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-commitment__icon .fa-lock {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    display: grid;
+    width: 11px;
+    height: 11px;
+    place-items: center;
+    border: 1px solid #fff;
+    border-radius: 50%;
+    background: #e78717;
+    color: #fff;
+    font-size: 5px;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-commitment__copy {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-commitment__copy strong,
+#telarPlanificacionEspecialistas .plan-remote-commitment__copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-commitment__copy strong {
+    color: #7f4b0a;
+    font-size: 7.5px;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-commitment__copy small {
+    margin-top: 2px;
+    color: #a06a28;
+    font-size: 5.5px;
+}
+
+#telarPlanificacionEspecialistas .plan-holiday-label {
+    display: flex;
+    min-height: 33px;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 3px 5px;
+    color: #c23e49;
+    text-align: center;
+}
+
+#telarPlanificacionEspecialistas .plan-holiday-label i {
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-holiday-label strong {
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-holiday-label span {
+    display: none;
+}
+
+#telarPlanificacionEspecialistas .plan-day-slots {
+    display: grid;
+    gap: 3px;
+    padding: 4px;
+}
+
+#telarPlanificacionEspecialistas .plan-slot {
+    display: grid;
+    grid-template-columns: 21px minmax(0, 1fr);
+    align-items: stretch;
+    min-height: 28px;
+    border: 1px solid #e4eaf0;
+    border-radius: 6px;
+    background: #fcfdfe;
+    transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+}
+
+#telarPlanificacionEspecialistas .plan-slot:not(.is-disabled):hover,
+#telarPlanificacionEspecialistas .plan-slot:not(.is-disabled):focus-visible {
+    border-color: #83cbd2;
+    outline: none;
+    background: #f4fbfb;
+}
+
+#telarPlanificacionEspecialistas .plan-slot.is-drop-target {
+    border-color: var(--plan-teal);
+    background: #e8f8f8;
+    box-shadow: inset 0 0 0 1px var(--plan-teal);
+}
+
+#telarPlanificacionEspecialistas .plan-slot.is-disabled {
+    border-color: #ffd1d5;
+    background: #fffafa;
+    cursor: not-allowed;
+}
+
+#telarPlanificacionEspecialistas .plan-slot.is-occupied {
+    border-color: #cfdae4;
+    background: #f8fafc;
+    cursor: pointer;
+}
+
+#telarPlanificacionEspecialistas .plan-slot.is-occupied:hover,
+#telarPlanificacionEspecialistas .plan-slot.is-occupied:focus-visible {
+    border-color: #6aaeb8;
+    background: #f3f9fa;
+}
+
+#telarPlanificacionEspecialistas .plan-slot.is-professional-blocked {
+    border-color: #efd2aa;
+    background: #fffaf3;
+    cursor: not-allowed;
+}
+
+#telarPlanificacionEspecialistas .plan-slot.is-professional-blocked:hover,
+#telarPlanificacionEspecialistas .plan-slot.is-professional-blocked:focus-visible {
+    border-color: #e3a855;
+    outline: none;
+    background: #fff5e6;
+}
+
+#telarPlanificacionEspecialistas .plan-slot.is-saving {
+    border-color: var(--plan-teal);
+    background: #eaf8f8;
+    box-shadow: inset 0 0 0 1px rgba(7, 137, 154, 0.18);
+    pointer-events: none;
+}
+
+#telarPlanificacionEspecialistas .plan-slot.is-saving .plan-slot__free {
+    color: transparent;
+}
+
+#telarPlanificacionEspecialistas .plan-slot.is-saving .plan-slot__content::after {
+    color: var(--plan-teal);
+    content: "Guardando…";
+    font-size: 8px;
+    font-weight: 750;
+}
+
+#telarPlanificacionEspecialistas .plan-slot__label {
+    display: grid;
+    place-items: center;
+    border-right: 1px solid #e6ecf1;
+    color: #63768e;
+    font-size: 8px;
+    font-weight: 750;
+}
+
+#telarPlanificacionEspecialistas .plan-slot__content {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 2px;
+    overflow: hidden;
+    padding: 2px;
+}
+
+#telarPlanificacionEspecialistas .plan-slot__free {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    color: #9aa7b7;
+    font-size: 7px;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-slot__blocked {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    overflow: hidden;
+    color: #aa6b1c;
+    font-size: 6.5px;
+    font-weight: 750;
+    line-height: 1.15;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-slot__blocked small {
+    margin-top: 1px;
+    overflow: hidden;
+    color: #9a8972;
+    font-size: 5.5px;
+    font-weight: 550;
+    text-overflow: ellipsis;
+}
+
+#telarPlanificacionEspecialistas .plan-slot-empty {
+    padding: 8px;
+    color: #8090a3;
+    font-size: 9px;
+    text-align: center;
+}
+
+#telarPlanificacionEspecialistas .plan-assignment {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+    flex: 1 1 100%;
+    align-items: center;
+    gap: 4px;
+    min-height: 25px;
+    padding: 1px 4px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--professional-color), #fff 60%);
+    border-left: 3px solid var(--professional-color);
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--professional-color), #fff 92%);
+    color: #263a51;
+    text-align: left;
+}
+
+#telarPlanificacionEspecialistas .plan-assignment:hover {
+    background: color-mix(in srgb, var(--professional-color), #fff 86%);
+}
+
+#telarPlanificacionEspecialistas .plan-assignment.is-dragging {
+    opacity: 0.45;
+}
+
+#telarPlanificacionEspecialistas .plan-assignment--pendiente_horario {
+    border-color: #efb158;
+    border-left-color: #d78a17;
+    background: #fff8eb;
+}
+
+#telarPlanificacionEspecialistas .plan-assignment--propuesta {
+    border-color: #bdacec;
+    border-left-color: var(--plan-violet);
+    background: #f7f4ff;
+}
+
+#telarPlanificacionEspecialistas .plan-assignment__copy {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    line-height: 1.05;
+}
+
+#telarPlanificacionEspecialistas .plan-assignment__copy strong,
+#telarPlanificacionEspecialistas .plan-assignment__copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-assignment__copy strong {
+    color: var(--professional-color);
+    font-size: 8px;
+}
+
+#telarPlanificacionEspecialistas .plan-assignment__copy small {
+    margin-top: 2px;
+    color: #687a90;
+    font-size: 6.5px;
+}
+
+#telarPlanificacionEspecialistas .plan-assignment__initials {
+    display: grid;
+    min-width: 20px;
+    height: 19px;
+    place-items: center;
+    border-radius: 4px;
+    background: var(--professional-color);
+    color: #fff;
+    font-size: 7px;
+    font-weight: 800;
+}
+
+#telarPlanificacionEspecialistas .plan-assignment__recurrence {
+    margin-left: auto;
+    color: #7e8ba0;
+    font-size: 6px;
+}
+
+#telarPlanificacionEspecialistas .plan-assignment__agenda {
+    display: inline-flex;
+    min-width: 20px;
+    height: 18px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 3px;
+    border: 1px solid #b9d8dc;
+    border-radius: 4px;
+    background: #eef9fa;
+    color: #327681;
+    font-size: 6px;
+    font-weight: 800;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy {
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+    flex: 1 1 100%;
+    align-items: center;
+    gap: 4px;
+    min-height: 25px;
+    padding: 1px 4px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--professional-color), #fff 60%);
+    border-left: 3px solid var(--professional-color);
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--professional-color), #fff 92%);
+    color: #263a51;
+    text-align: left;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy:hover {
+    background: color-mix(in srgb, var(--professional-color), #fff 86%);
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy.is-unidentified {
+    border-color: #e6b664;
+    border-left-color: #c47b00;
+    background: #fff9ee;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy.is-conflict {
+    border-color: #e9a9ae;
+    border-left-color: #c93d48;
+    background: #fff4f5;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy__avatars {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy__avatars .plan-avatar + .plan-avatar {
+    margin-left: -8px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy__unknown {
+    display: grid;
+    width: 23px;
+    height: 23px;
+    flex: 0 0 23px;
+    place-items: center;
+    border: 1px dashed #c99135;
+    border-radius: 50%;
+    background: #fff;
+    color: #9c6818;
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy__copy {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    line-height: 1.05;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy__copy strong,
+#telarPlanificacionEspecialistas .plan-agenda-occupancy__copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy__copy strong {
+    color: var(--professional-color);
+    font-size: 8px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy.is-unidentified .plan-agenda-occupancy__copy strong {
+    color: #8b5a10;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy.is-conflict .plan-agenda-occupancy__copy strong {
+    color: #b22f3a;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy__copy small {
+    margin-top: 2px;
+    color: #687a90;
+    font-size: 6.5px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-occupancy__warning {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 3px;
+    color: #a86609;
+    font-size: 6.5px;
+    font-weight: 800;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-marker {
+    display: inline-flex;
+    min-height: 22px;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 3px;
+    padding: 0 5px;
+    border: 1px solid #b9d8dc;
+    border-radius: 5px;
+    background: #eef9fa;
+    color: #327681;
+    font-size: 6.5px;
+    font-weight: 800;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-day-card {
+    min-height: 320px;
+    border-radius: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-day-card > header {
+    height: 42px;
+    flex-direction: column;
+    gap: 1px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-day-card > header span {
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-day-card > header strong {
+    font-size: 16px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-remote-commitment {
+    min-height: 48px;
+    margin: 7px 7px 0;
+    width: calc(100% - 14px);
+    padding: 5px 7px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-remote-commitment__copy strong {
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-remote-commitment__copy small {
+    font-size: 7px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-slot__blocked {
+    font-size: 8px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-slot__blocked small {
+    font-size: 6.5px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-day-slots {
+    gap: 7px;
+    padding: 8px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-slot {
+    grid-template-columns: 27px minmax(0, 1fr);
+    min-height: 54px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-slot__label {
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-slot__content {
+    flex-wrap: wrap;
+    align-content: center;
+    padding: 4px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-slot__free {
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-assignment {
+    min-height: 35px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-agenda-occupancy {
+    min-height: 35px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-agenda-occupancy__copy strong {
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-agenda-occupancy__copy small {
+    font-size: 7px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-assignment__copy strong {
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-week-grid .plan-assignment__copy small {
+    font-size: 7px;
+}
+
+#telarPlanificacionEspecialistas .plan-app.is-multibranch .plan-calendar {
+    min-width: 980px;
+}
+
+#telarPlanificacionEspecialistas .plan-route-calendar-heading {
+    align-items: center;
+    gap: 12px;
+}
+
+#telarPlanificacionEspecialistas .plan-route-professional-badge {
+    display: inline-flex;
+    max-width: min(520px, 48vw);
+    min-height: 28px;
+    align-items: center;
+    gap: 7px;
+    padding: 0 10px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--professional-color), #fff 52%);
+    border-radius: 8px;
+    color: var(--professional-color);
+    background: color-mix(in srgb, var(--professional-color), #fff 92%);
+    font-size: 10px;
+    font-weight: 750;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-route-week {
+    position: relative;
+}
+
+#telarPlanificacionEspecialistas .plan-route-week > header span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-route-day {
+    min-height: 116px;
+    overflow: visible;
+}
+
+#telarPlanificacionEspecialistas .plan-route-day__content {
+    position: relative;
+    z-index: 7;
+    display: grid;
+    align-content: start;
+    gap: 5px;
+    min-height: 78px;
+    padding: 6px;
+}
+
+#telarPlanificacionEspecialistas .plan-route-day__free {
+    display: grid;
+    min-height: 68px;
+    place-items: center;
+    color: #9aa8b9;
+    font-size: 8px;
+    font-weight: 600;
+}
+
+#telarPlanificacionEspecialistas .plan-route-assignment {
+    --branch-color: #07899a;
+    --professional-color: #07899a;
+    position: relative;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+    padding: 5px 6px;
+    border: 1px solid color-mix(in srgb, var(--branch-color), #fff 48%);
+    border-left: 3px solid var(--professional-color);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 3px 8px rgba(15, 35, 63, 0.06);
+}
+
+#telarPlanificacionEspecialistas .plan-route-assignment--pendiente_horario {
+    border-top-style: dashed;
+    border-right-style: dashed;
+    border-bottom-style: dashed;
+    background: #fffaf0;
+}
+
+#telarPlanificacionEspecialistas .plan-route-assignment--propuesta {
+    border-top-style: dotted;
+    border-right-style: dotted;
+    border-bottom-style: dotted;
+    background: #faf8ff;
+}
+
+#telarPlanificacionEspecialistas .plan-route-assignment__change {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #718196;
+    font-size: 6.5px;
+    font-weight: 700;
+}
+
+#telarPlanificacionEspecialistas .plan-route-assignment__main {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 31px minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+}
+
+#telarPlanificacionEspecialistas .plan-route-branch {
+    display: grid;
+    width: 29px;
+    height: 29px;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--branch-color), #fff 42%);
+    border-radius: 7px;
+    color: var(--branch-color);
+    background: color-mix(in srgb, var(--branch-color), #fff 91%);
+    line-height: 1;
+}
+
+#telarPlanificacionEspecialistas .plan-route-branch i {
+    font-size: 8px;
+}
+
+#telarPlanificacionEspecialistas .plan-route-branch strong {
+    font-size: 7px;
+}
+
+#telarPlanificacionEspecialistas .plan-route-assignment__copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+    padding-right: 2px;
+}
+
+#telarPlanificacionEspecialistas .plan-route-assignment__copy strong,
+#telarPlanificacionEspecialistas .plan-route-assignment__copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-route-assignment__copy strong {
+    color: #31465f;
+    font-size: 7.5px;
+}
+
+#telarPlanificacionEspecialistas .plan-route-assignment__copy small {
+    color: #708197;
+    font-size: 6.5px;
+}
+
+#telarPlanificacionEspecialistas .plan-route-assignment__status {
+    grid-column: 2;
+    justify-self: end;
+    margin-top: -2px;
+    color: var(--professional-color);
+    font-size: 6px;
+    font-weight: 750;
+}
+
+#telarPlanificacionEspecialistas .plan-route-alert {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+    max-width: 100%;
+    padding: 2px 5px;
+    border-radius: 999px;
+    color: #9a5c00;
+    background: #fff0cf;
+    font-size: 6px;
+    font-weight: 800;
+}
+
+#telarPlanificacionEspecialistas .plan-route-alert--superposicion_sucursales {
+    color: #b4232c;
+    background: #ffe5e7;
+}
+
+#telarPlanificacionEspecialistas .plan-route-alert--pendiente_traslado {
+    color: #77541f;
+    background: #f6eee0;
+}
+
+#telarPlanificacionEspecialistas .plan-threads {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 5;
+    overflow: visible;
+    pointer-events: none;
+}
+
+#telarPlanificacionEspecialistas .plan-threads path {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    opacity: 0.9;
+    vector-effect: non-scaling-stroke;
+}
+
+#telarPlanificacionEspecialistas .plan-threads .plan-route-thread {
+    stroke-width: 1.8;
+}
+
+#telarPlanificacionEspecialistas .plan-threads .plan-route-thread--entry {
+    opacity: 0.72;
+}
+
+#telarPlanificacionEspecialistas .plan-threads .plan-remote-thread {
+    stroke-dasharray: 5 4;
+    stroke-width: 1.7;
+    opacity: 0.82;
+}
+
+#telarPlanificacionEspecialistas .plan-route-thread-node rect {
+    stroke: #fff;
+    stroke-width: 1.5;
+    filter: drop-shadow(0 2px 3px rgba(15, 35, 63, 0.2));
+}
+
+#telarPlanificacionEspecialistas .plan-route-thread-node text {
+    fill: #fff;
+    font-size: 5px;
+    font-weight: 850;
+    pointer-events: none;
+}
+
+#telarPlanificacionEspecialistas .plan-footer {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    margin: 0 26px;
+    padding: 0 13px;
+    border: 1px solid #dae3eb;
+    border-bottom: 0;
+    border-radius: 9px 9px 0 0;
+    background: #fff;
+    color: #64758c;
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-footer i {
+    color: var(--plan-teal);
+    font-size: 13px;
+}
+
+#telarPlanificacionEspecialistas .plan-popover-wrap {
+    position: relative;
+}
+
+#telarPlanificacionEspecialistas .plan-popover {
+    position: absolute;
+    top: calc(100% + 9px);
+    right: 0;
+    z-index: 100;
+    width: min(360px, calc(100vw - 28px));
+    max-height: calc(100vh - 90px);
+    padding: 13px;
+    overflow: auto;
+    border: 1px solid #d8e1ea;
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 18px 45px rgba(15, 35, 63, 0.2);
+}
+
+#telarPlanificacionEspecialistas .plan-settings {
+    width: min(390px, calc(100vw - 28px));
+}
+
+#telarPlanificacionEspecialistas .plan-popover__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-popover__header strong {
+    color: #20334c;
+    font-size: 13px;
+}
+
+#telarPlanificacionEspecialistas .plan-popover__header button {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: #f2f5f8;
+    color: #53657b;
+}
+
+#telarPlanificacionEspecialistas .plan-settings__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-settings__scope {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 11px;
+    padding: 10px;
+    border: 1px solid #d8e4ed;
+    border-radius: 9px;
+    color: #334a64;
+    background: #f4fafb;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#telarPlanificacionEspecialistas .plan-settings__scope small {
+    color: #708198;
+    font-size: 8px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+#telarPlanificacionEspecialistas .plan-settings__grid label,
+#telarPlanificacionEspecialistas .plan-specialty-editor {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+    color: #52657c;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+#telarPlanificacionEspecialistas .plan-settings__grid select,
+#telarPlanificacionEspecialistas .plan-settings__scope select,
+#telarPlanificacionEspecialistas .plan-specialty-editor select,
+#telarPlanificacionEspecialistas .plan-specialty-editor input {
+    min-width: 0;
+    height: 34px;
+    padding: 0 8px;
+    border: 1px solid #d4dee8;
+    border-radius: 8px;
+    outline: none;
+    background: #fff;
+    color: #31455f;
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-settings__grid select:focus,
+#telarPlanificacionEspecialistas .plan-settings__scope select:focus,
+#telarPlanificacionEspecialistas .plan-specialty-editor select:focus,
+#telarPlanificacionEspecialistas .plan-specialty-editor input:focus {
+    border-color: #5eb7c0;
+    box-shadow: 0 0 0 3px rgba(7, 137, 154, 0.1);
+}
+
+#telarPlanificacionEspecialistas .plan-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 9px;
+    background: #f7f9fb;
+    color: #61738a;
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-legend > strong {
+    grid-column: 1 / -1;
+    color: #334860;
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-legend > span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#telarPlanificacionEspecialistas .plan-legend__line {
+    width: 23px;
+    height: 2px;
+    background: var(--plan-teal);
+}
+
+#telarPlanificacionEspecialistas .plan-legend__box {
+    width: 18px;
+    height: 13px;
+    border: 1px solid #ced8e2;
+    border-radius: 3px;
+    background: #fff;
+}
+
+#telarPlanificacionEspecialistas .plan-legend__box--holiday {
+    border-color: #ff929e;
+    background: #fff2f3;
+}
+
+#telarPlanificacionEspecialistas .plan-legend__box--pending {
+    border-color: #e6a642;
+    background: #fff7e8;
+}
+
+#telarPlanificacionEspecialistas .plan-specialty-editor {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e6ebf0;
+}
+
+#telarPlanificacionEspecialistas .plan-specialty-editor > strong {
+    color: #33485f;
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-specialty-editor > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 6px;
+}
+
+#telarPlanificacionEspecialistas .plan-specialty-editor button,
+#telarPlanificacionEspecialistas .plan-settings__history {
+    min-height: 34px;
+    padding: 0 10px;
+    border: 1px solid #a9d4d8;
+    border-radius: 8px;
+    background: #ebf7f8;
+    color: #077986;
+    font-size: 9px;
+    font-weight: 750;
+}
+
+#telarPlanificacionEspecialistas .plan-specialty-editor small {
+    color: #8491a1;
+    font-size: 8px;
+    font-weight: 400;
+}
+
+#telarPlanificacionEspecialistas .plan-settings__history {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-alert-row {
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 7px;
+    border-top: 1px solid #edf1f4;
+    color: #52657c;
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-alert-row strong {
+    color: #21344c;
+    font-size: 12px;
+}
+
+#telarPlanificacionEspecialistas .plan-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+#telarPlanificacionEspecialistas .plan-status-dot--pending {
+    background: #df941e;
+}
+
+#telarPlanificacionEspecialistas .plan-status-dot--proposal {
+    background: var(--plan-violet);
+}
+
+#telarPlanificacionEspecialistas .plan-status-dot--danger {
+    background: #d33b45;
+}
+
+#telarPlanificacionEspecialistas .plan-alert-empty {
+    margin: 8px 0 0;
+    color: #8290a1;
+    font-size: 9px;
+    text-align: center;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog-layer[hidden] {
+    display: none;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 25, 45, 0.52);
+    backdrop-filter: blur(3px);
+}
+
+#telarPlanificacionEspecialistas .plan-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(650px, 100%);
+    max-height: min(760px, calc(100vh - 36px));
+    overflow: auto;
+    border: 1px solid #d6e0e9;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 28px 80px rgba(10, 25, 45, 0.28);
+}
+
+#telarPlanificacionEspecialistas .plan-dialog > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 17px 20px 13px;
+    border-bottom: 1px solid #e6ebf0;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog > header span {
+    color: var(--plan-teal);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog > header h2 {
+    margin: 3px 0 0;
+    color: #172a42;
+    font-size: 19px;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog > header button {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 9px;
+    background: #f1f5f8;
+    color: #50647a;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog form,
+#telarPlanificacionEspecialistas .plan-readonly-detail {
+    padding: 16px 20px 0;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog-summary {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 14px;
+    padding: 11px;
+    border: 1px solid #dce6ed;
+    border-radius: 11px;
+    background: #f8fbfc;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog-summary > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog-summary small {
+    color: #8391a2;
+    font-size: 8px;
+    text-transform: uppercase;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog-summary strong {
+    color: #1e334b;
+    font-size: 12px;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog-summary div span {
+    color: var(--professional-color, var(--plan-teal));
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 11px;
+}
+
+#telarPlanificacionEspecialistas .plan-form-grid label,
+#telarPlanificacionEspecialistas .plan-form-reason,
+#telarPlanificacionEspecialistas .plan-recurrence-end label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: #485d75;
+    font-size: 9px;
+    font-weight: 750;
+}
+
+#telarPlanificacionEspecialistas .plan-form-grid select,
+#telarPlanificacionEspecialistas .plan-form-grid input,
+#telarPlanificacionEspecialistas .plan-form-reason textarea,
+#telarPlanificacionEspecialistas .plan-recurrence-end input {
+    width: 100%;
+    min-width: 0;
+    min-height: 39px;
+    padding: 8px 10px;
+    border: 1px solid #d1dce6;
+    border-radius: 8px;
+    outline: none;
+    background: #fff;
+    color: #263a52;
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-form-grid select:focus,
+#telarPlanificacionEspecialistas .plan-form-grid input:focus,
+#telarPlanificacionEspecialistas .plan-form-reason textarea:focus,
+#telarPlanificacionEspecialistas .plan-recurrence-end input:focus {
+    border-color: #55adb7;
+    box-shadow: 0 0 0 3px rgba(7, 137, 154, 0.1);
+}
+
+#telarPlanificacionEspecialistas .plan-recurrence {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 14px 0 0;
+    padding: 0;
+    border: 0;
+}
+
+#telarPlanificacionEspecialistas .plan-recurrence legend {
+    grid-column: 1 / -1;
+    margin-bottom: 4px;
+    color: #435970;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+#telarPlanificacionEspecialistas .plan-recurrence > label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px;
+    border: 1px solid #dbe3eb;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+#telarPlanificacionEspecialistas .plan-recurrence > label:has(input:checked) {
+    border-color: #61b7c0;
+    background: #f0fafa;
+}
+
+#telarPlanificacionEspecialistas .plan-recurrence input[type="radio"] {
+    accent-color: var(--plan-teal);
+}
+
+#telarPlanificacionEspecialistas .plan-recurrence label > span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#telarPlanificacionEspecialistas .plan-recurrence label strong {
+    color: #2b4058;
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-recurrence label small {
+    color: #8290a0;
+    font-size: 8px;
+}
+
+#telarPlanificacionEspecialistas .plan-recurrence-end {
+    grid-column: 1 / -1;
+    padding: 8px 0 0;
+}
+
+#telarPlanificacionEspecialistas .plan-form-reason {
+    margin-top: 13px;
+}
+
+#telarPlanificacionEspecialistas .plan-form-reason textarea {
+    min-height: 68px;
+    resize: vertical;
+}
+
+#telarPlanificacionEspecialistas .plan-form-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 12px;
+    padding: 9px 11px;
+    border: 1px solid #cae3e6;
+    border-radius: 9px;
+    background: #f1fafa;
+    color: #42636a;
+    font-size: 9px;
+    line-height: 1.45;
+}
+
+#telarPlanificacionEspecialistas .plan-form-info--warning {
+    border-color: #efd5a4;
+    background: #fff9ee;
+    color: #74592f;
+}
+
+#telarPlanificacionEspecialistas .plan-form-info--danger {
+    border-color: #efb9be;
+    background: #fff4f5;
+    color: #9e3440;
+}
+
+#telarPlanificacionEspecialistas .plan-form-info--branch {
+    border-color: #add7dc;
+    background: #eff9fa;
+    color: #245e67;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog--candidates {
+    width: min(720px, calc(100vw - 24px));
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-intro {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 14px 20px 0;
+    padding: 10px 12px;
+    border: 1px solid #c6e1e4;
+    border-radius: 9px;
+    color: #365a64;
+    background: #f2fafb;
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-intro > i {
+    margin-top: 2px;
+    color: var(--plan-teal);
+    font-size: 15px;
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-search {
+    display: flex;
+    min-height: 38px;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 20px 0;
+    padding: 0 11px;
+    border: 1px solid #d5e0e9;
+    border-radius: 9px;
+    color: #718196;
+    background: #fff;
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-search:focus-within {
+    border-color: #5eb7c0;
+    box-shadow: 0 0 0 3px rgba(7, 137, 154, 0.1);
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-search input {
+    width: 100%;
+    min-width: 0;
+    height: 36px;
+    border: 0;
+    outline: 0;
+    color: #2b4059;
+    background: transparent;
+    font-size: 11px;
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-list {
+    display: grid;
+    max-height: min(430px, 56vh);
+    gap: 8px;
+    margin: 10px 20px 0;
+    padding-right: 3px;
+    overflow-y: auto;
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-card {
+    display: grid;
+    grid-template-columns: 45px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 9px 10px;
+    border: 1px solid #dce5ed;
+    border-left: 3px solid var(--professional-color);
+    border-radius: 10px;
+    background: #fff;
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-card > span {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-card > span strong,
+#telarPlanificacionEspecialistas .plan-candidate-card > span small,
+#telarPlanificacionEspecialistas .plan-candidate-card > span em {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-card > span strong {
+    color: #263a52;
+    font-size: 11px;
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-card > span small {
+    color: #708096;
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-card > span em {
+    color: #087f8e;
+    font-size: 8px;
+    font-style: normal;
+    font-weight: 750;
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-card > button {
+    display: inline-flex;
+    min-height: 31px;
+    align-items: center;
+    gap: 5px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    background: var(--plan-teal);
+    font-size: 9px;
+    font-weight: 800;
+}
+
+#telarPlanificacionEspecialistas .plan-candidate-card > button:disabled {
+    opacity: 0.62;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 20px 18px;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog-spacer {
+    flex: 1 1 auto;
+}
+
+#telarPlanificacionEspecialistas .plan-button {
+    display: inline-flex;
+    min-height: 37px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 13px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 9px;
+    font-weight: 780;
+}
+
+#telarPlanificacionEspecialistas .plan-button--primary {
+    background: var(--plan-teal);
+    color: #fff;
+}
+
+#telarPlanificacionEspecialistas .plan-button--primary:hover {
+    background: #067987;
+}
+
+#telarPlanificacionEspecialistas .plan-button--secondary {
+    border-color: #cbd7e2;
+    background: #f4f7f9;
+    color: #40566d;
+}
+
+#telarPlanificacionEspecialistas .plan-button--ghost {
+    border-color: #d4dee7;
+    background: #fff;
+    color: #52677e;
+}
+
+#telarPlanificacionEspecialistas .plan-button--danger {
+    border-color: #f3b9be;
+    background: #fff3f4;
+    color: #b63440;
+}
+
+#telarPlanificacionEspecialistas .plan-button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+#telarPlanificacionEspecialistas .plan-readonly-detail dl {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 0;
+}
+
+#telarPlanificacionEspecialistas .plan-readonly-detail dl > div {
+    padding: 9px;
+    border-radius: 8px;
+    background: #f6f8fa;
+}
+
+#telarPlanificacionEspecialistas .plan-readonly-detail dt {
+    color: #8190a1;
+    font-size: 8px;
+    text-transform: uppercase;
+}
+
+#telarPlanificacionEspecialistas .plan-readonly-detail dd {
+    margin: 3px 0 0;
+    color: #2e435c;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog--agenda {
+    width: min(590px, 100%);
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail {
+    padding: 16px 20px 0;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__date {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #dce6ed;
+    border-radius: 10px;
+    background: #f8fbfc;
+    color: var(--plan-teal);
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__date > i {
+    font-size: 18px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__date span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__date small {
+    color: #7d8fa1;
+    font-size: 8px;
+    text-transform: uppercase;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__date strong {
+    color: #263d56;
+    font-size: 11px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__list {
+    display: grid;
+    gap: 7px;
+    margin-top: 12px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__list article {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 11px;
+    border: 1px solid color-mix(in srgb, var(--professional-color), #fff 62%);
+    border-left: 4px solid var(--professional-color);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--professional-color), #fff 94%);
+}
+
+#telarPlanificacionEspecialistas .plan-avatar--detail {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__list article > span:not(.plan-avatar):not(.plan-agenda-detail__unknown) {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__list strong,
+#telarPlanificacionEspecialistas .plan-agenda-detail__list small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__list strong {
+    color: #263d56;
+    font-size: 11px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__list small {
+    color: #718398;
+    font-size: 8px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__list em {
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: #e8f6f4;
+    color: #277469;
+    font-size: 7px;
+    font-style: normal;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__list article.is-unidentified {
+    border-color: #e5bb73;
+    border-left-color: #c47b00;
+    background: #fff9ef;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__list article.is-unidentified em {
+    background: #fff0cf;
+    color: #94600f;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog--remote {
+    width: min(570px, 100%);
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail {
+    padding: 16px 20px 0;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail__date {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #efd0a3;
+    border-radius: 10px;
+    background: #fff9ef;
+    color: #dc7c13;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail__date > i {
+    font-size: 18px;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail__date span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail__date small {
+    color: #9c815e;
+    font-size: 8px;
+    text-transform: uppercase;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail__date strong {
+    color: #4a3a25;
+    font-size: 11px;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail__list {
+    display: grid;
+    gap: 7px;
+    margin-top: 12px;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail__list article {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #ead8bd;
+    border-left: 4px solid #e58b20;
+    border-radius: 10px;
+    background: #fffaf3;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail__icon {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 8px;
+    background: #ffedd1;
+    color: #d8770e;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail__list article > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail__list strong,
+#telarPlanificacionEspecialistas .plan-remote-detail__list small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail__list strong {
+    color: #493720;
+    font-size: 11px;
+}
+
+#telarPlanificacionEspecialistas .plan-remote-detail__list small {
+    color: #8b7559;
+    font-size: 8px;
+}
+
+#telarPlanificacionEspecialistas .plan-agenda-detail__unknown {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border: 1px dashed #c99135;
+    border-radius: 50%;
+    background: #fff;
+    color: #9c6818;
+    font-size: 14px;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog--help ol {
+    display: grid;
+    gap: 9px;
+    margin: 0;
+    padding: 17px 25px 0 42px;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog--help li {
+    padding-left: 4px;
+    color: var(--plan-teal);
+}
+
+#telarPlanificacionEspecialistas .plan-dialog--help li strong,
+#telarPlanificacionEspecialistas .plan-dialog--help li span {
+    display: block;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog--help li strong {
+    color: #2d425a;
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog--help li span {
+    margin-top: 2px;
+    color: #718297;
+    font-size: 9px;
+}
+
+#telarPlanificacionEspecialistas .plan-dialog--help > .plan-form-info {
+    margin: 14px 20px 0;
+}
+
+#telarPlanificacionEspecialistas .plan-history {
+    max-height: 470px;
+    overflow: auto;
+    padding: 10px 20px 0;
+}
+
+#telarPlanificacionEspecialistas .plan-history article {
+    display: grid;
+    grid-template-columns: 29px minmax(0, 1fr);
+    gap: 9px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e9eef2;
+}
+
+#telarPlanificacionEspecialistas .plan-history article > i {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border-radius: 8px;
+    background: #eaf7f8;
+    color: var(--plan-teal);
+    font-size: 10px;
+}
+
+#telarPlanificacionEspecialistas .plan-history article > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#telarPlanificacionEspecialistas .plan-history strong {
+    color: #31465d;
+    font-size: 10px;
+    text-transform: capitalize;
+}
+
+#telarPlanificacionEspecialistas .plan-history span {
+    color: #718197;
+    font-size: 8px;
+}
+
+#telarPlanificacionEspecialistas .plan-history small {
+    overflow: hidden;
+    color: #8b98a7;
+    font-size: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#telarPlanificacionEspecialistas .plan-loading,
+#telarPlanificacionEspecialistas .plan-empty {
+    display: flex;
+    min-height: 280px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 9px;
+    padding: 24px;
+    color: #718298;
+    text-align: center;
+}
+
+#telarPlanificacionEspecialistas .plan-loading img {
+    width: 54px;
+    height: 54px;
+    animation: planPulse 1.4s ease-in-out infinite;
+}
+
+#telarPlanificacionEspecialistas .plan-loading strong,
+#telarPlanificacionEspecialistas .plan-empty strong {
+    color: #365069;
+    font-size: 11px;
+}
+
+#telarPlanificacionEspecialistas .plan-empty p {
+    max-width: 360px;
+    margin: 0;
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+#telarPlanificacionEspecialistas .plan-empty button {
+    min-height: 34px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--plan-teal);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 750;
+}
+
+#telarPlanificacionEspecialistas .plan-empty--compact {
+    min-height: 100px;
+    border: 1px dashed #ccd8e2;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+#telarPlanificacionEspecialistas .plan-empty--error {
+    color: #a23a44;
+}
+
+#telarPlanificacionEspecialistas .plan-loading--small {
+    min-height: 160px;
+}
+
+#telarPlanificacionEspecialistas .plan-live-region {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 3200;
+    width: min(370px, calc(100vw - 32px));
+}
+
+#telarPlanificacionEspecialistas .plan-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 12px 14px;
+    border: 1px solid #cddde8;
+    border-radius: 10px;
+    background: #fff;
+    color: #3e546c;
+    box-shadow: 0 14px 36px rgba(15, 35, 63, 0.2);
+    font-size: 10px;
+    line-height: 1.45;
+    animation: planToastIn 180ms ease-out both;
+}
+
+#telarPlanificacionEspecialistas .plan-toast--success {
+    border-color: #a9dccb;
+    color: #26715a;
+}
+
+#telarPlanificacionEspecialistas .plan-toast--error {
+    border-color: #f0b8bd;
+    color: #a3323d;
+}
+
+@keyframes planPulse {
+    0%, 100% { transform: scale(0.94); opacity: 0.72; }
+    50% { transform: scale(1.04); opacity: 1; }
+}
+
+@keyframes planToastIn {
+    from { transform: translateY(8px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 1120px) {
+    #telarPlanificacionEspecialistas .plan-app {
+        grid-template-rows: 58px auto auto minmax(0, 1fr) 38px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+        padding-top: 13px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-controls {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    #telarPlanificacionEspecialistas .plan-body {
+        grid-template-columns: 240px minmax(0, 1fr);
+    }
+
+    #telarPlanificacionEspecialistas .plan-professional-card {
+        min-height: 78px;
+    }
+}
+
+@media (max-width: 980px) {
+    #telarPlanificacionEspecialistas .plan-topbar {
+        padding-inline: 14px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-branch select {
+        min-width: 150px;
+        max-width: 230px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-user-chip__name {
+        display: none;
+    }
+
+    #telarPlanificacionEspecialistas .plan-heading {
+        padding-inline: 16px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-notice {
+        margin-inline: 16px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-body {
+        display: block;
+        padding-inline: 16px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-professionals {
+        position: relative;
+        left: auto;
+        z-index: 7;
+        margin-bottom: 10px;
+        padding: 0;
+        background: #f8fafc;
+    }
+
+    #telarPlanificacionEspecialistas .plan-professional-list {
+        display: flex;
+        padding: 2px 2px 8px;
+        overflow-x: auto;
+        scroll-snap-type: x proximity;
+    }
+
+    #telarPlanificacionEspecialistas .plan-professional-card {
+        min-width: 225px;
+        scroll-snap-align: start;
+    }
+
+    #telarPlanificacionEspecialistas .plan-professional-card__node {
+        right: auto;
+        left: calc(50% - 5px);
+        top: auto;
+        bottom: -5px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-calendar {
+        min-width: 720px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-threads {
+        display: none;
+    }
+
+    #telarPlanificacionEspecialistas .plan-route-professional-badge {
+        max-width: 48%;
+    }
+
+    #telarPlanificacionEspecialistas .plan-footer {
+        margin-inline: 16px;
+    }
+}
+
+@media (max-width: 620px) {
+    #telarPlanificacionEspecialistas .plan-app {
+        grid-template-rows: 56px auto auto minmax(0, 1fr) 38px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-branch > i,
+    #telarPlanificacionEspecialistas .plan-user-chip {
+        display: none;
+    }
+
+    #telarPlanificacionEspecialistas .plan-branch select {
+        min-width: 145px;
+        max-width: 190px;
+        padding-left: 0;
+        font-size: 12px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-icon-button {
+        width: 34px;
+        height: 34px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-heading h1 {
+        font-size: 19px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-heading p {
+        font-size: 11px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-controls {
+        display: grid;
+        grid-template-columns: auto minmax(120px, 1fr) auto auto;
+        gap: 6px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-view-switch {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    #telarPlanificacionEspecialistas .plan-view-switch button {
+        flex: 1 1 50%;
+    }
+
+    #telarPlanificacionEspecialistas .plan-date-button {
+        min-width: 0;
+    }
+
+    #telarPlanificacionEspecialistas .plan-calendar {
+        min-width: 680px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-settings__grid,
+    #telarPlanificacionEspecialistas .plan-form-grid,
+    #telarPlanificacionEspecialistas .plan-recurrence {
+        grid-template-columns: 1fr;
+    }
+
+    #telarPlanificacionEspecialistas .plan-recurrence legend,
+    #telarPlanificacionEspecialistas .plan-recurrence-end {
+        grid-column: 1;
+    }
+
+    #telarPlanificacionEspecialistas .plan-specialty-editor > div {
+        grid-template-columns: 1fr;
+    }
+
+    #telarPlanificacionEspecialistas .plan-dialog {
+        max-height: calc(100vh - 18px);
+        border-radius: 12px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-dialog footer {
+        align-items: stretch;
+        flex-wrap: wrap;
+    }
+
+    #telarPlanificacionEspecialistas .plan-dialog-spacer {
+        display: none;
+    }
+
+    #telarPlanificacionEspecialistas .plan-button {
+        flex: 1 1 auto;
+    }
+
+    #telarPlanificacionEspecialistas .plan-column-title {
+        gap: 6px;
+    }
+
+    #telarPlanificacionEspecialistas .plan-candidate-card {
+        grid-template-columns: 40px minmax(0, 1fr);
+    }
+
+    #telarPlanificacionEspecialistas .plan-candidate-card > button {
+        grid-column: 2;
+        justify-self: start;
+    }
+}

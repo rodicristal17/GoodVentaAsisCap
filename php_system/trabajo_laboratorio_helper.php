@@ -534,6 +534,133 @@ function trabajoLaboratorioUsuarioPuedeOperarLocal($mysqli, $codUsuario, $codLoc
     return $usuario && intval($usuario['cod_localFK']) === $codLocal;
 }
 
+/**
+ * Resuelve exclusivamente la autorización para preparar un trabajo nuevo.
+ * No amplía entregas, ajustes, instalaciones ni otras acciones físicas.
+ */
+function trabajoLaboratorioResolverAutorizacionPreparacionLocal($datos)
+{
+    $datos = is_array($datos) ? $datos : array();
+    $codLocalBase = intval(isset($datos['cod_local_base']) ? $datos['cod_local_base'] : 0);
+    $codLocalDestino = intval(isset($datos['cod_local_destino']) ? $datos['cod_local_destino'] : 0);
+    $resultado = array(
+        'autorizado' => false,
+        'multisucursal' => $codLocalBase > 0 && $codLocalDestino > 0
+            && $codLocalBase !== $codLocalDestino,
+        'origen' => 'sin_autorizacion',
+        'cod_local_base' => $codLocalBase,
+        'cod_local_destino' => $codLocalDestino
+    );
+    if (empty($datos['usuario_activo'])
+        || empty($datos['permiso_crear'])
+        || (empty($datos['es_doctor']) && empty($datos['es_auditor']))
+        || $codLocalBase <= 0
+        || $codLocalDestino <= 0) {
+        return $resultado;
+    }
+    if (!empty($datos['es_auditor'])) {
+        $resultado['autorizado'] = true;
+        $resultado['origen'] = 'auditoria';
+        return $resultado;
+    }
+    if ($codLocalBase === $codLocalDestino) {
+        $resultado['autorizado'] = true;
+        $resultado['origen'] = 'sucursal_base';
+        return $resultado;
+    }
+    if (!empty($datos['horario_local_activo'])) {
+        $resultado['autorizado'] = true;
+        $resultado['origen'] = 'horario_local';
+        return $resultado;
+    }
+    if (!empty($datos['vinculo_planificacion_activo'])) {
+        $resultado['autorizado'] = true;
+        $resultado['origen'] = 'planificacion_sucursal';
+    }
+    return $resultado;
+}
+
+function trabajoLaboratorioAutorizacionPreparacionLocal($mysqli, $codUsuario, $codLocal)
+{
+    static $cache = array();
+    $codUsuario = intval($codUsuario);
+    $codLocal = intval($codLocal);
+    $clave = $codUsuario.'|'.$codLocal;
+    if (isset($cache[$clave])) {
+        return $cache[$clave];
+    }
+    $usuario = trabajoLaboratorioUsuario($mysqli, $codUsuario);
+    $codLocalBase = $usuario ? intval($usuario['cod_localFK']) : 0;
+    $esDoctor = $usuario
+        && trabajoLaboratorioNormalizarTexto($usuario['tipo']) === 'doctor';
+    $esAuditor = trabajoLaboratorioUsuarioEsAuditor($mysqli, $codUsuario);
+    $permisoCrear = trabajoLaboratorioTienePermiso(
+        $mysqli,
+        $codUsuario,
+        'CREARTRABAJOLABORATORIO'
+    );
+    $horarioActivo = false;
+    $vinculoPlanificacion = false;
+
+    if ($usuario && $codLocal > 0 && $codLocalBase !== $codLocal) {
+        $stmt = $mysqli->prepare(
+            "SELECT 1
+             FROM horario_usuario hu
+             WHERE hu.cod_usuarioFK=?
+               AND hu.cod_localFK=?
+               AND UPPER(IFNULL(hu.estado_horario,'ACTIVO'))='ACTIVO'
+               AND (hu.vigente_desde IS NULL OR hu.vigente_desde<=CURDATE())
+               AND (hu.vigente_hasta IS NULL OR hu.vigente_hasta>=CURDATE())
+             LIMIT 1"
+        );
+        if ($stmt) {
+            $stmt->bind_param('ii', $codUsuario, $codLocal);
+            $stmt->execute();
+            $resultado = $stmt->get_result();
+            $horarioActivo = $resultado && $resultado->num_rows > 0;
+            $stmt->close();
+        }
+        if (trabajoLaboratorioTablaExiste($mysqli, 'planificacion_especialista_local')) {
+            $stmt = $mysqli->prepare(
+                "SELECT 1
+                 FROM planificacion_especialista_local pel
+                 WHERE pel.cod_profesionalFK=?
+                   AND pel.cod_localFK=?
+                   AND pel.estado='activo'
+                 LIMIT 1"
+            );
+            if ($stmt) {
+                $stmt->bind_param('ii', $codUsuario, $codLocal);
+                $stmt->execute();
+                $resultado = $stmt->get_result();
+                $vinculoPlanificacion = $resultado && $resultado->num_rows > 0;
+                $stmt->close();
+            }
+        }
+    }
+    $cache[$clave] = trabajoLaboratorioResolverAutorizacionPreparacionLocal(array(
+        'usuario_activo' => $usuario ? true : false,
+        'es_doctor' => $esDoctor,
+        'es_auditor' => $esAuditor,
+        'permiso_crear' => $permisoCrear,
+        'cod_local_base' => $codLocalBase,
+        'cod_local_destino' => $codLocal,
+        'horario_local_activo' => $horarioActivo,
+        'vinculo_planificacion_activo' => $vinculoPlanificacion
+    ));
+    return $cache[$clave];
+}
+
+function trabajoLaboratorioUsuarioPuedePrepararLocal($mysqli, $codUsuario, $codLocal)
+{
+    $autorizacion = trabajoLaboratorioAutorizacionPreparacionLocal(
+        $mysqli,
+        $codUsuario,
+        $codLocal
+    );
+    return !empty($autorizacion['autorizado']);
+}
+
 function trabajoLaboratorioUsuarioPerteneceLocal($mysqli, $codUsuario, $codLocal)
 {
     $usuario = trabajoLaboratorioUsuario($mysqli, $codUsuario);
@@ -1175,7 +1302,12 @@ function trabajoLaboratorioGuardarRegularizacionUnidades($mysqli, $codUsuario, $
             trabajoLaboratorioLanzar('cantidad_regularizacion_invalida', 'La cantidad agrupada debe ser un numero entero entre 2 y 32.');
         }
         if (!trabajoLaboratorioTienePermiso($mysqli, $codUsuario, 'VERFORMULARIOCONSULTORIO')
-            || !trabajoLaboratorioUsuarioPuedeLocal($mysqli, $codUsuario, intval($detalle['cod_local']))) {
+            || (!trabajoLaboratorioUsuarioPuedeLocal($mysqli, $codUsuario, intval($detalle['cod_local']))
+                && !trabajoLaboratorioUsuarioPuedePrepararLocal(
+                    $mysqli,
+                    $codUsuario,
+                    intval($detalle['cod_local'])
+                ))) {
             trabajoLaboratorioLanzar('regularizacion_no_autorizada', 'Necesita acceso a Consulta y al local de esta venta para designar las piezas.');
         }
         if (trabajoLaboratorioObtenerTrabajoActivoDetalle($mysqli, $codDetalle)) {
@@ -2315,16 +2447,24 @@ function trabajoLaboratorioObtenerContextoDetalle($mysqli, $codUsuario, $codDeta
         $codUsuario,
         intval($fila['cod_local'])
     );
+    $autorizacionPreparacion = trabajoLaboratorioAutorizacionPreparacionLocal(
+        $mysqli,
+        $codUsuario,
+        intval($fila['cod_local'])
+    );
+    $puedePrepararLocal = !empty($autorizacionPreparacion['autorizado']);
+    $puedeConsultarParaPreparar = $puedeConsultarLocal || $puedePrepararLocal;
 	$tienePermisoConsultaClinica = trabajoLaboratorioTienePermiso(
 		$mysqli,
 		$codUsuario,
 		'VERFORMULARIOCONSULTORIO'
 	);
-    $puedeVerResumen = ($puedeConsultarLocal && $tienePermisoConsultaClinica) || $puedeAbrirFicha;
+    $puedeVerResumen = ($puedeConsultarParaPreparar && $tienePermisoConsultaClinica)
+        || $puedeAbrirFicha;
     if (!$puedeVerResumen) {
         trabajoLaboratorioLanzar(
             'local_no_autorizado',
-            'El usuario no puede consultar el detalle ni el local de esta venta.'
+            'Necesita acceso a Consulta y autorizacion vigente para la sucursal de esta venta.'
         );
     }
 
@@ -2335,19 +2475,9 @@ function trabajoLaboratorioObtenerContextoDetalle($mysqli, $codUsuario, $codDeta
         $codUsuario,
         'CREARTRABAJOLABORATORIO'
     );
-	$tienePermisoEditarClinica = trabajoLaboratorioTienePermiso(
-		$mysqli,
-		$codUsuario,
-		'EDITARFORMULARIOCONSULTORIO'
-	);
-    $puedeOperarLocal = trabajoLaboratorioUsuarioPuedeOperarLocal(
-        $mysqli,
-        $codUsuario,
-        intval($fila['cod_local'])
-    );
     $habilitadoParaPrepararInicio = !$trabajoActivo
 		&& !$antecedenteHistorico
-        && $puedeOperarLocal
+        && $puedePrepararLocal
         && ($esDoctor || $esAuditor)
         && $tienePermisoCrear;
     $hilo = trabajoLaboratorioObtenerHiloUnicoVenta($mysqli, intval($fila['cod_ventaFK']), false);
@@ -2364,7 +2494,7 @@ function trabajoLaboratorioObtenerContextoDetalle($mysqli, $codUsuario, $codDeta
 		&& $cantidadValida
 		&& !$detalleInactivo;
 	$puedeAsignarUbicacion = $detallePreparadoParaUbicacion
-		&& $puedeConsultarLocal
+		&& $puedeConsultarParaPreparar
 		&& $tienePermisoConsultaClinica;
 	$puedeRegularizarUnidades = !$trabajoActivo
 		&& !$antecedenteHistorico
@@ -2372,7 +2502,7 @@ function trabajoLaboratorioObtenerContextoDetalle($mysqli, $codUsuario, $codDeta
 		&& $requiere
 		&& $esDetalleAgrupado
 		&& !$detalleInactivo
-		&& $puedeConsultarLocal
+		&& $puedeConsultarParaPreparar
 		&& $tienePermisoConsultaClinica;
 	$tecnicos = $detallePreparadoParaAcciones
 		? trabajoLaboratorioTecnicosDisponibles($mysqli, true) : array();
@@ -2426,13 +2556,19 @@ function trabajoLaboratorioObtenerContextoDetalle($mysqli, $codUsuario, $codDeta
             'mensaje' => 'Puede preparar el trabajo ahora y asignar el tecnico mas adelante.'
         );
     }
+    if ($puedePrepararLocal && !empty($autorizacionPreparacion['multisucursal'])) {
+        $avisos[] = array(
+            'codigo' => 'preparacion_multisucursal_autorizada',
+            'mensaje' => 'Puede preparar este trabajo en la sucursal de la venta sin cambiar su sucursal base.'
+        );
+    }
     if (!$trabajoActivo && !$esDoctor && !$esAuditor) {
         $bloqueos[] = array('codigo' => 'rol_clinico_requerido', 'mensaje' => 'Solo un profesional autorizado puede iniciar el trabajo.');
     }
-    if (!$trabajoActivo && !$puedeOperarLocal) {
+    if (!$trabajoActivo && !$puedePrepararLocal) {
         $bloqueos[] = array(
             'codigo' => 'operacion_local_requerida',
-            'mensaje' => 'Puede consultar el resumen, pero no iniciar trabajos en esta sucursal.'
+            'mensaje' => 'Necesita un horario vigente o un vinculo activo de planificacion para preparar trabajos en esta sucursal.'
         );
     }
     if (!$trabajoActivo && !$tienePermisoCrear) {
@@ -2441,7 +2577,7 @@ function trabajoLaboratorioObtenerContextoDetalle($mysqli, $codUsuario, $codDeta
 
 	$puedeAsegurarHilo = !$trabajoActivo && !$antecedenteHistorico && !$hilo
 		&& $requiere && ($cantidadValida || ($esDetalleAgrupado && $regularizacionUnidades)) && !$detalleInactivo
-        && $puedeOperarLocal
+        && $puedePrepararLocal
         && ($esDoctor || $esAuditor)
         && $tienePermisoCrear;
     $puedeIniciar = $cantidadValida && !$trabajoActivo && count($bloqueos) === 0;
@@ -2539,6 +2675,12 @@ function trabajoLaboratorioObtenerContextoDetalle($mysqli, $codUsuario, $codDeta
         'tecnico_puede_quedar_pendiente' => true,
         'puede_ver_resumen' => $puedeVerResumen,
         'puede_abrir_ficha' => $puedeAbrirFicha,
+        'autorizacion_preparacion' => array(
+            'autorizado' => $puedePrepararLocal,
+            'multisucursal' => !empty($autorizacionPreparacion['multisucursal']),
+            'origen' => isset($autorizacionPreparacion['origen'])
+                ? $autorizacionPreparacion['origen'] : 'sin_autorizacion'
+        ),
         'puede_iniciar' => $puedeIniciar,
 		'puede_iniciar_trabajos_agrupados' => $puedeIniciarAgrupados,
 		'puede_asignar_ubicacion' => $puedeAsignarUbicacion,
@@ -2574,8 +2716,11 @@ function trabajoLaboratorioAsegurarHiloDetalle($mysqli, $codUsuario, $codDetalle
     if (!$fila) {
         trabajoLaboratorioLanzar('detalle_no_encontrado', 'No se encontro el detalle de tratamiento.');
     }
-    if (!trabajoLaboratorioUsuarioPuedeOperarLocal($mysqli, $codUsuario, intval($fila['cod_local']))) {
-        trabajoLaboratorioLanzar('local_no_autorizado', 'El usuario no puede operar sobre el local de esta venta.');
+    if (!trabajoLaboratorioUsuarioPuedePrepararLocal($mysqli, $codUsuario, intval($fila['cod_local']))) {
+        trabajoLaboratorioLanzar(
+            'local_no_autorizado',
+            'Necesita un horario vigente o un vinculo activo de planificacion para preparar trabajos en esta sucursal.'
+        );
     }
     if ((!trabajoLaboratorioUsuarioEsDoctor($mysqli, $codUsuario)
             && !trabajoLaboratorioUsuarioEsAuditor($mysqli, $codUsuario))
@@ -5757,7 +5902,16 @@ function trabajoLaboratorioListar($mysqli, $codUsuario, $entrada, $opciones = ar
     $codDetalleFiltro = trabajoLaboratorioEntero(isset($entrada['cod_detalle_venta']) ? $entrada['cod_detalle_venta'] : 0);
     if ($codDetalleFiltro > 0) {
         $detalleFiltro = trabajoLaboratorioObtenerDetalleClinico($mysqli, $codDetalleFiltro, false);
-        if (!$detalleFiltro || !trabajoLaboratorioUsuarioPuedeLocal($mysqli, $codUsuario, intval($detalleFiltro['cod_local']))) {
+        if (!$detalleFiltro
+            || (!trabajoLaboratorioUsuarioPuedeLocal(
+                $mysqli,
+                $codUsuario,
+                intval($detalleFiltro['cod_local'])
+            ) && !trabajoLaboratorioUsuarioPuedePrepararLocal(
+                $mysqli,
+                $codUsuario,
+                intval($detalleFiltro['cod_local'])
+            ))) {
             trabajoLaboratorioLanzar('local_no_autorizado', 'El usuario no puede consultar el detalle solicitado.');
         }
         $condiciones[] = 'tl.cod_detalle_ventaFK=?';
@@ -6710,8 +6864,16 @@ function trabajoLaboratorioIniciar($mysqli, $codUsuario, $entrada)
                     && !trabajoLaboratorioUsuarioEsAuditor($mysqli, $codUsuario))) {
                 trabajoLaboratorioLanzar('creacion_no_autorizada', 'El usuario no puede iniciar trabajos de laboratorio.');
             }
-            if (!trabajoLaboratorioUsuarioPuedeOperarLocal($mysqli, $codUsuario, intval($detalle['cod_local']))) {
-                trabajoLaboratorioLanzar('local_no_autorizado', 'El usuario no puede operar sobre el local de esta venta.');
+            $autorizacionPreparacion = trabajoLaboratorioAutorizacionPreparacionLocal(
+                $mysqli,
+                $codUsuario,
+                intval($detalle['cod_local'])
+            );
+            if (empty($autorizacionPreparacion['autorizado'])) {
+                trabajoLaboratorioLanzar(
+                    'local_no_autorizado',
+                    'Necesita un horario vigente o un vinculo activo de planificacion para preparar trabajos en esta sucursal.'
+                );
             }
             $motivoExcepcionInicio = trabajoLaboratorioExigirMotivoExcepcionAuditor(
                 $mysqli,
@@ -6993,7 +7155,12 @@ function trabajoLaboratorioIniciar($mysqli, $codUsuario, $entrada)
                         'datos_trabajo' => trabajoLaboratorioSnapshotDatosTrabajo($trabajo),
                         'campos_modificados' => array(),
                         'estado_resultante' => $estado,
-                        'tecnico_pendiente' => $tecnico ? 0 : 1
+                        'tecnico_pendiente' => $tecnico ? 0 : 1,
+                        'preparacion_multisucursal' => !empty($autorizacionPreparacion['multisucursal']) ? 1 : 0,
+                        'origen_autorizacion_local' => isset($autorizacionPreparacion['origen'])
+                            ? $autorizacionPreparacion['origen'] : 'sin_autorizacion',
+                        'cod_local_base_actor' => intval($autorizacionPreparacion['cod_local_base']),
+                        'cod_local_venta' => intval($detalle['cod_local'])
                     ),
                     $motivoExcepcionInicio
                 ),
@@ -7140,7 +7307,12 @@ function trabajoLaboratorioIniciar($mysqli, $codUsuario, $entrada)
                                 'datos_trabajo' => trabajoLaboratorioSnapshotDatosTrabajo($trabajoUnidad),
                                 'campos_modificados' => array(),
                                 'estado_resultante' => $estado,
-                                'tecnico_pendiente' => $tecnico ? 0 : 1
+                                'tecnico_pendiente' => $tecnico ? 0 : 1,
+                                'preparacion_multisucursal' => !empty($autorizacionPreparacion['multisucursal']) ? 1 : 0,
+                                'origen_autorizacion_local' => isset($autorizacionPreparacion['origen'])
+                                    ? $autorizacionPreparacion['origen'] : 'sin_autorizacion',
+                                'cod_local_base_actor' => intval($autorizacionPreparacion['cod_local_base']),
+                                'cod_local_venta' => intval($detalle['cod_local'])
                             ),
                             $motivoExcepcionInicio
                         ),

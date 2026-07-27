@@ -4279,6 +4279,184 @@ function normalizarIdsConsultoriosAgenda($valor)
     return array_values($ids);
 }
 
+function crearProfesionalPlanificadoAgenda($fila, $origen, $clave)
+{
+    $horaEntrada = isset($fila['hora_entrada']) && $fila['hora_entrada'] !== null
+        ? substr((string)$fila['hora_entrada'], 0, 5) : '';
+    $horaSalida = isset($fila['hora_salida']) && $fila['hora_salida'] !== null
+        ? substr((string)$fila['hora_salida'], 0, 5) : '';
+
+    return array(
+        'clave' => (string)$clave,
+        'cod_profesional' => (int)$fila['cod_profesionalFK'],
+        'id_consultorio' => (int)$fila['id_consultorioFK'],
+        'nombre' => normalizarTextoUtf8($fila['profesional']),
+        'avatar' => normalizarTextoUtf8(isset($fila['avatar']) ? $fila['avatar'] : ''),
+        'especialidad' => normalizarTextoUtf8(isset($fila['especialidad']) ? $fila['especialidad'] : ''),
+        'estado' => normalizarTextoUtf8($fila['estado_planificacion']),
+        'hora_entrada' => $horaEntrada,
+        'hora_salida' => $horaSalida,
+        'origen' => (string)$origen,
+        'solo_lectura' => $origen === 'legacy',
+        'vincula_turnos' => $fila['estado_planificacion'] === 'confirmada'
+            && $horaEntrada !== '' && $horaSalida !== ''
+    );
+}
+
+/**
+ * Resuelve la planificacion efectiva de un dia para los consultorios visibles.
+ * Las asignaciones puntuales reemplazan la ocurrencia de su regla y la fuente
+ * legacy solo completa profesionales que todavia no ocupan ese consultorio.
+ */
+function obtenerProfesionalesPlanificadosAgenda($mysqli, $fecha, $idsConsultorios)
+{
+    $salida = array();
+    $idsConsultorios = normalizarIdsConsultoriosAgenda($idsConsultorios);
+    foreach ($idsConsultorios as $idConsultorio) {
+        $salida[(int)$idConsultorio] = array();
+    }
+    if (count($idsConsultorios) === 0) {
+        return $salida;
+    }
+
+    $listaIds = implode(',', $idsConsultorios);
+    $fechaSql = addslashes($fecha);
+    $numeroDia = (int)date('N', strtotime($fecha));
+    $diaSemana = addslashes(obtenerDiaSemanaAgenda($fecha));
+    $tieneReglas = tablaAgendaExiste($mysqli, 'planificacion_especialista_regla');
+    $tieneAsignaciones = tablaAgendaExiste($mysqli, 'planificacion_especialista_asignacion');
+    $tienePerfil = tablaAgendaExiste($mysqli, 'planificacion_especialista_perfil');
+    $joinPerfil = $tienePerfil
+        ? "LEFT JOIN planificacion_especialista_perfil pep ON pep.cod_usuarioFK=u.cod_usuario"
+        : "";
+    $campoEspecialidad = $tienePerfil ? "IFNULL(pep.especialidad,'')" : "''";
+    $items = array();
+    $indicesRegla = array();
+
+    if ($tieneReglas && $tieneAsignaciones) {
+        $sqlReglas = "SELECT r.id_regla,r.cod_profesionalFK,r.id_consultorioFK,
+                r.estado_asignacion AS estado_planificacion,
+                COALESCE(NULLIF(p.nombre_persona,''),u.login) AS profesional,
+                IFNULL(u.url,'') AS avatar,".$campoEspecialidad." AS especialidad,
+                TIME_FORMAT(h.hora_entrada,'%H:%i') AS hora_entrada,
+                TIME_FORMAT(h.hora_salida,'%H:%i') AS hora_salida
+            FROM planificacion_especialista_regla r
+            INNER JOIN usuario u ON u.cod_usuario=r.cod_profesionalFK
+            LEFT JOIN persona p ON p.cod_persona=u.cod_usuario
+            ".$joinPerfil."
+            LEFT JOIN horario_usuario h ON h.id=r.id_horario_usuarioFK
+            WHERE r.id_consultorioFK IN (".$listaIds.")
+              AND r.estado='activo'
+              AND r.dia_semana=".$numeroDia."
+              AND r.fecha_desde<='".$fechaSql."'
+              AND (r.fecha_hasta IS NULL OR r.fecha_hasta>='".$fechaSql."')";
+        $resultadoReglas = $mysqli->query($sqlReglas);
+        while ($resultadoReglas && ($fila = $resultadoReglas->fetch_assoc())) {
+            $claveRegla = (int)$fila['id_regla'];
+            $indicesRegla[$claveRegla] = count($items);
+            $items[] = crearProfesionalPlanificadoAgenda(
+                $fila,
+                'regla',
+                'regla-'.$claveRegla.'-'.$fecha
+            );
+        }
+
+        $sqlAsignaciones = "SELECT a.id_asignacion,a.id_reglaFK AS id_regla,
+                a.cod_profesionalFK,a.id_consultorioFK,a.estado AS estado_planificacion,
+                COALESCE(NULLIF(p.nombre_persona,''),u.login) AS profesional,
+                IFNULL(u.url,'') AS avatar,".$campoEspecialidad." AS especialidad,
+                TIME_FORMAT(h.hora_entrada,'%H:%i') AS hora_entrada,
+                TIME_FORMAT(h.hora_salida,'%H:%i') AS hora_salida
+            FROM planificacion_especialista_asignacion a
+            INNER JOIN usuario u ON u.cod_usuario=a.cod_profesionalFK
+            LEFT JOIN persona p ON p.cod_persona=u.cod_usuario
+            ".$joinPerfil."
+            LEFT JOIN horario_usuario h ON h.id=a.id_horario_usuarioFK
+            WHERE a.id_consultorioFK IN (".$listaIds.")
+              AND a.fecha='".$fechaSql."'
+            ORDER BY a.id_consultorioFK,a.id_asignacion";
+        $resultadoAsignaciones = $mysqli->query($sqlAsignaciones);
+        while ($resultadoAsignaciones && ($fila = $resultadoAsignaciones->fetch_assoc())) {
+            $idRegla = isset($fila['id_regla']) ? (int)$fila['id_regla'] : 0;
+            if ($idRegla > 0 && isset($indicesRegla[$idRegla])) {
+                $items[$indicesRegla[$idRegla]] = null;
+            }
+            if ($fila['estado_planificacion'] === 'anulada') {
+                continue;
+            }
+            $items[] = crearProfesionalPlanificadoAgenda(
+                $fila,
+                'asignacion',
+                'asignacion-'.(int)$fila['id_asignacion']
+            );
+        }
+    }
+
+    $ocupacion = array();
+    foreach ($items as $item) {
+        if ($item === null) {
+            continue;
+        }
+        $ocupacion[$item['cod_profesional'].'|'.(int)$item['id_consultorio']] = true;
+    }
+
+    if (tablaAgendaExiste($mysqli, 'consultorio_doctor_asignacion')) {
+        $sqlLegacy = "SELECT cda.id_asignacion,hu.cod_usuarioFK AS cod_profesionalFK,
+                cda.id_consultorio AS id_consultorioFK,
+                'confirmada' AS estado_planificacion,
+                COALESCE(NULLIF(p.nombre_persona,''),u.login) AS profesional,
+                IFNULL(u.url,'') AS avatar,".$campoEspecialidad." AS especialidad,
+                TIME_FORMAT(hu.hora_entrada,'%H:%i') AS hora_entrada,
+                TIME_FORMAT(hu.hora_salida,'%H:%i') AS hora_salida
+            FROM consultorio_doctor_asignacion cda
+            INNER JOIN horario_usuario hu ON hu.id=cda.id_horario_usuario
+            INNER JOIN usuario u ON u.cod_usuario=hu.cod_usuarioFK
+            LEFT JOIN persona p ON p.cod_persona=u.cod_usuario
+            ".$joinPerfil."
+            WHERE cda.id_consultorio IN (".$listaIds.")
+              AND cda.estado='activo'
+              AND u.tipo='DOCTOR' AND u.estado='Activo'
+              AND IFNULL(hu.estado_horario,'activo')='activo'
+              AND LOWER(TRIM(hu.dia_semana))='".$diaSemana."'
+              AND (hu.vigente_desde IS NULL OR hu.vigente_desde<='".$fechaSql."')
+              AND (hu.vigente_hasta IS NULL OR hu.vigente_hasta>='".$fechaSql."')
+              AND hu.hora_salida IS NOT NULL
+            ORDER BY cda.id_consultorio,hu.hora_entrada,cda.id_asignacion";
+        $resultadoLegacy = $mysqli->query($sqlLegacy);
+        while ($resultadoLegacy && ($fila = $resultadoLegacy->fetch_assoc())) {
+            $claveOcupacion = (int)$fila['cod_profesionalFK'].'|'.(int)$fila['id_consultorioFK'];
+            if (isset($ocupacion[$claveOcupacion])) {
+                continue;
+            }
+            $items[] = crearProfesionalPlanificadoAgenda(
+                $fila,
+                'legacy',
+                'legacy-'.(int)$fila['id_asignacion'].'-'.$fecha
+            );
+            $ocupacion[$claveOcupacion] = true;
+        }
+    }
+
+    foreach ($items as $item) {
+        if ($item === null || !isset($salida[(int)$item['id_consultorio']])) {
+            continue;
+        }
+        $salida[(int)$item['id_consultorio']][] = $item;
+    }
+    foreach ($salida as $idConsultorio => $profesionales) {
+        usort($profesionales, function ($a, $b) {
+            $horaA = $a['hora_entrada'] !== '' ? $a['hora_entrada'] : '99:99';
+            $horaB = $b['hora_entrada'] !== '' ? $b['hora_entrada'] : '99:99';
+            if ($horaA !== $horaB) {
+                return strcmp($horaA, $horaB);
+            }
+            return strcasecmp($a['nombre'], $b['nombre']);
+        });
+        $salida[$idConsultorio] = $profesionales;
+    }
+    return $salida;
+}
+
 function obtenerCatalogoConsultoriosAgendaBasica($mysqli, $contexto, $fecha, $codLocal = '')
 {
     $diaSemana = addslashes(obtenerDiaSemanaAgenda($fecha));
@@ -4348,8 +4526,24 @@ function obtenerCatalogoConsultoriosAgendaBasica($mysqli, $contexto, $fecha, $co
             "nombre" => normalizarTextoUtf8($row["nombre"]),
             "nombre_doctor" => normalizarTextoUtf8($row["nombre_doctor"]),
             "color" => $row["color"] != '' ? $row["color"] : '#7c3aed',
-            "descripcion" => normalizarTextoUtf8($row["descripcion"])
+            "descripcion" => normalizarTextoUtf8($row["descripcion"]),
+            "profesionales_planificados" => array()
         );
+    }
+    $idsConsultorios = array();
+    foreach ($consultorios as $consultorio) {
+        $idsConsultorios[] = (int)$consultorio['id'];
+    }
+    $profesionalesPorConsultorio = obtenerProfesionalesPlanificadosAgenda(
+        $mysqli,
+        $fecha,
+        $idsConsultorios
+    );
+    foreach ($consultorios as $indice => $consultorio) {
+        $idConsultorio = (int)$consultorio['id'];
+        if (isset($profesionalesPorConsultorio[$idConsultorio])) {
+            $consultorios[$indice]['profesionales_planificados'] = $profesionalesPorConsultorio[$idConsultorio];
+        }
     }
     return $consultorios;
 }
