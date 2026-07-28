@@ -6469,6 +6469,81 @@ function cargarFlujoGastosInterConsulta(codInterConsulta) {
     });
 }
 
+function obtenerContextoGastoHiloActual() {
+    var codigoHilo= String(cod_interConsulta || "").trim();
+    var tituloHilo= document.getElementById("tituloInterConsultas2");
+    var nombreHilo= tituloHilo ? String(tituloHilo.textContent || "").trim() : "";
+
+    return {
+        codigo: codigoHilo,
+        nombre: nombreHilo
+    };
+}
+
+function abrirNuevoGastoDesdeHiloActual(evento) {
+    if (evento) {
+        evento.stopPropagation();
+        evento.preventDefault();
+    }
+
+    var contexto= obtenerContextoGastoHiloActual();
+    if (!contexto.codigo || contexto.codigo == "0") {
+        ver_vetana_informativa("FALTO SELECCIONAR UNA INTERCONSULTA.");
+        return;
+    }
+
+    abrirMovimientoFinanciero({
+        modo: "crear",
+        tipoMovimiento: "Egreso",
+        categoriaFlujo: "Flujo de gastos del hilo",
+        interconsultaId: contexto.codigo,
+        interconsultaNombre: contexto.nombre
+    });
+}
+
+function crearProyectoDesdeHiloActual(evento) {
+    if (evento) {
+        evento.stopPropagation();
+        evento.preventDefault();
+    }
+
+    var contexto= obtenerContextoGastoHiloActual();
+    if (!contexto.codigo || contexto.codigo == "0") {
+        ver_vetana_informativa("FALTO SELECCIONAR UNA INTERCONSULTA.");
+        return;
+    }
+    if (controlacceso("INSERTARLISTADOEGRESOINGRESO", "accion") == false) {
+        return;
+    }
+    if (idabmAperturacierrecaja == "") {
+        verCerrarVentanaAbmGasto(true, true, false);
+        return;
+    }
+
+    cod_interConsulta= contexto.codigo;
+    var inputInterConsulta= document.getElementById("inptAbmInterConsultaGasto");
+    if (inputInterConsulta) {
+        inputInterConsulta.value= contexto.nombre;
+    }
+
+    crearProyectoGastoDesdeHilo(contexto.nombre, {
+        silencioso: true,
+        alCrear: function (idProyecto, nombreProyecto) {
+            abrirMovimientoFinanciero({
+                modo: "crear",
+                tipoMovimiento: "Egreso",
+                categoriaFlujo: "Proyecto del hilo",
+                interconsultaId: contexto.codigo,
+                interconsultaNombre: contexto.nombre,
+                proyectoId: idProyecto,
+                proyectoNombre: nombreProyecto,
+                esNuevoProyecto: true,
+                focoPlanificacion: true
+            });
+        }
+    });
+}
+
 function alternarPanelDictamenInterConsulta(idPanel, boton) {
     const panel = document.getElementById(idPanel);
     if (!panel || typeof bootstrap === "undefined" || !bootstrap.Collapse) {

@@ -42963,7 +42963,7 @@ button.tratamiento-ubicacion-visual {
   max-height: 94vh;
   margin-left: 0 !important;
   overflow: auto;
-  padding: 0 14px 16px;
+  padding: 0 10px 10px;
   border: 1px solid #dbe5ef;
   border-radius: 8px;
   background: #f7f9fc;
@@ -42972,9 +42972,9 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divConciliacionUeno .ueno-header {
-  width: calc(100% + 28px) !important;
+  width: calc(100% + 20px) !important;
   height: auto;
-  margin: 0 -14px 12px;
+  margin: 0 -10px 7px;
   border-collapse: collapse;
   border-bottom: 1px solid #e1e7ef;
   background: #ffffff;
@@ -42982,17 +42982,18 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divConciliacionUeno .ueno-header td {
-  padding: 12px 8px;
+  padding: 8px 6px;
   vertical-align: middle;
 }
 
 #divConciliacionUeno .ueno-header td:first-child {
-  padding-left: 14px;
+  padding-left: 12px;
 }
 
 #divConciliacionUeno .ueno-modal .pTituloB {
+  margin: 0;
   color: #1f2937;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 900;
   line-height: 1.15;
 }
@@ -43017,10 +43018,10 @@ button.tratamiento-ubicacion-visual {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   padding: 0;
   border: 1px solid #fecdd3;
   border-radius: 50%;
@@ -43038,7 +43039,7 @@ button.tratamiento-ubicacion-visual {
 #divConciliacionUeno .ueno-modal .ueno-close-button::after {
   content: "";
   position: absolute;
-  width: 18px;
+  width: 15px;
   height: 3px;
   border-radius: 999px;
   background: #ef4444;
@@ -43071,10 +43072,10 @@ button.tratamiento-ubicacion-visual {
 #divConciliacionUeno .ueno-guide {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 98%;
-  margin: 0 0 10px;
-  padding: 10px 12px;
+  margin: 0 0 6px;
+  padding: 7px 10px;
   border: 1px solid #d9e7f6;
   border-radius: 8px;
   background: #f0f7ff;
@@ -43092,15 +43093,15 @@ button.tratamiento-ubicacion-visual {
 
 #divConciliacionUeno .ueno-guide span {
   min-width: 0;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   line-height: 1.35;
 }
 
 #divConciliacionUeno .ueno-card {
   width: 98% !important;
-  margin: 0 0 10px;
-  padding: 10px;
+  margin: 0 0 6px;
+  padding: 7px 8px;
   border: 1px solid #dce5ef;
   border-radius: 8px;
   background: #ffffff;
@@ -43147,8 +43148,8 @@ button.tratamiento-ubicacion-visual {
 #divConciliacionUeno .ueno-workbench-summary {
   display: grid;
   grid-template-columns: repeat(5, minmax(120px, 1fr));
-  gap: 8px;
-  width: 98%;
+  gap: 6px;
+  width: 100%;
 }
 
 #divConciliacionUeno .ueno-workbench-summary span {
@@ -43156,8 +43157,8 @@ button.tratamiento-ubicacion-visual {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  min-height: 32px;
-  padding: 0 10px;
+  min-height: 27px;
+  padding: 0 8px;
   border: 1px solid #d8e5f5;
   border-radius: 8px;
   background: #ffffff;
@@ -43176,14 +43177,14 @@ button.tratamiento-ubicacion-visual {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding-bottom: 5px;
   border-bottom: 1px solid #e7edf5;
 }
 
 #divConciliacionUeno .ueno-collapsible-card {
-  padding: 8px 10px;
+  padding: 6px 8px;
 }
 
 #divConciliacionUeno .ueno-collapsible-card .ueno-section-head {
@@ -43194,8 +43195,8 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divConciliacionUeno .ueno-collapsible-card:not(.ueno-collapsed) .ueno-section-head {
-  margin-bottom: 10px;
-  padding-bottom: 8px;
+  margin-bottom: 7px;
+  padding-bottom: 6px;
   border-bottom: 1px solid #e7edf5;
 }
 
@@ -43209,9 +43210,9 @@ button.tratamiento-ubicacion-visual {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-width: 82px;
-  height: 28px;
-  padding: 0 10px;
+  min-width: 76px;
+  height: 24px;
+  padding: 0 8px;
   border: 1px solid #cfe0f3;
   border-radius: 999px;
   background: #f8fbff;
@@ -43223,8 +43224,8 @@ button.tratamiento-ubicacion-visual {
 
 #divConciliacionUeno .ueno-collapse-symbol {
   display: inline-grid;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   place-items: center;
   border-radius: 50%;
   background: #eaf4ff;
@@ -43232,9 +43233,9 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divConciliacionUeno .ueno-section-title {
-  margin: 0 0 3px;
+  margin: 0 0 1px;
   color: #1f2937;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
   line-height: 1.2;
 }
@@ -43246,9 +43247,9 @@ button.tratamiento-ubicacion-visual {
 #divConciliacionUeno .ueno-section-help {
   margin: 0;
   color: #657489;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.25;
 }
 
 #divConciliacionUeno .ueno-card > table:not(.tableCabeceraRegistro),

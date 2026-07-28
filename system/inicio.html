@@ -8320,8 +8320,8 @@ style='background-color:#5bc572'>
                           <i class="fa-solid fa-eye" aria-hidden="true"></i>
                           <span>Ver gastos</span>
                         </button>
-                        <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Agregar gasto al hilo" onclick="event.stopPropagation(); verCerrarVentanaAbmGasto(true, true, false); cod_interConsulta= '.$valueInter['cod_interConsulta'].'; document.getElementById(\'inptAbmInterConsultaGasto\').value= \''.$valueInter['asunto'].'\'; buscarProyectosVistaSelecc();">
-                        <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Crear proyecto del hilo" onclick="event.stopPropagation(); cod_interConsulta= '.$valueInter['cod_interConsulta'].'; crearProyectoGastoDesdeHilo();">
+                        <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Agregar gasto al hilo" alt="Agregar gasto al hilo" role="button" tabindex="0" onclick="abrirNuevoGastoDesdeHiloActual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){abrirNuevoGastoDesdeHiloActual(event);}">
+                        <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Crear proyecto del hilo" alt="Crear proyecto del hilo" role="button" tabindex="0" onclick="crearProyectoDesdeHiloActual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){crearProyectoDesdeHiloActual(event);}">
                       </div>
                     </div>
                     <div id="contenedorFlujoGastosInterConsulta" class="interconsulta-flow-content">
@@ -27970,7 +27970,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 </div>
 </div>
 
-<div class='divMenuf ueno-card ueno-support-card ueno-pagos-card' style='clear:both;width:96%;margin-left:1%'>
+<div class='divMenuf ueno-card ueno-collapsible-card ueno-collapsed ueno-support-card ueno-pagos-card' style='clear:both;width:96%;margin-left:1%'>
 <div class='ueno-section-head'>
 <div>
 <p class='ueno-section-title'>6. Control y trazabilidad de movimientos</p>
