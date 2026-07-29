@@ -9,6 +9,65 @@ include_once("calcularintereses.php");
 // include_once("calcularInteresDirecto.php");
 include_once("classTable.php");
 
+function pago_validar_orden_cuota_cobrar($codCredito, $codVenta)
+{
+	$mysqli = conectar_al_servidor();
+	$sql = "SELECT anterior.plazo,
+			GREATEST(0, ((IFNULL(anterior.Monto,0)-IFNULL(anterior.descuento,0))-
+				IFNULL((SELECT SUM(p1.Monto) FROM pago p1 WHERE p1.cod_creditoFK=anterior.idcredito AND p1.Tipo='Pago Cuota'),0))) +
+			GREATEST(0, ((IFNULL(anterior.totalinteres,0)+IFNULL(anterior.deudaInteres,0))-
+				IFNULL((SELECT SUM(p2.Monto) FROM pago p2 WHERE p2.cod_creditoFK=anterior.idcredito AND p2.Tipo='Interes'),0))) AS saldo_pendiente
+		FROM credito actual
+		INNER JOIN credito anterior ON anterior.cod_venta=actual.cod_venta
+		WHERE actual.idcredito=?
+		AND actual.cod_venta=?
+		AND IFNULL(anterior.Esado,'') NOT LIKE '%Anul%'
+		AND (
+			(CASE WHEN anterior.plazo REGEXP '^[0-9]+' THEN CAST(SUBSTRING_INDEX(anterior.plazo,'/',1) AS UNSIGNED) ELSE 999999 END) <
+			(CASE WHEN actual.plazo REGEXP '^[0-9]+' THEN CAST(SUBSTRING_INDEX(actual.plazo,'/',1) AS UNSIGNED) ELSE 999999 END)
+			OR (
+				(CASE WHEN anterior.plazo REGEXP '^[0-9]+' THEN CAST(SUBSTRING_INDEX(anterior.plazo,'/',1) AS UNSIGNED) ELSE 999999 END) =
+				(CASE WHEN actual.plazo REGEXP '^[0-9]+' THEN CAST(SUBSTRING_INDEX(actual.plazo,'/',1) AS UNSIGNED) ELSE 999999 END)
+				AND (anterior.fechapago < actual.fechapago OR (anterior.fechapago=actual.fechapago AND anterior.idcredito < actual.idcredito))
+			)
+		)
+		HAVING saldo_pendiente > 0
+		ORDER BY
+			CASE WHEN anterior.plazo REGEXP '^[0-9]+' THEN CAST(SUBSTRING_INDEX(anterior.plazo,'/',1) AS UNSIGNED) ELSE 999999 END ASC,
+			anterior.fechapago ASC,
+			anterior.idcredito ASC
+		LIMIT 1";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) {
+		mysqli_close($mysqli);
+		$informacion = array("1" => "error", "2" => "No se pudo validar el orden de las cuotas.");
+		echo json_encode($informacion);
+		exit;
+	}
+	$stmt->bind_param("ss", $codCredito, $codVenta);
+	if (!$stmt->execute()) {
+		$stmt->close();
+		mysqli_close($mysqli);
+		$informacion = array("1" => "error", "2" => "No se pudo validar el orden de las cuotas.");
+		echo json_encode($informacion);
+		exit;
+	}
+	$resultado = $stmt->get_result();
+	$anterior = $resultado ? $resultado->fetch_assoc() : null;
+	$stmt->close();
+	mysqli_close($mysqli);
+	if ($anterior) {
+		$saldo = number_format((int)$anterior["saldo_pendiente"], 0, ",", ".");
+		$informacion = array(
+			"1" => "error",
+			"2" => "No se puede cobrar esta cuota porque la cuota anterior " . $anterior["plazo"] .
+				" todavia tiene un saldo de " . $saldo . " Gs. Debe pagar completamente todas las cuotas anteriores."
+		);
+		echo json_encode($informacion);
+		exit;
+	}
+}
+
 function verificarOperacionPagos($operacion)
 {
 
@@ -474,6 +533,7 @@ $origen_cobro = mb_convert_encoding((string)($origen_cobro), 'ISO-8859-1', 'UTF-
 if($origen_cobro=="COBRAR_CUOTA"){
 	$cod_cobradorFK=$user;
 	$Fecha=pago_fecha_actual_bd();
+	pago_validar_orden_cuota_cobrar($cod_creditoFK, $cod_venta);
 }
 
 $nrofactura=$_POST['nrofactura'];

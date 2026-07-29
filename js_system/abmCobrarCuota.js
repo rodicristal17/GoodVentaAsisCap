@@ -45,6 +45,69 @@ function cobrarCuotaEsCuotaCobrable(cuota) {
 	return Number(cuota.saldo_pendiente_num || 0) > 0 && estado != "PAGADA" && estado != "ANULADA";
 }
 
+function cobrarCuotaAnteriorPendienteNoSeleccionada(cuota) {
+	if (!cuota || !cuota.idcredito) {
+		return null;
+	}
+	for (var i = 0; i < cobrarCuotaCuotas.length; i++) {
+		var anterior = cobrarCuotaCuotas[i];
+		if (String(anterior.idcredito || "") == String(cuota.idcredito)) {
+			break;
+		}
+		if (cobrarCuotaEsCuotaCobrable(anterior) && !cobrarCuotaEstaSeleccionada(anterior.idcredito)) {
+			return anterior;
+		}
+	}
+	return null;
+}
+
+function cobrarCuotaAvisarOrdenPendiente(cuota) {
+	var anterior = cobrarCuotaAnteriorPendienteNoSeleccionada(cuota);
+	if (!anterior) {
+		return false;
+	}
+	cobrarCuotaAviso(
+		"No se puede cobrar la cuota " + (cuota.cuota || "") +
+		" porque la cuota anterior " + (anterior.cuota || "") +
+		" todavia tiene un saldo de " + (anterior.saldo_pendiente || cobrarCuotaFormato(anterior.saldo_pendiente_num || 0)) +
+		" Gs. Selecciona y paga primero todas las cuotas anteriores.",
+		"error"
+	);
+	return true;
+}
+
+function cobrarCuotaPosteriorSeleccionada(cuota) {
+	if (!cuota || !cuota.idcredito) {
+		return null;
+	}
+	var encontroActual = false;
+	for (var i = 0; i < cobrarCuotaCuotas.length; i++) {
+		var item = cobrarCuotaCuotas[i];
+		if (String(item.idcredito || "") == String(cuota.idcredito)) {
+			encontroActual = true;
+			continue;
+		}
+		if (encontroActual && cobrarCuotaEstaSeleccionada(item.idcredito)) {
+			return item;
+		}
+	}
+	return null;
+}
+
+function cobrarCuotaAvisarNoQuitarAnterior(cuota) {
+	var posterior = cobrarCuotaPosteriorSeleccionada(cuota);
+	if (!posterior) {
+		return false;
+	}
+	cobrarCuotaAviso(
+		"No se puede quitar la cuota " + (cuota.cuota || "") +
+		" mientras la cuota posterior " + (posterior.cuota || "") +
+		" siga seleccionada. Quita primero las cuotas posteriores.",
+		"error"
+	);
+	return true;
+}
+
 function cobrarCuotaEsTransferenciaTexto(valor) {
 	return cobrarCuotaNormalizarTexto(valor).indexOf("TRANSFERENCIA") !== -1;
 }
@@ -1851,8 +1914,16 @@ function cobrarCuotaToggleSeleccionPorId(idcredito, forzarEstado) {
 	var estaSeleccionada = cobrarCuotaEstaSeleccionada(idcredito);
 	var agregar = typeof forzarEstado == "boolean" ? forzarEstado : !estaSeleccionada;
 	if (agregar) {
+		if (cobrarCuotaAvisarOrdenPendiente(cuota)) {
+			cobrarCuotaActualizarSeleccionVisual(false);
+			return;
+		}
 		cobrarCuotaAgregarSeleccion(cuota);
 	} else {
+		if (cobrarCuotaAvisarNoQuitarAnterior(cuota)) {
+			cobrarCuotaActualizarSeleccionVisual(false);
+			return;
+		}
 		cobrarCuotaQuitarSeleccion(idcredito);
 	}
 	cobrarCuotaActualizarSeleccionVisual(true);
@@ -2265,6 +2336,9 @@ function cobrarCuotaObtenerContextoRegistro() {
 	for (var i = 0; i < cuotasSeleccionadas.length; i++) {
 		if (!cobrarCuotaEsCuotaCobrable(cuotasSeleccionadas[i])) {
 			cobrarCuotaAviso("No se puede cobrar una cuota pagada o anulada", "error");
+			return null;
+		}
+		if (cobrarCuotaAvisarOrdenPendiente(cuotasSeleccionadas[i])) {
 			return null;
 		}
 	}

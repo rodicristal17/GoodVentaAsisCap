@@ -27859,7 +27859,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <td class='td_registro' style='width:7%'>FACTURA</td><td class='td_registro' style='width:5%'>MOV.</td>
 <td class='td_registro' style='width:13%'>CLIENTE/CUOTA</td><td class='td_registro' style='width:8%'>ANTES</td>
 <td class='td_registro' style='width:8%'>AHORA</td><td class='td_registro' style='width:7%'>MONTO</td>
-<td class='td_registro' style='width:4%'>USER</td><td class='td_registro' style='width:13%'>OBS.</td>
+<td class='td_registro' style='width:10%'>USUARIO</td><td class='td_registro' style='width:7%'>OBS.</td>
 </tr></tbody></table>
 <div class='div_cuerpo_table ueno-table-body' id='table_ueno_auditoria_movimiento_mesa' style='height:360px'></div>
 </div>
@@ -28032,11 +28032,20 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <p class='pTituloC'>Accion o palabra clave</p>
 <input class='inputText' type='text' id='inptUenoAuditAccion' style='width:160px'>
 </td>
-<td style='width:12%;text-align:left'>
+<td style='width:18%;text-align:left'>
+<p class='pTituloC'>Estado</p>
+<select class='inputSelect' id='inptUenoAuditEstado' style='width:180px'>
+<option value='todos'>Todos</option>
+<option value='conciliados'>Conciliados</option>
+<option value='pendientes'>Pendientes</option>
+<option value='conciliados_parciales'>Conciliados parciales</option>
+</select>
+</td>
+<td style='width:10%;text-align:left'>
 <p class='pTituloC'>Registros</p>
 <input class='inputTextDisable' type='text' id='inptUenoAuditTotal' disabled style='width:90px;text-align:center'>
 </td>
-<td style='width:42%;text-align:right'>
+<td style='width:26%;text-align:right'>
 <input type='button' value='Buscar auditoria' class='btn4 ueno-btn-secondary' onclick='uenoBuscarAuditoria()' style='width:140px'>
 </td>
 </tr>
@@ -28054,12 +28063,12 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <td class="td_registro" style="width:8%;">ANTES</td>
 <td class="td_registro" style="width:8%;">AHORA</td>
 <td class="td_registro" style="width:7%;">MONTO</td>
-<td class="td_registro" style="width:4%;">USER</td>
-<td class="td_registro" style="width:13%;">OBS.</td>
+<td class="td_registro" style="width:10%;">USUARIO</td>
+<td class="td_registro" style="width:7%;">OBS.</td>
 </tr>
 </tbody>
 </table>
-<div class="div_cuerpo_table ueno-table-body" id="table_ueno_auditoria" style='height:130px;'></div>
+<div class="div_cuerpo_table ueno-table-body" id="table_ueno_auditoria" style='height:450px;'></div>
 </div>
 </div>
 
@@ -28166,7 +28175,7 @@ title='Cerrar Ventana' onclick='uenoCerrarDetalleImportacionPopup()' />
 </table>
 <div class="div_cuerpo_table ueno-table-body" id="table_ueno_detalle_importacion"></div>
 <div class='ueno-audit-dialog-footer'>
-<input type='button' value='Cargar en mesa' class='btn4 ueno-btn-primary' onclick='uenoCargarImportacionDesdeDetalle()' style='width:135px'>
+<input type='button' value='Cargar en mesa' id='btnUenoDetalleCargarEnMesa' class='btn4 ueno-btn-primary' onclick='uenoCargarImportacionDesdeDetalle()' style='width:135px'>
 <input type='button' value='Cerrar' class='btn4 ueno-btn-secondary' onclick='uenoCerrarDetalleImportacionPopup()' style='width:120px'>
 </div>
 </div>
@@ -28199,8 +28208,8 @@ title='Cerrar Ventana' onclick='uenoCerrarAuditoriaMovimientoPopup()' />
 <td class="td_registro" style="width:8%;">ANTES</td>
 <td class="td_registro" style="width:8%;">AHORA</td>
 <td class="td_registro" style="width:7%;">MONTO</td>
-<td class="td_registro" style="width:4%;">USER</td>
-<td class="td_registro" style="width:13%;">OBS.</td>
+<td class="td_registro" style="width:10%;">USUARIO</td>
+<td class="td_registro" style="width:7%;">OBS.</td>
 </tr>
 </tbody>
 </table>

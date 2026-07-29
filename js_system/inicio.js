@@ -9475,7 +9475,6 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 INFO
 */
 function ver_vetana_informativa(titulo, detalle= "", tipo="") {
-	console.error(titulo);
 	document.getElementById('lbltitulomensajedetalle').style.display = "";
 	titulo= titulo.toLowerCase();
 	// Comprueba si es informacion ya predefinida o con error

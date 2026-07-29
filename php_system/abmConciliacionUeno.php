@@ -4030,6 +4030,50 @@ function ueno_buscar_auditoria($usuario)
 	$fecha_desde = ueno_fecha(isset($_POST["fecha_desde"]) ? $_POST["fecha_desde"] : "");
 	$fecha_hasta = ueno_fecha(isset($_POST["fecha_hasta"]) ? $_POST["fecha_hasta"] : "");
 	$accion = ueno_post("accion");
+	$estado = strtolower(trim(ueno_post("estado")));
+	$estadosPermitidos = array("todos", "conciliados", "pendientes", "conciliados_parciales");
+	if (!in_array($estado, $estadosPermitidos, true)) {
+		$estado = "todos";
+	}
+	$tieneAsignacionesEgreso = ueno_tabla_existe($mysqli, "ueno_movimiento_gasto");
+	$aplicadoDebitoMovimiento = $tieneAsignacionesEgreso
+		? "IFNULL((SELECT SUM(umg_estado.monto_aplicado)
+			FROM ueno_movimiento_gasto umg_estado
+			WHERE umg_estado.id_movimiento=mv_auditoria.id_movimiento
+			AND umg_estado.estado='activo'),0)"
+		: "0";
+	$aplicadoDebitoImportacion = $tieneAsignacionesEgreso
+		? "IFNULL((SELECT SUM(umg_imp.monto_aplicado)
+			FROM ueno_movimiento_gasto umg_imp
+			WHERE umg_imp.id_movimiento=mv_importacion.id_movimiento
+			AND umg_imp.estado='activo'),0)"
+		: "0";
+	$montoOriginalMovimiento = "(CASE
+		WHEN IFNULL(mv_auditoria.importe_credito,0)>0 THEN IFNULL(mv_auditoria.importe_credito,0)
+		ELSE IFNULL(mv_auditoria.importe_debito,0)
+	END)";
+	$montoDisponibleMovimiento = "(CASE
+		WHEN IFNULL(mv_auditoria.importe_credito,0)>0 THEN GREATEST(0,IFNULL(mv_auditoria.monto_disponible,0))
+		ELSE GREATEST(0,IFNULL(mv_auditoria.importe_debito,0)-$aplicadoDebitoMovimiento)
+	END)";
+	$montoOriginalImportacion = "IFNULL((SELECT SUM(
+		CASE WHEN IFNULL(mv_importacion.importe_credito,0)>0
+			THEN IFNULL(mv_importacion.importe_credito,0)
+			ELSE IFNULL(mv_importacion.importe_debito,0)
+		END)
+		FROM ueno_movimiento_bancario mv_importacion
+		WHERE mv_importacion.id_importacion=CAST(a.registro_id AS UNSIGNED)),0)";
+	$montoDisponibleImportacion = "IFNULL((SELECT SUM(
+		CASE WHEN IFNULL(mv_importacion.importe_credito,0)>0
+			THEN GREATEST(0,IFNULL(mv_importacion.monto_disponible,0))
+			ELSE GREATEST(0,IFNULL(mv_importacion.importe_debito,0)-$aplicadoDebitoImportacion)
+		END)
+		FROM ueno_movimiento_bancario mv_importacion
+		WHERE mv_importacion.id_importacion=CAST(a.registro_id AS UNSIGNED)),0)";
+	$montoOriginalAuditoria = "(CASE WHEN a.tabla_afectada='ueno_importacion_extracto'
+		THEN $montoOriginalImportacion ELSE $montoOriginalMovimiento END)";
+	$montoDisponibleAuditoria = "(CASE WHEN a.tabla_afectada='ueno_importacion_extracto'
+		THEN $montoDisponibleImportacion ELSE $montoDisponibleMovimiento END)";
 	$condicion = "";
 	if ($fecha_desde != "") {
 		$condicion .= " AND DATE(a.fecha_hora)>='" . $mysqli->real_escape_string($fecha_desde) . "'";
@@ -4040,6 +4084,13 @@ function ueno_buscar_auditoria($usuario)
 	if ($accion != "") {
 		$accionSql = $mysqli->real_escape_string($accion);
 		$condicion .= " AND (a.accion LIKE '%$accionSql%' OR a.observacion LIKE '%$accionSql%' OR a.id_movimiento='$accionSql')";
+	}
+	if ($estado == "conciliados") {
+		$condicion .= " AND $montoOriginalAuditoria>0 AND $montoDisponibleAuditoria<=0";
+	} elseif ($estado == "conciliados_parciales") {
+		$condicion .= " AND $montoDisponibleAuditoria>0 AND $montoDisponibleAuditoria<$montoOriginalAuditoria";
+	} elseif ($estado == "pendientes") {
+		$condicion .= " AND $montoDisponibleAuditoria>0";
 	}
 	$tieneMigracionAuditoria = ueno_tabla_existe($mysqli, "ueno_movimiento_migracion_caja") && ueno_tabla_existe($mysqli, "migrar_caja");
 	$camposMigracionAuditoria = $tieneMigracionAuditoria
@@ -4063,8 +4114,11 @@ function ueno_buscar_auditoria($usuario)
 
 	$sql = "SELECT a.id_auditoria, a.fecha_hora, a.accion, a.tabla_afectada, a.registro_id, a.cod_pagoFK,
 		a.id_movimiento, a.estado_anterior, a.estado_nuevo, a.monto, a.usuario, a.observacion,
+		$montoOriginalAuditoria AS monto_original_actual,
+		$montoDisponibleAuditoria AS monto_disponible_actual,
 		IFNULL(p.nrofactura,'') AS nrofactura,
 		IFNULL(per.nombre_persona,'') AS cliente_nombre,
+		IFNULL(per_usuario.nombre_persona,'') AS usuario_nombre,
 		IFNULL(cl.ci_cliente,'') AS cliente_doc,
 		IF(IFNULL(p.titulocuota,'')!='', p.titulocuota, IFNULL(cr.plazo,'')) AS cuota_detalle,
 		IFNULL(vt.cod_venta,'') AS cod_venta
@@ -4075,7 +4129,9 @@ function ueno_buscar_auditoria($usuario)
 		LEFT JOIN credito cr ON cr.idcredito=p.cod_creditoFK
 		LEFT JOIN venta vt ON vt.cod_venta=p.cod_venta_fk
 		LEFT JOIN persona per ON per.cod_persona=vt.cod_clienteFK
+		LEFT JOIN persona per_usuario ON per_usuario.cod_persona=a.usuario
 		LEFT JOIN cliente cl ON cl.cod_cliente=vt.cod_clienteFK
+		LEFT JOIN ueno_movimiento_bancario mv_auditoria ON mv_auditoria.id_movimiento=a.id_movimiento
 		$joinsMigracionAuditoria
 		$joinDepositoAuditoria
 		WHERE a.id_auditoria!='0' $condicion
@@ -4122,8 +4178,31 @@ function ueno_buscar_auditoria($usuario)
 		if ($clienteCuota == "") {
 			$clienteCuota = "-";
 		}
+		$usuarioNombre = trim((string)$row["usuario_nombre"]);
+		if ($usuarioNombre == "") {
+			$usuarioNombre = trim((string)$row["usuario"]);
+		}
+		$montoOriginalActual = max(0, (int)$row["monto_original_actual"]);
+		$montoDisponibleActual = max(0, (int)$row["monto_disponible_actual"]);
+		if ($montoDisponibleActual <= 0) {
+			$etiquetaDisponible = "<span class='ueno-audit-saldo ueno-audit-saldo--conciliado'>Sin saldo disponible</span>";
+		} else {
+			$claseSaldo = $montoOriginalActual > 0 && $montoDisponibleActual < $montoOriginalActual
+				? "ueno-audit-saldo--parcial"
+				: "ueno-audit-saldo--pendiente";
+			$etiquetaDisponible = "<span class='ueno-audit-saldo $claseSaldo'>Disponible: " . ueno_numero($montoDisponibleActual) . "</span>";
+		}
+		$montoAuditoriaHtml = "<div class='ueno-audit-monto-historico'>" . ueno_numero($row["monto"]) . "</div>" . $etiquetaDisponible;
+		$esRegistroImportacion = $row["tabla_afectada"] == "ueno_importacion_extracto" && (int)$row["registro_id"] > 0;
+		$atributosFilaAuditoria = $esRegistroImportacion
+			? " class='ueno-audit-import-row' role='button' tabindex='0' title='Ver registros del lote' onclick='uenoVerDetalleImportacionDesdeAuditoria(" . (int)$row["registro_id"] . ")' onkeydown='if(event.keyCode==13 || event.keyCode==32){event.preventDefault();uenoVerDetalleImportacionDesdeAuditoria(" . (int)$row["registro_id"] . ")}'"
+			: "";
+		$observacionHtml = ueno_escape_html($row["observacion"]);
+		if ($esRegistroImportacion) {
+			$observacionHtml .= "<span class='ueno-audit-import-link'>Ver registros del lote</span>";
+		}
 		$styleName = function_exists("CargarStyleTable") ? CargarStyleTable($styleName) : $styleName;
-		$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro'>"
+		$html .= "<table class='$styleName' border='1' cellspacing='1' cellpadding='5'><tr id='tbSelecRegistro'$atributosFilaAuditoria>"
 			. "<td style='width:4%;text-align:center'>" . (int)$row["id_auditoria"] . "</td>"
 			. "<td style='width:10%'>" . ueno_escape_html($row["fecha_hora"]) . "</td>"
 			. "<td style='width:11%'>" . ueno_escape_html($row["accion"]) . "</td>"
@@ -4133,9 +4212,9 @@ function ueno_buscar_auditoria($usuario)
 			. "<td style='width:13%'>" . ueno_escape_html($clienteCuota) . "</td>"
 			. "<td style='width:8%'>" . ueno_escape_html($row["estado_anterior"]) . "</td>"
 			. "<td style='width:8%'>" . ueno_escape_html($row["estado_nuevo"]) . "</td>"
-			. "<td style='width:7%;text-align:right'>" . ueno_numero($row["monto"]) . "</td>"
-			. "<td style='width:4%;text-align:center'>" . ueno_escape_html($row["usuario"]) . "</td>"
-			. "<td style='width:13%'>" . ueno_escape_html($row["observacion"]) . "</td>"
+			. "<td style='width:7%;text-align:right'>" . $montoAuditoriaHtml . "</td>"
+			. "<td style='width:10%;text-align:center'>" . ueno_escape_html($usuarioNombre) . "</td>"
+			. "<td style='width:7%'>" . $observacionHtml . "</td>"
 			. "</tr></table>";
 	}
 	mysqli_close($mysqli);

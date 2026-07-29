@@ -52264,6 +52264,60 @@ button.tratamiento-ubicacion-visual {
   vertical-align: middle;
 }
 
+#divConciliacionUeno .ueno-audit-monto-historico {
+  margin-bottom: 4px;
+  font-weight: 900;
+}
+
+#divConciliacionUeno .ueno-audit-saldo {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 7.5px;
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+}
+
+#divConciliacionUeno .ueno-audit-saldo--conciliado {
+  border-color: #86efac;
+  background: #dcfce7;
+  color: #166534;
+}
+
+#divConciliacionUeno .ueno-audit-saldo--parcial,
+#divConciliacionUeno .ueno-audit-saldo--pendiente {
+  border-color: #fdba74;
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+#divConciliacionUeno .ueno-audit-import-row {
+  cursor: pointer;
+}
+
+#divConciliacionUeno .ueno-audit-import-row:focus-visible td {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+
+#divConciliacionUeno .ueno-audit-import-link {
+  display: inline-flex;
+  margin-top: 5px;
+  padding: 3px 7px;
+  border: 1px solid #7dd3fc;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 7.5px;
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+}
+
 #divAbmGasto1 .flujo-filtros-secundarios {
   display: flex;
   align-items: flex-end;

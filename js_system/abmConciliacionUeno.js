@@ -1679,6 +1679,9 @@ function uenoCargarAuditoria(opciones) {
 	var accion = typeof opciones.accion !== "undefined"
 		? opciones.accion
 		: (document.getElementById("inptUenoAuditAccion") ? document.getElementById("inptUenoAuditAccion").value : "");
+	var estado = typeof opciones.estado !== "undefined"
+		? opciones.estado
+		: (document.getElementById("inptUenoAuditEstado") ? document.getElementById("inptUenoAuditEstado").value : "todos");
 
 	obtener_datos_user();
 	var datos = new FormData();
@@ -1689,6 +1692,7 @@ function uenoCargarAuditoria(opciones) {
 	datos.append("fecha_desde", fechaDesde || "");
 	datos.append("fecha_hasta", fechaHasta || "");
 	datos.append("accion", accion || "");
+	datos.append("estado", estado || "todos");
 
 	$.ajax({
 		data: datos,
@@ -1792,6 +1796,10 @@ function uenoBuscarImportacionesModal() {
 }
 
 function uenoVerDetalleImportacionDesdeImportacion(idImportacion) {
+	var btnCargar = document.getElementById("btnUenoDetalleCargarEnMesa");
+	if (btnCargar) {
+		btnCargar.style.display = "";
+	}
 	var comprobanteOrigen = document.getElementById("inptUenoModalBuscarComprobante");
 	var montoOrigen = document.getElementById("inptUenoModalBuscarMonto");
 	var comprobanteDestino = document.getElementById("inptUenoDetalleFiltroComprobante");
@@ -1803,6 +1811,14 @@ function uenoVerDetalleImportacionDesdeImportacion(idImportacion) {
 		montoDestino.value = montoOrigen.value;
 	}
 	uenoVerDetalleImportacion(idImportacion, true);
+}
+
+function uenoVerDetalleImportacionDesdeAuditoria(idImportacion) {
+	var btnCargar = document.getElementById("btnUenoDetalleCargarEnMesa");
+	if (btnCargar) {
+		btnCargar.style.display = "none";
+	}
+	uenoVerDetalleImportacion(idImportacion, false);
 }
 
 function uenoResumenDetalleImportacion(importacion) {
