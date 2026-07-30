@@ -12,3 +12,4 @@ archivox/
 /backup_db_local/
 
 .vscode/
+php_system/conexion.php

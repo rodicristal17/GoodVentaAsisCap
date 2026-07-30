@@ -8053,6 +8053,9 @@ var gestorAccesosRolOriginal="";
 var gestorAccesosRolTrabajo="";
 var gestorAccesosGruposAbiertos={};
 var gestorAccesosCargando=false;
+var gestorAccesosImpactoUsuarios=[];
+var gestorAccesosImpactoSeleccion={};
+var gestorAccesosImpactoRolNombre="";
 
 function gestorAccesosEscapar(valor) {
 	return String(valor===undefined || valor===null ? "" : valor).replace(/[&<>"']/g,function(caracter){
@@ -8454,29 +8457,133 @@ function gestorAccesosGuardar() {
 function gestorAccesosConfirmarGuardarRol() {
 	var rolId=gestorAccesosRolTrabajo;
 	gestorAccesosBloquear(true,"Calculando usuarios afectados...");
-	gestorAccesosPeticion({funt:"impactoRolGestor",rol_id:rolId}).done(function(responseText){
+	gestorAccesosPeticion({
+		funt:"impactoRolGestor",
+		rol_id:rolId,
+		catalogo_total:Object.keys(gestorAccesosEstados).length,
+		permisos:JSON.stringify(gestorAccesosSerializar())
+	}).done(function(responseText){
 		try{
 			var respuesta=$.parseJSON(responseText);
 			if(respuesta["1"]!=="exito"){throw new Error(respuesta["2"] || "No se pudo calcular el impacto.");}
-			var total=parseInt(respuesta.usuarios_afectados || 0,10);
-			var mensaje="¿Confirma actualizar la plantilla del rol "+String(respuesta.rol_nombre || "")+"?"
-				+"\nSe reemplazaran completamente los permisos efectivos de "+total+" usuario"+(total===1 ? "" : "s")+" y se eliminaran sus excepciones.";
-			if(!confirm(mensaje)){
-				gestorAccesosBloquear(false,"Guardado cancelado. No se modifico ningun usuario.");
-				return;
-			}
-			gestorAccesosBloquear(true,"Actualizando la plantilla y sus usuarios...");
-			gestorAccesosPeticion({
-				funt:"guardarRolGestor",
-				rol_id:rolId,
-				catalogo_total:Object.keys(gestorAccesosEstados).length,
-				permisos:JSON.stringify(gestorAccesosSerializar())
-			}).done(gestorAccesosProcesarGuardado).fail(gestorAccesosErrorGuardado);
+			gestorAccesosAbrirImpactoRol(respuesta);
+			gestorAccesosBloquear(false,"Seleccione los usuarios que desea actualizar.");
 		}catch(error){
 			gestorAccesosBloquear(false,error.message || "No se pudo calcular el impacto.");
 			ver_vetana_informativa("No se pudo guardar",error.message || "Intente nuevamente.","error");
 		}
 	}).fail(gestorAccesosErrorGuardado);
+}
+
+function gestorAccesosAbrirImpactoRol(respuesta) {
+	gestorAccesosImpactoUsuarios=respuesta.usuarios || [];
+	gestorAccesosImpactoSeleccion={};
+	gestorAccesosImpactoRolNombre=String(respuesta.rol_nombre || "");
+	var lista=document.getElementById("listaImpactoGestorAccesosRol");
+	var html="";
+	for(var i=0;i<gestorAccesosImpactoUsuarios.length;i++){
+		var usuario=gestorAccesosImpactoUsuarios[i];
+		var usuarioId=parseInt(usuario.id,10);
+		var cambios=parseInt(usuario.cambios || 0,10);
+		var habilitar=parseInt(usuario.habilitar || 0,10);
+		var bloquear=parseInt(usuario.bloquear || 0,10);
+		var seleccionable=cambios>0;
+		if(seleccionable){gestorAccesosImpactoSeleccion[usuarioId]=true;}
+		html+="<div class='gestor-accesos-impacto-usuario"+(seleccionable ? "" : " is-disabled")+"'>";
+		html+="<label><input type='checkbox' value='"+usuarioId+"' "+(seleccionable ? "checked" : "disabled")+" onchange='gestorAccesosCambiarSeleccionImpactoRol(this)'>";
+		html+="<span class='gestor-accesos-impacto-check' aria-hidden='true'></span>";
+		html+="<span class='gestor-accesos-impacto-identidad'><strong>"+gestorAccesosEscapar(usuario.nombre || ("Usuario #"+usuarioId))+"</strong><small>#"+usuarioId+" &middot; "+gestorAccesosEscapar(usuario.estado || "")+"</small></span></label>";
+		html+="<span class='gestor-accesos-impacto-metricas"+(seleccionable ? "" : " is-empty")+"'><strong>"+cambios+" cambio"+(cambios===1 ? "" : "s")+"</strong><small>"+habilitar+" habilita &middot; "+bloquear+" bloquea</small></span></div>";
+	}
+	if(lista){lista.innerHTML=html || "<div class='gestor-accesos-impacto-vacio'>Este rol no tiene usuarios activos asignados.</div>";}
+	gestorAccesosActualizarResumenImpactoRol();
+	var modal=document.getElementById("modalImpactoGestorAccesosRol");
+	if(modal){modal.style.display="flex";}
+}
+
+function gestorAccesosCambiarSeleccionImpactoRol(input) {
+	if(!input || input.disabled){return;}
+	var usuarioId=parseInt(input.value,10);
+	if(input.checked){
+		gestorAccesosImpactoSeleccion[usuarioId]=true;
+	}else{
+		delete gestorAccesosImpactoSeleccion[usuarioId];
+	}
+	var fila=input.closest ? input.closest(".gestor-accesos-impacto-usuario") : null;
+	if(fila){fila.classList.toggle("is-unselected",!input.checked);}
+	gestorAccesosActualizarResumenImpactoRol();
+}
+
+function gestorAccesosSeleccionarTodoImpactoRol(seleccionar) {
+	var lista=document.getElementById("listaImpactoGestorAccesosRol");
+	if(!lista){return;}
+	gestorAccesosImpactoSeleccion={};
+	var checks=lista.querySelectorAll("input[type='checkbox']");
+	for(var i=0;i<checks.length;i++){
+		if(checks[i].disabled){continue;}
+		checks[i].checked=seleccionar;
+		var usuarioId=parseInt(checks[i].value,10);
+		if(seleccionar){gestorAccesosImpactoSeleccion[usuarioId]=true;}
+		var fila=checks[i].closest ? checks[i].closest(".gestor-accesos-impacto-usuario") : null;
+		if(fila){fila.classList.toggle("is-unselected",!seleccionar);}
+	}
+	gestorAccesosActualizarResumenImpactoRol();
+}
+
+function gestorAccesosUsuariosSeleccionadosImpactoRol() {
+	var salida=[];
+	for(var usuarioId in gestorAccesosImpactoSeleccion){
+		if(Object.prototype.hasOwnProperty.call(gestorAccesosImpactoSeleccion,usuarioId) && gestorAccesosImpactoSeleccion[usuarioId]){
+			salida.push(parseInt(usuarioId,10));
+		}
+	}
+	salida.sort(function(a,b){return a-b;});
+	return salida;
+}
+
+function gestorAccesosActualizarResumenImpactoRol() {
+	var seleccionados=gestorAccesosUsuariosSeleccionadosImpactoRol();
+	var modificaciones=0;
+	for(var i=0;i<gestorAccesosImpactoUsuarios.length;i++){
+		var usuario=gestorAccesosImpactoUsuarios[i];
+		if(gestorAccesosImpactoSeleccion[parseInt(usuario.id,10)]){
+			modificaciones+=parseInt(usuario.cambios || 0,10);
+		}
+	}
+	var cambiosPlantilla=0;
+	for(var id in gestorAccesosEstados){
+		if(Object.prototype.hasOwnProperty.call(gestorAccesosEstados,id)
+			&& gestorAccesosEstados[id]!==gestorAccesosEstadosOriginales[id]){cambiosPlantilla++;}
+	}
+	var resumen=document.getElementById("resumenImpactoGestorAccesosRol");
+	if(resumen){
+		resumen.textContent="Se guardaran "+cambiosPlantilla+" cambio"+(cambiosPlantilla===1 ? "" : "s")+" en el rol "+gestorAccesosImpactoRolNombre+". Solo se actualizaran los usuarios seleccionados.";
+	}
+	var estado=document.getElementById("estadoSeleccionImpactoGestorAccesosRol");
+	if(estado){
+		estado.textContent=seleccionados.length+" usuario"+(seleccionados.length===1 ? "" : "s")+" seleccionado"+(seleccionados.length===1 ? "" : "s")+" · "+modificaciones+" modificacion"+(modificaciones===1 ? "" : "es");
+	}
+}
+
+function gestorAccesosCerrarImpactoRol() {
+	var modal=document.getElementById("modalImpactoGestorAccesosRol");
+	if(modal){modal.style.display="none";}
+	gestorAccesosBloquear(false,"Guardado cancelado. Los cambios siguen pendientes.");
+}
+
+function gestorAccesosConfirmarImpactoRol() {
+	if(gestorAccesosCargando){return;}
+	var seleccionados=gestorAccesosUsuariosSeleccionadosImpactoRol();
+	var modal=document.getElementById("modalImpactoGestorAccesosRol");
+	if(modal){modal.style.display="none";}
+	gestorAccesosBloquear(true,"Actualizando la plantilla y los usuarios seleccionados...");
+	gestorAccesosPeticion({
+		funt:"guardarRolGestor",
+		rol_id:gestorAccesosRolTrabajo,
+		catalogo_total:Object.keys(gestorAccesosEstados).length,
+		permisos:JSON.stringify(gestorAccesosSerializar()),
+		usuarios_seleccionados:JSON.stringify(seleccionados)
+	}).done(gestorAccesosProcesarGuardado).fail(gestorAccesosErrorGuardado);
 }
 
 function gestorAccesosProcesarGuardado(responseText) {
@@ -37449,6 +37556,13 @@ LISTA DE NIVELES
 */
 var idAbmListaNiveles="";
 var ControlVistaListaNiveles=""
+var accesosListaNivelOriginales={}
+var accesosListaNivelPendientes={}
+var accesosListaNivelTotalCatalogo=0
+var accesosListaNivelGuardando=false
+var accesosListaNivelImpactoUsuarios=[]
+var accesosListaNivelUsuariosSeleccionados={}
+var accesosListaNivelImpactoRolNombre=""
 function verCerrarFrmListaNiveles(d){
 	
 	  document.getElementById("divSegundoPlano").style.display="none"	
@@ -37773,12 +37887,24 @@ function verCerrarFrmDetallesAccesoListaNiveles(d){
 	if(d=="1"){
 	if(idAbmListaNiveles==""){
 			ver_vetana_informativa("Falto seleccionar un registro")
-		return false;
+			return false;
 	}
+	accesosListaNivelOriginales={}
+	accesosListaNivelPendientes={}
+	accesosListaNivelTotalCatalogo=0
+	accesosListaNivelGuardando=false
+	if(document.getElementById("inptBuscarDetallesAccesoListaNiveles1")){
+		document.getElementById("inptBuscarDetallesAccesoListaNiveles1").value=""
+	}
+	actualizarEstadoCambiosAccesosListaNivel()
 	document.getElementById("divDetallesAccesoListaNiveles").style.display="";
  document.getElementById("tdEfectoDetallesListaNiveles").className="magictime slideLeftReturn"
 	buscardetalleslistaniveles()
 	}else{
+	if(hayCambiosAccesosListaNivel() && !confirm("Hay cambios sin guardar. ¿Desea descartarlos y cerrar?")){
+		return false
+	}
+	cerrarModalImpactoAccesosListaNivel()
 	//document.getElementById("divDetallesAccesoListaNiveles").style.display="none";
 document.getElementById("tdEfectoDetallesListaNiveles").className="magictime slideRight"
 	$("div[id=divDetallesAccesoListaNiveles]").fadeOut(500);	
@@ -37856,6 +37982,7 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					if (document.getElementById("lblNroRegistroDetallesAccesoListaNiveles")) {
 						document.getElementById("lblNroRegistroDetallesAccesoListaNiveles").innerHTML = totalRegistros == 1 ? "1 permiso" : totalRegistros + " permisos"
 					}
+					aplicarEstadoTemporalAccesosListaNivel(totalRegistros)
                   
 				  
 if(datos_buscados==""){
@@ -37874,82 +38001,251 @@ ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error",
 }
 function abmaccesolistanivel(d) {
 	if(controlacceso("VERLISTADODENIVELES","accion")==false){return;}
-	var intpu=$(d)
-	var idabm=d.id
-	var accion="NO"
-	if ($(intpu).is(':checked') ){
-	accion="SI"
+	if(accesosListaNivelGuardando){
+		d.checked=!d.checked
+		return
 	}
-	verCerrarEfectoCargando("1")
-	var datos = new FormData();
-	obtener_datos_user();
-	datos.append("usuarios_idusario", userid)
-	datos.append("useru", userid)
-	datos.append("passu", passuser)
-	datos.append("navegador", navegador)
-	datos.append("funt", "editaracceso")
-	datos.append("idabm", idabm)
-	datos.append("acciones", accion)
-	var OpAjax = $.ajax({
-		data: datos,
-		url: "/GoodVentaAsisCap/php_system/ABMListadoNiveles.php",
-		type: "post",
-		cache: false,
-		contentType: false,
-		processData: false,
-		xhr: function () {
-        var xhr = new window.XMLHttpRequest();
-        //Uload progress
-        xhr.upload.addEventListener("progress" ,function (evt) {
-        var porce= ~~((evt.loaded / evt.total) * 100); 
-		if(porce>90){
-		porce=Number(porce)-7				
+	var accesoId=String(d.getAttribute("data-acceso-id") || "")
+	if(accesoId==""){
+		d.checked=!d.checked
+		ver_vetana_informativa("No se pudo identificar el permiso.","Vuelva a cargar la pantalla.","error")
+		return
+	}
+	var accion=d.checked ? "SI" : "NO"
+	accesosListaNivelPendientes[accesoId]=accion
+	actualizarVistaAccesoListaNivel(d,accion)
+	actualizarEstadoCambiosAccesosListaNivel()
+}
+
+function aplicarEstadoTemporalAccesosListaNivel(totalRegistros) {
+	var contenedor=document.getElementById("divBuscadorDetallesAccesoListaNiveles")
+	if(!contenedor){return}
+	var inputs=contenedor.querySelectorAll("input[data-acceso-id]")
+	var esCargaCompleta=String(document.getElementById("inptBuscarDetallesAccesoListaNiveles1").value || "").trim()==""
+	if(esCargaCompleta){
+		accesosListaNivelTotalCatalogo=parseInt(totalRegistros || inputs.length,10)
+	}
+	for(var i=0;i<inputs.length;i++){
+		var input=inputs[i]
+		var accesoId=String(input.getAttribute("data-acceso-id") || "")
+		var estadoBase=input.checked ? "SI" : "NO"
+		if(!Object.prototype.hasOwnProperty.call(accesosListaNivelOriginales,accesoId)){
+			accesosListaNivelOriginales[accesoId]=estadoBase
 		}
-		document.getElementById("lbltitulomensaje_b").innerHTML="Cargando<br>("+porce+"%)";
-		var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-		kb=0.1;
+		if(!Object.prototype.hasOwnProperty.call(accesosListaNivelPendientes,accesoId)){
+			accesosListaNivelPendientes[accesoId]=estadoBase
 		}
-         cargarConectividad("enviado",kb,"0")           
-        }, false);
- //Download progress
-		xhr.addEventListener("progress", function (evt) {
-        var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-		kb=0.1;
+		input.checked=accesosListaNivelPendientes[accesoId]=="SI"
+		actualizarVistaAccesoListaNivel(input,accesosListaNivelPendientes[accesoId])
+	}
+	actualizarEstadoCambiosAccesosListaNivel()
+}
+
+function contarCambiosAccesosListaNivel() {
+	var total=0
+	for(var accesoId in accesosListaNivelPendientes){
+		if(Object.prototype.hasOwnProperty.call(accesosListaNivelPendientes,accesoId)
+			&& accesosListaNivelPendientes[accesoId]!==accesosListaNivelOriginales[accesoId]){
+			total++
 		}
-        cargarConectividad("recibido","0",kb)  
-        }, false);
-        return xhr;
-    },
-		
-		error: function (jqXHR, textstatus, errorThrowm) {
-			verCerrarEfectoCargando("")
-			d.checked = accion != "SI"
-			actualizarVistaAccesoListaNivel(d, d.checked ? "SI" : "NO")
-			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
-			return false;
-		},
-		success: function (responseText) {
-			verCerrarEfectoCargando("")
-			Respuesta = responseText;
-			console.log(Respuesta)
-			try {
-				var datos = $.parseJSON(Respuesta);
-				Respuesta = datos["1"];
-                Respuesta=respuestaJqueryAjax(Respuesta)
-				if (Respuesta == true) {					
-					actualizarVistaAccesoListaNivel(d, accion)
-					ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")	
-					
-					}			
-			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-					var titulo="Error: "+error+" \r\n Consola: "+responseText
-				GuardarArchivosLog(titulo)
+	}
+	return total
+}
+
+function hayCambiosAccesosListaNivel() {
+	return contarCambiosAccesosListaNivel()>0
+}
+
+function actualizarEstadoCambiosAccesosListaNivel() {
+	var cambios=contarCambiosAccesosListaNivel()
+	var estado=document.getElementById("lblCambiosDetallesAccesoListaNiveles")
+	var boton=document.getElementById("btnGuardarCambiosDetallesAccesoListaNiveles")
+	if(estado){
+		estado.textContent=cambios>0 ? cambios+" cambio"+(cambios==1 ? "" : "s")+" pendiente"+(cambios==1 ? "" : "s")+" de guardar." : "Sin cambios pendientes."
+	}
+	if(boton){
+		boton.disabled=accesosListaNivelGuardando || cambios===0
+		boton.textContent=accesosListaNivelGuardando ? "Guardando..." : "Guardar cambios"
+	}
+}
+
+function serializarAccesosListaNivel() {
+	var salida=[]
+	var ids=Object.keys(accesosListaNivelPendientes).sort(function(a,b){return parseInt(a,10)-parseInt(b,10)})
+	for(var i=0;i<ids.length;i++){
+		salida.push({id:parseInt(ids[i],10),accion:accesosListaNivelPendientes[ids[i]]=="SI" ? "SI" : "NO"})
+	}
+	return salida
+}
+
+function prepararGuardadoAccesosListaNivel() {
+	if(accesosListaNivelGuardando || !hayCambiosAccesosListaNivel()){return}
+	if(Object.keys(accesosListaNivelPendientes).length!==accesosListaNivelTotalCatalogo){
+		ver_vetana_informativa("No se puede guardar","El catalogo completo de permisos no esta cargado. Cierre y vuelva a abrir la pantalla.","error")
+		return
+	}
+	accesosListaNivelGuardando=true
+	actualizarEstadoCambiosAccesosListaNivel()
+	gestorAccesosPeticion({
+		funt:"impactoRolGestor",
+		rol_id:idAbmListaNiveles,
+		catalogo_total:accesosListaNivelTotalCatalogo,
+		permisos:JSON.stringify(serializarAccesosListaNivel())
+	}).done(function(responseText){
+		try{
+			var respuesta=$.parseJSON(responseText)
+			if(respuesta["1"]!=="exito"){throw new Error(respuesta["2"] || "No se pudo calcular el impacto.")}
+			abrirModalImpactoAccesosListaNivel(respuesta)
+			accesosListaNivelGuardando=false
+			actualizarEstadoCambiosAccesosListaNivel()
+		}catch(error){
+			accesosListaNivelGuardando=false
+			actualizarEstadoCambiosAccesosListaNivel()
+			ver_vetana_informativa("No se puede guardar",error.message || "No se pudo calcular el impacto.","error")
+		}
+	}).fail(function(jqXHR,textstatus){
+		accesosListaNivelGuardando=false
+		actualizarEstadoCambiosAccesosListaNivel()
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+	})
+}
+
+function abrirModalImpactoAccesosListaNivel(respuesta) {
+	var usuarios=respuesta.usuarios || []
+	var lista=document.getElementById("listaImpactoDetallesAccesoListaNiveles")
+	var html=""
+	accesosListaNivelImpactoUsuarios=usuarios
+	accesosListaNivelUsuariosSeleccionados={}
+	accesosListaNivelImpactoRolNombre=String(respuesta.rol_nombre || "")
+	for(var i=0;i<usuarios.length;i++){
+		var usuario=usuarios[i]
+		var usuarioId=parseInt(usuario.id,10)
+		var cambiosUsuario=parseInt(usuario.cambios || 0,10)
+		var seleccionable=cambiosUsuario>0
+		if(seleccionable){accesosListaNivelUsuariosSeleccionados[usuarioId]=true}
+		html+="<div class='detalles-acceso-impacto-usuario"+(seleccionable ? "" : " is-disabled")+"'>"
+		html+="<label class='detalles-acceso-impacto-check'>"
+		html+="<input type='checkbox' value='"+usuarioId+"' "+(seleccionable ? "checked" : "disabled")+" onchange='cambiarSeleccionImpactoAccesosListaNivel(this)'>"
+		html+="<span class='detalles-acceso-impacto-checkmark' aria-hidden='true'></span>"
+		html+="<span class='detalles-acceso-impacto-identidad'><strong>"+gestorAccesosEscapar(usuario.nombre || ("Usuario #"+usuario.id))+"</strong><small>#"+usuarioId+" &middot; "+gestorAccesosEscapar(usuario.estado || "")+"</small></span>"
+		html+="</label></div>"
+	}
+	if(lista){lista.innerHTML=html || "<div class='detalles-acceso-impacto-vacio'>Este rol no tiene usuarios asignados.</div>"}
+	if(lista && usuarios.length){
+		var filasImpacto=lista.querySelectorAll(".detalles-acceso-impacto-usuario")
+		for(var indiceImpacto=0;indiceImpacto<filasImpacto.length;indiceImpacto++){
+			var usuarioImpacto=usuarios[indiceImpacto] || {}
+			var cambiosUsuario=parseInt(usuarioImpacto.cambios || 0,10)
+			var habilitar=parseInt(usuarioImpacto.habilitar || 0,10)
+			var bloquear=parseInt(usuarioImpacto.bloquear || 0,10)
+			var metricas=document.createElement("div")
+			metricas.className="detalles-acceso-impacto-metricas"+(cambiosUsuario===0 ? " is-empty" : "")
+			metricas.innerHTML="<strong>"+cambiosUsuario+" cambio"+(cambiosUsuario===1 ? "" : "s")+"</strong><small>"+habilitar+" habilita · "+bloquear+" bloquea</small>"
+			filasImpacto[indiceImpacto].appendChild(metricas)
+		}
+	}
+	actualizarResumenSeleccionImpactoAccesosListaNivel()
+	document.getElementById("modalImpactoDetallesAccesoListaNiveles").style.display="flex"
+}
+
+function cambiarSeleccionImpactoAccesosListaNivel(input) {
+	if(!input || input.disabled){return}
+	var usuarioId=parseInt(input.value,10)
+	if(input.checked){
+		accesosListaNivelUsuariosSeleccionados[usuarioId]=true
+	}else{
+		delete accesosListaNivelUsuariosSeleccionados[usuarioId]
+	}
+	var fila=input.closest ? input.closest(".detalles-acceso-impacto-usuario") : null
+	if(fila){fila.classList.toggle("is-unselected",!input.checked)}
+	actualizarResumenSeleccionImpactoAccesosListaNivel()
+}
+
+function seleccionarTodosImpactoAccesosListaNivel(seleccionar) {
+	var lista=document.getElementById("listaImpactoDetallesAccesoListaNiveles")
+	if(!lista){return}
+	var checks=lista.querySelectorAll(".detalles-acceso-impacto-check input[type='checkbox']")
+	accesosListaNivelUsuariosSeleccionados={}
+	for(var i=0;i<checks.length;i++){
+		if(checks[i].disabled){continue}
+		checks[i].checked=seleccionar
+		var usuarioId=parseInt(checks[i].value,10)
+		if(seleccionar){accesosListaNivelUsuariosSeleccionados[usuarioId]=true}
+		var fila=checks[i].closest ? checks[i].closest(".detalles-acceso-impacto-usuario") : null
+		if(fila){fila.classList.toggle("is-unselected",!seleccionar)}
+	}
+	actualizarResumenSeleccionImpactoAccesosListaNivel()
+}
+
+function usuariosSeleccionadosAccesosListaNivel() {
+	var seleccionados=[]
+	for(var usuarioId in accesosListaNivelUsuariosSeleccionados){
+		if(accesosListaNivelUsuariosSeleccionados.hasOwnProperty(usuarioId) && accesosListaNivelUsuariosSeleccionados[usuarioId]){
+			seleccionados.push(parseInt(usuarioId,10))
+		}
+	}
+	seleccionados.sort(function(a,b){return a-b})
+	return seleccionados
+}
+
+function actualizarResumenSeleccionImpactoAccesosListaNivel() {
+	var seleccionados=usuariosSeleccionadosAccesosListaNivel()
+	var modificaciones=0
+	for(var i=0;i<accesosListaNivelImpactoUsuarios.length;i++){
+		var usuario=accesosListaNivelImpactoUsuarios[i]
+		if(accesosListaNivelUsuariosSeleccionados[parseInt(usuario.id,10)]){
+			modificaciones+=parseInt(usuario.cambios || 0,10)
+		}
+	}
+	var estado=document.getElementById("estadoSeleccionImpactoDetallesAccesoListaNiveles")
+	if(estado){
+		estado.textContent=seleccionados.length+" usuario"+(seleccionados.length===1 ? "" : "s")+" seleccionado"+(seleccionados.length===1 ? "" : "s")+" · "+modificaciones+" modificacion"+(modificaciones===1 ? "" : "es")
+	}
+	var resumen=document.getElementById("resumenImpactoDetallesAccesoListaNiveles")
+	if(resumen){
+		var cambios=contarCambiosAccesosListaNivel()
+		resumen.textContent="Se guardaran "+cambios+" cambio"+(cambios===1 ? "" : "s")+" en el rol "+accesosListaNivelImpactoRolNombre+". Solo se actualizaran "+seleccionados.length+" usuario"+(seleccionados.length===1 ? "" : "s")+", con "+modificaciones+" modificaciones efectivas."
+	}
+}
+
+function cerrarModalImpactoAccesosListaNivel() {
+	var modal=document.getElementById("modalImpactoDetallesAccesoListaNiveles")
+	if(modal){modal.style.display="none"}
+}
+
+function confirmarGuardadoAccesosListaNivel() {
+	if(accesosListaNivelGuardando){return}
+	accesosListaNivelGuardando=true
+	cerrarModalImpactoAccesosListaNivel()
+	actualizarEstadoCambiosAccesosListaNivel()
+	gestorAccesosPeticion({
+		funt:"guardarRolGestor",
+		rol_id:idAbmListaNiveles,
+		catalogo_total:accesosListaNivelTotalCatalogo,
+		permisos:JSON.stringify(serializarAccesosListaNivel()),
+		usuarios_seleccionados:JSON.stringify(usuariosSeleccionadosAccesosListaNivel())
+	}).done(function(responseText){
+		try{
+			var respuesta=$.parseJSON(responseText)
+			if(respuesta["1"]!=="exito"){throw new Error(respuesta["2"] || "No se autorizaron los cambios.")}
+			accesosListaNivelOriginales=$.extend({},accesosListaNivelPendientes)
+			accesosListaNivelGuardando=false
+			actualizarEstadoCambiosAccesosListaNivel()
+			ver_vetana_informativa("Cambios guardados",respuesta["2"] || "Los permisos fueron actualizados.","exito")
+			if(String(respuesta.sesion_afectada || "")=="1"){
+				setTimeout(function(){window.location.reload()},900)
 			}
+		}catch(error){
+			accesosListaNivelGuardando=false
+			actualizarEstadoCambiosAccesosListaNivel()
+			ver_vetana_informativa("No se pudo guardar",error.message || "No se modificaron los permisos.","error")
 		}
-	});
+	}).fail(function(jqXHR,textstatus){
+		accesosListaNivelGuardando=false
+		actualizarEstadoCambiosAccesosListaNivel()
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+		ver_vetana_informativa("No se pudo guardar","No se modificaron los permisos.","error")
+	})
 }
 function actualizarVistaAccesoListaNivel(input, accion) {
 	var fila = input ? $(input).closest(".lista-niveles-acceso-row")[0] : null

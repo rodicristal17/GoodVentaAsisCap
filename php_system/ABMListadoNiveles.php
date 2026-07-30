@@ -359,6 +359,7 @@ function sincronizarAccesoUsuariosNivel($mysqli, $iddetallesniveles, $acciones)
 		INNER JOIN usuario us ON us.cod_usuario = acus.usuarios_idusario
 		SET acus.accion = ?
 		WHERE us.Acceso = ?
+			AND UPPER(TRIM(IFNULL(us.estado,''))) = 'ACTIVO'
 			AND acus.idlistadodeaccesoFK = ?
 			AND acus.tipo = 'Administrativo'";
 	$stmtUpdate = $mysqli->prepare($sqlUpdate);
@@ -539,7 +540,7 @@ function buscardetalles($idAbmListaNiveles,$buscar)
 	$mysqli=conectar_al_servidor();
 	 $pagina='';
 	
-		$sql= "Select dts.iddetallesniveles,lta.nro,lta.formulario,lta.codigo,lta.nombre,dts.accion 
+		$sql= "Select dts.iddetallesniveles,lta.idlistadodeacceso,lta.nro,lta.formulario,lta.codigo,lta.nombre,dts.accion 
         from listado_niveles lts inner join detallesniveles dts on dts.cod_nivelesfk=lts.cod_niveles 
 		inner join listadodeacceso lta on lta.idlistadodeacceso=dts.idlistadodeacceso
 		where cod_nivelesfk='".$idAbmListaNiveles."' and  lta.formulario like '%".$buscar."%' order by lta.nro asc,lta.orden asc";
@@ -564,6 +565,7 @@ $controltitulo="";
 		  
 		  
 		     $iddetallesniveles=$valor['iddetallesniveles'];
+		     $idlistadodeacceso=$valor['idlistadodeacceso'];
 		  	  $nro=mb_convert_encoding((string)($valor['nro']), 'UTF-8', 'ISO-8859-1');
 		  	  $formulario=mb_convert_encoding((string)($valor['formulario']), 'UTF-8', 'ISO-8859-1');
 		  	  $codigo=mb_convert_encoding((string)($valor['codigo']), 'UTF-8', 'ISO-8859-1');
@@ -587,7 +589,7 @@ $controltitulo="";
 				   $controltitulo=$formulario;
 			 }
 		  	 $inputcheck="<label class='lista-niveles-switch'>
-		  	 <input id='".$iddetallesniveles."' type='checkbox'".$checked." onclick='abmaccesolistanivel(this)' />
+		  	 <input id='".$iddetallesniveles."' data-acceso-id='".$idlistadodeacceso."' type='checkbox'".$checked." onclick='abmaccesolistanivel(this)' />
 		  	 <span class='lista-niveles-switch-track'></span>
 		  	 <span class='lista-niveles-switch-text'>".$textoEstado."</span>
 		  	 </label>";

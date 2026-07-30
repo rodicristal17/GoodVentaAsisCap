@@ -250,6 +250,7 @@ function gestorAccesosCatalogoBase($mysqli)
 			COUNT(DISTINCT u.cod_usuario) AS usuarios
 		FROM listado_niveles ln
 		LEFT JOIN usuario u ON u.acceso=CAST(ln.cod_niveles AS CHAR)
+			AND UPPER(TRIM(IFNULL(u.estado,'')))='ACTIVO'
 		WHERE ln.tipo='Administrativo'
 		GROUP BY ln.cod_niveles,ln.nombre,ln.estado
 		ORDER BY CASE WHEN UPPER(TRIM(IFNULL(ln.estado,'')))='ACTIVO' THEN 0 ELSE 1 END,ln.nombre";
@@ -273,6 +274,7 @@ function gestorAccesosCatalogoBase($mysqli)
 		FROM usuario u
 		LEFT JOIN persona p ON p.cod_persona=u.cod_usuario
 		LEFT JOIN listado_niveles ln ON ln.cod_niveles=CAST(u.acceso AS UNSIGNED)
+		WHERE UPPER(TRIM(IFNULL(u.estado,'')))='ACTIVO'
 		ORDER BY CASE WHEN UPPER(TRIM(IFNULL(u.estado,'')))='ACTIVO' THEN 0 ELSE 1 END,
 			IFNULL(p.nombre_persona,u.login)";
 	$resultUsuarios = $mysqli->query($sqlUsuarios);
@@ -380,9 +382,9 @@ function gestorAccesosCargar($usuarioObjetivo, $usuarioSesion, $rolObjetivo = ''
 	}
 	$mysqli = conectar_al_servidor();
 	$usuario = gestorAccesosObtenerUsuario($mysqli, intval($usuarioObjetivo));
-	if (!$usuario) {
+	if (!$usuario || strtoupper(trim((string)$usuario['estado'])) !== 'ACTIVO') {
 		mysqli_close($mysqli);
-		responderAccesos("DI", array("2" => "El usuario seleccionado no existe."));
+		responderAccesos("DI", array("2" => "El usuario seleccionado no existe o se encuentra inactivo."));
 	}
 	$rolId = intval($usuario['acceso']);
 	$rolObjetivo = trim((string)$rolObjetivo);
@@ -590,7 +592,8 @@ function gestorAccesosGuardarUsuario($usuarioSesion)
 	$mysqli = conectar_al_servidor();
 	$usuario = gestorAccesosObtenerUsuario($mysqli, intval($usuarioId));
 	$rol = gestorAccesosObtenerRol($mysqli, intval($rolId));
-	if (!$usuario || !$rol || strtoupper(trim((string)$rol['estado'])) !== 'ACTIVO') {
+	if (!$usuario || strtoupper(trim((string)$usuario['estado'])) !== 'ACTIVO'
+		|| !$rol || strtoupper(trim((string)$rol['estado'])) !== 'ACTIVO') {
 		mysqli_close($mysqli);
 		responderAccesos("DI", array("2" => "El usuario o el rol ya no se encuentra disponible."));
 	}
@@ -682,18 +685,76 @@ function gestorAccesosImpactoRol($rolId)
 		mysqli_close($mysqli);
 		responderAccesos("DI");
 	}
-	$stmt = $mysqli->prepare("SELECT COUNT(*) FROM usuario WHERE acceso=?");
+	$estadosPropuestos = null;
+	$json = isset($_POST['permisos']) ? trim((string)$_POST['permisos']) : '';
+	if ($json !== '') {
+		$total = isset($_POST['catalogo_total']) ? intval($_POST['catalogo_total']) : 0;
+		$estadosPropuestos = gestorAccesosNormalizarEstados($mysqli, $json, $total);
+		if ($estadosPropuestos === null) {
+			mysqli_close($mysqli);
+			responderAccesos("DESACTUALIZADO", array("2" => "El catalogo de permisos cambio. Vuelva a cargar antes de guardar."));
+		}
+		if ($estadosPropuestos === false) {
+			mysqli_close($mysqli);
+			responderAccesos("DI", array("2" => "La matriz de permisos recibida no es valida."));
+		}
+	}
+	$stmt = $mysqli->prepare("SELECT u.cod_usuario,
+			IFNULL(NULLIF(TRIM(p.nombre_persona),''),u.login) AS nombre_usuario,
+			u.estado
+		FROM usuario u
+		LEFT JOIN persona p ON p.cod_persona=u.cod_usuario
+		WHERE u.acceso=?
+			AND UPPER(TRIM(IFNULL(u.estado,'')))='ACTIVO'
+		ORDER BY CASE WHEN UPPER(TRIM(IFNULL(u.estado,'')))='ACTIVO' THEN 0 ELSE 1 END,
+			IFNULL(NULLIF(TRIM(p.nombre_persona),''),u.login)");
 	$stmt->bind_param('s', $rolId);
 	$stmt->execute();
-	$total = 0;
-	$stmt->bind_result($total);
-	$stmt->fetch();
+	$resultado = $stmt->get_result();
+	$usuarios = array();
+	$totalCambiosUsuarios = 0;
+	$usuariosConCambios = 0;
+	while ($fila = $resultado->fetch_assoc()) {
+		$cambios = 0;
+		$habilitar = 0;
+		$bloquear = 0;
+		if (is_array($estadosPropuestos)) {
+			$estadosActuales = gestorAccesosEstadosUsuario($mysqli, intval($fila["cod_usuario"]));
+			foreach ($estadosPropuestos as $idAcceso => $accionNueva) {
+				$accionActual = isset($estadosActuales[$idAcceso]) ? $estadosActuales[$idAcceso] : "NO";
+				if ($accionActual === $accionNueva) {
+					continue;
+				}
+				$cambios++;
+				if ($accionNueva === "SI") {
+					$habilitar++;
+				} else {
+					$bloquear++;
+				}
+			}
+		}
+		$totalCambiosUsuarios += $cambios;
+		if ($cambios > 0) {
+			$usuariosConCambios++;
+		}
+		$usuarios[] = array(
+			"id" => intval($fila["cod_usuario"]),
+			"nombre" => gestorAccesosUtf8($fila["nombre_usuario"]),
+			"estado" => gestorAccesosUtf8($fila["estado"]),
+			"cambios" => $cambios,
+			"habilitar" => $habilitar,
+			"bloquear" => $bloquear
+		);
+	}
 	$stmt->close();
 	mysqli_close($mysqli);
 	responderAccesos("exito", array(
 		"rol_id" => intval($rolId),
 		"rol_nombre" => gestorAccesosUtf8($rol['nombre']),
-		"usuarios_afectados" => intval($total)
+		"usuarios_afectados" => count($usuarios),
+		"usuarios_con_cambios" => $usuariosConCambios,
+		"cambios_usuarios" => $totalCambiosUsuarios,
+		"usuarios" => $usuarios
 	));
 }
 
@@ -728,15 +789,40 @@ function gestorAccesosGuardarRol($usuarioSesion)
 		responderAccesos("PROTEGIDO", array("2" => "No puede quitar al rol actual su propio permiso para administrar accesos."));
 	}
 
-	$usuariosRol = array();
-	$stmtUsuarios = $mysqli->prepare("SELECT cod_usuario FROM usuario WHERE acceso=? ORDER BY cod_usuario");
+	$usuariosRolDisponibles = array();
+	$stmtUsuarios = $mysqli->prepare("SELECT cod_usuario
+		FROM usuario
+		WHERE acceso=?
+			AND UPPER(TRIM(IFNULL(estado,'')))='ACTIVO'
+		ORDER BY cod_usuario");
 	$stmtUsuarios->bind_param('s', $rolId);
 	$stmtUsuarios->execute();
 	$resultUsuarios = $stmtUsuarios->get_result();
 	while ($fila = $resultUsuarios->fetch_assoc()) {
-		$usuariosRol[] = intval($fila['cod_usuario']);
+		$usuariosRolDisponibles[] = intval($fila['cod_usuario']);
 	}
 	$stmtUsuarios->close();
+	$usuariosRol = $usuariosRolDisponibles;
+	if (array_key_exists('usuarios_seleccionados', $_POST)) {
+		$seleccionRecibida = json_decode((string)$_POST['usuarios_seleccionados'], true);
+		if (!is_array($seleccionRecibida)) {
+			mysqli_close($mysqli);
+			responderAccesos("DI", array("2" => "La seleccion de usuarios no es valida."));
+		}
+		$usuariosRol = array();
+		$usuariosPermitidos = array_flip($usuariosRolDisponibles);
+		foreach ($seleccionRecibida as $usuarioSeleccionado) {
+			$usuarioId = intval($usuarioSeleccionado);
+			if ((string)$usuarioId !== trim((string)$usuarioSeleccionado)
+				|| $usuarioId <= 0
+				|| !isset($usuariosPermitidos[$usuarioId])) {
+				mysqli_close($mysqli);
+				responderAccesos("DI", array("2" => "La seleccion contiene usuarios inactivos o ajenos al rol."));
+			}
+			$usuariosRol[$usuarioId] = $usuarioId;
+		}
+		$usuariosRol = array_values($usuariosRol);
+	}
 	$resumenNuevo = gestorAccesosResumenEstados($mysqli, $estados);
 
 	if (!$mysqli->begin_transaction()) {

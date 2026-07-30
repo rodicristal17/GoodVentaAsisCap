@@ -1089,6 +1089,41 @@ function usuarioEstaInactivo($estado)
 	return strtolower(trim((string)$estado)) == "inactivo";
 }
 
+function bloquearAccesosUsuarioInactivo($mysqli,$cod_usuario)
+{
+	$cod_usuario=(int)$cod_usuario;
+	$stmt=$mysqli->prepare("UPDATE accesosuser
+		SET accion='NO'
+		WHERE usuarios_idusario=?
+			AND UPPER(TRIM(IFNULL(accion,'')))<>'NO'");
+	if(!$stmt){
+		responderErrorAbmUsuario("El usuario quedo inactivo, pero no se pudo preparar la revocacion de sus permisos.",$mysqli->error);
+	}
+	$stmt->bind_param('i',$cod_usuario);
+	if(!$stmt->execute()){
+		$error=$stmt->error;
+		$stmt->close();
+		responderErrorAbmUsuario("El usuario quedo inactivo, pero no se pudieron bloquear todos sus permisos.",$error);
+	}
+	$stmt->close();
+}
+
+function cerrarSesionesUsuarioInactivo($mysqli,$cod_usuario)
+{
+	$cod_usuario=(int)$cod_usuario;
+	$stmt=$mysqli->prepare("DELETE FROM seguridad WHERE id_usuario=?");
+	if(!$stmt){
+		responderErrorAbmUsuario("El usuario quedo inactivo, pero no se pudo preparar el cierre de sus sesiones.",$mysqli->error);
+	}
+	$stmt->bind_param('i',$cod_usuario);
+	if(!$stmt->execute()){
+		$error=$stmt->error;
+		$stmt->close();
+		responderErrorAbmUsuario("El usuario quedo inactivo, pero no se pudieron cerrar todas sus sesiones.",$error);
+	}
+	$stmt->close();
+}
+
 function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion,$cod_localFK)
 {
 	asegurarEstructuraHorarioUsuarioEsperado($mysqli);
@@ -2025,6 +2060,11 @@ if($operacion!="nuevo" && $operacion!="editar"){
 	responderErrorAbmUsuario("No se pudo guardar el funcionario porque la operacion solicitada no es valida.");
 }
 
+if($operacion=="editar" && usuarioEstaInactivo($estado)
+	&& (string)$cod_usuario===(string)$cod_usuario_accion){
+	responderErrorAbmUsuario("No puede inactivar su propio usuario mientras tiene la sesion iniciada.");
+}
+
 if($operacion==="nuevo"){
 	crearFuncionarioGuiadoTelar(
 		$tipo,$nombre_persona,$telefono,$rut_usuario,$login,$password,$estado,$acceso,$cod_localFK,
@@ -2189,12 +2229,22 @@ if (!(empty($ext))) {
 if($operacion=="nuevo"){
 $cod_usuario=obtenerUltimaid();
 abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion,$cod_localFK);
-EliminarAccesos($cod_usuario);
-generarKEYS($acceso,$cod_usuario,'Administrativo');
+if(usuarioEstaInactivo($estado)){
+	bloquearAccesosUsuarioInactivo($mysqli,$cod_usuario);
+	cerrarSesionesUsuarioInactivo($mysqli,$cod_usuario);
+}else{
+	EliminarAccesos($cod_usuario);
+	generarKEYS($acceso,$cod_usuario,'Administrativo');
+}
 }else{
 abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_accion,$cod_localFK);
-EliminarAccesos($cod_usuario);
-generarKEYS($acceso,$cod_usuario,'Administrativo');
+if(usuarioEstaInactivo($estado)){
+	bloquearAccesosUsuarioInactivo($mysqli,$cod_usuario);
+	cerrarSesionesUsuarioInactivo($mysqli,$cod_usuario);
+}else{
+	EliminarAccesos($cod_usuario);
+	generarKEYS($acceso,$cod_usuario,'Administrativo');
+}
 }
 
 if($operacion=="editar"){

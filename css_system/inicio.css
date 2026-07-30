@@ -37843,17 +37843,28 @@ button.tratamiento-ubicacion-visual {
 
 /* Listado de niveles */
 #divAbmListaNiveles {
+    top: 72px;
+    height: calc(100% - 72px);
     z-index: 1000;
 }
 
 #divDetallesAccesoListaNiveles {
+    position: fixed;
+    top: 72px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    height: auto;
+    box-sizing: border-box;
+    overflow: hidden;
     z-index: 1200;
 }
 
 #divAbmListaNiveles .lista-niveles-modal {
     width: min(1060px, calc(100vw - 34px));
     min-height: 0;
-    max-height: calc(100vh - 34px);
+    max-height: calc(100vh - 106px);
     box-sizing: border-box;
     border: 0;
     border-radius: 8px;
@@ -38009,8 +38020,8 @@ button.tratamiento-ubicacion-visual {
 
     #divAbmListaNiveles .lista-niveles-modal {
         width: 100vw;
-        max-height: 100vh;
-        min-height: 100vh;
+        max-height: calc(100vh - 228px);
+        min-height: 0;
         border-radius: 0;
     }
 
@@ -38297,6 +38308,29 @@ button.tratamiento-ubicacion-visual {
 
     #divAbmListaNiveles .lista-niveles-table-wrap {
         height: calc(100vh - 330px) !important;
+    }
+}
+
+@media (max-width: 980px) {
+    #divAbmListaNiveles {
+        top: 184px;
+        height: calc(100% - 184px);
+    }
+
+    #divAbmListaNiveles .lista-niveles-modal {
+        max-height: calc(100vh - 218px);
+    }
+}
+
+@media (max-width: 620px) {
+    #divAbmListaNiveles {
+        top: 228px;
+        height: calc(100% - 228px);
+    }
+
+    #divAbmListaNiveles .lista-niveles-modal {
+        max-height: calc(100vh - 228px);
+        min-height: calc(100vh - 228px);
     }
 }
 
@@ -38847,9 +38881,12 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divDetallesAccesoListaNiveles .detalles-acceso-niveles-modal {
+    display: flex;
+    flex-direction: column;
     width: min(1120px, calc(100vw - 36px));
-    min-height: 0;
-    max-height: calc(100vh - 36px);
+    height: calc(100vh - 108px);
+    min-height: 0 !important;
+    max-height: calc(100vh - 108px);
     box-sizing: border-box;
     border: 0;
     border-radius: 8px;
@@ -38859,6 +38896,7 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divDetallesAccesoListaNiveles .detalles-acceso-niveles-header {
+    flex: 0 0 auto;
     height: auto;
     margin: 0;
     padding: 0;
@@ -38891,6 +38929,10 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divDetallesAccesoListaNiveles .detalles-acceso-niveles-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
     width: 100%;
     box-sizing: border-box;
     margin: 0;
@@ -38898,6 +38940,14 @@ button.tratamiento-ubicacion-visual {
     border: 0;
     border-radius: 0;
     background: #f7f9fc;
+    text-align: left;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-niveles-body > center {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
     text-align: left;
 }
 
@@ -39004,13 +39054,351 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divDetallesAccesoListaNiveles .detalles-acceso-table-wrap {
+    flex: 0 0 auto;
     width: 100%;
-    height: min(62vh, 620px);
+    height: clamp(180px, calc(100vh - 405px), 450px) !important;
+    min-height: 180px;
     box-sizing: border-box;
     margin: 0;
     border: 1px solid #d8e0ea;
     border-radius: 0 0 8px 8px;
     background: #ffffff;
+    overflow-x: hidden;
+    overflow-y: auto !important;
+    scrollbar-gutter: stable;
+    overscroll-behavior: contain;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-table-wrap::-webkit-scrollbar {
+    width: 12px;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-table-wrap::-webkit-scrollbar-track {
+    background: #eef2f6;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-table-wrap::-webkit-scrollbar-thumb {
+    border: 3px solid #eef2f6;
+    border-radius: 999px;
+    background: #98a2b3;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-table-wrap::-webkit-scrollbar-thumb:hover {
+    background: #667085;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-footer {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #d8e0ea;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-footer-status {
+    margin: 0;
+    color: #667085;
+    font-family: "Merriweather Sans", Arial;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-save {
+    min-width: 170px;
+    height: 42px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 9px;
+    background: #0f65b8;
+    color: #ffffff;
+    font-family: "Merriweather Sans", Arial;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(15, 101, 184, 0.22);
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-save:hover:not(:disabled) {
+    background: #0b539b;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-save:disabled {
+    background: #cbd5e1;
+    color: #64748b;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    box-sizing: border-box;
+    background: rgba(15, 23, 42, 0.62);
+    backdrop-filter: blur(4px);
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-dialog {
+    display: flex;
+    flex-direction: column;
+    width: min(620px, calc(100vw - 36px));
+    max-height: min(680px, calc(100vh - 120px));
+    overflow: hidden;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.34);
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 22px 14px;
+    border-bottom: 1px solid #e3e8ef;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-eyebrow {
+    margin: 0 0 4px;
+    color: #0f65b8;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-header h3 {
+    margin: 0;
+    color: #172033;
+    font-size: 22px;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-close {
+    width: 38px;
+    height: 38px;
+    border: 1px solid #fecaca;
+    border-radius: 50%;
+    background: #fff5f5;
+    color: #d92d20;
+    font-size: 25px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-resumen {
+    margin: 0;
+    padding: 14px 22px;
+    background: #edf5ff;
+    color: #344054;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-seleccion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 22px;
+    border-bottom: 1px solid #e3e8ef;
+    background: #ffffff;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-seleccion > div {
+    display: flex;
+    gap: 8px;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-seleccion button {
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid #c9d7e8;
+    border-radius: 7px;
+    background: #f8fbff;
+    color: #0f65b8;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-seleccion button:focus-visible,
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-check input:focus-visible + .detalles-acceso-impacto-checkmark {
+    outline: 3px solid rgba(15, 101, 184, 0.25);
+    outline-offset: 2px;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-seleccion p {
+    margin: 0;
+    color: #475467;
+    font-size: 11px;
+    font-weight: 800;
+    text-align: right;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-lista {
+    flex: 1 1 auto;
+    min-height: 120px;
+    padding: 8px 22px;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-usuario {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 11px 4px;
+    border-bottom: 1px solid #edf1f5;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-usuario.is-unselected {
+    opacity: 0.58;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-usuario.is-disabled {
+    background: #fafbfc;
+    opacity: 0.7;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-check {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    cursor: pointer;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-check input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-checkmark {
+    position: relative;
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #9aa9bc;
+    border-radius: 5px;
+    background: #ffffff;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-check input:checked + .detalles-acceso-impacto-checkmark {
+    border-color: #0f65b8;
+    background: #0f65b8;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-check input:checked + .detalles-acceso-impacto-checkmark::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 10px;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-check input:disabled + .detalles-acceso-impacto-checkmark {
+    border-color: #d0d5dd;
+    background: #eaecf0;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-identidad {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-identidad strong {
+    color: #172033;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-identidad small {
+    margin-top: 3px;
+    color: #667085;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-metricas {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    min-width: 126px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    background: #fff7ed;
+    color: #9a3412;
+    text-align: right;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-metricas strong {
+    font-size: 12px;
+    font-weight: 900;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-metricas small {
+    margin-top: 2px;
+    color: inherit;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-metricas.is-empty {
+    background: #f1f5f9;
+    color: #667085;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-vacio {
+    padding: 26px 10px;
+    color: #667085;
+    font-size: 13px;
+    text-align: center;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 22px 20px;
+    border-top: 1px solid #e3e8ef;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-cancelar,
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-confirmar {
+    min-height: 40px;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-cancelar {
+    border: 1px solid #d8e0ea;
+    background: #ffffff;
+    color: #475467;
+}
+
+#divDetallesAccesoListaNiveles .detalles-acceso-impacto-confirmar {
+    border: 0;
+    background: #0f65b8;
+    color: #ffffff;
 }
 
 #divDetallesAccesoListaNiveles .lista-niveles-acceso-table {
@@ -39153,8 +39541,9 @@ button.tratamiento-ubicacion-visual {
 
     #divDetallesAccesoListaNiveles .detalles-acceso-niveles-modal {
         width: 100vw;
-        max-height: 100vh;
-        min-height: 100vh;
+        height: calc(100vh - 184px);
+        max-height: calc(100vh - 184px);
+        min-height: 0;
         border-radius: 0;
     }
 
@@ -39172,7 +39561,8 @@ button.tratamiento-ubicacion-visual {
     }
 
     #divDetallesAccesoListaNiveles .detalles-acceso-table-wrap {
-        height: calc(100vh - 230px);
+        height: clamp(120px, calc(100vh - 505px), 340px) !important;
+        min-height: 120px;
     }
 
     #divDetallesAccesoListaNiveles .lista-niveles-acceso-action {
@@ -39187,6 +39577,77 @@ button.tratamiento-ubicacion-visual {
     #divDetallesAccesoListaNiveles .lista-niveles-switch-text {
         min-width: 0;
         font-size: 11px;
+    }
+
+    #divDetallesAccesoListaNiveles .detalles-acceso-footer,
+    #divDetallesAccesoListaNiveles .detalles-acceso-impacto-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #divDetallesAccesoListaNiveles .detalles-acceso-impacto-usuario {
+        align-items: stretch;
+        flex-wrap: wrap;
+    }
+
+    #divDetallesAccesoListaNiveles .detalles-acceso-impacto-seleccion {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #divDetallesAccesoListaNiveles .detalles-acceso-impacto-seleccion > div {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    #divDetallesAccesoListaNiveles .detalles-acceso-impacto-seleccion p {
+        text-align: left;
+    }
+
+    #divDetallesAccesoListaNiveles .detalles-acceso-impacto-metricas {
+        width: 100%;
+        box-sizing: border-box;
+        text-align: left;
+    }
+
+    #divDetallesAccesoListaNiveles .detalles-acceso-save,
+    #divDetallesAccesoListaNiveles .detalles-acceso-impacto-cancelar,
+    #divDetallesAccesoListaNiveles .detalles-acceso-impacto-confirmar {
+        width: 100%;
+    }
+}
+
+@media (max-width: 980px) {
+    #divDetallesAccesoListaNiveles {
+        top: 184px;
+        height: auto;
+    }
+
+    #divDetallesAccesoListaNiveles .detalles-acceso-niveles-modal {
+        height: calc(100vh - 218px);
+        max-height: calc(100vh - 218px);
+    }
+
+    #divDetallesAccesoListaNiveles .detalles-acceso-table-wrap {
+        height: clamp(120px, calc(100vh - 505px), 340px) !important;
+    }
+}
+
+@media (max-width: 620px) {
+    #divDetallesAccesoListaNiveles {
+        top: 228px;
+        height: auto;
+    }
+
+    #divDetallesAccesoListaNiveles .detalles-acceso-niveles-modal {
+        height: calc(100vh - 228px);
+        max-height: calc(100vh - 228px);
+        min-height: 0;
+    }
+
+    #divDetallesAccesoListaNiveles .detalles-acceso-table-wrap {
+        height: clamp(90px, calc(100vh - 535px), 260px) !important;
+        min-height: 90px;
     }
 }
 
@@ -41303,6 +41764,244 @@ button.tratamiento-ubicacion-visual {
   cursor: wait;
 }
 
+#divVistaAcceso .gestor-accesos-impacto-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: rgba(15, 23, 42, .58);
+  box-sizing: border-box;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(650px, 100%);
+  max-height: min(760px, calc(100vh - 28px));
+  overflow: hidden;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .32);
+}
+
+#divVistaAcceso .gestor-accesos-impacto-dialog > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid #e3e8ef;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-dialog > header p {
+  margin: 0 0 4px;
+  color: #0f65b8;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-dialog > header h3 {
+  margin: 0;
+  color: #172033;
+  font-size: 22px;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-dialog > header button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #fecaca;
+  border-radius: 50%;
+  background: #fff5f5;
+  color: #d92d20;
+  cursor: pointer;
+  font-size: 25px;
+  font-weight: 900;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-resumen {
+  margin: 0;
+  padding: 13px 22px;
+  background: #edf5ff;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-seleccion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 22px;
+  border-bottom: 1px solid #e3e8ef;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-seleccion > div {
+  display: flex;
+  gap: 8px;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-seleccion button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid #c9d7e8;
+  border-radius: 7px;
+  background: #f8fbff;
+  color: #0f65b8;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-seleccion p {
+  margin: 0;
+  color: #475467;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: right;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-lista {
+  flex: 1 1 auto;
+  min-height: 120px;
+  padding: 8px 22px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-usuario {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 4px;
+  border-bottom: 1px solid #edf1f5;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-usuario.is-unselected {
+  opacity: .58;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-usuario.is-disabled {
+  background: #fafbfc;
+  opacity: .7;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-usuario > label {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-usuario > label input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-check {
+  position: relative;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #9aa9bc;
+  border-radius: 5px;
+  background: #ffffff;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-usuario input:checked + .gestor-accesos-impacto-check {
+  border-color: #0f65b8;
+  background: #0f65b8;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-usuario input:checked + .gestor-accesos-impacto-check::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 10px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+#divVistaAcceso .gestor-accesos-impacto-usuario input:disabled + .gestor-accesos-impacto-check {
+  border-color: #d0d5dd;
+  background: #eaecf0;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-identidad {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-identidad strong {
+  color: #172033;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-identidad small {
+  margin-top: 3px;
+  color: #667085;
+  font-size: 11px;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-metricas {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  min-width: 126px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #9a3412;
+  text-align: right;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-metricas strong {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-metricas small {
+  margin-top: 2px;
+  color: inherit;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-metricas.is-empty {
+  background: #f1f5f9;
+  color: #667085;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-vacio {
+  padding: 28px 12px;
+  color: #667085;
+  text-align: center;
+}
+
+#divVistaAcceso .gestor-accesos-impacto-dialog > footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px 20px;
+  border-top: 1px solid #e3e8ef;
+}
+
 @media (max-width: 960px) {
   #divVistaAcceso .accesos-visual-selectors {
     grid-template-columns: 1fr 1.25fr 1fr;
@@ -41363,6 +42062,46 @@ button.tratamiento-ubicacion-visual {
   #divVistaAcceso .accesos-visual-footer__actions,
   #divVistaAcceso .accesos-visual-footer__actions button {
     width: 100%;
+  }
+
+  #divVistaAcceso .gestor-accesos-impacto-modal {
+    padding: 0;
+  }
+
+  #divVistaAcceso .gestor-accesos-impacto-dialog {
+    width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  #divVistaAcceso .gestor-accesos-impacto-seleccion {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  #divVistaAcceso .gestor-accesos-impacto-seleccion > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #divVistaAcceso .gestor-accesos-impacto-seleccion p {
+    text-align: left;
+  }
+
+  #divVistaAcceso .gestor-accesos-impacto-usuario {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  #divVistaAcceso .gestor-accesos-impacto-metricas {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+  }
+
+  #divVistaAcceso .gestor-accesos-impacto-dialog > footer {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 

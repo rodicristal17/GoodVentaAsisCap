@@ -17,9 +17,5 @@ return  $mysqli;
 
 }
 
-// ricardo centurion
-// jaquelin marin
-// belen estigarribia
-// michael macoritto
 
 ?>

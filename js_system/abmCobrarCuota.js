@@ -45,8 +45,12 @@ function cobrarCuotaEsCuotaCobrable(cuota) {
 	return Number(cuota.saldo_pendiente_num || 0) > 0 && estado != "PAGADA" && estado != "ANULADA";
 }
 
+function cobrarCuotaEsEntrega(cuota) {
+	return cobrarCuotaNormalizarTexto(cuota && cuota.cuota).toUpperCase() == "ENTREGA";
+}
+
 function cobrarCuotaAnteriorPendienteNoSeleccionada(cuota) {
-	if (!cuota || !cuota.idcredito) {
+	if (!cuota || !cuota.idcredito || cobrarCuotaEsEntrega(cuota)) {
 		return null;
 	}
 	for (var i = 0; i < cobrarCuotaCuotas.length; i++) {
@@ -54,7 +58,7 @@ function cobrarCuotaAnteriorPendienteNoSeleccionada(cuota) {
 		if (String(anterior.idcredito || "") == String(cuota.idcredito)) {
 			break;
 		}
-		if (cobrarCuotaEsCuotaCobrable(anterior) && !cobrarCuotaEstaSeleccionada(anterior.idcredito)) {
+		if (!cobrarCuotaEsEntrega(anterior) && cobrarCuotaEsCuotaCobrable(anterior) && !cobrarCuotaEstaSeleccionada(anterior.idcredito)) {
 			return anterior;
 		}
 	}
@@ -77,7 +81,7 @@ function cobrarCuotaAvisarOrdenPendiente(cuota) {
 }
 
 function cobrarCuotaPosteriorSeleccionada(cuota) {
-	if (!cuota || !cuota.idcredito) {
+	if (!cuota || !cuota.idcredito || cobrarCuotaEsEntrega(cuota)) {
 		return null;
 	}
 	var encontroActual = false;
@@ -87,7 +91,7 @@ function cobrarCuotaPosteriorSeleccionada(cuota) {
 			encontroActual = true;
 			continue;
 		}
-		if (encontroActual && cobrarCuotaEstaSeleccionada(item.idcredito)) {
+		if (encontroActual && !cobrarCuotaEsEntrega(item) && cobrarCuotaEstaSeleccionada(item.idcredito)) {
 			return item;
 		}
 	}

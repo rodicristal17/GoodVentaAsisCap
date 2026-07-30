@@ -468,6 +468,7 @@ function cc_listar_cuotas_venta($usuario)
 		AND IFNULL(vt.estadocuenta,'Activo')!='Anulado'
 		AND vt.cod_venta='$ventaSql'
 		ORDER BY
+			CASE WHEN UPPER(TRIM(cr.plazo))='ENTREGA' THEN 0 ELSE 1 END ASC,
 			CASE WHEN cr.plazo REGEXP '^[0-9]+' THEN CAST(SUBSTRING_INDEX(cr.plazo,'/',1) AS UNSIGNED) ELSE 999999 END ASC,
 			cr.fechapago ASC,
 			cr.idcredito ASC";

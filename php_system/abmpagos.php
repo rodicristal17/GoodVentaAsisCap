@@ -22,6 +22,8 @@ function pago_validar_orden_cuota_cobrar($codCredito, $codVenta)
 		WHERE actual.idcredito=?
 		AND actual.cod_venta=?
 		AND IFNULL(anterior.Esado,'') NOT LIKE '%Anul%'
+		AND UPPER(TRIM(IFNULL(actual.plazo,'')))<>'ENTREGA'
+		AND UPPER(TRIM(IFNULL(anterior.plazo,'')))<>'ENTREGA'
 		AND (
 			(CASE WHEN anterior.plazo REGEXP '^[0-9]+' THEN CAST(SUBSTRING_INDEX(anterior.plazo,'/',1) AS UNSIGNED) ELSE 999999 END) <
 			(CASE WHEN actual.plazo REGEXP '^[0-9]+' THEN CAST(SUBSTRING_INDEX(actual.plazo,'/',1) AS UNSIGNED) ELSE 999999 END)
