@@ -1,0 +1,4 @@
+ERROR 1235 (42000) at line 959579: This version of MySQL doesn't yet support 'multiple triggers with the same action time and event for one table'
+ERROR 1235 (42000) at line 960085: This version of MySQL doesn't yet support 'multiple triggers with the same action time and event for one table'
+ERROR 1235 (42000) at line 961548: This version of MySQL doesn't yet support 'multiple triggers with the same action time and event for one table'
+ERROR 1452 (23000) at line 974377: Cannot add or update a child row: a foreign key constraint fails (`syscvxco_ac`.`#sql-1fa8_1bdc`, CONSTRAINT `fk_ueno_mov_pago_mov` FOREIGN KEY (`id_movimiento`) REFERENCES `ueno_movimiento_bancario` (`id_movimiento`))

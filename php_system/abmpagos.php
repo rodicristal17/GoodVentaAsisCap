@@ -1336,7 +1336,7 @@ if($nrofactura==""){
 $nrofactura=buscarnrofactura();
 }
 if($MontoCobrado>0){
-$tipopago='Efectivo';
+$tipopago=pago_nombre_tipo_pago($mysqli,$cod_TipoPago,"Efectivo");
 if($totalInteres>0){
 $totalDeudaCuotaControl=$totalDeudaCuota;
 
@@ -1405,7 +1405,7 @@ ueno_pago_registrar_conciliacion($mysqli, $idPagoInsertado, $cod_TipoPago, $Mont
 }
 
 if($MontoTarjeta>0){
-	$tipopago='Tarjeta';
+	$tipopago=pago_nombre_tipo_pago($mysqli,$cod_TipoPago,"Tarjeta");
 	$totalInteres2=$totalInteres-$interespagados;
 if($totalInteres2>0){
 $totalDeudaCuotaControl=$totalDeudaCuota;
