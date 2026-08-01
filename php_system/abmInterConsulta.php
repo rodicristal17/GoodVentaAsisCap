@@ -730,15 +730,43 @@
                         }
                         $stmtEdicion->close();
                     }
-                    $mysqliEdicion->close();
                     if (!$actualEdicion) {
+                        $mysqliEdicion->close();
                         echo json_encode(array("1" => "error", "2" => "No se encontro el hilo a editar."));
                         break;
                     }
 
-                    // El endpoint heredado no puede trasladar el hilo entre
-                    // locales ni reemplazar su venta vinculada.
-                    $cod_localFK= intval($actualEdicion['cod_localFK']);
+                    if ($cod_localFK === null || $cod_localFK <= 0
+                        || !interconsultaAccesoUsuarioPuedeUsarLocal($user, $cod_localFK, $mysqliEdicion)) {
+                        $mysqliEdicion->close();
+                        echo json_encode(array(
+                            "1" => "NI",
+                            "2" => "Seleccione un local activo para el cual tenga autorizacion."
+                        ));
+                        break;
+                    }
+                    $stmtLocalEdicion= $mysqliEdicion->prepare(
+                        "SELECT 1 FROM local WHERE cod_local=? AND estado='Activo' LIMIT 1"
+                    );
+                    $localEdicionActivo= false;
+                    if ($stmtLocalEdicion) {
+                        $stmtLocalEdicion->bind_param('i', $cod_localFK);
+                        if ($stmtLocalEdicion->execute()) {
+                            $localEdicionActivo= $stmtLocalEdicion->get_result()->num_rows > 0;
+                        }
+                        $stmtLocalEdicion->close();
+                    }
+                    $mysqliEdicion->close();
+                    if (!$localEdicionActivo) {
+                        echo json_encode(array(
+                            "1" => "error",
+                            "2" => "El local seleccionado no existe o esta inactivo."
+                        ));
+                        break;
+                    }
+
+                    // El local puede corregirse o trasladarse con autorizacion.
+                    // La venta vinculada y todos los registros relacionados se conservan.
                     $cod_ventaFK= isset($actualEdicion['cod_ventaFK']) ? intval($actualEdicion['cod_ventaFK']) : null;
                     if (normalizarTipoHiloInterConsulta($actualEdicion['tipo']) !== normalizarTipoHiloInterConsulta($tipo)) {
                         $resultadoReclasificacion= reclasificarHiloInterConsulta($cod_interConsulta, '', $tipo, $user);

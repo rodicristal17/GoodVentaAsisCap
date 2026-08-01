@@ -2274,7 +2274,11 @@ function ObtenerdatosAbmConsulta(elemento) {
 			break;
 		case "interConsulta":
 			document.getElementById("inptNombreClienteAbmInterConsulta").value= elemento.querySelector('#td_datos_1')?.textContent.trim();
-			document.getElementById('inptLocalAbmInterConsulta').value= document.getElementById("inptBuscarLocalPaciente").value
+			if (typeof asignarLocalAbmInterConsulta == "function") {
+				asignarLocalAbmInterConsulta(document.getElementById("inptBuscarLocalPaciente").value);
+			} else {
+				document.getElementById('inptLocalAbmInterConsulta').value= document.getElementById("inptBuscarLocalPaciente").value;
+			}
             buscarInterConsultasAsociadasPaciente(cod_clienteConsulta);
 			break;
 		default:

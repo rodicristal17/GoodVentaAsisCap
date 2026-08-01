@@ -5180,7 +5180,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 			}
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.90";
+var codigodeactualizacion="X-GT-1-JMTG-V1.91";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -20117,7 +20117,16 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 					document.getElementById("inptLocalProductoEnviarA").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados
 					document.getElementById("inptBuscarInterConsulta7").innerHTML = "<option value=''>TODOS</option>" +datos_buscados
 					document.getElementById("inptInformeDictamen5").innerHTML = "<option value=''>TODOS</option>" +datos_buscados
-					document.getElementById("inptLocalAbmInterConsulta").innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados;
+					var selectorLocalInterConsulta= document.getElementById("inptLocalAbmInterConsulta");
+					var localInterConsultaPendiente= selectorLocalInterConsulta.dataset.localPendiente
+						|| selectorLocalInterConsulta.value;
+					selectorLocalInterConsulta.innerHTML = "<option value=''>SELECCIONAR</option>" +datos_buscados;
+					if (localInterConsultaPendiente) {
+						selectorLocalInterConsulta.value= localInterConsultaPendiente;
+						if (selectorLocalInterConsulta.value === localInterConsultaPendiente) {
+							delete selectorLocalInterConsulta.dataset.localPendiente;
+						}
+					}
 					if (typeof sincronizarOpcionesRapidasInterConsulta == "function") {
 						sincronizarOpcionesRapidasInterConsulta();
 					}

@@ -7160,7 +7160,7 @@ function obtenerDatosInterConsulta(elemento) {
     document.getElementById('inptNombreClienteAbmInterConsulta').value= $(elemento).children('#td_datos_5').html();
     cod_clienteConsulta= $(elemento).children('#td_datos_7').html();
     document.getElementById('inptAsuntoAbmInterConsulta').value= $(elemento).children('#td_datos_10').html();
-    document.getElementById('inptLocalAbmInterConsulta').value= $(elemento).children('#td_datos_11').html();
+    asignarLocalAbmInterConsulta($(elemento).children('#td_datos_11').html());
     var tipoOriginal= $(elemento).children('#td_datos_6').html() || "";
     prepararCategoriaAbmDesdeTipo(tipoOriginal);
     document.getElementById('inptEstadoAbmInterConsulta').value= $(elemento).children('#td_datos_2').html();
@@ -7181,13 +7181,26 @@ function obtenerDetallesInterConsulta(origen) {
             document.getElementById('inptAsuntoAbmInterConsulta').value= elemento.querySelector('#td_datos_31')?.textContent.trim();
             prepararCategoriaAbmDesdeTipo(elemento.querySelector('#td_datos_33')?.textContent.trim() || "");
             document.getElementById('inptEstadoAbmInterConsulta').value= elemento.querySelector('#td_datos_32')?.textContent.trim();
-            document.getElementById('inptLocalAbmInterConsulta').value= elemento.querySelector('#td_datos_38')?.textContent.trim();
+            asignarLocalAbmInterConsulta(elemento.querySelector('#td_datos_38')?.textContent.trim());
             document.getElementById('inptMontoLimiteAbmInterConsulta').value= elemento.querySelector('#td_datos_41')?.textContent.trim();
             separadordemiles(document.getElementById('inptMontoLimiteAbmInterConsulta'));
             document.getElementById('inptObservacionAbmInterConsulta').value= elemento.querySelector('#td_datos_43')?.textContent.trim();
             verCerrarVentanaInterConsulta(true, 'divAbmDetallesInterConsulta');
             buscarInterConsultasAsociadasPaciente(cod_clienteConsulta);
             break;
+    }
+}
+
+function asignarLocalAbmInterConsulta(codLocal) {
+    var selector= document.getElementById('inptLocalAbmInterConsulta');
+    if (!selector) {
+        return;
+    }
+    var valor= String(codLocal || '').trim();
+    selector.dataset.localPendiente= valor;
+    selector.value= valor;
+    if (selector.value === valor && valor !== '') {
+        delete selector.dataset.localPendiente;
     }
 }
 
