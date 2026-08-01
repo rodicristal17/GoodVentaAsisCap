@@ -1105,7 +1105,9 @@ function renderProfesionalesPlanificadosAgenda(consultorio){
             + "Sin profesional planificado</span>";
     }
 
-    html += "<div class='agenda-plan-profesionales' aria-label='Profesionales vinculados a la planificaci&oacute;n'>";
+    html += "<div class='agenda-plan-profesionales"
+        + (profesionales.length === 1 ? " agenda-plan-profesionales--avatar-flotante" : "")
+        + "' aria-label='Profesionales vinculados a la planificaci&oacute;n'>";
     for(i = 0; i < profesionales.length; i++){
         profesional = profesionales[i];
         color = obtenerColorProfesionalAgenda(profesional.cod_profesional);
@@ -1215,6 +1217,7 @@ function cargarAgendaConsultorios(){
 
     var consultorios = [];
     var i, j, hora, minuto, contador_cita, ocupacionConsultorio;
+    var profesionalesPlanificados, avatarFlotante, hayAvatarFlotante = false;
     var html = '';
     var textoHora = '';
     var datosAlmuerzo = null;
@@ -1234,10 +1237,14 @@ function cargarAgendaConsultorios(){
         consultoriosSeleccionados.indexOf(String(agendaConsultoriosData.consultorios[i].id)) >= 0
     ){
         consultorios.push(agendaConsultoriosData.consultorios[i]);
+        if(obtenerProfesionalesPlanificadosConsultorioAgenda(agendaConsultoriosData.consultorios[i]).length === 1){
+            hayAvatarFlotante = true;
+        }
     }
 }
 
-    html += "<div class='agenda-grid' id='agendaGridInterno' style='--total-consultorios:" + consultorios.length + "'>";
+    html += "<div class='agenda-grid" + (hayAvatarFlotante ? " agenda-grid--avatar-flotante" : "")
+        + "' id='agendaGridInterno' style='--total-consultorios:" + consultorios.length + "'>";
 
     html += "<div class='agenda-header-row' style='--total-consultorios:" + consultorios.length + "'>";
     html += "<div class='agenda-celda-hora-header'>Hora</div>";
@@ -1245,14 +1252,18 @@ function cargarAgendaConsultorios(){
     for(i = 0; i < consultorios.length; i++){
         contador_cita = calcularTotalesResumenAgenda(fecha, '', String(consultorios[i].id));
         ocupacionConsultorio = calculateOccupancyRate(consultorios[i], fecha);
+        profesionalesPlanificados = obtenerProfesionalesPlanificadosConsultorioAgenda(consultorios[i]);
+        avatarFlotante = profesionalesPlanificados.length === 1;
             
-        html += "<div class='agenda-celda-consultorio' onclick='vercerrarModalAbmConsultorioAgenda(true);obtenerDatosAbmConsultorioAgenda(this)'>"
+        html += "<div class='agenda-celda-consultorio"
+            + (avatarFlotante ? " agenda-celda-consultorio--avatar-flotante" : "")
+            + "' onclick='vercerrarModalAbmConsultorioAgenda(true);obtenerDatosAbmConsultorioAgenda(this)'>"
             + "<span id='td_id' style='display:none;'>"+consultorios[i].id+"</span>"
-            + "<span id='td_datos_2' style='text-decoration: underline; color: blue;'>"+consultorios[i].nombre+"</span>"
+            + "<span id='td_datos_2' class='agenda-consultorio-titulo' style='text-decoration: underline; color: blue;'>"+consultorios[i].nombre+"</span>"
             + "<span id='td_datos_4' style='display:none;'>"+consultorios[i].cod_doctorFK+"</span>"
             + "<span id='td_datos_3' style='display:none;'>"+consultorios[i].nombre_doctor+"</span>"
             + renderProfesionalesPlanificadosAgenda(consultorios[i])
-            + "<span class='agenda-consultorio-sub'>" + consultorios[i].descripcion + "</span>"
+            + "<span class='agenda-consultorio-sub agenda-consultorio-descripcion'>" + consultorios[i].descripcion + "</span>"
             + renderOccupancyIndicatorAgenda(ocupacionConsultorio)
             + renderInsumosDiaConsultorioDropdownAgenda(consultorios[i].id, fecha)
 

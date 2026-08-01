@@ -93,13 +93,18 @@ $rutaPhp = $raiz.'/php_system/abmPlanificacionEspecialistas.php';
 $rutaJs = $raiz.'/js_system/planificacion_especialistas.js';
 $rutaCss = $raiz.'/css_system/planificacion_especialistas.css';
 $rutaHtml = $raiz.'/system/inicio.html';
+$rutaAgendaJs = $raiz.'/js_system/jsCalendar.js';
+$rutaAgendaCss = $raiz.'/css_system/cssCalendar.css';
 $fuentePhp = file_get_contents($rutaPhp);
 $fuenteJs = file_get_contents($rutaJs);
 $fuenteCss = file_get_contents($rutaCss);
 $fuenteHtml = file_get_contents($rutaHtml);
+$fuenteAgendaJs = file_get_contents($rutaAgendaJs);
+$fuenteAgendaCss = file_get_contents($rutaAgendaCss);
 
 pruebaPlanAfirmar(
-    $fuentePhp !== false && $fuenteJs !== false && $fuenteCss !== false && $fuenteHtml !== false,
+    $fuentePhp !== false && $fuenteJs !== false && $fuenteCss !== false
+    && $fuenteHtml !== false && $fuenteAgendaJs !== false && $fuenteAgendaCss !== false,
     'Los archivos del modulo se pueden inspeccionar.'
 );
 
@@ -249,6 +254,21 @@ pruebaPlanAfirmar(
     && strpos($fuenteCss, '.plan-remote-thread') !== false
     && strpos($fuenteCss, '.plan-remote-detail') !== false,
     'La advertencia multisucursal tiene estilos acotados, detalle e hilo propios.'
+);
+pruebaPlanAfirmar(
+    strpos($fuenteAgendaJs, 'agenda-plan-profesionales--avatar-flotante') !== false
+    && strpos($fuenteAgendaJs, 'agenda-celda-consultorio--avatar-flotante') !== false
+    && strpos($fuenteAgendaJs, 'profesionalesPlanificados.length === 1') !== false
+    && strpos($fuenteAgendaJs, 'agenda-grid--avatar-flotante') !== false,
+    'Agenda activa el avatar flotante solamente cuando existe un profesional identificado.'
+);
+pruebaPlanAfirmar(
+    strpos($fuenteAgendaCss, '--agenda-avatar-flotante-size:96px') !== false
+    && strpos($fuenteAgendaCss, '.agenda-plan-profesionales--avatar-flotante .agenda-plan-avatar') !== false
+    && strpos($fuenteAgendaCss, 'position:absolute') !== false
+    && strpos($fuenteAgendaCss, 'pointer-events:none') !== false
+    && strpos($fuenteAgendaCss, '.agenda-celda-consultorio--avatar-flotante > .agenda-insumos-dia-dropdown summary') !== false,
+    'El avatar sale del flujo y la informacion reserva espacio horizontal sin crecer en altura.'
 );
 
 preg_match(

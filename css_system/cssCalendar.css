@@ -470,8 +470,13 @@
 }
 
 .agenda-grid{
+    --agenda-column-min:220px;
     min-width:max-content;
     position:relative;
+}
+
+.agenda-grid--avatar-flotante{
+    --agenda-column-min:360px;
 }
 
 .agenda-seleccion-vacia{
@@ -577,7 +582,7 @@
 .agenda-header-row,
 .agenda-row{
     display:grid;
-    grid-template-columns:70px repeat(var(--total-consultorios), minmax(220px, 1fr));
+    grid-template-columns:70px repeat(var(--total-consultorios), minmax(var(--agenda-column-min), 1fr));
 }
 
 .agenda-header-row{
@@ -610,6 +615,26 @@
     position:sticky;
     top:0;
     z-index:15;
+}
+
+.agenda-celda-consultorio--avatar-flotante{
+    --agenda-avatar-flotante-size:96px;
+    --agenda-avatar-flotante-gutter:112px;
+    isolation:isolate;
+}
+
+.agenda-celda-consultorio--avatar-flotante > .agenda-consultorio-titulo,
+.agenda-celda-consultorio--avatar-flotante > .agenda-consultorio-descripcion{
+    width:calc(100% - var(--agenda-avatar-flotante-gutter));
+    max-width:calc(100% - var(--agenda-avatar-flotante-gutter));
+    margin-left:var(--agenda-avatar-flotante-gutter);
+    box-sizing:border-box;
+}
+
+.agenda-consultorio-titulo{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 }
 
 .agenda-celda-consultorio > span:not(.agenda-ocupacion-circulo),
@@ -658,6 +683,12 @@
     background:color-mix(in srgb, var(--agenda-plan-color) 7%, var(--sticky-bg));
 }
 
+.agenda-plan-profesionales--avatar-flotante .agenda-plan-profesional{
+    grid-template-columns:minmax(0, 1fr) 10px;
+    min-height:38px;
+    padding-left:var(--agenda-avatar-flotante-gutter);
+}
+
 .agenda-plan-profesional--pendiente_horario{
     border-style:dashed;
 }
@@ -677,6 +708,23 @@
     border:2px solid var(--agenda-plan-color);
     background:var(--sticky-bg);
     box-shadow:0 0 0 2px color-mix(in srgb, var(--agenda-plan-color) 12%, transparent);
+}
+
+.agenda-plan-profesionales--avatar-flotante .agenda-plan-avatar{
+    position:absolute;
+    top:50%;
+    left:4px;
+    z-index:4;
+    width:var(--agenda-avatar-flotante-size);
+    height:var(--agenda-avatar-flotante-size);
+    transform:translateY(-50%);
+    border-width:3px;
+    box-shadow:0 0 0 4px var(--sticky-bg), 0 10px 22px rgba(15, 58, 88, 0.2);
+    pointer-events:none;
+}
+
+.agenda-plan-profesionales--avatar-flotante .agenda-plan-avatar__fallback{
+    font-size:18px;
 }
 
 .agenda-plan-avatar img{
@@ -859,6 +907,10 @@
     background:rgba(238, 244, 251, 0.78);
     cursor:pointer;
     list-style:none;
+}
+
+.agenda-celda-consultorio--avatar-flotante > .agenda-insumos-dia-dropdown summary{
+    padding-left:calc(var(--agenda-avatar-flotante-gutter) + 7px);
 }
 
 .agenda-insumos-dia-dropdown summary::-webkit-details-marker{
