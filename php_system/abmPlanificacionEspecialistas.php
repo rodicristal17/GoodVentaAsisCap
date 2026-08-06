@@ -15,6 +15,7 @@ date_default_timezone_set('America/Asuncion');
 
 require_once __DIR__.'/conexion.php';
 require_once __DIR__.'/verificar_navegador.php';
+require_once __DIR__.'/planificacion_especialistas_helper.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -772,19 +773,16 @@ function planificacionConsultorios($mysqli, $codLocal)
     $stmt->execute();
     $resultado = $stmt->get_result();
     $consultorios = array();
-    $orden = 1;
     while ($resultado && ($fila = $resultado->fetch_assoc())) {
         $consultorios[] = array(
             'id_consultorio' => intval($fila['id_consultorio']),
             'nombre' => $fila['nombre'],
             'descripcion' => $fila['descripcion'],
-            'color' => $fila['color'],
-            'etiqueta' => 'C'.$orden
+            'color' => $fila['color']
         );
-        $orden++;
     }
     $stmt->close();
-    return $consultorios;
+    return planificacionOrdenarYRotularConsultorios($consultorios);
 }
 
 /**

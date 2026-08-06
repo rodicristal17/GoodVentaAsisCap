@@ -11,6 +11,7 @@
  */
 
 require_once dirname(__DIR__).'/php_system/conexion.php';
+require_once dirname(__DIR__).'/php_system/planificacion_especialistas_helper.php';
 
 function pruebaPlanFallar($mensaje)
 {
@@ -90,12 +91,14 @@ function pruebaPlanBloqueFuncionJs($fuente, $nombre)
 
 $raiz = dirname(__DIR__);
 $rutaPhp = $raiz.'/php_system/abmPlanificacionEspecialistas.php';
+$rutaHelper = $raiz.'/php_system/planificacion_especialistas_helper.php';
 $rutaJs = $raiz.'/js_system/planificacion_especialistas.js';
 $rutaCss = $raiz.'/css_system/planificacion_especialistas.css';
 $rutaHtml = $raiz.'/system/inicio.html';
 $rutaAgendaJs = $raiz.'/js_system/jsCalendar.js';
 $rutaAgendaCss = $raiz.'/css_system/cssCalendar.css';
 $fuentePhp = file_get_contents($rutaPhp);
+$fuenteHelper = file_get_contents($rutaHelper);
 $fuenteJs = file_get_contents($rutaJs);
 $fuenteCss = file_get_contents($rutaCss);
 $fuenteHtml = file_get_contents($rutaHtml);
@@ -103,9 +106,39 @@ $fuenteAgendaJs = file_get_contents($rutaAgendaJs);
 $fuenteAgendaCss = file_get_contents($rutaAgendaCss);
 
 pruebaPlanAfirmar(
-    $fuentePhp !== false && $fuenteJs !== false && $fuenteCss !== false
+    $fuentePhp !== false && $fuenteHelper !== false
+    && $fuenteJs !== false && $fuenteCss !== false
     && $fuenteHtml !== false && $fuenteAgendaJs !== false && $fuenteAgendaCss !== false,
     'Los archivos del modulo se pueden inspeccionar.'
+);
+
+$consultoriosDesordenados = array(
+    array('id_consultorio' => 5, 'nombre' => 'VILLA INDUSTRIAL CONSULTORIO 1'),
+    array('id_consultorio' => 10, 'nombre' => 'VILLA INDUTRIAL CONSULTORIO 3'),
+    array('id_consultorio' => 13, 'nombre' => 'VILLA INDUSTRIAL CONSULTORIO 2')
+);
+$consultoriosOrdenados = planificacionOrdenarYRotularConsultorios($consultoriosDesordenados);
+pruebaPlanAfirmar(
+    array_column($consultoriosOrdenados, 'id_consultorio') === array(5, 13, 10)
+    && array_column($consultoriosOrdenados, 'etiqueta') === array('C1', 'C2', 'C3'),
+    'Los consultorios se ordenan y rotulan por su numero real, no por el ID historico.'
+);
+$consultoriosSinNumero = planificacionOrdenarYRotularConsultorios(array(
+    array('id_consultorio' => 21, 'nombre' => 'SALA SUR'),
+    array('id_consultorio' => 20, 'nombre' => 'SALA NORTE')
+));
+pruebaPlanAfirmar(
+    array_column($consultoriosSinNumero, 'id_consultorio') === array(20, 21)
+    && array_column($consultoriosSinNumero, 'etiqueta') === array('C1', 'C2'),
+    'Los nombres antiguos sin numero conservan un orden y etiquetas deterministas.'
+);
+pruebaPlanAfirmar(
+    strpos($fuentePhp, "require_once __DIR__.'/planificacion_especialistas_helper.php';") !== false
+    && strpos(
+        pruebaPlanBloqueFuncionPhp($fuentePhp, 'planificacionConsultorios'),
+        'planificacionOrdenarYRotularConsultorios($consultorios)'
+    ) !== false,
+    'El catalogo de Planificacion aplica el orden visual compartido antes de responder.'
 );
 
 $bloqueOcupaciones = pruebaPlanBloqueFuncionPhp($fuentePhp, 'planificacionOcupacionesAgenda');
@@ -295,6 +328,28 @@ $mysqli = conectar_al_servidor();
 if (!$mysqli || $mysqli->connect_errno) {
     pruebaPlanFallar('No se pudo abrir la base local para las pruebas de solo lectura.');
 }
+
+$resultadoOrdenReal = $mysqli->query("SELECT id_consultorio,nombre
+    FROM consultorios
+    WHERE id_consultorio IN (5,10,13)");
+pruebaPlanAfirmar(
+    $resultadoOrdenReal !== false,
+    'Los consultorios del caso Villa Industrial se pueden auditar en solo lectura.'
+);
+$consultoriosOrdenReal = array();
+while ($filaOrdenReal = $resultadoOrdenReal->fetch_assoc()) {
+    $consultoriosOrdenReal[] = array(
+        'id_consultorio' => intval($filaOrdenReal['id_consultorio']),
+        'nombre' => $filaOrdenReal['nombre']
+    );
+}
+$resultadoOrdenReal->free();
+$consultoriosOrdenReal = planificacionOrdenarYRotularConsultorios($consultoriosOrdenReal);
+pruebaPlanAfirmar(
+    array_column($consultoriosOrdenReal, 'id_consultorio') === array(5, 13, 10)
+    && array_column($consultoriosOrdenReal, 'etiqueta') === array('C1', 'C2', 'C3'),
+    'Villa Industrial queda ordenado como consultorios reales 1, 2 y 3 sin cambiar sus IDs.'
+);
 
 $sqlEstructura = "SELECT COUNT(*)
     FROM information_schema.COLUMNS
