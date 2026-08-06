@@ -1435,7 +1435,19 @@ function centroFacturaInsertarDesdeMensajeEnTransaccion($mysqli, $mensaje, $vali
     $tipos = 'siisi'.str_repeat('s', 6).'d'.str_repeat('s', 4).'isisii';
     centroFacturaBind($stmt, $tipos, $parametros);
     if (!$stmt->execute()) {
-        $mensajeError = $stmt->errno == 1062 ? 'REGISTRO_DUPLICADO_ADJUNTO' : 'No se pudo crear el registro documental desde el Hilo.';
+        $numeroError = intval($stmt->errno);
+        $detalleError = trim((string)$stmt->error);
+        error_log(
+            'centro_facturas: fallo al crear registro desde Hilo'
+            .' errno='.$numeroError
+            .' error='.str_replace(array("\r", "\n"), ' ', $detalleError)
+            .' cod_mensaje='.$codMensaje
+            .' cod_hilo='.$hilo
+            .' cod_local='.$local
+            .' cod_usuario='.$codUsuario
+            .' tipo_documento='.$tipoDocumento
+        );
+        $mensajeError = $numeroError == 1062 ? 'REGISTRO_DUPLICADO_ADJUNTO' : 'No se pudo crear el registro documental desde el Hilo.';
         $stmt->close();
         return array('ok' => false, 'mensaje' => $mensajeError);
     }
@@ -1646,7 +1658,11 @@ function centroFacturaRegistrarDesdeGasto($idGasto, $codUsuario, $datos, $archiv
         if (trim((string)$gasto['url1']) === '') {
             throw new Exception('El archivo del egreso no quedo disponible.');
         }
-        if (!centroFacturaPuedeUsarLocal($codUsuario, $gasto['cod_local'], $mysqli)) {
+        $puedeDocumentoPorHilo = function_exists('gastoUsuarioPuedeGestionarLocalPorHilo')
+            && gastoUsuarioPuedeGestionarLocalPorHilo(
+                $mysqli, $codUsuario, $gasto['cod_local'], $gasto['cod_interConsultaFK']
+            );
+        if (!centroFacturaPuedeUsarLocal($codUsuario, $gasto['cod_local'], $mysqli) && !$puedeDocumentoPorHilo) {
             throw new Exception('No puede registrar documentos para el local del egreso.');
         }
         $stmt = $mysqli->prepare("SELECT id_factura,tipo_documento,estado_registro FROM centro_factura WHERE idgastosFK=? LIMIT 1");
@@ -1720,7 +1736,7 @@ function centroFacturaRegistrarDesdeGasto($idGasto, $codUsuario, $datos, $archiv
         if (!$stmt) {
             throw new Exception('No se pudo preparar el vinculo del archivo del egreso.');
         }
-        $stmt->bind_param('isssssi', $idFactura, $tipoOrigen, $url, $nombreArchivo, $extension, $mime, $hash, $codUsuario);
+        $stmt->bind_param('issssssi', $idFactura, $tipoOrigen, $url, $nombreArchivo, $extension, $mime, $hash, $codUsuario);
         if (!$stmt->execute()) {
             throw new Exception('No se pudo vincular el archivo del egreso.');
         }

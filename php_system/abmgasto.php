@@ -145,6 +145,31 @@ function usuarioPuedeGestionarLocalGasto($codUsuario, $codLocal)
 	return controldeaccesoacasas($codUsuario, 'CAMBIARLOCAL', " u.accion='SI' ") == 1;
 }
 
+function gastoUsuarioPuedeGestionarLocalPorHilo($mysqli, $codUsuario, $codLocal, $codInterConsulta)
+{
+	$codUsuario= intval($codUsuario);
+	$codLocal= intval($codLocal);
+	$codInterConsulta= intval($codInterConsulta);
+	if (!($mysqli instanceof mysqli) || $codUsuario <= 0 || $codLocal <= 0 || $codInterConsulta <= 0
+		|| controldeaccesoacasas($codUsuario, 'INSERTARLISTADOEGRESOINGRESO', " u.accion='SI' ") != 1) {
+		return false;
+	}
+	$stmt= $mysqli->prepare("SELECT tipo FROM interconsulta
+		WHERE cod_interConsulta=? AND cod_localFK=?
+			AND LOWER(TRIM(IFNULL(estado,'')))<>'inactivo' LIMIT 1");
+	if (!$stmt) {
+		return false;
+	}
+	$stmt->bind_param('ii', $codInterConsulta, $codLocal);
+	$filaHilo= null;
+	if ($stmt->execute()) {
+		$filaHilo= $stmt->get_result()->fetch_assoc();
+	}
+	$stmt->close();
+	return $filaHilo && function_exists('obtenerCategoriaPrincipalHilo')
+		&& obtenerCategoriaPrincipalHilo($filaHilo['tipo']) === 'pagos_egresos';
+}
+
 function gastoConceptosActivosParaIds($mysqli, $idsGastos, $bloquear = false)
 {
 	$idsGastos= gastoDistribucionNormalizarIdsExcluir($idsGastos);
@@ -221,7 +246,7 @@ function gastoDistribucionRepartirEquitativamente($monto, $locales)
 	return $asignaciones;
 }
 
-function gastoDistribucionValidarLocales($mysqli, $asignaciones, $codUsuario, $codLocalPago, $modo, $bloquear = false)
+function gastoDistribucionValidarLocales($mysqli, $asignaciones, $codUsuario, $codLocalPago, $modo, $bloquear = false, $codInterConsulta = 0)
 {
 	$locales= array_keys($asignaciones);
 	$codLocalPago= (int)$codLocalPago;
@@ -249,7 +274,10 @@ function gastoDistribucionValidarLocales($mysqli, $asignaciones, $codUsuario, $c
 	if ($codLocalPago <= 0 || !isset($activos[$codLocalPago])) {
 		throw new Exception('El local de pago ya no esta activo.');
 	}
-	if (!usuarioPuedeGestionarLocalGasto($codUsuario, $codLocalPago)) {
+	$puedeLocalPago= usuarioPuedeGestionarLocalGasto($codUsuario, $codLocalPago);
+	$puedeLocalPagoPorHilo= !$puedeLocalPago
+		&& gastoUsuarioPuedeGestionarLocalPorHilo($mysqli, $codUsuario, $codLocalPago, $codInterConsulta);
+	if (!$puedeLocalPago && !$puedeLocalPagoPorHilo) {
 		throw new Exception('No tiene permiso para registrar movimientos en el local de pago.');
 	}
 	$asignacionDesdeAdministracion= $codLocalPago === 1
@@ -260,13 +288,14 @@ function gastoDistribucionValidarLocales($mysqli, $asignaciones, $codUsuario, $c
 		if (!isset($activos[$codLocal])) {
 			throw new Exception('Una de las sucursales seleccionadas ya no esta activa.');
 		}
-		if (!$asignacionDesdeAdministracion && !usuarioPuedeGestionarLocalGasto($codUsuario, $codLocal)) {
+		$localCubiertoPorHilo= $puedeLocalPagoPorHilo && $codLocal === $codLocalPago;
+		if (!$asignacionDesdeAdministracion && !usuarioPuedeGestionarLocalGasto($codUsuario, $codLocal) && !$localCubiertoPorHilo) {
 			throw new Exception('No tiene permiso para asignar gastos a una de las sucursales seleccionadas.');
 		}
 	}
 }
 
-function gastoDistribucionNormalizarSolicitud($mysqli, $tipo, $codLocalPago, $montoTotal, $modo, $jsonAsignaciones, $codUsuario)
+function gastoDistribucionNormalizarSolicitud($mysqli, $tipo, $codLocalPago, $montoTotal, $modo, $jsonAsignaciones, $codUsuario, $codInterConsulta = 0)
 {
 	if (strtolower(trim((string)$tipo)) != 'egreso') {
 		return array('modo' => '', 'asignaciones' => array());
@@ -314,7 +343,7 @@ function gastoDistribucionNormalizarSolicitud($mysqli, $tipo, $codLocalPago, $mo
 	if (array_sum($asignaciones) !== $montoTotal) {
 		throw new Exception('La suma distribuida debe coincidir exactamente con el monto total del gasto.');
 	}
-	gastoDistribucionValidarLocales($mysqli, $asignaciones, $codUsuario, $codLocalPago, $modo);
+	gastoDistribucionValidarLocales($mysqli, $asignaciones, $codUsuario, $codLocalPago, $modo, false, $codInterConsulta);
 	return array('modo' => $modo, 'asignaciones' => $asignaciones);
 }
 
@@ -1226,6 +1255,8 @@ $codcaja=$_POST['codcaja'];
 $codcaja = mb_convert_encoding((string)($codcaja), 'ISO-8859-1', 'UTF-8');
 $idaperturacierrecaja=$_POST['idaperturacierrecaja'];
 $idaperturacierrecaja = mb_convert_encoding((string)($idaperturacierrecaja), 'ISO-8859-1', 'UTF-8');
+$cod_interConsultaFK= isset($_POST['cod_interConsultaFK']) ? $_POST['cod_interConsultaFK'] : '';
+$cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8859-1', 'UTF-8');
 $nroboleta=$_POST['nroboleta'];
 $nroboleta = mb_convert_encoding((string)($nroboleta), 'ISO-8859-1', 'UTF-8');
 $banco=$_POST['banco'];
@@ -1265,7 +1296,52 @@ if (controldeaccesoacasas($user, $permisoMovimiento, " u.accion='SI' ") != 1) {
 	echo json_encode($informacion);
 	exit;
 }
-if (!usuarioPuedeGestionarLocalGasto($user, $cod_local)) {
+$localAutorizadoPorHiloNuevo= false;
+if ($operacion == 'nuevo' && strtolower(trim((string)$tipo)) == 'egreso' && intval($cod_interConsultaFK) > 0) {
+	$mysqliLocalHilo= conectar_al_servidor();
+	$stmtLocalHilo= $mysqliLocalHilo->prepare("SELECT cod_localFK FROM interconsulta
+		WHERE cod_interConsulta=? AND LOWER(TRIM(IFNULL(estado,'')))<>'inactivo' LIMIT 1");
+	if (!$stmtLocalHilo) {
+		$mysqliLocalHilo->close();
+		echo json_encode(array('1'=>'error', '2'=>'No se pudo validar el local del Hilo seleccionado.'));
+		exit;
+	}
+	$hiloLocalId= intval($cod_interConsultaFK);
+	$stmtLocalHilo->bind_param('i', $hiloLocalId);
+	$stmtLocalHilo->execute();
+	$filaLocalHilo= $stmtLocalHilo->get_result()->fetch_assoc();
+	$stmtLocalHilo->close();
+	$localHilo= $filaLocalHilo ? intval($filaLocalHilo['cod_localFK']) : 0;
+	if ($localHilo <= 0 || !gastoUsuarioPuedeGestionarLocalPorHilo($mysqliLocalHilo, $user, $localHilo, $hiloLocalId)) {
+		$mysqliLocalHilo->close();
+		echo json_encode(array('1'=>'NI', '2'=>'El Hilo seleccionado no esta activo o no corresponde a Pagos y Egresos.'));
+		exit;
+	}
+	$cod_local= (string)$localHilo;
+	$localAutorizadoPorHiloNuevo= true;
+	if (intval($idaperturacierrecaja) > 0 && intval($codcaja) > 0) {
+		$stmtCajaHilo= $mysqliLocalHilo->prepare("SELECT 1 FROM arqueocaja
+			WHERE idarqueocaja=? AND caja_idcaja=? AND cod_local=?
+				AND LOWER(TRIM(IFNULL(estado,'')))='activo' LIMIT 1");
+		if (!$stmtCajaHilo) {
+			$mysqliLocalHilo->close();
+			echo json_encode(array('1'=>'error', '2'=>'No se pudo validar la caja del local del Hilo.'));
+			exit;
+		}
+		$aperturaHilo= intval($idaperturacierrecaja);
+		$cajaHilo= intval($codcaja);
+		$stmtCajaHilo->bind_param('iii', $aperturaHilo, $cajaHilo, $localHilo);
+		$cajaCoincideHilo= $stmtCajaHilo->execute() && $stmtCajaHilo->get_result()->num_rows > 0;
+		$stmtCajaHilo->close();
+		if (!$cajaCoincideHilo) {
+			$mysqliLocalHilo->close();
+			echo json_encode(array('1'=>'NI', '2'=>'La caja abierta no pertenece al local del Hilo. Seleccione una caja activa de ese local.'));
+			exit;
+		}
+	}
+	$mysqliLocalHilo->close();
+}
+if (!usuarioPuedeGestionarLocalGasto($user, $cod_local) && !$localAutorizadoPorHiloNuevo) {
 	$informacion= array("1" => "NI", "2" => "No puede guardar movimientos para el local seleccionado.");
 	echo json_encode($informacion);
 	exit;
@@ -1318,9 +1394,6 @@ if ($esDepositoCentral) {
 		exit;
 	}
 }
-
-$cod_interConsultaFK= $_POST['cod_interConsultaFK'];
-$cod_interConsultaFK= mb_convert_encoding((string)($cod_interConsultaFK), 'ISO-8859-1', 'UTF-8');
 
 $editar_cuotas= isset($_POST['editar_cuotas']) && (string)$_POST['editar_cuotas'] === 'true' ? 'true' : 'false';
 
@@ -1418,7 +1491,10 @@ if ($esDocumentoFinancieroGasto) {
 		echo json_encode($informacion);
 		exit;
 	}
-	if (!centroFacturaPuedeUsarLocal($user, $cod_local, $mysqliValidacionDocumento)) {
+	$puedeDocumentoPorHilo= $operacion == 'nuevo'
+		&& strtolower(trim((string)$tipo)) == 'egreso'
+		&& gastoUsuarioPuedeGestionarLocalPorHilo($mysqliValidacionDocumento, $user, $cod_local, $cod_interConsultaFK);
+	if (!centroFacturaPuedeUsarLocal($user, $cod_local, $mysqliValidacionDocumento) && !$puedeDocumentoPorHilo) {
 		$mysqliValidacionDocumento->close();
 		$informacion= array("1" => "NI", "2" => "No puede registrar documentos en el Centro de Facturas y Documentos para el local seleccionado.");
 		echo json_encode($informacion);
@@ -1504,7 +1580,8 @@ if (trim($fotoDocumentoFirmadoSolicitado) != '' || trim($extensionDocumentoFirma
 				$monto,
 				$modoDistribucionGasto,
 				$jsonDistribucionGasto,
-				$user
+				$user,
+				$cod_interConsultaFK
 			);
 		}
 		// El presupuesto se revalida dentro de la misma transaccion que guarda el
@@ -3753,7 +3830,7 @@ try {
 		if (!$fechaPresupuesto) {
 			throw new Exception('La fecha del movimiento no es valida para comprobar el presupuesto.');
 		}
-		gastoDistribucionValidarLocales($mysqli, $distribucionGasto['asignaciones'], $cod_usuario, $cod_local, $distribucionGasto['modo'], true);
+		gastoDistribucionValidarLocales($mysqli, $distribucionGasto['asignaciones'], $cod_usuario, $cod_local, $distribucionGasto['modo'], true, $cod_interConsultaFK);
 		gastoDistribucionBloquearPresupuestos($mysqli, $distribucionGasto, $cod_motivo);
 	}
 	$stmtConceptoBloqueado= $mysqli->prepare("SELECT categoria,estado FROM motivos_ingreso_egreso WHERE cod_motivo_ingreso_egreso=? LIMIT 1 FOR UPDATE");
@@ -3790,8 +3867,21 @@ try {
 		if (!$hiloGasto || strtolower(trim((string)$hiloGasto['estado'])) === 'inactivo') {
 			throw new Exception('El Hilo fue archivado y ya no admite movimientos.');
 		}
-		if (!usuarioPuedeGestionarLocalGasto($cod_usuario, $hiloGasto['cod_localFK'])) {
+		$accesoLocalPorHiloNuevo= $operacion == 'nuevo'
+			&& strtolower(trim((string)$tipo)) == 'egreso'
+			&& gastoUsuarioPuedeGestionarLocalPorHilo($mysqli, $cod_usuario, $hiloGasto['cod_localFK'], $hiloBloqueoGasto);
+		if (!usuarioPuedeGestionarLocalGasto($cod_usuario, $hiloGasto['cod_localFK']) && !$accesoLocalPorHiloNuevo) {
 			throw new Exception('No administra el local al que pertenece el Hilo seleccionado.');
+		}
+		if ($accesoLocalPorHiloNuevo) {
+			$cod_local= (string)intval($hiloGasto['cod_localFK']);
+			$cajaHiloBloqueada= caja_cierre_obtener_arqueo($mysqli, intval($idaperturacierrecaja), true);
+			if (!$cajaHiloBloqueada
+				|| intval($cajaHiloBloqueada['caja_idcaja']) !== intval($codcaja)
+				|| intval($cajaHiloBloqueada['cod_local']) !== intval($cod_local)
+				|| strtolower(trim((string)$cajaHiloBloqueada['estado'])) !== 'activo') {
+				throw new Exception('La caja abierta no pertenece al local del Hilo. Seleccione una caja activa de ese local.');
+			}
 		}
 		if (function_exists('obtenerCategoriaPrincipalHilo')
 			&& obtenerCategoriaPrincipalHilo($hiloGasto['tipo']) != 'pagos_egresos') {
@@ -5825,15 +5915,12 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 	}
 
 	$registrosZonaOrdenados= array();
-	foreach (array('ingreso', 'directo', 'operativo', 'administracion', 'sinCategoria', 'migracion') as $zonaOrdenada) {
+	foreach (array('ingreso', 'directo', 'deposito', 'operativo', 'administracion', 'sinCategoria', 'migracion') as $zonaOrdenada) {
 		if (isset($registrosZona[$zonaOrdenada])) {
 			$registrosZonaOrdenados[$zonaOrdenada]= $registrosZona[$zonaOrdenada];
 		}
 	}
 	foreach ($registrosZona as $zona => $cod_motivos) {
-		if ($zona == 'deposito') {
-			continue;
-		}
 		if (!isset($registrosZonaOrdenados[$zona])) {
 			$registrosZonaOrdenados[$zona]= $cod_motivos;
 		}
@@ -5861,6 +5948,13 @@ function buscarGastoConMotivos($arreglo,$fecha1,$fecha2,$estado,$cod_local,$tipo
 			$totalZona= $totalZonaCostosDirectos;
 			$styleColor= "#EABA4C;";
 			$styleRegistroColor= "#F4CB8D;";
+			break;
+		case 'deposito':
+			$idZona= "DepositosCentral";
+			$titulo= "Dep&oacute;sitos a Faraone Capital S.A.";
+			$totalZona= $totalZonaDepositosCentral;
+			$styleColor= "#246B83;";
+			$styleRegistroColor= "#B9DEE8;";
 			break;
 		case 'operativo':
 			$idZona= "GastosOperativos";
