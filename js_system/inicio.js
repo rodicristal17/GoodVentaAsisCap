@@ -453,9 +453,9 @@ window.onload = function () {
 		controlactualizacion = controlactualizacion + 1;
 
 
-		if (controlMensaje == 30) {
+		if (controlMensaje == 300) {
 			controlMensaje = 0;
-			buscarSugerencias();
+			buscarSugerencias(false);
 			// buscarproductosDescuento()
 
 		}
@@ -5105,7 +5105,7 @@ buscarDataListCliente()
 // reutilizan durante toda la vida de la sesión/página.
 obtenerAsistenciaUsuario();
 buscarOpcionesMecanicoDental();
-buscarSugerencias();
+buscarSugerencias(false);
 
 
         cargarTareasPendientesAdministrador();
@@ -49484,9 +49484,110 @@ function enableMagnifier(imgSelector, zoom = 2) {
 
  
  
- function buscarSugerencias() {
-	document.getElementById("sugerenciasContainer").innerHTML = "";
- 
+var sugerenciasAjaxEnCurso = false;
+var sugerenciasUltimaCarga = 0;
+var sugerenciasPausaHasta = 0;
+var SUGERENCIAS_INTERVALO_MS = 300000;
+var SUGERENCIAS_PAUSA_SEGURIDAD_MS = 600000;
+
+function respuestaEsVerificacionSeguridadSugerencias(responseText) {
+	var texto = typeof responseText === "string" ? responseText : "";
+	var inicio = texto.replace(/^\s+/, "").slice(0, 200).toLowerCase();
+	return inicio.indexOf("<!doctype html") === 0
+		|| inicio.indexOf("<html") === 0
+		|| texto.indexOf("wsidchk") !== -1
+		|| texto.indexOf("verifica su solicitud") !== -1
+		|| texto.indexOf("z0f76a1d14fd21a8fb5fd0d03e0fdc3d3cedae52f") !== -1;
+}
+
+function interpretarRespuestaSugerencias(responseText) {
+	var texto;
+	var datos;
+	if (responseText && typeof responseText === "object") {
+		return { valida: true, seguridad: false, datos: responseText };
+	}
+	texto = String(responseText === null || typeof responseText === "undefined" ? "" : responseText)
+		.replace(/^\uFEFF/, "").trim();
+	if (respuestaEsVerificacionSeguridadSugerencias(texto)) {
+		return { valida: false, seguridad: true, datos: null };
+	}
+	try {
+		datos = JSON.parse(texto);
+		return { valida: true, seguridad: false, datos: datos };
+	} catch (error) {
+		return { valida: false, seguridad: false, datos: null, error: error };
+	}
+}
+
+function mostrarAvisoSeguridadSugerencias(esTabla, notificar) {
+	var contenedor = document.getElementById(esTabla ? "tablaSeguimiento" : "sugerenciasContainer");
+	var aviso;
+	var texto;
+	var boton;
+	var fila;
+	var celda;
+	var notificacion = document.getElementById("notificacionSugerencias");
+	sugerenciasPausaHasta = Date.now() + SUGERENCIAS_PAUSA_SEGURIDAD_MS;
+	if (contenedor) {
+		contenedor.innerHTML = "";
+		aviso = document.createElement("div");
+		aviso.className = "alert alert-warning";
+		texto = document.createElement("span");
+		texto.textContent = "La seguridad del servidor esta verificando tu conexion. Actualiza la pagina e intenta nuevamente.";
+		boton = document.createElement("button");
+		boton.type = "button";
+		boton.className = "btn btn-primary";
+		boton.textContent = "Actualizar pagina";
+		boton.onclick = function () { window.location.reload(); };
+		aviso.appendChild(texto);
+		aviso.appendChild(document.createElement("br"));
+		aviso.appendChild(boton);
+		if (esTabla) {
+			fila = document.createElement("tr");
+			celda = document.createElement("td");
+			celda.colSpan = 4;
+			celda.appendChild(aviso);
+			fila.appendChild(celda);
+			contenedor.appendChild(fila);
+		} else {
+			contenedor.appendChild(aviso);
+		}
+	}
+	if (notificacion) {
+		notificacion.textContent = "!";
+		notificacion.title = "La seguridad del servidor requiere actualizar la pagina";
+		notificacion.style.display = "flex";
+	}
+	if (notificar && typeof ver_vetana_informativa === "function") {
+		ver_vetana_informativa("La seguridad del servidor esta verificando tu conexion. Actualiza la pagina e intenta nuevamente.");
+	}
+}
+
+function manejarRespuestaInvalidaSugerencias(resultado, esTabla, notificar) {
+	if (resultado && resultado.seguridad) {
+		mostrarAvisoSeguridadSugerencias(esTabla, notificar);
+		return;
+	}
+	if (window.console && typeof window.console.error === "function") {
+		window.console.error("Sugerencias recibio una respuesta no valida.", resultado ? resultado.error : "");
+	}
+	if (notificar && typeof ver_vetana_informativa === "function") {
+		ver_vetana_informativa("No se pudo interpretar la respuesta de Sugerencias. Intenta nuevamente.");
+	}
+}
+
+function buscarSugerencias(forzar) {
+	var ahora = Date.now();
+	if (sugerenciasAjaxEnCurso) { return; }
+	if (ahora < sugerenciasPausaHasta) {
+		if (forzar) { mostrarAvisoSeguridadSugerencias(false, true); }
+		return;
+	}
+	if (!forzar && sugerenciasUltimaCarga > 0
+		&& (ahora - sugerenciasUltimaCarga) < SUGERENCIAS_INTERVALO_MS) {
+		return;
+	}
+
 	obtener_datos_user();
 	var datos = {
 		"useru": userid,
@@ -49494,68 +49595,61 @@ function enableMagnifier(imgSelector, zoom = 2) {
 		"navegador": navegador,
 		"funt": "buscar"
 	};
+	sugerenciasAjaxEnCurso = true;
 	$.ajax({
-
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/obtener_sugerencias.php",
 		type: "post",
+		dataType: "text",
+		cache: false,
 		xhr: function () {
-        var xhr = new window.XMLHttpRequest();
-        //Uload progress
-        xhr.upload.addEventListener("progress" ,function (evt) {
-		var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-		kb=0.1;
-		}
-         cargarConectividad("enviado",kb,"0")           
-        }, false);
- //Download progress
-		xhr.addEventListener("progress", function (evt) {
-        var kb=((evt.loaded*1)/1000).toFixed(1)
-		if(kb=="0.0"){
-		kb=0.1;
-		}
-        cargarConectividad("recibido","0",kb)  
-        }, false);
-        return xhr;
-    },
-		
-		beforeSend: function () {
-
-
+			var xhr = new window.XMLHttpRequest();
+			xhr.upload.addEventListener("progress", function (evt) {
+				var kb = ((evt.loaded * 1) / 1000).toFixed(1);
+				if (kb == "0.0") { kb = 0.1; }
+				cargarConectividad("enviado", kb, "0");
+			}, false);
+			xhr.addEventListener("progress", function (evt) {
+				var kb = ((evt.loaded * 1) / 1000).toFixed(1);
+				if (kb == "0.0") { kb = 0.1; }
+				cargarConectividad("recibido", "0", kb);
+			}, false);
+			return xhr;
 		},
-		error: function (jqXHR, textstatus, errorThrowm) {
-manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
+		error: function (jqXHR, textstatus) {
+			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
 		},
 		success: function (responseText) {
-
-			var Respuesta = responseText;
-			console.log(Respuesta)
-			try {
-				var datos = $.parseJSON(Respuesta);
-				Respuesta = datos["1"];
-                Respuesta=respuestaJqueryAjax(Respuesta)
-				if (Respuesta == true) {
-					var datos_buscados = datos[2];
-					document.getElementById("sugerenciasContainer").innerHTML = datos_buscados
-					var notificacionSugerencias = document.getElementById("notificacionSugerencias");
-					var totalSugerenciasPendientes = parseInt(datos[4], 10) || 0;
-					if (notificacionSugerencias) {
-						notificacionSugerencias.innerHTML = totalSugerenciasPendientes;
-						notificacionSugerencias.style.display = totalSugerenciasPendientes > 0 ? "flex" : "none";
-					}
- 
-
-				}
-			} catch (error) {
-ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-				var titulo="Error: "+error+" \r\n Consola: "+responseText
-				GuardarArchivosLog(titulo)
+			var resultado = interpretarRespuestaSugerencias(responseText);
+			var respuesta;
+			var datosRespuesta;
+			var contenedor;
+			var notificacionSugerencias;
+			var totalSugerenciasPendientes;
+			if (!resultado.valida) {
+				manejarRespuestaInvalidaSugerencias(resultado, false, !!forzar);
+				return;
 			}
+			datosRespuesta = resultado.datos;
+			respuesta = respuestaJqueryAjax(datosRespuesta["1"]);
+			if (respuesta == true) {
+				contenedor = document.getElementById("sugerenciasContainer");
+				if (contenedor) { contenedor.innerHTML = datosRespuesta[2] || ""; }
+				notificacionSugerencias = document.getElementById("notificacionSugerencias");
+				totalSugerenciasPendientes = parseInt(datosRespuesta[4], 10) || 0;
+				if (notificacionSugerencias) {
+					notificacionSugerencias.textContent = totalSugerenciasPendientes;
+					notificacionSugerencias.title = "";
+					notificacionSugerencias.style.display = totalSugerenciasPendientes > 0 ? "flex" : "none";
+				}
+				sugerenciasUltimaCarga = Date.now();
+				sugerenciasPausaHasta = 0;
+			}
+		},
+		complete: function () {
+			sugerenciasAjaxEnCurso = false;
 		}
 	});
-
-
 }
 
 
@@ -49564,6 +49658,7 @@ ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
 // Función para abrir el modal
 function abrirModalSugerencias() {
   document.getElementById('modalSugerencias').style.display = 'block';
+	buscarSugerencias(true);
 }
 
 // Función para cerrar el modal
@@ -49624,6 +49719,10 @@ function VerificarActualizarSugerencia(){
 	ActualizarSugerencia(descripcionNueva,selectEstado,cod_sugerencias)
 }
 function ActualizarSugerencia(descripcion,Estado,idabm) {
+	if (Date.now() < sugerenciasPausaHasta) {
+		mostrarAvisoSeguridadSugerencias(false, true);
+		return;
+	}
 	verCerrarEfectoCargando("1")
 	var datos = new FormData();
 	obtener_datos_user();
@@ -49638,6 +49737,7 @@ function ActualizarSugerencia(descripcion,Estado,idabm) {
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/obtener_sugerencias.php",
 		type: "post",
+		dataType: "text",
 		cache: false,
 		contentType: false,
 		processData: false,
@@ -49674,24 +49774,22 @@ function ActualizarSugerencia(descripcion,Estado,idabm) {
 		},
 		success: function (responseText) {
 			verCerrarEfectoCargando("")
-			Respuesta = responseText;
-			console.log(Respuesta)
-			try {
-				var datos = $.parseJSON(Respuesta);
-				Respuesta = datos["1"];
-				 Respuesta=respuestaJqueryAjax(Respuesta)
-				if (Respuesta == true) { 
-				ver_vetana_informativa("DATOS CARGADO CORRECTAMENTE...")
-				buscarSugerencias()
+			var resultado = interpretarRespuestaSugerencias(responseText);
+			var datosRespuesta;
+			var respuesta;
+			if (!resultado.valida) {
+				manejarRespuestaInvalidaSugerencias(resultado, false, true);
+				return;
+			}
+			datosRespuesta = resultado.datos;
+			respuesta = respuestaJqueryAjax(datosRespuesta["1"]);
+			if (respuesta == true) {
+				ver_vetana_informativa("DATOS CARGADOS CORRECTAMENTE...")
+				sugerenciasUltimaCarga = 0;
+				buscarSugerencias(true)
 				cerrarModalEditar()
-				}
-				else {
-				ver_vetana_informativa("Error inesperado",  "Lo sentimos, ha ocurrido un error", "error")
-				}
-			} catch (error) {
-				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-						var titulo="Error: "+error+" \r\n Consola: "+responseText
-				GuardarArchivosLog(titulo)
+			} else {
+				ver_vetana_informativa("Error inesperado", "Lo sentimos, ha ocurrido un error", "error")
 			}
 		}
 	});
@@ -49700,7 +49798,11 @@ function ActualizarSugerencia(descripcion,Estado,idabm) {
 
  
  
- function buscarDetalleSugerencia() {
+function buscarDetalleSugerencia() {
+	if (Date.now() < sugerenciasPausaHasta) {
+		mostrarAvisoSeguridadSugerencias(true, true);
+		return;
+	}
 	document.getElementById("tablaSeguimiento").innerHTML = "";
  
 	obtener_datos_user();
@@ -49716,6 +49818,8 @@ function ActualizarSugerencia(descripcion,Estado,idabm) {
 		data: datos,
 		url: "/GoodVentaAsisCap/php_system/obtener_sugerencias.php",
 		type: "post",
+		dataType: "text",
+		cache: false,
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
         //Uload progress
@@ -49745,22 +49849,17 @@ function ActualizarSugerencia(descripcion,Estado,idabm) {
 manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 		},
 		success: function (responseText) {
-
-			var Respuesta = responseText;
-			console.log(Respuesta)
-			try {
-				var datos = $.parseJSON(Respuesta);
-				Respuesta = datos["1"];
-                Respuesta=respuestaJqueryAjax(Respuesta)
-				if (Respuesta == true) {
-					var datos_buscados = datos[2];
-					document.getElementById("tablaSeguimiento").innerHTML = datos_buscados
- 
-				}
-			} catch (error) {
-ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-				var titulo="Error: "+error+" \r\n Consola: "+responseText
-				GuardarArchivosLog(titulo)
+			var resultado = interpretarRespuestaSugerencias(responseText);
+			var datosRespuesta;
+			var respuesta;
+			if (!resultado.valida) {
+				manejarRespuestaInvalidaSugerencias(resultado, true, true);
+				return;
+			}
+			datosRespuesta = resultado.datos;
+			respuesta = respuestaJqueryAjax(datosRespuesta["1"]);
+			if (respuesta == true) {
+				document.getElementById("tablaSeguimiento").innerHTML = datosRespuesta[2] || "";
 			}
 		}
 	});
