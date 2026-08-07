@@ -1092,6 +1092,13 @@
     font-weight: 800;
 }
 
+#telarPlanificacionEspecialistas .plan-assignment__agenda.is-warning,
+#telarPlanificacionEspecialistas .plan-agenda-marker.is-warning {
+    border-color: #e6b664;
+    background: #fff9ee;
+    color: #9c6818;
+}
+
 #telarPlanificacionEspecialistas .plan-agenda-occupancy {
     display: flex;
     min-width: 0;
@@ -1206,6 +1213,10 @@
     color: #327681;
     font-size: 6.5px;
     font-weight: 800;
+}
+
+#telarPlanificacionEspecialistas .plan-slot__free + .plan-agenda-marker {
+    margin-left: auto;
 }
 
 #telarPlanificacionEspecialistas .plan-week-grid .plan-day-card {

@@ -5146,6 +5146,27 @@ function formatearMontoAdjuntoDocumentoGuiado(valor) {
     }
 }
 
+function formatearEntradaMontoAdjuntoDocumentoGuiado(input) {
+    if (!input) { return; }
+    var valorAnterior= String(input.value || "");
+    var posicion= typeof input.selectionStart == "number" ? input.selectionStart : valorAnterior.length;
+    var digitosPosteriores= valorAnterior.slice(posicion).replace(/\D/g, "").length;
+    var digitos= valorAnterior.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+    var formateado= digitos.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    input.value= formateado;
+
+    if (typeof input.setSelectionRange == "function") {
+        var nuevaPosicion= formateado.length;
+        var pendientes= digitosPosteriores;
+        while (nuevaPosicion > 0 && pendientes > 0) {
+            nuevaPosicion--;
+            if (/\d/.test(formateado.charAt(nuevaPosicion))) { pendientes--; }
+        }
+        input.setSelectionRange(nuevaPosicion, nuevaPosicion);
+    }
+    actualizarResumenAdjuntoDocumentoGuiado();
+}
+
 function obtenerFechaHoyAdjuntoDocumentoGuiado() {
     var fecha= new Date();
     var offset= fecha.getTimezoneOffset();
@@ -6480,6 +6501,21 @@ function obtenerContextoGastoHiloActual() {
     };
 }
 
+function abrirContenedorGastosDesdeHiloActual() {
+    if (controlacceso("VERLISTADOEGRESOINGRESO", "accion") == false) {
+        return false;
+    }
+    var contenedor= document.getElementById("divAbmGastos");
+    if (!contenedor) {
+        ver_vetana_informativa("No se encontro la ventana de gastos.");
+        return false;
+    }
+    if (contenedor.style.display != "") {
+        verCerrarAbmGasto();
+    }
+    return contenedor.style.display == "";
+}
+
 function abrirNuevoGastoDesdeHiloActual(evento) {
     if (evento) {
         evento.stopPropagation();
@@ -6489,6 +6525,12 @@ function abrirNuevoGastoDesdeHiloActual(evento) {
     var contexto= obtenerContextoGastoHiloActual();
     if (!contexto.codigo || contexto.codigo == "0") {
         ver_vetana_informativa("FALTO SELECCIONAR UNA INTERCONSULTA.");
+        return;
+    }
+    if (controlacceso("INSERTARLISTADOEGRESOINGRESO", "accion") == false) {
+        return;
+    }
+    if (!abrirContenedorGastosDesdeHiloActual()) {
         return;
     }
 
@@ -6515,15 +6557,22 @@ function crearProyectoDesdeHiloActual(evento) {
     if (controlacceso("INSERTARLISTADOEGRESOINGRESO", "accion") == false) {
         return;
     }
+    if (!abrirContenedorGastosDesdeHiloActual()) {
+        return;
+    }
     if (idabmAperturacierrecaja == "") {
         verCerrarVentanaAbmGasto(true, true, false);
         return;
     }
 
-    cod_interConsulta= contexto.codigo;
-    var inputInterConsulta= document.getElementById("inptAbmInterConsultaGasto");
-    if (inputInterConsulta) {
-        inputInterConsulta.value= contexto.nombre;
+    if (typeof gastoFijarHiloFormulario == "function") {
+        gastoFijarHiloFormulario(contexto.codigo, contexto.nombre);
+    } else {
+        cod_interConsulta= contexto.codigo;
+        var inputInterConsulta= document.getElementById("inptAbmInterConsultaGasto");
+        if (inputInterConsulta) {
+            inputInterConsulta.value= contexto.nombre;
+        }
     }
 
     crearProyectoGastoDesdeHilo(contexto.nombre, {
@@ -7102,7 +7151,11 @@ function obtenerDatosInterConsulta(elemento) {
             cod_ventaFKConsulta= "";
             cod_clienteConsulta= "";
             cod_interConsulta= $(elemento).children('#td_id').html();
-            document.getElementById('inptAbmInterConsultaGasto').value= $(elemento).children('#td_datos_10').html();
+            if (typeof gastoFijarHiloFormulario == "function") {
+                gastoFijarHiloFormulario(cod_interConsulta, $(elemento).children('#td_datos_10').html());
+            } else {
+                document.getElementById('inptAbmInterConsultaGasto').value= $(elemento).children('#td_datos_10').html();
+            }
             if (typeof buscarProyectosVistaSelecc == "function") {
                 buscarProyectosVistaSelecc();
             }

@@ -30,6 +30,10 @@ echo json_encode($informacion);
 exit;
 }
 
+if($funt=="editaracceso"){
+	iniciarContextoAuditoriaPermisos($user, $funt);
+}
+
 
 	
 	//CONTROL DE ACCESO

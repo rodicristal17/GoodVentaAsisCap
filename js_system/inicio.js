@@ -5180,7 +5180,7 @@ $("div[id=divSaludoGoodSystem]").fadeOut(500);
 			}
 }
 
-var codigodeactualizacion="X-GT-1-JMTG-V1.91";
+var codigodeactualizacion="X-GT-1-JMTG-V1.93";
 function controldeactualizacion(codigopc) {	
 	obtener_datos_user()
 	var datos = new FormData();
@@ -8611,6 +8611,63 @@ function gestorAccesosErrorGuardado(jqXHR,textstatus) {
 	manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
 	gestorAccesosBloquear(false,"No se guardaron los cambios.");
 	ver_vetana_informativa("No se pudo guardar","La operacion no se completo y debe intentarse nuevamente.","error");
+}
+
+function gestorAccesosAbrirAuditoria() {
+	if(controlacceso("VERACCESOSUARIOS","accion")==false){return;}
+	var modal=document.getElementById("modalAuditoriaGestorAccesos");
+	if(modal){modal.style.display="flex";}
+	gestorAccesosCargarAuditoria();
+}
+
+function gestorAccesosCerrarAuditoria() {
+	var modal=document.getElementById("modalAuditoriaGestorAccesos");
+	if(modal){modal.style.display="none";}
+}
+
+function gestorAccesosCargarAuditoria() {
+	var contenido=document.getElementById("gestorAccesosAuditoriaContenido");
+	if(!contenido){return;}
+	var solo=document.getElementById("gestorAccesosAuditoriaSoloUsuario");
+	var usuarioId=solo && solo.checked && gestorAccesosDatos && gestorAccesosDatos.seleccion
+		? gestorAccesosDatos.seleccion.usuario_id : 0;
+	contenido.innerHTML="<div class='accesos-visual-loading'>Consultando modificaciones...</div>";
+	gestorAccesosPeticion({funt:"auditoriaGestor",usuario_id:usuarioId,limite:150}).done(function(responseText){
+		try{
+			var respuesta=$.parseJSON(responseText);
+			if(respuesta["1"]!=="exito"){throw new Error(respuesta["2"] || "No se pudo cargar la auditoria.");}
+			gestorAccesosRenderAuditoria(respuesta.datos || []);
+		}catch(error){
+			contenido.innerHTML="<div class='accesos-visual-empty'>"+gestorAccesosEscapar(error.message)+"</div>";
+		}
+	}).fail(function(jqXHR,textstatus){
+		manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+		contenido.innerHTML="<div class='accesos-visual-empty'>No se pudo consultar la auditoria.</div>";
+	});
+}
+
+function gestorAccesosRenderAuditoria(filas) {
+	var contenido=document.getElementById("gestorAccesosAuditoriaContenido");
+	if(!contenido){return;}
+	if(!filas.length){
+		contenido.innerHTML="<div class='accesos-visual-empty'>Todavia no hay modificaciones registradas con la nueva auditoria.</div>";
+		return;
+	}
+	var html="<div class='gestor-accesos-auditoria-lista'>";
+	for(var i=0;i<filas.length;i++){
+		var fila=filas[i];
+		var actor=fila.actor || (fila.actor_id ? "Usuario #"+fila.actor_id : "Origen externo o base de datos");
+		html+="<article class='gestor-accesos-auditoria-item'>"
+			+"<div class='gestor-accesos-auditoria-top'><time>"+gestorAccesosEscapar(fila.fecha)+"</time><span>"+gestorAccesosEscapar(fila.anterior)+" &rarr; "+gestorAccesosEscapar(fila.nuevo)+"</span></div>"
+			+"<strong>"+gestorAccesosEscapar(fila.permiso || fila.codigo)+"</strong>"
+			+"<small>"+gestorAccesosEscapar(fila.codigo)+" &middot; Afectado: "+gestorAccesosEscapar(fila.usuario || ("Usuario #"+fila.usuario_id))+"</small>"
+			+"<p><b>Responsable:</b> "+gestorAccesosEscapar(actor)+"</p>"
+			+"<p><b>Origen:</b> "+gestorAccesosEscapar(fila.origen || "Conexion directa a la base de datos")+"</p>"
+			+"<p><b>Equipo:</b> "+gestorAccesosEscapar(fila.ip || "IP no disponible")+" &middot; "+gestorAccesosEscapar(fila.navegador || fila.usuario_bd || "Sin navegador")+"</p>"
+			+"</article>";
+	}
+	html+="</div>";
+	contenido.innerHTML=html;
 }
 
 function buscarAccesosUser() {

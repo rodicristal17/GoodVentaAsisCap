@@ -1066,14 +1066,15 @@ function obtenerInicialesProfesionalAgenda(nombre){
 
 function obtenerProfesionalesPlanificadosConsultorioAgenda(consultorio){
     return consultorio && Array.isArray(consultorio.profesionales_planificados)
-        ? consultorio.profesionales_planificados : [];
+        ? consultorio.profesionales_planificados.filter(function(profesional){
+            return profesional.estado === "confirmada"
+                || profesional.estado === "pendiente_horario";
+        }) : [];
 }
 
 function etiquetaEstadoProfesionalAgenda(estado){
-    if(estado === "confirmada"){ return "Confirmado"; }
-    if(estado === "pendiente_horario"){ return "Asignada · horario por definir"; }
-    if(estado === "propuesta"){ return "Propuesta"; }
-    return "Planificado";
+    return estado === "confirmada" || estado === "pendiente_horario"
+        ? "Asignado" : "Libre";
 }
 
 function renderAvatarProfesionalAgenda(profesional){
@@ -1096,24 +1097,19 @@ function renderProfesionalesPlanificadosAgenda(consultorio){
     var i, profesional, color, horario, detalle, titulo;
 
     if(profesionales.length === 0){
-        if(consultorio.nombre_doctor){
-            return "<span class='agenda-plan-sin-asignacion agenda-plan-sin-asignacion--referencia'>"
-                + "<i class='fa-regular fa-user' aria-hidden='true'></i>"
-                + "<span><small>Referencia actual</small>" + escaparHtmlAgenda(consultorio.nombre_doctor) + "</span></span>";
-        }
         return "<span class='agenda-plan-sin-asignacion'><i class='fa-regular fa-calendar-xmark' aria-hidden='true'></i>"
-            + "Sin profesional planificado</span>";
+            + "Libre</span>";
     }
 
     html += "<div class='agenda-plan-profesionales"
         + (profesionales.length === 1 ? " agenda-plan-profesionales--avatar-flotante" : "")
-        + "' aria-label='Profesionales vinculados a la planificaci&oacute;n'>";
+        + "' aria-label='Profesionales asignados en Planificaci&oacute;n'>";
     for(i = 0; i < profesionales.length; i++){
         profesional = profesionales[i];
         color = obtenerColorProfesionalAgenda(profesional.cod_profesional);
         horario = profesional.hora_entrada && profesional.hora_salida
             ? profesional.hora_entrada + " - " + profesional.hora_salida : "Horario por definir";
-        detalle = etiquetaEstadoProfesionalAgenda(profesional.estado) + " &middot; " + horario;
+        detalle = "Asignado &middot; " + horario;
         titulo = profesional.nombre + " - " + etiquetaEstadoProfesionalAgenda(profesional.estado)
             + (profesional.hora_entrada && profesional.hora_salida
                 ? " (" + profesional.hora_entrada + " - " + profesional.hora_salida + ")" : "");
@@ -1138,8 +1134,11 @@ function profesionalPlanificadoActivoEnIntervaloAgenda(profesional, inicio, fin)
     var profesionalInicio;
     var profesionalFin;
 
-    if(profesional.estado === "pendiente_horario" || profesional.estado === "propuesta"){
+    if(profesional.estado === "pendiente_horario"){
         return true;
+    }
+    if(profesional.estado !== "confirmada"){
+        return false;
     }
     if(!profesional.hora_entrada || !profesional.hora_salida){
         return true;

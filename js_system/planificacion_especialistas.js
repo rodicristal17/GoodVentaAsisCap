@@ -323,8 +323,7 @@
                 }
             });
             if (!profesionalSeleccionadoExiste) {
-                state.selectedProfessional = data.profesionales && data.profesionales.length
-                    ? String(data.profesionales[0].cod_profesional) : "";
+                state.selectedProfessional = "";
             }
             if (data.modo_multisucursal !== true && state.scope === "multi") {
                 state.scope = "branch";
@@ -421,7 +420,7 @@
                 });
             hint.textContent = Object.keys(remoteDates).length
                 ? "Los avisos naranja indican días u horarios comprometidos en otra sucursal para la profesional seleccionada."
-                : "Arrastra un doctor a una casilla libre para fijarlo. Agenda muestra quién ocupa las demás casillas.";
+                : "Selecciona un doctor y asígnalo a una casilla libre. Agenda conserva los turnos, pero no define la asignación del consultorio.";
         }
     }
 
@@ -440,56 +439,8 @@
         });
     }
 
-    function agendaVisualAssignments() {
-        var data = state.data || {};
-        var rawAssignments = data.asignaciones || [];
-        var occupiedSlots = {};
-        var local = data.local_actual || {};
-        var items = [];
-        rawAssignments.forEach(function (assignment) {
-            occupiedSlots[assignment.fecha + "|" + String(assignment.id_consultorio)] = true;
-        });
-        (data.ocupaciones_agenda || []).forEach(function (occupancy) {
-            var professionals = occupancy.profesionales || [];
-            var slotKey = occupancy.fecha + "|" + String(occupancy.id_consultorio);
-            var professional;
-            var room;
-            if (professionals.length !== 1 || occupiedSlots[slotKey]) { return; }
-            professional = professionals[0];
-            room = roomById(occupancy.id_consultorio) || {};
-            items.push({
-                id_asignacion: 0,
-                id_regla: null,
-                clave: "agenda-" + occupancy.fecha + "-"
-                    + occupancy.id_consultorio + "-" + professional.cod_profesional,
-                cod_profesional: professional.cod_profesional,
-                cod_local: local.cod_local || selectedLocal(),
-                nombre_local: local.nombre || "",
-                id_consultorio: occupancy.id_consultorio,
-                consultorio: room.nombre || "Consultorio",
-                fecha: occupancy.fecha,
-                id_horario: null,
-                hora_entrada: professional.hora_desde || occupancy.hora_desde || null,
-                hora_salida: professional.hora_hasta || occupancy.hora_hasta || null,
-                estado: "agenda",
-                motivo: "Ocupación identificada en Agenda.",
-                version: 0,
-                profesional: professional.nombre,
-                avatar: professional.avatar || "",
-                especialidad: "",
-                origen: "agenda",
-                solo_lectura: true,
-                es_recurrente: false,
-                cantidad_agenda: occupancy.cantidad_registros || 0
-            });
-            occupiedSlots[slotKey] = true;
-        });
-        return items;
-    }
-
     function visualAssignments() {
-        return ((state.data && state.data.asignaciones) || [])
-            .concat(agendaVisualAssignments());
+        return (state.data && state.data.asignaciones) || [];
     }
 
     function filteredAssignments() {
@@ -509,7 +460,8 @@
     function assignmentCountFor(professionalId) {
         var dates = {};
         filteredAssignments().forEach(function (assignment) {
-            if (String(assignment.cod_profesional) === String(professionalId)) {
+            if (assignmentOccupiesSlot(assignment)
+                && String(assignment.cod_profesional) === String(professionalId)) {
                 dates[assignment.fecha] = true;
             }
         });
@@ -520,7 +472,8 @@
         var dates = {};
         var branches = {};
         filteredAssignments().forEach(function (assignment) {
-            if (String(assignment.cod_profesional) !== String(professionalId)) { return; }
+            if (!assignmentOccupiesSlot(assignment)
+                || String(assignment.cod_profesional) !== String(professionalId)) { return; }
             dates[assignment.fecha] = true;
             branches[String(assignment.cod_local || "")] = true;
         });
@@ -622,6 +575,15 @@
         });
     }
 
+    function assignmentOccupiesSlot(assignment) {
+        return assignment && (assignment.estado === "confirmada"
+            || assignment.estado === "pendiente_horario");
+    }
+
+    function occupyingAssignmentsFor(date, roomId) {
+        return assignmentsFor(date, roomId).filter(assignmentOccupiesSlot);
+    }
+
     function agendaOccupancyFor(date, roomId) {
         var result = null;
         ((state.data && state.data.ocupaciones_agenda) || []).some(function (occupancy) {
@@ -635,13 +597,12 @@
         return result;
     }
 
-    function agendaOccupancyBlocksSlot(occupancy) {
+    function agendaOccupancyHasProfessional(occupancy) {
         return !!(occupancy && (occupancy.profesionales || []).length);
     }
 
     function slotIsOccupied(date, roomId) {
-        return assignmentsFor(date, roomId).length > 0
-            || agendaOccupancyBlocksSlot(agendaOccupancyFor(date, roomId));
+        return occupyingAssignmentsFor(date, roomId).length > 0;
     }
 
     function shortTimeRange(from, to) {
@@ -684,11 +645,16 @@
         return count + (count === 1 ? " turno" : " turnos");
     }
 
-    function agendaBadge(occupancy) {
+    function agendaBadge(occupancy, matchesPlanning) {
+        var warning = occupancy && matchesPlanning === false;
         if (!occupancy) { return ""; }
-        return '<span class="plan-assignment__agenda" title="La misma ocupación registra '
-            + escapeAttr(agendaCountLabel(occupancy)) + ' en Agenda">'
-            + '<i class="fa-regular fa-calendar-check" aria-hidden="true"></i><span>'
+        return '<span class="plan-assignment__agenda' + (warning ? ' is-warning' : '') + '" title="'
+            + (warning
+                ? 'Revisar: Agenda registra otro profesional en estos turnos'
+                : 'La misma ocupación registra ' + escapeAttr(agendaCountLabel(occupancy)) + ' en Agenda')
+            + '">'
+            + '<i class="fa-solid ' + (warning ? 'fa-triangle-exclamation' : 'fa-calendar-check')
+            + '" aria-hidden="true"></i><span>'
             + escapeHtml(occupancy.cantidad_registros || 0) + '</span></span>';
     }
 
@@ -788,48 +754,26 @@
                 + ' Compromiso en otra sucursal</span>' : "";
     }
 
-    function agendaOccupancyChip(occupancy, compact, forcedConflict) {
-        var professionals = occupancy.profesionales || [];
-        var first = professionals.length ? professionals[0] : null;
-        var isConflict = professionals.length > 1 || !!forcedConflict;
-        var label = professionals.length > 1
-            ? "Conflicto: varios doctores"
-            : (first ? first.nombre : "Actividad de Agenda");
-        var color = first ? stableColor(first.cod_profesional) : "#64748b";
-        var time = shortTimeRange(occupancy.hora_desde, occupancy.hora_hasta);
-        var html;
-        if (!first) { return ""; }
-        html = '<button type="button" class="plan-assignment plan-agenda-occupancy'
-            + (compact ? " is-compact" : "")
-            + (isConflict ? " is-conflict" : "")
-            + '" data-plan-agenda-date="' + escapeAttr(occupancy.fecha) + '"'
+    function agendaReviewMarker(occupancy) {
+        if (!agendaOccupancyHasProfessional(occupancy)) { return ""; }
+        return '<button type="button" class="plan-agenda-marker is-warning"'
+            + ' data-plan-agenda-date="' + escapeAttr(occupancy.fecha) + '"'
             + ' data-plan-agenda-room="' + escapeAttr(occupancy.id_consultorio) + '"'
-            + ' style="--professional-color:' + escapeAttr(color) + '" title="'
-            + escapeAttr(agendaOccupancyLabel(occupancy) + " · Ocupación registrada en Agenda")
-            + '">';
-        html += '<span class="plan-agenda-occupancy__avatars">';
-        professionals.slice(0, 2).forEach(function (professional) {
-            html += avatarHtml(professional, "plan-avatar--small");
-        });
-        html += '</span>';
-        html += '<span class="plan-agenda-occupancy__copy"><strong>'
-            + escapeHtml(compact && first && !isConflict ? initials(first.nombre) : label)
-            + '</strong><small>Agenda · ' + escapeHtml(occupancy.cantidad_registros || 0)
-            + (time ? " · " + escapeHtml(time) : "") + '</small></span>';
-        return html + '</button>';
+            + ' title="La casilla sigue libre: Agenda tiene turnos que deben vincularse con la asignación de Planificación">'
+            + '<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>'
+            + '<span>Agenda por revisar</span></button>';
     }
 
     function statusLabel(status) {
         var labels = {
             confirmada: "Confirmada",
             pendiente_horario: "Asignada · horario por definir",
-            agenda: "Asignada · Agenda",
             propuesta: "Propuesta"
         };
         return labels[status] || status || "Sin estado";
     }
 
-    function assignmentChip(assignment, compact, agendaOccupancy) {
+    function assignmentChip(assignment, compact, agendaOccupancy, agendaMatches) {
         var professional = professionalById(assignment.cod_profesional) || assignment;
         var color = stableColor(assignment.cod_profesional);
         var time = assignment.hora_entrada
@@ -854,7 +798,7 @@
             + escapeHtml(compact ? initials(professional.nombre || assignment.profesional) : (professional.nombre || assignment.profesional))
             + '</strong><small>' + escapeHtml(secondary) + '</small></span>'
             + (assignment.es_recurrente ? '<i class="fa-solid fa-repeat plan-assignment__recurrence" aria-label="Recurrente"></i>' : "")
-            + agendaBadge(agendaOccupancy)
+            + agendaBadge(agendaOccupancy, agendaMatches)
             + '</button>';
     }
 
@@ -883,16 +827,16 @@
         html += '<div class="plan-day-slots">';
         rooms.forEach(function (room) {
             var assignments = assignmentsFor(iso, room.id_consultorio);
+            var occupyingAssignments = assignments.filter(assignmentOccupiesSlot);
             var agendaOccupancy = agendaOccupancyFor(iso, room.id_consultorio);
-            var agendaBlocksSlot = agendaOccupancyBlocksSlot(agendaOccupancy);
+            var agendaHasProfessional = agendaOccupancyHasProfessional(agendaOccupancy);
             var agendaMatches = agendaOccupancy
-                && agendaMatchesAssignments(agendaOccupancy, assignments);
-            var occupied = assignments.length > 0 || agendaBlocksSlot;
+                && agendaMatchesAssignments(agendaOccupancy, occupyingAssignments);
+            var occupied = occupyingAssignments.length > 0;
             var blockedForSelected = professionalBlocked && !occupied;
             var interactive = !holiday && (occupied || (canCreate() && !blockedForSelected));
-            var occupancyText = assignments.length
-                ? (assignments[0].profesional || "Consultorio ocupado")
-                : (agendaBlocksSlot ? agendaOccupancyLabel(agendaOccupancy) : "");
+            var occupancyText = occupyingAssignments.length
+                ? (occupyingAssignments[0].profesional || "Consultorio ocupado") : "";
             html += '<div class="plan-slot' + (holiday ? " is-disabled" : "")
                 + (occupied ? " is-occupied" : "")
                 + (blockedForSelected ? " is-professional-blocked" : "")
@@ -917,22 +861,19 @@
                     html += assignmentChip(
                         assignment,
                         compact,
-                        agendaMatches ? agendaOccupancy : null
+                        assignmentOccupiesSlot(assignment) ? agendaOccupancy : null,
+                        assignmentOccupiesSlot(assignment) && agendaMatches
                     );
                 });
-                if (agendaOccupancy && agendaBlocksSlot && !agendaMatches) {
-                    html += agendaOccupancyChip(
-                        agendaOccupancy,
-                        compact,
-                        assignments.length > 0
-                    );
-                }
                 if (!occupied && blockedForSelected) {
                     html += '<span class="plan-slot__blocked">No disponible para '
                         + escapeHtml(professionalShortName(selectedProfessional))
                         + '<small>Libre para otros profesionales</small></span>';
                 } else if (!occupied) {
                     html += '<span class="plan-slot__free">Libre</span>';
+                    if (agendaHasProfessional) {
+                        html += agendaReviewMarker(agendaOccupancy);
+                    }
                 }
             }
             html += '</div></div>';
@@ -1621,9 +1562,6 @@
         if (!drag) { return; }
         if (slotIsOccupied(date, roomId)) {
             notify("La casilla ya está ocupada. Abra el detalle para ver quién la utiliza.", "info");
-            if (agendaOccupancyBlocksSlot(agendaOccupancyFor(date, roomId))) {
-                openAgendaOccupancy(date, roomId);
-            }
             return;
         }
         remoteCommitments = remoteCommitmentsBlockingDrag(drag, date);
@@ -1674,13 +1612,8 @@
     }
 
     function openAssignmentForSlot(date, roomId) {
-        var occupancy = agendaOccupancyFor(date, roomId);
-        var assignments = assignmentsFor(date, roomId);
+        var assignments = occupyingAssignmentsFor(date, roomId);
         var remoteCommitments = remoteCommitmentsForSelected(date);
-        if (agendaOccupancyBlocksSlot(occupancy)) {
-            openAgendaOccupancy(date, roomId);
-            return;
-        }
         if (assignments.length) {
             notify("La casilla ya está ocupada por "
                 + (assignments[0].profesional || "otro doctor") + ".", "info");
@@ -1885,7 +1818,7 @@
     function openAgendaOccupancy(date, roomId) {
         var occupancy = agendaOccupancyFor(date, roomId);
         var room = roomById(roomId) || {};
-        var assignments = assignmentsFor(date, roomId);
+        var assignments = occupyingAssignmentsFor(date, roomId);
         var professionals;
         var matchesPlanning;
         var conflictWithPlanning;
@@ -1900,7 +1833,7 @@
         professionals = occupancy.profesionales || [];
         matchesPlanning = agendaMatchesAssignments(occupancy, assignments);
         conflictWithPlanning = assignments.length > 0
-            && agendaOccupancyBlocksSlot(occupancy)
+            && agendaOccupancyHasProfessional(occupancy)
             && !matchesPlanning;
         if (matchesPlanning) {
             plannedAssignment = assignments[0];
@@ -1924,10 +1857,7 @@
             + '<span><small>Fecha</small><strong>' + escapeHtml(date) + '</strong></span></div>';
         if (matchesPlanning) {
             html += '<div class="plan-form-info"><i class="fa-solid fa-link"></i>'
-                + '<span><strong>'
-                + (plannedAssignment.origen === "agenda"
-                    ? "Agenda identifica al profesional asignado."
-                    : "Planificación y Agenda representan la misma ocupación.")
+                + '<span><strong>Planificación y Agenda representan la misma ocupación.'
                 + '</strong> El profesional se muestra una sola vez y Agenda aporta '
                 + escapeHtml(agendaCountLabel(occupancy)) + '.</span></div>';
         } else if (professionals.length > 1 || conflictWithPlanning) {
@@ -1936,6 +1866,9 @@
         } else if (!professionals.length) {
             html += '<div class="plan-form-info"><i class="fa-regular fa-calendar"></i>'
                 + '<span>Agenda registra actividad, pero no existe un profesional identificado. La casilla permanece libre en Planificación.</span></div>';
+        } else {
+            html += '<div class="plan-form-info plan-form-info--warning"><i class="fa-solid fa-triangle-exclamation"></i>'
+                + '<span><strong>Agenda no asigna el consultorio.</strong> Estos turnos sirven como advertencia; la casilla continúa libre hasta guardar el profesional en Planificación.</span></div>';
         }
         html += '<div class="plan-agenda-detail__list">';
         professionals.forEach(function (professional) {
@@ -2310,7 +2243,7 @@
             + '<ol><li><strong>Selecciona un profesional.</strong><span>Su color e hilo permanecen estables. Los avisos naranja muestran los días u horarios ya comprometidos en otra sucursal.</span></li>'
             + '<li><strong>Elige el período.</strong><span>Semanal muestra una semana; mensual agrupa el mes en filas semanales.</span></li>'
             + '<li><strong>Asigna el consultorio.</strong><span>Arrastra el profesional a una casilla libre para fijarlo directamente al día y consultorio. Tocar una casilla libre abre las opciones avanzadas.</span></li>'
-            + '<li><strong>Revisa ocupaciones.</strong><span>Planificación y Agenda muestran una sola tarjeta cuando representan al mismo doctor. Si Agenda es la única fuente e identifica al profesional, se muestra como “Asignada · Agenda” con su avatar e hilo, sin crear otra asignación. Los turnos sin profesional no reemplazan la leyenda “Libre”.</span></li>'
+            + '<li><strong>Revisa ocupaciones.</strong><span>Solamente Planificación define si la casilla está libre o asignada. Los turnos de Agenda no asignan al profesional; si existe una diferencia, aparece “Agenda por revisar” sin reemplazar el estado “Libre” ni al doctor planificado.</span></li>'
             + '<li><strong>Evita conflictos.</strong><span>Cada consultorio admite un solo doctor por día; el servidor valida nuevamente antes de guardar y conserva la trazabilidad.</span></li></ol>'
             + '<div class="plan-form-info"><i class="fa-solid fa-gear"></i><span>Filtros, hilos, leyenda, especialidad e historial están dentro del engranaje junto a la campanita.</span></div>'
             + '<footer><button type="button" class="plan-button plan-button--primary" data-plan-dialog="close">Entendido</button></footer></div>');

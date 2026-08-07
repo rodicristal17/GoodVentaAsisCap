@@ -683,6 +683,32 @@ function enfocarPagoYPlanificacionMovimientoFinanciero() {
 	}, 250);
 }
 
+function gastoFijarHiloFormulario(codInterConsulta, nombreHilo) {
+	var inputHilo = document.getElementById("inptAbmInterConsultaGasto");
+	var codigo = String(codInterConsulta || "").trim();
+	if (!/^\d+$/.test(codigo) || codigo == "0") {
+		codigo = "";
+	}
+	cod_interConsulta = codigo;
+	if (inputHilo) {
+		inputHilo.setAttribute("data-cod-interconsulta", codigo);
+		if (typeof nombreHilo != "undefined") {
+			inputHilo.value = nombreHilo || "";
+		}
+	}
+	return codigo;
+}
+
+function gastoObtenerHiloFormulario() {
+	var inputHilo = document.getElementById("inptAbmInterConsultaGasto");
+	var codigoFijado = inputHilo ? String(inputHilo.getAttribute("data-cod-interconsulta") || "").trim() : "";
+	if (/^\d+$/.test(codigoFijado) && codigoFijado != "0") {
+		return codigoFijado;
+	}
+	var codigoLegacy = String(typeof cod_interConsulta != "undefined" ? cod_interConsulta : "").trim();
+	return /^\d+$/.test(codigoLegacy) && codigoLegacy != "0" ? codigoLegacy : "";
+}
+
 function aplicarContextoCrearMovimientoFinanciero(contexto) {
 	var tipo = normalizarTipoMovimientoFinanciero(contexto.tipoMovimiento);
 	var esDeposito = tipo == "Deposito";
@@ -698,10 +724,7 @@ function aplicarContextoCrearMovimientoFinanciero(contexto) {
 		renderizarResumenAdjuntoMovimientoFinanciero();
 	}
 	if (contexto.interconsultaId) {
-		cod_interConsulta = contexto.interconsultaId;
-	}
-	if (contexto.interconsultaNombre && document.getElementById("inptAbmInterConsultaGasto")) {
-		document.getElementById("inptAbmInterConsultaGasto").value = contexto.interconsultaNombre;
+		gastoFijarHiloFormulario(contexto.interconsultaId, contexto.interconsultaNombre || "");
 	}
 	if (codConcepto) {
 		asegurarOpcionConceptoMovimientoFinanciero(codConcepto, conceptoNombre);
@@ -1781,8 +1804,10 @@ function obtenerdatosabmGasto(datostr) {
 	gastoIniciarCargaEdicion(idAbmGasto);
 	cargarDistribucionGastoParaEdicion(idAbmGasto);
 
-	cod_interConsulta= $(datostr).children('td[id="td_datos_15"]').html();
-	document.getElementById("inptAbmInterConsultaGasto").value= $(datostr).children('td[id="td_datos_16"]').html();
+	gastoFijarHiloFormulario(
+		$(datostr).children('td[id="td_datos_15"]').html(),
+		$(datostr).children('td[id="td_datos_16"]').html()
+	);
 	buscarProyectosVistaSelecc();
 	inicializarVistaPreviaPlanificacionGasto();
 
@@ -2252,10 +2277,7 @@ function obtenerOCrearInterConsultaMovimientoActual(alExito) {
 				if (respuesta == true) {
 					cod_interConsulta = datosRespuesta["2"] || "";
 					var asunto = datosRespuesta["3"] || contexto.asunto;
-					var inputInterConsulta = document.getElementById("inptAbmInterConsultaGasto");
-					if (inputInterConsulta) {
-						inputInterConsulta.value = asunto;
-					}
+					gastoFijarHiloFormulario(cod_interConsulta, asunto);
 					if (typeof alExito == "function") {
 						alExito(cod_interConsulta, asunto, contexto);
 					}
@@ -2330,11 +2352,7 @@ function crearProyectoGastoDesdeBotonHilo(evento, boton) {
 		ver_vetana_informativa("FALTO SELECCIONAR UNA INTERCONSULTA.");
 		return;
 	}
-	cod_interConsulta= codInterConsultaBoton;
-	var inputInterConsulta= document.getElementById("inptAbmInterConsultaGasto");
-	if (inputInterConsulta) {
-		inputInterConsulta.value= nombreHilo;
-	}
+	gastoFijarHiloFormulario(codInterConsultaBoton, nombreHilo);
 	crearProyectoGastoDesdeHilo(sugerencia, {
 		silencioso: true,
 		alCrear: function (idProyecto, nombreProyecto) {
@@ -2477,7 +2495,7 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 	datos.append("nombre_archivo_documento", typeof nombreArchivoAdjuntoDocumentoGasto != "undefined" ? (nombreArchivoAdjuntoDocumentoGasto || "") : "");
 	datos.append("foto_documento_firmado", fotoDocumentoFirmadoGasto);
     datos.append("ext_documento_firmado", extDocumentoFirmadoGasto);
-	datos.append("cod_interConsultaFK", cod_interConsulta);
+	datos.append("cod_interConsultaFK", gastoObtenerHiloFormulario());
 	datos.append("cantCuotas", cantCuotas);
 	datos.append("periodicidad", periodicidad);
 	datos.append("editar_cuotas", (editar_cuotas ? "true" : "false"));
@@ -4096,7 +4114,7 @@ function limpiarcamposGasto() {
 	configurarModalMovimientoFinanciero({ modo: "general" });
 	document.getElementById('inptMotivoMisGastos').value ="";
 	document.getElementById('inptMotivoMisGastos').setAttribute("data-categoria-cargada", "");
-	document.getElementById('inptAbmInterConsultaGasto').value= "";
+	gastoFijarHiloFormulario("", "");
 	document.getElementById('divGastoAsociadosGastos').style.display= "none";
 	document.getElementById('divGastoAsociadosGastos').setAttribute('data-es-credito', 'false');
 	document.getElementById('tablePeriodicidad').style.display= "";
@@ -4620,8 +4638,7 @@ function limpiarcamposmotivoegresoingreso(){
 	  document.getElementById("inptCategoriaMotivoEgresoIngreso").value = '';
     document.getElementById("inptEstadoMotivoEgresoIngreso").value = 'activo';
 	document.getElementById("inptAutorizacionMotivoEgresoIngreso").checked = false;
-	cod_interConsulta= "";
-	document.getElementById("inptAbmInterConsultaGasto").value= "";
+	gastoFijarHiloFormulario("", "");
 	idAbmMotivoEgresoIngreso=''
      document.getElementById("btnMotivoIngresoEgreso").value="Guardar"
 

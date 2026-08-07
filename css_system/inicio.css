@@ -41796,6 +41796,65 @@ button.tratamiento-ubicacion-visual {
   cursor: wait;
 }
 
+#divVistaAcceso .gestor-accesos-auditoria-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: rgba(15, 23, 42, .66);
+  box-sizing: border-box;
+}
+
+#divVistaAcceso .gestor-accesos-auditoria-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(900px, 100%);
+  max-height: calc(100dvh - 48px);
+  overflow: hidden;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .34);
+}
+
+#divVistaAcceso .gestor-accesos-auditoria-dialog > header,
+#divVistaAcceso .gestor-accesos-auditoria-dialog > footer,
+#divVistaAcceso .gestor-accesos-auditoria-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e4e7ec;
+}
+
+#divVistaAcceso .gestor-accesos-auditoria-dialog > header p,
+#divVistaAcceso .gestor-accesos-auditoria-dialog > header h3 { margin: 0; }
+#divVistaAcceso .gestor-accesos-auditoria-dialog > header p { color: #0f65b8; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+#divVistaAcceso .gestor-accesos-auditoria-dialog > header h3 { color: #172033; font-size: 18px; }
+#divVistaAcceso .gestor-accesos-auditoria-dialog button { min-height: 34px; padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #172033; cursor: pointer; font-weight: 800; }
+#divVistaAcceso .gestor-accesos-auditoria-dialog > header > button { min-width: 34px; padding: 0; font-size: 22px; }
+#divVistaAcceso .gestor-accesos-auditoria-toolbar { background: #f8fafc; font-size: 12px; font-weight: 800; }
+#divVistaAcceso .gestor-accesos-auditoria-toolbar input { accent-color: #2563eb; }
+#divVistaAcceso .gestor-accesos-auditoria-contenido { flex: 1 1 auto; min-height: 0; padding: 12px 16px; overflow: auto; background: #f7f9fc; }
+#divVistaAcceso .gestor-accesos-auditoria-lista { display: grid; gap: 9px; }
+#divVistaAcceso .gestor-accesos-auditoria-item { padding: 11px 13px; border: 1px solid #dfe5ec; border-left: 4px solid #14b8a6; border-radius: 9px; background: #fff; }
+#divVistaAcceso .gestor-accesos-auditoria-top { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 5px; color: #667085; font-size: 10px; font-weight: 800; }
+#divVistaAcceso .gestor-accesos-auditoria-top span { color: #6d28d9; }
+#divVistaAcceso .gestor-accesos-auditoria-item strong { display: block; color: #172033; font-size: 13px; }
+#divVistaAcceso .gestor-accesos-auditoria-item small { display: block; margin-top: 2px; color: #667085; font-size: 10px; }
+#divVistaAcceso .gestor-accesos-auditoria-item p { margin: 5px 0 0; color: #475467; font-size: 10px; overflow-wrap: anywhere; }
+#divVistaAcceso .gestor-accesos-auditoria-dialog > footer { border-top: 1px solid #e4e7ec; border-bottom: 0; color: #667085; font-size: 10px; }
+
+@media (max-width: 640px) {
+  #divVistaAcceso .gestor-accesos-auditoria-modal { padding: 6px; }
+  #divVistaAcceso .gestor-accesos-auditoria-dialog { max-height: calc(100dvh - 12px); }
+  #divVistaAcceso .gestor-accesos-auditoria-top { display: grid; }
+  #divVistaAcceso .gestor-accesos-auditoria-dialog > footer { align-items: flex-start; }
+}
+
 #divVistaAcceso .gestor-accesos-impacto-modal {
   position: absolute;
   inset: 0;

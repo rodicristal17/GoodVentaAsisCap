@@ -548,6 +548,41 @@ function gestorAccesosRegistrarAuditoria($mysqli, $usuarioId, $campo, $anterior,
 	return $ok;
 }
 
+function gestorAccesosAuditarDiferenciasPermisos($mysqli, $usuarioId, $anteriores, $nuevos)
+{
+	if (!gestorAccesosTablaExiste($mysqli, 'accesosuser_auditoria')) {
+		return true;
+	}
+	$sql = "INSERT INTO accesosuser_auditoria
+		(idaccesosUser,idlistadodeaccesoFK,usuarios_idusario,tipo,codigo_permiso,nombre_permiso,
+		accion_anterior,accion_nueva,fecha_hora,cod_usuario_actor,origen,ip,navegador,usuario_bd,conexion_id,grupo_cambio)
+		SELECT acus.idaccesosUser,lta.idlistadodeacceso,?,'Administrativo',lta.codigo,lta.nombre,
+		?,?,NOW(),NULLIF(@gv_audit_actor,0),NULLIF(@gv_audit_origen,''),NULLIF(@gv_audit_ip,''),
+		NULLIF(@gv_audit_navegador,''),CONCAT(CURRENT_USER(),' / ',USER()),CONNECTION_ID(),NULLIF(@gv_audit_grupo,'')
+		FROM listadodeacceso lta
+		LEFT JOIN accesosuser acus ON acus.idlistadodeaccesoFK=lta.idlistadodeacceso
+			AND acus.usuarios_idusario=? AND acus.tipo='Administrativo'
+		WHERE lta.idlistadodeacceso=? LIMIT 1";
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) {
+		return false;
+	}
+	foreach ($nuevos as $idAcceso => $nuevo) {
+		$anterior = isset($anteriores[$idAcceso]) ? $anteriores[$idAcceso] : null;
+		if ($anterior === null || $anterior === $nuevo) {
+			continue;
+		}
+		$idAcceso = intval($idAcceso);
+		$stmt->bind_param('issii', $usuarioId, $anterior, $nuevo, $usuarioId, $idAcceso);
+		if (!$stmt->execute()) {
+			$stmt->close();
+			return false;
+		}
+	}
+	$stmt->close();
+	return true;
+}
+
 function gestorAccesosReemplazarUsuario($mysqli, $usuarioId, $estados)
 {
 	$stmtDelete = $mysqli->prepare("DELETE FROM accesosuser
@@ -645,6 +680,9 @@ function gestorAccesosGuardarUsuario($usuarioSesion)
 			)) {
 				throw new Exception('No se pudo auditar el cambio de rol.');
 			}
+		}
+		if (!gestorAccesosAuditarDiferenciasPermisos($mysqli, intval($usuarioId), $anteriores, $estados)) {
+			throw new Exception('No se pudo auditar el detalle de permisos.');
 		}
 		if (!gestorAccesosReemplazarUsuario($mysqli, intval($usuarioId), $estados)) {
 			throw new Exception('No se pudo reemplazar la matriz de permisos.');
@@ -758,6 +796,67 @@ function gestorAccesosImpactoRol($rolId)
 	));
 }
 
+function gestorAccesosConsultarAuditoria($usuarioSesion)
+{
+	$usuarioId = isset($_POST['usuario_id']) ? intval($_POST['usuario_id']) : 0;
+	$limite = isset($_POST['limite']) ? intval($_POST['limite']) : 100;
+	$limite = max(20, min(200, $limite));
+	$mysqli = conectar_al_servidor();
+	if (!gestorAccesosTablaExiste($mysqli, 'accesosuser_auditoria')) {
+		mysqli_close($mysqli);
+		responderAccesos('SIN_MIGRACION', array('2' => 'Falta aplicar la migracion de auditoria de permisos.'));
+	}
+	$sql = "SELECT aa.id, aa.fecha_hora, aa.usuarios_idusario,
+		IFNULL(NULLIF(TRIM(p.nombre_persona),''),u.login) AS usuario_afectado,
+		aa.codigo_permiso, aa.nombre_permiso, aa.accion_anterior, aa.accion_nueva,
+		aa.cod_usuario_actor,
+		IFNULL(NULLIF(TRIM(pa.nombre_persona),''),ua.login) AS usuario_actor,
+		aa.origen, aa.ip, aa.navegador, aa.usuario_bd, aa.grupo_cambio
+		FROM accesosuser_auditoria aa
+		LEFT JOIN usuario u ON u.cod_usuario=aa.usuarios_idusario
+		LEFT JOIN persona p ON p.cod_persona=u.cod_usuario
+		LEFT JOIN usuario ua ON ua.cod_usuario=aa.cod_usuario_actor
+		LEFT JOIN persona pa ON pa.cod_persona=ua.cod_usuario
+		WHERE (?=0 OR aa.usuarios_idusario=?)
+		ORDER BY aa.id DESC
+		LIMIT " . $limite;
+	$stmt = $mysqli->prepare($sql);
+	if (!$stmt) {
+		mysqli_close($mysqli);
+		responderAccesos('Error', array('2' => 'No se pudo preparar la consulta de auditoria.'));
+	}
+	$stmt->bind_param('ii', $usuarioId, $usuarioId);
+	if (!$stmt->execute()) {
+		$stmt->close();
+		mysqli_close($mysqli);
+		responderAccesos('Error', array('2' => 'No se pudo consultar la auditoria.'));
+	}
+	$resultado = $stmt->get_result();
+	$filas = array();
+	while ($fila = $resultado->fetch_assoc()) {
+		$filas[] = array(
+			'id' => intval($fila['id']),
+			'fecha' => $fila['fecha_hora'],
+			'usuario_id' => intval($fila['usuarios_idusario']),
+			'usuario' => gestorAccesosUtf8($fila['usuario_afectado']),
+			'codigo' => gestorAccesosUtf8($fila['codigo_permiso']),
+			'permiso' => gestorAccesosUtf8($fila['nombre_permiso']),
+			'anterior' => gestorAccesosUtf8($fila['accion_anterior']),
+			'nuevo' => gestorAccesosUtf8($fila['accion_nueva']),
+			'actor_id' => intval($fila['cod_usuario_actor']),
+			'actor' => gestorAccesosUtf8($fila['usuario_actor']),
+			'origen' => gestorAccesosUtf8($fila['origen']),
+			'ip' => $fila['ip'],
+			'navegador' => gestorAccesosUtf8($fila['navegador']),
+			'usuario_bd' => $fila['usuario_bd'],
+			'grupo' => $fila['grupo_cambio']
+		);
+	}
+	$stmt->close();
+	mysqli_close($mysqli);
+	responderAccesos('exito', array('datos' => $filas, 'total' => count($filas)));
+}
+
 function gestorAccesosGuardarRol($usuarioSesion)
 {
 	$rolId = isset($_POST['rol_id']) ? trim((string)$_POST['rol_id']) : '';
@@ -859,6 +958,9 @@ function gestorAccesosGuardarRol($usuarioSesion)
 		foreach ($usuariosRol as $usuarioId) {
 			$anteriores = gestorAccesosEstadosUsuario($mysqli, $usuarioId);
 			$resumenAnterior = gestorAccesosResumenEstados($mysqli, $anteriores);
+			if (!gestorAccesosAuditarDiferenciasPermisos($mysqli, $usuarioId, $anteriores, $estados)) {
+				throw new Exception('No se pudo auditar el detalle de permisos heredados.');
+			}
 			if (!gestorAccesosReemplazarUsuario($mysqli, $usuarioId, $estados)) {
 				throw new Exception('No se pudo sincronizar un usuario del rol.');
 			}
@@ -910,6 +1012,10 @@ if($resp!="ok"){
 	responderAccesos("UI");
 }
 
+// El actor ya fue autenticado. Desde este punto, cualquier conexion creada por
+// este endpoint puede atribuir con seguridad una modificacion de permisos.
+iniciarContextoAuditoriaPermisos($user, $funt);
+
 	// Recuperacion idempotente: solo puede ejecutarse despues de autenticar la
 	// sesion y solo para la identidad protegida confirmada arriba.
 	$esSuperAdministradorProtegido = esSuperAdministradorProtegido($user);
@@ -951,6 +1057,10 @@ if($resp!="ok"){
 
 	if ($funt === "guardarRolGestor") {
 		gestorAccesosGuardarRol($user);
+	}
+
+	if ($funt === "auditoriaGestor") {
+		gestorAccesosConsultarAuditoria($user);
 	}
 	
 if($funt=="editar")

@@ -32,13 +32,13 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=gestor-accesos-layout-visible-20260730-1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=auditoria-permisos-20260803-1" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-4" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=trabajo-laboratorio-20260723-mini-hilo-1" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=buscador-pagare-20260721-1" />
 <link id="telarTrabajoLaboratorioCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260725-02" />
-<link id="telarPlanificacionEspecialistasCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/planificacion_especialistas.css?v=20260727-08" />
+<link id="telarPlanificacionEspecialistasCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/planificacion_especialistas.css?v=20260807-01" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-avatar-flotante-20260801-01" />
@@ -60,7 +60,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=interconsulta-local-20260801-1"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=sugerencias-webshield-20260806-1"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=sugerencias-webshield-auditoria-permisos-20260807-1"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=gestor-accesos-20260723-1"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -69,18 +69,18 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=egresos-multilocal-20260721"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-orden-sin-entrega-20260730"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
-<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-avatar-flotante-20260801-01"></script>
+<script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=planificacion-fuente-agenda-20260807-01"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js?x=performance-polling-20260718"></script>
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
-<script src="../js_system/abmGasto_ingresosEgresos.js?x=proyectos-flujo-hilo-20260724-1"></script>
+<script src="../js_system/abmGasto_ingresosEgresos.js?x=hilo-gasto-id-fijo-20260804-1"></script>
 <script src="../js_system/abmAsistencia.js?x=presencia-segura-20260717-1"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=performance-polling-20260718"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js?x=historico-solo-consulta-20260721"></script>
 <script src="../js_system/trabajo_laboratorio.js?x=trabajo-laboratorio-20260725-03"></script>
-<script src="../js_system/planificacion_especialistas.js?x=20260727-08"></script>
+<script src="../js_system/planificacion_especialistas.js?x=20260807-01"></script>
 <script src="../js_system/abmMecanicoDental.js?x=cuenta-telar-20260721-3"></script>
-<script src="../js_system/abmInterConsulta.js?x=interconsulta-local-20260801-1"></script>
+<script src="../js_system/abmInterConsulta.js?x=hilo-gasto-id-fijo-20260804-1"></script>
 <script src="../js_system/abmCentroFacturas.js?x=nomenclatura-legajos-20260721-1"></script>
 <script src="../js_system/abmInventarioLocal.js"></script>
 <script src="../js_system/abmCompra.js"></script>
@@ -6135,10 +6135,26 @@ onclick="vaciar('inptBuscarUsuario3')" />
 <button type='button' class='dashboard-shortcut-modal__btn dashboard-shortcut-modal__btn--secondary' onclick='gestorAccesosRestaurarRol()'>Restaurar permisos del rol</button>
 </div>
 <div class='accesos-visual-footer__actions'>
+<button type='button' class='dashboard-shortcut-modal__btn dashboard-shortcut-modal__btn--secondary' onclick='gestorAccesosAbrirAuditoria()'>Auditoria</button>
 <button type='button' class='dashboard-shortcut-modal__btn dashboard-shortcut-modal__btn--secondary' onclick='verCerrarAccesoUsuario("2")'>Cancelar</button>
 <button type='button' class='dashboard-shortcut-modal__btn dashboard-shortcut-modal__btn--primary' id='gestorAccesosGuardar' onclick='gestorAccesosGuardar()'>Guardar cambios</button>
 </div>
 </footer>
+</div>
+
+<div id='modalAuditoriaGestorAccesos' class='gestor-accesos-auditoria-modal' style='display:none' role='dialog' aria-modal='true' aria-labelledby='tituloAuditoriaGestorAccesos'>
+<div class='gestor-accesos-auditoria-dialog'>
+<header>
+<div><p>Trazabilidad de seguridad</p><h3 id='tituloAuditoriaGestorAccesos'>Modificaciones de permisos</h3></div>
+<button type='button' onclick='gestorAccesosCerrarAuditoria()' aria-label='Cerrar auditoria'>&times;</button>
+</header>
+<div class='gestor-accesos-auditoria-toolbar'>
+<label><input type='checkbox' id='gestorAccesosAuditoriaSoloUsuario' checked onchange='gestorAccesosCargarAuditoria()'> Solo usuario seleccionado</label>
+<button type='button' onclick='gestorAccesosCargarAuditoria()'>Actualizar</button>
+</div>
+<div id='gestorAccesosAuditoriaContenido' class='gestor-accesos-auditoria-contenido' aria-live='polite'></div>
+<footer><span>Se registran solamente modificaciones de permisos.</span><button type='button' onclick='gestorAccesosCerrarAuditoria()'>Cerrar</button></footer>
+</div>
 </div>
 
 <div id='modalImpactoGestorAccesosRol' class='gestor-accesos-impacto-modal' style='display:none' role='dialog' aria-modal='true' aria-labelledby='tituloImpactoGestorAccesosRol'>
@@ -8370,7 +8386,6 @@ style='background-color:#5bc572'>
                           <span>Ver gastos</span>
                         </button>
                         <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Agregar gasto al hilo" alt="Agregar gasto al hilo" role="button" tabindex="0" onclick="abrirNuevoGastoDesdeHiloActual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){abrirNuevoGastoDesdeHiloActual(event);}">
-                        <img src="/GoodVentaAsisCap/iconos/add.png" class="iconoBtn" title="Crear proyecto del hilo" alt="Crear proyecto del hilo" role="button" tabindex="0" onclick="crearProyectoDesdeHiloActual(event)" onkeydown="if(event.key==='Enter'||event.key===' '){crearProyectoDesdeHiloActual(event);}">
                       </div>
                     </div>
                     <div id="contenedorFlujoGastosInterConsulta" class="interconsulta-flow-content">
@@ -8608,7 +8623,7 @@ style='background-color:#5bc572'>
         <div id="camposDocumentoFiscalAdjunto" class="adjunto-documento-fields" hidden>
           <label class="adjunto-documento-field"><span id="etiquetaNumeroAdjuntoDocumento">N.&ordm; de documento (opcional)</span><input type="text" id="numeroAdjuntoDocumento" class="inputText" maxlength="80" autocomplete="off" oninput="actualizarResumenAdjuntoDocumentoGuiado()"></label>
           <label class="adjunto-documento-field">Fecha*<input type="date" id="fechaAdjuntoDocumento" class="inputText" onchange="actualizarResumenAdjuntoDocumentoGuiado()"></label>
-          <label class="adjunto-documento-field">Monto (Gs.)*<input type="text" inputmode="decimal" id="montoAdjuntoDocumento" class="inputText" maxlength="25" oninput="actualizarResumenAdjuntoDocumentoGuiado()"></label>
+          <label class="adjunto-documento-field">Monto (Gs.)*<input type="text" inputmode="numeric" id="montoAdjuntoDocumento" class="inputText" maxlength="25" autocomplete="off" oninput="formatearEntradaMontoAdjuntoDocumentoGuiado(this)"></label>
           <label id="grupoDescripcionAdjuntoDocumento" class="adjunto-documento-field adjunto-documento-field--wide" hidden>Descripci&oacute;n del recibo*<textarea id="descripcionAdjuntoDocumento" class="inputText" maxlength="500" rows="2" oninput="actualizarResumenAdjuntoDocumentoGuiado()"></textarea></label>
         </div>
         <div id="avisoConceptoAdjuntoDocumento" class="adjunto-documento-note" hidden><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>El concepto contable no se solicita aqu&iacute;. En un egreso se hereda del movimiento; desde un Hilo puede quedar pendiente de clasificar.</span></div>

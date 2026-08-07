@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . "/auditoria_permisos_helper.php");
 
 function conectar_al_servidor(){
 
@@ -13,6 +14,9 @@ if ($mysqli->connect_errno) {
 	return  $mysqli;
 }
 $mysqli->set_charset("latin1");
+// Solo establece variables MySQL cuando un flujo autenticado de permisos
+// activo previamente el contexto. Las conexiones normales no ejecutan SQL extra.
+aplicarContextoAuditoriaPermisos($mysqli);
 return  $mysqli;
 
 }

@@ -18,7 +18,7 @@ if (!is_file($mysql)) {
     exit(4);
 }
 
-$comando = escapeshellarg($mysql)
+$comando = escapeshellcmd($mysql)
     .' --host=localhost --port=3306 --user=root --default-character-set=utf8mb4'
     .' --init-command='.escapeshellarg('SET SESSION FOREIGN_KEY_CHECKS=0')
     .' '.escapeshellarg($base);
@@ -35,8 +35,32 @@ if (!is_resource($proceso)) {
 
 $entrada = fopen($dump, 'rb');
 $reemplazos = 0;
+$triggersOmitidos = 0;
+$omitiendoTrigger = false;
+$triggersIncompatibles = array(
+    'trg_ueno_movimiento_bancario_528ad270_inac',
+    'trg_ueno_movimiento_gasto_42c1e67b_inac',
+    'trg_ueno_movimiento_pago_4479224a_inac'
+);
 $falloEscritura = false;
 while (($linea = fgets($entrada)) !== false) {
+    if ($omitiendoTrigger) {
+        if (trim($linea) === 'DELIMITER ;') {
+            $omitiendoTrigger = false;
+            if (fwrite($tuberias[0], $linea) === false) {
+                $falloEscritura = true;
+                break;
+            }
+        }
+        continue;
+    }
+    foreach ($triggersIncompatibles as $triggerIncompatible) {
+        if (strpos($linea, 'CREATE TRIGGER `'.$triggerIncompatible.'`') === 0) {
+            $omitiendoTrigger = true;
+            $triggersOmitidos++;
+            continue 2;
+        }
+    }
     if (strpos($linea, '`solicitud_abierta` tinyint(1) GENERATED ALWAYS AS') !== false) {
         $linea = "  `solicitud_abierta` tinyint(1) DEFAULT NULL,\n";
         $reemplazos++;
@@ -58,6 +82,10 @@ if ($reemplazos !== 1) {
     fwrite(STDERR, "La importacion termino, pero se esperaban 1 y se realizaron ".$reemplazos." adaptaciones.\n");
     exit(7);
 }
+if ($triggersOmitidos !== 3) {
+    fwrite(STDERR, "La importacion termino, pero se esperaban omitir 3 triggers incompatibles y se omitieron ".$triggersOmitidos.".\n");
+    exit(8);
+}
 
-echo "IMPORTACION_STREAM_OK reemplazos=".$reemplazos."\n";
+echo "IMPORTACION_STREAM_OK reemplazos=".$reemplazos." triggers_omitidos=".$triggersOmitidos."\n";
 exit(0);

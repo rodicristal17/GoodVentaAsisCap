@@ -24,6 +24,10 @@ echo json_encode($informacion);
 exit;
 }
 
+if($operacion=="nuevo" || $operacion=="editar" || $operacion=="eliminar"){
+	iniciarContextoAuditoriaPermisos($user, $operacion);
+}
+
 if($operacion=="buscarMecanicosDisponiblesAlta"){
 	buscarMecanicosDisponiblesAltaFuncionario($user);
 }
