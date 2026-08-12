@@ -166,8 +166,14 @@ function gastoUsuarioPuedeGestionarLocalPorHilo($mysqli, $codUsuario, $codLocal,
 		$filaHilo= $stmt->get_result()->fetch_assoc();
 	}
 	$stmt->close();
-	return $filaHilo && function_exists('obtenerCategoriaPrincipalHilo')
-		&& obtenerCategoriaPrincipalHilo($filaHilo['tipo']) === 'pagos_egresos';
+	if (!$filaHilo || !function_exists('obtenerCategoriaPrincipalHilo')
+		|| obtenerCategoriaPrincipalHilo($filaHilo['tipo']) !== 'pagos_egresos'
+		|| !function_exists('interconsultaParticipantesActualesHilos')) {
+		return false;
+	}
+	$participantes= interconsultaParticipantesActualesHilos(array($codInterConsulta), $mysqli);
+	return isset($participantes[$codInterConsulta])
+		&& isset($participantes[$codInterConsulta][$codUsuario]);
 }
 
 function gastoConceptosActivosParaIds($mysqli, $idsGastos, $bloquear = false)
@@ -1317,8 +1323,12 @@ if ($operacion == 'nuevo' && strtolower(trim((string)$tipo)) == 'egreso' && intv
 		echo json_encode(array('1'=>'NI', '2'=>'El Hilo seleccionado no esta activo o no corresponde a Pagos y Egresos.'));
 		exit;
 	}
-	$cod_local= (string)$localHilo;
 	$localAutorizadoPorHiloNuevo= true;
+	if (!usuarioPuedeGestionarLocalGasto($user, intval($cod_local))) {
+		$mysqliLocalHilo->close();
+		echo json_encode(array('1'=>'NI', '2'=>'No tiene permiso para registrar el pago desde el local seleccionado.'));
+		exit;
+	}
 	if (intval($idaperturacierrecaja) > 0 && intval($codcaja) > 0) {
 		$stmtCajaHilo= $mysqliLocalHilo->prepare("SELECT 1 FROM arqueocaja
 			WHERE idarqueocaja=? AND caja_idcaja=? AND cod_local=?
@@ -1330,12 +1340,13 @@ if ($operacion == 'nuevo' && strtolower(trim((string)$tipo)) == 'egreso' && intv
 		}
 		$aperturaHilo= intval($idaperturacierrecaja);
 		$cajaHilo= intval($codcaja);
-		$stmtCajaHilo->bind_param('iii', $aperturaHilo, $cajaHilo, $localHilo);
+		$localPago= intval($cod_local);
+		$stmtCajaHilo->bind_param('iii', $aperturaHilo, $cajaHilo, $localPago);
 		$cajaCoincideHilo= $stmtCajaHilo->execute() && $stmtCajaHilo->get_result()->num_rows > 0;
 		$stmtCajaHilo->close();
 		if (!$cajaCoincideHilo) {
 			$mysqliLocalHilo->close();
-			echo json_encode(array('1'=>'NI', '2'=>'La caja abierta no pertenece al local del Hilo. Seleccione una caja activa de ese local.'));
+			echo json_encode(array('1'=>'NI', '2'=>'La caja abierta no pertenece al local de pago seleccionado. Seleccione una caja activa de ese local.'));
 			exit;
 		}
 	}
@@ -3874,13 +3885,12 @@ try {
 			throw new Exception('No administra el local al que pertenece el Hilo seleccionado.');
 		}
 		if ($accesoLocalPorHiloNuevo) {
-			$cod_local= (string)intval($hiloGasto['cod_localFK']);
 			$cajaHiloBloqueada= caja_cierre_obtener_arqueo($mysqli, intval($idaperturacierrecaja), true);
 			if (!$cajaHiloBloqueada
 				|| intval($cajaHiloBloqueada['caja_idcaja']) !== intval($codcaja)
 				|| intval($cajaHiloBloqueada['cod_local']) !== intval($cod_local)
 				|| strtolower(trim((string)$cajaHiloBloqueada['estado'])) !== 'activo') {
-				throw new Exception('La caja abierta no pertenece al local del Hilo. Seleccione una caja activa de ese local.');
+				throw new Exception('La caja abierta no pertenece al local de pago seleccionado. Seleccione una caja activa de ese local.');
 			}
 		}
 		if (function_exists('obtenerCategoriaPrincipalHilo')

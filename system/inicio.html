@@ -40,6 +40,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <link id="telarTrabajoLaboratorioCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260725-02" />
 <link id="telarPlanificacionEspecialistasCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/planificacion_especialistas.css?v=20260727-08" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/cuotas_salteadas.css?x=20260810-9" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-avatar-flotante-20260801-01" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -60,7 +61,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=interconsulta-local-20260801-1"></script>
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=auditoria-permisos-20260803-1"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=historial-pagos-salteados-20260810-1"></script>
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=gestor-accesos-20260723-1"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
@@ -68,6 +69,8 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=egresos-multilocal-20260721"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-orden-sin-entrega-20260730"></script>
+<script src="/GoodVentaAsisCap/js_system/abmCuotasSalteadas.js?x=20260810-9"></script>
+<script src="/GoodVentaAsisCap/js_system/abmHistorialPagosSalteados.js?x=20260810-4"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=agenda-avatar-flotante-20260801-01"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js?x=performance-polling-20260718"></script>
@@ -3779,6 +3782,28 @@ src='/GoodVentaAsisCap/iconos/pago-en-efectivo.png' />
 <div id='divMinimizadoCobrarCuota2' style='display:none'
 class='divMinimizado'></div>
 </center>
+</td>
+</tr>
+</table>
+
+<table class='divMenub' id='divMenuCuotasSalteadas'
+onclick='verCerrarCuotasSalteadas(true)' style='text-align:center' title='Revisar planes con cuotas pagadas fuera de secuencia'>
+<tr>
+<td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/cuantasacobra.png' alt='' />
+<p class='pTitulo4'>Cuotas salteadas</p>
+<center><div id='divMinimizadoCuotasSalteadas' style='display:none' class='divMinimizado'></div></center>
+</td>
+</tr>
+</table>
+
+<table class='divMenub' id='divMenuHistorialPagosSalteados'
+onclick='verCerrarHistorialPagosSalteados(true)' style='text-align:center' title='Consultar el historial inmutable de pagos fuera de secuencia'>
+<tr>
+<td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/cuantasacobra.png' alt='' />
+<p class='pTitulo4'>Historial pagos salteados</p>
+<center><div id='divMinimizadoHistorialPagosSalteados' style='display:none' class='divMinimizado'></div></center>
 </td>
 </tr>
 </table>
@@ -15156,6 +15181,132 @@ style='height:250px'>
 </td>
 </tr>
 </table>
+</div>
+
+<div class="cs-overlay" id="divCuotasSalteadas" style="display:none">
+  <section class="cs-app" role="dialog" aria-modal="true" aria-labelledby="cuotasSalteadasTitulo">
+    <header class="cs-header">
+      <div>
+        <span class="cs-header__eyebrow">Administrativo · Control de cobranzas</span>
+        <h2 id="cuotasSalteadasTitulo">Cuotas salteadas</h2>
+        <p>Planes con cuotas posteriores pagadas mientras quedan cuotas anteriores pendientes.</p>
+      </div>
+      <div class="cs-header__actions">
+        <button type="button" class="cs-button" id="btnCuotasSalteadasRegistrarHistorial" onclick="cuotasSalteadasSolicitarCodigo()"><i class="fa-solid fa-box-archive" aria-hidden="true"></i> Guardar historial</button>
+        <button type="button" class="cs-button" onclick="cuotasSalteadasExportar()"><i class="fa-solid fa-file-csv" aria-hidden="true"></i> Exportar</button>
+        <button type="button" class="cs-button" onclick="cuotasSalteadasImprimir()"><i class="fa-solid fa-print" aria-hidden="true"></i> Imprimir</button>
+        <button type="button" class="cs-close" onclick="verCerrarCuotasSalteadas(false)" aria-label="Cerrar cuotas salteadas" title="Cerrar">&times;</button>
+      </div>
+    </header>
+    <div class="cs-body">
+      <section class="cs-summary" aria-label="Resumen de cuotas salteadas">
+        <article><span>Clientes</span><b id="csResumenClientes">0</b></article>
+        <article><span>Ventas</span><b id="csResumenVentas">0</b></article>
+        <article><span>Cuotas salteadas</span><b id="csResumenCuotas">0</b></article>
+        <article><span>Saldo de los huecos</span><b id="csResumenSaldo">Gs. 0</b></article>
+        <article><span>Cuotas vencidas</span><b id="csResumenVencidas">0</b></article>
+        <article><span>Pagos parciales</span><b id="csResumenParciales">0</b></article>
+      </section>
+      <form class="cs-filters" onsubmit="event.preventDefault();cuotasSalteadasBuscar();">
+        <label>Cliente o documento<input type="search" id="csFiltroBuscar" placeholder="Nombre, documento o ID"></label>
+        <label>Situaci&oacute;n<select id="csFiltroSituacion"><option value="todas">Todas</option><option value="vencidas">Vencidas</option><option value="hoy">Vencen hoy</option><option value="futuras">A vencer</option><option value="parciales">Con pago parcial</option></select></label>
+        <label>Venta<input type="number" min="1" id="csFiltroVenta" placeholder="N.&ordm;"></label>
+        <label>Local<select id="csFiltroLocal"><option value="">Todos los locales</option></select></label>
+        <label>Desde<input type="date" id="csFiltroDesde"></label>
+        <label>Hasta<input type="date" id="csFiltroHasta"></label>
+        <button type="submit" class="cs-button cs-button--primary" id="btnCuotasSalteadasBuscar"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Buscar</button>
+        <button type="button" class="cs-button" onclick="cuotasSalteadasLimpiar()">Limpiar</button>
+      </form>
+      <div id="cuotasSalteadasAviso" class="cs-notice" hidden role="status"></div>
+      <section class="cs-results">
+        <div id="cuotasSalteadasCargando" class="cs-loading" hidden><span>Cargando y verificando saldos...</span></div>
+        <div class="cs-table-wrap">
+          <table class="cs-table">
+            <thead><tr><th>Cliente</th><th>Venta</th><th>Pagadas</th><th>Cuotas salteadas</th><th>Primer vencimiento</th><th>Entrega</th><th>Saldo</th><th>Acciones</th></tr></thead>
+            <tbody id="cuotasSalteadasTablaCuerpo"></tbody>
+          </table>
+          <div class="cs-empty" id="cuotasSalteadasVacio" hidden>No se encontraron cuotas salteadas con estos filtros.</div>
+        </div>
+        <footer class="cs-pagination" id="cuotasSalteadasPaginacion"></footer>
+      </section>
+    </div>
+    <div class="cs-detail-modal" id="cuotasSalteadasDetalle" hidden>
+      <section class="cs-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="cuotasSalteadasDetalleTitulo">
+        <header><h3 id="cuotasSalteadasDetalleTitulo">Recorrido de cuotas</h3><button type="button" class="cs-close" onclick="cuotasSalteadasCerrarDetalle()" aria-label="Cerrar detalle" title="Cerrar">&times;</button></header>
+        <div class="cs-detail-dialog__content" id="cuotasSalteadasDetalleContenido"></div>
+      </section>
+    </div>
+    <div class="cs-detail-modal" id="csCodigoHistorialModal" hidden>
+      <section class="cs-detail-dialog cs-security-dialog" role="dialog" aria-modal="true" aria-labelledby="csCodigoHistorialTitulo">
+        <header><h3 id="csCodigoHistorialTitulo">C&oacute;digo de seguridad</h3><button type="button" class="cs-close" onclick="cuotasSalteadasCerrarCodigo()" aria-label="Cerrar" title="Cerrar">&times;</button></header>
+        <form class="cs-detail-dialog__content" onsubmit="event.preventDefault();cuotasSalteadasConfirmarCodigo();">
+          <p>Ingrese el c&oacute;digo autorizado para guardar los resultados filtrados en el historial inmutable.</p>
+          <div class="cs-security-error" id="csCodigoHistorialAviso" hidden role="alert"></div>
+          <label class="cs-security-field">C&oacute;digo<input type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" id="csCodigoHistorial" required></label>
+          <div class="cs-security-actions"><button type="button" class="cs-button" onclick="cuotasSalteadasCerrarCodigo()">Cancelar</button><button type="submit" class="cs-button cs-button--primary">Confirmar y guardar</button></div>
+        </form>
+      </section>
+    </div>
+    <div class="cs-detail-modal" id="csRegularizarModal" hidden>
+      <section class="cs-detail-dialog cs-regularize-dialog" role="dialog" aria-modal="true" aria-labelledby="csRegularizarTitulo">
+        <header><h3 id="csRegularizarTitulo">Vista previa de regularizaci&oacute;n</h3><button type="button" class="cs-close" onclick="cuotasSalteadasCerrarRegularizacion()" aria-label="Cerrar" title="Cerrar">&times;</button></header>
+        <div class="cs-detail-dialog__content" id="csRegularizarContenido"></div>
+        <footer class="cs-regularize-actions"><button type="button" class="cs-button" onclick="cuotasSalteadasCerrarRegularizacion()">Cancelar</button><button type="button" class="cs-button cs-button--primary" id="csRegularizarAplicar" onclick="cuotasSalteadasAplicarRegularizacion()">Aplicar soluci&oacute;n</button></footer>
+      </section>
+    </div>
+  </section>
+</div>
+
+<div class="cs-overlay" id="divHistorialPagosSalteados" style="display:none">
+  <section class="cs-app" role="dialog" aria-modal="true" aria-labelledby="hpsTitulo">
+    <header class="cs-header">
+      <div>
+        <span class="cs-header__eyebrow">Administrativo &middot; Registro inmutable</span>
+        <h2 id="hpsTitulo">Historial de pagos salteados</h2>
+        <p>Registros permanentes de ventas con pagos aplicados a cuotas posteriores mientras exist&iacute;an cuotas anteriores pendientes.</p>
+      </div>
+      <div class="cs-header__actions">
+        <button type="button" class="cs-close" onclick="verCerrarHistorialPagosSalteados(false)" aria-label="Cerrar historial" title="Cerrar">&times;</button>
+      </div>
+    </header>
+    <div class="cs-body">
+      <section class="cs-summary" aria-label="Resumen del historial">
+        <article><span>Clientes</span><b id="hpsResumenClientes">0</b></article>
+        <article><span>Ventas</span><b id="hpsResumenVentas">0</b></article>
+        <article><span>Cuotas salteadas</span><b id="hpsResumenCuotas">0</b></article>
+        <article><span>Saldo de los huecos</span><b id="hpsResumenSaldo">Gs. 0</b></article>
+        <article><span>Cuotas vencidas</span><b id="hpsResumenVencidas">0</b></article>
+        <article><span>Pagos parciales</span><b id="hpsResumenParciales">0</b></article>
+      </section>
+      <form class="cs-filters hps-filters" onsubmit="event.preventDefault();historialPagosSalteadosBuscar();">
+        <label>Cliente o documento<input type="search" id="hpsFiltroBuscar" placeholder="Nombre, documento o ID"></label>
+        <label>Venta<input type="number" min="1" id="hpsFiltroVenta" placeholder="N.&ordm;"></label>
+        <label>Local<select id="hpsFiltroLocal"><option value="">Todos los locales</option></select></label>
+        <label>Detectado desde<input type="date" id="hpsFiltroDesde"></label>
+        <label>Detectado hasta<input type="date" id="hpsFiltroHasta"></label>
+        <button type="submit" class="cs-button cs-button--primary" id="btnHpsBuscar"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Buscar</button>
+        <button type="button" class="cs-button" onclick="historialPagosSalteadosLimpiar()">Limpiar</button>
+      </form>
+      <div id="hpsAviso" class="cs-notice" hidden role="status"></div>
+      <section class="cs-results">
+        <div id="hpsCargando" class="cs-loading" hidden><span>Cargando historial...</span></div>
+        <div class="cs-table-wrap">
+          <table class="cs-table hps-table">
+            <thead><tr><th>Cliente</th><th>Venta</th><th>Pagadas</th><th>Cuotas salteadas</th><th>Primer vencimiento</th><th>Entrega</th><th>Saldo</th><th>Acciones</th></tr></thead>
+            <tbody id="hpsTablaCuerpo"></tbody>
+          </table>
+          <div class="cs-empty" id="hpsVacio" hidden>No hay pagos salteados guardados con estos filtros.</div>
+        </div>
+        <footer class="cs-pagination" id="hpsPaginacion"></footer>
+      </section>
+    </div>
+    <div class="cs-detail-modal" id="hpsDetalle" hidden>
+      <section class="cs-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="hpsDetalleTitulo">
+        <header><h3 id="hpsDetalleTitulo">Cuotas guardadas en el historial</h3><button type="button" class="cs-close" onclick="historialPagosSalteadosCerrarDetalle()" aria-label="Cerrar detalle" title="Cerrar">&times;</button></header>
+        <div class="cs-detail-dialog__content" id="hpsDetalleContenido"></div>
+      </section>
+    </div>
+  </section>
 </div>
 
 <div class='principal2 cobrar-cuota-overlay' style='display:none' id='divCobrarCuota'>

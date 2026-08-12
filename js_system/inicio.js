@@ -38590,6 +38590,20 @@ function removeToMenu(){
 	$("table[id=divMenuCuentasPagar]").remove()
 	controladministrativo=controladministrativo+1;		
 	}
+	if(permisoAccesoUser("VERCUOTASSALTEADAS","accion")==false)
+	{
+	$("table[id=divMenuCuotasSalteadas]").remove()
+	controladministrativo=controladministrativo+1;
+	}
+	if(permisoAccesoUser("VERHISTORIALPAGOSSALTEADOS","accion")==false)
+	{
+	$("table[id=divMenuHistorialPagosSalteados]").remove()
+	controladministrativo=controladministrativo+1;
+	}
+	if(permisoAccesoUser("REGISTRARHISTORIALPAGOSSALTEADOS","accion")==false)
+	{
+	$("#btnCuotasSalteadasRegistrarHistorial").remove()
+	}
 	if( accesosuser["VERCONSULTADECAJA"]["accion"]!="SI")
 	{
 	$("table[id=divMenuConsultadeCaja]").remove()
@@ -38639,7 +38653,7 @@ function removeToMenu(){
 	}
 	
 	
-	if(controladministrativo>=15){
+	if(controladministrativo>=16){
 		document.getElementById("divMenuAdministrativo").style.display="none"
 	}
 	
