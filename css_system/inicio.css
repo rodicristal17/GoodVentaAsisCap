@@ -43923,10 +43923,40 @@ button.tratamiento-ubicacion-visual {
 }
 
 #divConciliacionUeno .ueno-guide span {
+	flex: 1 1 auto;
   min-width: 0;
   font-size: 11px;
   font-weight: 700;
   line-height: 1.35;
+}
+
+#divConciliacionUeno .ueno-bank-selector {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-left: auto;
+	padding-left: 10px;
+	border-left: 1px solid #c9ddef;
+	white-space: nowrap;
+}
+
+#divConciliacionUeno .ueno-bank-selector small {
+	color: #38546f;
+	font-size: 10px;
+	font-weight: 900;
+	text-transform: uppercase;
+}
+
+#divConciliacionUeno .ueno-bank-selector select {
+	min-width: 150px;
+	height: 32px;
+	padding: 0 30px 0 10px;
+	border: 1px solid #94b8d8;
+	border-radius: 7px;
+	background: #fff;
+	color: #173f63;
+	font-size: 12px;
+	font-weight: 900;
 }
 
 #divConciliacionUeno .ueno-card {
@@ -45793,6 +45823,14 @@ button.tratamiento-ubicacion-visual {
     gap: 4px;
   }
 
+	#divConciliacionUeno .ueno-bank-selector {
+		width: 100%;
+		margin-left: 0;
+		padding: 6px 0 0;
+		border-top: 1px solid #c9ddef;
+		border-left: 0;
+	}
+
   #divConciliacionUeno .ueno-card,
   #divConciliacionUeno .ueno-half-card {
     width: 98% !important;
@@ -46767,6 +46805,12 @@ button.tratamiento-ubicacion-visual {
   border: 1px solid #fed7aa;
   background: #ffedd5;
   color: #9a3412 !important;
+}
+
+#divCobrarCuota .cobrar-cuota__ueno-badge--bank {
+	border-color: #c4b5fd;
+	background: #f5f3ff;
+	color: #5b21b6;
 }
 
 #divCobrarCuota .cobrar-cuota__ueno-badge--suggest {

@@ -7,6 +7,20 @@ function ueno_saldo_tabla_existe($mysqli, $tabla)
 	return $result && $result->num_rows > 0;
 }
 
+function ueno_saldo_columna_existe($mysqli, $tabla, $columna)
+{
+	static $cache = array();
+	$clave = $tabla . "." . $columna;
+	if (isset($cache[$clave])) {
+		return $cache[$clave];
+	}
+	$tabla = $mysqli->real_escape_string($tabla);
+	$columna = $mysqli->real_escape_string($columna);
+	$result = $mysqli->query("SHOW COLUMNS FROM `$tabla` LIKE '$columna'");
+	$cache[$clave] = $result && $result->num_rows > 0;
+	return $cache[$clave];
+}
+
 function ueno_saldo_normalizar_comprobante($valor)
 {
 	return trim(str_replace(array("\r", "\n", "\t", " "), "", (string)$valor));
@@ -36,7 +50,7 @@ function ueno_saldo_asegurar_tabla_movimiento_pago($mysqli)
 	return $mysqli->query($sql) && ueno_saldo_tabla_existe($mysqli, "ueno_movimiento_pago");
 }
 
-function ueno_saldo_sql_unlinked_pagos($mysqli, $comprobante, $excluirCodPago = "", $excluirControl = "")
+function ueno_saldo_sql_unlinked_pagos($mysqli, $comprobante, $excluirCodPago = "", $excluirControl = "", $banco = "")
 {
 	$comprobante = ueno_saldo_normalizar_comprobante($comprobante);
 	if ($comprobante == "" || !ueno_saldo_tabla_existe($mysqli, "pago_transferencia_conciliacion")) {
@@ -50,6 +64,10 @@ function ueno_saldo_sql_unlinked_pagos($mysqli, $comprobante, $excluirCodPago = 
 	}
 	if ($excluirControl != "") {
 		$condicionExtra .= " AND pc.id!='" . $mysqli->real_escape_string($excluirControl) . "'";
+	}
+	$banco = strtoupper(trim((string)$banco));
+	if (($banco == "UENO" || $banco == "FAMILIAR") && ueno_saldo_columna_existe($mysqli, "pago_transferencia_conciliacion", "banco_codigo")) {
+		$condicionExtra .= " AND pc.banco_codigo='" . $mysqli->real_escape_string($banco) . "'";
 	}
 
 	$joinLink = "";
@@ -128,8 +146,9 @@ function ueno_saldo_disponible_movimiento($mysqli, $movimiento, $excluirCodPago 
 
 	$idMovimiento = isset($movimiento["id_movimiento"]) ? $movimiento["id_movimiento"] : "";
 	$comprobante = isset($movimiento["nro_comprobante"]) ? $movimiento["nro_comprobante"] : "";
+	$banco = isset($movimiento["banco_codigo"]) ? $movimiento["banco_codigo"] : "";
 	$aplicadoLink = ueno_saldo_total_linkeado($mysqli, $idMovimiento);
-	$aplicadoSinLink = ueno_saldo_sql_unlinked_pagos($mysqli, $comprobante, $excluirCodPago, $excluirControl);
+	$aplicadoSinLink = ueno_saldo_sql_unlinked_pagos($mysqli, $comprobante, $excluirCodPago, $excluirControl, $banco);
 	$aplicadoAuditoria = ueno_saldo_total_auditoria_cobrar($mysqli, $idMovimiento, $aplicadoLink);
 	$disponible = $importe - $aplicadoLink - $aplicadoSinLink - $aplicadoAuditoria;
 	if (isset($movimiento["monto_disponible"]) && trim((string)$movimiento["monto_disponible"]) !== "") {

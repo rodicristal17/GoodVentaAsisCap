@@ -11,6 +11,138 @@ var uenoAuditoriaMovimientoActual = "";
 var uenoImportacionesModalAbierto = false;
 var uenoDetalleImportacionActual = "";
 var uenoMesaTrabajoModalAbierta = false;
+var uenoBancoSeleccionado = "UENO";
+var uenoFiltroBancoSeleccionado = "TODOS";
+var uenoFiltroBancoVersion = 0;
+var uenoMetadatosExtracto = {
+	moneda: "PYG",
+	tipo_cuenta: "",
+	saldo_anterior: null,
+	saldo_final: null,
+	total_creditos_declarado: null,
+	total_debitos_declarado: null
+};
+
+function uenoBancoActual() {
+	var selector = document.getElementById("inptConciliacionBanco");
+	var banco = selector ? String(selector.value || "UENO").toUpperCase() : uenoBancoSeleccionado;
+	if (banco != "FAMILIAR") {
+		banco = "UENO";
+	}
+	uenoBancoSeleccionado = banco;
+	return banco;
+}
+
+function uenoBancoNombre(codigo) {
+	return String(codigo || uenoBancoActual()).toUpperCase() == "FAMILIAR" ? "Banco Familiar" : "Ueno";
+}
+
+function uenoAgregarBanco(datos) {
+	datos.append("banco_codigo", uenoBancoActual());
+	return datos;
+}
+
+function uenoFiltroBancoActual() {
+	var banco = String(uenoFiltroBancoSeleccionado || "TODOS").toUpperCase();
+	if (["TODOS", "UENO", "FAMILIAR"].indexOf(banco) < 0) {
+		banco = "TODOS";
+	}
+	uenoFiltroBancoSeleccionado = banco;
+	return banco;
+}
+
+function uenoFiltroBancoNombre(codigo) {
+	var banco = String(codigo || uenoFiltroBancoActual()).toUpperCase();
+	if (banco == "FAMILIAR") {
+		return "Banco Familiar";
+	}
+	return banco == "UENO" ? "Ueno" : "Todos los bancos";
+}
+
+function uenoAgregarFiltroBanco(datos) {
+	datos.append("banco_codigo", uenoFiltroBancoActual());
+	return datos;
+}
+
+function uenoActualizarBotonesFiltroBanco() {
+	var banco = uenoFiltroBancoActual();
+	var botones = document.querySelectorAll("#divConciliacionUeno [data-ueno-bank-filter]");
+	for (var i = 0; i < botones.length; i++) {
+		var activo = String(botones[i].getAttribute("data-ueno-bank-filter") || "").toUpperCase() == banco;
+		botones[i].classList.toggle("ueno-bank-filter-button--active", activo);
+		botones[i].setAttribute("aria-pressed", activo ? "true" : "false");
+	}
+}
+
+function uenoFechaFamiliarIso(valor) {
+	var partes = String(valor || "").split("/");
+	return partes.length == 3 ? partes[2] + "-" + partes[1] + "-" + partes[0] : "";
+}
+
+function uenoActualizarContextoBanco() {
+	var banco = uenoBancoActual();
+	var familiar = banco == "FAMILIAR";
+	var inputArchivo = document.getElementById("uenoArchivoExtracto");
+	if (inputArchivo) {
+		inputArchivo.accept = familiar ? ".pdf,application/pdf" : ".xls,.xlsx,.csv";
+	}
+	var cuenta = document.getElementById("inptUenoCuenta");
+	if (cuenta) {
+		cuenta.readOnly = familiar;
+		cuenta.title = familiar ? "La cuenta se obtiene del PDF de Banco Familiar" : "Cuenta informada en el extracto Ueno";
+	}
+	uenoSetTexto("lblUenoFormatoArchivo", familiar
+		? "Carga el extracto de Banco Familiar en PDF. Se valida cuenta corriente en guaranies, movimientos, totales y saldo; el PDF original no se almacena."
+		: "Carga el archivo Ueno en formato Excel o CSV. Los totales de credito/debito ayudan a confirmar que el archivo fue leido correctamente.");
+}
+
+function uenoCambiarBanco() {
+	uenoBancoSeleccionado = uenoBancoActual();
+	uenoLimpiarPreviewExtracto();
+	uenoActualizarContextoBanco();
+	return true;
+}
+
+function uenoActualizarContextoFiltroBanco() {
+	var banco = uenoFiltroBancoActual();
+	var nombre = uenoFiltroBancoNombre(banco);
+	var todos = banco == "TODOS";
+	uenoActualizarBotonesFiltroBanco();
+	uenoSetTexto("lblUenoBancoTesoreria", todos ? "Fecha bancaria" : "Fecha banco " + nombre);
+	uenoSetTexto("lblUenoTesoreriaHelp", todos
+		? "Compara el total acreditado por ambos bancos contra las transferencias registradas en Telar para la fecha seleccionada."
+		: "Compara el total acreditado por " + nombre + " contra las transferencias registradas en Telar para la fecha seleccionada.");
+	uenoSetTexto("lblUenoTotalBanco", todos ? "Total bancos" : "Total " + nombre + " banco");
+	uenoSetTexto("lblUenoSaldoBanco", todos ? "Saldo bancario disponible" : "Saldo " + nombre + " disponible");
+	uenoSetTexto("lblUenoMesaCompactTitulo", todos ? "5. Movimientos bancarios - mesa de trabajo" : "5. Movimientos " + nombre + " - mesa de trabajo");
+	uenoSetTexto("lblUenoMesaPopupTitulo", "Mesa de trabajo - " + nombre);
+	uenoSetTexto("lblUenoMesaTitulo", todos ? "5. Movimientos bancarios - mesa de trabajo" : "5. Movimientos " + nombre + " - mesa de trabajo");
+	uenoSetTexto("lblUenoAuditPopupTitulo", todos ? "Aplicacion del movimiento bancario" : "Aplicacion del movimiento - " + nombre);
+}
+
+function uenoCambiarFiltroBanco(codigo) {
+	var banco = String(codigo || "TODOS").toUpperCase();
+	if (["TODOS", "UENO", "FAMILIAR"].indexOf(banco) < 0) {
+		banco = "TODOS";
+	}
+	if (uenoFiltroBancoSeleccionado == banco) {
+		uenoActualizarContextoFiltroBanco();
+		return;
+	}
+	uenoFiltroBancoSeleccionado = banco;
+	uenoFiltroBancoVersion++;
+	uenoIdImportacionSeleccionada = "";
+	uenoDetalleImportacionActual = "";
+	uenoCerrarDetalleImportacionPopup();
+	uenoCerrarDetalleMesaTrabajo();
+	uenoLimpiarMovimientoTrabajo(false);
+	uenoActualizarContextoFiltroBanco();
+	uenoBuscarImportaciones();
+	uenoBuscarMovimientos();
+	uenoBuscarResumenTesoreria();
+	uenoBuscarPagosPendientes();
+	uenoBuscarAuditoria();
+}
 
 function uenoAvisarMesaSoloConsulta() {
 	ver_vetana_informativa("No se puede procesar pagos desde la mesa de trabajo. Utiliza el modulo de caja/cobros.", "", "error");
@@ -33,13 +165,18 @@ function verCerrarConciliacionUeno(d) {
 			ver_vetana_informativa("NO TIENES PERMISO PARA CONTINUAR", "", "error");
 			return;
 		}
+		uenoFiltroBancoSeleccionado = "TODOS";
+		uenoFiltroBancoVersion++;
 		document.getElementById("divConciliacionUeno").style.display = "";
+		uenoActualizarContextoBanco();
+		uenoActualizarContextoFiltroBanco();
 		uenoPrepararColapsables(true);
 		uenoPrepararFechasTesoreria();
 		uenoLimpiarMovimientoTrabajo(true);
 		uenoLimpiarAsignacionManual();
 		uenoBuscarImportaciones();
 		uenoBuscarMovimientos();
+		uenoBuscarPagosPendientes();
 		uenoBuscarResumenTesoreria();
 		uenoBuscarAuditoria();
 	} else {
@@ -66,9 +203,14 @@ function uenoSeleccionarArchivo() {
 function uenoLimpiarPreviewExtracto() {
 	uenoMovimientosPreview = [];
 	uenoHashArchivo = "";
-	uenoIdImportacionSeleccionada = "";
-	uenoLimpiarMovimientoTrabajo(true);
-	uenoLimpiarAsignacionManual();
+	uenoMetadatosExtracto = {
+		moneda: "PYG",
+		tipo_cuenta: "",
+		saldo_anterior: null,
+		saldo_final: null,
+		total_creditos_declarado: null,
+		total_debitos_declarado: null
+	};
 	var campos = [
 		"inptUenoCuenta",
 		"inptUenoDenominacion",
@@ -76,16 +218,7 @@ function uenoLimpiarPreviewExtracto() {
 		"inptUenoHash",
 		"inptUenoCantidadLeida",
 		"inptUenoTotalCreditoPreview",
-		"inptUenoTotalDebitoPreview",
-		"inptUenoTotalMovimientos",
-		"inptUenoTotalCreditos",
-		"inptUenoTotalDebitos",
-		"inptUenoTotalPagosPendientes",
-		"inptUenoMontoPagosPendientes",
-		"inptUenoBuscarCuotaCliente",
-		"inptUenoBuscarCuotaVenta",
-		"inptUenoBuscarCuotaMonto",
-		"inptUenoPagoComprobante"
+		"inptUenoTotalDebitoPreview"
 	];
 	for (var i = 0; i < campos.length; i++) {
 		var campo = document.getElementById(campos[i]);
@@ -97,21 +230,9 @@ function uenoLimpiarPreviewExtracto() {
 	if (preview) {
 		preview.innerHTML = "";
 	}
-	var movimientos = document.getElementById("table_ueno_movimientos");
-	if (movimientos) {
-		movimientos.innerHTML = "";
-	}
-	var pagos = document.getElementById("table_ueno_pagos_pendientes");
-	if (pagos) {
-		pagos.innerHTML = "";
-	}
 	var resumenImportacion = document.getElementById("divUenoResumenImportacion");
 	if (resumenImportacion) {
 		resumenImportacion.innerHTML = "";
-	}
-	var resumenConciliacion = document.getElementById("divUenoResumenConciliacion");
-	if (resumenConciliacion) {
-		resumenConciliacion.innerHTML = "";
 	}
 }
 
@@ -338,8 +459,8 @@ function uenoFechaAgrupacionDesdeFila(fila) {
 			visibles.push(celdas[i]);
 		}
 	}
-	var fechaTransaccion = visibles[1] ? visibles[1].textContent : "";
-	var fechaConfirmacion = visibles[0] ? visibles[0].textContent : "";
+	var fechaTransaccion = visibles[2] ? visibles[2].textContent : "";
+	var fechaConfirmacion = visibles[1] ? visibles[1].textContent : "";
 	return uenoNormalizarFechaAgrupacion(fechaTransaccion) || uenoNormalizarFechaAgrupacion(fechaConfirmacion);
 }
 
@@ -393,23 +514,23 @@ function uenoAgregarSeparadoresFechaMovimientos() {
 }
 
 function uenoEtiquetasAuditoria() {
-	return ["ID", "Fecha", "Accion", "Tabla", "Factura", "Mov.", "Cliente/Cuota", "Antes", "Ahora", "Monto", "User", "Obs."];
+	return ["Banco", "ID", "Fecha", "Accion", "Tabla", "Factura", "Mov.", "Cliente/Cuota", "Antes", "Ahora", "Monto", "User", "Obs."];
 }
 
 function uenoModernizarTablaAuditoria(idTabla) {
-	uenoModernizarTabla(idTabla, uenoEtiquetasAuditoria(), 8);
+	uenoModernizarTabla(idTabla, uenoEtiquetasAuditoria(), 9);
 }
 
 function uenoModernizarVista() {
 	uenoModernizarTabla("table_ueno_preview", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Debito", "Credito", "Estado"], 7);
 	uenoModernizarTabla("table_ueno_resumen_tesoreria", ["Local", "Turno", "Caja", "Lote", "Apertura", "Cierre", "Caja", "Transf. GV", "Conc.", "Pend.", "Obs.", "S/C", "Estado"], 12);
-	uenoModernizarTabla("table_ueno_importaciones", ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 8);
-	uenoModernizarTabla("table_ueno_importaciones_modal", ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado", "Encontrado"], 8);
+	uenoModernizarTabla("table_ueno_importaciones", ["Banco", "ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"], 9);
+	uenoModernizarTabla("table_ueno_importaciones_modal", ["Banco", "ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado", "Encontrado"], 9);
 	uenoModernizarTabla("table_ueno_detalle_importacion", ["Nro.", "F. conf.", "F. trans.", "Comprobante", "Detalle", "Deb.", "Cred.", "Disp.", "Duplicado", "Estado"], 9);
-	uenoModernizarTabla("table_ueno_movimientos", ["F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Deb.", "Credito original", "Aplicado", "Disponible", "Estado", "Aplicacion contable", "Cliente / Venta", "Usuario", "Accion"], 9);
+	uenoModernizarTabla("table_ueno_movimientos", ["Banco", "F. conf.", "F. trans.", "Comprobante", "Descripcion", "Concepto", "Deb.", "Credito original", "Aplicado", "Disponible", "Estado", "Aplicacion contable", "Cliente / Venta", "Usuario", "Accion"], 10);
 	uenoAgregarSeparadoresFechaMovimientos();
 	uenoModernizarTabla("table_ueno_candidatos_manual", ["ID", "F. conf.", "Comprobante", "Descripcion", "Credito", "Disponible", "Estado", "Coinc.", "Accion"], 6);
-	uenoModernizarTabla("table_ueno_pagos_pendientes", ["Cliente", "CI", "Venta", "Cuota/Pago", "Venc.", "Saldo pend.", "Monto sug.", "Estado", "Coinc.", "Accion"], 7);
+	uenoModernizarTabla("table_ueno_pagos_pendientes", ["Banco", "Cliente", "CI", "Venta", "Cuota/Pago", "Venc.", "Saldo pend.", "Monto sug.", "Estado", "Coinc.", "Accion"], 8);
 	uenoModernizarTablaAuditoria("table_ueno_auditoria");
 	uenoModernizarTablaAuditoria("table_ueno_auditoria_movimiento");
 }
@@ -424,8 +545,9 @@ function uenoMarcarImportacionSeleccionada(idImportacion) {
 		var filas = contenedor.querySelectorAll("tr");
 		for (var i = 0; i < filas.length; i++) {
 			filas[i].classList.remove("ueno-row-selected");
+			var idFila = filas[i].getAttribute("data-ueno-importacion-id");
 			var primeraCelda = filas[i].children && filas[i].children.length ? filas[i].children[0] : null;
-			if (primeraCelda && String(primeraCelda.textContent || "").trim() == String(idImportacion)) {
+			if ((idFila && String(idFila) == String(idImportacion)) || (!idFila && primeraCelda && String(primeraCelda.textContent || "").trim() == String(idImportacion))) {
 				filas[i].classList.add("ueno-row-selected");
 			}
 		}
@@ -469,7 +591,7 @@ function uenoMostrarMovimientoTrabajo() {
 		: "";
 
 	contenedor.innerHTML = "<div class='ueno-selected-card'>"
-		+ "<div class='ueno-selected-title'>Detalle del movimiento Ueno</div>"
+		+ "<div class='ueno-selected-title'>Detalle del movimiento - " + uenoEscapeHtml(uenoBancoNombre(movimiento["banco_codigo"] || uenoBancoActual())) + "</div>"
 		+ "<div class='ueno-selected-grid'>"
 		+ "<span><b>Comprobante</b>" + uenoEscapeHtml(movimiento["nro_comprobante"] || "") + "</span>"
 		+ "<span><b>F. confirmacion</b>" + uenoEscapeHtml(movimiento["fecha_confirmacion"] || "") + "</span>"
@@ -532,7 +654,7 @@ function uenoAbrirCobrarCuotaMovimiento() {
 		return uenoAvisarMesaSoloConsulta();
 	}
 	if (!uenoMovimientoTrabajo || !uenoMovimientoTrabajo["id_movimiento"]) {
-		ver_vetana_informativa("Primero selecciona un movimiento Ueno con credito disponible");
+		ver_vetana_informativa("Primero selecciona un movimiento bancario con credito disponible");
 		return;
 	}
 	if (typeof cobrarCuotaAbrirDesdeUeno !== "function") {
@@ -850,7 +972,7 @@ function uenoValidarAplicacionCuota() {
 	var valido = true;
 	if (!uenoMovimientoTrabajo || !uenoMovimientoTrabajo["id_movimiento"]) {
 		valido = false;
-		mensaje = "Primero selecciona un movimiento Ueno.";
+		mensaje = "Primero selecciona un movimiento bancario.";
 	} else if (!uenoCuotaGoodVentaSeleccionada || !uenoCuotaGoodVentaSeleccionada["id"]) {
 		valido = false;
 		mensaje = "Primero selecciona una cuota.";
@@ -863,10 +985,10 @@ function uenoValidarAplicacionCuota() {
 			mensaje = "El monto debe ser mayor a cero.";
 		} else if (disponible <= 0) {
 			valido = false;
-			mensaje = "El movimiento Ueno no tiene disponible.";
+			mensaje = "El movimiento bancario no tiene disponible.";
 		} else if (monto > disponible) {
 			valido = false;
-			mensaje = "El monto supera el saldo disponible del movimiento Ueno.";
+			mensaje = "El monto supera el saldo disponible del movimiento bancario.";
 		} else if (monto > saldo) {
 			valido = false;
 			mensaje = "El monto supera el saldo pendiente de la cuota.";
@@ -892,7 +1014,7 @@ function uenoAplicarCreditoACuota() {
 		return uenoAvisarMesaSoloConsulta();
 	}
 	if (!uenoMovimientoTrabajo || !uenoMovimientoTrabajo["id_movimiento"]) {
-		ver_vetana_informativa("Selecciona primero un movimiento Ueno disponible");
+		ver_vetana_informativa("Selecciona primero un movimiento bancario disponible");
 		return;
 	}
 	if (!uenoCuotaGoodVentaSeleccionada || uenoIdConciliacionManual == "") {
@@ -1038,21 +1160,11 @@ function uenoBufferToHex(buffer) {
 	return hex;
 }
 
-function uenoHashSimple(buffer) {
-	var bytes = new Uint8Array(buffer);
-	var hash = 0;
-	for (var i = 0; i < bytes.length; i++) {
-		hash = ((hash << 5) - hash) + bytes[i];
-		hash = hash & hash;
-	}
-	return "simple-" + Math.abs(hash) + "-" + bytes.length;
-}
-
 function uenoCalcularHash(buffer) {
 	if (window.crypto && window.crypto.subtle) {
 		return window.crypto.subtle.digest("SHA-256", buffer).then(uenoBufferToHex);
 	}
-	return Promise.resolve(uenoHashSimple(buffer));
+	return Promise.reject(new Error("El navegador no permite calcular la huella SHA-256 del extracto"));
 }
 
 function uenoProcesarArchivo(event) {
@@ -1062,33 +1174,62 @@ function uenoProcesarArchivo(event) {
 	}
 	uenoLimpiarPreviewExtracto();
 	document.getElementById("inptUenoArchivo").value = file.name;
-	if (typeof XLSX === "undefined") {
+	var banco = uenoBancoActual();
+	var esFamiliar = banco == "FAMILIAR";
+	if (esFamiliar && !/\.pdf$/i.test(file.name)) {
+		ver_vetana_informativa("Banco Familiar requiere un extracto en formato PDF", "", "error");
+		return;
+	}
+	if (!esFamiliar && !/\.(xls|xlsx|csv)$/i.test(file.name)) {
+		ver_vetana_informativa("Ueno requiere un extracto en formato Excel o CSV", "", "error");
+		return;
+	}
+	if (!esFamiliar && typeof XLSX === "undefined") {
 		ver_vetana_informativa("No se cargo el lector Excel local. Verifica js_system/excel.js", "", "error");
+		return;
+	}
+	if (esFamiliar && (typeof BancoFamiliarPdf === "undefined" || typeof BancoFamiliarPdf.parsear !== "function")) {
+		ver_vetana_informativa("No se cargo el lector PDF local de Banco Familiar", "", "error");
 		return;
 	}
 
 	var reader = new FileReader();
 	reader.onload = function(e) {
-		try {
-			var data = e.target.result;
-			uenoCalcularHash(data).then(function(hash) {
-				uenoHashArchivo = hash;
+		var data = e.target.result;
+		uenoCalcularHash(data).then(function(hash) {
+			uenoHashArchivo = hash;
+			if (esFamiliar) {
+				return BancoFamiliarPdf.parsear(data).then(function(resultado) {
+					uenoMetadatosExtracto = resultado.metadatos || uenoMetadatosExtracto;
+					uenoMovimientosPreview = resultado.movimientos || [];
+					document.getElementById("inptUenoCuenta").value = uenoMetadatosExtracto.cuenta || "";
+					document.getElementById("inptUenoDenominacion").value = uenoMetadatosExtracto.denominacion || "";
+					var desde = uenoFechaFamiliarIso(uenoMetadatosExtracto.periodo_desde);
+					var hasta = uenoFechaFamiliarIso(uenoMetadatosExtracto.periodo_hasta);
+					document.getElementById("inptUenoPeriodoDesde").value = desde;
+					document.getElementById("inptUenoPeriodoHasta").value = hasta;
+					document.getElementById("inptUenoFechaExtracto").value = hasta;
+				});
+			}
+			try {
 				var workbook = XLSX.read(data, { type: "array", raw: false, cellDates: false });
 				var sheetName = workbook.SheetNames[0];
 				var filas = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, raw: false, defval: "" });
 				uenoMovimientosPreview = uenoParsearMovimientos(filas);
 				document.getElementById("inptUenoCuenta").value = uenoExtraerMeta(filas, "cuenta");
 				document.getElementById("inptUenoDenominacion").value = uenoExtraerMeta(filas, "denominacion");
-				document.getElementById("inptUenoHash").value = hash;
+				return null;
+			} catch (errorExcel) {
+				throw errorExcel;
+			}
+		}).then(function() {
+				document.getElementById("inptUenoHash").value = uenoHashArchivo;
 				document.getElementById("inptUenoCantidadLeida").value = separadordemilesnumero(String(uenoMovimientosPreview.length));
 				uenoRenderPreview(uenoMovimientosPreview);
 				uenoPrevalidarPreview();
-			}).catch(function(errorHash) {
-				ver_vetana_informativa("No se pudo calcular el hash del archivo", String(errorHash), "error");
-			});
-		} catch (error) {
-			ver_vetana_informativa("No se pudo leer el extracto Ueno", String(error), "error");
-		}
+		}).catch(function(error) {
+			ver_vetana_informativa("No se pudo leer el extracto de " + uenoBancoNombre(banco), String(error && error.message ? error.message : error), "error");
+		});
 	};
 	reader.readAsArrayBuffer(file);
 }
@@ -1181,6 +1322,7 @@ function uenoPrevalidarPreview() {
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
 	datos.append("funt", "prevalidar_importacion");
+	uenoAgregarBanco(datos);
 	datos.append("cuenta", cuenta);
 	datos.append("movimientos_json", JSON.stringify(uenoMovimientosPreview));
 
@@ -1269,7 +1411,7 @@ function uenoGuardarImportacion() {
 		return;
 	}
 	if (uenoMovimientosPreview.length == 0) {
-		ver_vetana_informativa("Primero selecciona y revisa un extracto Ueno");
+		ver_vetana_informativa("Primero selecciona y revisa un extracto de " + uenoBancoNombre());
 		return;
 	}
 	if (uenoPreviewValidando) {
@@ -1283,7 +1425,7 @@ function uenoGuardarImportacion() {
 	}
 	var cuenta = document.getElementById("inptUenoCuenta").value;
 	if (cuenta == "") {
-		ver_vetana_informativa("Falta detectar o completar la cuenta Ueno");
+		ver_vetana_informativa("Falta detectar o completar la cuenta de " + uenoBancoNombre());
 		return;
 	}
 
@@ -1294,6 +1436,7 @@ function uenoGuardarImportacion() {
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
 	datos.append("funt", "guardar_importacion");
+	uenoAgregarBanco(datos);
 	datos.append("cuenta", cuenta);
 	datos.append("denominacion", document.getElementById("inptUenoDenominacion").value);
 	datos.append("fecha_extracto", document.getElementById("inptUenoFechaExtracto").value);
@@ -1303,6 +1446,12 @@ function uenoGuardarImportacion() {
 	datos.append("hash_archivo", uenoHashArchivo);
 	datos.append("observacion", document.getElementById("txtUenoObservacionImportacion").value);
 	datos.append("movimientos_json", JSON.stringify(uenoMovimientosPreview));
+	datos.append("moneda_codigo", uenoMetadatosExtracto.moneda || "PYG");
+	datos.append("tipo_cuenta", uenoMetadatosExtracto.tipo_cuenta || "");
+	datos.append("saldo_anterior", uenoMetadatosExtracto.saldo_anterior === null ? "" : uenoMetadatosExtracto.saldo_anterior);
+	datos.append("saldo_final", uenoMetadatosExtracto.saldo_final === null ? "" : uenoMetadatosExtracto.saldo_final);
+	datos.append("total_creditos_declarado", uenoMetadatosExtracto.total_creditos_declarado === null ? "" : uenoMetadatosExtracto.total_creditos_declarado);
+	datos.append("total_debitos_declarado", uenoMetadatosExtracto.total_debitos_declarado === null ? "" : uenoMetadatosExtracto.total_debitos_declarado);
 
 	$.ajax({
 		data: datos,
@@ -1340,7 +1489,7 @@ function uenoGuardarImportacion() {
 				uenoBuscarResumenTesoreria();
 				uenoBuscarAuditoria();
 			} catch (error) {
-				ver_vetana_informativa("Error inesperado al importar Ueno", String(error), "error");
+				ver_vetana_informativa("Error inesperado al importar " + uenoBancoNombre(), String(error), "error");
 			}
 		}
 	});
@@ -1459,11 +1608,6 @@ function uenoActualizarFiltrosRapidosMovimientos(resumen) {
 	uenoSetTexto("lblUenoMovParciales", resumen.parciales || "0");
 	uenoSetTexto("lblUenoMovConciliados", resumen.conciliados || "0");
 	uenoSetTexto("lblUenoMovSaldoDisponible", resumen.saldo_disponible_fmt || "0");
-	uenoSetTexto("lblUenoMesaCompactTotal", resumen.total_base || "0");
-	uenoSetTexto("lblUenoMesaCompactDisponibles", resumen.disponibles || "0");
-	uenoSetTexto("lblUenoMesaCompactParciales", resumen.parciales || "0");
-	uenoSetTexto("lblUenoMesaCompactConciliados", resumen.conciliados || "0");
-	uenoSetTexto("lblUenoMesaCompactSaldo", resumen.saldo_disponible_fmt || "0");
 
 	var contenedor = document.getElementById("divUenoMovFiltrosRapidos");
 	if (!contenedor) {
@@ -1604,10 +1748,12 @@ function uenoBuscarResumenTesoreria() {
 	uenoPrepararFechasTesoreria();
 	obtener_datos_user();
 	var datos = new FormData();
+	var filtroVersion = uenoFiltroBancoVersion;
 	datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
 	datos.append("funt", "buscar_resumen_tesoreria");
+	uenoAgregarFiltroBanco(datos);
 	datos.append("fecha_operativa", document.getElementById("inptUenoTesoreriaFechaOperativa").value);
 	datos.append("fecha_bancaria", document.getElementById("inptUenoTesoreriaFechaBancaria").value);
 	datos.append("local", document.getElementById("inptUenoTesoreriaLocal").value);
@@ -1620,6 +1766,7 @@ function uenoBuscarResumenTesoreria() {
 		contentType: false,
 		processData: false,
 		success: function(responseText) {
+			if (filtroVersion != uenoFiltroBancoVersion) { return; }
 			try {
 				var datos = $.parseJSON(responseText);
 				if (datos["1"] == "NI") {
@@ -1631,7 +1778,7 @@ function uenoBuscarResumenTesoreria() {
 					return;
 				}
 				if (datos["1"] != "exito") {
-					ver_vetana_informativa(datos["2"] || "No se pudo cargar tesoreria Ueno", "", "error");
+					ver_vetana_informativa(datos["2"] || "No se pudo cargar la tesoreria bancaria", "", "error");
 					return;
 				}
 				document.getElementById("table_ueno_resumen_tesoreria").innerHTML = datos["2"] || "";
@@ -1652,7 +1799,7 @@ function uenoBuscarResumenTesoreria() {
 				uenoMostrarEstadoTesoreria(datos);
 				uenoModernizarVista();
 			} catch (error) {
-				ver_vetana_informativa("Error inesperado al cargar tesoreria Ueno", String(error), "error");
+				ver_vetana_informativa("Error inesperado al cargar la tesoreria bancaria", String(error), "error");
 			}
 		}
 	});
@@ -1685,10 +1832,12 @@ function uenoCargarAuditoria(opciones) {
 
 	obtener_datos_user();
 	var datos = new FormData();
+	var filtroVersion = uenoFiltroBancoVersion;
 	datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
 	datos.append("funt", "buscar_auditoria");
+	uenoAgregarFiltroBanco(datos);
 	datos.append("fecha_desde", fechaDesde || "");
 	datos.append("fecha_hasta", fechaHasta || "");
 	datos.append("accion", accion || "");
@@ -1702,13 +1851,14 @@ function uenoCargarAuditoria(opciones) {
 		contentType: false,
 		processData: false,
 		success: function(responseText) {
+			if (filtroVersion != uenoFiltroBancoVersion) { return; }
 			try {
 				var respuesta = $.parseJSON(responseText);
 				if (respuesta["1"] == "tablasfaltantes") {
 					tabla.innerHTML = "";
 					uenoSetValorAuditoria(totalId, "0");
 					if (opciones.mostrarErrores) {
-						ver_vetana_informativa(respuesta["2"] || "Falta configurar auditoria Ueno", "", "error");
+						ver_vetana_informativa(respuesta["2"] || "Falta configurar la auditoria bancaria", "", "error");
 					}
 					uenoModernizarTablaAuditoria(tablaId);
 					return;
@@ -1722,21 +1872,22 @@ function uenoCargarAuditoria(opciones) {
 				tabla.innerHTML = "<div class='ueno-empty-message'>No se pudo cargar la trazabilidad.</div>";
 				uenoSetValorAuditoria(totalId, "0");
 				if (opciones.mostrarErrores) {
-					ver_vetana_informativa(respuesta["2"] || "No se pudo cargar auditoria Ueno", "", "error");
+					ver_vetana_informativa(respuesta["2"] || "No se pudo cargar la auditoria bancaria", "", "error");
 				}
 			} catch (error) {
 				tabla.innerHTML = "<div class='ueno-empty-message'>No se pudo interpretar la respuesta de auditoria.</div>";
 				uenoSetValorAuditoria(totalId, "0");
 				if (opciones.mostrarErrores) {
-					ver_vetana_informativa("Error inesperado al cargar auditoria Ueno", String(error), "error");
+					ver_vetana_informativa("Error inesperado al cargar la auditoria bancaria", String(error), "error");
 				}
 			}
 		},
 		error: function() {
+			if (filtroVersion != uenoFiltroBancoVersion) { return; }
 			tabla.innerHTML = "<div class='ueno-empty-message'>No se pudo conectar con auditoria Ueno.</div>";
 			uenoSetValorAuditoria(totalId, "0");
 			if (opciones.mostrarErrores) {
-				ver_vetana_informativa("No se pudo conectar con auditoria Ueno", "", "error");
+				ver_vetana_informativa("No se pudo conectar con la auditoria bancaria", "", "error");
 			}
 		}
 	});
@@ -1824,6 +1975,7 @@ function uenoVerDetalleImportacionDesdeAuditoria(idImportacion) {
 function uenoResumenDetalleImportacion(importacion) {
 	importacion = importacion || {};
 	var bloques = [
+		["Banco", importacion["banco_nombre"] || uenoBancoNombre(importacion["banco_codigo"])],
 		["Archivo", importacion["archivo"] || ""],
 		["Cuenta", importacion["cuenta"] || ""],
 		["Titular", importacion["denominacion"] || ""],
@@ -1835,6 +1987,9 @@ function uenoResumenDetalleImportacion(importacion) {
 		["Debitos", (importacion["debitos"] || "0") + " / " + (importacion["total_debitos"] || "0")],
 		["Estado", importacion["estado"] || ""],
 		["Usuario", importacion["usuario"] || ""],
+		["Moneda", importacion["moneda_codigo"] || "PYG"],
+		["Saldo anterior", importacion["saldo_anterior"] || "-"],
+		["Saldo final", importacion["saldo_final"] || "-"],
 		["Huella", importacion["hash_archivo"] || ""]
 	];
 	var html = "";
@@ -1992,10 +2147,12 @@ function uenoBuscarImportaciones(opciones) {
 	uenoSetValorAuditoria(totalId, "0");
 	obtener_datos_user();
 	var datos = new FormData();
+	var filtroVersion = uenoFiltroBancoVersion;
 	datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
 	datos.append("funt", "buscar_importaciones");
+	uenoAgregarFiltroBanco(datos);
 	datos.append("fecha_desde", document.getElementById(desdeId) ? document.getElementById(desdeId).value : "");
 	datos.append("fecha_hasta", document.getElementById(hastaId) ? document.getElementById(hastaId).value : "");
 	datos.append("nro_comprobante", uenoValorCampo(opciones.comprobanteId || ""));
@@ -2010,6 +2167,7 @@ function uenoBuscarImportaciones(opciones) {
 		contentType: false,
 		processData: false,
 		success: function(responseText) {
+			if (filtroVersion != uenoFiltroBancoVersion) { return; }
 			try {
 				var respuesta = $.parseJSON(responseText);
 				if (respuesta["1"] == "exito") {
@@ -2018,9 +2176,9 @@ function uenoBuscarImportaciones(opciones) {
 					}
 					uenoSetValorAuditoria(totalId, respuesta["3"] || "0");
 					var etiquetas = opciones.vista == "modal"
-						? ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado", "Encontrado"]
-						: ["ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"];
-					uenoModernizarTabla(tablaId, etiquetas, 8);
+						? ["Banco", "ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado", "Encontrado"]
+						: ["Banco", "ID", "Cuenta", "Fecha", "Archivo", "Importado", "Mov.", "Cred.", "Deb.", "Estado"];
+					uenoModernizarTabla(tablaId, etiquetas, 9);
 					uenoMarcarImportacionSeleccionada(uenoIdImportacionSeleccionada);
 					return;
 				}
@@ -2040,6 +2198,7 @@ function uenoBuscarImportaciones(opciones) {
 			}
 		},
 		error: function(jqXHR, textstatus) {
+			if (filtroVersion != uenoFiltroBancoVersion) { return; }
 			if (tabla) {
 				tabla.innerHTML = "<div class='ueno-empty-message'>No se pudo conectar con archivos migrados.</div>";
 			}
@@ -2062,10 +2221,12 @@ function uenoSeleccionarImportacion(idImportacion) {
 function uenoBuscarMovimientos(idImportacion) {
 	obtener_datos_user();
 	var datos = new FormData();
+	var filtroVersion = uenoFiltroBancoVersion;
 	datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
 	datos.append("funt", "buscar_movimientos");
+	uenoAgregarFiltroBanco(datos);
 	datos.append("id_importacion", idImportacion || "");
 	datos.append("fecha_desde", document.getElementById("inptUenoMovDesde") ? document.getElementById("inptUenoMovDesde").value : "");
 	datos.append("fecha_hasta", document.getElementById("inptUenoMovHasta") ? document.getElementById("inptUenoMovHasta").value : "");
@@ -2083,6 +2244,7 @@ function uenoBuscarMovimientos(idImportacion) {
 		contentType: false,
 		processData: false,
 		success: function(responseText) {
+			if (filtroVersion != uenoFiltroBancoVersion) { return; }
 			try {
 				var datos = $.parseJSON(responseText);
 				if (datos["1"] == "exito") {
@@ -2099,13 +2261,18 @@ function uenoBuscarMovimientos(idImportacion) {
 }
 
 function uenoBuscarPagosPendientes() {
+	if (!document.getElementById("table_ueno_pagos_pendientes")) {
+		return;
+	}
 	uenoLimpiarCuotaGoodVenta();
 	obtener_datos_user();
 	var datos = new FormData();
+	var filtroVersion = uenoFiltroBancoVersion;
 	datos.append("useru", userid);
 	datos.append("passu", passuser);
 	datos.append("navegador", navegador);
 	datos.append("funt", "buscar_pagos_pendientes");
+	uenoAgregarFiltroBanco(datos);
 	datos.append("estado", document.getElementById("inptUenoPagoEstado") ? document.getElementById("inptUenoPagoEstado").value : "");
 	datos.append("nro_comprobante", document.getElementById("inptUenoPagoComprobante") ? document.getElementById("inptUenoPagoComprobante").value : "");
 	datos.append("cliente", document.getElementById("inptUenoBuscarCuotaCliente") ? document.getElementById("inptUenoBuscarCuotaCliente").value : "");
@@ -2121,6 +2288,7 @@ function uenoBuscarPagosPendientes() {
 		contentType: false,
 		processData: false,
 		success: function(responseText) {
+			if (filtroVersion != uenoFiltroBancoVersion) { return; }
 			try {
 				var datos = $.parseJSON(responseText);
 				if (datos["1"] == "exito") {
@@ -2140,7 +2308,7 @@ function uenoBuscarCoincidenciasCuota() {
 		return uenoAvisarMesaSoloConsulta();
 	}
 	if (!uenoMovimientoTrabajo || !uenoMovimientoTrabajo["id_movimiento"]) {
-		ver_vetana_informativa("Primero selecciona un movimiento Ueno con credito disponible");
+		ver_vetana_informativa("Primero selecciona un movimiento bancario con credito disponible");
 		return;
 	}
 	var comprobante = document.getElementById("inptUenoPagoComprobante");
@@ -2321,7 +2489,7 @@ function uenoAsignarMovimientoManual(idMovimiento) {
 					return;
 				}
 				if (datos["1"] != "exito") {
-					ver_vetana_informativa(datos["2"] || "No se pudo asignar el movimiento Ueno", "", "error");
+					ver_vetana_informativa(datos["2"] || "No se pudo asignar el movimiento bancario", "", "error");
 					return;
 				}
 				ver_vetana_informativa(datos["2"] || "Pago asignado manualmente");
@@ -2332,7 +2500,7 @@ function uenoAsignarMovimientoManual(idMovimiento) {
 				uenoBuscarResumenTesoreria();
 				uenoBuscarAuditoria();
 			} catch (error) {
-				ver_vetana_informativa("Error inesperado al asignar movimiento Ueno", String(error), "error");
+				ver_vetana_informativa("Error inesperado al asignar movimiento bancario", String(error), "error");
 			}
 		}
 	});

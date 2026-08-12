@@ -780,6 +780,19 @@ function ueno_pago_comprobante_movimiento($mysqli, $idMovimiento)
 	return $comprobante;
 }
 
+function ueno_pago_banco_movimiento($mysqli, $idMovimiento)
+{
+	if ($idMovimiento == "" || !ueno_pago_tabla_existe($mysqli, "ueno_movimiento_bancario")) {
+		return "UENO";
+	}
+	$idMovimientoSql = $mysqli->real_escape_string($idMovimiento);
+	$result = $mysqli->query("SELECT banco_codigo FROM ueno_movimiento_bancario WHERE id_movimiento='$idMovimientoSql' LIMIT 1");
+	if (!$result || !($row = $result->fetch_assoc())) {
+		return "UENO";
+	}
+	return strtoupper(trim((string)$row["banco_codigo"])) == "FAMILIAR" ? "FAMILIAR" : "UENO";
+}
+
 function ueno_pago_comprobante_en_uso($mysqli, $comprobante, $grupoPago = "", $idMovimientoPermitido = "")
 {
 	if ($comprobante == "" || !ueno_pago_tabla_existe($mysqli, "pago_transferencia_conciliacion")) {
@@ -787,6 +800,9 @@ function ueno_pago_comprobante_en_uso($mysqli, $comprobante, $grupoPago = "", $i
 	}
 
 	$comprobanteSql = $mysqli->real_escape_string($comprobante);
+	$bancoCodigo = ueno_pago_banco_movimiento($mysqli, $idMovimientoPermitido);
+	$bancoSql = $mysqli->real_escape_string($bancoCodigo);
+	$condicionBanco = " AND pc.banco_codigo='$bancoSql'";
 	$condicionGrupo = "";
 	if ($grupoPago != "") {
 		$condicionGrupo = " AND IFNULL(grupo_pago,'')!='" . $mysqli->real_escape_string($grupoPago) . "'";
@@ -803,6 +819,7 @@ function ueno_pago_comprobante_en_uso($mysqli, $comprobante, $grupoPago = "", $i
 					AND ump.estado='activo'
 				WHERE pc.activo='SI'
 				AND pc.nro_comprobante_informado='$comprobanteSql'
+				$condicionBanco
 				AND pc.estado_conciliacion NOT IN ('anulado','rechazado')
 				AND ump.id_movimiento!='$idMovimientoSql'
 				$condicionGrupo";
@@ -818,9 +835,10 @@ function ueno_pago_comprobante_en_uso($mysqli, $comprobante, $grupoPago = "", $i
 	}
 
 	$sql = "SELECT COUNT(*) AS total
-		FROM pago_transferencia_conciliacion
+		FROM pago_transferencia_conciliacion pc
 		WHERE activo='SI'
 		AND nro_comprobante_informado='$comprobanteSql'
+		$condicionBanco
 		AND estado_conciliacion NOT IN ('anulado','rechazado')
 		$condicionGrupo";
 	$result = $mysqli->query($sql);
@@ -861,7 +879,7 @@ function ueno_pago_grupo_movimiento($mysqli, $comprobante, $idMovimiento)
 function ueno_pago_validar_comprobante_no_reutilizado($mysqli, $comprobante, $grupoPago = "", $idMovimientoPermitido = "")
 {
 	if (ueno_pago_comprobante_en_uso($mysqli, $comprobante, $grupoPago, $idMovimientoPermitido)) {
-		ueno_pago_responder_error("comprobanteduplicado", "El comprobante Ueno ya fue usado en otro pago activo. Debe revisarse desde conciliacion Ueno.");
+		ueno_pago_responder_error("comprobanteduplicado", "El comprobante bancario ya fue usado en otro pago activo del mismo banco. Debe revisarse desde conciliacion bancaria.");
 	}
 }
 
@@ -903,17 +921,17 @@ function ueno_pago_aplicar_movimiento_seleccionado($mysqli, $idControlUeno, $idP
 		return;
 	}
 	if (!ueno_saldo_asegurar_tabla_movimiento_pago($mysqli)) {
-		throw new Exception("No se pudo preparar la tabla de aplicaciones Ueno.");
+		throw new Exception("No se pudo preparar la tabla de aplicaciones bancarias.");
 	}
 
 	$idMovimientoSql = $mysqli->real_escape_string($idMovimiento);
 	$idPagoSql = $mysqli->real_escape_string($idPago);
 	$montoPago = (int)$monto;
 	if ($montoPago <= 0) {
-		throw new Exception("El monto de transferencia Ueno no es valido.");
+		throw new Exception("El monto de transferencia bancaria no es valido.");
 	}
 
-	$resultMov = $mysqli->query("SELECT id_movimiento, nro_comprobante, tipo_movimiento, importe_credito, monto_disponible, estado
+	$resultMov = $mysqli->query("SELECT id_movimiento, banco_codigo, nro_comprobante, tipo_movimiento, importe_credito, monto_disponible, estado
 		FROM ueno_movimiento_bancario
 		WHERE id_movimiento='$idMovimientoSql'
 		LIMIT 1 FOR UPDATE");
@@ -921,15 +939,15 @@ function ueno_pago_aplicar_movimiento_seleccionado($mysqli, $idControlUeno, $idP
 		throw new Exception($mysqli->error);
 	}
 	if ($resultMov->num_rows == 0) {
-		throw new Exception("No se encontro el movimiento Ueno seleccionado.");
+		throw new Exception("No se encontro el movimiento bancario seleccionado.");
 	}
 	$movimiento = $resultMov->fetch_assoc();
 	if ($movimiento["tipo_movimiento"] != "credito" || (int)$movimiento["importe_credito"] <= 0) {
-		throw new Exception("El movimiento Ueno seleccionado no es un credito disponible.");
+		throw new Exception("El movimiento bancario seleccionado no es un credito disponible.");
 	}
 	$estadoMovimientoActual = strtolower(trim((string)$movimiento["estado"]));
 	if (in_array($estadoMovimientoActual, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"))) {
-		throw new Exception("El movimiento Ueno seleccionado ya no esta disponible.");
+		throw new Exception("El movimiento bancario seleccionado ya no esta disponible.");
 	}
 
 	$totalAplicadoPago = ueno_pago_scalar_int($mysqli, "SELECT IFNULL(SUM(monto_aplicado),0) FROM ueno_movimiento_pago WHERE cod_pagoFK='$idPagoSql' AND estado='activo'");
@@ -946,7 +964,7 @@ function ueno_pago_aplicar_movimiento_seleccionado($mysqli, $idControlUeno, $idP
 
 	$disponibleCalculado = ueno_saldo_disponible_movimiento($mysqli, $movimiento, $idPago, $idControlUeno);
 	if ((int)$disponibleCalculado < $montoAplicar) {
-		throw new Exception("El movimiento Ueno seleccionado no tiene saldo disponible suficiente.");
+		throw new Exception("El movimiento bancario seleccionado no tiene saldo disponible suficiente.");
 	}
 
 	$observacionLink = trim((string)$observacion);
@@ -976,16 +994,17 @@ function ueno_pago_aplicar_movimiento_seleccionado($mysqli, $idControlUeno, $idP
 	$estadoAnteriorPago = "pendiente_conciliacion";
 	$estadoPago = $totalAplicadoNuevo >= $montoPago ? "conciliado_ueno" : "pendiente_conciliacion";
 	$observacionPago = $estadoPago == "conciliado_ueno"
-		? "Conciliado desde cobro con movimiento Ueno #".$idMovimiento
-		: "Aplicado parcialmente desde cobro con movimiento Ueno #".$idMovimiento;
+		? "Conciliado desde cobro con movimiento bancario #".$idMovimiento
+		: "Aplicado parcialmente desde cobro con movimiento bancario #".$idMovimiento;
 	$consultaPago = "UPDATE pago_transferencia_conciliacion
-		SET estado_conciliacion=?, usuario_ultima_revision=?, fecha_hora_revision=NOW(), observacion=?
+		SET banco_codigo=?, estado_conciliacion=?, usuario_ultima_revision=?, fecha_hora_revision=NOW(), observacion=?
 		WHERE id=? AND activo='SI'";
 	$stmtPago = $mysqli->prepare($consultaPago);
 	if (!$stmtPago) {
 		throw new Exception($mysqli->error);
 	}
-	$stmtPago->bind_param("ssss", $estadoPago, $usuario, $observacionPago, $idControlUeno);
+	$bancoMovimiento = strtoupper(trim((string)$movimiento["banco_codigo"])) == "FAMILIAR" ? "FAMILIAR" : "UENO";
+	$stmtPago->bind_param("sssss", $bancoMovimiento, $estadoPago, $usuario, $observacionPago, $idControlUeno);
 	if (!$stmtPago->execute()) {
 		throw new Exception($stmtPago->error);
 	}
@@ -1033,17 +1052,17 @@ function ueno_pago_bloquear_eliminacion_ueno($mysqli, $campoPago, $valor)
 	}
 	$row = $result->fetch_assoc();
 	if ((int)$row["total"] > 0) {
-		ueno_pago_responder_error("ueno_reverso_requerido", "Este pago tiene control Ueno. No se permite eliminacion fisica; debe anularse o reversarse con trazabilidad desde conciliacion.");
+		ueno_pago_responder_error("ueno_reverso_requerido", "Este pago tiene control bancario. No se permite eliminacion fisica; debe anularse o reversarse con trazabilidad desde conciliacion.");
 	}
 }
 
 function ueno_pago_estado_texto($estado)
 {
 	if ($estado == "pendiente_conciliacion") {
-		return "Pendiente Ueno";
+		return "Pendiente bancario";
 	}
 	if ($estado == "conciliado_ueno") {
-		return "Conciliado Ueno";
+		return "Conciliado bancario";
 	}
 	if ($estado == "observado") {
 		return "Observado";
@@ -1068,7 +1087,7 @@ function ueno_pago_validar_transferencias($totalregistro)
 
 		if (ueno_pago_es_transferencia($mysqli, $idtipopago)) {
 			if (!ueno_pago_tabla_existe($mysqli, "pago_transferencia_conciliacion")) {
-				$informacion = array("1" => "camposvacio", "2" => "Falta ejecutar actualizacion_10062026_conciliacion_ueno.sql");
+				$informacion = array("1" => "camposvacio", "2" => "Falta ejecutar las actualizaciones de conciliacion bancaria");
 				echo json_encode($informacion);
 				exit;
 			}
@@ -1079,28 +1098,28 @@ function ueno_pago_validar_transferencias($totalregistro)
 			$exigirMovimientoUeno = isset($_POST['exigir_movimiento_ueno']) ? $_POST['exigir_movimiento_ueno'] : "NO";
 			$exigirMovimientoUeno = mb_convert_encoding((string)$exigirMovimientoUeno, 'ISO-8859-1', 'UTF-8');
 			if ($exigirMovimientoUeno == "SI" && $idMovimientoUeno == "") {
-				ueno_pago_responder_error("movimientorequerido", "Debe seleccionar una transferencia Ueno disponible para registrar este cobro.");
+				ueno_pago_responder_error("movimientorequerido", "Debe seleccionar una transferencia bancaria disponible para registrar este cobro.");
 			}
 			if ($idMovimientoUeno != "" && ueno_pago_tabla_existe($mysqli, "ueno_movimiento_bancario")) {
 				ueno_saldo_asegurar_tabla_movimiento_pago($mysqli);
 				$idMovimientoSql = $mysqli->real_escape_string($idMovimientoUeno);
-				$resMovimiento = $mysqli->query("SELECT id_movimiento, nro_comprobante, importe_credito, monto_disponible, tipo_movimiento, estado FROM ueno_movimiento_bancario WHERE id_movimiento='$idMovimientoSql' LIMIT 1");
+				$resMovimiento = $mysqli->query("SELECT id_movimiento, banco_codigo, nro_comprobante, importe_credito, monto_disponible, tipo_movimiento, estado FROM ueno_movimiento_bancario WHERE id_movimiento='$idMovimientoSql' LIMIT 1");
 				$movimiento = $resMovimiento ? $resMovimiento->fetch_assoc() : null;
 				if (!$movimiento || $movimiento["tipo_movimiento"] != "credito") {
-					ueno_pago_responder_error("movimientoinvalido", "El movimiento Ueno seleccionado no esta disponible para cobrar cuotas.");
+					ueno_pago_responder_error("movimientoinvalido", "El movimiento bancario seleccionado no esta disponible para cobrar cuotas.");
 				}
 				$estadoMovimiento = strtolower(trim((string)$movimiento["estado"]));
 				if (in_array($estadoMovimiento, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"))) {
-					ueno_pago_responder_error("movimientoinvalido", "El movimiento Ueno seleccionado ya no esta disponible.");
+					ueno_pago_responder_error("movimientoinvalido", "El movimiento bancario seleccionado ya no esta disponible.");
 				}
 				$comprobanteUeno = trim(str_replace(array("\r", "\n", "\t", " "), "", (string)$movimiento["nro_comprobante"]));
 				$disponibleCalculado = ueno_saldo_disponible_movimiento($mysqli, $movimiento);
 				if ((int)$disponibleCalculado < (int)$montoTransferencia) {
-					ueno_pago_responder_error("saldouenoinsuficiente", "El movimiento Ueno seleccionado no tiene saldo suficiente para este cobro.");
+					ueno_pago_responder_error("saldouenoinsuficiente", "El movimiento bancario seleccionado no tiene saldo suficiente para este cobro.");
 				}
 			}
 			if ($comprobanteUeno == "") {
-				$informacion = array("1" => "camposvacio", "2" => "Falta numero de comprobante Ueno para transferencia");
+				$informacion = array("1" => "camposvacio", "2" => "Falta numero de comprobante bancario para transferencia");
 				echo json_encode($informacion);
 				exit;
 			}
@@ -1132,17 +1151,18 @@ function ueno_pago_registrar_conciliacion($mysqli, $idPago, $codTipoPago, $monto
 	ueno_pago_validar_comprobante_no_reutilizado($mysqli, $comprobante, $grupoPago, $idMovimientoPermitido);
 	$estado = "pendiente_conciliacion";
 	$activo = "SI";
+	$bancoCodigo = ueno_pago_banco_movimiento($mysqli, $idMovimientoPermitido);
 	$transaccionIniciada = false;
 
 	$consulta = "Insert ignore into pago_transferencia_conciliacion
-	(cod_pagoFK,grupo_pago,nro_comprobante_informado,monto_pago,estado_conciliacion,usuario_registro,observacion,origen,activo)
-	values(?,?,?,?,?,?,?,?,?)";
+	(cod_pagoFK,grupo_pago,banco_codigo,nro_comprobante_informado,monto_pago,estado_conciliacion,usuario_registro,observacion,origen,activo)
+	values(?,?,?,?,?,?,?,?,?,?)";
 	$stmt = $mysqli->prepare($consulta);
 	if (!$stmt) {
-		ueno_pago_responder_error("error", "No se pudo preparar el control Ueno del pago.");
+		ueno_pago_responder_error("error", "No se pudo preparar el control bancario del pago.");
 	}
-	$ss = 'sssssssss';
-	$stmt->bind_param($ss, $idPago, $grupoPago, $comprobante, $monto, $estado, $usuario, $observacion, $origen, $activo);
+	$ss = 'ssssssssss';
+	$stmt->bind_param($ss, $idPago, $grupoPago, $bancoCodigo, $comprobante, $monto, $estado, $usuario, $observacion, $origen, $activo);
 
 	try {
 		if ($idMovimientoPermitido != "") {
@@ -1155,7 +1175,7 @@ function ueno_pago_registrar_conciliacion($mysqli, $idPago, $codTipoPago, $monto
 			throw new Exception($stmt->error);
 		}
 		if ($stmt->affected_rows <= 0) {
-			throw new Exception("No se pudo registrar el control Ueno del pago");
+			throw new Exception("No se pudo registrar el control bancario del pago");
 		}
 		$idControlUeno = $mysqli->insert_id;
 		ueno_pago_aplicar_movimiento_seleccionado($mysqli, $idControlUeno, $idPago, $idMovimientoPermitido, $monto, $usuario, $observacion);
@@ -1171,21 +1191,21 @@ function ueno_pago_registrar_conciliacion($mysqli, $idPago, $codTipoPago, $monto
 		}
 		$mensaje = $e->getMessage();
 		if (stripos($mensaje, "comprobante duplicado activo") !== false) {
-			ueno_pago_responder_error("comprobanteduplicado", "El comprobante Ueno ya fue usado en otro pago activo. Debe revisarse desde conciliacion Ueno.");
+			ueno_pago_responder_error("comprobanteduplicado", "El comprobante bancario ya fue usado en otro pago activo. Debe revisarse desde conciliacion bancaria.");
 		}
 		if (stripos($mensaje, "comprobante obligatorio") !== false) {
-			ueno_pago_responder_error("camposvacio", "Falta numero de comprobante Ueno para transferencia.");
+			ueno_pago_responder_error("camposvacio", "Falta numero de comprobante bancario para transferencia.");
 		}
 		if (stripos($mensaje, "monto de pago invalido") !== false) {
-			ueno_pago_responder_error("error", "El monto de transferencia Ueno no es valido.");
+			ueno_pago_responder_error("error", "El monto de transferencia bancaria no es valido.");
 		}
 		if (stripos($mensaje, "saldo") !== false || stripos($mensaje, "suficiente") !== false) {
-			ueno_pago_responder_error("saldouenoinsuficiente", "El movimiento Ueno seleccionado no tiene saldo suficiente para este cobro.");
+			ueno_pago_responder_error("saldouenoinsuficiente", "El movimiento bancario seleccionado no tiene saldo suficiente para este cobro.");
 		}
-		if (stripos($mensaje, "movimiento Ueno") !== false) {
+		if (stripos($mensaje, "movimiento bancario") !== false) {
 			ueno_pago_responder_error("movimientoinvalido", $mensaje);
 		}
-		ueno_pago_responder_error("error", "No se pudo registrar el control Ueno del pago: ".$mensaje);
+		ueno_pago_responder_error("error", "No se pudo registrar el control bancario del pago: ".$mensaje);
 	}
 }
 

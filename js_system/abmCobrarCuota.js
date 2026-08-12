@@ -122,6 +122,8 @@ function cobrarCuotaMovimientoUenoSeguro(movimiento) {
 	}
 	return {
 		id_movimiento: movimiento.id_movimiento || "",
+		banco_codigo: movimiento.banco_codigo || "UENO",
+		banco_nombre: movimiento.banco_nombre || (movimiento.banco_codigo == "FAMILIAR" ? "Banco Familiar" : "Ueno"),
 		nro_comprobante: movimiento.nro_comprobante || "",
 		comprobante_masked: movimiento.comprobante_masked || cobrarCuotaMaskComprobante(movimiento.nro_comprobante || ""),
 		fecha_confirmacion: movimiento.fecha_confirmacion || "",

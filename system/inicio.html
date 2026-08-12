@@ -32,14 +32,14 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=auditoria-permisos-20260803-1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=conciliacion-bancaria-familiar-20260808-3" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-4" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=trabajo-laboratorio-20260723-mini-hilo-1" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=buscador-pagare-20260721-1" />
 <link id="telarTrabajoLaboratorioCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260725-02" />
 <link id="telarPlanificacionEspecialistasCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/planificacion_especialistas.css?v=20260807-01" />
-<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=emergente-fijo-20260711" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=conciliacion-multibanco-20260812" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-avatar-flotante-20260801-01" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -66,7 +66,8 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
-<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=egresos-multilocal-20260721"></script>
+<script src="/GoodVentaAsisCap/js_system/conciliacionBancoFamiliarPdf.js?x=20260808-3"></script>
+<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=conciliacion-multibanco-20260812"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-orden-sin-entrega-20260730"></script>
 <script src="/GoodVentaAsisCap/js_system/antecedente_clientes.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=planificacion-fuente-agenda-20260807-01"></script>
@@ -3822,7 +3823,7 @@ onclick="verCerrarConciliacionUeno(1)" style="text-align:center">
 <td>
 <img class="imgIconoMenu"
 src="/GoodVentaAsisCap/iconos/banco.png">
-<p class="pTitulo4">Conciliacion Ueno</p>
+<p class="pTitulo4">Conciliacion bancaria</p>
 <center>
 <div id='divMinimizadoConciliacionUeno'
 style='display:none' class='divMinimizado'></div>
@@ -16473,7 +16474,7 @@ title='Cerrar Ventana' onclick='verCerrarConfigCredito("")' />
 </section>
 
 <section class='pago-contado-panel pago-contado-panel--conciliation' id='divPagoContadoConciliarUeno' style='display:none'>
-<div class='pago-contado-section-title'><span>3</span><div><b>Conciliacion Ueno</b><small>Transferencias disponibles</small></div></div>
+<div class='pago-contado-section-title'><span>3</span><div><b>Conciliacion bancaria</b><small>Transferencias disponibles</small></div></div>
 <div class='pago-contado-conciliar'>
 <div class='pago-contado-conciliar-head'>
 <div><b>Conciliar transferencia</b><span id='lblPagoContadoUenoAyuda'>Selecciona una transferencia Ueno disponible para este pago.</span></div>
@@ -27604,7 +27605,7 @@ style='width:95%;' />
 <table class='tableMenuZ ueno-header'>
 <tr>
 <td style='width:100%;text-align:left'>
-<p class='pTituloB'>Conciliacion Ueno</p>
+<p class='pTituloB'>Conciliacion bancaria</p>
 </td>
 <td style='width:5%;text-align:center'>
 <button type='button' class='ueno-close-button' title='Cerrar Ventana'
@@ -27614,15 +27615,28 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 </table>
 <div class='ueno-guide'>
 <b>Mesa administrativa</b>
-<span>Mesa de control: consulta, trazabilidad y revision de movimientos Ueno. Los pagos deben procesarse desde el modulo de caja/cobros.</span>
+<span>Mesa de control: importacion, consulta y trazabilidad. El filtro se aplica a extractos, tesoreria, pagos pendientes y auditoria.</span>
+<div class='ueno-bank-filter' role='group' aria-label='Filtrar conciliacion por banco'>
+<small>Vista</small>
+<button type='button' class='ueno-bank-filter-button ueno-bank-filter-button--active' data-ueno-bank-filter='TODOS' aria-pressed='true' onclick='uenoCambiarFiltroBanco("TODOS")'>Todos</button>
+<button type='button' class='ueno-bank-filter-button' data-ueno-bank-filter='UENO' aria-pressed='false' onclick='uenoCambiarFiltroBanco("UENO")'>Ueno</button>
+<button type='button' class='ueno-bank-filter-button' data-ueno-bank-filter='FAMILIAR' aria-pressed='false' onclick='uenoCambiarFiltroBanco("FAMILIAR")'>Banco Familiar</button>
+</div>
 </div>
 <center>
 <div class='divMenuf ueno-card ueno-collapsible-card ueno-collapsed ueno-import-card'>
 <div class='ueno-section-head'>
 <div>
 <p class='ueno-section-title'>1. Importar extracto bancario</p>
-<p class='ueno-section-help'>Carga el archivo Ueno en formato Excel o CSV. Los totales de credito/debito ayudan a confirmar que el archivo fue leido correctamente.</p>
+<p class='ueno-section-help' id='lblUenoFormatoArchivo'>Carga el archivo Ueno en formato Excel o CSV. Los totales de credito/debito ayudan a confirmar que el archivo fue leido correctamente.</p>
 </div>
+<label class='ueno-bank-selector' title='Cada archivo pertenece a un banco'>
+<small>Banco del extracto</small>
+<select id='inptConciliacionBanco' onchange='uenoCambiarBanco()'>
+<option value='UENO'>Ueno</option>
+<option value='FAMILIAR'>Banco Familiar</option>
+</select>
+</label>
 </div>
 <table style='width:98%'>
 <tr>
@@ -27715,7 +27729,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <div class='ueno-section-head'>
 <div>
 <p class='ueno-section-title'>3. Control diario de tesoreria</p>
-<p class='ueno-section-help'>Compara el total acreditado por Ueno contra las transferencias registradas en Telar para la fecha seleccionada.</p>
+<p class='ueno-section-help' id='lblUenoTesoreriaHelp'>Compara el total acreditado por Ueno contra las transferencias registradas en Telar para la fecha seleccionada.</p>
 </div>
 </div>
 <table style='width:98%'>
@@ -27725,7 +27739,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <input class='inputText' type='date' id='inptUenoTesoreriaFechaOperativa' style='width:125px'>
 </td>
 <td style='width:12%;text-align:left'>
-<p class='pTituloC'>Fecha banco Ueno</p>
+<p class='pTituloC' id='lblUenoBancoTesoreria'>Fecha banco Ueno</p>
 <input class='inputText' type='date' id='inptUenoTesoreriaFechaBancaria' style='width:125px'>
 </td>
 <td style='width:14%;text-align:left'>
@@ -27756,7 +27770,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <table style='width:98%'>
 <tr>
 <td style='width:11%;text-align:left'>
-<p class='pTituloC'>Total Ueno banco</p>
+<p class='pTituloC' id='lblUenoTotalBanco'>Total Ueno banco</p>
 <input class='inputTextDisable' type='text' id='inptUenoTesTotalUeno' disabled style='width:110px;text-align:right'>
 </td>
 <td style='width:11%;text-align:left'>
@@ -27788,7 +27802,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <input class='inputTextDisable' type='text' id='inptUenoTesSinComprobante' disabled style='width:80px;text-align:center'>
 </td>
 <td style='width:12%;text-align:left'>
-<p class='pTituloC'>Saldo Ueno disponible</p>
+<p class='pTituloC' id='lblUenoSaldoBanco'>Saldo Ueno disponible</p>
 <input class='inputTextDisable' type='text' id='inptUenoTesDisponible' disabled style='width:120px;text-align:right'>
 </td>
 </tr>
@@ -27855,14 +27869,15 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <table class="tableCabeceraRegistro ueno-table-head">
 <tbody>
 <tr>
-<td class="td_registro" style="width:8%;">ID</td>
-<td class="td_registro" style="width:12%;">CUENTA</td>
-<td class="td_registro" style="width:10%;">FECHA</td>
-<td class="td_registro" style="width:24%;">ARCHIVO</td>
-<td class="td_registro" style="width:14%;">IMPORTADO</td>
-<td class="td_registro" style="width:8%;">MOV.</td>
-<td class="td_registro" style="width:8%;">CRED.</td>
-<td class="td_registro" style="width:8%;">DEB.</td>
+<td class="td_registro" style="width:10%;">BANCO</td>
+<td class="td_registro" style="width:6%;">ID</td>
+<td class="td_registro" style="width:10%;">CUENTA</td>
+<td class="td_registro" style="width:9%;">FECHA</td>
+<td class="td_registro" style="width:19%;">ARCHIVO</td>
+<td class="td_registro" style="width:13%;">IMPORTADO</td>
+<td class="td_registro" style="width:7%;">MOV.</td>
+<td class="td_registro" style="width:9%;">CRED.</td>
+<td class="td_registro" style="width:9%;">DEB.</td>
 <td class="td_registro" style="width:8%;">ESTADO</td>
 </tr>
 </tbody>
@@ -27870,20 +27885,13 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <div class="div_cuerpo_table ueno-table-body" id="table_ueno_importaciones" style='height:220px;'></div>
 </div>
 
-<div class='divMenuf ueno-card ueno-main-summary-card' style='width:47%;float:left;margin-left:1%'>
+<div class='divMenuf ueno-card ueno-main-summary-card ueno-main-summary-card--compact'>
 <div class='ueno-section-head'>
 <div>
-<p class='ueno-section-title'>5. Movimientos Ueno - mesa de trabajo</p>
-<p class='ueno-section-help'>Vista compacta de control. Abri la mesa para revisar movimientos, filtros y acciones en pantalla amplia.</p>
+<p class='ueno-section-title' id='lblUenoMesaCompactTitulo'>5. Movimientos bancarios - mesa de trabajo</p>
+<p class='ueno-section-help'>Abri la mesa para revisar movimientos, filtros y acciones en pantalla amplia.</p>
 </div>
 <input type='button' value='Abrir mesa de trabajo' class='btn4 ueno-btn-primary' onclick='uenoAbrirMesaTrabajoPopup()' style='width:170px'>
-</div>
-<div class='ueno-workbench-summary'>
-<span><b>Registros</b><strong id='lblUenoMesaCompactTotal'>0</strong></span>
-<span><b>Disponibles</b><strong id='lblUenoMesaCompactDisponibles'>0</strong></span>
-<span><b>Parciales</b><strong id='lblUenoMesaCompactParciales'>0</strong></span>
-<span><b>Conciliados</b><strong id='lblUenoMesaCompactConciliados'>0</strong></span>
-<span><b>Saldo disponible</b><strong id='lblUenoMesaCompactSaldo'>0</strong></span>
 </div>
 </div>
 
@@ -27891,8 +27899,13 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <div class='ueno-audit-dialog ueno-workbench-dialog'>
 <div class='ueno-audit-dialog-head ueno-workbench-dialog-head'>
 <div>
-<p class='ueno-section-title'>Mesa de trabajo Ueno</p>
-<p class='ueno-section-help'>Misma vista del punto 5, ampliada para revisar movimientos con mas espacio.</p>
+<p class='ueno-section-title' id='lblUenoMesaPopupTitulo'>Mesa de trabajo - Ueno</p>
+<p class='ueno-section-help'>Vista combinada por defecto. El banco de origen se conserva en cada fila.</p>
+</div>
+<div class='ueno-bank-filter ueno-bank-filter--workbench' role='group' aria-label='Filtrar mesa de trabajo por banco'>
+<button type='button' class='ueno-bank-filter-button ueno-bank-filter-button--active' data-ueno-bank-filter='TODOS' aria-pressed='true' onclick='uenoCambiarFiltroBanco("TODOS")'>Todos</button>
+<button type='button' class='ueno-bank-filter-button' data-ueno-bank-filter='UENO' aria-pressed='false' onclick='uenoCambiarFiltroBanco("UENO")'>Ueno</button>
+<button type='button' class='ueno-bank-filter-button' data-ueno-bank-filter='FAMILIAR' aria-pressed='false' onclick='uenoCambiarFiltroBanco("FAMILIAR")'>Banco Familiar</button>
 </div>
 <input type='button' value='Cerrar' class='btn4 ueno-btn-secondary' onclick='uenoCerrarMesaTrabajoPopup()' style='width:90px'>
 </div>
@@ -27900,7 +27913,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <section class='ueno-workbench-detail-panel' role='dialog' aria-modal='true' aria-labelledby='lblUenoDetalleMesaTitulo'>
 <header class='ueno-workbench-detail-head'>
 <div>
-<p class='ueno-section-title' id='lblUenoDetalleMesaTitulo'>Detalle del movimiento Ueno</p>
+<p class='ueno-section-title' id='lblUenoDetalleMesaTitulo'>Detalle del movimiento bancario</p>
 <p class='ueno-section-help'>Revisa el credito, sus posibles depositos y la trazabilidad sin salir de la mesa.</p>
 </div>
 <button type='button' class='ueno-workbench-detail-close' title='Cerrar detalle' onclick='uenoCerrarDetalleMesaTrabajo()' aria-label='Cerrar detalle'>&times;</button>
@@ -27918,12 +27931,13 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <span><b>Registros</b><strong id='lblUenoDetalleMesaTotal'>0</strong></span>
 </div>
 <table class='tableCabeceraRegistro ueno-table-head'><tbody><tr>
-<td class='td_registro' style='width:4%'>ID</td><td class='td_registro' style='width:10%'>FECHA</td>
-<td class='td_registro' style='width:11%'>ACCION</td><td class='td_registro' style='width:10%'>TABLA</td>
-<td class='td_registro' style='width:7%'>FACTURA</td><td class='td_registro' style='width:5%'>MOV.</td>
-<td class='td_registro' style='width:13%'>CLIENTE/CUOTA</td><td class='td_registro' style='width:8%'>ANTES</td>
-<td class='td_registro' style='width:8%'>AHORA</td><td class='td_registro' style='width:7%'>MONTO</td>
-<td class='td_registro' style='width:10%'>USUARIO</td><td class='td_registro' style='width:7%'>OBS.</td>
+<td class='td_registro' style='width:7%'>BANCO</td><td class='td_registro' style='width:4%'>ID</td>
+<td class='td_registro' style='width:9%'>FECHA</td><td class='td_registro' style='width:10%'>ACCION</td>
+<td class='td_registro' style='width:9%'>TABLA</td><td class='td_registro' style='width:6%'>FACTURA</td>
+<td class='td_registro' style='width:5%'>MOV.</td><td class='td_registro' style='width:11%'>CLIENTE/CUOTA</td>
+<td class='td_registro' style='width:7%'>ANTES</td><td class='td_registro' style='width:7%'>AHORA</td>
+<td class='td_registro' style='width:7%'>MONTO</td><td class='td_registro' style='width:10%'>USUARIO</td>
+<td class='td_registro' style='width:8%'>OBS.</td>
 </tr></tbody></table>
 <div class='div_cuerpo_table ueno-table-body' id='table_ueno_auditoria_movimiento_mesa' style='height:360px'></div>
 </div>
@@ -27932,7 +27946,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <div class='divMenuf ueno-card ueno-half-card ueno-main-card ueno-workbench-card' style='width:100%;float:none;margin-left:0'>
 <div class='ueno-section-head ueno-workbench-hidden-summary'>
 <div>
-<p class='ueno-section-title'>5. Movimientos Ueno - mesa de trabajo</p>
+<p class='ueno-section-title' id='lblUenoMesaTitulo'>5. Movimientos bancarios - mesa de trabajo</p>
 <p class='ueno-section-help'>Pantalla administrativa de consulta. El saldo disponible se muestra para control; las cuotas se procesan desde caja y las migraciones internas se confirman manualmente.</p>
 </div>
 </div>
@@ -28012,20 +28026,21 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <table class="tableCabeceraRegistro ueno-table-head">
 <tbody>
 <tr>
+<td class="td_registro" style="width:7%;">BANCO</td>
 <td class="td_registro" style="width:5%;">F. CONF.</td>
 <td class="td_registro" style="width:5%;">F. TRANS.</td>
-<td class="td_registro" style="width:8%;">COMPROBANTE</td>
-<td class="td_registro" style="width:11%;">DESCRIPCION</td>
-<td class="td_registro" style="width:7%;">CONCEPTO</td>
+<td class="td_registro" style="width:7%;">COMPROBANTE</td>
+<td class="td_registro" style="width:10%;">DESCRIPCION</td>
+<td class="td_registro" style="width:6%;">CONCEPTO</td>
 <td class="td_registro" style="width:5%;">DEB.</td>
 <td class="td_registro" style="width:6%;">CREDITO</td>
 <td class="td_registro" style="width:6%;">APLICADO</td>
 <td class="td_registro" style="width:5%;">DISP.</td>
 <td class="td_registro" style="width:6%;">ESTADO</td>
-<td class="td_registro" style="width:16%;">APLICACION CONTABLE</td>
-<td class="td_registro" style="width:9%;">CLIENTE / VENTA</td>
+<td class="td_registro" style="width:14%;">APLICACION CONTABLE</td>
+<td class="td_registro" style="width:8%;">CLIENTE / VENTA</td>
 <td class="td_registro" style="width:5%;">USUARIO</td>
-<td class="td_registro" style="width:6%;">ACCION</td>
+<td class="td_registro" style="width:5%;">ACCION</td>
 </tr>
 </tbody>
 </table>
@@ -28034,10 +28049,78 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 </div>
 </div>
 
+<div class='divMenuf ueno-card ueno-collapsible-card ueno-collapsed ueno-pagos-pendientes-card' style='clear:both;width:96%;margin-left:1%'>
+<div class='ueno-section-head'>
+<div>
+<p class='ueno-section-title'>6. Pagos pendientes de conciliacion</p>
+<p class='ueno-section-help'>Vista de consulta de ingresos por cuotas. El cobro y la aplicacion del saldo continúan realizándose desde Caja / Cobrar cuota.</p>
+</div>
+</div>
+<table style='width:98%'>
+<tr>
+<td style='width:14%;text-align:left'>
+<p class='pTituloC'>Estado</p>
+<select class='inputSelect' id='inptUenoPagoEstado'>
+<option value='pendiente_conciliacion'>PENDIENTES</option>
+<option value='observado'>OBSERVADOS</option>
+<option value='conciliado_ueno'>CONCILIADOS</option>
+<option value=''>TODOS</option>
+</select>
+</td>
+<td style='width:14%;text-align:left'>
+<p class='pTituloC'>Comprobante</p>
+<input class='inputText' type='text' id='inptUenoPagoComprobante' onkeyup='if(event.keyCode == 13){uenoBuscarPagosPendientes()}'>
+</td>
+<td style='width:16%;text-align:left'>
+<p class='pTituloC'>Cliente o CI</p>
+<input class='inputText' type='text' id='inptUenoBuscarCuotaCliente' onkeyup='if(event.keyCode == 13){uenoBuscarPagosPendientes()}'>
+</td>
+<td style='width:10%;text-align:left'>
+<p class='pTituloC'>Venta</p>
+<input class='inputText' type='text' id='inptUenoBuscarCuotaVenta' onkeyup='if(event.keyCode == 13){uenoBuscarPagosPendientes()}'>
+</td>
+<td style='width:11%;text-align:left'>
+<p class='pTituloC'>Monto</p>
+<input class='inputText' type='text' id='inptUenoBuscarCuotaMonto' onkeyup='separadordemiles(this); if(event.keyCode == 13){uenoBuscarPagosPendientes()}' style='text-align:right'>
+</td>
+<td style='width:9%;text-align:left'>
+<p class='pTituloC'>Registros</p>
+<input class='inputTextDisable' type='text' id='inptUenoTotalPagosPendientes' disabled style='text-align:center'>
+</td>
+<td style='width:12%;text-align:left'>
+<p class='pTituloC'>Saldo pendiente</p>
+<input class='inputTextDisable' type='text' id='inptUenoMontoPagosPendientes' disabled style='text-align:right'>
+</td>
+<td style='width:14%;text-align:right'>
+<input type='button' value='Buscar pagos' class='btn4 ueno-btn-secondary' onclick='uenoBuscarPagosPendientes()' style='width:125px'>
+<input type='button' value='Limpiar' class='btn4 ueno-btn-secondary' onclick='uenoLimpiarBusquedaCuotas()' style='width:85px'>
+</td>
+</tr>
+</table>
+<table class='tableCabeceraRegistro ueno-table-head'>
+<tbody>
+<tr>
+<td class='td_registro' style='width:10%'>BANCO</td>
+<td class='td_registro' style='width:13%'>CLIENTE</td>
+<td class='td_registro' style='width:7%'>CI</td>
+<td class='td_registro' style='width:8%'>VENTA</td>
+<td class='td_registro' style='width:9%'>CUOTA/PAGO</td>
+<td class='td_registro' style='width:8%'>VENC.</td>
+<td class='td_registro' style='width:9%'>SALDO PEND.</td>
+<td class='td_registro' style='width:9%'>MONTO SUG.</td>
+<td class='td_registro' style='width:9%'>ESTADO</td>
+<td class='td_registro' style='width:9%'>COINCIDENCIA</td>
+<td class='td_registro' style='width:9%'>ACCION</td>
+</tr>
+</tbody>
+</table>
+<div class='div_cuerpo_table ueno-table-body' id='table_ueno_pagos_pendientes' style='height:300px'></div>
+</div>
+
 <div class='divMenuf ueno-card ueno-collapsible-card ueno-collapsed ueno-support-card ueno-pagos-card' style='clear:both;width:96%;margin-left:1%'>
 <div class='ueno-section-head'>
 <div>
-<p class='ueno-section-title'>6. Control y trazabilidad de movimientos</p>
+<p class='ueno-section-title'>7. Control y trazabilidad de movimientos</p>
 <p class='ueno-section-help'>Selecciona Ver detalle en la tabla para revisar el movimiento. Esta mesa no registra pagos ni aplica saldos a cuotas.</p>
 </div>
 </div>
@@ -28078,7 +28161,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <div class='divMenuf ueno-card ueno-collapsible-card ueno-collapsed ueno-audit-card' style='clear:both;width:96%;margin-left:1%'>
 <div class='ueno-section-head'>
 <div>
-<p class='ueno-section-title'>7. Auditoria y trazabilidad</p>
+<p class='ueno-section-title'>8. Auditoria y trazabilidad</p>
 <p class='ueno-section-help'>Consulta importaciones, conciliaciones y asignaciones ya realizadas. Es una vista de control, no el area principal de trabajo.</p>
 </div>
 </div>
@@ -28117,18 +28200,19 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <table class="tableCabeceraRegistro ueno-table-head">
 <tbody>
 <tr>
+<td class="td_registro" style="width:7%;">BANCO</td>
 <td class="td_registro" style="width:4%;">ID</td>
-<td class="td_registro" style="width:10%;">FECHA</td>
-<td class="td_registro" style="width:11%;">ACCION</td>
-<td class="td_registro" style="width:10%;">TABLA</td>
-<td class="td_registro" style="width:7%;">FACTURA</td>
+<td class="td_registro" style="width:9%;">FECHA</td>
+<td class="td_registro" style="width:10%;">ACCION</td>
+<td class="td_registro" style="width:9%;">TABLA</td>
+<td class="td_registro" style="width:6%;">FACTURA</td>
 <td class="td_registro" style="width:5%;">MOV.</td>
-<td class="td_registro" style="width:13%;">CLIENTE/CUOTA</td>
-<td class="td_registro" style="width:8%;">ANTES</td>
-<td class="td_registro" style="width:8%;">AHORA</td>
+<td class="td_registro" style="width:11%;">CLIENTE/CUOTA</td>
+<td class="td_registro" style="width:7%;">ANTES</td>
+<td class="td_registro" style="width:7%;">AHORA</td>
 <td class="td_registro" style="width:7%;">MONTO</td>
 <td class="td_registro" style="width:10%;">USUARIO</td>
-<td class="td_registro" style="width:7%;">OBS.</td>
+<td class="td_registro" style="width:8%;">OBS.</td>
 </tr>
 </tbody>
 </table>
@@ -28172,16 +28256,17 @@ title='Cerrar Ventana' onclick='uenoCerrarModalImportaciones()' />
 <table class="tableCabeceraRegistro ueno-table-head">
 <tbody>
 <tr>
-<td class="td_registro" style="width:6%;">ID</td>
-<td class="td_registro" style="width:10%;">CUENTA</td>
+<td class="td_registro" style="width:8%;">BANCO</td>
+<td class="td_registro" style="width:5%;">ID</td>
+<td class="td_registro" style="width:9%;">CUENTA</td>
 <td class="td_registro" style="width:8%;">FECHA</td>
-<td class="td_registro" style="width:19%;">ARCHIVO</td>
-<td class="td_registro" style="width:12%;">IMPORTADO</td>
+<td class="td_registro" style="width:17%;">ARCHIVO</td>
+<td class="td_registro" style="width:11%;">IMPORTADO</td>
 <td class="td_registro" style="width:6%;">MOV.</td>
 <td class="td_registro" style="width:7%;">CRED.</td>
 <td class="td_registro" style="width:7%;">DEB.</td>
 <td class="td_registro" style="width:8%;">ESTADO</td>
-<td class="td_registro" style="width:17%;">ENCONTRADO</td>
+<td class="td_registro" style="width:14%;">ENCONTRADO</td>
 </tr>
 </tbody>
 </table>
@@ -28249,7 +28334,7 @@ title='Cerrar Ventana' onclick='uenoCerrarDetalleImportacionPopup()' />
 <div class='ueno-audit-dialog'>
 <div class='ueno-audit-dialog-head'>
 <div>
-<p class='ueno-section-title'>Aplicacion del movimiento Ueno</p>
+<p class='ueno-section-title' id='lblUenoAuditPopupTitulo'>Aplicacion del movimiento - Ueno</p>
 <p class='ueno-section-help' id='lblUenoAuditPopupContexto'>Trazabilidad del movimiento seleccionado.</p>
 </div>
 <img src='/GoodVentaAsisCap/iconos/botonCerrar.png' class='iconoBtn'
@@ -28262,18 +28347,19 @@ title='Cerrar Ventana' onclick='uenoCerrarAuditoriaMovimientoPopup()' />
 <table class="tableCabeceraRegistro ueno-table-head">
 <tbody>
 <tr>
+<td class="td_registro" style="width:7%;">BANCO</td>
 <td class="td_registro" style="width:4%;">ID</td>
-<td class="td_registro" style="width:10%;">FECHA</td>
-<td class="td_registro" style="width:11%;">ACCION</td>
-<td class="td_registro" style="width:10%;">TABLA</td>
-<td class="td_registro" style="width:7%;">FACTURA</td>
+<td class="td_registro" style="width:9%;">FECHA</td>
+<td class="td_registro" style="width:10%;">ACCION</td>
+<td class="td_registro" style="width:9%;">TABLA</td>
+<td class="td_registro" style="width:6%;">FACTURA</td>
 <td class="td_registro" style="width:5%;">MOV.</td>
-<td class="td_registro" style="width:13%;">CLIENTE/CUOTA</td>
-<td class="td_registro" style="width:8%;">ANTES</td>
-<td class="td_registro" style="width:8%;">AHORA</td>
+<td class="td_registro" style="width:11%;">CLIENTE/CUOTA</td>
+<td class="td_registro" style="width:7%;">ANTES</td>
+<td class="td_registro" style="width:7%;">AHORA</td>
 <td class="td_registro" style="width:7%;">MONTO</td>
 <td class="td_registro" style="width:10%;">USUARIO</td>
-<td class="td_registro" style="width:7%;">OBS.</td>
+<td class="td_registro" style="width:8%;">OBS.</td>
 </tr>
 </tbody>
 </table>
