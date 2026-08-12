@@ -1,0 +1,56 @@
+services:
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/production/Dockerfile
+      args:
+        PHP_VERSION: ${TELAR_PHP_VERSION:-7.4}
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      TELAR_DB_HOST: database
+      TELAR_DB_NAME: ${TELAR_DB_NAME}
+      TELAR_DB_USER: ${TELAR_DB_USER}
+      TELAR_DB_PASSWORD: ${TELAR_DB_PASSWORD}
+      TZ: America/Asuncion
+    ports:
+      - "${TELAR_BIND_IP:-10.220.100.201}:${TELAR_HTTP_PORT:-8080}:80"
+    volumes:
+      - ../../:/var/www/html
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "php -r '$$s=@file_get_contents(\"http://127.0.0.1/GoodVentaAsisCap/system/login.html\"); exit($$s === false ? 1 : 0);'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  database:
+    image: mariadb:10.6
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${TELAR_DB_NAME}
+      MARIADB_USER: ${TELAR_DB_USER}
+      MARIADB_PASSWORD: ${TELAR_DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${TELAR_DB_ROOT_PASSWORD}
+      TZ: America/Asuncion
+    command:
+      - --character-set-server=latin1
+      - --collation-server=latin1_swedish_ci
+      - --max-allowed-packet=256M
+    volumes:
+      - telar_database:/var/lib/mysql
+      - ./mariadb-performance.cnf:/etc/mysql/conf.d/99-telar-performance.cnf:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  telar_database:

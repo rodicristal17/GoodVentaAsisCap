@@ -1,0 +1,23 @@
+services:
+  web85:
+    build:
+      context: ../..
+      dockerfile: deploy/production/Dockerfile
+      args:
+        PHP_VERSION: 8.5.9
+    restart: "no"
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      TELAR_DB_HOST: database
+      TELAR_DB_NAME: ${TELAR_DB_NAME}
+      TELAR_DB_USER: ${TELAR_DB_USER}
+      TELAR_DB_PASSWORD: ${TELAR_DB_PASSWORD}
+      TZ: America/Asuncion
+    ports:
+      - "${TELAR_BIND_IP:-10.220.100.201}:8081:80"
+    volumes:
+      - ../../:/var/www/html
+    security_opt:
+      - no-new-privileges:true

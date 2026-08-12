@@ -9,14 +9,13 @@ include_once("verificar_navegador.php");
 include_once("subir_foto_base64.php");
 include_once("buscar_nivel.php");
 include_once("classTable.php");
-$host = "localhost";
-$dbname = "syscvxco_ac";
-$username = "root";
-$password = '';
+$host = getenv('TELAR_DB_HOST') !== false ? getenv('TELAR_DB_HOST') : 'localhost';
+$dbname = getenv('TELAR_DB_NAME') !== false ? getenv('TELAR_DB_NAME') : 'syscvxco_ac';
+$username = getenv('TELAR_DB_USER') !== false ? getenv('TELAR_DB_USER') : 'root';
+$password = getenv('TELAR_DB_PASSWORD') !== false ? getenv('TELAR_DB_PASSWORD') : '';
 
 try {
     $credenciales = array(
-        array('host' => $host, 'dbname' => $dbname, 'username' => 'syscvxco_ac', 'password' => 'syscvxco_ac'),
         array('host' => $host, 'dbname' => $dbname, 'username' => $username, 'password' => $password)
     );
     $pdo = null;

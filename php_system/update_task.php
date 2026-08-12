@@ -64,7 +64,15 @@ if ($user === '' || $pass === '' || $navegador === '' || verificar_navegador($us
 }
 
 try {
-    $pdo = new PDO("mysql:host=localhost;dbname=syscvxco_ac;charset=utf8mb4", "root", "");
+    $dbHost = getenv('TELAR_DB_HOST') !== false ? getenv('TELAR_DB_HOST') : 'localhost';
+    $dbName = getenv('TELAR_DB_NAME') !== false ? getenv('TELAR_DB_NAME') : 'syscvxco_ac';
+    $dbUser = getenv('TELAR_DB_USER') !== false ? getenv('TELAR_DB_USER') : 'root';
+    $dbPass = getenv('TELAR_DB_PASSWORD') !== false ? getenv('TELAR_DB_PASSWORD') : '';
+    $pdo = new PDO(
+        "mysql:host={$dbHost};dbname={$dbName};charset=utf8mb4",
+        $dbUser,
+        $dbPass
+    );
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $startTs = strtotime(isset($data['start']) ? $data['start'] : '');

@@ -10,6 +10,7 @@ php_system/conexion.php
 /archivoscheque
 archivox/
 /backup_db_local/
+/deploy/production/.env
 
 .vscode/
 php_system/conexion.php
