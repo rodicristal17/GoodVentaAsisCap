@@ -1065,7 +1065,8 @@ function planificacionListarAsignaciones($mysqli, $contexto, $codLocal, $desde, 
             while ($resultado && ($fila = $resultado->fetch_assoc())) {
                 $claveRegla = $fila['id_regla'] !== null
                     ? intval($fila['id_regla']).'|'.$fila['fecha'] : '';
-                if ($claveRegla !== '' && isset($indicesRegla[$claveRegla])) {
+                if ($fila['estado'] !== 'propuesta'
+                    && $claveRegla !== '' && isset($indicesRegla[$claveRegla])) {
                     $indice = $indicesRegla[$claveRegla];
                     if (isset($asignaciones[$indice])) {
                         $anterior = $asignaciones[$indice];
@@ -1282,6 +1283,9 @@ function planificacionCompromisosOtrasSucursales(
             $estructura
         );
         foreach ($asignaciones as $asignacion) {
+            if (isset($asignacion['estado']) && $asignacion['estado'] === 'propuesta') {
+                continue;
+            }
             if (isset($fechasFeriadas[$asignacion['fecha']])
                 && ($asignacion['origen'] === 'regla'
                     || $asignacion['origen'] === 'legacy')) {
@@ -1386,6 +1390,9 @@ function planificacionAlertasTraslado($asignaciones, $umbralMinutos)
 {
     $grupos = array();
     foreach ($asignaciones as $asignacion) {
+        if (isset($asignacion['estado']) && $asignacion['estado'] === 'propuesta') {
+            continue;
+        }
         $clave = intval($asignacion['cod_profesional']).'|'.$asignacion['fecha'];
         if (!isset($grupos[$clave])) {
             $grupos[$clave] = array();
@@ -1896,6 +1903,9 @@ function planificacionConflictos(
             $estructura
         );
         foreach ($existentes as $existente) {
+            if (isset($existente['estado']) && $existente['estado'] === 'propuesta') {
+                continue;
+            }
             if ($excluirId > 0 && intval($existente['id_asignacion']) === $excluirId
                 && $existente['origen'] === 'asignacion') {
                 continue;
@@ -2025,7 +2035,13 @@ function planificacionConflictosAgenda(
         if ($mismoProfesional && $mismoConsultorio) {
             continue;
         }
-        $seSuperpone = $mismoConsultorio || planificacionIntervalosSeSuperponen(
+        /* Agenda conserva turnos, pero no define la asignacion diaria del
+           consultorio. Un doctor distinto en la misma casilla se informa en
+           la interfaz para revision y no impide fijar la fuente oficial. */
+        if ($mismoConsultorio) {
+            continue;
+        }
+        $seSuperpone = planificacionIntervalosSeSuperponen(
             $horario ? $horario['hora_entrada'] : null,
             $horario ? $horario['hora_salida'] : null,
             $fila['hora_inicio'],
@@ -2037,7 +2053,7 @@ function planificacionConflictosAgenda(
         $puedeVerDetalleLocal = $puedeVerTodasSucursales
             || intval($fila['cod_localFk']) === intval($codLocal);
         $conflictos[] = array(
-            'tipo' => $mismoConsultorio ? 'agenda_consultorio' : 'agenda_profesional',
+            'tipo' => 'agenda_profesional',
             'cod_local' => $puedeVerDetalleLocal ? intval($fila['cod_localFk']) : 0,
             'nombre_local' => $puedeVerDetalleLocal ? $fila['nombre_local'] : '',
             'profesional' => $puedeVerDetalleLocal ? $fila['profesional'] : '',

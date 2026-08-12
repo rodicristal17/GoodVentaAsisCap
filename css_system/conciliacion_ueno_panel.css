@@ -2,6 +2,130 @@
   position: relative;
 }
 
+/* Vista bancaria combinada */
+#divConciliacionUeno .ueno-modal .pTituloB {
+  font-size: 17px;
+}
+
+#divConciliacionUeno .ueno-bank-filter {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  margin-left: auto;
+  border: 1px solid #bfd3e7;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+#divConciliacionUeno .ueno-bank-filter small {
+  padding: 0 9px;
+  color: #52677d;
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+#divConciliacionUeno .ueno-bank-filter-button {
+  min-width: 72px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-left: 1px solid #d8e3ee;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#divConciliacionUeno .ueno-bank-filter-button:hover {
+  background: #f1f7ff;
+  color: #174d77;
+}
+
+#divConciliacionUeno .ueno-bank-filter-button--active {
+  background: #155bd7;
+  color: #ffffff;
+  box-shadow: inset 0 -2px 0 #5eead4;
+}
+
+#divConciliacionUeno .ueno-bank-filter-button--active:hover {
+  background: #155bd7;
+  color: #ffffff;
+}
+
+#divConciliacionUeno .ueno-bank-filter--workbench {
+  margin-left: auto;
+}
+
+#divConciliacionUeno .ueno-import-card .ueno-bank-selector {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding-left: 10px;
+  border-left: 1px solid #d8e5f2;
+}
+
+#divConciliacionUeno .ueno-main-summary-card--compact {
+  min-height: 0;
+  padding: 7px 10px;
+}
+
+#divConciliacionUeno .ueno-main-summary-card--compact .ueno-section-head {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+#divConciliacionUeno .ueno-bank-badge {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  color: #334155;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+#divConciliacionUeno .ueno-bank-badge-mark {
+  display: inline-flex;
+  min-width: 34px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border-radius: 5px;
+  color: #ffffff;
+  box-sizing: border-box;
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: -0.2px;
+  line-height: 1;
+}
+
+#divConciliacionUeno .ueno-bank-badge--ueno .ueno-bank-badge-mark {
+  background: linear-gradient(135deg, #d5008f, #8b2bd1);
+  font-size: 10px;
+  text-transform: lowercase;
+}
+
+#divConciliacionUeno .ueno-bank-badge--familiar .ueno-bank-badge-mark {
+  background: linear-gradient(135deg, #082a60, #124f9d);
+}
+
+#divConciliacionUeno .ueno-bank-badge-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 8px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+}
+
+#divConciliacionUeno .ueno-row td[data-label="Banco"] {
+  overflow: visible;
+  white-space: nowrap;
+}
+
 #divConciliacionUeno .ueno-workbench-detail-overlay {
   position: fixed !important;
   inset: 0 !important;
@@ -114,6 +238,25 @@
 }
 
 @media (max-width: 900px) {
+	#divConciliacionUeno .ueno-guide {
+		align-items: flex-start;
+		flex-wrap: wrap;
+	}
+
+	#divConciliacionUeno .ueno-bank-filter {
+		width: 100%;
+		margin-left: 0;
+	}
+
+	#divConciliacionUeno .ueno-bank-filter-button {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	#divConciliacionUeno .ueno-bank-filter--workbench {
+		order: 3;
+	}
+
   #divConciliacionUeno .ueno-workbench-detail-overlay {
     padding: 10px;
   }

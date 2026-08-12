@@ -97,6 +97,7 @@ $rutaCss = $raiz.'/css_system/planificacion_especialistas.css';
 $rutaHtml = $raiz.'/system/inicio.html';
 $rutaAgendaJs = $raiz.'/js_system/jsCalendar.js';
 $rutaAgendaCss = $raiz.'/css_system/cssCalendar.css';
+$rutaAgendaPhp = $raiz.'/php_system/abmCalendar.php';
 $fuentePhp = file_get_contents($rutaPhp);
 $fuenteHelper = file_get_contents($rutaHelper);
 $fuenteJs = file_get_contents($rutaJs);
@@ -104,11 +105,13 @@ $fuenteCss = file_get_contents($rutaCss);
 $fuenteHtml = file_get_contents($rutaHtml);
 $fuenteAgendaJs = file_get_contents($rutaAgendaJs);
 $fuenteAgendaCss = file_get_contents($rutaAgendaCss);
+$fuenteAgendaPhp = file_get_contents($rutaAgendaPhp);
 
 pruebaPlanAfirmar(
     $fuentePhp !== false && $fuenteHelper !== false
     && $fuenteJs !== false && $fuenteCss !== false
-    && $fuenteHtml !== false && $fuenteAgendaJs !== false && $fuenteAgendaCss !== false,
+    && $fuenteHtml !== false && $fuenteAgendaJs !== false && $fuenteAgendaCss !== false
+    && $fuenteAgendaPhp !== false,
     'Los archivos del modulo se pueden inspeccionar.'
 );
 
@@ -152,14 +155,17 @@ $bloqueCompromisos = pruebaPlanBloqueFuncionPhp(
 );
 $bloqueConflictos = pruebaPlanBloqueFuncionPhp($fuentePhp, 'planificacionConflictos');
 $bloqueConflictosAgenda = pruebaPlanBloqueFuncionPhp($fuentePhp, 'planificacionConflictosAgenda');
+$bloqueListarAsignaciones = pruebaPlanBloqueFuncionPhp($fuentePhp, 'planificacionListarAsignaciones');
 $bloqueGuardar = pruebaPlanBloqueFuncionPhp($fuentePhp, 'planificacionGuardarAsignacion');
 $bloqueRegla = pruebaPlanBloqueFuncionPhp($fuentePhp, 'planificacionGuardarRegla');
-$bloqueAgendaVisualJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'agendaVisualAssignments');
 $bloqueVisualJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'visualAssignments');
 $bloqueFiltradasJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'filteredAssignments');
 $bloqueAsignacionesJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'assignmentsFor');
-$bloqueAgendaBloqueaJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'agendaOccupancyBlocksSlot');
+$bloqueAgendaTieneProfesionalJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'agendaOccupancyHasProfessional');
 $bloqueAgendaCoincideJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'agendaMatchesAssignments');
+$bloqueMarcaAgendaJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'agendaReviewMarker');
+$bloqueEstadoOcupaJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'assignmentOccupiesSlot');
+$bloqueCasillaOcupadaJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'slotIsOccupied');
 $bloqueCompromisosJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'remoteCommitmentsFor');
 $bloqueBloqueoRemotoJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'remoteCommitmentBlocksDay');
 $bloqueAvisoRemotoJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'remoteCommitmentNotice');
@@ -172,6 +178,23 @@ $bloqueDetalleAsignacionJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'openAssignmen
 $bloqueHilosJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'renderThreads');
 $bloqueArrastreJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'onDrop');
 $bloqueGuardadoDirectoJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'saveDirectAssignment');
+$bloqueCargaJs = pruebaPlanBloqueFuncionJs($fuenteJs, 'loadData');
+$bloqueProfesionalesAgendaPhp = pruebaPlanBloqueFuncionPhp(
+    $fuenteAgendaPhp,
+    'obtenerProfesionalesPlanificadosAgenda'
+);
+$bloqueOrdenAgendaPhp = pruebaPlanBloqueFuncionPhp(
+    $fuenteAgendaPhp,
+    'ordenarConsultoriosAgendaComoPlanificacion'
+);
+$bloqueProfesionalesAgendaJs = pruebaPlanBloqueFuncionJs(
+    $fuenteAgendaJs,
+    'obtenerProfesionalesPlanificadosConsultorioAgenda'
+);
+$bloqueRenderAgendaJs = pruebaPlanBloqueFuncionJs(
+    $fuenteAgendaJs,
+    'renderProfesionalesPlanificadosAgenda'
+);
 
 pruebaPlanAfirmar(
     $bloqueOcupaciones !== ''
@@ -209,14 +232,16 @@ pruebaPlanAfirmar(
 );
 pruebaPlanAfirmar(
     strpos($bloqueConflictos, '$mismoConsultorio || planificacionIntervalosSeSuperponen') !== false
-    && strpos($bloqueConflictosAgenda, '$mismoConsultorio || planificacionIntervalosSeSuperponen') !== false,
-    'El consultorio se considera una unica casilla para todo el dia.'
+    && strpos($bloqueConflictosAgenda, 'if ($mismoConsultorio)') !== false
+    && strpos($bloqueConflictosAgenda, '$seSuperpone = planificacionIntervalosSeSuperponen') !== false,
+    'Planificacion reserva la casilla diaria y Agenda solo bloquea al mismo profesional en otro consultorio.'
 );
 pruebaPlanAfirmar(
     strpos($bloqueConflictosAgenda, 'a.id_profesional IS NOT NULL') !== false
     && strpos($bloqueConflictosAgenda, 'a.id_profesional>0') !== false
-    && strpos($bloqueConflictosAgenda, 'if ($mismoProfesional && $mismoConsultorio)') !== false,
-    'Agenda ignora turnos sin profesional y no enfrenta una ocupacion con su misma asignacion.'
+    && strpos($bloqueConflictosAgenda, 'if ($mismoProfesional && $mismoConsultorio)') !== false
+    && strpos($bloqueConflictosAgenda, "'tipo' => 'agenda_profesional'") !== false,
+    'Agenda ignora turnos sin profesional y no decide la asignacion del consultorio.'
 );
 pruebaPlanAfirmar(
     strpos($bloqueGuardar, 'planificacionMensajeConflictos($conflictos, $fecha)') !== false
@@ -225,32 +250,60 @@ pruebaPlanAfirmar(
     'Los rechazos conservan conflictos reales sin inventar una identidad para turnos sueltos.'
 );
 pruebaPlanAfirmar(
-    strpos($bloqueAgendaVisualJs, 'professionals.length !== 1') !== false
-    && strpos($bloqueAgendaVisualJs, 'occupiedSlots[slotKey]') !== false
-    && strpos($bloqueAgendaVisualJs, 'estado: "agenda"') !== false
-    && strpos($bloqueAgendaVisualJs, 'origen: "agenda"') !== false
-    && strpos($bloqueVisualJs, '.concat(agendaVisualAssignments())') !== false
+    strpos($fuenteJs, 'function agendaVisualAssignments(') === false
+    && strpos($bloqueVisualJs, 'state.data.asignaciones') !== false
+    && strpos($bloqueVisualJs, '.concat(') === false
     && strpos($bloqueFiltradasJs, 'visualAssignments()') !== false
     && strpos($bloqueAsignacionesJs, 'visualAssignments()') !== false,
-    'Agenda con un unico profesional se convierte en asignacion visual sin duplicar una existente.'
+    'Solo las asignaciones guardadas en Planificacion ocupan visualmente una casilla.'
 );
 pruebaPlanAfirmar(
-    strpos($bloqueAgendaBloqueaJs, 'occupancy.profesionales') !== false
+    strpos($bloqueAgendaTieneProfesionalJs, 'occupancy.profesionales') !== false
     && strpos($bloqueAgendaCoincideJs, 'return !professionals.length') !== false
-    && strpos($bloqueAsignacionChipJs, 'assignment.origen !== "agenda"') !== false
-    && strpos($bloqueAsignacionChipJs, 'agendaBadge(agendaOccupancy)') !== false
-    && strpos($bloqueDiaJs, 'agendaMatches ? agendaOccupancy : null') !== false
+    && strpos($bloqueAsignacionChipJs, 'agendaBadge(agendaOccupancy, agendaMatches)') !== false
+    && strpos($bloqueDiaJs, 'var occupied = occupyingAssignments.length > 0;') !== false
+    && strpos($bloqueDiaJs, 'agendaReviewMarker(agendaOccupancy)') !== false
     && strpos($bloqueDiaJs, 'data-plan-occupied') !== false
-    && strpos($bloqueDetalleAsignacionJs, 'assignment.origen === "agenda"') !== false
     && strpos($bloqueHilosJs, 'assignments = filteredAssignments()') !== false
     && strpos($bloqueHilosJs, 'data-plan-assignment') !== false,
-    'La ocupacion unificada conserva avatar, detalle de Agenda y el hilo al profesional.'
+    'Agenda aporta coincidencias o advertencias sin reemplazar al profesional planificado.'
+);
+pruebaPlanAfirmar(
+    strpos($bloqueEstadoOcupaJs, 'assignment.estado === "confirmada"') !== false
+    && strpos($bloqueEstadoOcupaJs, 'assignment.estado === "pendiente_horario"') !== false
+    && strpos($bloqueEstadoOcupaJs, 'propuesta') === false
+    && strpos($bloqueCasillaOcupadaJs, 'occupyingAssignmentsFor') !== false
+    && strpos($bloqueListarAsignaciones, "\$fila['estado'] !== 'propuesta'") !== false
+    && strpos($bloqueConflictos, "\$existente['estado'] === 'propuesta'") !== false
+    && strpos($bloqueCompromisos, "\$asignacion['estado'] === 'propuesta'") !== false,
+    'Las propuestas quedan visibles para revision, pero no ocupan ni bloquean una casilla.'
 );
 pruebaPlanAfirmar(
     strpos($fuenteJs, 'Doctor sin identificar') === false
-    && strpos($fuenteJs, 'Conflicto: varios doctores') !== false
-    && strpos($bloqueDiaJs, "html += '<span class=\"plan-slot__free\">Libre</span>'") !== false,
-    'Los turnos sin profesional no crean otra tarjeta y una casilla no asignada muestra Libre.'
+    && strpos($bloqueMarcaAgendaJs, 'Agenda por revisar') !== false
+    && strpos($bloqueDiaJs, "html += '<span class=\"plan-slot__free\">Libre</span>'") !== false
+    && strpos($bloqueAbrirCasillaJs, 'agendaOccupancyFor(') === false,
+    'Una casilla sin Planificacion permanece Libre aunque Agenda tenga turnos.'
+);
+pruebaPlanAfirmar(
+    strpos($bloqueCargaJs, 'state.selectedProfessional = "";') !== false
+    && strpos($bloqueCargaJs, 'data.profesionales[0]') === false,
+    'La carga inicial no preselecciona al primer profesional del listado.'
+);
+pruebaPlanAfirmar(
+    strpos($fuenteAgendaPhp, "require_once __DIR__.'/planificacion_especialistas_helper.php';") !== false
+    && strpos($bloqueOrdenAgendaPhp, 'planificacionOrdenarYRotularConsultorios') !== false
+    && strpos($fuenteAgendaPhp, 'enriquecerConsultoriosAgendaConPlanificacion') !== false,
+    'Agenda reutiliza el mismo orden real C1, C2 y C3 de Planificacion.'
+);
+pruebaPlanAfirmar(
+    strpos($bloqueProfesionalesAgendaPhp, "array('confirmada', 'pendiente_horario')") !== false
+    && strpos($bloqueProfesionalesAgendaPhp, 'consultorio_doctor_asignacion') === false
+    && strpos($fuenteAgendaJs, 'profesional.estado === "confirmada"') !== false
+    && strpos($fuenteAgendaJs, 'profesional.estado === "pendiente_horario"') !== false
+    && strpos($fuenteAgendaJs, 'consultorio.nombre_doctor') === false
+    && strpos($fuenteAgendaJs, '+ "Libre</span>"') !== false,
+    'Agenda muestra solamente Libre o Asignado segun la fuente efectiva de Planificacion.'
 );
 pruebaPlanAfirmar(
     strpos($fuenteJs, '.plan-slot:not(.is-disabled):not(.is-occupied)') !== false
@@ -276,10 +329,10 @@ pruebaPlanAfirmar(
     'Seleccionar, tocar o arrastrar conserva el aviso, el detalle de sede y su hilo preventivo.'
 );
 pruebaPlanAfirmar(
-    strpos($fuenteCss, '.plan-agenda-occupancy') !== false
-    && strpos($fuenteCss, '.plan-assignment__agenda') !== false
+    strpos($fuenteCss, '.plan-agenda-marker.is-warning') !== false
+    && strpos($fuenteCss, '.plan-assignment__agenda.is-warning') !== false
     && strpos($fuenteCss, '.plan-slot.is-occupied') !== false,
-    'El indicador de Agenda queda integrado en la tarjeta del profesional.'
+    'Las diferencias de Agenda tienen una advertencia acotada sin crear otra asignacion.'
 );
 pruebaPlanAfirmar(
     strpos($fuenteCss, '.plan-remote-commitment') !== false
@@ -406,10 +459,12 @@ $sqlIncidente = "SELECT
            AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO') AS sin_identificar,
         (SELECT COUNT(*) FROM planificacion_especialista_asignacion pa
          WHERE pa.fecha='2026-07-10' AND pa.cod_localFK=3
-           AND pa.id_consultorioFK=8 AND pa.estado<>'anulada') AS asignaciones,
+           AND pa.id_consultorioFK=8
+           AND pa.estado IN ('confirmada','pendiente_horario')) AS asignaciones,
         (SELECT COUNT(*) FROM planificacion_especialista_asignacion pa
          WHERE pa.fecha='2026-07-10' AND pa.cod_localFK=3
-           AND pa.id_consultorioFK=8 AND pa.estado<>'anulada'
+           AND pa.id_consultorioFK=8
+           AND pa.estado IN ('confirmada','pendiente_horario')
            AND EXISTS (
              SELECT 1 FROM agenda a
              WHERE a.fecha=pa.fecha AND a.id_consultorio=pa.id_consultorioFK
@@ -446,7 +501,8 @@ $sqlLibre = "SELECT
            AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO') AS identificados,
         (SELECT COUNT(*) FROM planificacion_especialista_asignacion pa
          WHERE pa.fecha='2026-07-10' AND pa.cod_localFK=3
-           AND pa.id_consultorioFK=7 AND pa.estado<>'anulada') AS asignaciones";
+           AND pa.id_consultorioFK=7
+           AND pa.estado IN ('confirmada','pendiente_horario')) AS asignaciones";
 $resultadoLibre = $mysqli->query($sqlLibre);
 pruebaPlanAfirmar($resultadoLibre !== false, 'C2 del viernes 10 se puede auditar sin datos personales.');
 $filaLibre = $resultadoLibre->fetch_assoc();
@@ -468,7 +524,8 @@ $sqlAgendaVisual = "SELECT
            AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO') AS identificados,
         (SELECT COUNT(*) FROM planificacion_especialista_asignacion pa
          WHERE pa.fecha='2026-07-03' AND pa.cod_localFK=3
-           AND pa.id_consultorioFK=8 AND pa.estado<>'anulada') AS asignaciones";
+           AND pa.id_consultorioFK=8
+           AND pa.estado IN ('confirmada','pendiente_horario')) AS asignaciones";
 $resultadoAgendaVisual = $mysqli->query($sqlAgendaVisual);
 pruebaPlanAfirmar(
     $resultadoAgendaVisual !== false,
@@ -479,11 +536,11 @@ pruebaPlanAfirmar(
     intval($filaAgendaVisual['registros']) > 0
     && intval($filaAgendaVisual['identificados']) === 1
     && intval($filaAgendaVisual['asignaciones']) === 0,
-    'C3 del viernes 3 puede mostrarse como asignacion visual de Agenda sin escribir datos.'
+    'C3 del viernes 3 permanece Libre y Agenda se presenta solamente como advertencia.'
 );
 fwrite(
     STDOUT,
-    '[INFO] Casilla visual de Agenda: registros='.intval($filaAgendaVisual['registros'])
+    '[INFO] Casilla libre con advertencia de Agenda: registros='.intval($filaAgendaVisual['registros'])
     .', profesionales_identificados='.intval($filaAgendaVisual['identificados'])
     .', asignaciones_guardadas='.intval($filaAgendaVisual['asignaciones']).PHP_EOL
 );
@@ -501,7 +558,7 @@ $sqlCompromisosExternos = "SELECT COUNT(*) AS profesionales
             LIMIT 1
         ) vm
         WHERE pa.fecha IN ('2026-07-18','2026-07-27')
-          AND pa.estado<>'anulada'
+          AND pa.estado IN ('confirmada','pendiente_horario')
           AND pa.cod_localFK<>vm.cod_local
           AND (
               u.cod_localFK=vm.cod_local
