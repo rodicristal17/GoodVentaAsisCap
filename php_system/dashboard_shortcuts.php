@@ -100,6 +100,7 @@ function dashboard_permission_key($accessKey, $catalogPermission)
         'calendario' => 'VERFORMULARIOCALENDARIO',
         'planificacion_especialistas' => 'VERPLANIFICACIONESPECIALISTAS',
         'asignar_tareas' => 'VERASIGNARTAREASUSUARIO',
+        'central_telefonica' => 'VERCENTRALTELEFONICA',
         'cargar_sueldo' => 'VERCARGARSUELDO',
         'cuentas_a_pagar' => 'VERCUENTASAPAGAR',
         'consulta_cajas' => 'VERCONSULTADECAJA',

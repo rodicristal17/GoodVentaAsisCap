@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fixture visual - Central Telefonica</title>
+  <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/central_telefonica.css?v=20260812-01" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <div id="divCentralTelefonica" style="width:100%;height:100vh;position:fixed;display:none" aria-hidden="true">
+    <div id="telarCentralTelefonica"></div>
+  </div>
+  <div id="divMinimizadoCentralTelefonica" style="display:none"></div>
+  <script>
+    window.userid = 1;
+    window.passuser = "fixture";
+    window.navegador = "fixture";
+    window.obtener_datos_user = function () {};
+    window.permisoAccesoUser = function () { return true; };
+    window.ir_a_login = function () {};
+    window.ver_vetana_informativa = function () {};
+
+    (function () {
+      var originalXhr = window.XMLHttpRequest;
+      function FakeXhr() {
+        this.readyState = 0;
+        this.status = 0;
+        this.responseText = "";
+        this.timeout = 0;
+      }
+      FakeXhr.prototype.open = function () { this.readyState = 1; };
+      FakeXhr.prototype.setRequestHeader = function () {};
+      FakeXhr.prototype.send = function (formData) {
+        var self = this;
+        var action = formData.get("accion");
+        var calls = [
+          {id_llamada:1,fecha:"2026-08-12",hora:"10:32:18",fecha_inicio:"2026-08-12 10:32:18",tipo:"saliente_externa",estado:"contestada",numero_principal:"0981***456",origen:"1009",destino:"0981***456",extension:"1009",duracion_texto:"04:38",hablado_texto:"04:21",duracion_seg:278,hablado_seg:261,cantidad_segmentos:1,grabacion_disponible:true,paciente:null},
+          {id_llamada:2,fecha:"2026-08-12",hora:"10:45:07",fecha_inicio:"2026-08-12 10:45:07",tipo:"entrante_externa",estado:"no_contestada",numero_principal:"0972***321",origen:"0972***321",destino:"1007",extension:"1007",duracion_texto:"00:24",hablado_texto:"00:00",duracion_seg:24,hablado_seg:0,cantidad_segmentos:2,grabacion_disponible:false,paciente:null},
+          {id_llamada:3,fecha:"2026-08-12",hora:"11:02:54",fecha_inicio:"2026-08-12 11:02:54",tipo:"interna",estado:"contestada",numero_principal:"1005 → 1009",origen:"1005",destino:"1009",extension:"1005",duracion_texto:"01:12",hablado_texto:"01:03",duracion_seg:72,hablado_seg:63,cantidad_segmentos:1,grabacion_disponible:false,paciente:null},
+          {id_llamada:4,fecha:"2026-08-12",hora:"11:18:16",fecha_inicio:"2026-08-12 11:18:16",tipo:"saliente_externa",estado:"ocupada",numero_principal:"0982***880",origen:"1010",destino:"0982***880",extension:"1010",duracion_texto:"00:18",hablado_texto:"00:00",duracion_seg:18,hablado_seg:0,cantidad_segmentos:1,grabacion_disponible:false,paciente:null}
+        ];
+        var response = action === "detalle" ? {
+          ok:true,codigo:"detalle_obtenido",mensaje:"Detalle obtenido.",datos:{llamada:{
+            fecha_inicio:"2026-08-12 10:32:18",fecha_fin:"2026-08-12 10:36:56",tipo:"saliente_externa",estado:"contestada",origen:"1009",destino:"0981***456",extension:"1009",duracion_texto:"04:38",hablado_texto:"04:21",grabacion_disponible:true,clasificacion_motivo:"una extensión interna origina la llamada hacia un número externo",datos_tecnicos:{uniqueid_principal:"1786530000.10",linkedid:"1786530000.10",cantidad_segmentos:1},segmentos:[]
+          }}}
+        : {ok:true,codigo:"llamadas_obtenidas",mensaje:"Movimientos obtenidos.",datos:{
+          rango:{desde:"2026-08-12",hasta:"2026-08-12"},
+          resumen:{total:38,entrantes:16,salientes:17,contestadas:27,no_contestadas:6,tiempo_hablado_texto:"01:42:17",internas:5},
+          llamadas:calls,extensiones:["1005","1007","1009","1010"],
+          paginacion:{pagina:1,limite:50,total:38,paginas:1},
+          sincronizacion:{configurada:true,estado:"exitosa",ultima_sincronizacion:"2026-08-12 22:31:00",registros_consultados:42,registros_nuevos:4,duracion_ms:320,frecuencia_minutos:5},
+          permisos:{ver:true,telefonos_completos:false,datos_tecnicos:true,escuchar_grabaciones:false},hora_servidor:"2026-08-12 22:31:45"
+        }};
+        window.setTimeout(function () {
+          self.status = 200;
+          self.readyState = 4;
+          self.responseText = JSON.stringify(response);
+          if (typeof self.onreadystatechange === "function") { self.onreadystatechange(); }
+        }, 80);
+      };
+      window.XMLHttpRequest = FakeXhr;
+      window.__centralTelefonicaOriginalXhr = originalXhr;
+    })();
+  </script>
+  <script src="/GoodVentaAsisCap/js_system/central_telefonica.js?v=20260812-01"></script>
+  <script>window.addEventListener("load", function () { window.abrirCentralTelefonica(); });</script>
+</body>
+</html>

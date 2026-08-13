@@ -11,7 +11,11 @@ var uenoAuditoriaMovimientoActual = "";
 var uenoImportacionesModalAbierto = false;
 var uenoDetalleImportacionActual = "";
 var uenoMesaTrabajoModalAbierta = false;
-var uenoBancoSeleccionado = "UENO";
+var uenoBancoSeleccionado = "AUTO";
+var uenoBancoDetectado = "";
+var uenoFormatoArchivo = "";
+var uenoPreviewListaParaImportar = false;
+var uenoLecturaArchivoVersion = 0;
 var uenoFiltroBancoSeleccionado = "TODOS";
 var uenoFiltroBancoVersion = 0;
 var uenoMetadatosExtracto = {
@@ -23,18 +27,30 @@ var uenoMetadatosExtracto = {
 	total_debitos_declarado: null
 };
 
-function uenoBancoActual() {
+function uenoModoBancoActual() {
 	var selector = document.getElementById("inptConciliacionBanco");
-	var banco = selector ? String(selector.value || "UENO").toUpperCase() : uenoBancoSeleccionado;
-	if (banco != "FAMILIAR") {
-		banco = "UENO";
+	var banco = selector ? String(selector.value || "AUTO").toUpperCase() : uenoBancoSeleccionado;
+	if (["AUTO", "UENO", "FAMILIAR"].indexOf(banco) < 0) {
+		banco = "AUTO";
 	}
 	uenoBancoSeleccionado = banco;
 	return banco;
 }
 
+function uenoBancoActual() {
+	var modo = uenoModoBancoActual();
+	if (modo == "UENO" || modo == "FAMILIAR") {
+		return modo;
+	}
+	return uenoBancoDetectado == "FAMILIAR" ? "FAMILIAR" : "UENO";
+}
+
 function uenoBancoNombre(codigo) {
-	return String(codigo || uenoBancoActual()).toUpperCase() == "FAMILIAR" ? "Banco Familiar" : "Ueno";
+	var banco = String(codigo || (uenoBancoDetectado || uenoModoBancoActual())).toUpperCase();
+	if (banco == "FAMILIAR") {
+		return "Banco Familiar";
+	}
+	return banco == "AUTO" ? "banco detectado" : "Ueno";
 }
 
 function uenoAgregarBanco(datos) {
@@ -74,30 +90,53 @@ function uenoActualizarBotonesFiltroBanco() {
 	}
 }
 
+function uenoFechaExtractoIso(valor) {
+	var texto = String(valor || "").trim();
+	var matchIso = texto.match(/\b(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})\b/);
+	if (matchIso) {
+		return matchIso[1] + "-" + ("0" + matchIso[2]).slice(-2) + "-" + ("0" + matchIso[3]).slice(-2);
+	}
+	var matchLocal = texto.match(/\b(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})\b/);
+	if (matchLocal) {
+		return matchLocal[3] + "-" + ("0" + matchLocal[2]).slice(-2) + "-" + ("0" + matchLocal[1]).slice(-2);
+	}
+	return "";
+}
+
 function uenoFechaFamiliarIso(valor) {
-	var partes = String(valor || "").split("/");
-	return partes.length == 3 ? partes[2] + "-" + partes[1] + "-" + partes[0] : "";
+	return uenoFechaExtractoIso(valor);
 }
 
 function uenoActualizarContextoBanco() {
-	var banco = uenoBancoActual();
+	var modo = uenoModoBancoActual();
+	var banco = modo == "AUTO" ? uenoBancoDetectado : modo;
 	var familiar = banco == "FAMILIAR";
 	var inputArchivo = document.getElementById("uenoArchivoExtracto");
 	if (inputArchivo) {
-		inputArchivo.accept = familiar ? ".pdf,application/pdf" : ".xls,.xlsx,.csv";
+		if (modo == "AUTO") {
+			inputArchivo.accept = ".pdf,.xls,.xlsx,.csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+		} else {
+			inputArchivo.accept = familiar
+				? ".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+				: ".xls,.xlsx,.csv";
+		}
 	}
 	var cuenta = document.getElementById("inptUenoCuenta");
 	if (cuenta) {
 		cuenta.readOnly = familiar;
-		cuenta.title = familiar ? "La cuenta se obtiene del PDF de Banco Familiar" : "Cuenta informada en el extracto Ueno";
+		cuenta.title = familiar ? "La cuenta se obtiene del extracto de Banco Familiar" : "Cuenta informada en el extracto bancario";
 	}
-	uenoSetTexto("lblUenoFormatoArchivo", familiar
-		? "Carga el extracto de Banco Familiar en PDF. Se valida cuenta corriente en guaranies, movimientos, totales y saldo; el PDF original no se almacena."
-		: "Carga el archivo Ueno en formato Excel o CSV. Los totales de credito/debito ayudan a confirmar que el archivo fue leido correctamente.");
+	if (modo == "AUTO") {
+		uenoSetTexto("lblUenoFormatoArchivo", "Selecciona un extracto: Telar detecta Banco Familiar (PDF o Excel) y Ueno (Excel o CSV), valida su estructura y muestra una vista previa antes de habilitar la importacion.");
+	} else if (familiar) {
+		uenoSetTexto("lblUenoFormatoArchivo", "Carga el extracto de Banco Familiar en PDF o Excel. Se validan cuenta corriente en guaranies, periodo, movimientos y saldos; el archivo original no se almacena.");
+	} else {
+		uenoSetTexto("lblUenoFormatoArchivo", "Carga el archivo Ueno en formato Excel o CSV. Los totales de credito/debito ayudan a confirmar que el archivo fue leido correctamente.");
+	}
 }
 
 function uenoCambiarBanco() {
-	uenoBancoSeleccionado = uenoBancoActual();
+	uenoBancoSeleccionado = uenoModoBancoActual();
 	uenoLimpiarPreviewExtracto();
 	uenoActualizarContextoBanco();
 	return true;
@@ -201,8 +240,13 @@ function uenoSeleccionarArchivo() {
 }
 
 function uenoLimpiarPreviewExtracto() {
+	uenoLecturaArchivoVersion++;
 	uenoMovimientosPreview = [];
 	uenoHashArchivo = "";
+	uenoBancoDetectado = "";
+	uenoFormatoArchivo = "";
+	uenoPreviewListaParaImportar = false;
+	uenoPreviewValidando = false;
 	uenoMetadatosExtracto = {
 		moneda: "PYG",
 		tipo_cuenta: "",
@@ -212,6 +256,9 @@ function uenoLimpiarPreviewExtracto() {
 		total_debitos_declarado: null
 	};
 	var campos = [
+		"inptUenoFechaExtracto",
+		"inptUenoPeriodoDesde",
+		"inptUenoPeriodoHasta",
 		"inptUenoCuenta",
 		"inptUenoDenominacion",
 		"inptUenoArchivo",
@@ -234,6 +281,47 @@ function uenoLimpiarPreviewExtracto() {
 	if (resumenImportacion) {
 		resumenImportacion.innerHTML = "";
 	}
+	uenoHabilitarBotonImportar(false);
+	uenoMostrarEstadoArchivo("pendiente", "Selecciona un extracto para comenzar.");
+}
+
+function uenoHabilitarBotonImportar(habilitar) {
+	var boton = document.getElementById("btnUenoImportarExtracto");
+	if (!boton) {
+		return;
+	}
+	boton.disabled = !habilitar;
+	boton.setAttribute("aria-disabled", habilitar ? "false" : "true");
+}
+
+function uenoMostrarEstadoArchivo(estado, mensaje) {
+	var contenedor = document.getElementById("divUenoEstadoArchivo");
+	if (!contenedor) {
+		return;
+	}
+	var clase = "ueno-file-status ueno-file-status--" + (estado || "pendiente");
+	var titulo = estado == "listo" ? "Listo para importar" : (estado == "error" ? "Necesita revision" : (estado == "validando" ? "Validando extracto" : "Preparacion del extracto"));
+	var detalles = "";
+	if (uenoBancoDetectado) {
+		detalles += "<span><b>Banco:</b> " + uenoEscapeHtml(uenoBancoNombre(uenoBancoDetectado)) + "</span>";
+	}
+	if (uenoFormatoArchivo) {
+		detalles += "<span><b>Formato:</b> " + uenoEscapeHtml(uenoFormatoArchivo) + "</span>";
+	}
+	var cuenta = document.getElementById("inptUenoCuenta");
+	if (cuenta && cuenta.value) {
+		detalles += "<span><b>Cuenta:</b> " + uenoEscapeHtml(cuenta.value) + "</span>";
+	}
+	if (uenoMovimientosPreview.length) {
+		detalles += "<span><b>Movimientos:</b> " + uenoEscapeHtml(String(uenoMovimientosPreview.length)) + "</span>";
+	}
+	var desde = document.getElementById("inptUenoPeriodoDesde");
+	var hasta = document.getElementById("inptUenoPeriodoHasta");
+	if (desde && hasta && desde.value && hasta.value) {
+		detalles += "<span><b>Periodo:</b> " + uenoEscapeHtml(desde.value) + " al " + uenoEscapeHtml(hasta.value) + "</span>";
+	}
+	contenedor.className = clase;
+	contenedor.innerHTML = "<b>" + titulo + "</b>" + detalles + (mensaje ? "<span>" + uenoEscapeHtml(mensaje) + "</span>" : "");
 }
 
 function uenoNormalizarTexto(valor) {
@@ -1074,10 +1162,44 @@ function uenoResolverColumna(headers, opciones) {
 	return -1;
 }
 
+function uenoValorDespuesDeEtiqueta(fila, indiceEtiqueta) {
+	var etiqueta = String(fila[indiceEtiqueta] == null ? "" : fila[indiceEtiqueta]).trim();
+	var posicionDosPuntos = etiqueta.indexOf(":");
+	if (posicionDosPuntos >= 0) {
+		var valorMismaCelda = etiqueta.substring(posicionDosPuntos + 1).trim();
+		if (valorMismaCelda != "") {
+			return valorMismaCelda;
+		}
+	}
+	for (var i = indiceEtiqueta + 1; i < fila.length; i++) {
+		var valor = String(fila[i] == null ? "" : fila[i]).trim();
+		if (valor != "") {
+			return valor;
+		}
+	}
+	return "";
+}
+
 function uenoExtraerMeta(filas, clave) {
 	var limite = Math.min(filas.length, 25);
 	var regexCuenta = /(CUENTA|NRO CUENTA|NUMERO DE CUENTA|NRO\. DE CUENTA)[^0-9]{0,20}([0-9]{6,})/i;
 	for (var i = 0; i < limite; i++) {
+		var fila = filas[i] || [];
+		for (var c = 0; c < fila.length; c++) {
+			var etiqueta = uenoNormalizarTexto(fila[c]);
+			if (clave == "cuenta" && /^(CUENTA|NRO CUENTA|NUMERO DE CUENTA|NRO DE CUENTA)\s*:/.test(etiqueta)) {
+				var cuentaCeldas = uenoValorDespuesDeEtiqueta(fila, c).replace(/\D/g, "");
+				if (cuentaCeldas.length >= 6) {
+					return cuentaCeldas;
+				}
+			}
+			if (clave == "denominacion" && /^(DENOMINACION|TITULAR|EMPRESA)\s*:/.test(etiqueta)) {
+				var denominacionCeldas = uenoValorDespuesDeEtiqueta(fila, c);
+				if (denominacionCeldas != "") {
+					return denominacionCeldas;
+				}
+			}
+		}
 		var texto = uenoTextoFila(filas[i]);
 		if (clave == "cuenta") {
 			var matchCuenta = texto.match(regexCuenta);
@@ -1102,6 +1224,41 @@ function uenoExtraerMeta(filas, clave) {
 		}
 	}
 	return "";
+}
+
+function uenoExtraerPeriodo(filas, movimientos) {
+	var limite = Math.min(filas.length, 25);
+	for (var i = 0; i < limite; i++) {
+		var texto = uenoTextoFila(filas[i]);
+		if (uenoNormalizarTexto(texto).indexOf("PERIODO") < 0) {
+			continue;
+		}
+		var fechasDeclaradas = texto.match(/\b\d{1,4}[-\/]\d{1,2}[-\/]\d{1,4}\b/g) || [];
+		if (fechasDeclaradas.length >= 2) {
+			var desdeDeclarado = uenoFechaExtractoIso(fechasDeclaradas[0]);
+			var hastaDeclarado = uenoFechaExtractoIso(fechasDeclaradas[1]);
+			if (desdeDeclarado && hastaDeclarado) {
+				return { desde: desdeDeclarado, hasta: hastaDeclarado };
+			}
+		}
+	}
+
+	var fechas = [];
+	for (var m = 0; m < (movimientos || []).length; m++) {
+		var fecha = uenoFechaExtractoIso(movimientos[m].fecha_confirmacion || movimientos[m].fecha_transaccion || "");
+		if (fecha) {
+			fechas.push(fecha);
+		}
+	}
+	fechas.sort();
+	return fechas.length ? { desde: fechas[0], hasta: fechas[fechas.length - 1] } : { desde: "", hasta: "" };
+}
+
+function uenoAplicarPeriodoUeno(filas, movimientos) {
+	var periodo = uenoExtraerPeriodo(filas || [], movimientos || []);
+	document.getElementById("inptUenoPeriodoDesde").value = periodo.desde || "";
+	document.getElementById("inptUenoPeriodoHasta").value = periodo.hasta || "";
+	document.getElementById("inptUenoFechaExtracto").value = periodo.hasta || "";
 }
 
 function uenoParsearMovimientos(filas) {
@@ -1161,10 +1318,63 @@ function uenoBufferToHex(buffer) {
 }
 
 function uenoCalcularHash(buffer) {
-	if (window.crypto && window.crypto.subtle) {
-		return window.crypto.subtle.digest("SHA-256", buffer).then(uenoBufferToHex);
+	function calcularLocal() {
+		if (typeof TelarSha256 !== "undefined" && typeof TelarSha256.calcular === "function") {
+			try {
+				return Promise.resolve(TelarSha256.calcular(buffer));
+			} catch (error) {
+				return Promise.reject(error);
+			}
+		}
+		return Promise.reject(new Error("No se cargo el calculador SHA-256 local"));
 	}
-	return Promise.reject(new Error("El navegador no permite calcular la huella SHA-256 del extracto"));
+	if (window.crypto && window.crypto.subtle && typeof window.crypto.subtle.digest === "function") {
+		try {
+			return window.crypto.subtle.digest("SHA-256", buffer).then(uenoBufferToHex).catch(calcularLocal);
+		} catch (error) {
+			return calcularLocal();
+		}
+	}
+	return calcularLocal();
+}
+
+function uenoExtensionArchivo(nombre) {
+	var match = String(nombre || "").toLowerCase().match(/\.([a-z0-9]+)$/);
+	return match ? match[1] : "";
+}
+
+function uenoResolverBancoArchivo(file, filas) {
+	var extension = uenoExtensionArchivo(file ? file.name : "");
+	var banco = "";
+	if (extension == "pdf") {
+		banco = "FAMILIAR";
+	} else if (["xls", "xlsx", "csv"].indexOf(extension) >= 0) {
+		if (typeof BancoFamiliarExcel !== "undefined" && typeof BancoFamiliarExcel.esFormato === "function" && BancoFamiliarExcel.esFormato(filas || [])) {
+			banco = "FAMILIAR";
+		} else if (uenoBuscarIndiceEncabezado(filas || []) >= 0) {
+			banco = "UENO";
+		}
+	}
+	if (!banco) {
+		throw new Error("El archivo no coincide con la estructura esperada de Banco Familiar ni de Ueno");
+	}
+	var modo = uenoModoBancoActual();
+	if (modo != "AUTO" && modo != banco) {
+		throw new Error("El archivo corresponde a " + uenoBancoNombre(banco) + ", pero el selector esta configurado como " + uenoBancoNombre(modo) + ". Cambia el selector o usa Deteccion automatica.");
+	}
+	return banco;
+}
+
+function uenoAplicarResultadoFamiliar(resultado) {
+	uenoMetadatosExtracto = resultado.metadatos || uenoMetadatosExtracto;
+	uenoMovimientosPreview = resultado.movimientos || [];
+	document.getElementById("inptUenoCuenta").value = uenoMetadatosExtracto.cuenta || "";
+	document.getElementById("inptUenoDenominacion").value = uenoMetadatosExtracto.denominacion || "";
+	var desde = uenoFechaFamiliarIso(uenoMetadatosExtracto.periodo_desde);
+	var hasta = uenoFechaFamiliarIso(uenoMetadatosExtracto.periodo_hasta);
+	document.getElementById("inptUenoPeriodoDesde").value = desde;
+	document.getElementById("inptUenoPeriodoHasta").value = hasta;
+	document.getElementById("inptUenoFechaExtracto").value = hasta;
 }
 
 function uenoProcesarArchivo(event) {
@@ -1173,63 +1383,101 @@ function uenoProcesarArchivo(event) {
 		return;
 	}
 	uenoLimpiarPreviewExtracto();
+	var lecturaVersion = uenoLecturaArchivoVersion;
 	document.getElementById("inptUenoArchivo").value = file.name;
-	var banco = uenoBancoActual();
-	var esFamiliar = banco == "FAMILIAR";
-	if (esFamiliar && !/\.pdf$/i.test(file.name)) {
-		ver_vetana_informativa("Banco Familiar requiere un extracto en formato PDF", "", "error");
+	var extension = uenoExtensionArchivo(file.name);
+	var esPdf = extension == "pdf";
+	var esHoja = ["xls", "xlsx", "csv"].indexOf(extension) >= 0;
+	if (!esPdf && !esHoja) {
+		uenoMostrarEstadoArchivo("error", "Usa un archivo PDF, XLS, XLSX o CSV compatible.");
+		ver_vetana_informativa("Formato de extracto no admitido", "Usa PDF o Excel para Banco Familiar, y Excel o CSV para Ueno.", "error");
 		return;
 	}
-	if (!esFamiliar && !/\.(xls|xlsx|csv)$/i.test(file.name)) {
-		ver_vetana_informativa("Ueno requiere un extracto en formato Excel o CSV", "", "error");
-		return;
-	}
-	if (!esFamiliar && typeof XLSX === "undefined") {
+	if (esHoja && typeof XLSX === "undefined") {
 		ver_vetana_informativa("No se cargo el lector Excel local. Verifica js_system/excel.js", "", "error");
 		return;
 	}
-	if (esFamiliar && (typeof BancoFamiliarPdf === "undefined" || typeof BancoFamiliarPdf.parsear !== "function")) {
+	if (esPdf && (typeof BancoFamiliarPdf === "undefined" || typeof BancoFamiliarPdf.parsear !== "function")) {
 		ver_vetana_informativa("No se cargo el lector PDF local de Banco Familiar", "", "error");
 		return;
 	}
+	uenoFormatoArchivo = esPdf ? "PDF" : (extension == "csv" ? "CSV" : "Excel");
+	uenoMostrarEstadoArchivo("validando", "Leyendo el archivo y calculando su huella de seguridad...");
 
 	var reader = new FileReader();
 	reader.onload = function(e) {
+		if (lecturaVersion != uenoLecturaArchivoVersion) {
+			return;
+		}
 		var data = e.target.result;
-		uenoCalcularHash(data).then(function(hash) {
-			uenoHashArchivo = hash;
-			if (esFamiliar) {
-				return BancoFamiliarPdf.parsear(data).then(function(resultado) {
-					uenoMetadatosExtracto = resultado.metadatos || uenoMetadatosExtracto;
-					uenoMovimientosPreview = resultado.movimientos || [];
-					document.getElementById("inptUenoCuenta").value = uenoMetadatosExtracto.cuenta || "";
-					document.getElementById("inptUenoDenominacion").value = uenoMetadatosExtracto.denominacion || "";
-					var desde = uenoFechaFamiliarIso(uenoMetadatosExtracto.periodo_desde);
-					var hasta = uenoFechaFamiliarIso(uenoMetadatosExtracto.periodo_hasta);
-					document.getElementById("inptUenoPeriodoDesde").value = desde;
-					document.getElementById("inptUenoPeriodoHasta").value = hasta;
-					document.getElementById("inptUenoFechaExtracto").value = hasta;
-				});
-			}
-			try {
+		var filas = null;
+		var banco;
+		try {
+			if (esHoja) {
 				var workbook = XLSX.read(data, { type: "array", raw: false, cellDates: false });
 				var sheetName = workbook.SheetNames[0];
-				var filas = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, raw: false, defval: "" });
-				uenoMovimientosPreview = uenoParsearMovimientos(filas);
-				document.getElementById("inptUenoCuenta").value = uenoExtraerMeta(filas, "cuenta");
-				document.getElementById("inptUenoDenominacion").value = uenoExtraerMeta(filas, "denominacion");
-				return null;
-			} catch (errorExcel) {
-				throw errorExcel;
+				filas = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, raw: false, defval: "" });
 			}
+			banco = uenoResolverBancoArchivo(file, filas);
+			uenoBancoDetectado = banco;
+			uenoActualizarContextoBanco();
+			uenoMostrarEstadoArchivo("validando", "Formato reconocido. Validando movimientos, saldos y duplicados...");
+		} catch (errorDeteccion) {
+			uenoMostrarEstadoArchivo("error", errorDeteccion.message || String(errorDeteccion));
+			ver_vetana_informativa("No se pudo reconocer el extracto", errorDeteccion.message || String(errorDeteccion), "error");
+			return;
+		}
+		uenoCalcularHash(data).then(function(hash) {
+			if (lecturaVersion != uenoLecturaArchivoVersion) {
+				throw { uenoLecturaCancelada: true };
+			}
+			uenoHashArchivo = hash;
+			if (banco == "FAMILIAR" && esPdf) {
+				return BancoFamiliarPdf.parsear(data).then(function(resultado) {
+					if (lecturaVersion != uenoLecturaArchivoVersion) {
+						throw { uenoLecturaCancelada: true };
+					}
+					uenoAplicarResultadoFamiliar(resultado);
+				});
+			}
+			if (banco == "FAMILIAR") {
+				if (typeof BancoFamiliarExcel === "undefined" || typeof BancoFamiliarExcel.parsear !== "function") {
+					throw new Error("No se cargo el lector Excel local de Banco Familiar");
+				}
+				uenoAplicarResultadoFamiliar(BancoFamiliarExcel.parsear(filas));
+				return null;
+			}
+			uenoMovimientosPreview = uenoParsearMovimientos(filas);
+			document.getElementById("inptUenoCuenta").value = uenoExtraerMeta(filas, "cuenta");
+			document.getElementById("inptUenoDenominacion").value = uenoExtraerMeta(filas, "denominacion");
+			uenoAplicarPeriodoUeno(filas, uenoMovimientosPreview);
+			return null;
 		}).then(function() {
+				if (lecturaVersion != uenoLecturaArchivoVersion) {
+					return;
+				}
 				document.getElementById("inptUenoHash").value = uenoHashArchivo;
 				document.getElementById("inptUenoCantidadLeida").value = separadordemilesnumero(String(uenoMovimientosPreview.length));
 				uenoRenderPreview(uenoMovimientosPreview);
+				uenoMostrarEstadoArchivo("validando", "Estructura y saldos correctos. Verificando movimientos ya importados...");
 				uenoPrevalidarPreview();
 		}).catch(function(error) {
-			ver_vetana_informativa("No se pudo leer el extracto de " + uenoBancoNombre(banco), String(error && error.message ? error.message : error), "error");
+			if (error && error.uenoLecturaCancelada) {
+				return;
+			}
+			uenoPreviewListaParaImportar = false;
+			uenoHabilitarBotonImportar(false);
+			var detalle = String(error && error.message ? error.message : error);
+			uenoMostrarEstadoArchivo("error", detalle);
+			ver_vetana_informativa("No se pudo leer el extracto de " + uenoBancoNombre(banco), detalle, "error");
 		});
+	};
+	reader.onerror = function() {
+		if (lecturaVersion != uenoLecturaArchivoVersion) {
+			return;
+		}
+		uenoMostrarEstadoArchivo("error", "El navegador no pudo abrir el archivo seleccionado.");
+		ver_vetana_informativa("No se pudo abrir el extracto seleccionado", "Vuelve a descargarlo del banco e intenta nuevamente.", "error");
 	};
 	reader.readAsArrayBuffer(file);
 }
@@ -1300,6 +1548,8 @@ function uenoMostrarResumenPreview(mensajeExtra, alerta) {
 }
 
 function uenoPrevalidarPreview() {
+	uenoPreviewListaParaImportar = false;
+	uenoHabilitarBotonImportar(false);
 	if (!uenoMovimientosPreview.length) {
 		uenoMostrarResumenPreview("", false);
 		return;
@@ -1307,9 +1557,11 @@ function uenoPrevalidarPreview() {
 	var cuenta = document.getElementById("inptUenoCuenta") ? document.getElementById("inptUenoCuenta").value : "";
 	if (cuenta == "") {
 		uenoMostrarResumenPreview("Completa la cuenta para verificar duplicados", true);
+		uenoMostrarEstadoArchivo("error", "No se pudo identificar la cuenta. Completa el campo para continuar con la verificacion.");
 		return;
 	}
 	if (!uenoTienePermiso("IMPORTAREXTRACTOUENO")) {
+		uenoMostrarEstadoArchivo("error", "El usuario no tiene permiso para importar extractos.");
 		return;
 	}
 
@@ -1339,6 +1591,7 @@ function uenoPrevalidarPreview() {
 				var datos = $.parseJSON(responseText);
 				if (datos["1"] != "exito") {
 					uenoMostrarResumenPreview(datos["2"] || "No se pudo verificar duplicados", true);
+					uenoMostrarEstadoArchivo("error", datos["2"] || "No se pudo verificar los movimientos contra la base de datos.");
 					uenoRenderPreview(uenoMovimientosPreview);
 					return;
 				}
@@ -1354,15 +1607,26 @@ function uenoPrevalidarPreview() {
 					}
 				}
 				uenoRenderPreview(uenoMovimientosPreview);
-				uenoMostrarResumenPreview("", false);
+				var resumen = uenoContarPreviewPorEstado();
+				uenoPreviewListaParaImportar = resumen.sin_verificar == 0 && resumen.nuevos > 0;
+				uenoHabilitarBotonImportar(uenoPreviewListaParaImportar);
+				if (uenoPreviewListaParaImportar) {
+					uenoMostrarResumenPreview("Validaciones completas", false);
+					uenoMostrarEstadoArchivo("listo", "Estructura, saldos y duplicados verificados. Revisa la vista previa antes de importar.");
+				} else {
+					uenoMostrarResumenPreview("Todos los movimientos ya fueron importados", true);
+					uenoMostrarEstadoArchivo("error", "No hay movimientos nuevos para importar.");
+				}
 			} catch (error) {
 				uenoMostrarResumenPreview("No se pudo interpretar la verificacion", true);
+				uenoMostrarEstadoArchivo("error", "La respuesta de verificacion del servidor no es valida.");
 				uenoRenderPreview(uenoMovimientosPreview);
 			}
 		},
 		error: function(jqXHR, textstatus) {
 			uenoPreviewValidando = false;
 			uenoMostrarResumenPreview("No se pudo verificar duplicados: " + textstatus, true);
+			uenoMostrarEstadoArchivo("error", "No se pudo verificar el extracto contra la base de datos.");
 			uenoRenderPreview(uenoMovimientosPreview);
 		}
 	});
@@ -1418,6 +1682,14 @@ function uenoGuardarImportacion() {
 		ver_vetana_informativa("Espera a que termine la verificacion de movimientos ya importados");
 		return;
 	}
+	if (!uenoPreviewListaParaImportar) {
+		ver_vetana_informativa("La importacion permanece bloqueada hasta completar todas las validaciones del extracto", "", "error");
+		return;
+	}
+	if (!/^[a-f0-9]{64}$/i.test(uenoHashArchivo)) {
+		ver_vetana_informativa("No se pudo validar la huella SHA-256 del archivo", "Vuelve a seleccionar el extracto.", "error");
+		return;
+	}
 	var resumenPreview = uenoContarPreviewPorEstado();
 	if (resumenPreview.nuevos == 0 && resumenPreview.sin_verificar == 0) {
 		ver_vetana_informativa("Todos los movimientos del extracto ya fueron importados. No se migrara ningun registro duplicado.", "", "error");
@@ -1443,6 +1715,7 @@ function uenoGuardarImportacion() {
 	datos.append("periodo_desde", document.getElementById("inptUenoPeriodoDesde").value);
 	datos.append("periodo_hasta", document.getElementById("inptUenoPeriodoHasta").value);
 	datos.append("nombre_archivo_original", document.getElementById("inptUenoArchivo").value);
+	datos.append("formato_archivo", uenoFormatoArchivo);
 	datos.append("hash_archivo", uenoHashArchivo);
 	datos.append("observacion", document.getElementById("txtUenoObservacionImportacion").value);
 	datos.append("movimientos_json", JSON.stringify(uenoMovimientosPreview));
@@ -2571,6 +2844,8 @@ document.addEventListener("DOMContentLoaded", function() {
 	if (input) {
 		input.addEventListener("change", uenoProcesarArchivo);
 	}
+	uenoActualizarContextoBanco();
+	uenoHabilitarBotonImportar(false);
 	uenoPrepararColapsables(false);
 	uenoModernizarVista();
 });

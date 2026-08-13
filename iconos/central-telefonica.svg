@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Central telefónica</title>
+  <desc id="desc">Auricular telefónico conectado por hilos</desc>
+  <defs>
+    <linearGradient id="telarPhone" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#147da1"/>
+      <stop offset="0.52" stop-color="#20b7b0"/>
+      <stop offset="1" stop-color="#7156cf"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="29" fill="#eef8fb"/>
+  <path d="M17 17c2.1-2.1 5.4-2.1 7.5 0l5.2 5.2c1.8 1.8 2.1 4.6.6 6.7l-3.1 4.3c2.8 5.1 6.6 8.9 11.7 11.7l4.3-3.1c2.1-1.5 4.9-1.2 6.7.6l5.2 5.2c2.1 2.1 2.1 5.4 0 7.5l-2.4 2.4c-2.6 2.6-6.6 3.4-10 2-8.5-3.6-16.1-9.1-22.6-15.6S8.1 29.8 4.5 21.3c-1.4-3.4-.6-7.4 2-10L8.9 9c2.1-2.1 5.4-2.1 7.5 0l.6.6" fill="none" stroke="url(#telarPhone)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" transform="translate(2 0) scale(.92)"/>
+  <path d="M35 12c7.4 1.2 13.2 7 14.4 14.4M36.2 20.3c3.1.8 5.5 3.2 6.3 6.3" fill="none" stroke="#7156cf" stroke-width="3.2" stroke-linecap="round"/>
+</svg>

@@ -48,6 +48,18 @@ if (process.env.DEBUG_PDF_ESTRUCTURA === "SI") {
 }
 
 const resultado = globalThis.BancoFamiliarPdf.parsearItems(paginas);
+let saldoSecuencial = Number(resultado.metadatos.saldo_anterior || 0);
+let saldosSecuencialesValidos = true;
+for (const movimiento of resultado.movimientos) {
+	saldoSecuencial += Number(movimiento.importe_credito || 0) - Number(movimiento.importe_debito || 0);
+	if (saldoSecuencial !== Number(movimiento.saldo_banco)) {
+		saldosSecuencialesValidos = false;
+		break;
+	}
+}
+if (!saldosSecuencialesValidos) {
+	throw new Error("La secuencia de saldos del PDF no coincide con sus movimientos");
+}
 const paginasAlteradas = paginas.map((items) => items.map((item) => ({
 	...item,
 	transform: Array.isArray(item.transform) ? item.transform.slice() : item.transform
@@ -86,5 +98,6 @@ console.log(JSON.stringify({
 	total_debitos: resultado.metadatos.total_debitos_calculado,
 	total_creditos: resultado.metadatos.total_creditos_calculado,
 	saldo_validado: resultado.metadatos.saldo_anterior + resultado.metadatos.total_creditos_calculado - resultado.metadatos.total_debitos_calculado === resultado.metadatos.saldo_final,
+	saldos_secuenciales_validados: saldosSecuencialesValidos,
 	totales_alterados_rechazados: totalesAlteradosRechazados
 }, null, 2));

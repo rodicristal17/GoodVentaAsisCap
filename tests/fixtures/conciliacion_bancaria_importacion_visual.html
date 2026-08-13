@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>Prueba visual - importacion bancaria</title>
+	<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=20260813-1">
+	<style>
+		body { margin: 0; padding: 18px; background: #eef4fa; color: #1e293b; font-family: Arial, sans-serif; }
+		#divConciliacionUeno { max-width: 1280px; margin: auto; }
+		.ueno-card { padding: 12px; border: 1px solid #cbd5e1; border-radius: 9px; background: #fff; box-shadow: 0 5px 16px rgba(15, 23, 42, .08); }
+		.ueno-section-head { display: flex; align-items: center; gap: 12px; }
+		.ueno-section-title { margin: 0; color: #173c67; font-weight: 800; }
+		.ueno-section-help { margin: 4px 0 8px; font-size: 11px; }
+		.ueno-bank-selector { margin-left: auto; font-size: 10px; font-weight: 700; }
+		.ueno-bank-selector small { display: block; margin-bottom: 3px; }
+		select, input { min-height: 30px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+		.fields { display: grid; grid-template-columns: repeat(7, minmax(110px, 1fr)); gap: 8px; margin-top: 8px; }
+		.field label { display: block; margin-bottom: 3px; font-size: 10px; font-weight: 700; }
+		.field input { width: 100%; padding: 4px 6px; }
+		.actions { display: flex; gap: 8px; margin: 10px 1%; }
+		.btn4 { padding: 7px 12px; border: 0; border-radius: 6px; background: #16815d; color: white; font-weight: 700; }
+		#table_ueno_preview { max-height: 260px; overflow: auto; }
+		.tableRegistroSearch { width: 100%; border-collapse: collapse; background: #fff; font-size: 10px; }
+		.tableRegistroSearch td { border: 1px solid #dbe4ee; padding: 5px; }
+		@media (max-width: 900px) { .ueno-section-head { align-items: flex-start; flex-wrap: wrap; } .ueno-bank-selector { width: 100%; margin-left: 0; } .fields { grid-template-columns: repeat(2, minmax(130px, 1fr)); } }
+	</style>
+</head>
+<body>
+<div id="divConciliacionUeno">
+	<div class="ueno-card ueno-import-card">
+		<div class="ueno-section-head">
+			<div>
+				<p class="ueno-section-title">1. Importar extracto bancario</p>
+				<p class="ueno-section-help" id="lblUenoFormatoArchivo"></p>
+			</div>
+			<label class="ueno-bank-selector"><small>Banco del extracto</small>
+				<select id="inptConciliacionBanco" onchange="uenoCambiarBanco()"><option value="AUTO">Detectar automaticamente</option><option value="UENO">Ueno</option><option value="FAMILIAR">Banco Familiar</option></select>
+			</label>
+		</div>
+		<div class="fields">
+			<div class="field"><label>Fecha del extracto</label><input type="date" id="inptUenoFechaExtracto"></div>
+			<div class="field"><label>Periodo desde</label><input type="date" id="inptUenoPeriodoDesde"></div>
+			<div class="field"><label>Periodo hasta</label><input type="date" id="inptUenoPeriodoHasta"></div>
+			<div class="field"><label>Cuenta</label><input id="inptUenoCuenta" onchange="uenoPrevalidarPreview()"></div>
+			<div class="field"><label>Denominacion / titular</label><input id="inptUenoDenominacion"></div>
+			<div class="field"><label>Archivo seleccionado</label><input id="inptUenoArchivo" disabled></div>
+			<div class="field"><label>Movimientos leidos</label><input id="inptUenoCantidadLeida" disabled></div>
+			<div class="field"><label>Huella del archivo</label><input id="inptUenoHash" disabled></div>
+			<div class="field"><label>Credito del extracto</label><input id="inptUenoTotalCreditoPreview" disabled></div>
+			<div class="field"><label>Debito del extracto</label><input id="inptUenoTotalDebitoPreview" disabled></div>
+			<div class="field"><label>Observacion</label><input id="txtUenoObservacionImportacion"></div>
+		</div>
+		<div class="actions">
+			<input type="file" id="uenoArchivoExtracto" accept=".pdf,.xls,.xlsx,.csv" style="display:none">
+			<button class="btn4" onclick="uenoSeleccionarArchivo()">Seleccionar extracto</button>
+			<button class="btn4" id="btnUenoImportarExtracto" disabled>Importar extracto</button>
+		</div>
+		<div id="divUenoEstadoArchivo" class="ueno-file-status ueno-file-status--pendiente" aria-live="polite"><b>Preparacion del extracto</b><span>Selecciona un extracto para comenzar.</span></div>
+		<div id="divUenoResumenImportacion"></div>
+	</div>
+	<div class="ueno-card" style="margin-top:10px"><p class="ueno-section-title">2. Vista previa del extracto</p><div id="table_ueno_preview"></div></div>
+</div>
+<script>
+	var userid = 2, passuser = "", navegador = "prueba";
+	function obtener_datos_user() {}
+	function ver_vetana_informativa(titulo, detalle) { window.__ultimoError = [titulo, detalle]; }
+	function separadordemilesnumero(valor) { return Number(valor || 0).toLocaleString("es-PY"); }
+	function QuitarSeparadorMilValor(valor) { return String(valor == null ? "0" : valor).replace(/\./g, "").replace(/,/g, "."); }
+	window.$ = {
+		parseJSON: JSON.parse,
+		ajax: function(opciones) {
+			var movimientos = JSON.parse(opciones.data.get("movimientos_json") || "[]");
+			setTimeout(function() {
+				opciones.success(JSON.stringify({ "1": "exito", movimientos: movimientos.map(function(movimiento, indice) { return { indice: indice, estado: "nuevo", detalle: "Movimiento nuevo" }; }) }));
+			}, 20);
+		}
+	};
+</script>
+<script src="/GoodVentaAsisCap/js_system/excel.js"></script>
+<script src="/GoodVentaAsisCap/js_system/sha256Local.js"></script>
+<script src="/GoodVentaAsisCap/js_system/conciliacionBancoFamiliarPdf.js"></script>
+<script src="/GoodVentaAsisCap/js_system/conciliacionBancoFamiliarExcel.js"></script>
+<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js"></script>
+</body>
+</html>

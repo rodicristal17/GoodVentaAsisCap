@@ -37,6 +37,11 @@ function ueno_post($clave, $defecto = "")
 	return ueno_to_db($_POST[$clave]);
 }
 
+function ueno_hash_archivo_valido($hash)
+{
+	return preg_match('/^[a-f0-9]{64}$/i', trim((string)$hash)) === 1;
+}
+
 function ueno_validar_sesion()
 {
 	if (!isset($_POST['useru']) || !isset($_POST['passu']) || !isset($_POST['navegador'])) {
@@ -1330,7 +1335,7 @@ function ueno_validar_cuenta_familiar($mysqli, $cuenta)
 	if ($result && ($row = $result->fetch_assoc())) {
 		$cuentaGuardada = preg_replace('/[^0-9]/', '', (string)$row["cuenta"]);
 		if ($cuentaGuardada != "" && $cuentaGuardada != $cuentaNormalizada) {
-			throw new Exception("La cuenta del PDF no coincide con la cuenta corriente de Banco Familiar ya registrada en Telar");
+			throw new Exception("La cuenta del extracto no coincide con la cuenta corriente de Banco Familiar ya registrada en Telar");
 		}
 	}
 }
@@ -1346,7 +1351,7 @@ function ueno_validar_totales_familiar($mysqli, $cuenta, $normalizacion)
 	$requeridos = array("saldo_anterior", "saldo_final", "total_creditos_declarado", "total_debitos_declarado");
 	foreach ($requeridos as $campo) {
 		if (!isset($_POST[$campo]) || trim((string)$_POST[$campo]) === "") {
-			throw new Exception("Faltan los totales de control declarados en el PDF de Banco Familiar");
+			throw new Exception("Faltan los totales de control del extracto de Banco Familiar");
 		}
 	}
 	$saldoAnterior = ueno_monto($_POST["saldo_anterior"]);
@@ -1354,12 +1359,24 @@ function ueno_validar_totales_familiar($mysqli, $cuenta, $normalizacion)
 	$totalCreditosDeclarado = ueno_monto($_POST["total_creditos_declarado"]);
 	$totalDebitosDeclarado = ueno_monto($_POST["total_debitos_declarado"]);
 	if ($totalCreditosDeclarado != (int)$normalizacion["total_creditos"] || $totalDebitosDeclarado != (int)$normalizacion["total_debitos"]) {
-		throw new Exception("Los totales extraidos no coinciden con los movimientos del PDF de Banco Familiar");
+		throw new Exception("Los totales extraidos no coinciden con los movimientos de Banco Familiar");
 	}
 	if ($saldoAnterior + $totalCreditosDeclarado - $totalDebitosDeclarado != $saldoFinal) {
-		throw new Exception("Los movimientos no reconstruyen el saldo final del PDF de Banco Familiar");
+		throw new Exception("Los movimientos no reconstruyen el saldo final de Banco Familiar");
 	}
 	$normalizados = $normalizacion["normalizados"];
+	$saldoSecuencial = $saldoAnterior;
+	foreach ($normalizados as $indice => $movimiento) {
+		$credito = (int)$movimiento["importe_credito"];
+		$debito = (int)$movimiento["importe_debito"];
+		if (($credito > 0 && $debito > 0) || ($credito <= 0 && $debito <= 0)) {
+			throw new Exception("El movimiento " . ((int)$indice + 1) . " de Banco Familiar debe tener solamente un debito o un credito mayor a cero");
+		}
+		$saldoSecuencial += $credito - $debito;
+		if ($movimiento["saldo_banco"] === null || (int)$movimiento["saldo_banco"] != $saldoSecuencial) {
+			throw new Exception("El saldo del movimiento " . ((int)$indice + 1) . " no coincide con el historial de Banco Familiar");
+		}
+	}
 	$ultimo = count($normalizados) > 0 ? $normalizados[count($normalizados) - 1] : null;
 	if (!$ultimo || $ultimo["saldo_banco"] === null || (int)$ultimo["saldo_banco"] != $saldoFinal) {
 		throw new Exception("El saldo del ultimo movimiento no coincide con el saldo final de Banco Familiar");
@@ -1491,11 +1508,23 @@ function ueno_insertar_importacion($usuario)
 	$periodo_desde = ueno_fecha(isset($_POST["periodo_desde"]) ? $_POST["periodo_desde"] : "");
 	$periodo_hasta = ueno_fecha(isset($_POST["periodo_hasta"]) ? $_POST["periodo_hasta"] : "");
 	$nombre_archivo = ueno_post("nombre_archivo_original");
+	$formato_archivo = strtoupper(trim(ueno_from_db(ueno_post("formato_archivo"))));
 	$hash_archivo = ueno_post("hash_archivo");
 	$observacion = ueno_post("observacion");
-	// En Banco Familiar se conserva una etiqueta neutra, no el nombre local del PDF.
+	if ($formato_archivo == "XLS" || $formato_archivo == "XLSX") {
+		$formato_archivo = "EXCEL";
+	}
+	if ($formato_archivo == "") {
+		$extension = strtolower(pathinfo($nombre_archivo, PATHINFO_EXTENSION));
+		$formato_archivo = $extension == "pdf" ? "PDF" : ($extension == "csv" ? "CSV" : "EXCEL");
+	}
+	// En Banco Familiar se conserva una etiqueta neutra, no el nombre local del archivo.
 	if ($banco == "FAMILIAR") {
-		$nombre_archivo = "Extracto Banco Familiar";
+		if ($formato_archivo != "PDF" && $formato_archivo != "EXCEL") {
+			mysqli_close($mysqli);
+			ueno_json(array("1" => "formatoinvalido", "2" => "Banco Familiar admite extractos PDF o Excel"));
+		}
+		$nombre_archivo = "Extracto Banco Familiar - " . ($formato_archivo == "EXCEL" ? "Excel" : "PDF");
 	}
 	$moneda_codigo = $banco == "FAMILIAR" ? "PYG" : strtoupper(trim(ueno_from_db(ueno_post("moneda_codigo", "PYG"))));
 	if ($moneda_codigo == "") {
@@ -1508,6 +1537,10 @@ function ueno_insertar_importacion($usuario)
 	if ($cuenta == "" || $nombre_archivo == "" || $hash_archivo == "" || $json == "") {
 		mysqli_close($mysqli);
 		ueno_json(array("1" => "camposvacio"));
+	}
+	if (!ueno_hash_archivo_valido($hash_archivo)) {
+		mysqli_close($mysqli);
+		ueno_json(array("1" => "hashinvalido", "2" => "La huella SHA-256 del extracto no es valida. Vuelve a seleccionar el archivo"));
 	}
 
 	$movimientos = json_decode($json, true);

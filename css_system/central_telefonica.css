@@ -1,0 +1,320 @@
+#divCentralTelefonica {
+  inset: 0;
+  z-index: 1000000000000002;
+  overflow: hidden;
+  color: #15273b;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body.central-telefonica-open { overflow: hidden; }
+
+#divCentralTelefonica *,
+#divCentralTelefonica *::before,
+#divCentralTelefonica *::after { box-sizing: border-box; }
+
+.central-telefonica-shell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at 8% 3%, rgba(22, 169, 178, .14), transparent 28rem),
+    radial-gradient(circle at 96% 8%, rgba(113, 86, 207, .13), transparent 27rem),
+    #f3f7fb;
+}
+
+.central-telefonica-header {
+  min-height: 78px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  color: #fff;
+  background: linear-gradient(112deg, #102943 0%, #155b76 57%, #55428f 100%);
+  box-shadow: 0 8px 24px rgba(14, 43, 67, .2);
+  flex: 0 0 auto;
+}
+
+.central-telefonica-heading,
+.central-telefonica-header__actions,
+.central-telefonica-panel__title,
+.central-telefonica-drawer__header { display: flex; align-items: center; }
+
+.central-telefonica-heading { gap: 12px; min-width: 0; }
+.central-telefonica-heading__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.62), 0 6px 16px rgba(2, 19, 35, .19);
+}
+.central-telefonica-heading__icon img { width: 42px; height: 42px; }
+.central-telefonica-heading h1 { margin: 0; font-size: 23px; line-height: 1.05; font-weight: 750; }
+.central-telefonica-heading > div > span { display: block; margin-top: 4px; color: rgba(255,255,255,.78); font-size: 12px; }
+.central-telefonica-eyebrow { margin: 0 0 3px; font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #138ca0; }
+.central-telefonica-header .central-telefonica-eyebrow { color: #75e2df; }
+
+.central-telefonica-header__actions { gap: 8px; justify-content: flex-end; }
+.central-telefonica-sync {
+  min-height: 36px;
+  max-width: 280px;
+  padding: 7px 11px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 11px;
+  background: rgba(5, 22, 38, .22);
+  font-size: 11px;
+  font-weight: 650;
+}
+.central-telefonica-sync--ok i { color: #74e3bd; }
+.central-telefonica-sync--warning i { color: #ffd17b; }
+.central-telefonica-sync--error i { color: #ff9999; }
+
+.central-telefonica-icon-button,
+.central-telefonica-primary-button,
+.central-telefonica-link-button,
+.central-telefonica-detail-button,
+.central-telefonica-pagination button {
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.central-telefonica-icon-button {
+  height: 36px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 11px;
+  background: rgba(255,255,255,.1);
+  font-size: 11px;
+  font-weight: 700;
+}
+.central-telefonica-icon-button:hover { background: rgba(255,255,255,.18); }
+.central-telefonica-icon-button--compact,
+.central-telefonica-icon-button--close { width: 36px; padding: 0; }
+.central-telefonica-icon-button--close:hover { background: #c34350; border-color: #c34350; }
+
+.central-telefonica-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 15px 18px 24px;
+}
+
+.central-telefonica-summary {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 9px;
+  margin-bottom: 12px;
+}
+.central-telefonica-summary-card {
+  min-height: 70px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(91, 126, 151, .18);
+  border-radius: 14px;
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 5px 16px rgba(24, 61, 87, .07);
+}
+.central-telefonica-summary-card__icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: #157b92;
+  background: #e7f6f8;
+}
+.central-telefonica-summary-card strong { display: block; color: #102b43; font-size: 19px; line-height: 1.05; }
+.central-telefonica-summary-card span:last-child { display: block; margin-top: 4px; color: #63778a; font-size: 10px; font-weight: 650; }
+
+.central-telefonica-panel {
+  border: 1px solid rgba(91, 126, 151, .18);
+  border-radius: 15px;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 7px 22px rgba(24, 61, 87, .07);
+}
+.central-telefonica-filters-panel { padding: 12px 14px 14px; margin-bottom: 12px; }
+.central-telefonica-list-panel { overflow: hidden; }
+.central-telefonica-panel__title { justify-content: space-between; gap: 15px; margin-bottom: 10px; }
+.central-telefonica-list-panel > .central-telefonica-panel__title { padding: 13px 15px 10px; margin: 0; }
+.central-telefonica-panel__title h2 { display: inline; margin: 0; color: #17334b; font-size: 15px; }
+.central-telefonica-panel__title > div > span { margin-left: 8px; color: #718396; font-size: 10px; }
+.central-telefonica-link-button { color: #137c93; background: transparent; font-size: 11px; font-weight: 750; }
+
+.central-telefonica-filters {
+  display: grid;
+  grid-template-columns: 130px 130px 155px 145px 120px minmax(155px, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+}
+.central-telefonica-field { display: grid; gap: 4px; min-width: 0; }
+.central-telefonica-field > span { color: #536b7f; font-size: 9px; font-weight: 750; text-transform: uppercase; letter-spacing: .035em; }
+.central-telefonica-field input,
+.central-telefonica-field select {
+  width: 100%;
+  height: 36px;
+  min-width: 0;
+  padding: 0 9px;
+  border: 1px solid #cad8e3;
+  border-radius: 9px;
+  color: #1d374d;
+  background: #fbfdff;
+  font: 11px inherit;
+  outline: none;
+}
+.central-telefonica-field input:focus,
+.central-telefonica-field select:focus { border-color: #199eab; box-shadow: 0 0 0 3px rgba(25,158,171,.12); }
+.central-telefonica-primary-button {
+  height: 36px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 9px;
+  color: #fff;
+  background: linear-gradient(135deg, #128a9d, #246ca6);
+  font-size: 11px;
+  font-weight: 750;
+  box-shadow: 0 5px 12px rgba(25, 114, 147, .19);
+}
+
+.central-telefonica-readonly-badge {
+  padding: 6px 9px;
+  border-radius: 999px;
+  color: #587085;
+  background: #edf2f6;
+  font-size: 9px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.central-telefonica-table-wrap { position: relative; min-height: 245px; overflow-x: auto; border-top: 1px solid #e4ebf1; }
+.central-telefonica-table { width: 100%; min-width: 980px; border-collapse: collapse; table-layout: auto; }
+.central-telefonica-table th {
+  padding: 9px 10px;
+  color: #607488;
+  background: #f6f9fb;
+  border-bottom: 1px solid #dfe8ef;
+  font-size: 9px;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+  white-space: nowrap;
+}
+.central-telefonica-table td { padding: 9px 10px; border-bottom: 1px solid #edf1f4; color: #31495d; font-size: 10.5px; vertical-align: middle; }
+.central-telefonica-table tr:hover td { background: #f8fcfd; }
+.central-telefonica-table td:first-child strong,
+.central-telefonica-table td:first-child span { display: block; }
+.central-telefonica-table td:first-child span { margin-top: 2px; color: #748799; }
+.central-telefonica-number { font-variant-numeric: tabular-nums; font-weight: 700; }
+
+.central-telefonica-type,
+.central-telefonica-status,
+.central-telefonica-recording { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.central-telefonica-type { font-weight: 700; }
+.central-telefonica-type--entrante_externa { color: #087c70; }
+.central-telefonica-type--saliente_externa { color: #2868a8; }
+.central-telefonica-type--interna { color: #7048aa; }
+.central-telefonica-type--servicio_prueba { color: #786c5d; }
+.central-telefonica-status { padding: 4px 7px; border-radius: 999px; font-size: 9px; font-weight: 750; background: #edf1f4; color: #607182; }
+.central-telefonica-status--contestada { color: #187547; background: #e4f5eb; }
+.central-telefonica-status--no_contestada,
+.central-telefonica-status--fallida,
+.central-telefonica-status--congestion { color: #a93d45; background: #fdebed; }
+.central-telefonica-status--ocupada { color: #9b6413; background: #fff3d9; }
+.central-telefonica-recording { color: #748394; font-size: 9.5px; }
+.central-telefonica-recording--available { color: #5c48a7; font-weight: 700; }
+.central-telefonica-detail-button { width: 30px; height: 30px; border-radius: 9px; color: #167c91; background: #eaf6f8; }
+.central-telefonica-detail-button:hover { color: #fff; background: #168b9d; }
+
+.central-telefonica-table-state {
+  position: absolute;
+  inset: 35px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: #678093;
+  background: rgba(255,255,255,.94);
+  font-size: 11px;
+}
+.central-telefonica-table-state[hidden] { display: none; }
+.central-telefonica-table-state--error { color: #a13e47; }
+
+.central-telefonica-pagination { min-height: 45px; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #60758a; background: #fbfcfd; font-size: 10px; }
+.central-telefonica-pagination div { display: flex; gap: 6px; }
+.central-telefonica-pagination button { min-height: 29px; padding: 0 10px; border: 1px solid #d1dee7; border-radius: 8px; color: #416078; background: #fff; font-size: 10px; font-weight: 700; }
+.central-telefonica-pagination button:disabled { cursor: default; opacity: .45; }
+
+.central-telefonica-drawer-layer { position: fixed; inset: 0; z-index: 1000000000000003; display: flex; justify-content: flex-end; }
+.central-telefonica-drawer-layer[hidden] { display: none; }
+.central-telefonica-drawer-backdrop { position: absolute; inset: 0; border: 0; background: rgba(9, 25, 40, .46); }
+.central-telefonica-drawer { position: relative; z-index: 1; width: min(510px, 94vw); height: 100%; display: flex; flex-direction: column; background: #f7fafc; box-shadow: -18px 0 42px rgba(8,31,48,.23); }
+.central-telefonica-drawer__header { min-height: 75px; padding: 14px 16px; justify-content: space-between; gap: 12px; color: #fff; background: linear-gradient(112deg, #12314c, #265f79); }
+.central-telefonica-drawer__header h2 { margin: 0; font-size: 18px; }
+.central-telefonica-drawer__body { flex: 1; overflow: auto; padding: 14px; }
+.central-telefonica-detail-section,
+.central-telefonica-technical { margin-bottom: 10px; padding: 13px; border: 1px solid #dfe8ef; border-radius: 13px; background: #fff; }
+.central-telefonica-detail-section h3,
+.central-telefonica-technical summary { margin: 0 0 11px; color: #193b54; font-size: 12px; font-weight: 750; }
+.central-telefonica-detail-section p { margin: 0; color: #586f82; font-size: 11px; line-height: 1.5; }
+.central-telefonica-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.central-telefonica-detail-item { min-width: 0; padding: 8px 9px; border-radius: 9px; background: #f4f8fa; }
+.central-telefonica-detail-item span,
+.central-telefonica-detail-item strong { display: block; overflow-wrap: anywhere; }
+.central-telefonica-detail-item span { margin-bottom: 3px; color: #718597; font-size: 8.5px; font-weight: 700; text-transform: uppercase; }
+.central-telefonica-detail-item strong { color: #28475d; font-size: 10.5px; }
+.central-telefonica-recording-card { display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 10px; color: #6755a8; background: #f0edfb; }
+.central-telefonica-recording-card i { font-size: 18px; }
+.central-telefonica-recording-card strong,
+.central-telefonica-recording-card span { display: block; }
+.central-telefonica-recording-card strong { font-size: 11px; }
+.central-telefonica-recording-card span { margin-top: 3px; color: #716f83; font-size: 9.5px; }
+.central-telefonica-technical summary { cursor: pointer; }
+.central-telefonica-segments { margin-top: 10px; }
+.central-telefonica-segments h4 { font-size: 11px; color: #345267; }
+.central-telefonica-segments article { margin-top: 7px; padding: 8px 9px; border-left: 3px solid #1b9aa5; border-radius: 7px; background: #f4f8fa; }
+.central-telefonica-segments span,
+.central-telefonica-segments strong,
+.central-telefonica-segments small { display: block; }
+.central-telefonica-segments span { color: #14818d; font-size: 8px; font-weight: 750; text-transform: uppercase; }
+.central-telefonica-segments strong { margin-top: 3px; color: #29485d; font-size: 10px; }
+.central-telefonica-segments small { margin-top: 3px; color: #748696; font-size: 8.5px; overflow-wrap: anywhere; }
+.central-telefonica-detail-loading,
+.central-telefonica-detail-error { min-height: 180px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #60788b; font-size: 11px; }
+.central-telefonica-detail-error { color: #a43f48; }
+
+.central-telefonica-live-region { position: fixed; right: 20px; bottom: 20px; z-index: 1000000000000004; }
+.central-telefonica-toast { max-width: 350px; padding: 10px 13px; display: flex; gap: 8px; align-items: flex-start; border-radius: 11px; color: #fff; background: #23475f; box-shadow: 0 10px 28px rgba(10,34,51,.25); font-size: 11px; }
+.central-telefonica-toast--error { background: #a33d47; }
+.central-telefonica-sr-only { position: absolute!important; width: 1px!important; height: 1px!important; padding: 0!important; margin: -1px!important; overflow: hidden!important; clip: rect(0,0,0,0)!important; white-space: nowrap!important; border: 0!important; }
+
+@media (max-width: 1150px) {
+  .central-telefonica-summary { grid-template-columns: repeat(4, minmax(125px, 1fr)); }
+  .central-telefonica-filters { grid-template-columns: repeat(4, minmax(130px, 1fr)); }
+  .central-telefonica-primary-button { align-self: end; }
+}
+
+@media (max-width: 800px) {
+  .central-telefonica-header { padding: 10px 12px; align-items: flex-start; }
+  .central-telefonica-heading > div > span,
+  .central-telefonica-sync { display: none; }
+  .central-telefonica-icon-button span:not(.central-telefonica-sr-only) { display: none; }
+  .central-telefonica-icon-button { width: 36px; padding: 0; }
+  .central-telefonica-main { padding: 10px; }
+  .central-telefonica-summary { grid-template-columns: repeat(2, minmax(125px, 1fr)); }
+  .central-telefonica-filters { grid-template-columns: repeat(2, minmax(130px, 1fr)); }
+  .central-telefonica-detail-grid { grid-template-columns: 1fr; }
+}

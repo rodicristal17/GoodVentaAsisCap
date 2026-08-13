@@ -41,8 +41,8 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/cuotas_salteadas.css?x=20260810-9" />
 
 <link id="telarPlanificacionEspecialistasCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/planificacion_especialistas.css?v=20260807-01" />
-<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=conciliacion-multibanco-20260812" />
-
+<link id="telarCentralTelefonicaCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/central_telefonica.css?v=20260812-01" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=conciliacion-multibanco-20260813-1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-avatar-flotante-20260801-01" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -71,8 +71,10 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/minmizar.js?x=caja-control-consola-20260612"></script>
 <script src="/GoodVentaAsisCap/js_system/jquery.table2excel.js"></script>   
 <script src="/GoodVentaAsisCap/js_system/excel.js?x=conciliacion-ueno-20260610"></script>
+<script src="/GoodVentaAsisCap/js_system/sha256Local.js?x=20260813-1"></script>
 <script src="/GoodVentaAsisCap/js_system/conciliacionBancoFamiliarPdf.js?x=20260808-3"></script>
-<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=conciliacion-multibanco-20260812"></script>
+<script src="/GoodVentaAsisCap/js_system/conciliacionBancoFamiliarExcel.js?x=20260813-1"></script>
+<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=conciliacion-multibanco-20260813-2"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-orden-sin-entrega-20260730"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCuotasSalteadas.js?x=20260810-9"></script>
 <script src="/GoodVentaAsisCap/js_system/abmHistorialPagosSalteados.js?x=20260810-4"></script>
@@ -88,6 +90,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="../js_system/abmTrabajoMecanicoDental.js?x=historico-solo-consulta-20260721"></script>
 <script src="../js_system/trabajo_laboratorio.js?x=trabajo-laboratorio-20260725-03"></script>
 <script src="../js_system/planificacion_especialistas.js?x=20260807-01"></script>
+<script src="../js_system/central_telefonica.js?x=20260812-01"></script>
 <script src="../js_system/abmMecanicoDental.js?x=cuenta-telar-20260721-3"></script>
 <script src="../js_system/abmInterConsulta.js?x=hilo-gasto-id-fijo-20260804-1"></script>
 <script src="../js_system/abmCentroFacturas.js?x=nomenclatura-legajos-20260721-1"></script>
@@ -2955,6 +2958,18 @@ src='/GoodVentaAsisCap/iconos/agenda-dia.png' />
 <div id='divMinimizadoAgendaDia'
 style='display:none' class='divMinimizado'>
 </div>
+</center>
+</td>
+</tr>
+</table>
+
+<table class='divMenub' id='divMenuCentralTelefonica' data-access-key="central_telefonica" onclick='abrirCentralTelefonica()' style='width:20%;text-align:center;display:none' title='Abrir Central Telefónica'>
+<tr>
+<td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/central-telefonica.svg?v=20260812-01' />
+<p class='pTitulo4'>Central Telef&oacute;nica</p>
+<center>
+<div id='divMinimizadoCentralTelefonica' style='display:none' class='divMinimizado'></div>
 </center>
 </td>
 </tr>
@@ -27816,11 +27831,12 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <div class='ueno-section-head'>
 <div>
 <p class='ueno-section-title'>1. Importar extracto bancario</p>
-<p class='ueno-section-help' id='lblUenoFormatoArchivo'>Carga el archivo Ueno en formato Excel o CSV. Los totales de credito/debito ayudan a confirmar que el archivo fue leido correctamente.</p>
+<p class='ueno-section-help' id='lblUenoFormatoArchivo'>Selecciona un extracto: Telar detecta Banco Familiar (PDF o Excel) y Ueno (Excel o CSV), valida su estructura y muestra una vista previa antes de habilitar la importacion.</p>
 </div>
 <label class='ueno-bank-selector' title='Cada archivo pertenece a un banco'>
 <small>Banco del extracto</small>
 <select id='inptConciliacionBanco' onchange='uenoCambiarBanco()'>
+<option value='AUTO'>Detectar automaticamente</option>
 <option value='UENO'>Ueno</option>
 <option value='FAMILIAR'>Banco Familiar</option>
 </select>
@@ -27857,13 +27873,14 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <input class='inputTextDisable' type='text' id='inptUenoCantidadLeida' disabled style='width:90px;text-align:center'>
 </td>
 <td style='width:10%;text-align:right'>
-<input type='file' id='uenoArchivoExtracto' accept='.xls,.xlsx,.csv' style='display:none'>
+<input type='file' id='uenoArchivoExtracto' accept='.pdf,.xls,.xlsx,.csv,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' style='display:none'>
 <input type='button' value='Seleccionar extracto' class='btn4 ueno-btn-secondary' onclick='uenoSeleccionarArchivo()' style='width:150px'>
-<input type='button' value='Importar extracto' class='btn4 ueno-btn-primary' onclick='uenoGuardarImportacion()' style='width:145px;background-color:#2196F3'>
+<input type='button' id='btnUenoImportarExtracto' value='Importar extracto' class='btn4 ueno-btn-primary' onclick='uenoGuardarImportacion()' disabled aria-disabled='true' title='Se habilita cuando el extracto supera todas las validaciones' style='width:145px;background-color:#2196F3'>
 <input type='button' value='Archivos migrados' class='btn4 ueno-btn-secondary' onclick='uenoAbrirModalImportaciones()' title='Ver archivos de extracto ya migrados' style='width:145px'>
 </td>
 </tr>
 </table>
+<div id='divUenoEstadoArchivo' class='ueno-file-status ueno-file-status--pendiente' aria-live='polite'><b>Preparacion del extracto</b><span>Selecciona un extracto para comenzar.</span></div>
 <table style='width:98%'>
 <tr>
 <td style='width:38%;text-align:left'>
@@ -28874,6 +28891,10 @@ onclick='buscarvistaaperturacierrecaja()' />
 
 <div id='divPlanificacionEspecialistas' class='divAbms' style='width:100%;height:100vh;position:fixed;display:none;'>
     <div id='telarPlanificacionEspecialistas'></div>
+</div>
+
+<div id='divCentralTelefonica' class='divAbms' style='width:100%;height:100vh;position:fixed;display:none;' aria-hidden='true'>
+    <div id='telarCentralTelefonica'></div>
 </div>
 
 <div id='divAgendaConsultorios' class='divAbms agenda-ventana' style='width:100%;height:100vh;position: absolute;display:none;'>

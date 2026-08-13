@@ -18,6 +18,8 @@ verificar_condicion(ueno_banco_filtro_codigo("UENO") === "UENO", "El filtro Ueno
 verificar_condicion(ueno_banco_filtro_codigo("FAMILIAR") === "FAMILIAR", "El filtro Familiar no conserva su banco");
 verificar_condicion(strpos(ueno_banco_badge_html("UENO"), "ueno-bank-badge--ueno") !== false, "Falta la insignia Ueno");
 verificar_condicion(strpos(ueno_banco_badge_html("FAMILIAR"), "ueno-bank-badge--familiar") !== false, "Falta la insignia Banco Familiar");
+verificar_condicion(ueno_hash_archivo_valido(str_repeat("a", 64)), "El servidor rechazo una huella SHA-256 valida");
+verificar_condicion(!ueno_hash_archivo_valido("simple-12345"), "El servidor acepto una huella simplificada insegura");
 $mesaTodos = ueno_tabla_movimientos($mysqli, "", "", "", "", "", "todos", 0, "todos", 2, "");
 $mesaUeno = ueno_tabla_movimientos($mysqli, "", "", "", "", "", "todos", 0, "todos", 2, "UENO");
 verificar_condicion($mesaTodos["total"] >= $mesaUeno["total"], "La mesa combinada excluye movimientos Ueno");
@@ -78,6 +80,17 @@ try {
 }
 verificar_condicion($falloControlado, "Un total alterado no fue rechazado");
 
+$_POST["total_debitos_declarado"] = "200";
+$familiarSaldoAlterado = $familiar;
+$familiarSaldoAlterado["normalizados"][0]["saldo_banco"] = 1499;
+$falloSaldoSecuencial = false;
+try {
+	ueno_validar_totales_familiar($mysqli, $cuentaPrueba, $familiarSaldoAlterado);
+} catch (Exception $e) {
+	$falloSaldoSecuencial = true;
+}
+verificar_condicion($falloSaldoSecuencial, "Un saldo secuencial alterado no fue rechazado");
+
 $conteos = array();
 foreach (array("ueno_importacion_extracto", "ueno_movimiento_bancario", "pago_transferencia_conciliacion") as $tabla) {
 	$result = $mysqli->query("SELECT COUNT(*) AS total,
@@ -100,6 +113,7 @@ echo json_encode(array(
 	"hash_separado_por_banco" => true,
 	"bloqueo_cuenta_familiar" => true,
 	"totales_familiar_validados" => true,
+	"saldos_secuenciales_validados" => true,
 	"clasificacion_por_banco" => $conteos
 ), JSON_PRETTY_PRINT) . PHP_EOL;
 ?>
