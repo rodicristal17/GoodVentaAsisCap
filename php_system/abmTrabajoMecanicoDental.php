@@ -267,6 +267,10 @@
             if ($estado != null) {$atributos .= ", estado = ?"; $ss .= "s"; $parametros[] = $estado;}
 
             $atributos = substr($atributos, 2);
+            if ($atributos === "") {
+                $mysqli->close();
+                return $cod_tipo_trabajo;
+            }
             $parametros[] = $cod_tipo_trabajo;
             $ss .= "i";
 

@@ -3383,10 +3383,12 @@ function guardarPacienteAgenda($mysqli, $useru){
     try {
         $sqlPersona = "INSERT INTO persona (
                             nombre_persona, 
-                            direccion 
+                            direccion,
+                            telefono
                         ) VALUES (
                             '".$nombre."', 
-                            '".$direccion."' 
+                            '".$direccion."',
+                            '".$telefono."'
                         )";
 
         if(!$mysqli->query($sqlPersona)){
@@ -3397,22 +3399,36 @@ function guardarPacienteAgenda($mysqli, $useru){
 
         $sqlCliente = "INSERT INTO cliente (
                             cod_cliente,
+							rut_cliente,
 							ci_cliente,
                             whapp,
                             estado,
                             cod_user_insert,
                             fecha_insert,
                             accesocredito,
-							idzonaFk
+							idzonaFk,
+							foto1,
+							foto2,
+							direcciontrab,
+							fecha_edicion_referencia,
+							fechanac,
+							obsTrabajo
                         ) VALUES (
                             '".$idPersona."',
+							'',
 							'".$documento."',
                             '".$telefono."',
                             'Activo',
                             '".$useru."',
                             NOW(),
                             'Confirmado',
-							0
+							0,
+							'',
+							'',
+							'',
+							NOW(),
+							'2000-01-01',
+							''
                         )";
 
         if(!$mysqli->query($sqlCliente)){
@@ -5475,31 +5491,27 @@ function guardarAgendamiento($mysqli, $useru){
 
     if($id == ''){
         $sql = "INSERT INTO agendamiento (
-                    cod_pacienteFK,
-                    cod_consultorioFK,
-                    fecha_recepcion,
-                    fecha_consulta,
-                    observacion,
+                    cod_ventaFK,
+                    cod_usuarioFK,
+                    fecha_ag,
+                    fecha_con,
+                    decripcion,
                     estado,
-                    usuario,
-                    fechainsert
                 ) VALUES (
                     '".$id_paciente."',
                     '".$id_especialista."',
                     '".$fecha_recepcion."',
                     '".$fecha_consulta."',
                     '".$observacion."',
-                    'Pendiente',
-                    '".$useru."',
-                    NOW()
+                    'Pendiente'
                 )";
     }else{
         $sql = "UPDATE agendamiento SET
-                    cod_pacienteFK = '".$id_paciente."',
-                    cod_consultorioFK = '".$id_especialista."',
-                    fecha_recepcion = '".$fecha_recepcion."',
-                    fecha_consulta = '".$fecha_consulta."',
-                    observacion = '".$observacion."'
+                    cod_ventaFK = '".$id_paciente."',
+                    cod_usuarioFK = '".$id_especialista."',
+                    fecha_ag = '".$fecha_recepcion."',
+                    fecha_con = '".$fecha_consulta."',
+                    decripcion = '".$observacion."'
                 WHERE cod_agendamiento = '".$id."'
                 LIMIT 1";
     }

@@ -21,6 +21,31 @@
   z-index: 25;
 }
 
+#divErroresSistema { position:fixed; inset:72px 12px 12px; z-index:10040; overflow:hidden; }
+.error-sistema-shell { display:flex; flex-direction:column; width:100%; height:100%; box-sizing:border-box; padding:18px; border:1px solid #234e70; border-radius:16px; background:#f7fbff; box-shadow:0 22px 60px rgba(3,21,45,.28); }
+.error-sistema-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding-bottom:12px; border-bottom:1px solid #c7dbea; }
+.error-sistema-header .pTituloB { margin:0; color:#102f52; }
+.error-sistema-subtitulo { margin:5px 0 0; color:#506a82; font-size:13px; }
+.error-sistema-cerrar { width:40px; height:40px; border:0; border-radius:50%; background:#153d67; color:#fff; cursor:pointer; font-size:28px; line-height:36px; }
+.error-sistema-cerrar:focus-visible { outline:3px solid #30c5c8; outline-offset:2px; }
+.error-sistema-filtros { display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px; padding:14px 0; }
+.error-sistema-filtros label { display:flex; flex-direction:column; gap:5px; color:#24445f; font-size:12px; font-weight:700; }
+.error-sistema-filtros input,.error-sistema-filtros select { min-height:38px; box-sizing:border-box; border:1px solid #9eb8ca; border-radius:8px; background:#fff; padding:7px 10px; color:#18354e; }
+.error-sistema-buscar { flex:1 1 300px; }
+.error-sistema-resumen { padding:7px 10px; border-radius:8px; background:#e8f4fa; color:#24445f; }
+.error-sistema-tabla-wrap { flex:1 1 auto; min-height:0; margin-top:10px; overflow:auto; border:1px solid #bdd0df; border-radius:10px; background:#fff; }
+.error-sistema-tabla { width:100%; border-collapse:collapse; font-size:12px; }
+.error-sistema-tabla th { position:sticky; top:0; z-index:1; padding:10px; background:#173f69; color:#fff; text-align:left; }
+.error-sistema-tabla td { max-width:360px; padding:9px 10px; border-bottom:1px solid #e3edf4; color:#243b50; vertical-align:top; overflow-wrap:anywhere; }
+.error-sistema-nivel { display:inline-block; padding:4px 7px; border-radius:999px; background:#dfeaf2; font-weight:700; }
+.error-sistema-nivel--fatal,.error-sistema-nivel--parse,.error-sistema-nivel--user_error { background:#ffd9de; color:#8a1324; }
+.error-sistema-nivel--warning,.error-sistema-nivel--user_warning { background:#fff0c7; color:#765300; }
+.error-sistema-nivel--deprecated,.error-sistema-nivel--notice { background:#e8e0ff; color:#4b2b82; }
+.error-sistema-vacio { padding:32px !important; text-align:center; color:#62788b !important; }
+
+@media (max-width:980px) { #divErroresSistema { inset:184px 8px 8px; } }
+@media (max-width:620px) { #divErroresSistema { inset:228px 4px 4px; } .error-sistema-shell { padding:10px; } .error-sistema-tabla { min-width:900px; } }
+
 /* Funcionarios y Accesos */
 .dashboard-topbar-user--menu {
     position: relative;

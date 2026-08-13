@@ -139,7 +139,7 @@ $stmt1 = $mysqli->prepare($consulta1);
  
 if (!$stmt1->execute()) {
 	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }
@@ -150,14 +150,14 @@ $consulta1 = "INSERT INTO detalle_sugerencias (fecha, estado, descripcion, cod_u
 $stmt1 = $mysqli->prepare($consulta1);
 
 if (!$stmt1) {
-    trigger_error('Error en la preparación de la consulta: ' . $mysqli->error, E_USER_ERROR);
+    telar_trigger_error('Error en la preparación de la consulta: ' . $mysqli->error, E_USER_ERROR);
     exit;
 }
 
 $stmt1->bind_param("sssi", $estado, $resolucion, $user, $idsugerencias);
 
 if (!$stmt1->execute()) {
-    trigger_error('La ejecución de la consulta falló; MySQL dijo (' . $stmt1->errno . ') ' . $stmt1->error, E_USER_ERROR);
+    telar_trigger_error('La ejecución de la consulta falló; MySQL dijo (' . $stmt1->errno . ') ' . $stmt1->error, E_USER_ERROR);
     exit;
 }
 

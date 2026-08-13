@@ -88,7 +88,7 @@ $stmt->bind_param($ss,$cod_localfk,$nrocaja);
 
 
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 	$result = $stmt->get_result();
@@ -98,7 +98,7 @@ exit;
 		$codNroAnterior = $row['Cod_Nro'];
 		$stmtInactivar->bind_param('ss',$cod_usuarioFk,$codNroAnterior);
 		if (!$stmtInactivar->execute()) {
-			echo trigger_error('The query execution failed; MySQL said ('.$stmtInactivar->errno.') '.$stmtInactivar->error, E_USER_ERROR);
+			echo telar_trigger_error('The query execution failed; MySQL said ('.$stmtInactivar->errno.') '.$stmtInactivar->error, E_USER_ERROR);
 			exit;
 		}
 	}
@@ -113,7 +113,7 @@ exit;
 	
 	
 if ( ! $stmt->execute() ) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }

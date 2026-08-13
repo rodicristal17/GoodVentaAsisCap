@@ -91,14 +91,14 @@ if($operacion=="nuevo") /*Condición para conocer que operacion queremos realiza
 {
 
 
-$consulta1="Insert into listado (cant,fecha,estado,cod_producto,cod_cobrador,cantvendido,cod_local)
-values(?,?,?,?,?,?,?)";/*Sentencia para insertar registros*/	
+$consulta1="Insert into listado (cant,fecha,estado,cod_producto,cod_cobrador,cantvendido)
+values(?,?,?,?,?,?)";/*Sentencia para insertar registros*/	
 /*La sentencia insert es utilizado para insertar datos y esta compuesto por 
 insert into elnombredelatabla (atributos de la tabla que se quiere insertar separados entre comas) values (los valores que vamos inserta interpretado como este simbolo ?)
 */
 $stmt1 = $mysqli->prepare($consulta1);/*Se prepara la sentencia sql con el objeto prepare*/
-$ss='sssssss';/*Variable que indica la cantidad paramentros a cargar en la sentencia, guiarse por la cantidad de ? que se encuentra en la sentencia*/
-$stmt1->bind_param($ss,$cant,$fecha,$estado,$cod_producto,$cod_cobrador,$cantvendido,$cod_local);/*Se cargar los paramentros a la sentencia preparada*/
+$ss='ssssss';/*Variable que indica la cantidad paramentros a cargar en la sentencia, guiarse por la cantidad de ? que se encuentra en la sentencia*/
+$stmt1->bind_param($ss,$cant,$fecha,$estado,$cod_producto,$cod_cobrador,$cantvendido);/*Se cargar los paramentros a la sentencia preparada*/
 
 
 }
@@ -107,14 +107,14 @@ $stmt1->bind_param($ss,$cant,$fecha,$estado,$cod_producto,$cod_cobrador,$cantven
 if($operacion=="editar")
 {
 
-$consulta1="Update listado set cant=?,fecha=?,estado=?,cod_producto=?,cod_cobrador=?,cantvendido=?,cod_local=? where idlistado=?";	/*Sentencia para editar registros*/
+$consulta1="Update listado set cant=?,fecha=?,estado=?,cod_producto=?,cod_cobrador=?,cantvendido=? where idlistado=?";	/*Sentencia para editar registros*/
 /*La sentencia update es utilizado para editar datos y esta compuesto por 
 update elnombredelatabla set (indicar que atributos se van a modificar igualando al simbolo ? separados entre comas) 
 where nombreatributo=? condición para editar solo el registro seleccionado
 */
 $stmt1 = $mysqli->prepare($consulta1);/*Se prepara la sentencia sql con el objeto prepare*/
-$ss='sssssssss';/*Variable que indica la cantidad paramentros a cargar en la sentencia, guiarse por la cantidad de ? que se encuentra en la sentencia*/
-$stmt1->bind_param($ss,$cant,$fecha,$estado,$cod_producto,$cod_cobrador,$cantvendido,$cod_local,$idlistado); /*Se cargar los paramentros a la sentencia preparada*/
+$ss='sssssss';/*Variable que indica la cantidad paramentros a cargar en la sentencia, guiarse por la cantidad de ? que se encuentra en la sentencia*/
+$stmt1->bind_param($ss,$cant,$fecha,$estado,$cod_producto,$cod_cobrador,$cantvendido,$idlistado); /*Se cargar los paramentros a la sentencia preparada*/
 
 }
 
@@ -124,7 +124,7 @@ $stmt1->bind_param($ss,$cant,$fecha,$estado,$cod_producto,$cod_cobrador,$cantven
 if (!$stmt1->execute()) {
 	
 /*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }

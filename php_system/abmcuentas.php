@@ -127,7 +127,7 @@ $stmt1->bind_param($ss,$cod_productoFK,$costo,$cod_clienteFK,$idpedidos); /*Se c
 if (!$stmt1->execute()) {
 	
 /*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }
@@ -186,7 +186,7 @@ $pagina = "";
 /*Función para ejecutar sentencias sql*/
 if ( ! $stmt->execute()) {
 /*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -272,7 +272,7 @@ $stmt = $mysqli->prepare($sql);/*Se prepara la sentencia sql con el objeto prepa
 /*Función para ejecutar sentencias sql*/
 if ( ! $stmt->execute()) {
 /*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -370,7 +370,7 @@ $stmt = $mysqli->prepare($sql);/*Se prepara la sentencia sql con el objeto prepa
 /*Función para ejecutar sentencias sql*/
 if ( ! $stmt->execute()) {
 /*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -417,7 +417,7 @@ $stmt = $mysqli->prepare($sql);/*Se prepara la sentencia sql con el objeto prepa
 /*Función para ejecutar sentencias sql*/
 if ( ! $stmt->execute()) {
 /*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 

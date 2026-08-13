@@ -419,12 +419,12 @@
     }
 
     function verificarOperacionInterConsulta($funt) {
-        $user = $_POST['useru'];
+        $user = isset($_POST['useru']) ? $_POST['useru'] : '';
         $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
-        $pass = $_POST['passu'];
+        $pass = isset($_POST['passu']) ? $_POST['passu'] : '';
 
         $pass = str_replace("=", "+", $pass);
-        $navegador = $_POST['navegador'];
+        $navegador = isset($_POST['navegador']) ? $_POST['navegador'] : '';
         $navegador = mb_convert_encoding((string)($navegador), 'ISO-8859-1', 'UTF-8');
         $resp = verificar_navegador($user, $navegador, $pass);
         if ($resp != "ok") {
@@ -5199,17 +5199,14 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         if ($row = $result->fetch_assoc()) {
             $cod_mencion = $row['cod_mencion'];
         }
+        $stmt->close();
 
         if ($cod_mencion) {
-            $sql= "UPDATE menciones SET isLeido= ? WHERE cod_mencion = ?";
-            $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('si', $isLeido, $cod_mencion);
-
             $parametros = array();
             $atributos = "";
             $ss = "";
 
-            if (!empty($isLeido)) {
+            if ($isLeido !== null && $isLeido !== '') {
                 $atributos .= "isLeido = ?, ";
                 $parametros[] = $isLeido;
                 $ss .= "i";
@@ -5220,6 +5217,10 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 $ss .= "s";
             }
             $atributos = substr($atributos, 0, -2);
+            if ($atributos === "") {
+                $mysqli->close();
+                return $cod_mencion;
+            }
 
             $parametros[] = $cod_mencion;
             $ss .= "i";
@@ -5527,6 +5528,11 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $ss .= "i";
 
             $atributos = substr($atributos, 2);
+            if ($atributos === "") {
+                if ($transaccionHiloMensaje) { $mysqli->rollback(); }
+                $mysqli->close();
+                return $cod_mensaje;
+            }
             $sql= "UPDATE mensaje SET $atributos WHERE cod_mensaje = ?";
             $stmt = $mysqli->prepare($sql);
             

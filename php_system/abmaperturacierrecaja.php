@@ -147,7 +147,7 @@ function abmAperturaCierre($idarqueocaja,$cod_local,$caja_idcaja,$montoapertura,
 		$stmt1->bind_param($ss,$cod_local,$caja_idcaja,$montoapertura,$fechaapertura,$estado,$codusuarioap,$lote);
 
 		if (!$stmt1->execute()) {
-			echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+			echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 			exit;
 		}
 
@@ -1232,7 +1232,7 @@ if ($busqueda != "") {
 $sqlTotal = "Select count(*) as total from arqueocaja ap where estado!='Cancelado' ".$sqlFiltro;
 $stmtTotal = $mysqli->prepare($sqlTotal);
 if (!$stmtTotal || ! $stmtTotal->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$mysqli->errno.') '.$mysqli->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$mysqli->errno.') '.$mysqli->error, E_USER_ERROR);
 exit;
 }
 $resultTotal = $stmtTotal->get_result();
@@ -1268,7 +1268,7 @@ $stmt = $mysqli->prepare($sql);
 if (!$stmt || ! $stmt->execute()) {
 	$errno = $stmt ? $stmt->errno : $mysqli->errno;
 	$error = $stmt ? $stmt->error : $mysqli->error;
-	echo trigger_error('The query execution failed; MySQL said ('.$errno.') '.$error, E_USER_ERROR);
+	echo telar_trigger_error('The query execution failed; MySQL said ('.$errno.') '.$error, E_USER_ERROR);
 	exit;
 }
 $result = $stmt->get_result();
@@ -1510,7 +1510,7 @@ from aperturacajaapp ap where  estado!='Cancelado' ".$condicionFechas.$condicion
 $pagina = "";   
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -1565,7 +1565,7 @@ $sql= "select  sum(pg.Monto) as Monto
 $Pagos = "0";   
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -1592,7 +1592,7 @@ $sql= "Select monto
 $MontoEgresos = "0";   
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -1620,7 +1620,7 @@ $sql= "Select monto
 $MontoIngreso= "0";   
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -1675,7 +1675,7 @@ $sql= "select idmigrar_caja, obs, fecha, monto, cod_caja_desdeFK, cod_caja_hasta
  
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 $totalCaja=0;
@@ -1734,7 +1734,7 @@ $sql= "select idmigrar_caja, obs, fecha, monto, cod_caja_desdeFK, cod_caja_hasta
  
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 $totalCaja=0;
@@ -1793,7 +1793,7 @@ $totalPagado = "0";
 $pagina = "";   
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -1864,7 +1864,7 @@ $sql= "SELECT * FROM tipopago;";
 $pagina = "<table style='width:98%'><tr>";
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -1925,7 +1925,7 @@ $sql= "select  IFNULL(Monto,0) as Monto
  
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 $totalTipoPago=0;
@@ -2041,7 +2041,7 @@ from arqueocaja  where idarqueocaja='$idArqeoFk'  ";
 $montoapertura = "0";   
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 

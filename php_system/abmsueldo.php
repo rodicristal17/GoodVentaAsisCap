@@ -122,7 +122,7 @@ $stmt1->bind_param($ss,$comision,$totalrecaudado,$sueldo,$fecha,$cod_persona,$es
 
 if (!$stmt1->execute()) {
 	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }

@@ -103,7 +103,7 @@ function CambiarEstadoAgendamiento($cod_agen,$estado)
 	
 if (!$stmt->execute()) {
 	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }
@@ -219,13 +219,13 @@ function abm($MedicoFK,$useru,$Cod_Agendamiento,$Cod_PacienteFK,$FechaRecepcion,
 	if($operacion=="editar")
 	{
         
-    $consulta="Update agendamiento set cod_UsuarioFK=?, Cod_PacienteFK=?, fecha=?, tipo=?, fecha_hora_ag=?, estado=?, cod_consultasFK=?, edad=?, descripcion=?,turno=? where idagendamiento=?";	
+	$consulta="Update agendamiento set cod_usuarioFK=?, cod_ventaFK=?, fecha_ag=?, fecha_con=?, decripcion=? where cod_agendamiento=?";	
 
 	$stmt = $mysqli->prepare($consulta);
         
-    $ss='sssssssssss';
+    $ss='ssssss';
         
-   $stmt->bind_param($ss,$useru,$Cod_PacienteFK,$FechaRecepcion,$tipopaciente,$FechaEntrega,$Estado,$contultaFK,$edad,$Observacion,$nroTurno,$Cod_Agendamiento); 
+   $stmt->bind_param($ss,$MedicoFK,$Cod_PacienteFK,$FechaRecepcion,$FechaConsulta,$obs,$Cod_Agendamiento); 
         
 	
        
@@ -233,7 +233,7 @@ function abm($MedicoFK,$useru,$Cod_Agendamiento,$Cod_PacienteFK,$FechaRecepcion,
 	
 if (!$stmt->execute()) {
 	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }

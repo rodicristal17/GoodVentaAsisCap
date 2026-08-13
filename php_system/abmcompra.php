@@ -307,7 +307,7 @@ $stmt1->bind_param($ss,$fecha_compra,$cod_proveedorFK,$num_comprobante,$cod_loca
 
 
 if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
@@ -355,7 +355,7 @@ $stmt1 = $mysqli->prepare($consulta1);
 $ss='ssss';
 $stmt1->bind_param($ss,$motivo,$user,$fecha_inser_edit,$cod_compra);
 if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 }
 
@@ -419,7 +419,7 @@ $stmt1->bind_param($ss,$codpago);
 
 
 if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }

@@ -376,7 +376,7 @@ $sql= "SELECT
 
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
  
@@ -447,7 +447,7 @@ $stmtVerificar = $mysqli->prepare($consultaVerificar);
 $stmtVerificar->bind_param('ss', $id_agenda, $cod_detalle);
 
 if (!$stmtVerificar->execute()) {
-	echo trigger_error('The query execution failed; MySQL said ('.$stmtVerificar->errno.') '.$stmtVerificar->error, E_USER_ERROR);
+	echo telar_trigger_error('The query execution failed; MySQL said ('.$stmtVerificar->errno.') '.$stmtVerificar->error, E_USER_ERROR);
 	exit;
 }
 
@@ -463,7 +463,7 @@ $stmt1 = $mysqli->prepare($consulta1);
 $stmt1->bind_param('ss', $cod_detalle, $id_agenda);
 
 if (!$stmt1->execute()) {
-	echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+	echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 	exit;
 }
 
@@ -732,7 +732,7 @@ LIMIT 20";
 $stmt = $mysqli->prepare($sql);
 $stmt->bind_param("s", $cod_venta);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
  
@@ -782,7 +782,7 @@ function actualizarApodo($cod_venta,$apodo)
     
 
     if (!$stmt1->execute()) {
-        echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+        echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
         exit;
     }
  
@@ -1285,7 +1285,7 @@ $fechaHora = $paraguayTime->format("Y-m-d H:i:s");
     
 
     if (!$stmt1->execute()) {
-        echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+        echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
         exit;
     }
 
@@ -1306,7 +1306,7 @@ $sql= "SELECT descripcion,(select nombre_persona from persona where cod_persona=
  
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
  
@@ -1567,7 +1567,7 @@ $sql= "SELECT c.cod_consulta, c.cod_ventaFK, c.fecha, c.cod_usuarioFK, c.cod_age
 $stmt = $mysqli->prepare($sql);
 $stmt->bind_param("s", $cod_venta);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
  
@@ -2342,7 +2342,7 @@ function obtenerTratamientosVentaPlanConsulta($mysqli,$cod_venta)
 
 	$stmt = $mysqli->prepare($sql);
 	if (!$stmt || !$stmt->execute()) {
-		echo trigger_error('The query execution failed; MySQL said ('.$mysqli->errno.') '.$mysqli->error, E_USER_ERROR);
+		echo telar_trigger_error('The query execution failed; MySQL said ('.$mysqli->errno.') '.$mysqli->error, E_USER_ERROR);
 		exit;
 	}
 
@@ -5405,7 +5405,7 @@ function detalleTratamientoDatos($buscar) {
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt->execute()) {
-        trigger_error('Query error: '.$stmt->error, E_USER_ERROR);
+        telar_trigger_error('Query error: '.$stmt->error, E_USER_ERROR);
         exit;
     }
 
@@ -5449,7 +5449,7 @@ function detalleTratamientosDatosPorVentaConsulta($ventas)
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt || !$stmt->execute()) {
-        trigger_error('Query error: '.$mysqli->error, E_USER_ERROR);
+        telar_trigger_error('Query error: '.$mysqli->error, E_USER_ERROR);
         exit;
     }
 
@@ -6002,7 +6002,7 @@ function detalleTratamiento($buscar) {
 
     $stmt = $mysqli->prepare($sql);
     if (!$stmt->execute()) {
-        trigger_error('Query error: '.$stmt->error, E_USER_ERROR);
+        telar_trigger_error('Query error: '.$stmt->error, E_USER_ERROR);
         exit;
     }
 
@@ -6094,7 +6094,7 @@ FROM consulta where estado= 'Activo' ".$condicionLocal.$condicionpaciente.$condi
 $stmt = $mysqli->prepare($sql);
 $pagina = "";   
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 

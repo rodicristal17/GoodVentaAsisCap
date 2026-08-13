@@ -166,7 +166,7 @@ $stmt1->bind_param($ss,$nombre,$nrotelef,$estado,$cod_localfk,$idvendedor);
 
 
 if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }
@@ -532,7 +532,7 @@ function abmAccesoMetas($nro,$idMetas,$funt)
 	}
 	
 if ( ! $stmt->execute() ) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }
@@ -565,7 +565,7 @@ function abmAccesoMetasPHP($Cod_vendedorFK,$nro,$funt)
 
 	
 if ( ! $stmt->execute() ) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }

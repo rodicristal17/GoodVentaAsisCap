@@ -62,7 +62,7 @@
 	                    'hora_entrada_usuario' => $hora_entrada_usuario
 	                ));
 	                break;
-            case "editar";
+            case "editar":
                 $cod_asistencia= $_POST['cod_asistencia'];
                 $cod_asistencia = mb_convert_encoding((string)($cod_asistencia), 'ISO-8859-1', 'UTF-8');
                 $cod_usuario= $user;

@@ -11,7 +11,7 @@ RUN apt-get update \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" gd mbstring mysqli pdo_mysql zip \
     && (php -m | grep -qi '^Zend OPcache$' || docker-php-ext-install opcache) \
-    && a2enmod rewrite headers expires deflate \
+    && a2enmod rewrite headers expires deflate ssl \
     && sed -ri 's/^ServerTokens .*/ServerTokens Prod/; s/^ServerSignature .*/ServerSignature Off/' /etc/apache2/conf-available/security.conf \
     && rm -rf /var/lib/apt/lists/*
 
@@ -24,5 +24,13 @@ RUN if php -r 'exit(PHP_VERSION_ID >= 80000 ? 0 : 1);'; then \
           'auto_prepend_file=/var/www/html/php_compat/encoding.php' \
           > /usr/local/etc/php/conf.d/98-telar-php8-compat.ini; \
     fi
+
+RUN printf '%s\n' \
+      'auto_prepend_file=/var/www/html/php_system/error_monitor_bootstrap.php' \
+      'display_errors=Off' \
+      'display_startup_errors=Off' \
+      'log_errors=On' \
+      'error_reporting=E_ALL' \
+      > /usr/local/etc/php/conf.d/zz-telar-error-monitor.ini
 
 WORKDIR /var/www/html

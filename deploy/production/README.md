@@ -23,6 +23,15 @@ La configuración secreta vive únicamente en `/opt/telar/app/deploy/production/
 - URL VPN/LAN: `http://10.220.100.201:8080/`
 - La raíz redirige a `/GoodVentaAsisCap/system/login.html`.
 - UFW permite SSH y HTTP solamente desde `10.220.100.0/24`.
+- Cockpit: `https://10.220.100.201:9090/`, limitado a LAN/VPN.
+- Portainer: `https://10.220.100.201:9443/`, limitado a LAN/VPN.
+
+## Monitor interno de errores
+
+- Los errores PHP se registran fuera del directorio público en el volumen `telar_error_logs`.
+- Se conservan 30 días y se sanitizan contraseñas, tokens y cabeceras sensibles.
+- No se almacenan cuerpos POST, cookies, diagnósticos ni historias clínicas.
+- El permiso `VERERRORESSISTEMA` se crea en `NO` para usuarios y roles. Debe asignarse explícitamente desde el gestor de accesos.
 
 ## Respaldo y restauración
 

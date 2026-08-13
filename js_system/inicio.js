@@ -4994,6 +4994,9 @@ $("div[id=divPresentacion]").fadeOut(500);
 					codEncargadoSolicitud = userid;
 					CodCobradorUser = datos["7"];
  accesosuser=datos["5"];
+ if (typeof actualizarAccesoErroresSistema === "function") {
+	actualizarAccesoErroresSistema();
+ }
  if (typeof centroFacturasPrepararAccesoInicial === "function") {
 	centroFacturasPrepararAccesoInicial();
  }

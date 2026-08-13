@@ -2809,7 +2809,7 @@ function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngres
 	$stmt = $mysqli->prepare($sql);
 	$stmt->bind_param('ii',$cod_motivoIngresoEgreso_dest,$cod_motivoIngresoEgreso);
 	if (!$stmt->execute()) {
-		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 		exit;
 	}
 
@@ -2818,7 +2818,7 @@ function combinarMotivoIngresoEgreso($cod_motivoIngresoEgreso, $cod_motivoIngres
 	$stmt = $mysqli->prepare($sql);
 	$stmt->bind_param('i',$cod_motivoIngresoEgreso);
 	if (!$stmt->execute()) {
-		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 		exit;
 	}
 
@@ -3020,7 +3020,7 @@ function sumarMesesRespetandoDia($fechaBase, $mesesASumar, $diaObjetivo) {
 
 	$nuevoAnio = $anioBase + floor(($mesTotal - 1) / 12);
 	$nuevoMes = (($mesTotal - 1) % 12) + 1;
-	$ultimoDiaMes = cal_days_in_month(CAL_GREGORIAN, $nuevoMes, $nuevoAnio);
+	$ultimoDiaMes = telar_dias_en_mes($nuevoMes, $nuevoAnio);
 	$diaFinal = min($diaObjetivo, $ultimoDiaMes);
 
 	return DateTime::createFromFormat('Y-n-j', $nuevoAnio . '-' . $nuevoMes . '-' . $diaFinal);
@@ -3034,7 +3034,7 @@ function calcularFechaQuincenalPorCortes($fechaBase, $indice) {
 	$anio = (int)$fechaBase->format('Y');
 	$mes = (int)$fechaBase->format('n');
 	$dia = (int)$fechaBase->format('j');
-	$ultimoDiaMes = cal_days_in_month(CAL_GREGORIAN, $mes, $anio);
+	$ultimoDiaMes = telar_dias_en_mes($mes, $anio);
 
 	if ($dia < 15) {
 		$fechaCuota = DateTime::createFromFormat('Y-n-j', $anio . '-' . $mes . '-15');
@@ -3055,7 +3055,7 @@ function calcularFechaQuincenalPorCortes($fechaBase, $indice) {
 		$diaActual = (int)$fechaCuota->format('j');
 
 		if ($diaActual === 15) {
-			$ultimoDiaMesActual = cal_days_in_month(CAL_GREGORIAN, $mesActual, $anioActual);
+			$ultimoDiaMesActual = telar_dias_en_mes($mesActual, $anioActual);
 			$fechaCuota = DateTime::createFromFormat('Y-n-j', $anioActual . '-' . $mesActual . '-' . $ultimoDiaMesActual);
 		} else {
 			$mesSiguiente = $mesActual + 1;
@@ -4397,8 +4397,9 @@ if($operacion=="editar")
 	// Compara los datos anteriores con los nuevos y prepara el mensaje
 	$mensaje= "";
 	foreach ($datos_gasto[0] as $key => $value) {
-		if ($datos_gasto_nuevo[$key] != $value) {
-			$mensaje .= ", el campo $key cambió de '".$value."' a '".$datos_gasto_nuevo[$key]."'";
+		$valorNuevo = array_key_exists($key, $datos_gasto_nuevo) ? $datos_gasto_nuevo[$key] : null;
+		if ($valorNuevo != $value) {
+			$mensaje .= ", el campo $key cambió de '".$value."' a '".$valorNuevo."'";
 		}
 	}
 	if ($mensaje && $datos_gasto_nuevo['cod_interConsultaFK']) {
@@ -6522,7 +6523,7 @@ $stmt = $mysqli->prepare($sql);/*Se prepara la sentencia sql con el objeto prepa
 /*Función para ejecutar sentencias sql*/
 if ( ! $stmt->execute()) {
 /*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 $totalPagado=0;
@@ -6763,7 +6764,7 @@ $stmt = $mysqli->prepare($sql);/*Se prepara la sentencia sql con el objeto prepa
 /*Función para ejecutar sentencias sql*/
 if ( ! $stmt->execute()) {
 /*Si la sentencia prepara retorna un false entra esta funcion y capturamos el error y lo devolvemos con un echo*/
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -6956,7 +6957,7 @@ $stmt->bind_param($ss,$motivo,$estado,$categoria,$necesita_autorizacion);
 
 if (!$stmt->execute()) {
 	echo "$consulta1\n$motivo\n";
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }
@@ -6994,7 +6995,7 @@ $stmt = $mysqli->prepare($consulta1);
 
 if (!$stmt->execute()) {
 	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }
@@ -7101,7 +7102,7 @@ function agregarLimiteCaja($cod_usuarioF, $limite_monto) {
 	$stmt->bind_param($ss,$cod_usuarioF, $limite_monto);
 
 	if (!$stmt->execute()) {
-		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 		exit;
 	}
 
@@ -7118,7 +7119,7 @@ function obtenerLimiteCaja() {
 	$stmt = $mysqli->prepare($consulta1);
 
 	if (!$stmt->execute()) {
-		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 		exit;
 	}
 

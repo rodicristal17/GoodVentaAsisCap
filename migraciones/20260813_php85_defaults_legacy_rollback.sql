@@ -1,0 +1,62 @@
+-- Revierte solamente las definiciones modificadas por la migracion PHP 8.5.
+
+ALTER TABLE accesosuser
+    MODIFY COLUMN frmname VARCHAR(75) NOT NULL,
+    MODIFY COLUMN orden DOUBLE NOT NULL;
+
+ALTER TABLE compra
+    MODIFY COLUMN total_compra DOUBLE NOT NULL,
+    MODIFY COLUMN tipo_comprobante VARCHAR(20) NOT NULL,
+    MODIFY COLUMN motivoeliminar VARCHAR(150) NOT NULL;
+
+ALTER TABLE credito
+    MODIFY COLUMN dias DOUBLE NOT NULL,
+    MODIFY COLUMN interes DOUBLE NOT NULL,
+    MODIFY COLUMN totalinteres INT(11) NOT NULL,
+    MODIFY COLUMN totaldeuda INT(11) NOT NULL,
+    MODIFY COLUMN total INT(11) NOT NULL,
+    MODIFY COLUMN descuento INT(11) NOT NULL;
+
+ALTER TABLE fotos_cliente
+    MODIFY COLUMN cod_ventaFK INT(11) NOT NULL;
+
+ALTER TABLE historialdespacho
+    MODIFY COLUMN cod_anulado_por VARCHAR(45) NOT NULL,
+    MODIFY COLUMN fecha_anulacion DATE NOT NULL;
+
+ALTER TABLE nrofactura
+    MODIFY COLUMN timbrado VARCHAR(20) NOT NULL,
+    MODIFY COLUMN ire VARCHAR(5) NOT NULL,
+    MODIFY COLUMN irp VARCHAR(5) NOT NULL,
+    MODIFY COLUMN iva VARCHAR(5) NOT NULL;
+
+ALTER TABLE pago
+    MODIFY COLUMN codApertura VARCHAR(45) NOT NULL,
+    MODIFY COLUMN codCaja VARCHAR(45) NOT NULL,
+    MODIFY COLUMN descripcion VARCHAR(45) NOT NULL,
+    MODIFY COLUMN cod_tipoPagoFK INT(11) NOT NULL;
+
+ALTER TABLE pagoseliminados
+    MODIFY COLUMN cod_ventaFK VARCHAR(10) NOT NULL;
+
+ALTER TABLE pedidos
+    MODIFY COLUMN idpedidos INT(11) NOT NULL;
+
+ALTER TABLE persona
+    MODIFY COLUMN direccion VARCHAR(255) NOT NULL;
+
+ALTER TABLE producto
+    MODIFY COLUMN stock_producto DOUBLE NOT NULL;
+
+ALTER TABLE referenciascliente
+    MODIFY COLUMN obs VARCHAR(250) NOT NULL;
+
+ALTER TABLE solicitudcredito
+    MODIFY COLUMN detalleVenta VARCHAR(100) NOT NULL,
+    MODIFY COLUMN cod_usuarioFK INT(11) NOT NULL;
+
+ALTER TABLE venta
+    MODIFY COLUMN pago INT(11) NOT NULL,
+    MODIFY COLUMN descuento INT(11) NOT NULL,
+    MODIFY COLUMN codSolicitudCreditoFK INT(11) NOT NULL,
+    MODIFY COLUMN apodo VARCHAR(50) NOT NULL;

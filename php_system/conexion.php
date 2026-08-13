@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__ . "/php85_compat.php");
 require_once(__DIR__ . "/auditoria_permisos_helper.php");
 
 function conectar_al_servidor(){

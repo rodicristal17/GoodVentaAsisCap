@@ -32,7 +32,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=conciliacion-bancaria-familiar-20260808-3" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=monitor-errores-20260812-1" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-4" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=trabajo-laboratorio-20260723-mini-hilo-1" />
@@ -83,6 +83,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="../js_system/abmGasto_ingresosEgresos.js?x=hilo-gasto-id-fijo-20260804-1"></script>
 <script src="../js_system/abmAsistencia.js?x=presencia-segura-20260717-1"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
+<script src="../js_system/abmErroresSistema.js?x=20260812-1"></script>
 <script src="../js_system/abmSolicitudEliminadoInforme.js?x=performance-polling-20260718"></script>
 <script src="../js_system/abmTrabajoMecanicoDental.js?x=historico-solo-consulta-20260721"></script>
 <script src="../js_system/trabajo_laboratorio.js?x=trabajo-laboratorio-20260725-03"></script>
@@ -4676,6 +4677,13 @@ class='divMinimizado'></div>
 <center><div id='divMinimizadoListadodeNiveles' style='display:none' class='divMinimizado'></div></center>
 </td>
 </tr>
+</table>
+
+<table id='divMenuErroresSistema' class='divMenub' data-access-key='errores_sistema' style='text-align:center;display:none' onclick='abrirErroresSistema()'>
+<tr><td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/alerta.png' alt='' />
+<p class='pTitulo4'>Errores del sistema</p>
+</td></tr>
 </table>
 
 
@@ -24051,6 +24059,31 @@ ZONA
 </div>
 </center>
 </div>
+<div class="principal2" style="display:none;" id="divErroresSistema">
+  <div class="error-sistema-shell">
+    <div class="error-sistema-header">
+      <div>
+        <p class="pTituloB">Controlador de <b style="font-size:30px">Errores</b></p>
+        <p class="error-sistema-subtitulo">Incidentes técnicos sanitizados de los últimos 30 días</p>
+      </div>
+      <button type="button" class="error-sistema-cerrar" onclick="cerrarErroresSistema()" aria-label="Cerrar monitor de errores">×</button>
+    </div>
+    <div class="error-sistema-filtros">
+      <label>Nivel<select id="selErrorSistemaNivel"><option value="">Todos</option><option value="fatal">Fatal</option><option value="warning">Warning</option><option value="deprecated">Deprecated</option><option value="notice">Notice</option></select></label>
+      <label>Desde<input id="inptErrorSistemaDesde" type="date"></label>
+      <label class="error-sistema-buscar">Buscar<input id="inptErrorSistemaBuscar" type="search" placeholder="Código, ruta, archivo o mensaje" onkeyup="if(event.keyCode===13){buscarErroresSistema()}"></label>
+      <button type="button" class="btn4" onclick="buscarErroresSistema()">Actualizar</button>
+    </div>
+    <div class="error-sistema-resumen"><strong id="totalErroresSistema">0</strong> incidentes encontrados</div>
+    <div class="error-sistema-tabla-wrap">
+      <table class="error-sistema-tabla">
+        <thead><tr><th>Fecha</th><th>Nivel</th><th>Código</th><th>Ruta</th><th>Mensaje</th><th>Origen</th></tr></thead>
+        <tbody id="tbodyErroresSistema"><tr><td colspan="6" class="error-sistema-vacio">Presioná Actualizar para consultar.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div class="principal2" style="display:none;" id="divInformeLogInactivos">
   <table style="width:100%;height:100%" id="tdEfectoInformeLogInactivos" class="magictime slideDownReturn">
     <tbody>

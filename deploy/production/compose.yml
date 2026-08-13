@@ -6,6 +6,7 @@ services:
       args:
         PHP_VERSION: ${TELAR_PHP_VERSION:-7.4}
     restart: unless-stopped
+    command: ["sh", "-c", "install -d -o www-data -g www-data -m 0770 /var/log/telar && exec apache2-foreground"]
     depends_on:
       database:
         condition: service_healthy
@@ -17,12 +18,15 @@ services:
       TZ: America/Asuncion
     ports:
       - "${TELAR_BIND_IP:-10.220.100.201}:${TELAR_HTTP_PORT:-8080}:80"
+      - "${TELAR_BIND_IP:-10.220.100.201}:${TELAR_HTTPS_PORT:-443}:443"
     volumes:
       - ../../:/var/www/html
+      - telar_error_logs:/var/log/telar
+      - ./certs:/etc/apache2/ssl:ro
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      test: ["CMD-SHELL", "php -r '$$s=@file_get_contents(\"http://127.0.0.1/GoodVentaAsisCap/system/login.html\"); exit($$s === false ? 1 : 0);'"]
+      test: ["CMD-SHELL", "php -r '$$c=stream_context_create([\"ssl\"=>[\"verify_peer\"=>false,\"verify_peer_name\"=>false]]); $$s=@file_get_contents(\"https://127.0.0.1/GoodVentaAsisCap/system/login.html\", false, $$c); exit($$s === false ? 1 : 0);'"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -54,3 +58,4 @@ services:
 
 volumes:
   telar_database:
+  telar_error_logs:

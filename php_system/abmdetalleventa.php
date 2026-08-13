@@ -581,7 +581,7 @@ where dtv.cod_ventaFK='$buscar'";
 $pagina="";
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -732,7 +732,7 @@ $stmt1->bind_param($ss,$cantidad_detalle,$descuento,$cod_productoFK,$precio_prod
 
 if (!$stmt1->execute()) {
 	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
@@ -776,7 +776,7 @@ if($tipo == "1"){
 $consulta="delete from credito where  cod_venta='$cod_venta'";
 $stmt = $mysqli->prepare($consulta);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -816,7 +816,7 @@ $stmt1->bind_param($ss,$cod_detalle);
 
 if (!$stmt1->execute()) {
 	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }
@@ -832,7 +832,7 @@ $stmt1->bind_param($ss,$CodProductoCambio,$cod_ventaFK,$cod_usuarioFK);
 
 if (!$stmt1->execute()) {
 
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
@@ -883,7 +883,7 @@ $stmt1->bind_param($ss,$cantidad_detalle,$descuento,$cod_productoFK,$precio_prod
 
 if (!$stmt1->execute()) {
 	
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
@@ -902,7 +902,7 @@ $stmt1->bind_param($ss,$cantidad_detalle,$cod_productoFK);
 
 if (!$stmt1->execute()) {
 
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
@@ -959,7 +959,7 @@ $mysqli=conectar_al_servidor();
 // $stmt1->bind_param($ss,$cod_detalle);
 // if (!$stmt1->execute()) {
 	
-// echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+// echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 // exit;
 
 // }
@@ -975,7 +975,7 @@ $stmt1 = $mysqli->prepare($consulta1);
 if (!$stmt1->execute()) {
 	
 
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
@@ -1019,7 +1019,7 @@ $stmt1 = $mysqli->prepare($consulta1);
 $ss='s';
 $stmt1->bind_param($ss,$cod_detalle);
 if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }
@@ -1054,7 +1054,7 @@ $mysqli=conectar_al_servidor();
 // $stmt1->bind_param($ss,$cod_detalle);
 
 // if (!$stmt1->execute()) {
-// echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+// echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 // exit;
 
 // }
@@ -1071,7 +1071,7 @@ $stmt1 = $mysqli->prepare($consulta1);
 if (!$stmt1->execute()) {
 	
 
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
@@ -1112,7 +1112,7 @@ $stmt1 = $mysqli->prepare($consulta1);
 if (!$stmt1->execute()) {
 	
 
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
@@ -1148,7 +1148,7 @@ function quitarproducto($cod_detalle, $cod_ventaFK, $codProducto, $motivo, $desc
 	$ss='s';
 	$stmt1->bind_param($ss,$cod_detalle);
 	if (!$stmt1->execute()) {
-	echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+	echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 	exit;
 	}
 	$result = $stmt1->get_result();
@@ -1176,7 +1176,7 @@ function quitarproducto($cod_detalle, $cod_ventaFK, $codProducto, $motivo, $desc
 	$stmt1 = $mysqli->prepare($consulta1);
 	$stmt1->bind_param($ss,$cod_detalle);
 	if (!$stmt1->execute()) {
-	echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+	echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 	exit;
 	}
 	$stmt1->close();
@@ -1202,7 +1202,7 @@ function registrarDetalleVentaEliminado($motivo,$codProducto,$user,$cod_ventaFK)
 	$ss='ssss';
 	$stmt1->bind_param($ss,$motivo,$codProducto,$user,$cod_ventaFK);
 	if (!$stmt1->execute()) {
-	echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+	echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 	exit;
 	}
 	mysqli_close($mysqli);
@@ -1362,7 +1362,7 @@ $stmt1->bind_param($ss,$total,$cod_venta);
 if (!$stmt1->execute()) {
 	
 
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }
@@ -1387,7 +1387,7 @@ $stmt1->bind_param($ss ,$idAbm);
 
 if (!$stmt1->execute()) {	
 
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 
 }
@@ -1433,7 +1433,7 @@ values($idGaranteFk,'$fecha_venta','0',$cod_usuarioFK,$cod_clienteFK,'$num_factu
 $stmt1 = $mysqli->prepare($consulta1);
 
 if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 
 }
@@ -1514,7 +1514,7 @@ function BuscarDatosPagare($cod_venta)
 	$stmt = $mysqli->prepare($sql);
 	$stmt->bind_param('s', $cod_venta);
 	if ( ! $stmt->execute()) {
-		echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+		echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 		exit;
 	}
 
@@ -1605,7 +1605,7 @@ $nroCouta = "1";
 $fac="";
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 $SubTotalestotalIva10=0;
@@ -1892,7 +1892,7 @@ $sql= "select cr.fechapago,cr.plazo,cr.Monto as montocredito,pg.idPago,pg.Fecha,
 $pagina = "";   
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 $pagina2 = ""; 
@@ -1981,7 +1981,7 @@ $pagina="";
 $cuotas = "0";  
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -2027,7 +2027,7 @@ $sql= "select count(vt.num_factura) as cuotas
 $cuotas = "0";  
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -2092,7 +2092,7 @@ $nroFactura = "0";
 $nroVenta = "0";   
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 $SubTotalestotalIva10=0;
@@ -2227,7 +2227,7 @@ where vt.cod_clienteFK='$buscar' order by fecha_venta desc";
 $pagina = "";    
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -2318,7 +2318,7 @@ where dtv.cod_ventaFK='$buscar'";
 $pagina="";
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 $totalIva10=0;
@@ -2469,7 +2469,7 @@ $ultimaFechaPago ="0";
  
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -2601,7 +2601,7 @@ $totalventas = "0";
 $totalinvertido = "0";   
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -2665,7 +2665,7 @@ and  IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta
  ".$condicionfecha.$condicionCodLocal.$condicionCategoria.$condicionMarca.$condicioncodigo.$condicionproducto.$condiciongroupby; 
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -2739,7 +2739,7 @@ $totalventas = $totalventa;
 $totalinvertido = $totalinvertido;   
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -2820,7 +2820,7 @@ $totalventa = "0";
 $totalpagado = "0";   
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -2925,7 +2925,7 @@ $stmt = $mysqli->prepare($sql);
 
 if ( ! $stmt->execute()) {
 
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -3062,7 +3062,7 @@ $totalventas = "0";
 $stmt = $mysqli->prepare($sql);
 
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -3171,7 +3171,7 @@ $sql= "select pr.cod_producto
 where  dtv.cod_detalle!='0' and IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0 ".$condicionfecha.$condicionfechafiltro.$condicionfechaVendedor.$condicionproducto.$condicionDescuento.$condicionFlete.$condicioncliente.$condicionLocal." group by dtv.cod_detalle "; 
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 $result = $stmt->get_result();
@@ -3245,7 +3245,7 @@ $totalventas = $totalventa;
 $stmt = $mysqli->prepare($sql);
 
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -3420,7 +3420,7 @@ $pagina="";
 
 $stmt = $mysqli->prepare($sql);
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 
@@ -3557,7 +3557,7 @@ $consulta1="Update cliente set totaldias='$nroDias' where cod_cliente='$codClien
 $stmt1 = $mysqli->prepare($consulta1);
 
 if (!$stmt1->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt->errno.') '.$stmt->error, E_USER_ERROR);
 exit;
 }
 	
@@ -3578,7 +3578,7 @@ function refinanciarencambio($cod_venta,$totalActual,$metodopago){
 $stmt = $mysqli->prepare($sql);
 
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 }
  
@@ -3619,7 +3619,7 @@ exit;
 $stmt = $mysqli->prepare($sql);
 
 if ( ! $stmt->execute()) {
-echo trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
+echo telar_trigger_error('The query execution failed; MySQL said ('.$stmt1->errno.') '.$stmt1->error, E_USER_ERROR);
 exit;
 }
  
