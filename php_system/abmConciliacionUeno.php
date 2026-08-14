@@ -558,6 +558,14 @@ function ueno_resolver_filtro_local($mysqli, $usuario, $codLocalSolicitado)
 	return (int)$valor;
 }
 
+function ueno_entero_nullable($valor)
+{
+	if ($valor === null || trim((string)$valor) === "") {
+		return null;
+	}
+	return (int)$valor;
+}
+
 function ueno_auditar_conciliacion($mysqli, $accion, $tabla, $registro_id, $cod_pagoFK, $id_movimiento, $estado_anterior, $estado_nuevo, $monto, $usuario, $observacion, $datos = "")
 {
 	if (!ueno_tabla_existe($mysqli, "ueno_auditoria_conciliacion")) {
@@ -567,6 +575,10 @@ function ueno_auditar_conciliacion($mysqli, $accion, $tabla, $registro_id, $cod_
 	if (is_array($datos)) {
 		$datos = json_encode($datos);
 	}
+	$cod_pagoFK = ueno_entero_nullable($cod_pagoFK);
+	$id_movimiento = ueno_entero_nullable($id_movimiento);
+	$monto = (int)$monto;
+	$usuario = ueno_entero_nullable($usuario);
 
 	$consulta = "INSERT INTO ueno_auditoria_conciliacion
 		(tabla_afectada, registro_id, cod_pagoFK, id_movimiento, accion, estado_anterior, estado_nuevo, monto, usuario, observacion, datos)
@@ -576,7 +588,7 @@ function ueno_auditar_conciliacion($mysqli, $accion, $tabla, $registro_id, $cod_
 		throw new Exception($mysqli->error);
 	}
 	$stmt->bind_param(
-		"sssssssssss",
+		"ssiisssiiss",
 		$tabla,
 		$registro_id,
 		$cod_pagoFK,
@@ -1651,167 +1663,196 @@ function ueno_insertar_importacion($usuario)
 		));
 	}
 
-	$mysqli->begin_transaction();
 	$bloqueoCuentaFamiliar = false;
-	if ($banco == "FAMILIAR") {
-		$bloqueoCuentaFamiliar = (int)ueno_scalar($mysqli, "SELECT GET_LOCK('telar_conciliacion_familiar_cuenta',10)") === 1;
-		if (!$bloqueoCuentaFamiliar) {
-			$mysqli->rollback();
-			mysqli_close($mysqli);
-			ueno_json(array("1" => "error", "2" => "No se pudo bloquear la validacion de la cuenta Banco Familiar. Intenta nuevamente."));
+	$transaccionImportacionActiva = false;
+	$codigoErrorImportacion = "error_importacion";
+	$mensajeErrorImportacion = "No se pudo guardar el extracto. La operacion fue cancelada. Intenta nuevamente o informa a soporte.";
+	try {
+		if (!$mysqli->begin_transaction()) {
+			throw new Exception("No se pudo iniciar la transaccion de importacion");
 		}
-		try {
-			ueno_validar_cuenta_familiar($mysqli, $cuenta);
-		} catch (Exception $e) {
-			$mysqli->rollback();
-			$mysqli->query("SELECT RELEASE_LOCK('telar_conciliacion_familiar_cuenta')");
-			mysqli_close($mysqli);
-			ueno_json(array("1" => "extractoinvalido", "2" => $e->getMessage()));
+		$transaccionImportacionActiva = true;
+		if ($banco == "FAMILIAR") {
+			$bloqueoCuentaFamiliar = (int)ueno_scalar($mysqli, "SELECT GET_LOCK('telar_conciliacion_familiar_cuenta',10)") === 1;
+			if (!$bloqueoCuentaFamiliar) {
+				$mensajeErrorImportacion = "No se pudo iniciar la validacion de la cuenta Banco Familiar. Intenta nuevamente.";
+				throw new Exception("No se obtuvo el bloqueo de cuenta Banco Familiar");
+			}
+			try {
+				ueno_validar_cuenta_familiar($mysqli, $cuenta);
+			} catch (Exception $e) {
+				$codigoErrorImportacion = "extractoinvalido";
+				$mensajeErrorImportacion = $e->getMessage();
+				throw $e;
+			}
 		}
-	}
 
-	$sqlImportacion = "INSERT INTO ueno_importacion_extracto
-		(banco_codigo, cuenta, denominacion, moneda_codigo, fecha_extracto, periodo_desde, periodo_hasta, nombre_archivo_original, hash_archivo, usuario_importo,
-		cantidad_movimientos, cantidad_creditos, cantidad_debitos, total_creditos, total_debitos, saldo_anterior, saldo_final, estado, observacion)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-	$stmtImp = $mysqli->prepare($sqlImportacion);
-	$estado_importacion = "importado";
-	$stmtImp->bind_param("sssssssssssssssssss", $banco, $cuenta, $denominacion, $moneda_codigo, $fecha_extracto, $periodo_desde, $periodo_hasta, $nombre_archivo, $hash_archivo, $usuario, $cantidad_movimientos, $cantidad_creditos, $cantidad_debitos, $total_creditos, $total_debitos, $saldo_anterior, $saldo_final, $estado_importacion, $observacion);
-	if (!$stmtImp->execute()) {
-		$mysqli->rollback();
-		ueno_json(array("1" => "error", "2" => $stmtImp->error));
-	}
-	$id_importacion = $mysqli->insert_id;
-
-	$nuevos = 0;
-	$duplicados = 0;
-	$vistosInsertadosHash = array();
-	$vistosInsertadosComprobanteMonto = array();
-	$sqlMovimiento = "INSERT INTO ueno_movimiento_bancario
-		(id_importacion, banco_codigo, cuenta, fecha_confirmacion, fecha_transaccion, nro_comprobante, descripcion, concepto, importe_debito,
-		importe_credito, tipo_movimiento, saldo_banco, monto_disponible, estado, hash_movimiento)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-	$stmtMov = $mysqli->prepare($sqlMovimiento);
-	$sqlExisteComprobanteMonto = "SELECT id_movimiento FROM ueno_movimiento_bancario
-		WHERE banco_codigo=? AND cuenta=? AND nro_comprobante=?
-		AND (CASE WHEN importe_credito>0 THEN importe_credito ELSE importe_debito END)=?
-		AND (CASE WHEN importe_credito>0 THEN importe_credito ELSE importe_debito END)>0
-		LIMIT 1";
-	$stmtExisteComprobanteMonto = $mysqli->prepare($sqlExisteComprobanteMonto);
-
-	foreach ($normalizados as $mov) {
-		$mov_hash_movimiento = $mov["hash_movimiento"];
-		$mov_clave_comprobante_monto = ueno_clave_comprobante_monto_movimiento($mov);
-		$mov_fecha_confirmacion = $mov["fecha_confirmacion"];
-		$mov_fecha_transaccion = $mov["fecha_transaccion"];
-		$mov_nro_comprobante = $mov["nro_comprobante"];
-		$mov_descripcion = $mov["descripcion"];
-		$mov_concepto = $mov["concepto"];
-		$mov_importe_debito = $mov["importe_debito"];
-		$mov_importe_credito = $mov["importe_credito"];
-		$mov_tipo_movimiento = $mov["tipo_movimiento"];
-		$mov_saldo_banco = $mov["saldo_banco"];
-		$mov_monto_disponible = $mov["monto_disponible"];
-		$mov_estado = $mov["estado"];
-
-		$sqlExiste = "SELECT id_movimiento FROM ueno_movimiento_bancario WHERE hash_movimiento=? LIMIT 1";
-		$stmtExiste = $mysqli->prepare($sqlExiste);
-		$stmtExiste->bind_param("s", $mov_hash_movimiento);
-		if (!$stmtExiste->execute()) {
-			$mysqli->rollback();
-			ueno_json(array("1" => "error", "2" => $stmtExiste->error));
+		$sqlImportacion = "INSERT INTO ueno_importacion_extracto
+			(banco_codigo, cuenta, denominacion, moneda_codigo, fecha_extracto, periodo_desde, periodo_hasta, nombre_archivo_original, hash_archivo, usuario_importo,
+			cantidad_movimientos, cantidad_creditos, cantidad_debitos, total_creditos, total_debitos, saldo_anterior, saldo_final, estado, observacion)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		$stmtImp = $mysqli->prepare($sqlImportacion);
+		if (!$stmtImp) {
+			throw new Exception($mysqli->error);
 		}
-		$resExiste = $stmtExiste->get_result();
-		if ($resExiste && $resExiste->num_rows > 0) {
-			$duplicados++;
+		$estado_importacion = "importado";
+		$stmtImp->bind_param("sssssssssssssssssss", $banco, $cuenta, $denominacion, $moneda_codigo, $fecha_extracto, $periodo_desde, $periodo_hasta, $nombre_archivo, $hash_archivo, $usuario, $cantidad_movimientos, $cantidad_creditos, $cantidad_debitos, $total_creditos, $total_debitos, $saldo_anterior, $saldo_final, $estado_importacion, $observacion);
+		if (!$stmtImp->execute()) {
+			throw new Exception($stmtImp->error);
+		}
+		$id_importacion = $mysqli->insert_id;
+
+		$nuevos = 0;
+		$duplicados = 0;
+		$vistosInsertadosHash = array();
+		$vistosInsertadosComprobanteMonto = array();
+		$sqlMovimiento = "INSERT INTO ueno_movimiento_bancario
+			(id_importacion, banco_codigo, cuenta, fecha_confirmacion, fecha_transaccion, nro_comprobante, descripcion, concepto, importe_debito,
+			importe_credito, tipo_movimiento, saldo_banco, monto_disponible, estado, hash_movimiento)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		$stmtMov = $mysqli->prepare($sqlMovimiento);
+		if (!$stmtMov) {
+			throw new Exception($mysqli->error);
+		}
+		$sqlExisteComprobanteMonto = "SELECT id_movimiento FROM ueno_movimiento_bancario
+			WHERE banco_codigo=? AND cuenta=? AND nro_comprobante=?
+			AND (CASE WHEN importe_credito>0 THEN importe_credito ELSE importe_debito END)=?
+			AND (CASE WHEN importe_credito>0 THEN importe_credito ELSE importe_debito END)>0
+			LIMIT 1";
+		$stmtExisteComprobanteMonto = $mysqli->prepare($sqlExisteComprobanteMonto);
+		if (!$stmtExisteComprobanteMonto) {
+			throw new Exception($mysqli->error);
+		}
+
+		foreach ($normalizados as $mov) {
+			$mov_hash_movimiento = $mov["hash_movimiento"];
+			$mov_clave_comprobante_monto = ueno_clave_comprobante_monto_movimiento($mov);
+			$mov_fecha_confirmacion = $mov["fecha_confirmacion"];
+			$mov_fecha_transaccion = $mov["fecha_transaccion"];
+			$mov_nro_comprobante = $mov["nro_comprobante"];
+			$mov_descripcion = $mov["descripcion"];
+			$mov_concepto = $mov["concepto"];
+			$mov_importe_debito = $mov["importe_debito"];
+			$mov_importe_credito = $mov["importe_credito"];
+			$mov_tipo_movimiento = $mov["tipo_movimiento"];
+			$mov_saldo_banco = $mov["saldo_banco"];
+			$mov_monto_disponible = $mov["monto_disponible"];
+			$mov_estado = $mov["estado"];
+
+			$sqlExiste = "SELECT id_movimiento FROM ueno_movimiento_bancario WHERE hash_movimiento=? LIMIT 1";
+			$stmtExiste = $mysqli->prepare($sqlExiste);
+			if (!$stmtExiste) {
+				throw new Exception($mysqli->error);
+			}
+			$stmtExiste->bind_param("s", $mov_hash_movimiento);
+			if (!$stmtExiste->execute()) {
+				throw new Exception($stmtExiste->error);
+			}
+			$resExiste = $stmtExiste->get_result();
+			if ($resExiste && $resExiste->num_rows > 0) {
+				$duplicados++;
+				$vistosInsertadosHash[$mov_hash_movimiento] = true;
+				if ($mov_clave_comprobante_monto != "") {
+					$vistosInsertadosComprobanteMonto[$mov_clave_comprobante_monto] = true;
+				}
+				continue;
+			}
+
+			if (isset($vistosInsertadosHash[$mov_hash_movimiento])) {
+				$duplicados++;
+				continue;
+			}
+
+			if ($mov_clave_comprobante_monto != "") {
+				if (isset($vistosInsertadosComprobanteMonto[$mov_clave_comprobante_monto])) {
+					$duplicados++;
+					continue;
+				}
+				$partesComprobanteMonto = explode("|", $mov_clave_comprobante_monto);
+				$existeNroComprobante = $partesComprobanteMonto[0];
+				$existeMonto = (int)$partesComprobanteMonto[1];
+				$stmtExisteComprobanteMonto->bind_param("sssi", $banco, $cuenta, $existeNroComprobante, $existeMonto);
+				if (!$stmtExisteComprobanteMonto->execute()) {
+					throw new Exception($stmtExisteComprobanteMonto->error);
+				}
+				$resExisteComprobanteMonto = $stmtExisteComprobanteMonto->get_result();
+				if ($resExisteComprobanteMonto && $resExisteComprobanteMonto->num_rows > 0) {
+					$duplicados++;
+					$vistosInsertadosHash[$mov_hash_movimiento] = true;
+					$vistosInsertadosComprobanteMonto[$mov_clave_comprobante_monto] = true;
+					continue;
+				}
+			}
+
+			$stmtMov->bind_param(
+				"sssssssssssssss",
+				$id_importacion,
+				$banco,
+				$cuenta,
+				$mov_fecha_confirmacion,
+				$mov_fecha_transaccion,
+				$mov_nro_comprobante,
+				$mov_descripcion,
+				$mov_concepto,
+				$mov_importe_debito,
+				$mov_importe_credito,
+				$mov_tipo_movimiento,
+				$mov_saldo_banco,
+				$mov_monto_disponible,
+				$mov_estado,
+				$mov_hash_movimiento
+			);
+			if (!$stmtMov->execute()) {
+				throw new Exception($stmtMov->error);
+			}
+			$nuevos++;
 			$vistosInsertadosHash[$mov_hash_movimiento] = true;
 			if ($mov_clave_comprobante_monto != "") {
 				$vistosInsertadosComprobanteMonto[$mov_clave_comprobante_monto] = true;
 			}
-			continue;
 		}
 
-		if (isset($vistosInsertadosHash[$mov_hash_movimiento])) {
-			$duplicados++;
-			continue;
-		}
-
-		if ($mov_clave_comprobante_monto != "") {
-			if (isset($vistosInsertadosComprobanteMonto[$mov_clave_comprobante_monto])) {
-				$duplicados++;
-				continue;
-			}
-			$partesComprobanteMonto = explode("|", $mov_clave_comprobante_monto);
-			$existeNroComprobante = $partesComprobanteMonto[0];
-			$existeMonto = (int)$partesComprobanteMonto[1];
-			$stmtExisteComprobanteMonto->bind_param("sssi", $banco, $cuenta, $existeNroComprobante, $existeMonto);
-			if (!$stmtExisteComprobanteMonto->execute()) {
-				$mysqli->rollback();
-				ueno_json(array("1" => "error", "2" => $stmtExisteComprobanteMonto->error));
-			}
-			$resExisteComprobanteMonto = $stmtExisteComprobanteMonto->get_result();
-			if ($resExisteComprobanteMonto && $resExisteComprobanteMonto->num_rows > 0) {
-				$duplicados++;
-				$vistosInsertadosHash[$mov_hash_movimiento] = true;
-				$vistosInsertadosComprobanteMonto[$mov_clave_comprobante_monto] = true;
-				continue;
-			}
-		}
-
-		$stmtMov->bind_param(
-			"sssssssssssssss",
+		ueno_auditar_conciliacion(
+			$mysqli,
+			"IMPORTAR_EXTRACTO",
+			"ueno_importacion_extracto",
 			$id_importacion,
-			$banco,
-			$cuenta,
-			$mov_fecha_confirmacion,
-			$mov_fecha_transaccion,
-			$mov_nro_comprobante,
-			$mov_descripcion,
-			$mov_concepto,
-			$mov_importe_debito,
-			$mov_importe_credito,
-			$mov_tipo_movimiento,
-			$mov_saldo_banco,
-			$mov_monto_disponible,
-			$mov_estado,
-			$mov_hash_movimiento
+			"",
+			"",
+			"",
+			$estado_importacion,
+			$total_creditos,
+			$usuario,
+			"Importacion " . ueno_banco_nombre($banco) . ": " . $nombre_archivo,
+			array(
+				"banco_codigo" => $banco,
+				"cuenta" => $cuenta,
+				"movimientos_leidos" => $cantidad_movimientos,
+				"movimientos_nuevos" => $nuevos,
+				"movimientos_duplicados" => $duplicados,
+				"total_debitos" => $total_debitos
+			)
 		);
-		if (!$stmtMov->execute()) {
+
+		if (!$mysqli->commit()) {
+			throw new Exception("No se pudo confirmar la transaccion de importacion");
+		}
+		$transaccionImportacionActiva = false;
+	} catch (Throwable $e) {
+		if ($transaccionImportacionActiva) {
 			$mysqli->rollback();
-			ueno_json(array("1" => "error", "2" => $stmtMov->error));
 		}
-		$nuevos++;
-		$vistosInsertadosHash[$mov_hash_movimiento] = true;
-		if ($mov_clave_comprobante_monto != "") {
-			$vistosInsertadosComprobanteMonto[$mov_clave_comprobante_monto] = true;
+		if ($bloqueoCuentaFamiliar) {
+			$mysqli->query("SELECT RELEASE_LOCK('telar_conciliacion_familiar_cuenta')");
+			$bloqueoCuentaFamiliar = false;
 		}
+		error_log("[Conciliacion bancaria][guardar_importacion][" . $banco . "] " . $e->getMessage());
+		mysqli_close($mysqli);
+		ueno_json(array("1" => $codigoErrorImportacion, "2" => $mensajeErrorImportacion));
 	}
-
-	ueno_auditar_conciliacion(
-		$mysqli,
-		"IMPORTAR_EXTRACTO",
-		"ueno_importacion_extracto",
-		$id_importacion,
-		"",
-		"",
-		"",
-		$estado_importacion,
-		$total_creditos,
-		$usuario,
-		"Importacion " . ueno_banco_nombre($banco) . ": " . $nombre_archivo,
-		array(
-			"banco_codigo" => $banco,
-			"cuenta" => $cuenta,
-			"movimientos_leidos" => $cantidad_movimientos,
-			"movimientos_nuevos" => $nuevos,
-			"movimientos_duplicados" => $duplicados,
-			"total_debitos" => $total_debitos
-		)
-	);
-
-	$mysqli->commit();
 	if ($bloqueoCuentaFamiliar) {
 		$mysqli->query("SELECT RELEASE_LOCK('telar_conciliacion_familiar_cuenta')");
+		$bloqueoCuentaFamiliar = false;
 	}
 
 	$resumen_conciliacion = ueno_resumen_conciliacion_vacio();

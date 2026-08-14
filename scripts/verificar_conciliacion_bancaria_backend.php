@@ -1,5 +1,5 @@
 <?php
-// Verificacion de solo lectura para la extension multi-banco de conciliacion.
+// Verificacion no persistente para la extension multi-banco de conciliacion.
 $raiz = dirname(__DIR__);
 chdir($raiz . DIRECTORY_SEPARATOR . "php_system");
 require_once($raiz . DIRECTORY_SEPARATOR . "php_system" . DIRECTORY_SEPARATOR . "abmConciliacionUeno.php");
@@ -20,6 +20,9 @@ verificar_condicion(strpos(ueno_banco_badge_html("UENO"), "ueno-bank-badge--ueno
 verificar_condicion(strpos(ueno_banco_badge_html("FAMILIAR"), "ueno-bank-badge--familiar") !== false, "Falta la insignia Banco Familiar");
 verificar_condicion(ueno_hash_archivo_valido(str_repeat("a", 64)), "El servidor rechazo una huella SHA-256 valida");
 verificar_condicion(!ueno_hash_archivo_valido("simple-12345"), "El servidor acepto una huella simplificada insegura");
+verificar_condicion(ueno_entero_nullable("") === null, "La auditoria no convierte el entero vacio a NULL");
+verificar_condicion(ueno_entero_nullable(null) === null, "La auditoria no conserva el entero NULL");
+verificar_condicion(ueno_entero_nullable("25") === 25, "La auditoria no normaliza un identificador numerico");
 $mesaTodos = ueno_tabla_movimientos($mysqli, "", "", "", "", "", "todos", 0, "todos", 2, "");
 $mesaUeno = ueno_tabla_movimientos($mysqli, "", "", "", "", "", "todos", 0, "todos", 2, "UENO");
 verificar_condicion($mesaTodos["total"] >= $mesaUeno["total"], "La mesa combinada excluye movimientos Ueno");
@@ -27,6 +30,59 @@ verificar_condicion(strpos($mesaTodos["html"], "ueno-bank-badge") !== false || $
 $lockPrueba = (int)ueno_scalar($mysqli, "SELECT GET_LOCK('telar_conciliacion_bancaria_verificador',0)");
 verificar_condicion($lockPrueba === 1, "MySQL no pudo adquirir el bloqueo de cuenta bancaria");
 verificar_condicion((int)ueno_scalar($mysqli, "SELECT RELEASE_LOCK('telar_conciliacion_bancaria_verificador')") === 1, "MySQL no libero el bloqueo de cuenta bancaria");
+
+$resultModoSql = $mysqli->query("SELECT @@SESSION.sql_mode AS sql_mode");
+verificar_condicion($resultModoSql !== false, "No se pudo consultar el modo SQL de la sesion");
+$filaModoSql = $resultModoSql->fetch_assoc();
+$modoSqlOriginal = $filaModoSql ? (string)$filaModoSql["sql_mode"] : "";
+$conteoAuditoriaAntes = (int)ueno_scalar($mysqli, "SELECT COUNT(*) FROM ueno_auditoria_conciliacion");
+$marcadorAuditoria = "verificador-" . uniqid("", true);
+$transaccionAuditoriaActiva = false;
+try {
+	verificar_condicion($mysqli->query("SET SESSION sql_mode='STRICT_TRANS_TABLES'") !== false, "No se pudo activar el modo SQL estricto");
+	verificar_condicion($mysqli->begin_transaction(), "No se pudo iniciar la prueba transaccional de auditoria");
+	$transaccionAuditoriaActiva = true;
+	foreach (array("UENO", "FAMILIAR") as $bancoAuditoria) {
+		ueno_auditar_conciliacion(
+			$mysqli,
+			"VERIFICAR_IMPORTACION_" . $bancoAuditoria,
+			"verificador_conciliacion",
+			$marcadorAuditoria . "-" . $bancoAuditoria,
+			"",
+			"",
+			"",
+			"importado",
+			100,
+			2,
+			"Verificacion transaccional no persistente",
+			array("banco_codigo" => $bancoAuditoria)
+		);
+	}
+	$marcadorSql = $mysqli->real_escape_string($marcadorAuditoria . "-%");
+	$resultAuditoria = $mysqli->query("SELECT COUNT(*) AS total,
+		SUM(CASE WHEN cod_pagoFK IS NULL THEN 1 ELSE 0 END) AS pagos_null,
+		SUM(CASE WHEN id_movimiento IS NULL THEN 1 ELSE 0 END) AS movimientos_null
+		FROM ueno_auditoria_conciliacion
+		WHERE tabla_afectada='verificador_conciliacion' AND registro_id LIKE '$marcadorSql'");
+	verificar_condicion($resultAuditoria !== false, "No se pudo consultar la auditoria transaccional");
+	$filaAuditoria = $resultAuditoria->fetch_assoc();
+	verificar_condicion((int)$filaAuditoria["total"] === 2, "No se registraron ambas auditorias bancarias en modo estricto");
+	verificar_condicion((int)$filaAuditoria["pagos_null"] === 2, "cod_pagoFK vacio no se guardo como NULL");
+	verificar_condicion((int)$filaAuditoria["movimientos_null"] === 2, "id_movimiento vacio no se guardo como NULL");
+	verificar_condicion($mysqli->rollback(), "No se pudo revertir la prueba transaccional de auditoria");
+	$transaccionAuditoriaActiva = false;
+} catch (Throwable $e) {
+	if ($transaccionAuditoriaActiva) {
+		$mysqli->rollback();
+	}
+	$modoSqlRestaurar = $mysqli->real_escape_string($modoSqlOriginal);
+	$mysqli->query("SET SESSION sql_mode='$modoSqlRestaurar'");
+	throw $e;
+}
+$modoSqlRestaurar = $mysqli->real_escape_string($modoSqlOriginal);
+verificar_condicion($mysqli->query("SET SESSION sql_mode='$modoSqlRestaurar'") !== false, "No se pudo restaurar el modo SQL de la sesion");
+$conteoAuditoriaDespues = (int)ueno_scalar($mysqli, "SELECT COUNT(*) FROM ueno_auditoria_conciliacion");
+verificar_condicion($conteoAuditoriaAntes === $conteoAuditoriaDespues, "La prueba de auditoria dejo filas persistidas");
 
 $movimientos = array(
 	array(
@@ -112,6 +168,8 @@ echo json_encode(array(
 	"mesa_combinada" => array("total" => $mesaTodos["total"], "ueno" => $mesaUeno["total"]),
 	"hash_separado_por_banco" => true,
 	"bloqueo_cuenta_familiar" => true,
+	"auditoria_estricta_nullable" => true,
+	"prueba_auditoria_revertida" => true,
 	"totales_familiar_validados" => true,
 	"saldos_secuenciales_validados" => true,
 	"clasificacion_por_banco" => $conteos
