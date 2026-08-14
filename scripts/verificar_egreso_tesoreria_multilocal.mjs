@@ -136,8 +136,9 @@ afirmar(
 );
 afirmar(
 	fuenteHtml.includes("id='avisoDistribucionTesoreriaGasto'")
-		&& fuenteHtml.includes("id='ayudaDistribucionPersonalizadaGasto'"),
-	"La interfaz explica el modo Tesoreria y mantiene una ayuda cercana."
+		&& fuenteHtml.includes("id='ayudaDistribucionPersonalizadaGasto'")
+		&& (fuenteHtml.match(/tesoreria-multilocal-20260814-1/g) || []).length === 2,
+	"La interfaz explica el modo Tesoreria y fuerza la carga de ambos JavaScript actualizados."
 );
 afirmar(
 	fuenteJsInterConsulta.includes('localDetalleInterConsulta.setAttribute("data-cod-local"')
