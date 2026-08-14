@@ -145,6 +145,21 @@ function usuarioPuedeGestionarLocalGasto($codUsuario, $codLocal)
 	return controldeaccesoacasas($codUsuario, 'CAMBIARLOCAL', " u.accion='SI' ") == 1;
 }
 
+function gastoUsuarioPuedeRegistrarTesoreriaMultilocal($codUsuario)
+{
+	$codUsuario= intval($codUsuario);
+	if ($codUsuario <= 0) {
+		return false;
+	}
+	return controldeaccesoacasas($codUsuario, 'VERCIERRESTESORERIA', " u.accion='SI' ") == 1
+		&& controldeaccesoacasas($codUsuario, 'INSERTARLISTADOEGRESOINGRESO', " u.accion='SI' ") == 1;
+}
+
+function gastoDistribucionMinimoPersonalizado($codUsuario, $codLocalPago)
+{
+	return intval($codLocalPago) === 1 && gastoUsuarioPuedeRegistrarTesoreriaMultilocal($codUsuario) ? 1 : 2;
+}
+
 function gastoUsuarioPuedeGestionarLocalPorHilo($mysqli, $codUsuario, $codLocal, $codInterConsulta)
 {
 	$codUsuario= intval($codUsuario);
@@ -280,7 +295,10 @@ function gastoDistribucionValidarLocales($mysqli, $asignaciones, $codUsuario, $c
 	if ($codLocalPago <= 0 || !isset($activos[$codLocalPago])) {
 		throw new Exception('El local de pago ya no esta activo.');
 	}
-	$puedeLocalPago= usuarioPuedeGestionarLocalGasto($codUsuario, $codLocalPago);
+	$puedeTesoreriaAdministracion= $codLocalPago === 1
+		&& gastoUsuarioPuedeRegistrarTesoreriaMultilocal($codUsuario);
+	$puedeLocalPago= usuarioPuedeGestionarLocalGasto($codUsuario, $codLocalPago)
+		|| $puedeTesoreriaAdministracion;
 	$puedeLocalPagoPorHilo= !$puedeLocalPago
 		&& gastoUsuarioPuedeGestionarLocalPorHilo($mysqli, $codUsuario, $codLocalPago, $codInterConsulta);
 	if (!$puedeLocalPago && !$puedeLocalPagoPorHilo) {
@@ -288,7 +306,7 @@ function gastoDistribucionValidarLocales($mysqli, $asignaciones, $codUsuario, $c
 	}
 	$asignacionDesdeAdministracion= $codLocalPago === 1
 		&& in_array($modo, array('compartido', 'personalizado'), true)
-		&& usuarioPuedeGestionarLocalGasto($codUsuario, $codLocalPago);
+		&& $puedeLocalPago;
 	foreach ($locales as $codLocal) {
 		$codLocal= (int)$codLocal;
 		if (!isset($activos[$codLocal])) {
@@ -341,8 +359,12 @@ function gastoDistribucionNormalizarSolicitud($mysqli, $tipo, $codLocalPago, $mo
 			}
 			$asignaciones[$codLocal]= gastoDistribucionMontoEntero(isset($item['monto']) ? $item['monto'] : '');
 		}
-		if (count($asignaciones) < 2) {
-			throw new Exception('La distribucion personalizada requiere por lo menos dos sucursales.');
+		$minimoPersonalizado= gastoDistribucionMinimoPersonalizado($codUsuario, $codLocalPago);
+		if (count($asignaciones) < $minimoPersonalizado) {
+			$mensajeMinimo= $minimoPersonalizado === 1
+				? 'Tesoreria debe seleccionar al menos una sucursal para el impacto del egreso.'
+				: 'La distribucion personalizada requiere por lo menos dos sucursales.';
+			throw new Exception($mensajeMinimo);
 		}
 	}
 	ksort($asignaciones, SORT_NUMERIC);

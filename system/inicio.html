@@ -9017,13 +9017,14 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 <div>
 <div class='panel-title'>Distribuci&oacute;n por sucursal</div>
 <p class='movimiento-distribucion-ayuda'>El local de arriba identifica la caja que paga. Aqu&iacute; defin&iacute;s a qu&eacute; sucursal corresponde contablemente el egreso.</p>
+<p class='movimiento-distribucion-ayuda' id='avisoDistribucionTesoreriaGasto' hidden><b>Modo Tesorer&iacute;a:</b> Administraci&oacute;n conserva la caja pagadora y pod&eacute;s asignar el impacto a una o varias sucursales.</p>
 </div>
 <button type='button' id='btnRepartirEquitativoGasto' class='btn4 movimiento-distribucion-repartir' onclick='repartirEquitativamenteDistribucionGasto()'>Repartir equitativamente</button>
 </div>
 <div class='movimiento-distribucion-modos' role='radiogroup' aria-label='Modo de distribuci&oacute;n del egreso'>
 <label><input type='radio' name='modoDistribucionGasto' value='local' onchange='cambiarModoDistribucionGasto(this.value)'> Un local <small>100% al local que paga; no disponible para Administraci&oacute;n</small></label>
 <label><input type='radio' name='modoDistribucionGasto' value='compartido' onchange='cambiarModoDistribucionGasto(this.value)'> Administraci&oacute;n compartida <small>Partes iguales entre las cinco sucursales</small></label>
-<label><input type='radio' name='modoDistribucionGasto' value='personalizado' onchange='cambiarModoDistribucionGasto(this.value)'> Personalizado <small>Eleg&iacute; 2 o m&aacute;s sucursales y sus montos</small></label>
+<label><input type='radio' name='modoDistribucionGasto' value='personalizado' onchange='cambiarModoDistribucionGasto(this.value)'> Personalizado <small id='ayudaDistribucionPersonalizadaGasto'>Eleg&iacute; 2 o m&aacute;s sucursales y sus montos</small></label>
 </div>
 <div id='listaDistribucionLocalGasto' class='movimiento-distribucion-locales'></div>
 <div id='resumenDistribucionLocalGasto' class='movimiento-distribucion-resumen' aria-live='polite'></div>

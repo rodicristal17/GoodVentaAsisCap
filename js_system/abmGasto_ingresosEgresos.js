@@ -178,6 +178,51 @@ function gastoDistribucionLocalPago() {
 	return select ? Number(select.value || 0) : 0;
 }
 
+function gastoUsuarioPuedeRegistrarTesoreriaMultilocal() {
+	return typeof permisoAccesoUser == "function"
+		&& permisoAccesoUser("VERCIERRESTESORERIA", "accion")
+		&& permisoAccesoUser("INSERTARLISTADOEGRESOINGRESO", "accion");
+}
+
+function gastoDistribucionMinimoPersonalizado() {
+	return gastoUsuarioPuedeRegistrarTesoreriaMultilocal() && gastoDistribucionLocalPago() == 1 ? 1 : 2;
+}
+
+function gastoActualizarAyudaTesoreriaMultilocal() {
+	var habilitado = gastoDistribucionMinimoPersonalizado() == 1;
+	var aviso = document.getElementById("avisoDistribucionTesoreriaGasto");
+	var ayuda = document.getElementById("ayudaDistribucionPersonalizadaGasto");
+	if (aviso) { aviso.hidden = !habilitado; }
+	if (ayuda) {
+		ayuda.innerHTML = habilitado
+			? "Eleg&iacute; una o m&aacute;s sucursales; la caja pagadora sigue siendo Administraci&oacute;n"
+			: "Eleg&iacute; 2 o m&aacute;s sucursales y sus montos";
+	}
+}
+
+function gastoAplicarImpactoTesoreriaDesdeLocalHilo(codLocalHilo) {
+	var codLocalDestino = Number(codLocalHilo || 0);
+	var selectLocalPago = document.getElementById("inptlocalMisGastos");
+	var tipo = document.getElementById("inptTipoGasto");
+	if (codLocalDestino <= 1
+		|| !selectLocalPago
+		|| !tipo
+		|| normalizarTipoMovimientoFinanciero(tipo.value) != "Egreso"
+		|| String(typeof idAbmGasto == "undefined" ? "" : (idAbmGasto || "")) != ""
+		|| !gastoUsuarioPuedeRegistrarTesoreriaMultilocal()) {
+		return false;
+	}
+	selectLocalPago.value = "1";
+	if (String(selectLocalPago.value) != "1") {
+		return false;
+	}
+	gastoDistribucionEstado.modo = "personalizado";
+	gastoDistribucionEstado.valores = {};
+	gastoDistribucionEstado.valores[codLocalDestino] = gastoDistribucionTotalMovimiento();
+	renderizarDistribucionLocalGasto();
+	return true;
+}
+
 function gastoDistribucionEquitativa(monto, locales) {
 	locales = (locales || []).slice().map(Number).filter(function (codigo) { return codigo > 0; });
 	locales.sort(function (a, b) { return a - b; });
@@ -242,8 +287,13 @@ function validarDistribucionGasto(mostrarMensaje) {
 		}
 		suma += asignaciones[i].monto;
 	}
-	if (gastoDistribucionEstado.modo == "personalizado" && asignaciones.length < 2) {
-		if (mostrarMensaje) { ver_vetana_informativa("La distribucion personalizada requiere por lo menos dos sucursales."); }
+	var minimoPersonalizado = gastoDistribucionMinimoPersonalizado();
+	if (gastoDistribucionEstado.modo == "personalizado" && asignaciones.length < minimoPersonalizado) {
+		if (mostrarMensaje) {
+			ver_vetana_informativa(minimoPersonalizado == 1
+				? "Tesoreria debe seleccionar al menos una sucursal para el impacto del egreso."
+				: "La distribucion personalizada requiere por lo menos dos sucursales.");
+		}
 		return { ok: false };
 	}
 	if (gastoDistribucionEstado.modo == "local" && gastoDistribucionLocalPago() == 1) {
@@ -268,7 +318,8 @@ function actualizarResumenDistribucionGasto() {
 		suma += asignaciones[i].monto;
 		partes.push(gastoDistribucionNombreLocal(asignaciones[i].cod_local) + ": " + gastoDistribucionFormato(asignaciones[i].monto) + " Gs.");
 	}
-	var correcto = total > 0 && suma == total && (gastoDistribucionEstado.modo != "personalizado" || asignaciones.length >= 2);
+	var correcto = total > 0 && suma == total
+		&& (gastoDistribucionEstado.modo != "personalizado" || asignaciones.length >= gastoDistribucionMinimoPersonalizado());
 	resumen.className = "movimiento-distribucion-resumen " + (correcto ? "is-ok" : "is-error");
 	resumen.innerHTML = "Asignado: <b>" + gastoDistribucionFormato(suma) + " de " + gastoDistribucionFormato(total) + " Gs.</b>"
 		+ (partes.length ? "<br>" + partes.map(function (parte) { return "<span>" + planificacionGastoEscape(parte) + "</span>"; }).join(" | ") : "<br>Seleccione las sucursales de destino.");
@@ -277,6 +328,7 @@ function actualizarResumenDistribucionGasto() {
 function renderizarDistribucionLocalGasto() {
 	var contenedor = document.getElementById("listaDistribucionLocalGasto");
 	if (!contenedor) { return; }
+	gastoActualizarAyudaTesoreriaMultilocal();
 	var modo = gastoDistribucionEstado.modo;
 	var asignaciones = {};
 	var actuales = gastoDistribucionAsignacionesActuales();
@@ -340,7 +392,7 @@ function cambiarModoDistribucionGasto(modo) {
 		gastoDistribucionEstado.valores[gastoDistribucionLocalPago()] = gastoDistribucionTotalMovimiento();
 	} else if (modo == "compartido") {
 		gastoDistribucionEstado.valores = gastoDistribucionEquitativa(gastoDistribucionTotalMovimiento(), gastoDistribucionLocalesGraficos);
-	} else if (Object.keys(gastoDistribucionEstado.valores).length < 2) {
+	} else if (Object.keys(gastoDistribucionEstado.valores).length < gastoDistribucionMinimoPersonalizado()) {
 		gastoDistribucionEstado.valores = {};
 	}
 	renderizarDistribucionLocalGasto();
@@ -351,6 +403,10 @@ function alternarLocalDistribucionGasto(codLocal, seleccionado) {
 		gastoDistribucionEstado.valores[codLocal] = gastoDistribucionEstado.valores[codLocal] || 0;
 	} else {
 		delete gastoDistribucionEstado.valores[codLocal];
+	}
+	var seleccionados = Object.keys(gastoDistribucionEstado.valores);
+	if (gastoDistribucionMinimoPersonalizado() == 1 && seleccionados.length == 1) {
+		gastoDistribucionEstado.valores[seleccionados[0]] = gastoDistribucionTotalMovimiento();
 	}
 	renderizarDistribucionLocalGasto();
 }
@@ -368,8 +424,11 @@ function repartirEquitativamenteDistribucionGasto() {
 		var check = document.getElementById("chkDistribucionGastoLocal" + codigo);
 		if (check && check.checked) { seleccionados.push(codigo); }
 	}
-	if (seleccionados.length < 2) {
-		ver_vetana_informativa("Seleccione por lo menos dos sucursales antes de repartir.");
+	var minimoPersonalizado = gastoDistribucionMinimoPersonalizado();
+	if (seleccionados.length < minimoPersonalizado) {
+		ver_vetana_informativa(minimoPersonalizado == 1
+			? "Seleccione una sucursal para asignarle el egreso."
+			: "Seleccione por lo menos dos sucursales antes de repartir.");
 		return;
 	}
 	gastoDistribucionEstado.valores = gastoDistribucionEquitativa(gastoDistribucionTotalMovimiento(), seleccionados);
@@ -395,6 +454,11 @@ function actualizarDistribucionPorMontoGasto() {
 		gastoDistribucionEstado.valores[gastoDistribucionLocalPago()] = gastoDistribucionTotalMovimiento();
 	} else if (gastoDistribucionEstado.modo == "compartido") {
 		gastoDistribucionEstado.valores = gastoDistribucionEquitativa(gastoDistribucionTotalMovimiento(), gastoDistribucionLocalesGraficos);
+	} else if (gastoDistribucionEstado.modo == "personalizado" && gastoDistribucionMinimoPersonalizado() == 1) {
+		var seleccionados = Object.keys(gastoDistribucionEstado.valores);
+		if (seleccionados.length == 1) {
+			gastoDistribucionEstado.valores[seleccionados[0]] = gastoDistribucionTotalMovimiento();
+		}
 	}
 	renderizarDistribucionLocalGasto();
 }
@@ -715,6 +779,13 @@ function aplicarContextoCrearMovimientoFinanciero(contexto) {
 	var codConcepto = contexto.conceptoId || "";
 	var conceptoNombre = contexto.conceptoNombre || "";
 	var localFiltrado = contexto.localId || (document.getElementById("inptlocalMisGastosBusca") ? document.getElementById("inptlocalMisGastosBusca").value : "");
+	var localImpactoInicialTesoreria = "";
+	if (tipo == "Egreso"
+		&& gastoUsuarioPuedeRegistrarTesoreriaMultilocal()
+		&& Number(localFiltrado || 0) > 1) {
+		localImpactoInicialTesoreria = String(localFiltrado);
+		localFiltrado = "1";
+	}
 	configurarModalMovimientoFinanciero(contexto);
 	idAbmGasto = "";
 	document.getElementById("btnAbmGastos").value = (tipo == "Ingreso" ? "Guardar ingreso" : (esDeposito ? "Guardar deposito" : "Guardar egreso"));
@@ -738,6 +809,9 @@ function aplicarContextoCrearMovimientoFinanciero(contexto) {
 	}
 	if (localFiltrado && document.getElementById("inptlocalMisGastos")) {
 		document.getElementById("inptlocalMisGastos").value = localFiltrado;
+		if (localImpactoInicialTesoreria && String(document.getElementById("inptlocalMisGastos").value) != "1") {
+			localImpactoInicialTesoreria = "";
+		}
 	}
 	if (contexto.uenoMovimiento && contexto.uenoMovimiento.id_movimiento) {
 		gastoUenoMovimientoOrigen = contexto.uenoMovimiento;
@@ -783,6 +857,12 @@ function aplicarContextoCrearMovimientoFinanciero(contexto) {
 	}
 	inicializarVistaPreviaPlanificacionGasto();
 	reiniciarDistribucionGasto();
+	if (localImpactoInicialTesoreria) {
+		gastoDistribucionEstado.modo = "personalizado";
+		gastoDistribucionEstado.valores = {};
+		gastoDistribucionEstado.valores[Number(localImpactoInicialTesoreria)] = gastoDistribucionTotalMovimiento();
+		renderizarDistribucionLocalGasto();
+	}
 	if (contexto.focoPlanificacion && !contexto.proyectoId) {
 		enfocarPagoYPlanificacionMovimientoFinanciero();
 	}

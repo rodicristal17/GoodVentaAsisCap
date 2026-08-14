@@ -2042,7 +2042,9 @@ function actualizarCabeceraDetalleHilo(datosHilo, opcionesDictamen= "") {
     document.getElementById("txtEstadoInterConsulta").textContent= estado;
     document.getElementById("txtTipoInterConsulta").textContent= tipo;
     document.getElementById("txtCodInterConsulta").textContent= codigo;
-    document.getElementById("localDetalleInterConsulta").textContent= local;
+    var localDetalleInterConsulta= document.getElementById("localDetalleInterConsulta");
+    localDetalleInterConsulta.textContent= local;
+    localDetalleInterConsulta.setAttribute("data-cod-local", String(datosHilo.cod_localFK || ""));
     document.getElementById("txtCodVenta").textContent= venta;
     document.getElementById("txtMontoLimite").textContent= monto == "Sin monto limite" ? monto : monto + " Gs.";
 
@@ -6494,10 +6496,12 @@ function obtenerContextoGastoHiloActual() {
     var codigoHilo= String(cod_interConsulta || "").trim();
     var tituloHilo= document.getElementById("tituloInterConsultas2");
     var nombreHilo= tituloHilo ? String(tituloHilo.textContent || "").trim() : "";
+    var localHilo= document.getElementById("localDetalleInterConsulta");
 
     return {
         codigo: codigoHilo,
-        nombre: nombreHilo
+        nombre: nombreHilo,
+        localId: localHilo ? String(localHilo.getAttribute("data-cod-local") || "").trim() : ""
     };
 }
 
@@ -6539,7 +6543,8 @@ function abrirNuevoGastoDesdeHiloActual(evento) {
         tipoMovimiento: "Egreso",
         categoriaFlujo: "Flujo de gastos del hilo",
         interconsultaId: contexto.codigo,
-        interconsultaNombre: contexto.nombre
+        interconsultaNombre: contexto.nombre,
+        localId: contexto.localId
     });
 }
 
@@ -6584,6 +6589,7 @@ function crearProyectoDesdeHiloActual(evento) {
                 categoriaFlujo: "Proyecto del hilo",
                 interconsultaId: contexto.codigo,
                 interconsultaNombre: contexto.nombre,
+                localId: contexto.localId,
                 proyectoId: idProyecto,
                 proyectoNombre: nombreProyecto,
                 esNuevoProyecto: true,
@@ -7151,10 +7157,14 @@ function obtenerDatosInterConsulta(elemento) {
             cod_ventaFKConsulta= "";
             cod_clienteConsulta= "";
             cod_interConsulta= $(elemento).children('#td_id').html();
+            var codLocalHiloGasto= $(elemento).children('#td_datos_11').html();
             if (typeof gastoFijarHiloFormulario == "function") {
                 gastoFijarHiloFormulario(cod_interConsulta, $(elemento).children('#td_datos_10').html());
             } else {
                 document.getElementById('inptAbmInterConsultaGasto').value= $(elemento).children('#td_datos_10').html();
+            }
+            if (typeof gastoAplicarImpactoTesoreriaDesdeLocalHilo == "function") {
+                gastoAplicarImpactoTesoreriaDesdeLocalHilo(codLocalHiloGasto);
             }
             if (typeof buscarProyectosVistaSelecc == "function") {
                 buscarProyectosVistaSelecc();
