@@ -91,9 +91,10 @@ centralTelefonicaTranscripcionPrueba(
         && strpos($helper, "'response_format' => 'diarized_json'") !== false
         && strpos($helper, "'chunking_strategy' => 'auto'") !== false
         && strpos($helper, "' -- '.escapeshellarg") === false
+        && strpos($helper, 'if (PHP_VERSION_ID < 80500)') !== false
         && strpos($helper, "finally {") !== false
         && strpos($helper, '@unlink($temporal)') !== false,
-    'El worker envia una referencia SSH limpia, usa el endpoint diarizado y elimina el temporal.'
+    'El worker evita la obsolescencia PHP 8.5, usa SSH limpio y elimina el temporal.'
 );
 centralTelefonicaTranscripcionPrueba(
     strpos($endpoint, "case 'solicitar_transcripcion':") !== false

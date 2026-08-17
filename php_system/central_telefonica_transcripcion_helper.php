@@ -530,7 +530,9 @@ function centralTelefonicaTranscripcionEnviarOpenAI($config, $rutaAudio, $refere
     $cuerpo = curl_exec($curl);
     $errorCurl = curl_errno($curl);
     $estadoHttp = intval(curl_getinfo($curl, CURLINFO_HTTP_CODE));
-    curl_close($curl);
+    if (PHP_VERSION_ID < 80500) {
+        curl_close($curl);
+    }
 
     if ($cuerpo === false || $errorCurl !== 0) {
         throw new CentralTelefonicaTranscripcionExcepcion(
