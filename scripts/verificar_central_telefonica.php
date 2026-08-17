@@ -192,8 +192,8 @@ centralTelefonicaPrueba(
     'Los filtros usan una sola barra en escritorio y un panel colapsable en tablet.'
 );
 centralTelefonicaPrueba(
-    strpos($inicio, 'central_telefonica.css?v=20260817-02') !== false
-        && strpos($inicio, 'central_telefonica.js?x=20260817-02') !== false,
+    strpos($inicio, 'central_telefonica.css?v=20260817-03') !== false
+        && strpos($inicio, 'central_telefonica.js?x=20260817-03') !== false,
     'La pantalla principal publica la version compacta sin reutilizar recursos en cache.'
 );
 

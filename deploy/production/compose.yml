@@ -85,6 +85,66 @@ services:
         max-size: 10m
         max-file: "3"
 
+  central-telefonica-transcription:
+    image: production-web:latest
+    restart: unless-stopped
+    init: true
+    user: "www-data:www-data"
+    command:
+      - sh
+      - -c
+      - |
+        interval="$${TELAR_TRANSCRIPTION_INTERVAL_SECONDS:-10}"
+        case "$$interval" in
+          ''|*[!0-9]*) interval=10 ;;
+        esac
+        if [ "$$interval" -lt 5 ]; then interval=10; fi
+        trap 'exit 0' TERM INT
+        while true; do
+          php /var/www/html/scripts/procesar_transcripciones_central_telefonica.php
+          sleep "$$interval" & wait $$!
+        done
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      TELAR_DB_HOST: database
+      TELAR_DB_NAME: ${TELAR_DB_NAME}
+      TELAR_DB_USER: ${TELAR_DB_USER}
+      TELAR_DB_PASSWORD: ${TELAR_DB_PASSWORD}
+      TELAR_ISSABEL_AUDIO_HOST: ${TELAR_ISSABEL_AUDIO_HOST:-10.220.100.230}
+      TELAR_ISSABEL_AUDIO_PORT: ${TELAR_ISSABEL_AUDIO_PORT:-22}
+      TELAR_ISSABEL_AUDIO_USER: ${TELAR_ISSABEL_AUDIO_USER:-telar_audio}
+      TELAR_ISSABEL_AUDIO_KEY_PATH: /run/secrets/issabel_audio_ssh_key
+      TELAR_ISSABEL_AUDIO_KNOWN_HOSTS_PATH: /run/secrets/issabel_known_hosts
+      TELAR_ISSABEL_AUDIO_TIMEOUT_SECONDS: ${TELAR_ISSABEL_AUDIO_TIMEOUT_SECONDS:-60}
+      TELAR_OPENAI_API_KEY: ${TELAR_OPENAI_API_KEY}
+      TELAR_OPENAI_PROJECT: ${TELAR_OPENAI_PROJECT:-}
+      TELAR_OPENAI_ORGANIZATION: ${TELAR_OPENAI_ORGANIZATION:-}
+      TELAR_OPENAI_TRANSCRIPTION_MODEL: gpt-4o-transcribe-diarize
+      TELAR_OPENAI_TIMEOUT_SECONDS: ${TELAR_OPENAI_TIMEOUT_SECONDS:-900}
+      TELAR_OPENAI_MAX_AUDIO_BYTES: ${TELAR_OPENAI_MAX_AUDIO_BYTES:-26214400}
+      TELAR_OPENAI_INPUT_USD_MILLION: ${TELAR_OPENAI_INPUT_USD_MILLION:-2.50}
+      TELAR_OPENAI_OUTPUT_USD_MILLION: ${TELAR_OPENAI_OUTPUT_USD_MILLION:-10.00}
+      TELAR_TRANSCRIPTION_INTERVAL_SECONDS: ${TELAR_TRANSCRIPTION_INTERVAL_SECONDS:-10}
+      TZ: America/Asuncion
+    volumes:
+      - ../../:/var/www/html:ro
+      - ./secrets:/run/secrets:ro
+      - telar_error_logs:/var/log/telar
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=0700,uid=33,gid=33
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: 0.50
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
   database:
     image: mariadb:10.6
     restart: unless-stopped

@@ -40,8 +40,44 @@ $resultado = $mysqli->query(
 );
 $fila = $resultado ? $resultado->fetch_assoc() : array('total' => 0);
 centralTelefonicaDbPrueba(
-    intval($fila['total']) === 4,
-    'El catalogo contiene exactamente cuatro permisos telefonicos.'
+    intval($fila['total']) === 5,
+    'El catalogo contiene exactamente cinco permisos telefonicos.'
+);
+
+$resultado = $mysqli->query(
+    "SELECT COUNT(*) total FROM information_schema.tables WHERE table_schema=DATABASE() "
+    ."AND table_name IN ('central_telefonica_transcripcion',"
+    ."'central_telefonica_transcripcion_evento','central_telefonica_transcripcion_servicio')"
+);
+$fila = $resultado ? $resultado->fetch_assoc() : array('total' => 0);
+centralTelefonicaDbPrueba(
+    intval($fila['total']) === 3,
+    'Las tres tablas aditivas de transcripcion estan disponibles.'
+);
+
+$resultado = $mysqli->query(
+    "SELECT COUNT(*) total FROM central_telefonica_transcripcion_servicio "
+    ."WHERE id_servicio=1 AND proveedor='openai' "
+    ."AND modelo='gpt-4o-transcribe-diarize' "
+    ."AND estado IN ('sin_configurar','disponible','error','deshabilitado')"
+);
+$fila = $resultado ? $resultado->fetch_assoc() : array('total' => 0);
+centralTelefonicaDbPrueba(
+    intval($fila['total']) === 1,
+    'El servicio singleton conserva proveedor, modelo y un estado controlado.'
+);
+
+$resultado = $mysqli->query(
+    "SELECT COUNT(*) total,"
+    ."SUM(au.usuarios_idusario=5994) carlos FROM accesosuser au "
+    ."INNER JOIN listadodeacceso la ON la.idlistadodeacceso=au.idlistadodeaccesoFK "
+    ."WHERE la.codigo='TRANSCRIBIRLLAMADACENTRALTELEFONICA' "
+    ."AND au.tipo='Administrativo' AND UPPER(TRIM(au.accion))='SI'"
+);
+$fila = $resultado ? $resultado->fetch_assoc() : array('total' => 0, 'carlos' => 0);
+centralTelefonicaDbPrueba(
+    intval($fila['total']) === 1 && intval($fila['carlos']) === 1,
+    'Solo la cuenta protegida de Carlos puede solicitar y consultar transcripciones.'
 );
 
 $resultado = $mysqli->query(

@@ -14,6 +14,9 @@
         pages: 1,
         limit: 50,
         data: null,
+        transcriptionService: null,
+        currentCallId: null,
+        hasPendingTranscriptions: false,
         refreshTimer: null,
         summaryCollapsed: true,
         filtersExpanded: false
@@ -125,7 +128,7 @@
             + "  <header class='central-telefonica-header'>"
             + "    <div class='central-telefonica-heading'>"
             + "      <span class='central-telefonica-heading__icon'><img src='/GoodVentaAsisCap/iconos/central-telefonica.svg' alt='' /></span>"
-            + "      <div><p class='central-telefonica-eyebrow'>Telar · Control operativo</p><h1>Central Telefónica</h1><span>Movimientos de Issabel/Asterisk en modo de solo lectura</span></div>"
+            + "      <div><p class='central-telefonica-eyebrow'>Telar · Control operativo</p><h1>Central Telefónica</h1><span>CDR de Issabel/Asterisk en consulta · transcripción bajo demanda</span></div>"
             + "    </div>"
             + "    <div class='central-telefonica-header__actions'>"
             + "      <div class='central-telefonica-sync' id='centralTelefonicaSync' role='status'><i class='fa-solid fa-circle-notch' aria-hidden='true'></i><span>Verificando sincronización…</span></div>"
@@ -173,10 +176,10 @@
             + "      </form>"
             + "    </section>"
             + "    <section class='central-telefonica-panel central-telefonica-list-panel'>"
-            + "      <div class='central-telefonica-panel__title'><div><p class='central-telefonica-eyebrow'>Movimientos</p><h2>Listado de llamadas</h2><span id='centralTelefonicaResultCount'>0 registros</span></div><span class='central-telefonica-readonly-badge'><i class='fa-solid fa-lock' aria-hidden='true'></i> Solo lectura</span></div>"
+            + "      <div class='central-telefonica-panel__title'><div><p class='central-telefonica-eyebrow'>Movimientos</p><h2>Listado de llamadas</h2><span id='centralTelefonicaResultCount'>0 registros</span></div><span class='central-telefonica-readonly-badge'><i class='fa-solid fa-lock' aria-hidden='true'></i> CDR solo lectura</span></div>"
             + "      <div class='central-telefonica-table-wrap'>"
             + "        <table class='central-telefonica-table'>"
-            + "          <thead><tr><th>Fecha y hora</th><th>Dirección</th><th>Número</th><th>Extensión</th><th>Estado</th><th>Duración</th><th>Hablado</th><th>Grabación</th><th><span class='central-telefonica-sr-only'>Acciones</span></th></tr></thead>"
+            + "          <thead><tr><th>Fecha y hora</th><th>Dirección</th><th>Número</th><th>Extensión</th><th>Estado</th><th>Duración</th><th>Hablado</th><th>Grabación</th><th>Transcripción</th><th><span class='central-telefonica-sr-only'>Acciones</span></th></tr></thead>"
             + "          <tbody id='centralTelefonicaRows'></tbody>"
             + "        </table>"
             + "        <div id='centralTelefonicaTableState' class='central-telefonica-table-state'><i class='fa-solid fa-circle-notch fa-spin' aria-hidden='true'></i><span>Cargando movimientos…</span></div>"
@@ -234,6 +237,12 @@
             if (action === "minimize") { window.minimizarCentralTelefonica(); }
             if (action === "close-detail") { closeDetail(); }
             if (action === "detail") { openDetail(actionElement.getAttribute("data-call-id")); }
+            if (action === "transcribe") {
+                requestTranscription(actionElement.getAttribute("data-call-id"), actionElement);
+            }
+            if (action === "save-speaker-roles") {
+                saveSpeakerRoles(actionElement.getAttribute("data-call-id"), actionElement);
+            }
             if (action === "page-prev" && state.page > 1) { state.page--; loadCalls(true); }
             if (action === "page-next" && state.page < state.pages) { state.page++; loadCalls(true); }
         }, false);
@@ -390,12 +399,14 @@
         request("listar", filterPayload()).then(function (data) {
             if (sequence !== state.requestSequence || !state.open) { return; }
             state.data = data;
+            state.transcriptionService = data.transcripcion_servicio || null;
             state.loading = false;
             renderSummary(data.resumen || {});
             renderSync(data.sincronizacion || {});
             renderExtensions(data.extensiones || []);
             renderRows(data.llamadas || []);
             renderPagination(data.paginacion || {});
+            scheduleRefresh();
             if (scrollToList) {
                 var panel = state.root.querySelector(".central-telefonica-list-panel");
                 if (panel && panel.scrollIntoView) { panel.scrollIntoView({ behavior: "smooth", block: "start" }); }
@@ -503,11 +514,57 @@
         return labels[status] || status || "Sin estado";
     }
 
+    function transcriptionStatusLabel(status) {
+        var labels = {
+            sin_solicitar: "Sin transcribir",
+            en_cola: "En cola",
+            obteniendo_audio: "Preparando audio",
+            transcribiendo: "Transcribiendo",
+            completada: "Completada",
+            error: "Necesita revisión",
+            migracion_pendiente: "No instalada"
+        };
+        return labels[status] || status || "Sin transcribir";
+    }
+
+    function renderTranscriptionAction(call) {
+        var transcription = call.transcripcion;
+        var service = state.transcriptionService || {};
+        var status;
+        var disabled;
+        var title;
+        if (!transcription) { return "<span class='central-telefonica-muted'>—</span>"; }
+        status = transcription.estado || "sin_solicitar";
+        if (status === "completada") {
+            return "<button type='button' class='central-telefonica-transcription-button central-telefonica-transcription-button--done' data-central-action='detail' data-call-id='"
+                + escapeHtml(call.id_llamada) + "'><i class='fa-solid fa-file-lines' aria-hidden='true'></i><span>Ver texto</span></button>";
+        }
+        if (status === "en_cola" || status === "obteniendo_audio" || status === "transcribiendo") {
+            state.hasPendingTranscriptions = true;
+            return "<span class='central-telefonica-transcription-state central-telefonica-transcription-state--pending'><i class='fa-solid fa-circle-notch fa-spin' aria-hidden='true'></i>"
+                + escapeHtml(transcriptionStatusLabel(status)) + "</span>";
+        }
+        if (!call.grabacion_disponible) {
+            return "<span class='central-telefonica-transcription-state'>Sin audio</span>";
+        }
+        disabled = !service.disponible || status === "migracion_pendiente";
+        title = disabled
+            ? (service.mensaje || "El servicio de transcripción no está disponible.")
+            : (status === "error" ? "Reintentar esta transcripción" : "Transcribir esta llamada");
+        return "<button type='button' class='central-telefonica-transcription-button"
+            + (status === "error" ? " central-telefonica-transcription-button--retry" : "")
+            + "' data-central-action='transcribe' data-call-id='" + escapeHtml(call.id_llamada) + "' title='"
+            + escapeHtml(title) + "' " + (disabled ? "disabled" : "") + "><i class='fa-solid "
+            + (status === "error" ? "fa-rotate-right" : "fa-wand-magic-sparkles")
+            + "' aria-hidden='true'></i><span>" + (status === "error" ? "Reintentar" : "Transcribir") + "</span></button>";
+    }
+
     function renderRows(calls) {
         var rows = state.root.querySelector("#centralTelefonicaRows");
         var tableState = state.root.querySelector("#centralTelefonicaTableState");
         var count = state.root.querySelector("#centralTelefonicaResultCount");
         var html = "";
+        state.hasPendingTranscriptions = false;
         count.textContent = calls.length + (calls.length === 1 ? " registro visible" : " registros visibles");
         if (!calls.length) {
             rows.innerHTML = "";
@@ -526,6 +583,7 @@
                 + "<td>" + (call.grabacion_disponible
                     ? "<span class='central-telefonica-recording central-telefonica-recording--available'><i class='fa-solid fa-wave-square' aria-hidden='true'></i> Disponible</span>"
                     : "<span class='central-telefonica-recording'><i class='fa-solid fa-minus' aria-hidden='true'></i> No disponible</span>") + "</td>"
+                + "<td>" + renderTranscriptionAction(call) + "</td>"
                 + "<td><button type='button' class='central-telefonica-detail-button' data-central-action='detail' data-call-id='" + escapeHtml(call.id_llamada) + "' aria-label='Ver detalle de la llamada'><i class='fa-solid fa-chevron-right' aria-hidden='true'></i></button></td>"
                 + "</tr>";
         });
@@ -545,9 +603,11 @@
     function openDetail(id) {
         var layer = state.root.querySelector("#centralTelefonicaDrawerLayer");
         var body = state.root.querySelector("#centralTelefonicaDrawerBody");
+        state.currentCallId = String(id || "");
         layer.hidden = false;
         body.innerHTML = "<div class='central-telefonica-detail-loading'><i class='fa-solid fa-circle-notch fa-spin' aria-hidden='true'></i><span>Cargando detalle…</span></div>";
         request("detalle", { id_llamada: id }).then(function (data) {
+            state.transcriptionService = data.transcripcion_servicio || state.transcriptionService;
             renderDetail(data.llamada || {});
         }).catch(function (error) {
             body.innerHTML = "<div class='central-telefonica-detail-error'><i class='fa-solid fa-triangle-exclamation' aria-hidden='true'></i><span>" + escapeHtml(error.message) + "</span></div>";
@@ -557,6 +617,7 @@
     function closeDetail() {
         var layer = state.root ? state.root.querySelector("#centralTelefonicaDrawerLayer") : null;
         if (layer) { layer.hidden = true; }
+        state.currentCallId = null;
     }
 
     function detailItem(label, value) {
@@ -584,6 +645,7 @@
                 ? "<i class='fa-solid fa-wave-square' aria-hidden='true'></i><div><strong>Grabación disponible</strong><span>La reproducción protegida se habilitará en una etapa posterior.</span></div>"
                 : "<i class='fa-solid fa-volume-xmark' aria-hidden='true'></i><div><strong>Sin grabación disponible</strong><span>Issabel no informó una grabación para esta llamada.</span></div>")
             + "</div></section>";
+        html += renderTranscriptionDetail(call);
         if (call.datos_tecnicos) {
             html += "<details class='central-telefonica-technical'><summary>Datos técnicos</summary>"
                 + detailItem("UniqueID principal", call.datos_tecnicos.uniqueid_principal)
@@ -593,6 +655,136 @@
                 + "</details>";
         }
         body.innerHTML = html;
+    }
+
+    function formatTranscriptTime(value) {
+        var seconds = Math.max(0, Number(value || 0));
+        var minutes = Math.floor(seconds / 60);
+        var rest = Math.floor(seconds % 60);
+        return String(minutes) + ":" + (rest < 10 ? "0" : "") + String(rest);
+    }
+
+    function speakerRoleLabel(role) {
+        var labels = { funcionario: "Funcionario", paciente: "Paciente", otro: "Otro" };
+        return labels[role] || "Hablante";
+    }
+
+    function renderSpeakerRoleEditor(call, transcription) {
+        var roles = transcription.roles_hablantes || {};
+        var speakers = [];
+        var html = "";
+        (transcription.segmentos || []).forEach(function (segment) {
+            var speaker = String(segment.speaker || "A");
+            if (speakers.indexOf(speaker) === -1) { speakers.push(speaker); }
+        });
+        if (!speakers.length) { return ""; }
+        html += "<div class='central-telefonica-speakers'><div><strong>Quién habla</strong><span>La sugerencia es orientativa. Corregila si fuera necesario.</span></div><div class='central-telefonica-speakers__fields'>";
+        speakers.forEach(function (speaker) {
+            var selected = roles[speaker] || "otro";
+            html += "<label><span>" + escapeHtml(speaker) + "</span><select data-central-speaker='" + escapeHtml(speaker) + "'>"
+                + "<option value='funcionario' " + (selected === "funcionario" ? "selected" : "") + ">Funcionario</option>"
+                + "<option value='paciente' " + (selected === "paciente" ? "selected" : "") + ">Paciente</option>"
+                + "<option value='otro' " + (selected === "otro" ? "selected" : "") + ">Otro</option></select></label>";
+        });
+        return html + "</div><button type='button' class='central-telefonica-secondary-button' data-central-action='save-speaker-roles' data-call-id='"
+            + escapeHtml(call.id_llamada) + "'><i class='fa-solid fa-floppy-disk' aria-hidden='true'></i> Guardar asignación</button></div>";
+    }
+
+    function renderTranscriptSegments(transcription) {
+        var roles = transcription.roles_hablantes || {};
+        var html = "<div class='central-telefonica-transcript'>";
+        (transcription.segmentos || []).forEach(function (segment) {
+            var speaker = String(segment.speaker || "A");
+            var role = roles[speaker] || "otro";
+            html += "<article class='central-telefonica-transcript__segment'><div><strong>"
+                + escapeHtml(speakerRoleLabel(role)) + "</strong><span>" + escapeHtml(speaker) + " · "
+                + escapeHtml(formatTranscriptTime(segment.start)) + "</span></div><p>"
+                + escapeHtml(segment.text || "") + "</p></article>";
+        });
+        return html + "</div>";
+    }
+
+    function renderTranscriptionEvents(events) {
+        var html = "";
+        if (!events || !events.length) { return html; }
+        html += "<details class='central-telefonica-transcription-events'><summary>Historial del procesamiento</summary>";
+        events.forEach(function (event) {
+            html += "<div><strong>" + escapeHtml(transcriptionStatusLabel(event.estado)) + "</strong><span>"
+                + escapeHtml(event.fecha_evento || "") + "</span><p>" + escapeHtml(event.detalle || event.codigo || "") + "</p></div>";
+        });
+        return html + "</details>";
+    }
+
+    function renderTranscriptionDetail(call) {
+        var transcription = call.transcripcion;
+        var service = state.transcriptionService || {};
+        var status;
+        var html;
+        if (!transcription) { return ""; }
+        status = transcription.estado || "sin_solicitar";
+        html = "<section class='central-telefonica-detail-section central-telefonica-transcription-section'><div class='central-telefonica-transcription-heading'><div><h3>Transcripción con IA</h3><p>Procesamiento bajo demanda con separación de hablantes.</p></div><span class='central-telefonica-transcription-status central-telefonica-transcription-status--"
+            + escapeHtml(status) + "'>" + escapeHtml(transcriptionStatusLabel(status)) + "</span></div>";
+        if (status === "sin_solicitar" || status === "migracion_pendiente") {
+            html += "<div class='central-telefonica-transcription-empty'><i class='fa-solid fa-file-waveform' aria-hidden='true'></i><div><strong>Aún no fue transcripta</strong><span>Solo se enviará esta grabación cuando confirmes con el botón.</span></div></div>";
+            if (call.grabacion_disponible) {
+                html += "<button type='button' class='central-telefonica-primary-button' data-central-action='transcribe' data-call-id='"
+                    + escapeHtml(call.id_llamada) + "' " + (!service.disponible ? "disabled" : "") + "><i class='fa-solid fa-wand-magic-sparkles' aria-hidden='true'></i> Transcribir esta llamada</button>";
+                if (!service.disponible) { html += "<p class='central-telefonica-inline-warning'>" + escapeHtml(service.mensaje || "El servicio todavía no está disponible.") + "</p>"; }
+            }
+        } else if (status === "en_cola" || status === "obteniendo_audio" || status === "transcribiendo") {
+            html += "<div class='central-telefonica-transcription-progress'><i class='fa-solid fa-circle-notch fa-spin' aria-hidden='true'></i><div><strong>"
+                + escapeHtml(transcriptionStatusLabel(status)) + "</strong><span>Podés seguir usando Telar; el resultado quedará guardado.</span></div></div>";
+        } else if (status === "error") {
+            html += "<div class='central-telefonica-detail-error'><i class='fa-solid fa-triangle-exclamation' aria-hidden='true'></i><span>"
+                + escapeHtml(transcription.mensaje_error || "No se pudo completar la transcripción.") + "</span></div><button type='button' class='central-telefonica-primary-button' data-central-action='transcribe' data-call-id='"
+                + escapeHtml(call.id_llamada) + "' " + (!service.disponible ? "disabled" : "") + "><i class='fa-solid fa-rotate-right' aria-hidden='true'></i> Reintentar</button>";
+        } else if (status === "completada") {
+            html += renderSpeakerRoleEditor(call, transcription)
+                + renderTranscriptSegments(transcription)
+                + "<div class='central-telefonica-transcription-meta'>"
+                + detailItem("Proveedor", transcription.proveedor)
+                + detailItem("Modelo", transcription.modelo)
+                + detailItem("Duración procesada", transcription.duracion_audio_seg === null ? "—" : formatTranscriptTime(transcription.duracion_audio_seg))
+                + detailItem("Costo estimado", transcription.costo_estimado_usd === null ? "—" : "USD " + Number(transcription.costo_estimado_usd).toFixed(6))
+                + detailItem("Intentos", transcription.intentos)
+                + detailItem("Finalización", transcription.fecha_fin)
+                + "</div>" + renderTranscriptionEvents(transcription.eventos || []);
+        }
+        return html + "</section>";
+    }
+
+    function requestTranscription(id, button) {
+        if (!id || (button && button.disabled)) { return; }
+        if (button) { button.disabled = true; }
+        request("solicitar_transcripcion", { id_llamada: id }).then(function () {
+            notify("La llamada fue agregada a la cola de transcripción.", "info");
+            loadCalls(false);
+            if (state.currentCallId === String(id)) { openDetail(id); }
+        }).catch(function (error) {
+            if (button) { button.disabled = false; }
+            notify(error.message, "error");
+        });
+    }
+
+    function saveSpeakerRoles(id, button) {
+        var roles = {};
+        var fields;
+        if (!id || !state.root) { return; }
+        fields = state.root.querySelectorAll("#centralTelefonicaDrawerBody [data-central-speaker]");
+        Array.prototype.forEach.call(fields, function (field) {
+            roles[field.getAttribute("data-central-speaker")] = field.value;
+        });
+        if (button) { button.disabled = true; }
+        request("actualizar_roles_transcripcion", {
+            id_llamada: id,
+            roles_json: JSON.stringify(roles)
+        }).then(function () {
+            notify("La asignación de hablantes fue guardada.", "info");
+            openDetail(id);
+        }).catch(function (error) {
+            if (button) { button.disabled = false; }
+            notify(error.message, "error");
+        });
     }
 
     function renderSegments(segments) {
@@ -609,7 +801,7 @@
         window.clearInterval(state.refreshTimer);
         state.refreshTimer = window.setInterval(function () {
             if (state.open && !state.loading) { loadCalls(false); }
-        }, 60000);
+        }, state.hasPendingTranscriptions ? 15000 : 60000);
     }
 
     window.abrirCentralTelefonica = function () {

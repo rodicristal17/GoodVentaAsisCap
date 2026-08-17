@@ -11,6 +11,8 @@ php_system/conexion.php
 archivox/
 /backup_db_local/
 /deploy/production/.env
+/deploy/production/secrets/*
+!/deploy/production/secrets/.gitkeep
 
 .vscode/
 php_system/conexion.php

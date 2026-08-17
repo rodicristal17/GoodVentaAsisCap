@@ -252,7 +252,7 @@ body.central-telefonica-open { overflow: hidden; }
   letter-spacing: .05em;
 }
 .central-telefonica-table-wrap { position: relative; min-height: 245px; overflow-x: auto; border-top: 1px solid #e4ebf1; }
-.central-telefonica-table { width: 100%; min-width: 980px; border-collapse: collapse; table-layout: auto; }
+.central-telefonica-table { width: 100%; min-width: 1110px; border-collapse: collapse; table-layout: auto; }
 .central-telefonica-table th {
   padding: 9px 10px;
   color: #607488;
@@ -289,6 +289,29 @@ body.central-telefonica-open { overflow: hidden; }
 .central-telefonica-recording--available { color: #5c48a7; font-weight: 700; }
 .central-telefonica-detail-button { width: 30px; height: 30px; border-radius: 9px; color: #167c91; background: #eaf6f8; }
 .central-telefonica-detail-button:hover { color: #fff; background: #168b9d; }
+.central-telefonica-muted { color: #96a4b0; }
+.central-telefonica-transcription-button {
+  min-height: 28px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #bedbe2;
+  border-radius: 8px;
+  color: #167589;
+  background: #eef9fa;
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.central-telefonica-transcription-button--done { color: #5d43a4; border-color: #d8cff1; background: #f3f0fb; }
+.central-telefonica-transcription-button--retry { color: #9b6413; border-color: #ead8ac; background: #fff8e9; }
+.central-telefonica-transcription-button:disabled,
+.central-telefonica-primary-button:disabled,
+.central-telefonica-secondary-button:disabled { cursor: not-allowed; opacity: .5; box-shadow: none; }
+.central-telefonica-transcription-state { display: inline-flex; align-items: center; gap: 5px; color: #748394; font-size: 9.5px; white-space: nowrap; }
+.central-telefonica-transcription-state--pending { color: #236c91; font-weight: 700; }
 
 .central-telefonica-table-state {
   position: absolute;
@@ -346,6 +369,53 @@ body.central-telefonica-open { overflow: hidden; }
 .central-telefonica-detail-loading,
 .central-telefonica-detail-error { min-height: 180px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #60788b; font-size: 11px; }
 .central-telefonica-detail-error { color: #a43f48; }
+
+.central-telefonica-transcription-section { border-top: 3px solid #6670c8; }
+.central-telefonica-transcription-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 11px; }
+.central-telefonica-transcription-heading h3 { margin-bottom: 3px; }
+.central-telefonica-transcription-heading p { color: #738596; font-size: 9.5px; }
+.central-telefonica-transcription-status { flex: 0 0 auto; padding: 5px 8px; border-radius: 999px; color: #5b6d7d; background: #edf2f5; font-size: 8.5px; font-weight: 750; }
+.central-telefonica-transcription-status--completada { color: #187547; background: #e4f5eb; }
+.central-telefonica-transcription-status--en_cola,
+.central-telefonica-transcription-status--obteniendo_audio,
+.central-telefonica-transcription-status--transcribiendo { color: #236c91; background: #e7f3f8; }
+.central-telefonica-transcription-status--error { color: #a43f48; background: #fdebed; }
+.central-telefonica-transcription-empty,
+.central-telefonica-transcription-progress { margin-bottom: 10px; padding: 11px; display: flex; align-items: center; gap: 10px; border-radius: 10px; color: #536c7f; background: #f2f7fa; }
+.central-telefonica-transcription-empty > i,
+.central-telefonica-transcription-progress > i { color: #596cc0; font-size: 18px; }
+.central-telefonica-transcription-empty strong,
+.central-telefonica-transcription-empty span,
+.central-telefonica-transcription-progress strong,
+.central-telefonica-transcription-progress span { display: block; }
+.central-telefonica-transcription-empty strong,
+.central-telefonica-transcription-progress strong { color: #29485d; font-size: 10.5px; }
+.central-telefonica-transcription-empty span,
+.central-telefonica-transcription-progress span { margin-top: 3px; font-size: 9.5px; }
+.central-telefonica-inline-warning { margin-top: 8px!important; color: #9b6413!important; }
+.central-telefonica-secondary-button { min-height: 31px; padding: 0 10px; border: 1px solid #cad8e3; border-radius: 8px; color: #355c75; background: #fff; font-family: inherit; font-size: 9.5px; font-weight: 750; }
+.central-telefonica-speakers { margin-bottom: 12px; padding: 10px; border: 1px solid #dfe7f2; border-radius: 10px; background: #f8f9fd; }
+.central-telefonica-speakers > div:first-child strong,
+.central-telefonica-speakers > div:first-child span { display: block; }
+.central-telefonica-speakers > div:first-child strong { color: #29485d; font-size: 10.5px; }
+.central-telefonica-speakers > div:first-child span { margin-top: 2px; color: #748696; font-size: 9px; }
+.central-telefonica-speakers__fields { margin: 9px 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.central-telefonica-speakers__fields label { display: grid; gap: 3px; color: #60758a; font-size: 8.5px; font-weight: 700; }
+.central-telefonica-speakers__fields select { height: 31px; padding: 0 8px; border: 1px solid #cad8e3; border-radius: 8px; color: #28475d; background: #fff; font: 10px inherit; }
+.central-telefonica-transcript { display: grid; gap: 7px; }
+.central-telefonica-transcript__segment { padding: 10px; border-left: 3px solid #5d68bf; border-radius: 8px; background: #f5f7fc; }
+.central-telefonica-transcript__segment > div { display: flex; align-items: center; gap: 7px; }
+.central-telefonica-transcript__segment strong { color: #3b4c9f; font-size: 9.5px; }
+.central-telefonica-transcript__segment span { color: #8390a1; font-size: 8.5px; }
+.central-telefonica-transcript__segment p { margin-top: 5px; color: #31495d; font-size: 10.5px; white-space: pre-wrap; }
+.central-telefonica-transcription-meta { margin-top: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.central-telefonica-transcription-events { margin-top: 10px; color: #4c6478; font-size: 9.5px; }
+.central-telefonica-transcription-events summary { cursor: pointer; color: #3f579e; font-weight: 750; }
+.central-telefonica-transcription-events > div { margin-top: 7px; padding: 8px; border-radius: 8px; background: #f4f7fa; }
+.central-telefonica-transcription-events strong,
+.central-telefonica-transcription-events span { margin-right: 7px; }
+.central-telefonica-transcription-events p { margin-top: 3px; font-size: 9px; }
+.central-telefonica-transcription-section .central-telefonica-detail-error { min-height: 0; margin-bottom: 10px; padding: 10px; justify-content: flex-start; border-radius: 9px; background: #fff1f2; }
 
 .central-telefonica-live-region { position: fixed; right: 20px; bottom: 20px; z-index: 1000000000000004; }
 .central-telefonica-toast { max-width: 350px; padding: 10px 13px; display: flex; gap: 8px; align-items: flex-start; border-radius: 11px; color: #fff; background: #23475f; box-shadow: 0 10px 28px rgba(10,34,51,.25); font-size: 11px; }

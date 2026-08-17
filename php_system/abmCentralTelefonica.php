@@ -14,6 +14,7 @@ date_default_timezone_set('America/Asuncion');
 require_once __DIR__.'/conexion.php';
 require_once __DIR__.'/verificar_navegador.php';
 require_once __DIR__.'/central_telefonica_helper.php';
+require_once __DIR__.'/central_telefonica_transcripcion_helper.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -211,7 +212,9 @@ function centralTelefonicaEjecutarConsulta($mysqli, $sql, $tipos, $parametros)
 function centralTelefonicaContexto($mysqli, $codUsuario)
 {
     $stmt = $mysqli->prepare(
-        "SELECT cod_usuario,estado,tipo FROM usuario WHERE cod_usuario=? LIMIT 1"
+        "SELECT u.cod_usuario,u.estado,u.tipo,u.login,p.nombre_persona "
+        ."FROM usuario u LEFT JOIN persona p ON p.cod_persona=u.cod_usuario "
+        ."WHERE u.cod_usuario=? LIMIT 1"
     );
     if (!$stmt) {
         centralTelefonicaLanzar('usuario_no_disponible', 'No se pudo validar el usuario.');
@@ -227,6 +230,14 @@ function centralTelefonicaContexto($mysqli, $codUsuario)
     if (!$usuario || strtoupper(trim((string)$usuario['estado'])) !== 'ACTIVO') {
         centralTelefonicaLanzar('usuario_no_disponible', 'El usuario autenticado no esta activo.');
     }
+
+    $cuentaTranscripcionProtegida = intval($usuario['cod_usuario']) === 5994
+        && strtolower(trim((string)$usuario['login'])) === 'cf'
+        && strtoupper(trim((string)$usuario['tipo'])) === 'ADMINISTRATIVO'
+        && strpos(
+            strtoupper(trim((string)$usuario['nombre_persona'])),
+            'CARLOS FARAONE CLINIDENT'
+        ) === 0;
 
     $permisos = array(
         'ver' => centralTelefonicaTienePermiso($mysqli, $codUsuario, 'VERCENTRALTELEFONICA'),
@@ -244,7 +255,13 @@ function centralTelefonicaContexto($mysqli, $codUsuario)
             $mysqli,
             $codUsuario,
             'ESCUCHARGRABACIONCENTRALTELEFONICA'
-        )
+        ),
+        'transcribir_llamadas' => $cuentaTranscripcionProtegida
+            && centralTelefonicaTienePermiso(
+                $mysqli,
+                $codUsuario,
+                'TRANSCRIBIRLLAMADACENTRALTELEFONICA'
+            )
     );
     if (!$permisos['ver']) {
         centralTelefonicaLanzar('acceso_no_autorizado', 'No tiene permiso para ver Central Telefonica.');
@@ -265,7 +282,36 @@ function centralTelefonicaTelefonoVisible($valor, $contexto)
     return centralTelefonicaMascararTelefono($valor);
 }
 
-function centralTelefonicaFilaVisible($fila, $contexto)
+function centralTelefonicaTranscripcionEstadoFila($fila, $contexto, $estructuraDisponible)
+{
+    if (empty($contexto['permisos']['transcribir_llamadas'])) {
+        return null;
+    }
+    if (!$estructuraDisponible) {
+        return array(
+            'estado' => 'migracion_pendiente',
+            'solicitada' => false,
+            'actualizada' => null,
+            'mensaje_error' => null
+        );
+    }
+    $estado = isset($fila['transcripcion_estado']) && $fila['transcripcion_estado'] !== null
+        ? (string)$fila['transcripcion_estado'] : '';
+    return array(
+        'estado' => $estado === '' ? 'sin_solicitar' : $estado,
+        'solicitada' => $estado !== '',
+        'actualizada' => isset($fila['transcripcion_actualizada'])
+            ? $fila['transcripcion_actualizada'] : null,
+        'mensaje_error' => $estado === 'error' && isset($fila['transcripcion_mensaje_error'])
+            ? $fila['transcripcion_mensaje_error'] : null
+    );
+}
+
+function centralTelefonicaFilaVisible(
+    $fila,
+    $contexto,
+    $estructuraTranscripcion = false
+)
 {
     $tipo = isset($fila['tipo']) ? $fila['tipo'] : '';
     $origen = centralTelefonicaTelefonoVisible($fila['origen_original'], $contexto);
@@ -290,7 +336,58 @@ function centralTelefonicaFilaVisible($fila, $contexto)
         'hablado_texto' => centralTelefonicaFormatearDuracion($fila['hablado_seg']),
         'cantidad_segmentos' => intval($fila['cantidad_segmentos']),
         'grabacion_disponible' => intval($fila['grabacion_disponible']) === 1,
+        'transcripcion' => centralTelefonicaTranscripcionEstadoFila(
+            $fila,
+            $contexto,
+            $estructuraTranscripcion
+        ),
         'paciente' => null
+    );
+}
+
+function centralTelefonicaTranscripcionServicioVisible($mysqli, $contexto, $estructuraDisponible)
+{
+    if (empty($contexto['permisos']['transcribir_llamadas'])) {
+        return null;
+    }
+    if (!$estructuraDisponible) {
+        return array(
+            'disponible' => false,
+            'estado' => 'migracion_pendiente',
+            'mensaje' => 'La transcripcion todavia no esta instalada.'
+        );
+    }
+    $resultado = $mysqli->query(
+        "SELECT estado,proveedor,modelo,ultima_actividad,codigo_error "
+        ."FROM central_telefonica_transcripcion_servicio WHERE id_servicio=1 LIMIT 1"
+    );
+    $fila = $resultado ? $resultado->fetch_assoc() : null;
+    if (!$fila) {
+        return array(
+            'disponible' => false,
+            'estado' => 'sin_configurar',
+            'mensaje' => 'El worker de transcripcion todavia no esta configurado.'
+        );
+    }
+    $reciente = false;
+    if (!empty($fila['ultima_actividad'])) {
+        $marca = strtotime((string)$fila['ultima_actividad']);
+        $reciente = $marca !== false && $marca >= time() - 180;
+    }
+    $disponible = $fila['estado'] === 'disponible' && $reciente;
+    $mensaje = $disponible
+        ? 'OpenAI disponible para procesar una llamada por vez.'
+        : ($fila['estado'] === 'error'
+            ? 'El servicio de transcripcion necesita revision.'
+            : 'El worker de transcripcion no esta activo o no esta configurado.');
+    return array(
+        'disponible' => $disponible,
+        'estado' => $reciente ? $fila['estado'] : 'sin_actividad',
+        'proveedor' => $fila['proveedor'],
+        'modelo' => $fila['modelo'],
+        'ultima_actividad' => $fila['ultima_actividad'],
+        'codigo_error' => $fila['codigo_error'],
+        'mensaje' => $mensaje
     );
 }
 
@@ -396,6 +493,7 @@ function centralTelefonicaListar($mysqli, $contexto, $entrada)
 {
     $rango = centralTelefonicaRangoEntrada($entrada);
     $where = centralTelefonicaPrepararWhere($entrada, $rango);
+    $estructuraTranscripcion = centralTelefonicaTranscripcionEstructuraDisponible($mysqli);
     $pagina = max(1, intval(isset($entrada['pagina']) ? $entrada['pagina'] : 1));
     $limite = intval(isset($entrada['limite']) ? $entrada['limite'] : 50);
     $limite = max(10, min(100, $limite));
@@ -411,11 +509,20 @@ function centralTelefonicaListar($mysqli, $contexto, $entrada)
     $stmtTotal->close();
     $total = intval($filaTotal['total']);
 
+    $camposTranscripcion = $estructuraTranscripcion
+        ? ",t.estado AS transcripcion_estado,t.fecha_actualizacion AS transcripcion_actualizada,"
+            ."t.mensaje_error AS transcripcion_mensaje_error"
+        : ",NULL AS transcripcion_estado,NULL AS transcripcion_actualizada,"
+            ."NULL AS transcripcion_mensaje_error";
+    $unionTranscripcion = $estructuraTranscripcion
+        ? ' LEFT JOIN central_telefonica_transcripcion t ON t.id_llamada=l.id_llamada '
+        : ' ';
     $sql = "SELECT l.id_llamada,l.fecha_inicio,l.tipo,l.estado,
             l.origen_original,l.destino_original,l.extension,
             l.duracion_seg,l.hablado_seg,l.cantidad_segmentos,
-            l.grabacion_disponible
+            l.grabacion_disponible".$camposTranscripcion."
         FROM central_telefonica_llamada l
+        ".$unionTranscripcion."
         WHERE ".$where['sql']."
         ORDER BY l.fecha_inicio DESC,l.id_llamada DESC
         LIMIT ? OFFSET ?";
@@ -427,7 +534,11 @@ function centralTelefonicaListar($mysqli, $contexto, $entrada)
     $resultado = $stmt->get_result();
     $items = array();
     while ($resultado && ($fila = $resultado->fetch_assoc())) {
-        $items[] = centralTelefonicaFilaVisible($fila, $contexto);
+        $items[] = centralTelefonicaFilaVisible(
+            $fila,
+            $contexto,
+            $estructuraTranscripcion
+        );
     }
     $stmt->close();
 
@@ -443,9 +554,339 @@ function centralTelefonicaListar($mysqli, $contexto, $entrada)
             'paginas' => max(1, intval(ceil($total / $limite)))
         ),
         'sincronizacion' => centralTelefonicaEstadoSincronizacion($mysqli),
+        'transcripcion_servicio' => centralTelefonicaTranscripcionServicioVisible(
+            $mysqli,
+            $contexto,
+            $estructuraTranscripcion
+        ),
         'permisos' => $contexto['permisos'],
         'hora_servidor' => date('Y-m-d H:i:s')
     );
+}
+
+function centralTelefonicaTranscripcionExigirPermiso($contexto)
+{
+    if (empty($contexto['permisos']['transcribir_llamadas'])) {
+        centralTelefonicaLanzar(
+            'transcripcion_no_autorizada',
+            'No tiene permiso para transcribir ni consultar conversaciones.'
+        );
+    }
+}
+
+function centralTelefonicaTranscripcionDetalleVisible($mysqli, $contexto, $idLlamada)
+{
+    if (empty($contexto['permisos']['transcribir_llamadas'])
+        || !centralTelefonicaTranscripcionEstructuraDisponible($mysqli)) {
+        return null;
+    }
+
+    $mysqli->set_charset('utf8mb4');
+    $stmt = $mysqli->prepare(
+        "SELECT id_transcripcion,estado,proveedor,modelo,idioma,fecha_solicitud,"
+        ."fecha_inicio,fecha_fin,intentos,transcripcion_texto,segmentos_json,"
+        ."roles_hablantes_json,roles_fuente,roles_fecha_actualizacion,"
+        ."duracion_audio_seg,uso_entrada_tokens,uso_salida_tokens,uso_total_tokens,"
+        ."costo_estimado_usd,codigo_error,mensaje_error,fecha_actualizacion "
+        ."FROM central_telefonica_transcripcion WHERE id_llamada=? LIMIT 1"
+    );
+    if (!$stmt) {
+        $mysqli->set_charset('latin1');
+        centralTelefonicaLanzar(
+            'transcripcion_no_disponible',
+            'No se pudo consultar la transcripcion de la llamada.'
+        );
+    }
+    $id = intval($idLlamada);
+    $stmt->bind_param('i', $id);
+    $fila = null;
+    if ($stmt->execute()) {
+        $resultado = $stmt->get_result();
+        $fila = $resultado ? $resultado->fetch_assoc() : null;
+    }
+    $stmt->close();
+    if (!$fila) {
+        $mysqli->set_charset('latin1');
+        return array(
+            'estado' => 'sin_solicitar',
+            'solicitada' => false,
+            'segmentos' => array(),
+            'roles_hablantes' => array(),
+            'eventos' => array()
+        );
+    }
+
+    $segmentos = json_decode((string)$fila['segmentos_json'], true);
+    $roles = json_decode((string)$fila['roles_hablantes_json'], true);
+    $segmentos = is_array($segmentos) ? $segmentos : array();
+    $roles = is_array($roles) ? $roles : array();
+    $eventos = array();
+    $stmtEventos = $mysqli->prepare(
+        "SELECT estado,codigo,detalle,actor_usuario,fecha_evento "
+        ."FROM central_telefonica_transcripcion_evento "
+        ."WHERE id_transcripcion=? ORDER BY id_evento DESC LIMIT 20"
+    );
+    if ($stmtEventos) {
+        $idTranscripcion = intval($fila['id_transcripcion']);
+        $stmtEventos->bind_param('i', $idTranscripcion);
+        if ($stmtEventos->execute()) {
+            $resultadoEventos = $stmtEventos->get_result();
+            while ($resultadoEventos && ($evento = $resultadoEventos->fetch_assoc())) {
+                $evento['actor_usuario'] = $evento['actor_usuario'] === null
+                    ? null : intval($evento['actor_usuario']);
+                $eventos[] = $evento;
+            }
+        }
+        $stmtEventos->close();
+    }
+    $mysqli->set_charset('latin1');
+
+    return array(
+        'id_transcripcion' => intval($fila['id_transcripcion']),
+        'estado' => $fila['estado'],
+        'solicitada' => true,
+        'proveedor' => $fila['proveedor'],
+        'modelo' => $fila['modelo'],
+        'idioma' => $fila['idioma'],
+        'fecha_solicitud' => $fila['fecha_solicitud'],
+        'fecha_inicio' => $fila['fecha_inicio'],
+        'fecha_fin' => $fila['fecha_fin'],
+        'intentos' => intval($fila['intentos']),
+        'texto' => $fila['estado'] === 'completada' ? (string)$fila['transcripcion_texto'] : '',
+        'segmentos' => $fila['estado'] === 'completada' ? $segmentos : array(),
+        'roles_hablantes' => $fila['estado'] === 'completada' ? $roles : array(),
+        'roles_fuente' => $fila['roles_fuente'],
+        'roles_fecha_actualizacion' => $fila['roles_fecha_actualizacion'],
+        'duracion_audio_seg' => $fila['duracion_audio_seg'] === null
+            ? null : floatval($fila['duracion_audio_seg']),
+        'uso' => array(
+            'entrada_tokens' => intval($fila['uso_entrada_tokens']),
+            'salida_tokens' => intval($fila['uso_salida_tokens']),
+            'total_tokens' => intval($fila['uso_total_tokens'])
+        ),
+        'costo_estimado_usd' => $fila['costo_estimado_usd'] === null
+            ? null : floatval($fila['costo_estimado_usd']),
+        'codigo_error' => $fila['codigo_error'],
+        'mensaje_error' => $fila['mensaje_error'],
+        'fecha_actualizacion' => $fila['fecha_actualizacion'],
+        'eventos' => $eventos
+    );
+}
+
+function centralTelefonicaSolicitarTranscripcion($mysqli, $contexto, $entrada)
+{
+    centralTelefonicaTranscripcionExigirPermiso($contexto);
+    if (!centralTelefonicaTranscripcionEstructuraDisponible($mysqli)) {
+        centralTelefonicaLanzar(
+            'transcripcion_no_instalada',
+            'La migracion de transcripciones todavia no esta aplicada.'
+        );
+    }
+    $servicio = centralTelefonicaTranscripcionServicioVisible($mysqli, $contexto, true);
+    if (!$servicio || empty($servicio['disponible'])) {
+        centralTelefonicaLanzar(
+            'transcripcion_no_configurada',
+            isset($servicio['mensaje'])
+                ? $servicio['mensaje'] : 'El servicio de transcripcion no esta disponible.'
+        );
+    }
+    $idLlamada = intval(isset($entrada['id_llamada']) ? $entrada['id_llamada'] : 0);
+    if ($idLlamada <= 0) {
+        centralTelefonicaLanzar('llamada_invalida', 'No se pudo identificar la llamada.');
+    }
+
+    $stmtLlamada = centralTelefonicaEjecutarConsulta(
+        $mysqli,
+        'SELECT id_llamada,grabacion_disponible FROM central_telefonica_llamada WHERE id_llamada=? LIMIT 1',
+        'i',
+        array($idLlamada)
+    );
+    $filaLlamada = $stmtLlamada->get_result()->fetch_assoc();
+    $stmtLlamada->close();
+    if (!$filaLlamada) {
+        centralTelefonicaLanzar('llamada_no_encontrada', 'La llamada ya no esta disponible.');
+    }
+    if (intval($filaLlamada['grabacion_disponible']) !== 1) {
+        centralTelefonicaLanzar(
+            'grabacion_no_disponible',
+            'Esta llamada no tiene una grabacion disponible para transcribir.'
+        );
+    }
+
+    $mysqli->begin_transaction();
+    $stmt = $mysqli->prepare(
+        'SELECT id_transcripcion,estado FROM central_telefonica_transcripcion '
+        .'WHERE id_llamada=? LIMIT 1 FOR UPDATE'
+    );
+    if (!$stmt) {
+        $mysqli->rollback();
+        centralTelefonicaLanzar('cola_no_disponible', 'No se pudo consultar la cola de transcripcion.');
+    }
+    $stmt->bind_param('i', $idLlamada);
+    $fila = null;
+    if ($stmt->execute()) {
+        $resultado = $stmt->get_result();
+        $fila = $resultado ? $resultado->fetch_assoc() : null;
+    }
+    $stmt->close();
+    $idTranscripcion = 0;
+    $codigo = 'transcripcion_encolada';
+    if ($fila) {
+        $idTranscripcion = intval($fila['id_transcripcion']);
+        if (in_array($fila['estado'], array('en_cola', 'obteniendo_audio', 'transcribiendo'), true)) {
+            $mysqli->commit();
+            return array(
+                'id_transcripcion' => $idTranscripcion,
+                'estado' => $fila['estado'],
+                'codigo' => 'transcripcion_en_curso'
+            );
+        }
+        if ($fila['estado'] === 'completada') {
+            $mysqli->commit();
+            return array(
+                'id_transcripcion' => $idTranscripcion,
+                'estado' => 'completada',
+                'codigo' => 'transcripcion_existente'
+            );
+        }
+        $stmtActualizar = $mysqli->prepare(
+            "UPDATE central_telefonica_transcripcion SET estado='en_cola',"
+            ."solicitado_por=?,fecha_solicitud=NOW(),fecha_inicio=NULL,fecha_fin=NULL,"
+            ."codigo_error=NULL,mensaje_error=NULL WHERE id_transcripcion=?"
+        );
+        if (!$stmtActualizar) {
+            $mysqli->rollback();
+            centralTelefonicaLanzar('cola_no_disponible', 'No se pudo reintentar la transcripcion.');
+        }
+        $actor = intval($contexto['cod_usuario']);
+        $stmtActualizar->bind_param('ii', $actor, $idTranscripcion);
+        $ok = $stmtActualizar->execute();
+        $stmtActualizar->close();
+        if (!$ok) {
+            $mysqli->rollback();
+            centralTelefonicaLanzar('cola_no_disponible', 'No se pudo reintentar la transcripcion.');
+        }
+        $codigo = 'transcripcion_reencolada';
+    } else {
+        $stmtInsertar = $mysqli->prepare(
+            "INSERT INTO central_telefonica_transcripcion "
+            ."(id_llamada,estado,proveedor,modelo,idioma,solicitado_por,fecha_solicitud) "
+            ."VALUES (?,'en_cola','openai','gpt-4o-transcribe-diarize','es',?,NOW())"
+        );
+        if (!$stmtInsertar) {
+            $mysqli->rollback();
+            centralTelefonicaLanzar('cola_no_disponible', 'No se pudo crear la solicitud de transcripcion.');
+        }
+        $actor = intval($contexto['cod_usuario']);
+        $stmtInsertar->bind_param('ii', $idLlamada, $actor);
+        $ok = $stmtInsertar->execute();
+        $idTranscripcion = intval($stmtInsertar->insert_id);
+        $stmtInsertar->close();
+        if (!$ok || $idTranscripcion <= 0) {
+            $mysqli->rollback();
+            centralTelefonicaLanzar('cola_no_disponible', 'No se pudo crear la solicitud de transcripcion.');
+        }
+    }
+    $mysqli->commit();
+    centralTelefonicaTranscripcionEvento(
+        $mysqli,
+        $idTranscripcion,
+        'en_cola',
+        $codigo,
+        'Solicitud creada desde Central Telefonica.',
+        intval($contexto['cod_usuario'])
+    );
+    return array(
+        'id_transcripcion' => $idTranscripcion,
+        'estado' => 'en_cola',
+        'codigo' => $codigo
+    );
+}
+
+function centralTelefonicaActualizarRolesTranscripcion($mysqli, $contexto, $entrada)
+{
+    centralTelefonicaTranscripcionExigirPermiso($contexto);
+    if (!centralTelefonicaTranscripcionEstructuraDisponible($mysqli)) {
+        centralTelefonicaLanzar(
+            'transcripcion_no_instalada',
+            'La migracion de transcripciones todavia no esta aplicada.'
+        );
+    }
+    $idLlamada = intval(isset($entrada['id_llamada']) ? $entrada['id_llamada'] : 0);
+    $rolesEntrada = isset($entrada['roles_json']) ? json_decode((string)$entrada['roles_json'], true) : null;
+    if ($idLlamada <= 0 || !is_array($rolesEntrada)) {
+        centralTelefonicaLanzar('roles_invalidos', 'No se pudo interpretar la asignacion de hablantes.');
+    }
+
+    $mysqli->set_charset('utf8mb4');
+    $stmt = $mysqli->prepare(
+        "SELECT id_transcripcion,segmentos_json FROM central_telefonica_transcripcion "
+        ."WHERE id_llamada=? AND estado='completada' LIMIT 1"
+    );
+    if (!$stmt) {
+        $mysqli->set_charset('latin1');
+        centralTelefonicaLanzar('transcripcion_no_disponible', 'No se pudo consultar la transcripcion.');
+    }
+    $stmt->bind_param('i', $idLlamada);
+    $fila = null;
+    if ($stmt->execute()) {
+        $resultado = $stmt->get_result();
+        $fila = $resultado ? $resultado->fetch_assoc() : null;
+    }
+    $stmt->close();
+    if (!$fila) {
+        $mysqli->set_charset('latin1');
+        centralTelefonicaLanzar('transcripcion_no_disponible', 'La llamada aun no tiene una transcripcion completa.');
+    }
+    $segmentos = json_decode((string)$fila['segmentos_json'], true);
+    $hablantes = array();
+    foreach ((array)$segmentos as $segmento) {
+        $hablante = isset($segmento['speaker']) ? (string)$segmento['speaker'] : '';
+        if ($hablante !== '' && !in_array($hablante, $hablantes, true)) {
+            $hablantes[] = $hablante;
+        }
+    }
+    $roles = array();
+    $permitidos = array('funcionario', 'paciente', 'otro');
+    foreach ($hablantes as $hablante) {
+        $rol = isset($rolesEntrada[$hablante]) ? (string)$rolesEntrada[$hablante] : '';
+        if (!in_array($rol, $permitidos, true)) {
+            $mysqli->set_charset('latin1');
+            centralTelefonicaLanzar('roles_invalidos', 'Asigne un rol valido a cada hablante.');
+        }
+        $roles[$hablante] = $rol;
+    }
+    if (count($roles) === 0) {
+        $mysqli->set_charset('latin1');
+        centralTelefonicaLanzar('roles_invalidos', 'La transcripcion no contiene hablantes editables.');
+    }
+    $rolesJson = centralTelefonicaTranscripcionJson($roles);
+    $idTranscripcion = intval($fila['id_transcripcion']);
+    $actor = intval($contexto['cod_usuario']);
+    $stmtActualizar = $mysqli->prepare(
+        "UPDATE central_telefonica_transcripcion SET roles_hablantes_json=?,"
+        ."roles_fuente='manual',roles_actualizados_por=?,roles_fecha_actualizacion=NOW() "
+        ."WHERE id_transcripcion=?"
+    );
+    $ok = false;
+    if ($stmtActualizar) {
+        $stmtActualizar->bind_param('sii', $rolesJson, $actor, $idTranscripcion);
+        $ok = $stmtActualizar->execute();
+        $stmtActualizar->close();
+    }
+    $mysqli->set_charset('latin1');
+    if (!$ok) {
+        centralTelefonicaLanzar('roles_no_guardados', 'No se pudo guardar la asignacion de hablantes.');
+    }
+    centralTelefonicaTranscripcionEvento(
+        $mysqli,
+        $idTranscripcion,
+        'completada',
+        'roles_actualizados',
+        'La asignacion de hablantes fue corregida manualmente.',
+        $actor
+    );
+    return array('id_transcripcion' => $idTranscripcion, 'roles_hablantes' => $roles);
 }
 
 function centralTelefonicaDetalle($mysqli, $contexto, $entrada)
@@ -455,11 +896,21 @@ function centralTelefonicaDetalle($mysqli, $contexto, $entrada)
         centralTelefonicaLanzar('llamada_invalida', 'No se pudo identificar la llamada.');
     }
 
-    $sql = "SELECT id_llamada,grupo_clave,cdr_linkedid,cdr_uniqueid_principal,
-            fecha_inicio,fecha_fin,tipo,estado,origen_original,destino_original,
-            extension,duracion_seg,hablado_seg,cantidad_segmentos,
-            grabacion_disponible,clasificacion_motivo
-        FROM central_telefonica_llamada WHERE id_llamada=? LIMIT 1";
+    $estructuraTranscripcion = centralTelefonicaTranscripcionEstructuraDisponible($mysqli);
+    $camposTranscripcion = $estructuraTranscripcion
+        ? ",t.estado AS transcripcion_estado,t.fecha_actualizacion AS transcripcion_actualizada,"
+            ."t.mensaje_error AS transcripcion_mensaje_error"
+        : ",NULL AS transcripcion_estado,NULL AS transcripcion_actualizada,"
+            ."NULL AS transcripcion_mensaje_error";
+    $unionTranscripcion = $estructuraTranscripcion
+        ? ' LEFT JOIN central_telefonica_transcripcion t ON t.id_llamada=l.id_llamada '
+        : ' ';
+    $sql = "SELECT l.id_llamada,l.grupo_clave,l.cdr_linkedid,l.cdr_uniqueid_principal,
+            l.fecha_inicio,l.fecha_fin,l.tipo,l.estado,l.origen_original,l.destino_original,
+            l.extension,l.duracion_seg,l.hablado_seg,l.cantidad_segmentos,
+            l.grabacion_disponible,l.clasificacion_motivo".$camposTranscripcion."
+        FROM central_telefonica_llamada l ".$unionTranscripcion."
+        WHERE l.id_llamada=? LIMIT 1";
     $stmt = centralTelefonicaEjecutarConsulta($mysqli, $sql, 'i', array($id));
     $resultado = $stmt->get_result();
     $fila = $resultado ? $resultado->fetch_assoc() : null;
@@ -468,7 +919,7 @@ function centralTelefonicaDetalle($mysqli, $contexto, $entrada)
         centralTelefonicaLanzar('llamada_no_encontrada', 'La llamada ya no esta disponible.');
     }
 
-    $visible = centralTelefonicaFilaVisible($fila, $contexto);
+    $visible = centralTelefonicaFilaVisible($fila, $contexto, $estructuraTranscripcion);
     $visible['fecha_fin'] = $fila['fecha_fin'];
     $visible['clasificacion_motivo'] = $fila['clasificacion_motivo'];
     $visible['datos_tecnicos'] = null;
@@ -513,7 +964,24 @@ function centralTelefonicaDetalle($mysqli, $contexto, $entrada)
         $stmtSegmentos->close();
     }
 
-    return array('llamada' => $visible, 'permisos' => $contexto['permisos']);
+    $transcripcion = centralTelefonicaTranscripcionDetalleVisible(
+        $mysqli,
+        $contexto,
+        $id
+    );
+    if ($transcripcion !== null) {
+        $visible['transcripcion'] = $transcripcion;
+    }
+
+    return array(
+        'llamada' => $visible,
+        'permisos' => $contexto['permisos'],
+        'transcripcion_servicio' => centralTelefonicaTranscripcionServicioVisible(
+            $mysqli,
+            $contexto,
+            $estructuraTranscripcion
+        )
+    );
 }
 
 try {
@@ -565,11 +1033,31 @@ try {
                 centralTelefonicaDetalle($mysqli, $contexto, $entrada)
             );
             break;
+        case 'solicitar_transcripcion':
+            centralTelefonicaResponder(
+                true,
+                'transcripcion_solicitada',
+                'La llamada fue agregada a la cola de transcripcion.',
+                centralTelefonicaSolicitarTranscripcion($mysqli, $contexto, $entrada)
+            );
+            break;
+        case 'actualizar_roles_transcripcion':
+            centralTelefonicaResponder(
+                true,
+                'roles_actualizados',
+                'La asignacion de hablantes fue actualizada.',
+                centralTelefonicaActualizarRolesTranscripcion($mysqli, $contexto, $entrada)
+            );
+            break;
         default:
             centralTelefonicaLanzar('accion_no_reconocida', 'La accion solicitada no existe.');
     }
 } catch (CentralTelefonicaExcepcion $e) {
-    $estado = $e->codigoOperacion === 'acceso_no_autorizado' ? 403 : 422;
+    $estado = in_array(
+        $e->codigoOperacion,
+        array('acceso_no_autorizado', 'transcripcion_no_autorizada'),
+        true
+    ) ? 403 : 422;
     centralTelefonicaResponder(
         false,
         $e->codigoOperacion,

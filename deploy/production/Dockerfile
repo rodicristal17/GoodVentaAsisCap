@@ -4,12 +4,15 @@ FROM php:${PHP_VERSION}-apache
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libfreetype6-dev \
+        libcurl4-openssl-dev \
         libjpeg62-turbo-dev \
         libonig-dev \
         libpng-dev \
         libzip-dev \
+        ca-certificates \
+        openssh-client \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" gd mbstring mysqli pdo_mysql zip \
+    && docker-php-ext-install -j"$(nproc)" curl gd mbstring mysqli pdo_mysql zip \
     && (php -m | grep -qi '^Zend OPcache$' || docker-php-ext-install opcache) \
     && a2enmod rewrite headers expires deflate ssl \
     && sed -ri 's/^ServerTokens .*/ServerTokens Prod/; s/^ServerSignature .*/ServerSignature Off/' /etc/apache2/conf-available/security.conf \
