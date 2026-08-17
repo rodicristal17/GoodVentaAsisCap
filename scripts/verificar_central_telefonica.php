@@ -143,6 +143,24 @@ centralTelefonicaPrueba(
     'Normaliza los estados principales del CDR.'
 );
 
+$rutaCompose = dirname(__DIR__).'/deploy/production/compose.yml';
+$compose = is_readable($rutaCompose) ? file_get_contents($rutaCompose) : '';
+centralTelefonicaPrueba(
+    strpos($compose, 'central-telefonica-sync:') !== false
+        && strpos($compose, 'TELAR_CENTRAL_SYNC_INTERVAL_SECONDS:-300') !== false
+        && strpos($compose, 'sincronizar_central_telefonica.php') !== false
+        && strpos($compose, 'if [ "$$interval" -lt 60 ]') !== false,
+    'El servicio programado ejecuta el sincronizador cada cinco minutos y rechaza intervalos inseguros.'
+);
+centralTelefonicaPrueba(
+    strpos($compose, '../../:/var/www/html:ro') !== false
+        && strpos($compose, 'read_only: true') !== false
+        && strpos($compose, 'no-new-privileges:true') !== false
+        && strpos($compose, 'max-size: 10m') !== false
+        && strpos($compose, 'max-file: "3"') !== false,
+    'El sincronizador queda aislado, con codigo de solo lectura y rotacion de logs.'
+);
+
 fwrite(STDOUT, 'Aprobadas: '.$aprobadas.' | Fallidas: '.$fallidas.PHP_EOL);
 exit($fallidas > 0 ? 1 : 0);
 
