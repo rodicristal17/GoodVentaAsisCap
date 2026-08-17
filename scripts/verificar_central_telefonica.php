@@ -5,7 +5,7 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 
-require_once dirname(__DIR__).'/php_system/central_telefonica_helper.php';
+require_once dirname(__DIR__).'/php_system/central_telefonica_sync_helper.php';
 
 $aprobadas = 0;
 $fallidas = 0;
@@ -23,6 +23,13 @@ function centralTelefonicaPrueba($condicion, $mensaje)
 }
 
 $config = centralTelefonicaCargarConfiguracionIssabel();
+
+centralTelefonicaPrueba(
+    centralTelefonicaSyncNormalizarLimiteLectura(10) === 10
+        && centralTelefonicaSyncNormalizarLimiteLectura(0) === 1
+        && centralTelefonicaSyncNormalizarLimiteLectura(25000) === 20000,
+    'Respeta lotes pequenos solicitados y conserva el limite maximo seguro.'
+);
 
 centralTelefonicaPrueba(
     centralTelefonicaNormalizarTelefono('0981123456') === '+595981123456',

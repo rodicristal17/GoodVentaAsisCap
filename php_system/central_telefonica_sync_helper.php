@@ -167,6 +167,11 @@ function centralTelefonicaSyncExpresionColumna($columna, $alias, $predeterminado
     return centralTelefonicaSyncIdentificador($columna).' AS `'.$alias.'`';
 }
 
+function centralTelefonicaSyncNormalizarLimiteLectura($limite)
+{
+    return max(1, min(20000, intval($limite)));
+}
+
 function centralTelefonicaSyncLeerFuente($conexion, $config, $desde, $limite)
 {
     $columnas = centralTelefonicaSyncColumnasFuente($conexion, $config['table']);
@@ -196,7 +201,7 @@ function centralTelefonicaSyncLeerFuente($conexion, $config, $desde, $limite)
             'No se pudo preparar la lectura incremental del CDR.'
         );
     }
-    $limite = max(100, min(20000, intval($limite)));
+    $limite = centralTelefonicaSyncNormalizarLimiteLectura($limite);
     $stmt->bind_param('si', $desde, $limite);
     if (!$stmt->execute()) {
         $stmt->close();
