@@ -9,6 +9,24 @@ require_once("trabajo_laboratorio_helper.php");
 
 date_default_timezone_set('Etc/GMT+3');
 
+function normalizarPlanVendidoPresupuesto($valor)
+{
+    if ($valor === null) {
+        return null;
+    }
+
+    $valor = trim((string)($valor));
+    if ($valor === '') {
+        return null;
+    }
+
+    if (!in_array($valor, array('total', 'prioritario'), true)) {
+        return false;
+    }
+
+    return $valor;
+}
+
 function verificarOperacionPresupuesto($operacion)
 {
     $user = mb_convert_encoding((string)($_POST['useru']), 'ISO-8859-1', 'UTF-8');
@@ -85,6 +103,12 @@ function verificarOperacionPresupuesto($operacion)
             $cod_clienteFK = isset($_POST['cod_clienteFK']) ? mb_convert_encoding((string)($_POST['cod_clienteFK']), 'ISO-8859-1', 'UTF-8') : null;
             $cod_ventaFK = isset($_POST['cod_ventaFK']) ? mb_convert_encoding((string)($_POST['cod_ventaFK']), 'ISO-8859-1', 'UTF-8') : null;
             $plan_vendido = isset($_POST['plan_vendido']) ? mb_convert_encoding((string)($_POST['plan_vendido']), 'ISO-8859-1', 'UTF-8') : null;
+            $plan_vendido = normalizarPlanVendidoPresupuesto($plan_vendido);
+
+            if ($plan_vendido === false) {
+                echo json_encode(array("1" => "error", "mensaje" => "El plan vendido debe ser total o prioritario."));
+                exit;
+            }
 
             $idPresupuesto = abmPresupuesto($id, $cant_cuotas, $cod_clienteFK, $user, $cod_ventaFK, $plan_vendido);
             echo json_encode(array("1" => "exito", "2" => $idPresupuesto));

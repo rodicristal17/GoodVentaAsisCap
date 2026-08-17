@@ -198,9 +198,9 @@ $bloqueRenderAgendaJs = pruebaPlanBloqueFuncionJs(
 
 pruebaPlanAfirmar(
     $bloqueOcupaciones !== ''
-    && strpos($bloqueOcupaciones, "UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO'") !== false
+    && strpos($bloqueOcupaciones, "'AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO'") !== false
     && strpos($bloqueOcupaciones, 'GROUP BY a.fecha,a.id_consultorio,a.id_profesional') !== false,
-    'Agenda se resume por fecha, consultorio y doctor, excluyendo cancelados.'
+    'Agenda se resume por fecha, consultorio y doctor, excluyendo cancelados y ausencias.'
 );
 pruebaPlanAfirmar(
     stripos($bloqueOcupaciones, 'paciente') === false
@@ -217,7 +217,7 @@ pruebaPlanAfirmar(
     $bloqueCompromisos !== ''
     && strpos($bloqueCompromisos, 'planificacionListarAsignaciones(') !== false
     && strpos($bloqueCompromisos, 'c.cod_localFk<>?') !== false
-    && strpos($bloqueCompromisos, "UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO'") !== false
+    && strpos($bloqueCompromisos, "'AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO'") !== false
     && strpos($bloqueCompromisos, "\$contexto['permisos']['todas_sucursales']") !== false
     && strpos($fuentePhp, "'compromisos_otras_sucursales'") !== false,
     'La vista local recibe compromisos preventivos de otras sucursales con permisos vigentes.'
@@ -425,7 +425,7 @@ $sqlLectura = "SELECT COUNT(*) AS casillas
         FROM agenda a
         INNER JOIN consultorios c ON c.id_consultorio=a.id_consultorio
         WHERE a.fecha BETWEEN ? AND ?
-          AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO'
+          AND UPPER(TRIM(IFNULL(a.estado,'AGENDADO'))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')
           AND a.id_profesional IS NOT NULL
           AND a.id_profesional>0
         GROUP BY a.fecha,a.id_consultorio
@@ -448,15 +448,15 @@ $stmt->close();
 $sqlIncidente = "SELECT
         (SELECT COUNT(*) FROM agenda a
          WHERE a.fecha='2026-07-10' AND a.id_consultorio=8
-           AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO') AS registros,
+           AND UPPER(TRIM(IFNULL(a.estado,'AGENDADO'))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')) AS registros,
         (SELECT COUNT(DISTINCT a.id_profesional) FROM agenda a
          WHERE a.fecha='2026-07-10' AND a.id_consultorio=8
            AND a.id_profesional IS NOT NULL AND a.id_profesional>0
-           AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO') AS doctores_identificados,
+           AND UPPER(TRIM(IFNULL(a.estado,'AGENDADO'))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')) AS doctores_identificados,
         (SELECT COUNT(*) FROM agenda a
          WHERE a.fecha='2026-07-10' AND a.id_consultorio=8
            AND (a.id_profesional IS NULL OR a.id_profesional<=0)
-           AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO') AS sin_identificar,
+           AND UPPER(TRIM(IFNULL(a.estado,'AGENDADO'))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')) AS sin_identificar,
         (SELECT COUNT(*) FROM planificacion_especialista_asignacion pa
          WHERE pa.fecha='2026-07-10' AND pa.cod_localFK=3
            AND pa.id_consultorioFK=8
@@ -469,7 +469,7 @@ $sqlIncidente = "SELECT
              SELECT 1 FROM agenda a
              WHERE a.fecha=pa.fecha AND a.id_consultorio=pa.id_consultorioFK
                AND a.id_profesional=pa.cod_profesionalFK
-               AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO'
+               AND UPPER(TRIM(IFNULL(a.estado,'AGENDADO'))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')
            )) AS misma_ocupacion";
 $resultadoIncidente = $mysqli->query($sqlIncidente);
 pruebaPlanAfirmar($resultadoIncidente !== false, 'C3 del viernes 10 se puede auditar sin datos personales.');
@@ -494,11 +494,11 @@ $resultadoIncidente->free();
 $sqlLibre = "SELECT
         (SELECT COUNT(*) FROM agenda a
          WHERE a.fecha='2026-07-10' AND a.id_consultorio=7
-           AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO') AS registros,
+           AND UPPER(TRIM(IFNULL(a.estado,'AGENDADO'))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')) AS registros,
         (SELECT COUNT(*) FROM agenda a
          WHERE a.fecha='2026-07-10' AND a.id_consultorio=7
            AND a.id_profesional IS NOT NULL AND a.id_profesional>0
-           AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO') AS identificados,
+           AND UPPER(TRIM(IFNULL(a.estado,'AGENDADO'))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')) AS identificados,
         (SELECT COUNT(*) FROM planificacion_especialista_asignacion pa
          WHERE pa.fecha='2026-07-10' AND pa.cod_localFK=3
            AND pa.id_consultorioFK=7
@@ -517,11 +517,11 @@ $resultadoLibre->free();
 $sqlAgendaVisual = "SELECT
         (SELECT COUNT(*) FROM agenda a
          WHERE a.fecha='2026-07-03' AND a.id_consultorio=8
-           AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO') AS registros,
+           AND UPPER(TRIM(IFNULL(a.estado,'AGENDADO'))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')) AS registros,
         (SELECT COUNT(DISTINCT a.id_profesional) FROM agenda a
          WHERE a.fecha='2026-07-03' AND a.id_consultorio=8
            AND a.id_profesional IS NOT NULL AND a.id_profesional>0
-           AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO') AS identificados,
+           AND UPPER(TRIM(IFNULL(a.estado,'AGENDADO'))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')) AS identificados,
         (SELECT COUNT(*) FROM planificacion_especialista_asignacion pa
          WHERE pa.fecha='2026-07-03' AND pa.cod_localFK=3
            AND pa.id_consultorioFK=8

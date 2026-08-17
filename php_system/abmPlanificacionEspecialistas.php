@@ -808,7 +808,7 @@ function planificacionOcupacionesAgenda($mysqli, $codLocal, $desde, $hasta)
         LEFT JOIN persona p ON p.cod_persona=u.cod_usuario
         WHERE c.cod_localFk=?
           AND a.fecha BETWEEN ? AND ?
-          AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO'
+          AND UPPER(TRIM(IFNULL(a.estado,'AGENDADO'))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')
         GROUP BY a.fecha,a.id_consultorio,a.id_profesional,
                  p.nombre_persona,u.login,u.url
         ORDER BY a.fecha,a.id_consultorio,a.id_profesional";
@@ -1317,7 +1317,7 @@ function planificacionCompromisosOtrasSucursales(
             WHERE a.fecha BETWEEN ? AND ?
               AND c.cod_localFk<>?
               AND a.id_profesional IN (".$idsSql.")
-              AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO'
+              AND UPPER(TRIM(IFNULL(a.estado,'AGENDADO'))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')
             GROUP BY a.fecha,a.id_profesional,c.cod_localFk,l.Nombre,c.nombre
             ORDER BY a.fecha,a.id_profesional,c.cod_localFk,c.nombre";
         $stmt = $mysqli->prepare($sqlAgenda);
@@ -2016,7 +2016,7 @@ function planificacionConflictosAgenda(
         LEFT JOIN usuario u ON u.cod_usuario=a.id_profesional
         LEFT JOIN persona p ON p.cod_persona=u.cod_usuario
         WHERE a.fecha=?
-          AND UPPER(IFNULL(a.estado,'AGENDADO'))<>'CANCELADO'
+          AND UPPER(TRIM(IFNULL(a.estado,'AGENDADO'))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')
           AND a.id_profesional IS NOT NULL
           AND a.id_profesional>0
           AND (a.id_profesional=? OR a.id_consultorio=?)

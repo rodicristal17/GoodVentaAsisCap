@@ -694,6 +694,31 @@ function normalizarNumeroAgenda($valor)
     return is_numeric($valor) ? (float)$valor : 0;
 }
 
+function normalizarEstadoCitaAgenda($estado, $predeterminado = '')
+{
+    $estado = strtoupper(trim((string)$estado));
+    if ($estado === '') {
+        return $predeterminado;
+    }
+
+    if (in_array($estado, array('AUSENCIA', 'NO_ASISTIO', 'NOASISTIO', 'NO ASISTIO'), true)) {
+        $estado = 'AUSENTE';
+    }
+
+    $permitidos = array(
+        'AGENDADO',
+        'CONFIRMADO',
+        'CANCELADO',
+        'ATENDIDO',
+        'PRIMERACONSULTA',
+        'CONFIRMADOCONDEUDA',
+        'ENESPERA',
+        'AUSENTE'
+    );
+
+    return in_array($estado, $permitidos, true) ? $estado : false;
+}
+
 function esEstadoPrimeraConsultaAgenda($estado)
 {
     return strtoupper(trim((string)$estado)) === "PRIMERACONSULTA";
@@ -3542,7 +3567,7 @@ function guardarCita($mysqli, $useru){
     $fecha = isset($_POST['fecha']) ? limpiar($mysqli, $_POST['fecha']) : '';
     $inicio = isset($_POST['inicio']) ? limpiar($mysqli, $_POST['inicio']) : '';
     $fin = isset($_POST['fin']) ? limpiar($mysqli, $_POST['fin']) : '';
-    $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : 'AGENDADO';
+    $estado = normalizarEstadoCitaAgenda(isset($_POST['estado']) ? $_POST['estado'] : '', 'AGENDADO');
     $motivo = isset($_POST['motivo']) ? limpiar($mysqli, $_POST['motivo']) : '';
     $codVenta = isset($_POST['cod_venta']) ? (int)$_POST['cod_venta'] : 0;
     $detalles = isset($_POST['detalles']) ? $_POST['detalles'] : array();
@@ -3572,6 +3597,14 @@ function guardarCita($mysqli, $useru){
     }
     $primerDetalle = count($idsDetalles) > 0 ? $idsDetalles[0] : "NULL";
     $codVentaSql = $codVenta > 0 ? "'".$codVenta."'" : "NULL";
+
+    if ($estado === false) {
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "El estado de la cita no es valido. Actualice la pantalla y vuelva a intentarlo."
+        ));
+        exit;
+    }
 
     if($paciente == '' || $consultorio == '' || $fecha == '' || $inicio == '' || $fin == ''){
         echo json_encode(array(
@@ -3953,7 +3986,7 @@ function actualizarCita($mysqli, $useru){
     $id_agenda = isset($_POST['id_agenda']) ? limpiar($mysqli, $_POST['id_agenda']) : '';
     $hora_inicio = isset($_POST['hora_inicio']) ? limpiar($mysqli, $_POST['hora_inicio']) : '';
     $hora_fin = isset($_POST['hora_fin']) ? limpiar($mysqli, $_POST['hora_fin']) : '';
-    $estado = isset($_POST['estado']) ? limpiar($mysqli, $_POST['estado']) : '';    
+    $estado = normalizarEstadoCitaAgenda(isset($_POST['estado']) ? $_POST['estado'] : '');
     $motivo = isset($_POST['motivo']) ? limpiar($mysqli, $_POST['motivo']) : '';
     $campos = array();
 
@@ -3961,6 +3994,14 @@ function actualizarCita($mysqli, $useru){
         echo json_encode(array(
             "1" => "Datos incompletos",
             "mensaje" => "Falta el ID del agendamiento"
+        ));
+        exit;
+    }
+
+    if ($estado === false) {
+        echo json_encode(array(
+            "1" => "Error",
+            "mensaje" => "El estado de la cita no es valido. Actualice la pantalla y vuelva a intentarlo."
         ));
         exit;
     }

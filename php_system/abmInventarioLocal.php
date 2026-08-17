@@ -5,6 +5,16 @@
     include("classTable.php");
     include("subir_foto_base64.php");
 
+    function responderErrorInventarioLocal($mensaje) {
+        echo json_encode(array("1" => "error", "mensaje" => $mensaje));
+        exit;
+    }
+
+    function normalizarEnumInventarioLocal($valor, $permitidos) {
+        $valor = strtolower(trim((string)$valor));
+        return in_array($valor, $permitidos, true) ? $valor : false;
+    }
+
     function verificar($funt) {
         $user = $_POST['useru'];
         $user = mb_convert_encoding((string)($user), 'ISO-8859-1', 'UTF-8');
@@ -56,11 +66,29 @@
                 $observacion= isset($_POST['observacion']) ? mb_convert_encoding((string)($_POST['observacion']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_localFK= isset($_POST['cod_localFK']) ? mb_convert_encoding((string)($_POST['cod_localFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $cod_usuario_responsableFK= isset($_POST['cod_usuario_responsableFK']) ? mb_convert_encoding((string)($_POST['cod_usuario_responsableFK']), 'ISO-8859-1', 'UTF-8') : null;
-                $cod_marcaFK= isset($_POST['cod_usuario_responsableFK']) ? mb_convert_encoding((string)($_POST['cod_marcaFK']), 'ISO-8859-1', 'UTF-8') : null;
+                $cod_marcaFK= isset($_POST['cod_marcaFK']) ? mb_convert_encoding((string)($_POST['cod_marcaFK']), 'ISO-8859-1', 'UTF-8') : null;
                 $modelo= isset($_POST['modelo']) ? mb_convert_encoding((string)($_POST['modelo']), 'ISO-8859-1', 'UTF-8') : null;
                 $nro_serie= isset($_POST['nro_serie']) ? mb_convert_encoding((string)($_POST['nro_serie']), 'ISO-8859-1', 'UTF-8') : null;
                 $estado_fisico= isset($_POST['estado_fisico']) ? mb_convert_encoding((string)($_POST['estado_fisico']), 'ISO-8859-1', 'UTF-8') : null;
                 $categoria= isset($_POST['categoria']) ? mb_convert_encoding((string)($_POST['categoria']), 'ISO-8859-1', 'UTF-8') : null;
+
+                $estado = normalizarEnumInventarioLocal($estado, array('activo', 'inactivo'));
+                $categoria = normalizarEnumInventarioLocal($categoria, array('mobiliario', 'medico'));
+                $estado_fisico = normalizarEnumInventarioLocal($estado_fisico, array(
+                    'excelente',
+                    'mantenimiento',
+                    mb_convert_encoding('dañado', 'ISO-8859-1', 'UTF-8')
+                ));
+
+                if ($estado === false) {
+                    responderErrorInventarioLocal('Seleccione un estado valido para el articulo.');
+                }
+                if ($categoria === false) {
+                    responderErrorInventarioLocal('Seleccione una categoria valida para el articulo.');
+                }
+                if ($estado_fisico === false) {
+                    responderErrorInventarioLocal('Seleccione un estado fisico valido para el articulo.');
+                }
 
                 $cod_inventario= abmInventarioLocal($cod_inventario, $nombre, $descripcion, $estado, $cantidad, $costo, $observacion, $modelo, $nro_serie, $cod_localFK, $cod_marcaFK,$cod_usuario_responsableFK, $user, $estado_fisico, $categoria);
                 echo json_encode(array("1" => "exito", "cod_inventario" => $cod_inventario));

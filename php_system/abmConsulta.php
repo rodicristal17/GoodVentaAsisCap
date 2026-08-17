@@ -2247,7 +2247,7 @@ function FechaPlanificadaTratamientoSelectSqlConsulta($mysqli, $detalleAlias = "
 		$condicionEstadoTratamiento = columnaExisteConsulta($mysqli, "agenda_tratamientos", "estado") ? " AND IFNULL(at.estado,'') <> 'cancelado'" : "";
 		$condicionDetalle = "(".$condicionDetalle." OR EXISTS (SELECT 1 FROM agenda_tratamientos at WHERE at.id_agenda = a.id_agenda AND at.cod_detalle_ventaFK = ".$detalleAlias.".cod_detalle".$condicionEstadoTratamiento."))";
 	}
-	$condicionEstado = columnaExisteConsulta($mysqli, "agenda", "estado") ? " AND UPPER(IFNULL(a.estado,'')) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA')" : "";
+	$condicionEstado = columnaExisteConsulta($mysqli, "agenda", "estado") ? " AND UPPER(TRIM(IFNULL(a.estado,''))) NOT IN ('CANCELADO','CANCELADA','ANULADO','ANULADA','AUSENTE','AUSENCIA','NO_ASISTIO','NOASISTIO','NO ASISTIO')" : "";
 	return "(SELECT MIN(a.fecha) FROM agenda a WHERE ".$condicionDetalle.$condicionEstado.") AS fecha_planificada";
 }
 

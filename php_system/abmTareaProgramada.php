@@ -61,6 +61,30 @@ function validar_estado_tarea_programada($estado)
     return $estado;
 }
 
+function normalizar_fecha_realizado_tarea_programada($fecha)
+{
+    $fecha = trim((string)$fecha);
+    if ($fecha === '') {
+        return null;
+    }
+
+    $fecha = str_replace('T', ' ', $fecha);
+    $formatos = array('Y-m-d H:i:s', 'Y-m-d H:i');
+
+    foreach ($formatos as $formato) {
+        $fechaValida = DateTime::createFromFormat('!'.$formato, $fecha);
+        $errores = DateTime::getLastErrors();
+        $sinErrores = $errores === false
+            || ((int)$errores['warning_count'] === 0 && (int)$errores['error_count'] === 0);
+
+        if ($fechaValida !== false && $sinErrores && $fechaValida->format($formato) === $fecha) {
+            return $fechaValida->format('Y-m-d H:i:s');
+        }
+    }
+
+    return false;
+}
+
 function bind_param_tarea_programada($stmt, $tipos, $parametros)
 {
     $refs = array();
@@ -3029,12 +3053,22 @@ function abm($id, $nombre, $hora, $estado, $fecha_realizado, $cod_usuarioFK, $ti
 
     $hora = validar_hora_tarea_programada($hora);
     $estado = validar_estado_tarea_programada($estado);
+	$fecha_realizado = normalizar_fecha_realizado_tarea_programada($fecha_realizado);
 
     if ($hora == '') {
         $informacion = array('1' => 'camposvacio');
         echo json_encode($informacion);
         exit;
     }
+
+	if ($fecha_realizado === false) {
+		$informacion = array(
+			'1' => 'error',
+			'mensaje' => 'La fecha de realizacion no es valida. Seleccione nuevamente la fecha y la hora.'
+		);
+		echo json_encode($informacion);
+		exit;
+	}
 
     $mysqli = conectar_al_servidor();
 
@@ -3045,10 +3079,6 @@ function abm($id, $nombre, $hora, $estado, $fecha_realizado, $cod_usuarioFK, $ti
 
         if ($cod_usuarioFK == '') {
             $cod_usuarioFK = $cod_usuarioFK_create;
-        }
-
-        if ($fecha_realizado == '') {
-            $fecha_realizado = NULL;
         }
 
         $fecha_create = date('Y-m-d H:i:s');

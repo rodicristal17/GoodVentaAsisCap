@@ -617,7 +617,18 @@ function asegurarEstructuraHorarioUsuarioEsperado($mysqli)
 function normalizarFechaHorarioUsuario($fecha)
 {
 	$fecha = trim((string)$fecha);
-	return preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) ? $fecha : null;
+	if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $fecha, $partes)) {
+		return null;
+	}
+
+	return checkdate((int)$partes[2], (int)$partes[3], (int)$partes[1]) ? $fecha : null;
+}
+
+function normalizarDiaHorarioUsuario($dia)
+{
+	$dia = strtolower(trim((string)$dia));
+	$permitidos = array('lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo');
+	return in_array($dia, $permitidos, true) ? $dia : false;
 }
 
 function normalizarTipoJornadaUsuario($tipo)
@@ -665,27 +676,53 @@ function calcularMinutosJornadaUsuario($hora_entrada, $hora_salida, $descanso_in
 
 function obtenerHorariosUsuarioPost()
 {
-	$horariosJson = isset($_POST["horarios_usuario_json"]) ? json_decode((string)$_POST["horarios_usuario_json"], true) : array();
+	$horariosTexto = isset($_POST["horarios_usuario_json"]) ? trim((string)$_POST["horarios_usuario_json"]) : '';
+	$horariosJson = $horariosTexto !== '' ? json_decode($horariosTexto, true) : array();
 	$horarios = array();
 
 	if (!is_array($horariosJson)) {
-		return $horarios;
+		responderErrorAbmUsuario('No se pudo interpretar la jornada del funcionario. Recargue la ficha y vuelva a intentarlo.');
 	}
 
 	foreach ($horariosJson as $horario) {
 		if (!is_array($horario)) {
-			continue;
+			responderErrorAbmUsuario('La jornada contiene una fila no valida. Recargue la ficha y vuelva a intentarlo.');
 		}
 
-		$dia = isset($horario["dia"]) ? (string)$horario["dia"] : "";
+		$dia = normalizarDiaHorarioUsuario(isset($horario["dia"]) ? $horario["dia"] : '');
+		if ($dia === false) {
+			responderErrorAbmUsuario('La jornada contiene un dia no valido. Seleccione nuevamente los dias de trabajo.');
+		}
 		$cod_localFK = isset($horario["cod_localFK"]) ? (string)$horario["cod_localFK"] : "";
+		if ($cod_localFK !== '' && (!ctype_digit($cod_localFK) || (int)$cod_localFK <= 0)) {
+			responderErrorAbmUsuario('La jornada contiene una sucursal no valida. Seleccione nuevamente el local.');
+		}
 		$tipo_jornada = normalizarTipoJornadaUsuario(isset($horario["tipo_jornada"]) ? $horario["tipo_jornada"] : "");
-		$hora_entrada = isset($horario["hora_entrada"]) ? normalizarHoraUsuario($horario["hora_entrada"]) : "";
-		$hora_salida = isset($horario["hora_salida"]) ? normalizarHoraUsuario($horario["hora_salida"]) : "";
-		$descanso_inicio = isset($horario["descanso_inicio"]) ? normalizarHoraUsuario($horario["descanso_inicio"]) : "";
-		$descanso_fin = isset($horario["descanso_fin"]) ? normalizarHoraUsuario($horario["descanso_fin"]) : "";
-		$vigente_desde = normalizarFechaHorarioUsuario(isset($horario["vigente_desde"]) ? $horario["vigente_desde"] : "");
-		$vigente_hasta = normalizarFechaHorarioUsuario(isset($horario["vigente_hasta"]) ? $horario["vigente_hasta"] : "");
+		$hora_entrada_original = isset($horario["hora_entrada"]) ? trim((string)$horario["hora_entrada"]) : "";
+		$hora_salida_original = isset($horario["hora_salida"]) ? trim((string)$horario["hora_salida"]) : "";
+		$descanso_inicio_original = isset($horario["descanso_inicio"]) ? trim((string)$horario["descanso_inicio"]) : "";
+		$descanso_fin_original = isset($horario["descanso_fin"]) ? trim((string)$horario["descanso_fin"]) : "";
+		$hora_entrada = normalizarHoraUsuario($hora_entrada_original);
+		$hora_salida = normalizarHoraUsuario($hora_salida_original);
+		$descanso_inicio = normalizarHoraUsuario($descanso_inicio_original);
+		$descanso_fin = normalizarHoraUsuario($descanso_fin_original);
+		if (($hora_entrada_original !== '' && $hora_entrada === '')
+			|| ($hora_salida_original !== '' && $hora_salida === '')
+			|| ($descanso_inicio_original !== '' && $descanso_inicio === '')
+			|| ($descanso_fin_original !== '' && $descanso_fin === '')) {
+			responderErrorAbmUsuario('La jornada contiene una hora no valida. Use el formato HH:MM.');
+		}
+		$vigente_desde_original = isset($horario["vigente_desde"]) ? trim((string)$horario["vigente_desde"]) : "";
+		$vigente_hasta_original = isset($horario["vigente_hasta"]) ? trim((string)$horario["vigente_hasta"]) : "";
+		$vigente_desde = normalizarFechaHorarioUsuario($vigente_desde_original);
+		$vigente_hasta = normalizarFechaHorarioUsuario($vigente_hasta_original);
+		if (($vigente_desde_original !== '' && $vigente_desde === null)
+			|| ($vigente_hasta_original !== '' && $vigente_hasta === null)) {
+			responderErrorAbmUsuario('La jornada contiene una fecha no valida. Seleccione nuevamente la vigencia.');
+		}
+		if ($vigente_desde !== null && $vigente_hasta !== null && $vigente_hasta < $vigente_desde) {
+			responderErrorAbmUsuario('La fecha final de la jornada no puede ser anterior a la fecha inicial.');
+		}
 		$estado_horario = normalizarEstadoHorarioUsuario(isset($horario["estado_horario"]) ? $horario["estado_horario"] : "");
 		$observacion = isset($horario["observacion"]) ? substr((string)$horario["observacion"], 0, 255) : "";
 
@@ -1135,45 +1172,49 @@ function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_a
 		$horarios_usuario = array();
 	}
 
-	$consultaInactivar = "UPDATE horario_usuario
-		SET estado_horario='inactivo',
-			vigente_hasta=IF(vigente_hasta IS NULL, DATE_SUB(CURDATE(), INTERVAL 1 DAY), vigente_hasta),
-			fecha_edit=NOW(),
-			cod_usuarioFK_edit=?
-		WHERE cod_usuarioFK=?
-		AND cod_localFK IS NOT NULL
-		AND (estado_horario IS NULL OR estado_horario='activo')";
+	$mysqli->begin_transaction();
+	try {
+		$consultaInactivar = "UPDATE horario_usuario
+			SET estado_horario='inactivo',
+				vigente_hasta=IF(vigente_hasta IS NULL, DATE_SUB(CURDATE(), INTERVAL 1 DAY), vigente_hasta),
+				fecha_edit=NOW(),
+				cod_usuarioFK_edit=?
+			WHERE cod_usuarioFK=?
+			AND cod_localFK IS NOT NULL
+			AND (estado_horario IS NULL OR estado_horario='activo')";
 
-	$stmtInactivar = $mysqli->prepare($consultaInactivar);
-	if (!$stmtInactivar) {
-		responderErrorAbmUsuario("No se pudo preparar la actualizacion de horarios del funcionario.", $mysqli->error);
-	}
+		$stmtInactivar = $mysqli->prepare($consultaInactivar);
+		if (!$stmtInactivar) {
+			throw new Exception($mysqli->error);
+		}
 
-	$ss='ss';
-	$stmtInactivar->bind_param($ss,$cod_usuario_accion,$cod_usuario);
+		$ss='ss';
+		$stmtInactivar->bind_param($ss,$cod_usuario_accion,$cod_usuario);
 
-	if (!$stmtInactivar->execute()) {
-		responderErrorAbmUsuario("No se pudieron actualizar los horarios anteriores del funcionario.", $stmtInactivar->error);
-	}
+		if (!$stmtInactivar->execute()) {
+			$errorHorario = $stmtInactivar->error;
+			$stmtInactivar->close();
+			throw new Exception($errorHorario);
+		}
+		$stmtInactivar->close();
 
-	$stmtInactivar->close();
+		if (count($horarios_usuario) == 0) {
+			$mysqli->commit();
+			return;
+		}
 
-	if (count($horarios_usuario) == 0) {
-		return;
-	}
+		$consultaInsert = "INSERT INTO horario_usuario
+			(cod_usuarioFK,dia_semana,hora_entrada,hora_salida,cod_localFK,cod_usuarioFK_create,
+			tipo_jornada,descanso_inicio,descanso_fin,horas_esperadas_minutos,jornada_equivalente,
+			vigente_desde,vigente_hasta,estado_horario,observacion)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
-	$consultaInsert = "INSERT INTO horario_usuario
-		(cod_usuarioFK,dia_semana,hora_entrada,hora_salida,cod_localFK,cod_usuarioFK_create,
-		tipo_jornada,descanso_inicio,descanso_fin,horas_esperadas_minutos,jornada_equivalente,
-		vigente_desde,vigente_hasta,estado_horario,observacion)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		$stmtInsert = $mysqli->prepare($consultaInsert);
+		if (!$stmtInsert) {
+			throw new Exception($mysqli->error);
+		}
 
-	$stmtInsert = $mysqli->prepare($consultaInsert);
-	if (!$stmtInsert) {
-		responderErrorAbmUsuario("No se pudo preparar el guardado de horarios del funcionario.", $mysqli->error);
-	}
-
-	foreach ($horarios_usuario as $horario) {
+		foreach ($horarios_usuario as $horario) {
 		$dia_semana = $horario["dia_semana"];
 		$cod_local_horario = isset($horario["cod_localFK"]) && $horario["cod_localFK"] != "" ? $horario["cod_localFK"] : $cod_localFK;
 		$hora_entrada = $horario["hora_entrada"];
@@ -1208,12 +1249,19 @@ function abmHorarioUsuario($mysqli,$cod_usuario,$horarios_usuario,$cod_usuario_a
 			$observacion
 		);
 
-		if (!$stmtInsert->execute()) {
-			responderErrorAbmUsuario("No se pudo guardar un horario del funcionario.", $stmtInsert->error);
+			if (!$stmtInsert->execute()) {
+				$errorHorario = $stmtInsert->error;
+				$stmtInsert->close();
+				throw new Exception($errorHorario);
+			}
 		}
-	}
 
-	$stmtInsert->close();
+		$stmtInsert->close();
+		$mysqli->commit();
+	} catch (Exception $e) {
+		$mysqli->rollback();
+		responderErrorAbmUsuario('No se pudieron actualizar los horarios del funcionario. Los horarios anteriores se conservaron.', $e->getMessage());
+	}
 }
 
 function buscarHorariosUsuario($mysqli,$cod_usuario)
