@@ -368,8 +368,35 @@ function abmPresupuesto($id, $cant_cuotas, $cod_clienteFK, $cod_usuarioFK_create
     }
 
     if (empty($id)) {
+        $codCliente = (int)$cod_clienteFK;
+        if ($codCliente <= 0) {
+            echo json_encode(array("1" => "error", "mensaje" => "Seleccione nuevamente el paciente antes de crear el presupuesto."));
+            exit;
+        }
+
+        $stmtCliente = $mysqli->prepare("SELECT cod_cliente FROM cliente WHERE cod_cliente = ? LIMIT 1");
+        if (!$stmtCliente) {
+            error_log("Presupuesto: no se pudo preparar la validacion del paciente: ".$mysqli->error);
+            echo json_encode(array("1" => "error", "mensaje" => "No se pudo validar el paciente seleccionado."));
+            exit;
+        }
+        $stmtCliente->bind_param('i', $codCliente);
+        if (!$stmtCliente->execute() || $stmtCliente->get_result()->num_rows === 0) {
+            $stmtCliente->close();
+            error_log("Presupuesto: codigo de cliente inexistente recibido en alta.");
+            echo json_encode(array("1" => "error", "mensaje" => "El paciente seleccionado no tiene un registro de cliente valido. Vuelva a seleccionarlo."));
+            exit;
+        }
+        $stmtCliente->close();
+        $cod_clienteFK = $codCliente;
+
         $sql = "INSERT INTO presupuesto (cant_cuotas, cod_clienteFK, cod_usuarioFK_create, cod_ventaFK, plan_vendido) VALUES (?,?,?,?,?)";
         $stmt = $mysqli->prepare($sql);
+        if (!$stmt) {
+            error_log("Presupuesto: no se pudo preparar el alta: ".$mysqli->error);
+            echo json_encode(array("1" => "error", "mensaje" => "No se pudo preparar el nuevo presupuesto."));
+            exit;
+        }
         $stmt->bind_param('iiiis', $cant_cuotas, $cod_clienteFK, $cod_usuarioFK_create, $cod_ventaFK, $plan_vendido);
     } else {
         $parametros = array();
@@ -425,6 +452,7 @@ function abmPresupuesto($id, $cant_cuotas, $cod_clienteFK, $cod_usuarioFK_create
     }
 
     if (!$stmt->execute()) {
+        error_log("Presupuesto: fallo al ejecutar alta o edicion: ".$stmt->error);
         $informacion = array("1" => "error", "mensaje" => "Error al guardar presupuesto: " . $stmt->error, "sql" => $sql);
         echo json_encode($informacion);
         exit;
@@ -692,6 +720,7 @@ function abmDetallesPresupuesto($id, $cod_productoFK, $cantidad, $precio, $es_pr
 }
 
 if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
+    header('Content-Type: application/json; charset=utf-8');
     $operacion = mb_convert_encoding((string)($_POST['accion']), 'ISO-8859-1', 'UTF-8');
     verificarOperacionPresupuesto($operacion);
 }

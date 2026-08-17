@@ -1130,6 +1130,8 @@ function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha
     }
 
     $mysqli = conectar_al_servidor();
+	$cod_agendamiento = trim((string)$cod_agendamiento);
+	$cod_agendamiento = ctype_digit($cod_agendamiento) ? (int)$cod_agendamiento : 0;
 	if (!asegurarConsultaTratamientoColumnaConsulta($mysqli)) {
 		mysqli_close($mysqli);
 		responderConsultaJson("error","No se pudo preparar el vinculo entre consulta y tratamiento.");
@@ -1183,6 +1185,7 @@ function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha
 	}
 
     if (!$stmt1->execute()) {
+		error_log("[Consulta] No se pudo ejecutar el guardado del registro clinico. Operacion=".$operacion." MySQL=".$stmt1->errno." ".$stmt1->error);
 		$mysqli->rollback();
 		mysqli_close($mysqli);
         responderConsultaJson("error","No se pudo guardar el registro clinico.");
