@@ -161,6 +161,42 @@ centralTelefonicaPrueba(
     'El sincronizador queda aislado, con codigo de solo lectura y rotacion de logs.'
 );
 
+$rutaJs = dirname(__DIR__).'/js_system/central_telefonica.js';
+$rutaCss = dirname(__DIR__).'/css_system/central_telefonica.css';
+$rutaInicio = dirname(__DIR__).'/system/inicio.html';
+$js = is_readable($rutaJs) ? file_get_contents($rutaJs) : '';
+$css = is_readable($rutaCss) ? file_get_contents($rutaCss) : '';
+$inicio = is_readable($rutaInicio) ? file_get_contents($rutaInicio) : '';
+
+centralTelefonicaPrueba(
+    strpos($js, "data-central-action='toggle-summary'") !== false
+        && strpos($js, "aria-controls='centralTelefonicaSummaryCards'") !== false
+        && strpos($js, 'centralTelefonicaCompact_total') !== false
+        && strpos($js, 'centralTelefonicaCompact_no_contestadas') !== false
+        && strpos($js, 'centralTelefonicaCompact_tiempo_hablado_texto') !== false,
+    'Los indicadores ofrecen resumen compacto y control accesible para mostrar el detalle.'
+);
+centralTelefonicaPrueba(
+    strpos($js, 'SUMMARY_PREFERENCE_KEY') !== false
+        && strpos($js, 'localStorage.setItem') !== false
+        && strpos($js, 'setSummaryCollapsed(readSummaryPreference(), false)') !== false,
+    'La preferencia de indicadores se conserva y el estado inicial permanece contraido.'
+);
+centralTelefonicaPrueba(
+    strpos($js, "data-central-action='toggle-filters'") !== false
+        && strpos($js, 'collapseFiltersOnCompactViewport') !== false
+        && strpos($js, 'centralTelefonicaFiltersToggleText') !== false
+        && strpos($css, 'grid-template-columns: minmax(112px, .82fr)') !== false
+        && strpos($css, '@media (max-width: 1100px)') !== false
+        && strpos($css, '.central-telefonica-filters-panel--expanded .central-telefonica-filters') !== false,
+    'Los filtros usan una sola barra en escritorio y un panel colapsable en tablet.'
+);
+centralTelefonicaPrueba(
+    strpos($inicio, 'central_telefonica.css?v=20260817-02') !== false
+        && strpos($inicio, 'central_telefonica.js?x=20260817-02') !== false,
+    'La pantalla principal publica la version compacta sin reutilizar recursos en cache.'
+);
+
 fwrite(STDOUT, 'Aprobadas: '.$aprobadas.' | Fallidas: '.$fallidas.PHP_EOL);
 exit($fallidas > 0 ? 1 : 0);
 

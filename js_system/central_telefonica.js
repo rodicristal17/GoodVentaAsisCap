@@ -4,6 +4,7 @@
 
     var ENDPOINT = "/GoodVentaAsisCap/php_system/abmCentralTelefonica.php";
     var ROOT_ID = "telarCentralTelefonica";
+    var SUMMARY_PREFERENCE_KEY = "telar.centralTelefonica.summaryCollapsed";
     var state = {
         root: null,
         open: false,
@@ -13,7 +14,9 @@
         pages: 1,
         limit: 50,
         data: null,
-        refreshTimer: null
+        refreshTimer: null,
+        summaryCollapsed: true,
+        filtersExpanded: false
     };
 
     function escapeHtml(value) {
@@ -132,7 +135,17 @@
             + "    </div>"
             + "  </header>"
             + "  <main class='central-telefonica-main'>"
-            + "    <section class='central-telefonica-summary' aria-label='Resumen de llamadas'>"
+            + "    <section class='central-telefonica-summary-section central-telefonica-summary-section--collapsed' aria-label='Resumen de llamadas'>"
+            + "      <button type='button' class='central-telefonica-summary-toggle' data-central-action='toggle-summary' aria-expanded='false' aria-controls='centralTelefonicaSummaryCards'>"
+            + "        <span class='central-telefonica-summary-toggle__title'><i class='fa-solid fa-chart-simple' aria-hidden='true'></i><span>Indicadores</span></span>"
+            + "        <span class='central-telefonica-summary-compact' aria-live='polite'>"
+            + "          <span><strong id='centralTelefonicaCompact_total'>—</strong> llamadas</span>"
+            + "          <span><strong id='centralTelefonicaCompact_no_contestadas'>—</strong> no contestadas</span>"
+            + "          <span><strong id='centralTelefonicaCompact_tiempo_hablado_texto'>—</strong> hablado</span>"
+            + "        </span>"
+            + "        <span class='central-telefonica-summary-toggle__action'><span id='centralTelefonicaSummaryToggleText'>Mostrar</span><i class='fa-solid fa-chevron-down' aria-hidden='true'></i></span>"
+            + "      </button>"
+            + "      <div class='central-telefonica-summary' id='centralTelefonicaSummaryCards' hidden>"
             + summaryCard("total", "fa-phone-volume", "Total de llamadas")
             + summaryCard("entrantes", "fa-arrow-down-long", "Entrantes")
             + summaryCard("salientes", "fa-arrow-up-long", "Salientes")
@@ -140,10 +153,15 @@
             + summaryCard("no_contestadas", "fa-phone-slash", "No contestadas")
             + summaryCard("tiempo_hablado_texto", "fa-clock", "Tiempo hablado")
             + summaryCard("internas", "fa-building", "Internas")
+            + "      </div>"
             + "    </section>"
             + "    <section class='central-telefonica-panel central-telefonica-filters-panel'>"
-            + "      <div class='central-telefonica-panel__title'><div><p class='central-telefonica-eyebrow'>Consulta</p><h2>Filtros</h2></div><button type='button' class='central-telefonica-link-button' data-central-action='clear'>Limpiar filtros</button></div>"
-            + "      <form id='centralTelefonicaFilters' class='central-telefonica-filters'>"
+            + "      <h2 class='central-telefonica-sr-only'>Filtros de llamadas</h2>"
+            + "      <button type='button' class='central-telefonica-filters-toggle' data-central-action='toggle-filters' aria-expanded='false' aria-controls='centralTelefonicaFilters'>"
+            + "        <span><i class='fa-solid fa-sliders' aria-hidden='true'></i> Filtros</span>"
+            + "        <span class='central-telefonica-filters-toggle__action'><span id='centralTelefonicaFiltersToggleText'>Mostrar</span><i class='fa-solid fa-chevron-down' aria-hidden='true'></i></span>"
+            + "      </button>"
+            + "      <form id='centralTelefonicaFilters' class='central-telefonica-filters' aria-label='Filtros de llamadas'>"
             + filterField("Desde", "<input type='date' id='centralTelefonicaDesde' value='" + today + "' required />")
             + filterField("Hasta", "<input type='date' id='centralTelefonicaHasta' value='" + today + "' required />")
             + filterField("Dirección", "<select id='centralTelefonicaTipo'><option value=''>Todas</option><option value='entrante_externa'>Entrante externa</option><option value='saliente_externa'>Saliente externa</option><option value='interna'>Interna</option><option value='servicio_prueba'>Servicio / prueba</option><option value='sin_clasificar'>Sin clasificar</option></select>")
@@ -151,6 +169,7 @@
             + filterField("Extensión", "<select id='centralTelefonicaExtension'><option value=''>Todas</option></select>")
             + filterField("Número telefónico", "<input type='search' id='centralTelefonicaTelefono' inputmode='tel' maxlength='40' placeholder='Ej.: 0981 o 595981' />")
             + "        <button type='submit' class='central-telefonica-primary-button'><i class='fa-solid fa-filter' aria-hidden='true'></i><span>Aplicar filtros</span></button>"
+            + "        <button type='button' class='central-telefonica-filter-clear' data-central-action='clear'>Limpiar</button>"
             + "      </form>"
             + "    </section>"
             + "    <section class='central-telefonica-panel central-telefonica-list-panel'>"
@@ -193,6 +212,8 @@
         if (!root.getAttribute("data-central-ready")) {
             root.innerHTML = shellHtml();
             root.setAttribute("data-central-ready", "1");
+            setSummaryCollapsed(readSummaryPreference(), false);
+            setFiltersExpanded(false);
             bindEvents();
         }
         return true;
@@ -207,6 +228,8 @@
             action = actionElement.getAttribute("data-central-action");
             if (action === "refresh") { loadCalls(false); }
             if (action === "clear") { clearFilters(); }
+            if (action === "toggle-summary") { setSummaryCollapsed(!state.summaryCollapsed, true); }
+            if (action === "toggle-filters") { setFiltersExpanded(!state.filtersExpanded); }
             if (action === "close") { window.cerrarCentralTelefonica(); }
             if (action === "minimize") { window.minimizarCentralTelefonica(); }
             if (action === "close-detail") { closeDetail(); }
@@ -218,9 +241,92 @@
             form.addEventListener("submit", function (event) {
                 event.preventDefault();
                 state.page = 1;
+                updateFiltersToggleStatus();
+                collapseFiltersOnCompactViewport();
                 loadCalls(true);
             }, false);
+            form.addEventListener("change", updateFiltersToggleStatus, false);
+            form.addEventListener("input", updateFiltersToggleStatus, false);
         }
+    }
+
+    function readSummaryPreference() {
+        try {
+            return window.localStorage.getItem(SUMMARY_PREFERENCE_KEY) !== "false";
+        } catch (ignore) {
+            return true;
+        }
+    }
+
+    function setSummaryCollapsed(collapsed, persist) {
+        var section;
+        var button;
+        var cards;
+        var text;
+        if (!state.root) { return; }
+        state.summaryCollapsed = collapsed === true;
+        section = state.root.querySelector(".central-telefonica-summary-section");
+        button = state.root.querySelector(".central-telefonica-summary-toggle");
+        cards = state.root.querySelector("#centralTelefonicaSummaryCards");
+        text = state.root.querySelector("#centralTelefonicaSummaryToggleText");
+        if (section) {
+            section.classList.toggle("central-telefonica-summary-section--collapsed", state.summaryCollapsed);
+        }
+        if (button) { button.setAttribute("aria-expanded", state.summaryCollapsed ? "false" : "true"); }
+        if (cards) { cards.hidden = state.summaryCollapsed; }
+        if (text) { text.textContent = state.summaryCollapsed ? "Mostrar" : "Ocultar"; }
+        if (persist) {
+            try {
+                window.localStorage.setItem(SUMMARY_PREFERENCE_KEY, state.summaryCollapsed ? "true" : "false");
+            } catch (ignore) {}
+        }
+    }
+
+    function isCompactFiltersViewport() {
+        if (typeof window.matchMedia === "function") {
+            return window.matchMedia("(max-width: 1100px)").matches;
+        }
+        return document.documentElement.clientWidth <= 1100;
+    }
+
+    function setFiltersExpanded(expanded) {
+        var panel;
+        var button;
+        if (!state.root) { return; }
+        state.filtersExpanded = expanded === true;
+        panel = state.root.querySelector(".central-telefonica-filters-panel");
+        button = state.root.querySelector(".central-telefonica-filters-toggle");
+        if (panel) {
+            panel.classList.toggle("central-telefonica-filters-panel--expanded", state.filtersExpanded);
+        }
+        if (button) { button.setAttribute("aria-expanded", state.filtersExpanded ? "true" : "false"); }
+        updateFiltersToggleStatus();
+    }
+
+    function collapseFiltersOnCompactViewport() {
+        if (isCompactFiltersViewport()) { setFiltersExpanded(false); }
+    }
+
+    function activeFilterCount() {
+        var today = todayIso();
+        var count = 0;
+        if (valueOf("centralTelefonicaDesde") !== today) { count++; }
+        if (valueOf("centralTelefonicaHasta") !== today) { count++; }
+        if (valueOf("centralTelefonicaTipo")) { count++; }
+        if (valueOf("centralTelefonicaEstado")) { count++; }
+        if (valueOf("centralTelefonicaExtension")) { count++; }
+        if (valueOf("centralTelefonicaTelefono")) { count++; }
+        return count;
+    }
+
+    function updateFiltersToggleStatus() {
+        var text;
+        var count;
+        if (!state.root) { return; }
+        text = state.root.querySelector("#centralTelefonicaFiltersToggleText");
+        if (!text) { return; }
+        count = activeFilterCount();
+        text.textContent = state.filtersExpanded ? "Ocultar" : "Mostrar" + (count ? " (" + count + ")" : "");
     }
 
     function filterPayload() {
@@ -250,6 +356,8 @@
         state.root.querySelector("#centralTelefonicaExtension").value = "";
         state.root.querySelector("#centralTelefonicaTelefono").value = "";
         state.page = 1;
+        updateFiltersToggleStatus();
+        collapseFiltersOnCompactViewport();
         loadCalls(true);
     }
 
@@ -308,7 +416,10 @@
         var keys = ["total", "entrantes", "salientes", "contestadas", "no_contestadas", "tiempo_hablado_texto", "internas"];
         keys.forEach(function (key) {
             var element = state.root.querySelector("#centralTelefonicaSummary_" + key);
-            if (element) { element.textContent = typeof summary[key] === "undefined" ? "0" : summary[key]; }
+            var compact = state.root.querySelector("#centralTelefonicaCompact_" + key);
+            var value = typeof summary[key] === "undefined" ? "0" : summary[key];
+            if (element) { element.textContent = value; }
+            if (compact) { compact.textContent = value; }
         });
     }
 
