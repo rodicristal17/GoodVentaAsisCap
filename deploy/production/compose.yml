@@ -38,6 +38,53 @@ services:
       retries: 3
       start_period: 15s
 
+  central-telefonica-sync:
+    image: production-web:latest
+    restart: unless-stopped
+    init: true
+    command:
+      - sh
+      - -c
+      - |
+        interval="$${TELAR_CENTRAL_SYNC_INTERVAL_SECONDS:-300}"
+        case "$$interval" in
+          ''|*[!0-9]*) interval=300 ;;
+        esac
+        if [ "$$interval" -lt 60 ]; then interval=300; fi
+        trap 'exit 0' TERM INT
+        while true; do
+          php /var/www/html/scripts/sincronizar_central_telefonica.php
+          sleep "$$interval" & wait $$!
+        done
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      TELAR_DB_HOST: database
+      TELAR_DB_NAME: ${TELAR_DB_NAME}
+      TELAR_DB_USER: ${TELAR_DB_USER}
+      TELAR_DB_PASSWORD: ${TELAR_DB_PASSWORD}
+      TELAR_ISSABEL_DB_HOST: ${TELAR_ISSABEL_DB_HOST}
+      TELAR_ISSABEL_DB_PORT: ${TELAR_ISSABEL_DB_PORT}
+      TELAR_ISSABEL_DB_NAME: ${TELAR_ISSABEL_DB_NAME}
+      TELAR_ISSABEL_CDR_TABLE: ${TELAR_ISSABEL_CDR_TABLE}
+      TELAR_ISSABEL_DB_USER: ${TELAR_ISSABEL_DB_USER}
+      TELAR_ISSABEL_DB_PASSWORD: ${TELAR_ISSABEL_DB_PASSWORD}
+      TELAR_CENTRAL_SYNC_INTERVAL_SECONDS: ${TELAR_CENTRAL_SYNC_INTERVAL_SECONDS:-300}
+      TZ: America/Asuncion
+    volumes:
+      - ../../:/var/www/html:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
   database:
     image: mariadb:10.6
     restart: unless-stopped
