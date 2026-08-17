@@ -4092,6 +4092,7 @@ function verDetalleAgenda(id){
     document.getElementById('detAgendaCedula').setAttribute('data-whatsapp-paciente', evento.whapp || '');
     document.getElementById('detAgendaCedula').setAttribute('data-direccion-paciente', evento.direccion || '');
     document.getElementById('detAgendaCedula').innerHTML = escaparHtmlAgenda(evento.ci_cliente || '');
+    document.getElementById('detAgendaTelefono').innerHTML = escaparHtmlAgenda(evento.whapp || evento.telefono || 'Sin telefono');
     document.getElementById('detAgendaTratamientoAsignado').innerHTML = renderTratamientosDetalleAgenda(evento.nombres_tratamiento || '');
     if(document.getElementById('detAgendaVentaAsignada')){
         document.getElementById('detAgendaVentaAsignada').innerHTML = renderVentaDetalleAgenda(evento);
