@@ -235,12 +235,15 @@ $rutaDirectorio = dirname(__DIR__).'/php_system/central_telefonica_directorio_he
 $rutaMigracionDirectorio = dirname(__DIR__).'/actualizacion_18082026_central_telefonica_directorio.sql';
 $rutaEndpoint = dirname(__DIR__).'/php_system/abmCentralTelefonica.php';
 $rutaMigracionAdministracion = dirname(__DIR__).'/actualizacion_18082026_administracion_directorio_central_telefonica.sql';
+$rutaMigracionManual = dirname(__DIR__).'/actualizacion_18082026_directorio_manual_central_telefonica.sql';
 $directorio = is_readable($rutaDirectorio) ? file_get_contents($rutaDirectorio) : '';
 $endpoint = is_readable($rutaEndpoint) ? file_get_contents($rutaEndpoint) : '';
 $migracionDirectorio = is_readable($rutaMigracionDirectorio)
     ? file_get_contents($rutaMigracionDirectorio) : '';
 $migracionAdministracion = is_readable($rutaMigracionAdministracion)
     ? file_get_contents($rutaMigracionAdministracion) : '';
+$migracionManual = is_readable($rutaMigracionManual)
+    ? file_get_contents($rutaMigracionManual) : '';
 centralTelefonicaPrueba(
     strpos($directorio, 'TELAR_ISSABEL_DIRECTORY_DB_USER') !== false
         && strpos($directorio, "fuente='issabel'") !== false
@@ -264,9 +267,12 @@ centralTelefonicaPrueba(
         && strpos($js, "data-directory-user") !== false
         && strpos($js, "data-directory-site") !== false
         && strpos($js, "data-central-action='clear-directory'") !== false
+        && strpos($js, "data-central-action='toggle-add-directory'") !== false
+        && strpos($js, 'data-directory-cargo') !== false
+        && strpos($js, 'Sin renombrar') !== false
         && strpos($css, '.central-telefonica-directory-drawer') !== false
         && strpos($css, '.central-telefonica-directory-card__fields') !== false,
-    'El panel permite buscar, asignar funcionario y sede, y quitar una asociacion.'
+    'El panel permite crear y renombrar extensiones, asignar usuario y sede, y quitar el usuario.'
 );
 centralTelefonicaPrueba(
     strpos($endpoint, "'administrar_directorio' => \$cuentaTranscripcionProtegida") !== false
@@ -279,8 +285,10 @@ centralTelefonicaPrueba(
     strpos($directorio, "GET_LOCK('telar_central_telefonica_directorio',3)") !== false
         && strpos($directorio, "tipo === 'cola'") !== false
         && strpos($directorio, 'central_telefonica_directorio_evento') !== false
-        && strpos($directorio, 'centralTelefonicaDirectorioCompletarSnapshots') !== false,
-    'El guardado serializa la sincronizacion, protege colas y registra auditoria.'
+        && strpos($directorio, 'centralTelefonicaDirectorioCompletarSnapshots') !== false
+        && strpos($directorio, 'funcionario_ya_asignado') !== false
+        && strpos($directorio, 'centralTelefonicaDirectorioDetectadasDesdeLlamadas') !== false,
+    'El guardado serializa cambios, evita dos extensiones por usuario y detecta internos nuevos.'
 );
 centralTelefonicaPrueba(
     strpos($migracionAdministracion, 'CREATE TABLE IF NOT EXISTS central_telefonica_directorio_evento') !== false
@@ -290,8 +298,22 @@ centralTelefonicaPrueba(
     'La migracion aditiva concede la administracion solamente a Carlos y conserva auditoria.'
 );
 centralTelefonicaPrueba(
-    strpos($inicio, 'central_telefonica.css?v=20260818-02') !== false
-        && strpos($inicio, 'central_telefonica.js?x=20260818-02') !== false,
+    strpos($migracionManual, 'cargo_visible') !== false
+        && strpos($migracionManual, "'1010','ceo','CEO','Casa Central'") !== false
+        && substr_count($migracionManual, 'UNION ALL SELECT') === 22
+        && strpos($migracionManual, "'2302','admin-cc','Administración','Cerro Corá'") !== false,
+    'La migracion aditiva incorpora cargo y precarga las 23 extensiones confirmadas.'
+);
+centralTelefonicaPrueba(
+    strpos($endpoint, 'centralTelefonicaAplicarDirectorioVisible') !== false
+        && strpos($endpoint, "'cargo' => ''") !== false
+        && strpos($js, 'entityPersonMain') !== false
+        && strpos($js, 'entityCargoSite') !== false,
+    'El listado combina numero, nombre, cargo y sede con la configuracion actual.'
+);
+centralTelefonicaPrueba(
+    strpos($inicio, 'central_telefonica.css?v=20260818-03') !== false
+        && strpos($inicio, 'central_telefonica.js?x=20260818-03') !== false,
     'La pantalla principal publica el administrador sin reutilizar recursos en cache.'
 );
 

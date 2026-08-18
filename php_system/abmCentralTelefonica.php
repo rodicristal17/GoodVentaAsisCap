@@ -386,10 +386,16 @@ function centralTelefonicaDirectorioAdministrarGuardar($mysqli, $contexto, $entr
         10
     ));
     $quitar = in_array($quitarTexto, array('1', 'true', 'si', 'yes'), true);
+    $crearTexto = strtolower(centralTelefonicaTextoEntrada(
+        isset($entrada['crear']) ? $entrada['crear'] : '',
+        10
+    ));
+    $crear = in_array($crearTexto, array('1', 'true', 'si', 'yes'), true);
     $ipAccion = isset($_SERVER['REMOTE_ADDR']) ? (string)$_SERVER['REMOTE_ADDR'] : '';
     $asignacion = centralTelefonicaDirectorioAdministracionGuardar(
         $mysqli,
         centralTelefonicaTextoEntrada(isset($entrada['extension']) ? $entrada['extension'] : '', 20),
+        centralTelefonicaTextoEntrada(isset($entrada['cargo']) ? $entrada['cargo'] : '', 101),
         intval(isset($entrada['cod_usuario']) ? $entrada['cod_usuario'] : 0),
         intval(isset($entrada['cod_local']) ? $entrada['cod_local'] : 0),
         centralTelefonicaTextoEntrada(
@@ -397,6 +403,7 @@ function centralTelefonicaDirectorioAdministrarGuardar($mysqli, $contexto, $entr
             101
         ),
         $quitar,
+        $crear,
         intval($contexto['cod_usuario']),
         $ipAccion
     );
@@ -465,14 +472,18 @@ function centralTelefonicaFilaVisible(
         'funcionario' => array(
             'extension' => $funcionarioExtension,
             'nombre' => isset($fila['funcionario_nombre']) ? $fila['funcionario_nombre'] : '',
-            'sede' => isset($fila['funcionario_sede']) ? $fila['funcionario_sede'] : ''
+            'cargo' => '',
+            'sede' => isset($fila['funcionario_sede']) ? $fila['funcionario_sede'] : '',
+            'sin_renombrar' => $funcionarioExtension !== ''
         ),
         'funcionario_destino' => array(
             'extension' => $funcionarioDestinoExtension,
             'nombre' => isset($fila['funcionario_destino_nombre'])
                 ? $fila['funcionario_destino_nombre'] : '',
+            'cargo' => '',
             'sede' => isset($fila['funcionario_destino_sede'])
-                ? $fila['funcionario_destino_sede'] : ''
+                ? $fila['funcionario_destino_sede'] : '',
+            'sin_renombrar' => $funcionarioDestinoExtension !== ''
         ),
         'duracion_seg' => intval($fila['duracion_seg']),
         'duracion_texto' => centralTelefonicaFormatearDuracion($fila['duracion_seg']),
@@ -487,6 +498,44 @@ function centralTelefonicaFilaVisible(
         ),
         'paciente' => null
     );
+}
+
+function centralTelefonicaAplicarDirectorioVisible($mysqli, $items)
+{
+    if (!centralTelefonicaDirectorioEstructuraDisponible($mysqli) || !$items) {
+        return $items;
+    }
+    $extensiones = array();
+    foreach ($items as $item) {
+        foreach (array('funcionario', 'funcionario_destino') as $clave) {
+            $extension = isset($item[$clave]['extension'])
+                ? trim((string)$item[$clave]['extension']) : '';
+            if ($extension !== '') {
+                $extensiones[$extension] = true;
+            }
+        }
+    }
+    $directorio = centralTelefonicaDirectorioResolver($mysqli, array_keys($extensiones));
+    foreach ($items as $indice => $item) {
+        foreach (array('funcionario', 'funcionario_destino') as $clave) {
+            $extension = isset($item[$clave]['extension'])
+                ? trim((string)$item[$clave]['extension']) : '';
+            if ($extension === '') {
+                continue;
+            }
+            if (isset($directorio[$extension])) {
+                $actual = $directorio[$extension];
+                $items[$indice][$clave]['nombre'] = (string)$actual['nombre'];
+                $items[$indice][$clave]['cargo'] = (string)$actual['cargo'];
+                $items[$indice][$clave]['sede'] = (string)$actual['sede'];
+                $items[$indice][$clave]['sin_renombrar'] = !empty($actual['sin_renombrar']);
+            } else {
+                $items[$indice][$clave]['cargo'] = '';
+                $items[$indice][$clave]['sin_renombrar'] = true;
+            }
+        }
+    }
+    return $items;
 }
 
 function centralTelefonicaTranscripcionServicioVisible($mysqli, $contexto, $estructuraDisponible)
@@ -643,6 +692,7 @@ function centralTelefonicaCatalogosDirectorio($mysqli, $rango, $disponible)
             $funcionarios[$extension] = array(
                 'extension' => $extension,
                 'nombre' => '',
+                'cargo' => '',
                 'sede' => '',
                 'cod_local' => 0,
                 'tipo' => 'interna'
@@ -676,6 +726,7 @@ function centralTelefonicaCatalogosDirectorio($mysqli, $rango, $disponible)
         $funcionarios[$fila['extension']] = array(
             'extension' => $fila['extension'],
             'nombre' => $fila['nombre'],
+            'cargo' => '',
             'sede' => $fila['sede'],
             'cod_local' => intval($fila['cod_local']),
             'tipo' => 'funcionario'
@@ -683,8 +734,11 @@ function centralTelefonicaCatalogosDirectorio($mysqli, $rango, $disponible)
     }
     $stmt->close();
 
+    $campoCargo = centralTelefonicaDirectorioManualDisponible($mysqli)
+        ? 'd.cargo_visible' : "''";
     $sqlDirectorio = "SELECT d.extension,d.tipo,"
         ."COALESCE(NULLIF(p.nombre_persona,''),NULLIF(d.nombre,''),'') nombre,"
+        .$campoCargo." cargo,"
         ."COALESCE(NULLIF(l.Nombre,''),NULLIF(d.sede_nombre,''),'') sede,"
         ."IFNULL(d.cod_localFK,0) cod_local "
         ."FROM central_telefonica_directorio d "
@@ -696,6 +750,7 @@ function centralTelefonicaCatalogosDirectorio($mysqli, $rango, $disponible)
         $item = array(
             'extension' => $fila['extension'],
             'nombre' => $fila['nombre'],
+            'cargo' => $fila['cargo'],
             'sede' => $fila['sede'],
             'cod_local' => intval($fila['cod_local']),
             'tipo' => $fila['tipo']
@@ -703,16 +758,7 @@ function centralTelefonicaCatalogosDirectorio($mysqli, $rango, $disponible)
         if ($fila['tipo'] === 'cola') {
             $colas[$fila['extension']] = $item;
         } else {
-            if (!isset($funcionarios[$fila['extension']])) {
-                $funcionarios[$fila['extension']] = $item;
-            } else {
-                foreach (array('nombre', 'sede', 'cod_local', 'tipo') as $clave) {
-                    if ($funcionarios[$fila['extension']][$clave] === ''
-                        || $funcionarios[$fila['extension']][$clave] === 0) {
-                        $funcionarios[$fila['extension']][$clave] = $item[$clave];
-                    }
-                }
-            }
+            $funcionarios[$fila['extension']] = $item;
         }
     }
 
@@ -730,6 +776,7 @@ function centralTelefonicaCatalogosDirectorio($mysqli, $rango, $disponible)
             $colas[$fila['extension']] = array(
                 'extension' => $fila['extension'],
                 'nombre' => $fila['nombre'],
+                'cargo' => '',
                 'sede' => '',
                 'cod_local' => 0,
                 'tipo' => 'cola'
@@ -829,6 +876,7 @@ function centralTelefonicaListar($mysqli, $contexto, $entrada)
         );
     }
     $stmt->close();
+    $items = centralTelefonicaAplicarDirectorioVisible($mysqli, $items);
 
     return array(
         'rango' => array('desde' => $rango['desde'], 'hasta' => $rango['hasta']),
@@ -1223,7 +1271,11 @@ function centralTelefonicaDetalle($mysqli, $contexto, $entrada)
         centralTelefonicaLanzar('llamada_no_encontrada', 'La llamada ya no esta disponible.');
     }
 
-    $visible = centralTelefonicaFilaVisible($fila, $contexto, $estructuraTranscripcion);
+    $visibles = centralTelefonicaAplicarDirectorioVisible(
+        $mysqli,
+        array(centralTelefonicaFilaVisible($fila, $contexto, $estructuraTranscripcion))
+    );
+    $visible = $visibles[0];
     $visible['fecha_fin'] = $fila['fecha_fin'];
     $visible['clasificacion_motivo'] = $fila['clasificacion_motivo'];
     $visible['datos_tecnicos'] = null;

@@ -173,7 +173,7 @@
             + filterField("Desde", "<input type='date' id='centralTelefonicaDesde' value='" + today + "' required />")
             + filterField("Hasta", "<input type='date' id='centralTelefonicaHasta' value='" + today + "' required />")
             + filterField("Dirección", "<select id='centralTelefonicaTipo'><option value=''>Todas</option><option value='entrante_externa'>Entrante externa</option><option value='saliente_externa'>Saliente externa</option><option value='interna'>Interna</option><option value='servicio_prueba'>Servicio / prueba</option><option value='sin_clasificar'>Sin clasificar</option></select>")
-            + filterField("Funcionario", "<select id='centralTelefonicaFuncionario'><option value=''>Todos</option></select>")
+            + filterField("Interno / cargo", "<select id='centralTelefonicaFuncionario'><option value=''>Todos</option></select>")
             + filterField("Sede", "<select id='centralTelefonicaSede'><option value=''>Todas</option></select>")
             + filterField("Cola", "<select id='centralTelefonicaCola'><option value=''>Todas</option></select>")
             + filterField("Estado", "<select id='centralTelefonicaEstado'><option value=''>Todos</option><option value='contestada'>Contestada</option><option value='no_contestada'>No contestada</option><option value='ocupada'>Ocupada</option><option value='fallida'>Fallida</option><option value='congestion'>Congestión</option></select>")
@@ -204,7 +204,7 @@
             + "  <div class='central-telefonica-drawer-layer' id='centralTelefonicaDirectoryLayer' hidden>"
             + "    <button type='button' class='central-telefonica-drawer-backdrop' data-central-action='close-directory' aria-label='Cerrar administrador de extensiones'></button>"
             + "    <aside class='central-telefonica-drawer central-telefonica-directory-drawer' role='dialog' aria-modal='true' aria-labelledby='centralTelefonicaDirectoryTitle'>"
-            + "      <div class='central-telefonica-drawer__header'><div><p class='central-telefonica-eyebrow'>Configuración administrativa</p><h2 id='centralTelefonicaDirectoryTitle'>Extensiones vigentes</h2></div><button type='button' class='central-telefonica-icon-button central-telefonica-icon-button--close' data-central-action='close-directory'><i class='fa-solid fa-xmark' aria-hidden='true'></i><span class='central-telefonica-sr-only'>Cerrar</span></button></div>"
+            + "      <div class='central-telefonica-drawer__header'><div><p class='central-telefonica-eyebrow'>Configuración administrativa</p><h2 id='centralTelefonicaDirectoryTitle'>Extensiones internas</h2></div><button type='button' class='central-telefonica-icon-button central-telefonica-icon-button--close' data-central-action='close-directory'><i class='fa-solid fa-xmark' aria-hidden='true'></i><span class='central-telefonica-sr-only'>Cerrar</span></button></div>"
             + "      <div class='central-telefonica-drawer__body central-telefonica-directory-body' id='centralTelefonicaDirectoryBody'></div>"
             + "    </aside>"
             + "  </div>"
@@ -240,10 +240,14 @@
         var html = "<option value='' data-local='0'>Seleccionar funcionario</option>";
         (state.directoryData.funcionarios || []).forEach(function (employee) {
             var selected = Number(employee.cod_usuario) === current;
+            var assignedElsewhere = employee.extension_asignada
+                && String(employee.extension_asignada) !== String(row.extension || "");
             if (selected) { found = true; }
             html += "<option value='" + Number(employee.cod_usuario) + "' data-local='"
-                + Number(employee.cod_local_principal || 0) + "' " + (selected ? "selected" : "") + ">"
+                + Number(employee.cod_local_principal || 0) + "' " + (selected ? "selected " : "")
+                + (assignedElsewhere ? "disabled " : "") + ">"
                 + escapeHtml(employee.nombre) + (employee.tipo ? " · " + escapeHtml(employee.tipo) : "")
+                + (assignedElsewhere ? " · Ext. " + escapeHtml(employee.extension_asignada) : "")
                 + "</option>";
         });
         if (current > 0 && !found) {
@@ -273,28 +277,37 @@
     function directoryCard(row) {
         var isQueue = row.tipo === "cola";
         var assigned = row.asignada === true;
+        var renamed = row.renombrada === true;
+        var persisted = row.persistida !== false;
         var siteVisible = row.sede_nombre || row.sede_nombre_alternativa || "Sin sede asignada";
         var employeeVisible = isQueue ? "No corresponde" : (row.funcionario_nombre || "Sin funcionario asignado");
-        var search = [row.extension, row.nombre_issabel, employeeVisible, siteVisible, row.tipo]
+        var status = !renamed ? "unrenamed" : (assigned || isQueue ? "assigned" : "unassigned");
+        var statusLabel = !renamed ? "Sin renombrar" : (assigned || isQueue ? "Configurada" : "Sin usuario");
+        var search = [row.extension, row.nombre_issabel, row.cargo, employeeVisible, siteVisible, row.tipo]
             .join(" ").toLowerCase();
         var html = "<article class='central-telefonica-directory-card' data-directory-search='"
-            + escapeHtml(search) + "' data-directory-status='" + (assigned ? "assigned" : "unassigned")
+            + escapeHtml(search) + "' data-directory-status='" + status
+            + "' data-directory-persisted='" + (persisted ? "1" : "0")
             + "' data-extension='" + escapeHtml(row.extension) + "'>";
         html += "<div class='central-telefonica-directory-card__header'><div><strong>"
-            + escapeHtml(row.extension) + " · " + escapeHtml(row.nombre_issabel || "Sin nombre en Issabel")
+            + escapeHtml(row.extension) + " · " + escapeHtml(row.cargo || "Sin renombrar")
             + "</strong><span>" + entityBadge(row.tipo) + " "
-            + escapeHtml(employeeVisible) + " · " + escapeHtml(siteVisible) + "</span></div>"
+            + escapeHtml(employeeVisible) + " · " + escapeHtml(siteVisible)
+            + (row.nombre_issabel ? " · Técnico: " + escapeHtml(row.nombre_issabel) : "") + "</span></div>"
             + "<span class='central-telefonica-directory-status central-telefonica-directory-status--"
-            + (assigned ? "assigned" : "unassigned") + "'><i class='fa-solid "
-            + (assigned ? "fa-circle-check" : "fa-circle-exclamation") + "' aria-hidden='true'></i>"
-            + (assigned ? "Asignada" : "Sin asignar") + "</span></div>";
+            + status + "'><i class='fa-solid "
+            + (status === "assigned" ? "fa-circle-check" : "fa-circle-exclamation") + "' aria-hidden='true'></i>"
+            + statusLabel + "</span></div>";
         html += "<div class='central-telefonica-directory-card__fields'>";
         if (isQueue) {
             html += "<input type='hidden' data-directory-user value='0' />"
+                + "<input type='hidden' data-directory-cargo value='" + escapeHtml(row.cargo || "") + "' />"
                 + "<div class='central-telefonica-directory-field central-telefonica-directory-field--readonly'><span>Funcionario</span>"
                 + "<strong>No corresponde</strong><small>La cola es una ruta; el funcionario se identifica por la extensión que atiende.</small></div>";
         } else {
-            html += "<label class='central-telefonica-directory-field'><span>Funcionario</span><select data-directory-user>"
+            html += "<label class='central-telefonica-directory-field'><span>Cargo visible</span><input type='text' data-directory-cargo maxlength='100' value='"
+                + escapeHtml(row.cargo || "") + "' placeholder='Ej.: Caja, Cobranzas o CEO' /></label>"
+                + "<label class='central-telefonica-directory-field'><span>Usuario Telar</span><select data-directory-user>"
                 + directoryEmployeeOptions(row) + "</select></label>";
         }
         html += "<label class='central-telefonica-directory-field'><span>Sede</span><select data-directory-site>"
@@ -305,26 +318,41 @@
             + escapeHtml(row.sede_nombre_alternativa || "") + "' placeholder='Solo si la sede no existe en Telar' /></label>"
             + "</div>";
         html += "<div class='central-telefonica-directory-card__actions'>"
-            + "<button type='button' class='central-telefonica-secondary-button central-telefonica-directory-save' data-central-action='save-directory'><i class='fa-solid fa-floppy-disk' aria-hidden='true'></i> Guardar asignación</button>"
+            + "<button type='button' class='central-telefonica-secondary-button central-telefonica-directory-save' data-central-action='save-directory'><i class='fa-solid fa-floppy-disk' aria-hidden='true'></i> Guardar cambios</button>"
             + "<button type='button' class='central-telefonica-directory-clear' data-central-action='clear-directory' "
-            + (assigned ? "" : "disabled") + "><i class='fa-solid fa-link-slash' aria-hidden='true'></i> Quitar asignación</button>"
+            + (assigned ? "" : "disabled") + "><i class='fa-solid fa-link-slash' aria-hidden='true'></i> Quitar usuario</button>"
             + "</div></article>";
         return html;
+    }
+
+    function directoryAddForm() {
+        var row = { extension: "", cod_usuario: 0, cod_local: 0 };
+        return "<section class='central-telefonica-directory-add' id='centralTelefonicaDirectoryAdd' hidden>"
+            + "<div class='central-telefonica-directory-add__title'><div><strong>Nueva extensión interna</strong><span>Se crea únicamente en Telar; no modifica Issabel.</span></div><button type='button' data-central-action='cancel-add-directory' aria-label='Cancelar'><i class='fa-solid fa-xmark' aria-hidden='true'></i></button></div>"
+            + "<div class='central-telefonica-directory-card__fields'>"
+            + "<label class='central-telefonica-directory-field'><span>Número de extensión</span><input type='text' inputmode='numeric' maxlength='5' data-directory-new-extension placeholder='Ej.: 1012' /></label>"
+            + "<label class='central-telefonica-directory-field'><span>Cargo visible</span><input type='text' maxlength='100' data-directory-cargo placeholder='Ej.: Recepción' /></label>"
+            + "<label class='central-telefonica-directory-field'><span>Usuario Telar</span><select data-directory-user>" + directoryEmployeeOptions(row) + "</select></label>"
+            + "<label class='central-telefonica-directory-field'><span>Sede</span><select data-directory-site>" + directorySiteOptions(row) + "</select></label>"
+            + "<label class='central-telefonica-directory-field central-telefonica-directory-fallback'><span>Nombre alternativo de sede</span><input type='text' data-directory-site-name maxlength='100' placeholder='Solo si la sede no existe en Telar' /></label>"
+            + "</div><div class='central-telefonica-directory-card__actions'><button type='button' class='central-telefonica-secondary-button central-telefonica-directory-save' data-central-action='save-new-directory'><i class='fa-solid fa-plus' aria-hidden='true'></i> Crear extensión</button></div></section>";
     }
 
     function renderDirectory(data) {
         var body = state.root.querySelector("#centralTelefonicaDirectoryBody");
         var summary = data.resumen || {};
-        var html = "<section class='central-telefonica-directory-intro'><i class='fa-solid fa-circle-info' aria-hidden='true'></i><div><strong>Identificación interna de Telar</strong><span>La extensión y el nombre técnico provienen de Issabel y no se modifican aquí.</span></div></section>"
-            + "<section class='central-telefonica-directory-toolbar'><label><span>Buscar</span><input type='search' id='centralTelefonicaDirectorySearch' placeholder='Extensión, funcionario o sede' /></label>"
-            + "<label><span>Estado</span><select id='centralTelefonicaDirectoryStatus'><option value=''>Todas</option><option value='assigned'>Asignadas</option><option value='unassigned'>Sin asignar</option></select></label>"
+        var html = "<section class='central-telefonica-directory-intro'><i class='fa-solid fa-circle-info' aria-hidden='true'></i><div><strong>Configuración interna de Telar</strong><span>Los cargos, usuarios y sedes se administran aquí y no modifican Issabel. Un interno nuevo detectado en llamadas aparecerá como Sin renombrar.</span></div></section>"
+            + "<section class='central-telefonica-directory-toolbar'><label><span>Buscar</span><input type='search' id='centralTelefonicaDirectorySearch' placeholder='Extensión, nombre, cargo o sede' /></label>"
+            + "<label><span>Estado</span><select id='centralTelefonicaDirectoryStatus'><option value=''>Todas</option><option value='assigned'>Configuradas</option><option value='unassigned'>Sin usuario</option><option value='unrenamed'>Sin renombrar</option></select></label>"
+            + "<button type='button' class='central-telefonica-secondary-button central-telefonica-directory-add-button' data-central-action='toggle-add-directory'><i class='fa-solid fa-plus' aria-hidden='true'></i> Agregar extensión</button>"
             + "<div class='central-telefonica-directory-summary'><strong>" + Number(summary.total || 0)
-            + "</strong><span>vigentes · " + Number(summary.sin_asignar || 0) + " sin asignar</span></div></section>"
+            + "</strong><span>vigentes · " + Number(summary.sin_renombrar || 0) + " sin renombrar</span></div></section>"
+            + directoryAddForm()
             + "<div class='central-telefonica-directory-result' id='centralTelefonicaDirectoryResult'>"
             + Number(summary.total || 0) + " extensiones visibles</div>"
             + "<div class='central-telefonica-directory-list' id='centralTelefonicaDirectoryList'>";
         if (!(data.extensiones || []).length) {
-            html += "<div class='central-telefonica-directory-empty'><i class='fa-solid fa-plug-circle-xmark' aria-hidden='true'></i><strong>No hay extensiones vigentes</strong><span>Ejecute primero la sincronización controlada del directorio.</span></div>";
+            html += "<div class='central-telefonica-directory-empty'><i class='fa-solid fa-phone-slash' aria-hidden='true'></i><strong>No hay extensiones internas</strong><span>Use Agregar extensión para crear la primera configuración manual.</span></div>";
         } else {
             (data.extensiones || []).forEach(function (row) { html += directoryCard(row); });
         }
@@ -410,20 +438,24 @@
 
     function saveDirectoryRow(button, clearAssignment) {
         var card = button && button.closest ? button.closest(".central-telefonica-directory-card") : null;
+        var cargo;
         var user;
         var site;
         var siteName;
         if (!card) { return; }
+        cargo = card.querySelector("[data-directory-cargo]");
         user = card.querySelector("[data-directory-user]");
         site = card.querySelector("[data-directory-site]");
         siteName = card.querySelector("[data-directory-site-name]");
         directoryCardButtons(card, true);
         request("guardar_directorio", {
             extension: card.getAttribute("data-extension"),
+            cargo: cargo ? cargo.value : "",
             cod_usuario: clearAssignment ? 0 : (user ? user.value : 0),
             cod_local: clearAssignment ? 0 : (site ? site.value : 0),
             sede_nombre: clearAssignment || (site && site.value) ? "" : (siteName ? siteName.value : ""),
-            quitar: clearAssignment ? 1 : 0
+            quitar: clearAssignment ? 1 : 0,
+            crear: card.getAttribute("data-directory-persisted") === "0" ? 1 : 0
         }).then(function () {
             notify(clearAssignment ? "La extensión quedó disponible para una nueva asignación." : "La asignación fue guardada.", "info");
             state.directoryLoading = false;
@@ -440,11 +472,50 @@
         });
     }
 
+    function toggleDirectoryAdd(show) {
+        var form = state.root ? state.root.querySelector("#centralTelefonicaDirectoryAdd") : null;
+        var input;
+        if (!form) { return; }
+        form.hidden = typeof show === "boolean" ? !show : !form.hidden;
+        if (!form.hidden) {
+            input = form.querySelector("[data-directory-new-extension]");
+            if (input) { input.focus(); }
+        }
+    }
+
+    function saveNewDirectory(button) {
+        var form = button && button.closest ? button.closest(".central-telefonica-directory-add") : null;
+        var extension = form ? form.querySelector("[data-directory-new-extension]") : null;
+        var cargo = form ? form.querySelector("[data-directory-cargo]") : null;
+        var user = form ? form.querySelector("[data-directory-user]") : null;
+        var site = form ? form.querySelector("[data-directory-site]") : null;
+        var siteName = form ? form.querySelector("[data-directory-site-name]") : null;
+        if (!form) { return; }
+        directoryCardButtons(form, true);
+        request("guardar_directorio", {
+            extension: extension ? extension.value : "",
+            cargo: cargo ? cargo.value : "",
+            cod_usuario: user ? user.value : 0,
+            cod_local: site ? site.value : 0,
+            sede_nombre: site && site.value ? "" : (siteName ? siteName.value : ""),
+            quitar: 0,
+            crear: 1
+        }).then(function () {
+            notify("La extensión fue creada en Telar.", "info");
+            state.directoryLoading = false;
+            loadDirectory();
+            loadCalls(false);
+        }).catch(function (error) {
+            directoryCardButtons(form, false);
+            notify(error.message, "error");
+        });
+    }
+
     function confirmClearDirectoryRow(button) {
         var card = button && button.closest ? button.closest(".central-telefonica-directory-card") : null;
         var extension = card ? card.getAttribute("data-extension") : "";
         if (!card || button.disabled) { return; }
-        if (window.confirm("¿Quitar la asignación de la extensión " + extension + "? La extensión seguirá vigente en Issabel y las llamadas históricas conservarán sus datos.")) {
+        if (window.confirm("¿Quitar el usuario de la extensión " + extension + "? El número y el cargo seguirán configurados en Telar.")) {
             saveDirectoryRow(button, true);
         }
     }
@@ -473,6 +544,9 @@
             if (action === "refresh") { loadCalls(false); }
             if (action === "open-directory") { openDirectory(); }
             if (action === "close-directory") { closeDirectory(); }
+            if (action === "toggle-add-directory") { toggleDirectoryAdd(true); }
+            if (action === "cancel-add-directory") { toggleDirectoryAdd(false); }
+            if (action === "save-new-directory") { saveNewDirectory(actionElement); }
             if (action === "save-directory") { saveDirectoryRow(actionElement, false); }
             if (action === "clear-directory") { confirmClearDirectoryRow(actionElement); }
             if (action === "clear") { clearFilters(); }
@@ -503,11 +577,15 @@
                 filterDirectoryRows();
             }
             if (event.target.hasAttribute("data-directory-user")) {
-                card = event.target.closest ? event.target.closest(".central-telefonica-directory-card") : null;
+                card = event.target.closest
+                    ? event.target.closest(".central-telefonica-directory-card, .central-telefonica-directory-add")
+                    : null;
                 updateDirectoryUserSite(card, event.target);
             }
             if (event.target.hasAttribute("data-directory-site")) {
-                card = event.target.closest ? event.target.closest(".central-telefonica-directory-card") : null;
+                card = event.target.closest
+                    ? event.target.closest(".central-telefonica-directory-card, .central-telefonica-directory-add")
+                    : null;
                 updateDirectoryFallbackVisibility(card);
             }
         }, false);
@@ -767,7 +845,8 @@
             "Todos",
             "extension",
             function (item) {
-                return (item.nombre ? item.nombre + " · " : "") + item.extension
+                return item.extension + (item.nombre ? " · " + item.nombre : "")
+                    + (item.cargo ? " · " + item.cargo : " · Sin renombrar")
                     + (item.sede ? " · " + item.sede : "");
             }
         );
@@ -867,7 +946,7 @@
     }
 
     function entityBadge(type) {
-        var labels = { funcionario: "Funcionario", cola: "Cola", interna: "Interna" };
+        var labels = { funcionario: "Funcionario", cola: "Cola", interna: "Interna", pendiente: "Sin renombrar" };
         if (!labels[type]) { return ""; }
         return "<span class='central-telefonica-entity-badge central-telefonica-entity-badge--"
             + escapeHtml(type) + "'>" + escapeHtml(labels[type]) + "</span>";
@@ -877,6 +956,20 @@
         if (!extension && !name) { return "Sin identificar"; }
         if (extension && name) { return extension + " · " + name; }
         return extension || name;
+    }
+
+    function entityPersonMain(entity) {
+        entity = entity || {};
+        return entityMain(
+            entity.extension,
+            entity.nombre || (entity.sin_renombrar ? "Sin renombrar" : "Sin usuario asignado")
+        );
+    }
+
+    function entityCargoSite(entity) {
+        entity = entity || {};
+        return (entity.cargo || "Cargo pendiente") + " · "
+            + (entity.sede || "Sede sin asignar");
     }
 
     function renderRouteCell(call) {
@@ -908,22 +1001,24 @@
         var main;
         var site;
         if (call.tipo === "interna") {
-            main = entityMain(source.extension, source.nombre) + " → "
-                + entityMain(destination.extension, destination.nombre);
+            main = entityPersonMain(source) + " → " + entityPersonMain(destination);
             site = source.sede && destination.sede && source.sede !== destination.sede
                 ? source.sede + " → " + destination.sede
                 : (source.sede || destination.sede || "Sede sin asignar");
             return "<div class='central-telefonica-entity central-telefonica-person'><strong>"
-                + escapeHtml(main) + "</strong><span>" + escapeHtml(site) + "</span></div>";
+                + escapeHtml(main) + "</strong><span>"
+                + escapeHtml((source.cargo || "Cargo pendiente") + " → "
+                    + (destination.cargo || "Cargo pendiente") + " · " + site)
+                + "</span></div>";
         }
         if (!source.extension) {
             return "<div class='central-telefonica-entity central-telefonica-entity--unknown'><strong>Sin identificar</strong><span>La cola no informó un funcionario</span></div>";
         }
-        main = entityMain(source.extension, source.nombre);
-        site = source.sede || "Sede sin asignar";
+        main = entityPersonMain(source);
+        site = entityCargoSite(source);
         return "<div class='central-telefonica-entity central-telefonica-person'><strong>"
             + escapeHtml(main) + "</strong><span>" + escapeHtml(site)
-            + entityBadge("funcionario") + "</span></div>";
+            + entityBadge(source.sin_renombrar ? "pendiente" : "funcionario") + "</span></div>";
     }
 
     function renderRows(calls) {
@@ -1003,9 +1098,12 @@
                 ? (funcionario.extension || "—") + " → " + (funcionarioDestino.extension || "—")
                 : entityMain(route.extension || call.extension, route.nombre));
         var funcionarioText = call.tipo === "interna"
-            ? entityMain(funcionario.extension, funcionario.nombre) + " → "
-                + entityMain(funcionarioDestino.extension, funcionarioDestino.nombre)
-            : entityMain(funcionario.extension, funcionario.nombre);
+            ? entityPersonMain(funcionario) + " → " + entityPersonMain(funcionarioDestino)
+            : entityPersonMain(funcionario);
+        var cargoText = call.tipo === "interna"
+            ? (funcionario.cargo || "Cargo pendiente") + " → "
+                + (funcionarioDestino.cargo || "Cargo pendiente")
+            : (funcionario.cargo || "Cargo pendiente");
         var html = "<section class='central-telefonica-detail-section'><h3>Información general</h3><div class='central-telefonica-detail-grid'>"
             + detailItem("Inicio", call.fecha_inicio)
             + detailItem("Finalización", call.fecha_fin)
@@ -1015,6 +1113,7 @@
             + detailItem("Destino", call.destino)
             + detailItem("Ruta / cola", routeText)
             + detailItem("Atendida / realizada por", funcionarioText)
+            + detailItem("Cargo", cargoText)
             + detailItem("Sede", funcionario.sede || funcionarioDestino.sede || "Sin asignar")
             + "</div></section>"
             + "<section class='central-telefonica-detail-section'><h3>Duración</h3><div class='central-telefonica-detail-grid'>"

@@ -91,6 +91,28 @@ centralTelefonicaDbPrueba(
 );
 
 $resultado = $mysqli->query(
+    "SELECT COUNT(*) total,SUM(TRIM(cargo_visible)<>'') con_cargo "
+    ."FROM central_telefonica_directorio WHERE extension IN "
+    ."('1000','1001','1002','1003','1004','1005','1006','1007','1009','1010','1011',"
+    ."'2000','2002','2003','2100','2101','2102','2200','2201','2202','2300','2301','2302')"
+);
+$fila = $resultado ? $resultado->fetch_assoc() : array('total' => 0, 'con_cargo' => 0);
+centralTelefonicaDbPrueba(
+    intval($fila['total']) === 23 && intval($fila['con_cargo']) === 23,
+    'Las 23 extensiones confirmadas estan precargadas con cargo visible.'
+);
+
+$resultado = $mysqli->query(
+    "SELECT COUNT(*) total FROM (SELECT cod_usuarioFK FROM central_telefonica_directorio "
+    ."WHERE activo=1 AND cod_usuarioFK IS NOT NULL GROUP BY cod_usuarioFK HAVING COUNT(*)>1) duplicados"
+);
+$fila = $resultado ? $resultado->fetch_assoc() : array('total' => 1);
+centralTelefonicaDbPrueba(
+    intval($fila['total']) === 0,
+    'Ningun usuario de Telar ocupa mas de una extension vigente.'
+);
+
+$resultado = $mysqli->query(
     "SELECT COUNT(*) total,SUM(au.usuarios_idusario=5994) carlos FROM accesosuser au "
     ."INNER JOIN listadodeacceso la ON la.idlistadodeacceso=au.idlistadodeaccesoFK "
     ."WHERE la.codigo='ADMINISTRARDIRECTORIOCENTRALTELEFONICA' "
@@ -302,6 +324,93 @@ centralTelefonicaDbPrueba(
     intval($fila['total']) === 0,
     'La prueba revirtio todos los CDR ficticios.'
 );
+
+$usuarioPrueba = null;
+$resultado = $mysqli->query(
+    "SELECT u.cod_usuario,IFNULL(u.cod_localFK,0) cod_local FROM usuario u "
+    ."INNER JOIN persona p ON p.cod_persona=u.cod_usuario "
+    ."WHERE UPPER(TRIM(IFNULL(u.estado,'')))='ACTIVO' "
+    ."AND u.cod_localFK IS NOT NULL AND u.cod_localFK>0 "
+    ."AND TRIM(IFNULL(p.nombre_persona,''))<>'' ORDER BY u.cod_usuario LIMIT 1"
+);
+if ($resultado) {
+    $usuarioPrueba = $resultado->fetch_assoc();
+}
+
+function centralTelefonicaDbCrearTablaTemporalSombra($mysqli, $tabla)
+{
+    $resultado = $mysqli->query('SHOW CREATE TABLE `'.$tabla.'`');
+    $fila = $resultado ? $resultado->fetch_assoc() : null;
+    if (!$fila) {
+        return false;
+    }
+    $valores = array_values($fila);
+    $sql = isset($valores[1]) ? (string)$valores[1] : '';
+    $sql = preg_replace('/^CREATE TABLE /', 'CREATE TEMPORARY TABLE ', $sql, 1);
+    return $sql !== '' && $mysqli->query($sql) === true;
+}
+$crudTemporal = false;
+if ($usuarioPrueba
+    && centralTelefonicaDbCrearTablaTemporalSombra($mysqli, 'central_telefonica_directorio')
+    && centralTelefonicaDbCrearTablaTemporalSombra($mysqli, 'central_telefonica_directorio_evento')
+    && centralTelefonicaDbCrearTablaTemporalSombra($mysqli, 'central_telefonica_llamada')) {
+    $codUsuarioPrueba = intval($usuarioPrueba['cod_usuario']);
+    $codLocalPrueba = intval($usuarioPrueba['cod_local']);
+    try {
+        $cargoRechazado = false;
+        try {
+            centralTelefonicaDirectorioAdministracionGuardar(
+                $mysqli, '3990', '', $codUsuarioPrueba, $codLocalPrueba,
+                '', false, true, $codUsuarioPrueba, '127.0.0.1'
+            );
+        } catch (CentralTelefonicaDirectorioExcepcion $e) {
+            $cargoRechazado = $e->codigoOperacion === 'cargo_requerido';
+        }
+        centralTelefonicaDirectorioAdministracionGuardar(
+            $mysqli, '3991', 'Prueba interna', $codUsuarioPrueba, $codLocalPrueba,
+            '', false, true, $codUsuarioPrueba, '127.0.0.1'
+        );
+        $duplicadoRechazado = false;
+        try {
+            centralTelefonicaDirectorioAdministracionGuardar(
+                $mysqli, '3992', 'Prueba interna 2', $codUsuarioPrueba, $codLocalPrueba,
+                '', false, true, $codUsuarioPrueba, '127.0.0.1'
+            );
+        } catch (CentralTelefonicaDirectorioExcepcion $e) {
+            $duplicadoRechazado = $e->codigoOperacion === 'funcionario_ya_asignado';
+        }
+        centralTelefonicaDirectorioAdministracionGuardar(
+            $mysqli, '3991', 'Prueba interna', 0, 0,
+            '', true, false, $codUsuarioPrueba, '127.0.0.1'
+        );
+        centralTelefonicaDirectorioAdministracionGuardar(
+            $mysqli, '3992', 'Prueba interna 2', $codUsuarioPrueba, $codLocalPrueba,
+            '', false, true, $codUsuarioPrueba, '127.0.0.1'
+        );
+        $resultado = $mysqli->query(
+            "SELECT COUNT(*) total,SUM(extension='3991' AND cod_usuarioFK IS NULL "
+            ."AND cod_localFK=".$codLocalPrueba." AND cargo_visible='Prueba interna') liberada,"
+            ."SUM(extension='3992' AND cod_usuarioFK=".$codUsuarioPrueba.") reasignada "
+            ."FROM central_telefonica_directorio"
+        );
+        $filaCrud = $resultado ? $resultado->fetch_assoc() : array();
+        $crudTemporal = $cargoRechazado && $duplicadoRechazado
+            && intval(isset($filaCrud['total']) ? $filaCrud['total'] : 0) === 2
+            && intval(isset($filaCrud['liberada']) ? $filaCrud['liberada'] : 0) === 1
+            && intval(isset($filaCrud['reasignada']) ? $filaCrud['reasignada'] : 0) === 1;
+    } catch (Exception $e) {
+        $crudTemporal = false;
+    } catch (Throwable $e) {
+        $crudTemporal = false;
+    }
+}
+centralTelefonicaDbPrueba(
+    $crudTemporal,
+    'El alta manual, la exclusividad y Quitar usuario funcionan en tablas temporales.'
+);
+$mysqli->query('DROP TEMPORARY TABLE IF EXISTS central_telefonica_llamada');
+$mysqli->query('DROP TEMPORARY TABLE IF EXISTS central_telefonica_directorio_evento');
+$mysqli->query('DROP TEMPORARY TABLE IF EXISTS central_telefonica_directorio');
 
 $mysqli->close();
 fwrite(STDOUT, 'Aprobadas: '.$aprobadas.' | Fallidas: '.$fallidas.PHP_EOL);
