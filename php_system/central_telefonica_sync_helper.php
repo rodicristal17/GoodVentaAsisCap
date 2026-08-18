@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__.'/central_telefonica_helper.php';
+require_once __DIR__.'/central_telefonica_directorio_helper.php';
 
 class CentralTelefonicaSyncExcepcion extends Exception
 {
@@ -459,6 +460,9 @@ function centralTelefonicaSyncSegmentosGrupo($mysqli, $grupo)
 
 function centralTelefonicaSyncGuardarConsolidado($mysqli, $llamada)
 {
+    if (centralTelefonicaDirectorioEstructuraDisponible($mysqli)) {
+        return centralTelefonicaSyncGuardarConsolidadoDirectorio($mysqli, $llamada);
+    }
     $sql = "INSERT INTO central_telefonica_llamada
         (llamada_clave,grupo_clave,cdr_linkedid,cdr_uniqueid_principal,
          fecha_inicio,fecha_fin,tipo,estado,origen_original,destino_original,
@@ -513,6 +517,100 @@ function centralTelefonicaSyncGuardarConsolidado($mysqli, $llamada)
         centralTelefonicaSyncLanzar(
             'persistencia_no_disponible',
             'No se pudo guardar la llamada consolidada.'
+        );
+    }
+    $stmt->close();
+}
+
+function centralTelefonicaSyncGuardarConsolidadoDirectorio($mysqli, $llamada)
+{
+    $sql = "INSERT INTO central_telefonica_llamada
+        (llamada_clave,grupo_clave,cdr_linkedid,cdr_uniqueid_principal,
+         fecha_inicio,fecha_fin,tipo,estado,origen_original,destino_original,
+         origen_normalizado,destino_normalizado,extension,
+         ruta_extension,ruta_tipo,ruta_nombre,
+         funcionario_extension,funcionario_nombre,funcionario_sede,
+         funcionario_cod_usuario,funcionario_cod_local,
+         funcionario_destino_extension,funcionario_destino_nombre,
+         funcionario_destino_sede,funcionario_destino_cod_usuario,
+         funcionario_destino_cod_local,duracion_seg,hablado_seg,
+         cantidad_segmentos,grabacion_disponible,grabacion_segmento_id,
+         clasificacion_motivo,fecha_creacion,fecha_actualizacion)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),NOW())
+        ON DUPLICATE KEY UPDATE
+         grupo_clave=VALUES(grupo_clave),cdr_linkedid=VALUES(cdr_linkedid),
+         cdr_uniqueid_principal=VALUES(cdr_uniqueid_principal),
+         fecha_inicio=VALUES(fecha_inicio),fecha_fin=VALUES(fecha_fin),
+         tipo=VALUES(tipo),estado=VALUES(estado),
+         origen_original=VALUES(origen_original),destino_original=VALUES(destino_original),
+         origen_normalizado=VALUES(origen_normalizado),destino_normalizado=VALUES(destino_normalizado),
+         extension=VALUES(extension),ruta_extension=VALUES(ruta_extension),
+         ruta_tipo=IF(ruta_tipo='',VALUES(ruta_tipo),ruta_tipo),
+         ruta_nombre=IF(ruta_nombre='',VALUES(ruta_nombre),ruta_nombre),
+         funcionario_extension=VALUES(funcionario_extension),
+         funcionario_nombre=IF(funcionario_nombre='',VALUES(funcionario_nombre),funcionario_nombre),
+         funcionario_sede=IF(funcionario_sede='',VALUES(funcionario_sede),funcionario_sede),
+         funcionario_cod_usuario=IFNULL(funcionario_cod_usuario,VALUES(funcionario_cod_usuario)),
+         funcionario_cod_local=IFNULL(funcionario_cod_local,VALUES(funcionario_cod_local)),
+         funcionario_destino_extension=VALUES(funcionario_destino_extension),
+         funcionario_destino_nombre=IF(funcionario_destino_nombre='',VALUES(funcionario_destino_nombre),funcionario_destino_nombre),
+         funcionario_destino_sede=IF(funcionario_destino_sede='',VALUES(funcionario_destino_sede),funcionario_destino_sede),
+         funcionario_destino_cod_usuario=IFNULL(funcionario_destino_cod_usuario,VALUES(funcionario_destino_cod_usuario)),
+         funcionario_destino_cod_local=IFNULL(funcionario_destino_cod_local,VALUES(funcionario_destino_cod_local)),
+         duracion_seg=VALUES(duracion_seg),hablado_seg=VALUES(hablado_seg),
+         cantidad_segmentos=VALUES(cantidad_segmentos),
+         grabacion_disponible=VALUES(grabacion_disponible),
+         grabacion_segmento_id=VALUES(grabacion_segmento_id),
+         clasificacion_motivo=VALUES(clasificacion_motivo),fecha_actualizacion=NOW()";
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        centralTelefonicaSyncLanzar(
+            'persistencia_no_disponible',
+            'No se pudo preparar la identidad de la llamada consolidada.'
+        );
+    }
+    $segmentoGrabacion = $llamada['grabacion_segmento_id'];
+    $tipos = str_repeat('s', 19).'ii'.str_repeat('s', 3).'ii'.str_repeat('i', 5).'s';
+    $stmt->bind_param(
+        $tipos,
+        $llamada['llamada_clave'],
+        $llamada['grupo_clave'],
+        $llamada['cdr_linkedid'],
+        $llamada['cdr_uniqueid_principal'],
+        $llamada['fecha_inicio'],
+        $llamada['fecha_fin'],
+        $llamada['tipo'],
+        $llamada['estado'],
+        $llamada['origen_original'],
+        $llamada['destino_original'],
+        $llamada['origen_normalizado'],
+        $llamada['destino_normalizado'],
+        $llamada['extension'],
+        $llamada['ruta_extension'],
+        $llamada['ruta_tipo'],
+        $llamada['ruta_nombre'],
+        $llamada['funcionario_extension'],
+        $llamada['funcionario_nombre'],
+        $llamada['funcionario_sede'],
+        $llamada['funcionario_cod_usuario'],
+        $llamada['funcionario_cod_local'],
+        $llamada['funcionario_destino_extension'],
+        $llamada['funcionario_destino_nombre'],
+        $llamada['funcionario_destino_sede'],
+        $llamada['funcionario_destino_cod_usuario'],
+        $llamada['funcionario_destino_cod_local'],
+        $llamada['duracion_seg'],
+        $llamada['hablado_seg'],
+        $llamada['cantidad_segmentos'],
+        $llamada['grabacion_disponible'],
+        $segmentoGrabacion,
+        $llamada['clasificacion_motivo']
+    );
+    if (!$stmt->execute()) {
+        $stmt->close();
+        centralTelefonicaSyncLanzar(
+            'persistencia_no_disponible',
+            'No se pudo guardar la identidad de la llamada consolidada.'
         );
     }
     $stmt->close();
@@ -590,6 +688,14 @@ function centralTelefonicaEjecutarSincronizacion($mysqli, $config, $opciones)
             $segmentos = centralTelefonicaSyncSegmentosGrupo($mysqli, $grupo);
             $consolidado = centralTelefonicaConstruirConsolidado($segmentos, $config);
             if ($consolidado) {
+                if (centralTelefonicaDirectorioEstructuraDisponible($mysqli)) {
+                    $consolidado = centralTelefonicaDirectorioEnriquecerConsolidado(
+                        $mysqli,
+                        $consolidado,
+                        $segmentos,
+                        $config
+                    );
+                }
                 centralTelefonicaSyncGuardarConsolidado($mysqli, $consolidado);
                 $resultadoFinal['grupos']++;
             }

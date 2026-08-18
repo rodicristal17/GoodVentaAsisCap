@@ -437,6 +437,81 @@ function centralTelefonicaSumarSegundos($fecha, $segundos)
     return date('Y-m-d H:i:s', $marca + max(0, intval($segundos)));
 }
 
+function centralTelefonicaExtensionDesdeCanal($canal, $config)
+{
+    $canal = trim((string)$canal);
+    if ($canal === '') {
+        return '';
+    }
+    $patrones = array(
+        '/^(?:PJSIP|SIP|IAX2)\/([0-9]{2,8})(?:[-@\/]|$)/i',
+        '/^Local\/([0-9]{2,8})(?:@|[-\/]|$)/i'
+    );
+    foreach ($patrones as $patron) {
+        if (preg_match($patron, $canal, $coincidencia)
+            && centralTelefonicaNumeroEsExtension($coincidencia[1], $config)) {
+            return preg_replace('/[^0-9]/', '', $coincidencia[1]);
+        }
+    }
+    return '';
+}
+
+function centralTelefonicaIdentidadOperativa($segmentos, $tipo, $config)
+{
+    $identidad = array(
+        'ruta_extension' => '',
+        'funcionario_extension' => '',
+        'funcionario_destino_extension' => ''
+    );
+    foreach ((array)$segmentos as $segmento) {
+        $origen = isset($segmento['origen_original']) ? $segmento['origen_original'] : '';
+        $destino = isset($segmento['destino_original']) ? $segmento['destino_original'] : '';
+        $origenExtension = centralTelefonicaNumeroEsExtension($origen, $config)
+            ? preg_replace('/[^0-9]/', '', $origen) : '';
+        $destinoExtension = centralTelefonicaNumeroEsExtension($destino, $config)
+            ? preg_replace('/[^0-9]/', '', $destino) : '';
+        $canalDestinoExtension = centralTelefonicaExtensionDesdeCanal(
+            isset($segmento['canal_destino']) ? $segmento['canal_destino'] : '',
+            $config
+        );
+        $estado = centralTelefonicaNormalizarDisposicion(
+            isset($segmento['disposicion']) ? $segmento['disposicion'] : ''
+        );
+        $contestado = $estado === 'contestada'
+            || intval(isset($segmento['hablado_seg']) ? $segmento['hablado_seg'] : 0) > 0;
+
+        if ($tipo === 'saliente_externa' && $identidad['funcionario_extension'] === ''
+            && $origenExtension !== '') {
+            $identidad['funcionario_extension'] = $origenExtension;
+        }
+        if ($tipo === 'entrante_externa') {
+            if ($identidad['ruta_extension'] === '' && $destinoExtension !== '') {
+                $identidad['ruta_extension'] = $destinoExtension;
+            }
+            if ($contestado && $canalDestinoExtension !== ''
+                && $canalDestinoExtension !== $identidad['ruta_extension']) {
+                $identidad['funcionario_extension'] = $canalDestinoExtension;
+            } elseif ($contestado && $destinoExtension !== ''
+                && $destinoExtension !== $identidad['ruta_extension']) {
+                $identidad['funcionario_extension'] = $destinoExtension;
+            }
+        }
+        if ($tipo === 'interna') {
+            if ($identidad['funcionario_extension'] === '' && $origenExtension !== '') {
+                $identidad['funcionario_extension'] = $origenExtension;
+            }
+            if ($identidad['funcionario_destino_extension'] === ''
+                && $destinoExtension !== '') {
+                $identidad['funcionario_destino_extension'] = $destinoExtension;
+            }
+        }
+    }
+    if ($tipo === 'entrante_externa' && $identidad['funcionario_extension'] === '') {
+        $identidad['funcionario_extension'] = $identidad['ruta_extension'];
+    }
+    return $identidad;
+}
+
 function centralTelefonicaConstruirConsolidado($segmentos, $config)
 {
     if (!is_array($segmentos) || count($segmentos) === 0) {
@@ -493,6 +568,7 @@ function centralTelefonicaConstruirConsolidado($segmentos, $config)
     }
 
     $grupo = centralTelefonicaClaveGrupo($primero);
+    $identidad = centralTelefonicaIdentidadOperativa($segmentos, $tipo, $config);
     return array(
         'llamada_clave' => hash('sha256', 'issabel|'.$grupo),
         'grupo_clave' => $grupo,
@@ -507,6 +583,9 @@ function centralTelefonicaConstruirConsolidado($segmentos, $config)
         'origen_normalizado' => centralTelefonicaNormalizarTelefono($origen),
         'destino_normalizado' => centralTelefonicaNormalizarTelefono($destino),
         'extension' => $extension,
+        'ruta_extension' => $identidad['ruta_extension'],
+        'funcionario_extension' => $identidad['funcionario_extension'],
+        'funcionario_destino_extension' => $identidad['funcionario_destino_extension'],
         'duracion_seg' => $duracion,
         'hablado_seg' => $hablado,
         'cantidad_segmentos' => count($segmentos),

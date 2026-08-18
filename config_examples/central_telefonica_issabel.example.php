@@ -20,6 +20,22 @@ return array(
     'overlap_minutes' => 10,
     'batch_limit' => 5000,
 
+    // Directorio opcional. Usar una credencial distinta con SELECT limitado
+    // exclusivamente a: users(extension,name), devices(id,description) y
+    // queues_config(extension,descr). Su ausencia no detiene el CDR.
+    'directory' => array(
+        'enabled' => false,
+        'host' => '10.220.100.230',
+        'port' => 3306,
+        'database' => 'asterisk',
+        'user' => 'telar_directory_readonly',
+        'password' => 'REEMPLAZAR_EN_ARCHIVO_PRIVADO',
+        'charset' => 'utf8',
+        'users_table' => 'users',
+        'devices_table' => 'devices',
+        'queues_table' => 'queues_config'
+    ),
+
     // Ajustar estas reglas despues de confirmar extensiones, contextos y trunks.
     'extension_patterns' => array('/^[1-9][0-9]{2,4}$/'),
     'service_patterns' => array('/^[*#]/', '/^(s|h|i|t)$/i'),

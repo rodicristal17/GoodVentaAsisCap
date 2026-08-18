@@ -14,6 +14,7 @@ date_default_timezone_set('America/Asuncion');
 require_once __DIR__.'/conexion.php';
 require_once __DIR__.'/verificar_navegador.php';
 require_once __DIR__.'/central_telefonica_helper.php';
+require_once __DIR__.'/central_telefonica_directorio_helper.php';
 require_once __DIR__.'/central_telefonica_transcripcion_helper.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -118,7 +119,7 @@ function centralTelefonicaRangoEntrada($entrada)
     );
 }
 
-function centralTelefonicaPrepararWhere($entrada, $rango)
+function centralTelefonicaPrepararWhere($entrada, $rango, $directorioDisponible = false)
 {
     $where = array('l.fecha_inicio>=?', 'l.fecha_inicio<?');
     $tipos = 'ss';
@@ -133,6 +134,19 @@ function centralTelefonicaPrepararWhere($entrada, $rango)
         isset($entrada['telefono']) ? $entrada['telefono'] : '',
         40
     ));
+    $funcionario = preg_replace('/[^0-9]/', '', centralTelefonicaTextoEntrada(
+        isset($entrada['funcionario']) ? $entrada['funcionario'] : '',
+        20
+    ));
+    $cola = preg_replace('/[^0-9]/', '', centralTelefonicaTextoEntrada(
+        isset($entrada['cola']) ? $entrada['cola'] : '',
+        20
+    ));
+    $sedeTexto = preg_replace('/[^0-9]/', '', centralTelefonicaTextoEntrada(
+        isset($entrada['sede']) ? $entrada['sede'] : '',
+        12
+    ));
+    $sede = $sedeTexto === '' ? 0 : intval($sedeTexto);
     $tiposPermitidos = array(
         'entrante_externa', 'saliente_externa', 'interna',
         'servicio_prueba', 'sin_clasificar'
@@ -162,6 +176,35 @@ function centralTelefonicaPrepararWhere($entrada, $rango)
         $where[] = 'l.extension=?';
         $tipos .= 's';
         $parametros[] = $extension;
+    }
+    if (($cola !== '' || $sede > 0) && !$directorioDisponible) {
+        centralTelefonicaLanzar(
+            'directorio_no_disponible',
+            'Los filtros de sede y cola requieren la migracion del directorio.'
+        );
+    }
+    if ($funcionario !== '') {
+        if ($directorioDisponible) {
+            $where[] = '(l.funcionario_extension=? OR l.funcionario_destino_extension=?)';
+            $tipos .= 'ss';
+            $parametros[] = $funcionario;
+            $parametros[] = $funcionario;
+        } else {
+            $where[] = 'l.extension=?';
+            $tipos .= 's';
+            $parametros[] = $funcionario;
+        }
+    }
+    if ($sede > 0) {
+        $where[] = '(l.funcionario_cod_local=? OR l.funcionario_destino_cod_local=?)';
+        $tipos .= 'ii';
+        $parametros[] = $sede;
+        $parametros[] = $sede;
+    }
+    if ($cola !== '') {
+        $where[] = "l.ruta_extension=? AND l.ruta_tipo='cola'";
+        $tipos .= 's';
+        $parametros[] = $cola;
     }
     if ($telefono !== '') {
         $where[] = "(REPLACE(l.origen_normalizado,'+','') LIKE ?
@@ -318,6 +361,37 @@ function centralTelefonicaFilaVisible(
     $destino = centralTelefonicaTelefonoVisible($fila['destino_original'], $contexto);
     $numero = $tipo === 'entrante_externa' ? $origen
         : ($tipo === 'saliente_externa' ? $destino : $origen.' → '.$destino);
+    $rutaExtension = isset($fila['ruta_extension']) ? trim((string)$fila['ruta_extension']) : '';
+    $rutaTipo = isset($fila['ruta_tipo']) ? trim((string)$fila['ruta_tipo']) : '';
+    $rutaNombre = isset($fila['ruta_nombre']) ? trim((string)$fila['ruta_nombre']) : '';
+    $funcionarioExtension = isset($fila['funcionario_extension'])
+        ? trim((string)$fila['funcionario_extension']) : '';
+    $funcionarioDestinoExtension = isset($fila['funcionario_destino_extension'])
+        ? trim((string)$fila['funcionario_destino_extension']) : '';
+    if ($tipo === 'entrante_externa' && $rutaExtension === '') {
+        $rutaExtension = trim((string)$fila['extension']);
+        $rutaTipo = $rutaTipo === '' ? 'interna' : $rutaTipo;
+    }
+    if ($tipo === 'saliente_externa') {
+        $rutaTipo = 'salida';
+        $rutaNombre = $rutaNombre === '' ? 'Salida directa' : $rutaNombre;
+        if ($funcionarioExtension === '') {
+            $funcionarioExtension = trim((string)$fila['extension']);
+        }
+    }
+    if ($tipo === 'interna') {
+        $rutaTipo = 'interna';
+        $rutaNombre = $rutaNombre === '' ? 'Llamada interna' : $rutaNombre;
+        if ($funcionarioExtension === '') {
+            $funcionarioExtension = preg_replace('/[^0-9]/', '', (string)$fila['origen_original']);
+        }
+        if ($funcionarioDestinoExtension === '') {
+            $funcionarioDestinoExtension = preg_replace('/[^0-9]/', '', (string)$fila['destino_original']);
+        }
+    }
+    if ($rutaTipo === 'cola' && $funcionarioExtension === $rutaExtension) {
+        $funcionarioExtension = '';
+    }
 
     return array(
         'id_llamada' => intval($fila['id_llamada']),
@@ -330,6 +404,23 @@ function centralTelefonicaFilaVisible(
         'destino' => $destino,
         'numero_principal' => $numero,
         'extension' => $fila['extension'],
+        'ruta' => array(
+            'extension' => $rutaExtension,
+            'tipo' => $rutaTipo,
+            'nombre' => $rutaNombre
+        ),
+        'funcionario' => array(
+            'extension' => $funcionarioExtension,
+            'nombre' => isset($fila['funcionario_nombre']) ? $fila['funcionario_nombre'] : '',
+            'sede' => isset($fila['funcionario_sede']) ? $fila['funcionario_sede'] : ''
+        ),
+        'funcionario_destino' => array(
+            'extension' => $funcionarioDestinoExtension,
+            'nombre' => isset($fila['funcionario_destino_nombre'])
+                ? $fila['funcionario_destino_nombre'] : '',
+            'sede' => isset($fila['funcionario_destino_sede'])
+                ? $fila['funcionario_destino_sede'] : ''
+        ),
         'duracion_seg' => intval($fila['duracion_seg']),
         'duracion_texto' => centralTelefonicaFormatearDuracion($fila['duracion_seg']),
         'hablado_seg' => intval($fila['hablado_seg']),
@@ -489,10 +580,145 @@ function centralTelefonicaExtensiones($mysqli, $rango)
     return $items;
 }
 
+function centralTelefonicaCatalogosDirectorio($mysqli, $rango, $disponible)
+{
+    $funcionarios = array();
+    $colas = array();
+    $sedes = array();
+    if (!$disponible) {
+        foreach (centralTelefonicaExtensiones($mysqli, $rango) as $extension) {
+            $funcionarios[$extension] = array(
+                'extension' => $extension,
+                'nombre' => '',
+                'sede' => '',
+                'cod_local' => 0,
+                'tipo' => 'interna'
+            );
+        }
+        return array(
+            'funcionarios' => array_values($funcionarios),
+            'sedes' => array(),
+            'colas' => array()
+        );
+    }
+
+    $sql = "SELECT extension,MAX(nombre) nombre,MAX(sede) sede,"
+        ."MAX(cod_local) cod_local FROM ("
+        ."SELECT funcionario_extension extension,funcionario_nombre nombre,"
+        ."funcionario_sede sede,IFNULL(funcionario_cod_local,0) cod_local "
+        ."FROM central_telefonica_llamada WHERE fecha_inicio>=? AND fecha_inicio<? "
+        ."UNION ALL "
+        ."SELECT funcionario_destino_extension,funcionario_destino_nombre,"
+        ."funcionario_destino_sede,IFNULL(funcionario_destino_cod_local,0) "
+        ."FROM central_telefonica_llamada WHERE fecha_inicio>=? AND fecha_inicio<?"
+        .") x WHERE extension<>'' GROUP BY extension";
+    $stmt = centralTelefonicaEjecutarConsulta(
+        $mysqli,
+        $sql,
+        'ssss',
+        array($rango['inicio'], $rango['fin_exclusivo'], $rango['inicio'], $rango['fin_exclusivo'])
+    );
+    $resultado = $stmt->get_result();
+    while ($resultado && ($fila = $resultado->fetch_assoc())) {
+        $funcionarios[$fila['extension']] = array(
+            'extension' => $fila['extension'],
+            'nombre' => $fila['nombre'],
+            'sede' => $fila['sede'],
+            'cod_local' => intval($fila['cod_local']),
+            'tipo' => 'funcionario'
+        );
+    }
+    $stmt->close();
+
+    $sqlDirectorio = "SELECT d.extension,d.tipo,"
+        ."COALESCE(NULLIF(p.nombre_persona,''),NULLIF(d.nombre,''),'') nombre,"
+        ."COALESCE(NULLIF(l.Nombre,''),NULLIF(d.sede_nombre,''),'') sede,"
+        ."IFNULL(d.cod_localFK,0) cod_local "
+        ."FROM central_telefonica_directorio d "
+        ."LEFT JOIN usuario u ON u.cod_usuario=d.cod_usuarioFK "
+        ."LEFT JOIN persona p ON p.cod_persona=u.cod_usuario "
+        ."LEFT JOIN local l ON l.cod_local=d.cod_localFK WHERE d.activo=1";
+    $resultadoDirectorio = $mysqli->query($sqlDirectorio);
+    while ($resultadoDirectorio && ($fila = $resultadoDirectorio->fetch_assoc())) {
+        $item = array(
+            'extension' => $fila['extension'],
+            'nombre' => $fila['nombre'],
+            'sede' => $fila['sede'],
+            'cod_local' => intval($fila['cod_local']),
+            'tipo' => $fila['tipo']
+        );
+        if ($fila['tipo'] === 'cola') {
+            $colas[$fila['extension']] = $item;
+        } else {
+            if (!isset($funcionarios[$fila['extension']])) {
+                $funcionarios[$fila['extension']] = $item;
+            } else {
+                foreach (array('nombre', 'sede', 'cod_local', 'tipo') as $clave) {
+                    if ($funcionarios[$fila['extension']][$clave] === ''
+                        || $funcionarios[$fila['extension']][$clave] === 0) {
+                        $funcionarios[$fila['extension']][$clave] = $item[$clave];
+                    }
+                }
+            }
+        }
+    }
+
+    $stmt = centralTelefonicaEjecutarConsulta(
+        $mysqli,
+        "SELECT ruta_extension extension,MAX(ruta_nombre) nombre "
+        ."FROM central_telefonica_llamada WHERE fecha_inicio>=? AND fecha_inicio<? "
+        ."AND ruta_tipo='cola' AND ruta_extension<>'' GROUP BY ruta_extension",
+        'ss',
+        array($rango['inicio'], $rango['fin_exclusivo'])
+    );
+    $resultado = $stmt->get_result();
+    while ($resultado && ($fila = $resultado->fetch_assoc())) {
+        if (!isset($colas[$fila['extension']])) {
+            $colas[$fila['extension']] = array(
+                'extension' => $fila['extension'],
+                'nombre' => $fila['nombre'],
+                'sede' => '',
+                'cod_local' => 0,
+                'tipo' => 'cola'
+            );
+        }
+    }
+    $stmt->close();
+
+    foreach ($funcionarios as $item) {
+        if (intval($item['cod_local']) > 0 && trim((string)$item['sede']) !== '') {
+            $sedes[intval($item['cod_local'])] = array(
+                'cod_local' => intval($item['cod_local']),
+                'nombre' => $item['sede']
+            );
+        }
+    }
+    $ordenar = function ($a, $b) {
+        return strnatcasecmp(
+            trim((string)$a['nombre']).' '.trim((string)$a['extension']),
+            trim((string)$b['nombre']).' '.trim((string)$b['extension'])
+        );
+    };
+    $funcionarios = array_values($funcionarios);
+    $colas = array_values($colas);
+    $sedes = array_values($sedes);
+    usort($funcionarios, $ordenar);
+    usort($colas, $ordenar);
+    usort($sedes, function ($a, $b) {
+        return strnatcasecmp((string)$a['nombre'], (string)$b['nombre']);
+    });
+    return array(
+        'funcionarios' => $funcionarios,
+        'sedes' => $sedes,
+        'colas' => $colas
+    );
+}
+
 function centralTelefonicaListar($mysqli, $contexto, $entrada)
 {
     $rango = centralTelefonicaRangoEntrada($entrada);
-    $where = centralTelefonicaPrepararWhere($entrada, $rango);
+    $directorioDisponible = centralTelefonicaDirectorioEstructuraDisponible($mysqli);
+    $where = centralTelefonicaPrepararWhere($entrada, $rango, $directorioDisponible);
     $estructuraTranscripcion = centralTelefonicaTranscripcionEstructuraDisponible($mysqli);
     $pagina = max(1, intval(isset($entrada['pagina']) ? $entrada['pagina'] : 1));
     $limite = intval(isset($entrada['limite']) ? $entrada['limite'] : 50);
@@ -517,10 +743,19 @@ function centralTelefonicaListar($mysqli, $contexto, $entrada)
     $unionTranscripcion = $estructuraTranscripcion
         ? ' LEFT JOIN central_telefonica_transcripcion t ON t.id_llamada=l.id_llamada '
         : ' ';
+    $camposDirectorio = $directorioDisponible
+        ? ",l.ruta_extension,l.ruta_tipo,l.ruta_nombre,"
+            ."l.funcionario_extension,l.funcionario_nombre,l.funcionario_sede,"
+            ."l.funcionario_destino_extension,l.funcionario_destino_nombre,"
+            ."l.funcionario_destino_sede"
+        : ",'' AS ruta_extension,'' AS ruta_tipo,'' AS ruta_nombre,"
+            ."'' AS funcionario_extension,'' AS funcionario_nombre,"
+            ."'' AS funcionario_sede,'' AS funcionario_destino_extension,"
+            ."'' AS funcionario_destino_nombre,'' AS funcionario_destino_sede";
     $sql = "SELECT l.id_llamada,l.fecha_inicio,l.tipo,l.estado,
             l.origen_original,l.destino_original,l.extension,
             l.duracion_seg,l.hablado_seg,l.cantidad_segmentos,
-            l.grabacion_disponible".$camposTranscripcion."
+            l.grabacion_disponible".$camposDirectorio.$camposTranscripcion."
         FROM central_telefonica_llamada l
         ".$unionTranscripcion."
         WHERE ".$where['sql']."
@@ -547,6 +782,12 @@ function centralTelefonicaListar($mysqli, $contexto, $entrada)
         'resumen' => centralTelefonicaResumen($mysqli, $where),
         'llamadas' => $items,
         'extensiones' => centralTelefonicaExtensiones($mysqli, $rango),
+        'catalogos' => centralTelefonicaCatalogosDirectorio(
+            $mysqli,
+            $rango,
+            $directorioDisponible
+        ),
+        'directorio_disponible' => $directorioDisponible,
         'paginacion' => array(
             'pagina' => $pagina,
             'limite' => $limite,
@@ -897,6 +1138,7 @@ function centralTelefonicaDetalle($mysqli, $contexto, $entrada)
     }
 
     $estructuraTranscripcion = centralTelefonicaTranscripcionEstructuraDisponible($mysqli);
+    $directorioDisponible = centralTelefonicaDirectorioEstructuraDisponible($mysqli);
     $camposTranscripcion = $estructuraTranscripcion
         ? ",t.estado AS transcripcion_estado,t.fecha_actualizacion AS transcripcion_actualizada,"
             ."t.mensaje_error AS transcripcion_mensaje_error"
@@ -905,10 +1147,19 @@ function centralTelefonicaDetalle($mysqli, $contexto, $entrada)
     $unionTranscripcion = $estructuraTranscripcion
         ? ' LEFT JOIN central_telefonica_transcripcion t ON t.id_llamada=l.id_llamada '
         : ' ';
+    $camposDirectorio = $directorioDisponible
+        ? ",l.ruta_extension,l.ruta_tipo,l.ruta_nombre,"
+            ."l.funcionario_extension,l.funcionario_nombre,l.funcionario_sede,"
+            ."l.funcionario_destino_extension,l.funcionario_destino_nombre,"
+            ."l.funcionario_destino_sede"
+        : ",'' AS ruta_extension,'' AS ruta_tipo,'' AS ruta_nombre,"
+            ."'' AS funcionario_extension,'' AS funcionario_nombre,"
+            ."'' AS funcionario_sede,'' AS funcionario_destino_extension,"
+            ."'' AS funcionario_destino_nombre,'' AS funcionario_destino_sede";
     $sql = "SELECT l.id_llamada,l.grupo_clave,l.cdr_linkedid,l.cdr_uniqueid_principal,
             l.fecha_inicio,l.fecha_fin,l.tipo,l.estado,l.origen_original,l.destino_original,
             l.extension,l.duracion_seg,l.hablado_seg,l.cantidad_segmentos,
-            l.grabacion_disponible,l.clasificacion_motivo".$camposTranscripcion."
+            l.grabacion_disponible,l.clasificacion_motivo".$camposDirectorio.$camposTranscripcion."
         FROM central_telefonica_llamada l ".$unionTranscripcion."
         WHERE l.id_llamada=? LIMIT 1";
     $stmt = centralTelefonicaEjecutarConsulta($mysqli, $sql, 'i', array($id));

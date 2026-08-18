@@ -128,6 +128,35 @@ centralTelefonicaPrueba(
         && $consolidada['tipo'] === 'entrante_externa',
     'Consolida dos segmentos del mismo linkedid en una llamada contestada.'
 );
+$colaEntrada = $entrante[0];
+$colaEntrada['destino_original'] = '9000';
+$colaEntrada['canal_destino'] = 'Local/9000@from-queue-0001';
+$colaContestada = $colaEntrada;
+$colaContestada['cdr_uniqueid'] = '2.3';
+$colaContestada['canal_destino'] = 'PJSIP/1000-0008';
+$colaContestada['disposicion'] = 'ANSWERED';
+$colaContestada['hablado_seg'] = 52;
+$identidadCola = centralTelefonicaIdentidadOperativa(
+    array($colaEntrada, $colaContestada),
+    'entrante_externa',
+    $config
+);
+centralTelefonicaPrueba(
+    $identidadCola['ruta_extension'] === '9000'
+        && $identidadCola['funcionario_extension'] === '1000',
+    'Separa la cola de entrada de la extension que realmente contesto.'
+);
+$identidadInterna = centralTelefonicaIdentidadOperativa($interna, 'interna', $config);
+centralTelefonicaPrueba(
+    $identidadInterna['funcionario_extension'] === '1005'
+        && $identidadInterna['funcionario_destino_extension'] === '1009',
+    'Conserva origen y destino por separado en llamadas internas.'
+);
+centralTelefonicaPrueba(
+    centralTelefonicaExtensionDesdeCanal('PJSIP/1010-0007', $config) === '1010'
+        && centralTelefonicaExtensionDesdeCanal('SIP/to-gw-gsm-0002', $config) === '',
+    'Extrae extensiones de canales internos sin confundir troncales.'
+);
 centralTelefonicaPrueba(
     centralTelefonicaClaveGrupo($entrante[0]) === centralTelefonicaClaveGrupo($segmentoTransferido),
     'Dos segmentos con el mismo linkedid comparten la clave de grupo.'
@@ -186,15 +215,40 @@ centralTelefonicaPrueba(
     strpos($js, "data-central-action='toggle-filters'") !== false
         && strpos($js, 'collapseFiltersOnCompactViewport') !== false
         && strpos($js, 'centralTelefonicaFiltersToggleText') !== false
-        && strpos($css, 'grid-template-columns: minmax(112px, .82fr)') !== false
-        && strpos($css, '@media (max-width: 1100px)') !== false
+        && strpos($js, "id='centralTelefonicaFuncionario'") !== false
+        && strpos($js, "id='centralTelefonicaSede'") !== false
+        && strpos($js, "id='centralTelefonicaCola'") !== false
+        && strpos($css, 'grid-template-columns: minmax(92px, .72fr)') !== false
+        && strpos($css, '@media (max-width: 1180px)') !== false
         && strpos($css, '.central-telefonica-filters-panel--expanded .central-telefonica-filters') !== false,
-    'Los filtros usan una sola barra en escritorio y un panel colapsable en tablet.'
+    'Los filtros de funcionario, sede y cola usan una barra compacta y colapsan en tablet.'
 );
 centralTelefonicaPrueba(
-    strpos($inicio, 'central_telefonica.css?v=20260817-03') !== false
-        && strpos($inicio, 'central_telefonica.js?x=20260817-03') !== false,
-    'La pantalla principal publica la version compacta sin reutilizar recursos en cache.'
+    strpos($js, '<th>Ruta / cola</th>') !== false
+        && strpos($js, '<th>Atendida / realizada por</th>') !== false
+        && strpos($js, 'central-telefonica-entity-badge--') !== false
+        && strpos($css, '.central-telefonica-entity-badge--funcionario') !== false
+        && strpos($css, '.central-telefonica-entity-badge--cola') !== false,
+    'El listado separa ruta o cola del funcionario y muestra etiquetas de identidad.'
+);
+$rutaDirectorio = dirname(__DIR__).'/php_system/central_telefonica_directorio_helper.php';
+$rutaMigracionDirectorio = dirname(__DIR__).'/actualizacion_18082026_central_telefonica_directorio.sql';
+$directorio = is_readable($rutaDirectorio) ? file_get_contents($rutaDirectorio) : '';
+$migracionDirectorio = is_readable($rutaMigracionDirectorio)
+    ? file_get_contents($rutaMigracionDirectorio) : '';
+centralTelefonicaPrueba(
+    strpos($directorio, 'TELAR_ISSABEL_DIRECTORY_DB_USER') !== false
+        && strpos($directorio, "fuente='issabel'") !== false
+        && substr_count($compose, 'TELAR_ISSABEL_DIRECTORY_ENABLED:') === 4
+        && substr_count($compose, 'TELAR_ISSABEL_DIRECTORY_DB_PASSWORD:') === 4
+        && strpos($migracionDirectorio, 'central_telefonica_directorio') !== false
+        && strpos($migracionDirectorio, 'funcionario_destino_extension') !== false,
+    'El directorio usa credencial independiente y snapshots aditivos de atribucion.'
+);
+centralTelefonicaPrueba(
+    strpos($inicio, 'central_telefonica.css?v=20260818-01') !== false
+        && strpos($inicio, 'central_telefonica.js?x=20260818-01') !== false,
+    'La pantalla principal publica la version enriquecida sin reutilizar recursos en cache.'
 );
 
 fwrite(STDOUT, 'Aprobadas: '.$aprobadas.' | Fallidas: '.$fallidas.PHP_EOL);

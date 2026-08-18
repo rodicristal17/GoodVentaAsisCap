@@ -168,8 +168,10 @@
             + filterField("Desde", "<input type='date' id='centralTelefonicaDesde' value='" + today + "' required />")
             + filterField("Hasta", "<input type='date' id='centralTelefonicaHasta' value='" + today + "' required />")
             + filterField("Dirección", "<select id='centralTelefonicaTipo'><option value=''>Todas</option><option value='entrante_externa'>Entrante externa</option><option value='saliente_externa'>Saliente externa</option><option value='interna'>Interna</option><option value='servicio_prueba'>Servicio / prueba</option><option value='sin_clasificar'>Sin clasificar</option></select>")
+            + filterField("Funcionario", "<select id='centralTelefonicaFuncionario'><option value=''>Todos</option></select>")
+            + filterField("Sede", "<select id='centralTelefonicaSede'><option value=''>Todas</option></select>")
+            + filterField("Cola", "<select id='centralTelefonicaCola'><option value=''>Todas</option></select>")
             + filterField("Estado", "<select id='centralTelefonicaEstado'><option value=''>Todos</option><option value='contestada'>Contestada</option><option value='no_contestada'>No contestada</option><option value='ocupada'>Ocupada</option><option value='fallida'>Fallida</option><option value='congestion'>Congestión</option></select>")
-            + filterField("Extensión", "<select id='centralTelefonicaExtension'><option value=''>Todas</option></select>")
             + filterField("Número telefónico", "<input type='search' id='centralTelefonicaTelefono' inputmode='tel' maxlength='40' placeholder='Ej.: 0981 o 595981' />")
             + "        <button type='submit' class='central-telefonica-primary-button'><i class='fa-solid fa-filter' aria-hidden='true'></i><span>Aplicar filtros</span></button>"
             + "        <button type='button' class='central-telefonica-filter-clear' data-central-action='clear'>Limpiar</button>"
@@ -179,7 +181,7 @@
             + "      <div class='central-telefonica-panel__title'><div><p class='central-telefonica-eyebrow'>Movimientos</p><h2>Listado de llamadas</h2><span id='centralTelefonicaResultCount'>0 registros</span></div><span class='central-telefonica-readonly-badge'><i class='fa-solid fa-lock' aria-hidden='true'></i> CDR solo lectura</span></div>"
             + "      <div class='central-telefonica-table-wrap'>"
             + "        <table class='central-telefonica-table'>"
-            + "          <thead><tr><th>Fecha y hora</th><th>Dirección</th><th>Número</th><th>Extensión</th><th>Estado</th><th>Duración</th><th>Hablado</th><th>Grabación</th><th>Transcripción</th><th><span class='central-telefonica-sr-only'>Acciones</span></th></tr></thead>"
+            + "          <thead><tr><th>Fecha y hora</th><th>Dirección</th><th>Número</th><th>Ruta / cola</th><th>Atendida / realizada por</th><th>Estado</th><th>Duración</th><th>Hablado</th><th>Grabación</th><th>Transcripción</th><th><span class='central-telefonica-sr-only'>Acciones</span></th></tr></thead>"
             + "          <tbody id='centralTelefonicaRows'></tbody>"
             + "        </table>"
             + "        <div id='centralTelefonicaTableState' class='central-telefonica-table-state'><i class='fa-solid fa-circle-notch fa-spin' aria-hidden='true'></i><span>Cargando movimientos…</span></div>"
@@ -293,9 +295,9 @@
 
     function isCompactFiltersViewport() {
         if (typeof window.matchMedia === "function") {
-            return window.matchMedia("(max-width: 1100px)").matches;
+            return window.matchMedia("(max-width: 1180px)").matches;
         }
-        return document.documentElement.clientWidth <= 1100;
+        return document.documentElement.clientWidth <= 1180;
     }
 
     function setFiltersExpanded(expanded) {
@@ -322,8 +324,10 @@
         if (valueOf("centralTelefonicaDesde") !== today) { count++; }
         if (valueOf("centralTelefonicaHasta") !== today) { count++; }
         if (valueOf("centralTelefonicaTipo")) { count++; }
+        if (valueOf("centralTelefonicaFuncionario")) { count++; }
+        if (valueOf("centralTelefonicaSede")) { count++; }
+        if (valueOf("centralTelefonicaCola")) { count++; }
         if (valueOf("centralTelefonicaEstado")) { count++; }
-        if (valueOf("centralTelefonicaExtension")) { count++; }
         if (valueOf("centralTelefonicaTelefono")) { count++; }
         return count;
     }
@@ -343,8 +347,10 @@
             desde: valueOf("centralTelefonicaDesde"),
             hasta: valueOf("centralTelefonicaHasta"),
             tipo: valueOf("centralTelefonicaTipo"),
+            funcionario: valueOf("centralTelefonicaFuncionario"),
+            sede: valueOf("centralTelefonicaSede"),
+            cola: valueOf("centralTelefonicaCola"),
             estado: valueOf("centralTelefonicaEstado"),
-            extension: valueOf("centralTelefonicaExtension"),
             telefono: valueOf("centralTelefonicaTelefono"),
             pagina: state.page,
             limite: state.limit
@@ -361,8 +367,10 @@
         state.root.querySelector("#centralTelefonicaDesde").value = today;
         state.root.querySelector("#centralTelefonicaHasta").value = today;
         state.root.querySelector("#centralTelefonicaTipo").value = "";
+        state.root.querySelector("#centralTelefonicaFuncionario").value = "";
+        state.root.querySelector("#centralTelefonicaSede").value = "";
+        state.root.querySelector("#centralTelefonicaCola").value = "";
         state.root.querySelector("#centralTelefonicaEstado").value = "";
-        state.root.querySelector("#centralTelefonicaExtension").value = "";
         state.root.querySelector("#centralTelefonicaTelefono").value = "";
         state.page = 1;
         updateFiltersToggleStatus();
@@ -403,7 +411,7 @@
             state.loading = false;
             renderSummary(data.resumen || {});
             renderSync(data.sincronizacion || {});
-            renderExtensions(data.extensiones || []);
+            renderCatalogs(data.catalogos || {});
             renderRows(data.llamadas || []);
             renderPagination(data.paginacion || {});
             scheduleRefresh();
@@ -472,15 +480,49 @@
         element.innerHTML = "<i class='fa-solid " + icon + "' aria-hidden='true'></i><span>" + escapeHtml(text) + "</span>";
     }
 
-    function renderExtensions(extensions) {
-        var select = state.root.querySelector("#centralTelefonicaExtension");
-        var selected = select.value;
-        var html = "<option value=''>Todas</option>";
-        extensions.forEach(function (extension) {
-            html += "<option value='" + escapeHtml(extension) + "'>" + escapeHtml(extension) + "</option>";
+    function renderSelectOptions(id, items, emptyLabel, valueKey, labelBuilder) {
+        var select = state.root.querySelector("#" + id);
+        var selected;
+        var html;
+        if (!select) { return; }
+        selected = select.value;
+        html = "<option value=''>" + escapeHtml(emptyLabel) + "</option>";
+        (items || []).forEach(function (item) {
+            var value = item && typeof item === "object" ? item[valueKey] : item;
+            var label = labelBuilder ? labelBuilder(item) : value;
+            html += "<option value='" + escapeHtml(value) + "'>" + escapeHtml(label) + "</option>";
         });
         select.innerHTML = html;
         select.value = selected;
+    }
+
+    function renderCatalogs(catalogs) {
+        renderSelectOptions(
+            "centralTelefonicaFuncionario",
+            catalogs.funcionarios || [],
+            "Todos",
+            "extension",
+            function (item) {
+                return (item.nombre ? item.nombre + " · " : "") + item.extension
+                    + (item.sede ? " · " + item.sede : "");
+            }
+        );
+        renderSelectOptions(
+            "centralTelefonicaSede",
+            catalogs.sedes || [],
+            "Todas",
+            "cod_local",
+            function (item) { return item.nombre || "Sede " + item.cod_local; }
+        );
+        renderSelectOptions(
+            "centralTelefonicaCola",
+            catalogs.colas || [],
+            "Todas",
+            "extension",
+            function (item) {
+                return item.extension + (item.nombre ? " · " + item.nombre : "");
+            }
+        );
     }
 
     function typeLabel(type) {
@@ -559,6 +601,66 @@
             + "' aria-hidden='true'></i><span>" + (status === "error" ? "Reintentar" : "Transcribir") + "</span></button>";
     }
 
+    function entityBadge(type) {
+        var labels = { funcionario: "Funcionario", cola: "Cola", interna: "Interna" };
+        if (!labels[type]) { return ""; }
+        return "<span class='central-telefonica-entity-badge central-telefonica-entity-badge--"
+            + escapeHtml(type) + "'>" + escapeHtml(labels[type]) + "</span>";
+    }
+
+    function entityMain(extension, name) {
+        if (!extension && !name) { return "Sin identificar"; }
+        if (extension && name) { return extension + " · " + name; }
+        return extension || name;
+    }
+
+    function renderRouteCell(call) {
+        var route = call.ruta || {};
+        var source = call.funcionario || {};
+        var destination = call.funcionario_destino || {};
+        var main;
+        var detail;
+        var type = route.tipo || "interna";
+        if (call.tipo === "interna") {
+            main = (source.extension || "—") + " → " + (destination.extension || "—");
+            detail = route.nombre || "Llamada interna";
+            type = "interna";
+        } else if (call.tipo === "saliente_externa") {
+            main = route.nombre || "Salida directa";
+            detail = "";
+            type = "";
+        } else {
+            main = route.extension || call.extension || "—";
+            detail = route.nombre || (type === "cola" ? "Cola sin nombre" : "Extensión directa");
+        }
+        return "<div class='central-telefonica-entity central-telefonica-route'><strong>"
+            + escapeHtml(main) + "</strong><span>" + escapeHtml(detail) + entityBadge(type) + "</span></div>";
+    }
+
+    function renderFuncionarioCell(call) {
+        var source = call.funcionario || {};
+        var destination = call.funcionario_destino || {};
+        var main;
+        var site;
+        if (call.tipo === "interna") {
+            main = entityMain(source.extension, source.nombre) + " → "
+                + entityMain(destination.extension, destination.nombre);
+            site = source.sede && destination.sede && source.sede !== destination.sede
+                ? source.sede + " → " + destination.sede
+                : (source.sede || destination.sede || "Sede sin asignar");
+            return "<div class='central-telefonica-entity central-telefonica-person'><strong>"
+                + escapeHtml(main) + "</strong><span>" + escapeHtml(site) + "</span></div>";
+        }
+        if (!source.extension) {
+            return "<div class='central-telefonica-entity central-telefonica-entity--unknown'><strong>Sin identificar</strong><span>La cola no informó un funcionario</span></div>";
+        }
+        main = entityMain(source.extension, source.nombre);
+        site = source.sede || "Sede sin asignar";
+        return "<div class='central-telefonica-entity central-telefonica-person'><strong>"
+            + escapeHtml(main) + "</strong><span>" + escapeHtml(site)
+            + entityBadge("funcionario") + "</span></div>";
+    }
+
     function renderRows(calls) {
         var rows = state.root.querySelector("#centralTelefonicaRows");
         var tableState = state.root.querySelector("#centralTelefonicaTableState");
@@ -576,7 +678,8 @@
                 + "<td><strong>" + escapeHtml(call.fecha) + "</strong><span>" + escapeHtml(call.hora) + "</span></td>"
                 + "<td><span class='central-telefonica-type central-telefonica-type--" + escapeHtml(call.tipo) + "'><i class='fa-solid " + typeIcon(call.tipo) + "' aria-hidden='true'></i>" + escapeHtml(typeLabel(call.tipo)) + "</span></td>"
                 + "<td class='central-telefonica-number'>" + escapeHtml(call.numero_principal || "—") + "</td>"
-                + "<td>" + escapeHtml(call.extension || "—") + "</td>"
+                + "<td>" + renderRouteCell(call) + "</td>"
+                + "<td>" + renderFuncionarioCell(call) + "</td>"
                 + "<td><span class='central-telefonica-status central-telefonica-status--" + escapeHtml(call.estado) + "'>" + escapeHtml(statusLabel(call.estado)) + "</span></td>"
                 + "<td>" + escapeHtml(call.duracion_texto) + "</td>"
                 + "<td><strong>" + escapeHtml(call.hablado_texto) + "</strong></td>"
@@ -626,6 +729,18 @@
 
     function renderDetail(call) {
         var body = state.root.querySelector("#centralTelefonicaDrawerBody");
+        var route = call.ruta || {};
+        var funcionario = call.funcionario || {};
+        var funcionarioDestino = call.funcionario_destino || {};
+        var routeText = call.tipo === "saliente_externa"
+            ? (route.nombre || "Salida directa")
+            : (call.tipo === "interna"
+                ? (funcionario.extension || "—") + " → " + (funcionarioDestino.extension || "—")
+                : entityMain(route.extension || call.extension, route.nombre));
+        var funcionarioText = call.tipo === "interna"
+            ? entityMain(funcionario.extension, funcionario.nombre) + " → "
+                + entityMain(funcionarioDestino.extension, funcionarioDestino.nombre)
+            : entityMain(funcionario.extension, funcionario.nombre);
         var html = "<section class='central-telefonica-detail-section'><h3>Información general</h3><div class='central-telefonica-detail-grid'>"
             + detailItem("Inicio", call.fecha_inicio)
             + detailItem("Finalización", call.fecha_fin)
@@ -633,7 +748,9 @@
             + detailItem("Estado", statusLabel(call.estado))
             + detailItem("Origen", call.origen)
             + detailItem("Destino", call.destino)
-            + detailItem("Extensión", call.extension)
+            + detailItem("Ruta / cola", routeText)
+            + detailItem("Atendida / realizada por", funcionarioText)
+            + detailItem("Sede", funcionario.sede || funcionarioDestino.sede || "Sin asignar")
             + "</div></section>"
             + "<section class='central-telefonica-detail-section'><h3>Duración</h3><div class='central-telefonica-detail-grid'>"
             + detailItem("Duración total", call.duracion_texto)

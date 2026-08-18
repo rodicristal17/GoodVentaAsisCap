@@ -18,6 +18,8 @@ docker compose up -d
 
 La configuración secreta vive únicamente en `/opt/telar/app/deploy/production/.env`, con permisos `0600`. No debe incorporarse a Git ni copiarse al vault.
 
+El directorio de Central Telefónica usa una credencial distinta de la lectura CDR. Debe comenzar con `TELAR_ISSABEL_DIRECTORY_ENABLED=false` y activarse únicamente después de validar en `--dry-run` un usuario MySQL con `SELECT` limitado a `asterisk.users`, `asterisk.devices` y `asterisk.queues_config`. Su ausencia no detiene la sincronización principal de llamadas.
+
 ## Acceso
 
 - URL VPN/LAN: `http://10.220.100.201:8080/`
