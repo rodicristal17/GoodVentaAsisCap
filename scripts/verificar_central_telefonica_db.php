@@ -40,8 +40,8 @@ $resultado = $mysqli->query(
 );
 $fila = $resultado ? $resultado->fetch_assoc() : array('total' => 0);
 centralTelefonicaDbPrueba(
-    intval($fila['total']) === 5,
-    'El catalogo contiene exactamente cinco permisos telefonicos.'
+    intval($fila['total']) === 6,
+    'El catalogo contiene exactamente seis permisos telefonicos.'
 );
 
 $resultado = $mysqli->query(
@@ -78,6 +78,40 @@ $fila = $resultado ? $resultado->fetch_assoc() : array('total' => 0, 'carlos' =>
 centralTelefonicaDbPrueba(
     intval($fila['total']) === 1 && intval($fila['carlos']) === 1,
     'Solo la cuenta protegida de Carlos puede solicitar y consultar transcripciones.'
+);
+
+$resultado = $mysqli->query(
+    "SELECT COUNT(*) total FROM information_schema.tables WHERE table_schema=DATABASE() "
+    ."AND table_name='central_telefonica_directorio_evento'"
+);
+$fila = $resultado ? $resultado->fetch_assoc() : array('total' => 0);
+centralTelefonicaDbPrueba(
+    intval($fila['total']) === 1 && centralTelefonicaDirectorioAdministracionDisponible($mysqli),
+    'La auditoria y la administracion del directorio estan disponibles.'
+);
+
+$resultado = $mysqli->query(
+    "SELECT COUNT(*) total,SUM(au.usuarios_idusario=5994) carlos FROM accesosuser au "
+    ."INNER JOIN listadodeacceso la ON la.idlistadodeacceso=au.idlistadodeaccesoFK "
+    ."WHERE la.codigo='ADMINISTRARDIRECTORIOCENTRALTELEFONICA' "
+    ."AND au.tipo='Administrativo' AND UPPER(TRIM(au.accion))='SI'"
+);
+$fila = $resultado ? $resultado->fetch_assoc() : array('total' => 0, 'carlos' => 0);
+centralTelefonicaDbPrueba(
+    intval($fila['total']) === 1 && intval($fila['carlos']) === 1,
+    'Solo la cuenta protegida de Carlos puede administrar asociaciones telefonicas.'
+);
+
+$resultado = $mysqli->query(
+    "SELECT COUNT(*) total FROM detallesniveles dn "
+    ."INNER JOIN listadodeacceso la ON la.idlistadodeacceso=dn.idlistadodeacceso "
+    ."WHERE la.codigo='ADMINISTRARDIRECTORIOCENTRALTELEFONICA' "
+    ."AND UPPER(TRIM(dn.accion))='SI'"
+);
+$fila = $resultado ? $resultado->fetch_assoc() : array('total' => 1);
+centralTelefonicaDbPrueba(
+    intval($fila['total']) === 0,
+    'Ningun rol hereda la administracion del directorio telefonico.'
 );
 
 $resultado = $mysqli->query(
@@ -222,6 +256,14 @@ try {
 
     $segmentos = centralTelefonicaSyncSegmentosGrupo($mysqli, $segmento['grupo_clave']);
     $consolidado = centralTelefonicaConstruirConsolidado($segmentos, $config);
+    if (centralTelefonicaDirectorioEstructuraDisponible($mysqli)) {
+        $consolidado = centralTelefonicaDirectorioEnriquecerConsolidado(
+            $mysqli,
+            $consolidado,
+            $segmentos,
+            $config
+        );
+    }
     centralTelefonicaSyncGuardarConsolidado($mysqli, $consolidado);
     centralTelefonicaSyncGuardarConsolidado($mysqli, $consolidado);
     $stmt = $mysqli->prepare(

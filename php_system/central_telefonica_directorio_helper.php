@@ -483,4 +483,389 @@ function centralTelefonicaDirectorioSincronizar($mysqli, $configBase, $soloLectu
     }
 }
 
+function centralTelefonicaDirectorioAdministracionDisponible($mysqli)
+{
+    return centralTelefonicaDirectorioEstructuraDisponible($mysqli)
+        && centralTelefonicaTablaExiste($mysqli, 'central_telefonica_directorio_evento');
+}
+
+function centralTelefonicaDirectorioTextoAdministracion($valor, $maximo)
+{
+    if (is_array($valor) || is_object($valor)) {
+        return '';
+    }
+    $texto = trim((string)$valor);
+    if (mb_strlen($texto, 'UTF-8') > intval($maximo)) {
+        $texto = mb_substr($texto, 0, intval($maximo), 'UTF-8');
+    }
+    return $texto;
+}
+
+function centralTelefonicaDirectorioFilaAdministracion($fila)
+{
+    $codUsuario = $fila['cod_usuarioFK'] === null ? 0 : intval($fila['cod_usuarioFK']);
+    $codLocal = $fila['cod_localFK'] === null ? 0 : intval($fila['cod_localFK']);
+    $sedeAlternativa = trim((string)$fila['sede_nombre']);
+    return array(
+        'extension' => (string)$fila['extension'],
+        'tipo' => (string)$fila['tipo'],
+        'nombre_issabel' => (string)$fila['nombre'],
+        'descripcion' => (string)$fila['descripcion'],
+        'cod_usuario' => $codUsuario,
+        'funcionario_nombre' => (string)$fila['funcionario_nombre'],
+        'cod_local' => $codLocal,
+        'sede_nombre' => (string)$fila['local_nombre'],
+        'sede_nombre_alternativa' => $sedeAlternativa,
+        'asignada' => $codUsuario > 0 || $codLocal > 0 || $sedeAlternativa !== '',
+        'fecha_ultima_fuente' => $fila['fecha_ultima_fuente']
+    );
+}
+
+function centralTelefonicaDirectorioAdministracionListar($mysqli)
+{
+    if (!centralTelefonicaDirectorioAdministracionDisponible($mysqli)) {
+        centralTelefonicaDirectorioLanzar(
+            'administracion_directorio_pendiente',
+            'La administracion del directorio telefonico todavia no esta instalada.'
+        );
+    }
+    $extensiones = array();
+    $sql = "SELECT d.extension,d.tipo,d.nombre,d.descripcion,d.cod_usuarioFK,d.cod_localFK,"
+        ."d.sede_nombre,d.fecha_ultima_fuente,IFNULL(p.nombre_persona,'') funcionario_nombre,"
+        ."IFNULL(l.Nombre,'') local_nombre FROM central_telefonica_directorio d "
+        ."LEFT JOIN usuario u ON u.cod_usuario=d.cod_usuarioFK "
+        ."LEFT JOIN persona p ON p.cod_persona=u.cod_usuario "
+        ."LEFT JOIN local l ON l.cod_local=d.cod_localFK "
+        ."WHERE d.activo=1 ORDER BY IF(d.tipo='cola',1,0),CAST(d.extension AS UNSIGNED),d.extension";
+    $resultado = $mysqli->query($sql);
+    if (!$resultado) {
+        centralTelefonicaDirectorioLanzar(
+            'directorio_no_disponible',
+            'No se pudieron consultar las extensiones vigentes.'
+        );
+    }
+    while ($fila = $resultado->fetch_assoc()) {
+        $extensiones[] = centralTelefonicaDirectorioFilaAdministracion($fila);
+    }
+    $resultado->free();
+
+    $funcionarios = array();
+    $resultado = $mysqli->query(
+        "SELECT u.cod_usuario,u.cod_localFK,u.tipo,p.nombre_persona,IFNULL(l.Nombre,'') sede_principal "
+        ."FROM usuario u INNER JOIN persona p ON p.cod_persona=u.cod_usuario "
+        ."LEFT JOIN local l ON l.cod_local=u.cod_localFK "
+        ."WHERE UPPER(TRIM(IFNULL(u.estado,'')))='ACTIVO' "
+        ."AND TRIM(IFNULL(p.nombre_persona,''))<>'' ORDER BY p.nombre_persona,u.cod_usuario"
+    );
+    if (!$resultado) {
+        centralTelefonicaDirectorioLanzar(
+            'funcionarios_no_disponibles',
+            'No se pudo preparar el listado de funcionarios.'
+        );
+    }
+    while ($fila = $resultado->fetch_assoc()) {
+        $funcionarios[] = array(
+            'cod_usuario' => intval($fila['cod_usuario']),
+            'nombre' => (string)$fila['nombre_persona'],
+            'tipo' => (string)$fila['tipo'],
+            'cod_local_principal' => $fila['cod_localFK'] === null ? 0 : intval($fila['cod_localFK']),
+            'sede_principal' => (string)$fila['sede_principal']
+        );
+    }
+    $resultado->free();
+
+    $sedes = array();
+    $resultado = $mysqli->query(
+        "SELECT cod_local,Nombre FROM local "
+        ."WHERE UPPER(TRIM(IFNULL(estado,'')))='ACTIVO' ORDER BY Nombre,cod_local"
+    );
+    if (!$resultado) {
+        centralTelefonicaDirectorioLanzar(
+            'sedes_no_disponibles',
+            'No se pudo preparar el listado de sedes.'
+        );
+    }
+    while ($fila = $resultado->fetch_assoc()) {
+        $sedes[] = array(
+            'cod_local' => intval($fila['cod_local']),
+            'nombre' => (string)$fila['Nombre']
+        );
+    }
+    $resultado->free();
+
+    $asignadas = 0;
+    foreach ($extensiones as $extension) {
+        if ($extension['asignada']) {
+            $asignadas++;
+        }
+    }
+    return array(
+        'extensiones' => $extensiones,
+        'funcionarios' => $funcionarios,
+        'sedes' => $sedes,
+        'resumen' => array(
+            'total' => count($extensiones),
+            'asignadas' => $asignadas,
+            'sin_asignar' => count($extensiones) - $asignadas
+        )
+    );
+}
+
+function centralTelefonicaDirectorioAdministracionGuardar(
+    $mysqli,
+    $extension,
+    $codUsuario,
+    $codLocal,
+    $sedeNombre,
+    $quitar,
+    $actor,
+    $ipAccion
+) {
+    if (!centralTelefonicaDirectorioAdministracionDisponible($mysqli)) {
+        centralTelefonicaDirectorioLanzar(
+            'administracion_directorio_pendiente',
+            'La administracion del directorio telefonico todavia no esta instalada.'
+        );
+    }
+    $extension = trim((string)$extension);
+    if (!preg_match('/^[0-9]{1,20}$/', $extension)) {
+        centralTelefonicaDirectorioLanzar(
+            'extension_invalida',
+            'Seleccione una extension vigente.'
+        );
+    }
+    $codUsuario = max(0, intval($codUsuario));
+    $codLocal = max(0, intval($codLocal));
+    $actor = intval($actor);
+    $sedeOriginal = trim((string)$sedeNombre);
+    if (mb_strlen($sedeOriginal, 'UTF-8') > 100) {
+        centralTelefonicaDirectorioLanzar(
+            'sede_invalida',
+            'El nombre alternativo de la sede admite hasta 100 caracteres.'
+        );
+    }
+    $sedeNombre = centralTelefonicaDirectorioTextoAdministracion($sedeOriginal, 100);
+    $ipAccion = centralTelefonicaDirectorioTextoAdministracion($ipAccion, 45);
+    $quitar = $quitar ? true : false;
+    if ($quitar) {
+        $codUsuario = 0;
+        $codLocal = 0;
+        $sedeNombre = '';
+    }
+
+    $resultadoBloqueo = $mysqli->query(
+        "SELECT GET_LOCK('telar_central_telefonica_directorio',3) adquirido"
+    );
+    $filaBloqueo = $resultadoBloqueo ? $resultadoBloqueo->fetch_assoc() : null;
+    $bloqueo = $filaBloqueo && intval($filaBloqueo['adquirido']) === 1;
+    if (!$bloqueo) {
+        centralTelefonicaDirectorioLanzar(
+            'directorio_en_actualizacion',
+            'El directorio se esta actualizando. Intente nuevamente en unos segundos.'
+        );
+    }
+
+    $transaccion = false;
+    try {
+        if (!$mysqli->begin_transaction()) {
+            centralTelefonicaDirectorioLanzar(
+                'asignacion_no_guardada',
+                'No se pudo iniciar la actualizacion de la asignacion.'
+            );
+        }
+        $transaccion = true;
+        $stmt = $mysqli->prepare(
+            "SELECT extension,tipo,nombre,cod_usuarioFK,cod_localFK,sede_nombre "
+            ."FROM central_telefonica_directorio WHERE extension=? AND activo=1 LIMIT 1 FOR UPDATE"
+        );
+        if (!$stmt) {
+            centralTelefonicaDirectorioLanzar(
+                'directorio_no_disponible',
+                'No se pudo preparar la extension seleccionada.'
+            );
+        }
+        $stmt->bind_param('s', $extension);
+        $fila = null;
+        if ($stmt->execute()) {
+            $resultado = $stmt->get_result();
+            $fila = $resultado ? $resultado->fetch_assoc() : null;
+        }
+        $stmt->close();
+        if (!$fila) {
+            centralTelefonicaDirectorioLanzar(
+                'extension_no_disponible',
+                'La extension ya no se encuentra vigente.'
+            );
+        }
+
+        $tipo = trim((string)$fila['tipo']);
+        $funcionarioNombre = '';
+        $localNombre = '';
+        if (!$quitar && $tipo === 'cola' && $codUsuario > 0) {
+            centralTelefonicaDirectorioLanzar(
+                'cola_sin_funcionario',
+                'Una cola no puede asignarse directamente a un funcionario.'
+            );
+        }
+        if ($tipo === 'cola') {
+            $codUsuario = 0;
+        } elseif (!$quitar && $codUsuario <= 0) {
+            centralTelefonicaDirectorioLanzar(
+                'funcionario_requerido',
+                'Seleccione el funcionario que utiliza esta extension.'
+            );
+        }
+
+        if ($codUsuario > 0) {
+            $stmt = $mysqli->prepare(
+                "SELECT u.cod_usuario,p.nombre_persona FROM usuario u "
+                ."INNER JOIN persona p ON p.cod_persona=u.cod_usuario "
+                ."WHERE u.cod_usuario=? AND UPPER(TRIM(IFNULL(u.estado,'')))='ACTIVO' LIMIT 1"
+            );
+            if (!$stmt) {
+                centralTelefonicaDirectorioLanzar(
+                    'funcionario_no_disponible',
+                    'No se pudo validar el funcionario seleccionado.'
+                );
+            }
+            $stmt->bind_param('i', $codUsuario);
+            $funcionario = null;
+            if ($stmt->execute()) {
+                $resultado = $stmt->get_result();
+                $funcionario = $resultado ? $resultado->fetch_assoc() : null;
+            }
+            $stmt->close();
+            if (!$funcionario) {
+                centralTelefonicaDirectorioLanzar(
+                    'funcionario_no_disponible',
+                    'El funcionario seleccionado no esta activo.'
+                );
+            }
+            $funcionarioNombre = (string)$funcionario['nombre_persona'];
+        }
+        if ($codLocal > 0) {
+            $stmt = $mysqli->prepare(
+                "SELECT cod_local,Nombre FROM local WHERE cod_local=? "
+                ."AND UPPER(TRIM(IFNULL(estado,'')))='ACTIVO' LIMIT 1"
+            );
+            if (!$stmt) {
+                centralTelefonicaDirectorioLanzar(
+                    'sede_no_disponible',
+                    'No se pudo validar la sede seleccionada.'
+                );
+            }
+            $stmt->bind_param('i', $codLocal);
+            $local = null;
+            if ($stmt->execute()) {
+                $resultado = $stmt->get_result();
+                $local = $resultado ? $resultado->fetch_assoc() : null;
+            }
+            $stmt->close();
+            if (!$local) {
+                centralTelefonicaDirectorioLanzar(
+                    'sede_no_disponible',
+                    'La sede seleccionada no esta activa.'
+                );
+            }
+            $localNombre = (string)$local['Nombre'];
+            $sedeNombre = '';
+        }
+
+        $anterior = array(
+            'extension' => (string)$fila['extension'],
+            'tipo' => $tipo,
+            'cod_usuario' => $fila['cod_usuarioFK'] === null ? 0 : intval($fila['cod_usuarioFK']),
+            'cod_local' => $fila['cod_localFK'] === null ? 0 : intval($fila['cod_localFK']),
+            'sede_nombre' => (string)$fila['sede_nombre']
+        );
+        $nuevo = array(
+            'extension' => $extension,
+            'tipo' => $tipo,
+            'cod_usuario' => $codUsuario,
+            'funcionario_nombre' => $funcionarioNombre,
+            'cod_local' => $codLocal,
+            'sede_nombre' => $codLocal > 0 ? $localNombre : $sedeNombre
+        );
+        $stmt = $mysqli->prepare(
+            "UPDATE central_telefonica_directorio SET cod_usuarioFK=NULLIF(?,0),"
+            ."cod_localFK=NULLIF(?,0),sede_nombre=?,fecha_actualizacion=NOW() "
+            ."WHERE extension=? AND activo=1 LIMIT 1"
+        );
+        if (!$stmt) {
+            centralTelefonicaDirectorioLanzar(
+                'asignacion_no_guardada',
+                'No se pudo preparar la asignacion.'
+            );
+        }
+        $stmt->bind_param('iiss', $codUsuario, $codLocal, $sedeNombre, $extension);
+        $ok = $stmt->execute();
+        $stmt->close();
+        if (!$ok) {
+            centralTelefonicaDirectorioLanzar(
+                'asignacion_no_guardada',
+                'No se pudo guardar la asignacion.'
+            );
+        }
+
+        $accion = $quitar ? 'quitar_asignacion' : 'guardar_asignacion';
+        $datosAnteriores = json_encode($anterior, JSON_UNESCAPED_UNICODE);
+        $datosNuevos = json_encode($nuevo, JSON_UNESCAPED_UNICODE);
+        $stmt = $mysqli->prepare(
+            "INSERT INTO central_telefonica_directorio_evento "
+            ."(extension,accion,datos_anteriores,datos_nuevos,cod_usuarioFK_accion,ip_accion,fecha_evento) "
+            ."VALUES (?,?,?,?,?,?,NOW())"
+        );
+        if (!$stmt) {
+            centralTelefonicaDirectorioLanzar(
+                'auditoria_no_guardada',
+                'No se pudo preparar la auditoria de la asignacion.'
+            );
+        }
+        $stmt->bind_param(
+            'ssssis',
+            $extension,
+            $accion,
+            $datosAnteriores,
+            $datosNuevos,
+            $actor,
+            $ipAccion
+        );
+        $ok = $stmt->execute();
+        $stmt->close();
+        if (!$ok) {
+            centralTelefonicaDirectorioLanzar(
+                'auditoria_no_guardada',
+                'No se pudo guardar la auditoria de la asignacion.'
+            );
+        }
+        if (!$quitar && !centralTelefonicaDirectorioCompletarSnapshots($mysqli)) {
+            centralTelefonicaDirectorioLanzar(
+                'directorio_snapshots_no_disponibles',
+                'La asignacion no pudo aplicarse a las llamadas aun no identificadas.'
+            );
+        }
+        if (!$mysqli->commit()) {
+            centralTelefonicaDirectorioLanzar(
+                'asignacion_no_guardada',
+                'No se pudo confirmar la asignacion.'
+            );
+        }
+        $transaccion = false;
+        $mysqli->query("SELECT RELEASE_LOCK('telar_central_telefonica_directorio')");
+        return $nuevo;
+    } catch (Exception $e) {
+        if ($transaccion) {
+            @$mysqli->rollback();
+        }
+        @$mysqli->query("SELECT RELEASE_LOCK('telar_central_telefonica_directorio')");
+        throw $e;
+    } catch (Throwable $e) {
+        if ($transaccion) {
+            @$mysqli->rollback();
+        }
+        @$mysqli->query("SELECT RELEASE_LOCK('telar_central_telefonica_directorio')");
+        throw $e;
+    }
+}
+
 ?>

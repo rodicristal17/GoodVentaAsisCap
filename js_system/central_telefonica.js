@@ -16,6 +16,10 @@
         data: null,
         transcriptionService: null,
         currentCallId: null,
+        canManageDirectory: false,
+        directoryOpen: false,
+        directoryLoading: false,
+        directoryData: null,
         hasPendingTranscriptions: false,
         refreshTimer: null,
         summaryCollapsed: true,
@@ -133,6 +137,7 @@
             + "    <div class='central-telefonica-header__actions'>"
             + "      <div class='central-telefonica-sync' id='centralTelefonicaSync' role='status'><i class='fa-solid fa-circle-notch' aria-hidden='true'></i><span>Verificando sincronización…</span></div>"
             + "      <button type='button' class='central-telefonica-icon-button' data-central-action='refresh' title='Actualizar listado'><i class='fa-solid fa-rotate-right' aria-hidden='true'></i><span>Actualizar</span></button>"
+            + "      <button type='button' class='central-telefonica-icon-button central-telefonica-icon-button--compact' id='centralTelefonicaDirectoryButton' data-central-action='open-directory' title='Administrar extensiones' hidden><i class='fa-solid fa-gear' aria-hidden='true'></i><span class='central-telefonica-sr-only'>Administrar extensiones</span></button>"
             + "      <button type='button' class='central-telefonica-icon-button central-telefonica-icon-button--compact' data-central-action='minimize' title='Minimizar'><i class='fa-solid fa-window-minimize' aria-hidden='true'></i><span class='central-telefonica-sr-only'>Minimizar</span></button>"
             + "      <button type='button' class='central-telefonica-icon-button central-telefonica-icon-button--close' data-central-action='close' title='Cerrar'><i class='fa-solid fa-xmark' aria-hidden='true'></i><span class='central-telefonica-sr-only'>Cerrar</span></button>"
             + "    </div>"
@@ -196,6 +201,13 @@
             + "      <div class='central-telefonica-drawer__body' id='centralTelefonicaDrawerBody'></div>"
             + "    </aside>"
             + "  </div>"
+            + "  <div class='central-telefonica-drawer-layer' id='centralTelefonicaDirectoryLayer' hidden>"
+            + "    <button type='button' class='central-telefonica-drawer-backdrop' data-central-action='close-directory' aria-label='Cerrar administrador de extensiones'></button>"
+            + "    <aside class='central-telefonica-drawer central-telefonica-directory-drawer' role='dialog' aria-modal='true' aria-labelledby='centralTelefonicaDirectoryTitle'>"
+            + "      <div class='central-telefonica-drawer__header'><div><p class='central-telefonica-eyebrow'>Configuración administrativa</p><h2 id='centralTelefonicaDirectoryTitle'>Extensiones vigentes</h2></div><button type='button' class='central-telefonica-icon-button central-telefonica-icon-button--close' data-central-action='close-directory'><i class='fa-solid fa-xmark' aria-hidden='true'></i><span class='central-telefonica-sr-only'>Cerrar</span></button></div>"
+            + "      <div class='central-telefonica-drawer__body central-telefonica-directory-body' id='centralTelefonicaDirectoryBody'></div>"
+            + "    </aside>"
+            + "  </div>"
             + "  <div class='central-telefonica-live-region' id='centralTelefonicaLiveRegion' aria-live='polite' aria-atomic='true'></div>"
             + "</div>";
     }
@@ -208,6 +220,233 @@
 
     function filterField(label, control) {
         return "<label class='central-telefonica-field'><span>" + label + "</span>" + control + "</label>";
+    }
+
+    function renderDirectoryPermission(permissions) {
+        var button = state.root ? state.root.querySelector("#centralTelefonicaDirectoryButton") : null;
+        state.canManageDirectory = permissions.administrar_directorio === true;
+        if (button) { button.hidden = !state.canManageDirectory; }
+        if (!state.canManageDirectory && state.directoryOpen) { closeDirectory(); }
+    }
+
+    function directoryTypeLabel(type) {
+        var labels = { funcionario: "Funcionario", interna: "Interna", cola: "Cola" };
+        return labels[type] || "Extensión";
+    }
+
+    function directoryEmployeeOptions(row) {
+        var current = Number(row.cod_usuario || 0);
+        var found = false;
+        var html = "<option value='' data-local='0'>Seleccionar funcionario</option>";
+        (state.directoryData.funcionarios || []).forEach(function (employee) {
+            var selected = Number(employee.cod_usuario) === current;
+            if (selected) { found = true; }
+            html += "<option value='" + Number(employee.cod_usuario) + "' data-local='"
+                + Number(employee.cod_local_principal || 0) + "' " + (selected ? "selected" : "") + ">"
+                + escapeHtml(employee.nombre) + (employee.tipo ? " · " + escapeHtml(employee.tipo) : "")
+                + "</option>";
+        });
+        if (current > 0 && !found) {
+            html += "<option value='" + current + "' data-local='0' selected>"
+                + escapeHtml(row.funcionario_nombre || ("Usuario " + current)) + " · No activo</option>";
+        }
+        return html;
+    }
+
+    function directorySiteOptions(row) {
+        var current = Number(row.cod_local || 0);
+        var found = false;
+        var html = "<option value=''>Sin sede de Telar</option>";
+        (state.directoryData.sedes || []).forEach(function (site) {
+            var selected = Number(site.cod_local) === current;
+            if (selected) { found = true; }
+            html += "<option value='" + Number(site.cod_local) + "' " + (selected ? "selected" : "") + ">"
+                + escapeHtml(site.nombre) + "</option>";
+        });
+        if (current > 0 && !found) {
+            html += "<option value='" + current + "' selected>"
+                + escapeHtml(row.sede_nombre || ("Sede " + current)) + " · No activa</option>";
+        }
+        return html;
+    }
+
+    function directoryCard(row) {
+        var isQueue = row.tipo === "cola";
+        var assigned = row.asignada === true;
+        var siteVisible = row.sede_nombre || row.sede_nombre_alternativa || "Sin sede asignada";
+        var employeeVisible = isQueue ? "No corresponde" : (row.funcionario_nombre || "Sin funcionario asignado");
+        var search = [row.extension, row.nombre_issabel, employeeVisible, siteVisible, row.tipo]
+            .join(" ").toLowerCase();
+        var html = "<article class='central-telefonica-directory-card' data-directory-search='"
+            + escapeHtml(search) + "' data-directory-status='" + (assigned ? "assigned" : "unassigned")
+            + "' data-extension='" + escapeHtml(row.extension) + "'>";
+        html += "<div class='central-telefonica-directory-card__header'><div><strong>"
+            + escapeHtml(row.extension) + " · " + escapeHtml(row.nombre_issabel || "Sin nombre en Issabel")
+            + "</strong><span>" + entityBadge(row.tipo) + " "
+            + escapeHtml(employeeVisible) + " · " + escapeHtml(siteVisible) + "</span></div>"
+            + "<span class='central-telefonica-directory-status central-telefonica-directory-status--"
+            + (assigned ? "assigned" : "unassigned") + "'><i class='fa-solid "
+            + (assigned ? "fa-circle-check" : "fa-circle-exclamation") + "' aria-hidden='true'></i>"
+            + (assigned ? "Asignada" : "Sin asignar") + "</span></div>";
+        html += "<div class='central-telefonica-directory-card__fields'>";
+        if (isQueue) {
+            html += "<input type='hidden' data-directory-user value='0' />"
+                + "<div class='central-telefonica-directory-field central-telefonica-directory-field--readonly'><span>Funcionario</span>"
+                + "<strong>No corresponde</strong><small>La cola es una ruta; el funcionario se identifica por la extensión que atiende.</small></div>";
+        } else {
+            html += "<label class='central-telefonica-directory-field'><span>Funcionario</span><select data-directory-user>"
+                + directoryEmployeeOptions(row) + "</select></label>";
+        }
+        html += "<label class='central-telefonica-directory-field'><span>Sede</span><select data-directory-site>"
+            + directorySiteOptions(row) + "</select></label>"
+            + "<label class='central-telefonica-directory-field central-telefonica-directory-fallback' "
+            + (Number(row.cod_local || 0) > 0 ? "hidden" : "") + "><span>Nombre alternativo de sede</span>"
+            + "<input type='text' data-directory-site-name maxlength='100' value='"
+            + escapeHtml(row.sede_nombre_alternativa || "") + "' placeholder='Solo si la sede no existe en Telar' /></label>"
+            + "</div>";
+        html += "<div class='central-telefonica-directory-card__actions'>"
+            + "<button type='button' class='central-telefonica-secondary-button central-telefonica-directory-save' data-central-action='save-directory'><i class='fa-solid fa-floppy-disk' aria-hidden='true'></i> Guardar asignación</button>"
+            + "<button type='button' class='central-telefonica-directory-clear' data-central-action='clear-directory' "
+            + (assigned ? "" : "disabled") + "><i class='fa-solid fa-link-slash' aria-hidden='true'></i> Quitar asignación</button>"
+            + "</div></article>";
+        return html;
+    }
+
+    function renderDirectory(data) {
+        var body = state.root.querySelector("#centralTelefonicaDirectoryBody");
+        var summary = data.resumen || {};
+        var html = "<section class='central-telefonica-directory-intro'><i class='fa-solid fa-circle-info' aria-hidden='true'></i><div><strong>Identificación interna de Telar</strong><span>La extensión y el nombre técnico provienen de Issabel y no se modifican aquí.</span></div></section>"
+            + "<section class='central-telefonica-directory-toolbar'><label><span>Buscar</span><input type='search' id='centralTelefonicaDirectorySearch' placeholder='Extensión, funcionario o sede' /></label>"
+            + "<label><span>Estado</span><select id='centralTelefonicaDirectoryStatus'><option value=''>Todas</option><option value='assigned'>Asignadas</option><option value='unassigned'>Sin asignar</option></select></label>"
+            + "<div class='central-telefonica-directory-summary'><strong>" + Number(summary.total || 0)
+            + "</strong><span>vigentes · " + Number(summary.sin_asignar || 0) + " sin asignar</span></div></section>"
+            + "<div class='central-telefonica-directory-result' id='centralTelefonicaDirectoryResult'>"
+            + Number(summary.total || 0) + " extensiones visibles</div>"
+            + "<div class='central-telefonica-directory-list' id='centralTelefonicaDirectoryList'>";
+        if (!(data.extensiones || []).length) {
+            html += "<div class='central-telefonica-directory-empty'><i class='fa-solid fa-plug-circle-xmark' aria-hidden='true'></i><strong>No hay extensiones vigentes</strong><span>Ejecute primero la sincronización controlada del directorio.</span></div>";
+        } else {
+            (data.extensiones || []).forEach(function (row) { html += directoryCard(row); });
+        }
+        body.innerHTML = html + "</div>";
+    }
+
+    function openDirectory() {
+        var layer;
+        var body;
+        if (!state.canManageDirectory || !state.root) { return; }
+        closeDetail();
+        layer = state.root.querySelector("#centralTelefonicaDirectoryLayer");
+        body = state.root.querySelector("#centralTelefonicaDirectoryBody");
+        state.directoryOpen = true;
+        layer.hidden = false;
+        body.innerHTML = "<div class='central-telefonica-detail-loading'><i class='fa-solid fa-circle-notch fa-spin' aria-hidden='true'></i><span>Cargando extensiones vigentes…</span></div>";
+        loadDirectory();
+    }
+
+    function closeDirectory() {
+        var layer = state.root ? state.root.querySelector("#centralTelefonicaDirectoryLayer") : null;
+        if (layer) { layer.hidden = true; }
+        state.directoryOpen = false;
+        state.directoryLoading = false;
+    }
+
+    function loadDirectory() {
+        var body;
+        if (!state.directoryOpen || state.directoryLoading) { return; }
+        state.directoryLoading = true;
+        request("listar_directorio").then(function (data) {
+            if (!state.directoryOpen) { return; }
+            state.directoryLoading = false;
+            state.directoryData = data;
+            renderDirectory(data);
+        }).catch(function (error) {
+            if (!state.directoryOpen) { return; }
+            state.directoryLoading = false;
+            body = state.root.querySelector("#centralTelefonicaDirectoryBody");
+            body.innerHTML = "<div class='central-telefonica-detail-error'><i class='fa-solid fa-triangle-exclamation' aria-hidden='true'></i><span>"
+                + escapeHtml(error.message) + "</span></div>";
+            notify(error.message, "error");
+        });
+    }
+
+    function filterDirectoryRows() {
+        var search = valueOf("centralTelefonicaDirectorySearch").toLowerCase();
+        var status = valueOf("centralTelefonicaDirectoryStatus");
+        var cards = state.root.querySelectorAll(".central-telefonica-directory-card");
+        var result = state.root.querySelector("#centralTelefonicaDirectoryResult");
+        var visible = 0;
+        Array.prototype.forEach.call(cards, function (card) {
+            var matchesSearch = !search || String(card.getAttribute("data-directory-search") || "").indexOf(search) !== -1;
+            var matchesStatus = !status || card.getAttribute("data-directory-status") === status;
+            card.hidden = !(matchesSearch && matchesStatus);
+            if (!card.hidden) { visible++; }
+        });
+        if (result) { result.textContent = visible + (visible === 1 ? " extensión visible" : " extensiones visibles"); }
+    }
+
+    function updateDirectoryUserSite(card, select) {
+        var option;
+        var site;
+        if (!card || !select || select.type === "hidden") { return; }
+        option = select.options[select.selectedIndex];
+        site = card.querySelector("[data-directory-site]");
+        if (site) {
+            site.value = option ? String(option.getAttribute("data-local") || "") : "";
+        }
+        updateDirectoryFallbackVisibility(card);
+    }
+
+    function updateDirectoryFallbackVisibility(card) {
+        var site = card ? card.querySelector("[data-directory-site]") : null;
+        var fallback = card ? card.querySelector(".central-telefonica-directory-fallback") : null;
+        if (fallback) { fallback.hidden = !!(site && site.value); }
+    }
+
+    function directoryCardButtons(card, disabled) {
+        var buttons = card ? card.querySelectorAll("button") : [];
+        Array.prototype.forEach.call(buttons, function (button) { button.disabled = disabled; });
+    }
+
+    function saveDirectoryRow(button, clearAssignment) {
+        var card = button && button.closest ? button.closest(".central-telefonica-directory-card") : null;
+        var user;
+        var site;
+        var siteName;
+        if (!card) { return; }
+        user = card.querySelector("[data-directory-user]");
+        site = card.querySelector("[data-directory-site]");
+        siteName = card.querySelector("[data-directory-site-name]");
+        directoryCardButtons(card, true);
+        request("guardar_directorio", {
+            extension: card.getAttribute("data-extension"),
+            cod_usuario: clearAssignment ? 0 : (user ? user.value : 0),
+            cod_local: clearAssignment ? 0 : (site ? site.value : 0),
+            sede_nombre: clearAssignment || (site && site.value) ? "" : (siteName ? siteName.value : ""),
+            quitar: clearAssignment ? 1 : 0
+        }).then(function () {
+            notify(clearAssignment ? "La extensión quedó disponible para una nueva asignación." : "La asignación fue guardada.", "info");
+            state.directoryLoading = false;
+            loadDirectory();
+            loadCalls(false);
+        }).catch(function (error) {
+            var clearButton;
+            directoryCardButtons(card, false);
+            clearButton = card.querySelector("[data-central-action='clear-directory']");
+            if (clearButton && card.getAttribute("data-directory-status") === "unassigned") {
+                clearButton.disabled = true;
+            }
+            notify(error.message, "error");
+        });
+    }
+
+    function confirmClearDirectoryRow(button) {
+        var card = button && button.closest ? button.closest(".central-telefonica-directory-card") : null;
+        var extension = card ? card.getAttribute("data-extension") : "";
+        if (!card || button.disabled) { return; }
+        if (window.confirm("¿Quitar la asignación de la extensión " + extension + "? La extensión seguirá vigente en Issabel y las llamadas históricas conservarán sus datos.")) {
+            saveDirectoryRow(button, true);
+        }
     }
 
     function ensureRoot() {
@@ -232,6 +471,10 @@
             if (!actionElement) { return; }
             action = actionElement.getAttribute("data-central-action");
             if (action === "refresh") { loadCalls(false); }
+            if (action === "open-directory") { openDirectory(); }
+            if (action === "close-directory") { closeDirectory(); }
+            if (action === "save-directory") { saveDirectoryRow(actionElement, false); }
+            if (action === "clear-directory") { confirmClearDirectoryRow(actionElement); }
             if (action === "clear") { clearFilters(); }
             if (action === "toggle-summary") { setSummaryCollapsed(!state.summaryCollapsed, true); }
             if (action === "toggle-filters") { setFiltersExpanded(!state.filtersExpanded); }
@@ -247,6 +490,26 @@
             }
             if (action === "page-prev" && state.page > 1) { state.page--; loadCalls(true); }
             if (action === "page-next" && state.page < state.pages) { state.page++; loadCalls(true); }
+        }, false);
+        state.root.addEventListener("input", function (event) {
+            if (event.target && event.target.id === "centralTelefonicaDirectorySearch") {
+                filterDirectoryRows();
+            }
+        }, false);
+        state.root.addEventListener("change", function (event) {
+            var card;
+            if (!event.target) { return; }
+            if (event.target.id === "centralTelefonicaDirectoryStatus") {
+                filterDirectoryRows();
+            }
+            if (event.target.hasAttribute("data-directory-user")) {
+                card = event.target.closest ? event.target.closest(".central-telefonica-directory-card") : null;
+                updateDirectoryUserSite(card, event.target);
+            }
+            if (event.target.hasAttribute("data-directory-site")) {
+                card = event.target.closest ? event.target.closest(".central-telefonica-directory-card") : null;
+                updateDirectoryFallbackVisibility(card);
+            }
         }, false);
         if (form) {
             form.addEventListener("submit", function (event) {
@@ -411,6 +674,7 @@
             state.loading = false;
             renderSummary(data.resumen || {});
             renderSync(data.sincronizacion || {});
+            renderDirectoryPermission(data.permisos || {});
             renderCatalogs(data.catalogos || {});
             renderRows(data.llamadas || []);
             renderPagination(data.paginacion || {});
@@ -520,7 +784,8 @@
             "Todas",
             "extension",
             function (item) {
-                return item.extension + (item.nombre ? " · " + item.nombre : "");
+                return item.extension + (item.nombre ? " · " + item.nombre : "")
+                    + (item.sede ? " · " + item.sede : "");
             }
         );
     }
@@ -951,6 +1216,7 @@
         state.requestSequence++;
         state.loading = false;
         closeDetail();
+        closeDirectory();
         window.clearInterval(state.refreshTimer);
         if (document.body) { document.body.classList.remove("central-telefonica-open"); }
     };

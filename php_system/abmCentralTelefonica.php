@@ -304,6 +304,12 @@ function centralTelefonicaContexto($mysqli, $codUsuario)
                 $mysqli,
                 $codUsuario,
                 'TRANSCRIBIRLLAMADACENTRALTELEFONICA'
+            ),
+        'administrar_directorio' => $cuentaTranscripcionProtegida
+            && centralTelefonicaTienePermiso(
+                $mysqli,
+                $codUsuario,
+                'ADMINISTRARDIRECTORIOCENTRALTELEFONICA'
             )
     );
     if (!$permisos['ver']) {
@@ -348,6 +354,53 @@ function centralTelefonicaTranscripcionEstadoFila($fila, $contexto, $estructuraD
         'mensaje_error' => $estado === 'error' && isset($fila['transcripcion_mensaje_error'])
             ? $fila['transcripcion_mensaje_error'] : null
     );
+}
+
+function centralTelefonicaDirectorioExigirAdministracion($mysqli, $contexto)
+{
+    if (empty($contexto['permisos']['administrar_directorio'])) {
+        centralTelefonicaLanzar(
+            'directorio_no_autorizado',
+            'No tiene permiso para administrar el directorio telefonico.'
+        );
+    }
+    if (!centralTelefonicaDirectorioAdministracionDisponible($mysqli)) {
+        centralTelefonicaLanzar(
+            'administracion_directorio_pendiente',
+            'La administracion del directorio telefonico todavia no esta instalada.'
+        );
+    }
+}
+
+function centralTelefonicaDirectorioAdministrarListar($mysqli, $contexto)
+{
+    centralTelefonicaDirectorioExigirAdministracion($mysqli, $contexto);
+    return centralTelefonicaDirectorioAdministracionListar($mysqli);
+}
+
+function centralTelefonicaDirectorioAdministrarGuardar($mysqli, $contexto, $entrada)
+{
+    centralTelefonicaDirectorioExigirAdministracion($mysqli, $contexto);
+    $quitarTexto = strtolower(centralTelefonicaTextoEntrada(
+        isset($entrada['quitar']) ? $entrada['quitar'] : '',
+        10
+    ));
+    $quitar = in_array($quitarTexto, array('1', 'true', 'si', 'yes'), true);
+    $ipAccion = isset($_SERVER['REMOTE_ADDR']) ? (string)$_SERVER['REMOTE_ADDR'] : '';
+    $asignacion = centralTelefonicaDirectorioAdministracionGuardar(
+        $mysqli,
+        centralTelefonicaTextoEntrada(isset($entrada['extension']) ? $entrada['extension'] : '', 20),
+        intval(isset($entrada['cod_usuario']) ? $entrada['cod_usuario'] : 0),
+        intval(isset($entrada['cod_local']) ? $entrada['cod_local'] : 0),
+        centralTelefonicaTextoEntrada(
+            isset($entrada['sede_nombre']) ? $entrada['sede_nombre'] : '',
+            101
+        ),
+        $quitar,
+        intval($contexto['cod_usuario']),
+        $ipAccion
+    );
+    return array('asignacion' => $asignacion);
 }
 
 function centralTelefonicaFilaVisible(
@@ -1284,6 +1337,22 @@ try {
                 centralTelefonicaDetalle($mysqli, $contexto, $entrada)
             );
             break;
+        case 'listar_directorio':
+            centralTelefonicaResponder(
+                true,
+                'directorio_obtenido',
+                'Extensiones vigentes obtenidas.',
+                centralTelefonicaDirectorioAdministrarListar($mysqli, $contexto)
+            );
+            break;
+        case 'guardar_directorio':
+            centralTelefonicaResponder(
+                true,
+                'directorio_actualizado',
+                'La asignacion de la extension fue actualizada.',
+                centralTelefonicaDirectorioAdministrarGuardar($mysqli, $contexto, $entrada)
+            );
+            break;
         case 'solicitar_transcripcion':
             centralTelefonicaResponder(
                 true,
@@ -1306,7 +1375,11 @@ try {
 } catch (CentralTelefonicaExcepcion $e) {
     $estado = in_array(
         $e->codigoOperacion,
-        array('acceso_no_autorizado', 'transcripcion_no_autorizada'),
+        array(
+            'acceso_no_autorizado',
+            'transcripcion_no_autorizada',
+            'directorio_no_autorizado'
+        ),
         true
     ) ? 403 : 422;
     centralTelefonicaResponder(
@@ -1314,6 +1387,16 @@ try {
         $e->codigoOperacion,
         $e->getMessage(),
         $e->datosOperacion,
+        $estado
+    );
+} catch (CentralTelefonicaDirectorioExcepcion $e) {
+    $estado = $e->codigoOperacion === 'extension_no_disponible' ? 404
+        : ($e->codigoOperacion === 'directorio_en_actualizacion' ? 409 : 422);
+    centralTelefonicaResponder(
+        false,
+        $e->codigoOperacion,
+        $e->getMessage(),
+        array(),
         $estado
     );
 } catch (Exception $e) {

@@ -233,9 +233,14 @@ centralTelefonicaPrueba(
 );
 $rutaDirectorio = dirname(__DIR__).'/php_system/central_telefonica_directorio_helper.php';
 $rutaMigracionDirectorio = dirname(__DIR__).'/actualizacion_18082026_central_telefonica_directorio.sql';
+$rutaEndpoint = dirname(__DIR__).'/php_system/abmCentralTelefonica.php';
+$rutaMigracionAdministracion = dirname(__DIR__).'/actualizacion_18082026_administracion_directorio_central_telefonica.sql';
 $directorio = is_readable($rutaDirectorio) ? file_get_contents($rutaDirectorio) : '';
+$endpoint = is_readable($rutaEndpoint) ? file_get_contents($rutaEndpoint) : '';
 $migracionDirectorio = is_readable($rutaMigracionDirectorio)
     ? file_get_contents($rutaMigracionDirectorio) : '';
+$migracionAdministracion = is_readable($rutaMigracionAdministracion)
+    ? file_get_contents($rutaMigracionAdministracion) : '';
 centralTelefonicaPrueba(
     strpos($directorio, 'TELAR_ISSABEL_DIRECTORY_DB_USER') !== false
         && strpos($directorio, "fuente='issabel'") !== false
@@ -246,9 +251,48 @@ centralTelefonicaPrueba(
     'El directorio usa credencial independiente y snapshots aditivos de atribucion.'
 );
 centralTelefonicaPrueba(
-    strpos($inicio, 'central_telefonica.css?v=20260818-01') !== false
-        && strpos($inicio, 'central_telefonica.js?x=20260818-01') !== false,
-    'La pantalla principal publica la version enriquecida sin reutilizar recursos en cache.'
+    strpos($js, "id='centralTelefonicaDirectoryButton'") !== false
+        && strpos($js, "data-central-action='open-directory'") !== false
+        && strpos($js, "data-central-action='minimize'") !== false
+        && strpos($js, "id='centralTelefonicaDirectoryButton'")
+            < strpos($js, "data-central-action='minimize'"),
+    'El engranaje administrativo aparece junto al boton de minimizar.'
+);
+centralTelefonicaPrueba(
+    strpos($js, 'centralTelefonicaDirectoryLayer') !== false
+        && strpos($js, 'centralTelefonicaDirectorySearch') !== false
+        && strpos($js, "data-directory-user") !== false
+        && strpos($js, "data-directory-site") !== false
+        && strpos($js, "data-central-action='clear-directory'") !== false
+        && strpos($css, '.central-telefonica-directory-drawer') !== false
+        && strpos($css, '.central-telefonica-directory-card__fields') !== false,
+    'El panel permite buscar, asignar funcionario y sede, y quitar una asociacion.'
+);
+centralTelefonicaPrueba(
+    strpos($endpoint, "'administrar_directorio' => \$cuentaTranscripcionProtegida") !== false
+        && strpos($endpoint, 'ADMINISTRARDIRECTORIOCENTRALTELEFONICA') !== false
+        && strpos($endpoint, "case 'listar_directorio':") !== false
+        && strpos($endpoint, "case 'guardar_directorio':") !== false,
+    'El servidor repite la autorizacion exclusiva antes de consultar o guardar.'
+);
+centralTelefonicaPrueba(
+    strpos($directorio, "GET_LOCK('telar_central_telefonica_directorio',3)") !== false
+        && strpos($directorio, "tipo === 'cola'") !== false
+        && strpos($directorio, 'central_telefonica_directorio_evento') !== false
+        && strpos($directorio, 'centralTelefonicaDirectorioCompletarSnapshots') !== false,
+    'El guardado serializa la sincronizacion, protege colas y registra auditoria.'
+);
+centralTelefonicaPrueba(
+    strpos($migracionAdministracion, 'CREATE TABLE IF NOT EXISTS central_telefonica_directorio_evento') !== false
+        && strpos($migracionAdministracion, 'ADMINISTRARDIRECTORIOCENTRALTELEFONICA') !== false
+        && strpos($migracionAdministracion, 'u.cod_usuario=5994') !== false
+        && strpos($migracionAdministracion, "SET accion='NO'") !== false,
+    'La migracion aditiva concede la administracion solamente a Carlos y conserva auditoria.'
+);
+centralTelefonicaPrueba(
+    strpos($inicio, 'central_telefonica.css?v=20260818-02') !== false
+        && strpos($inicio, 'central_telefonica.js?x=20260818-02') !== false,
+    'La pantalla principal publica el administrador sin reutilizar recursos en cache.'
 );
 
 fwrite(STDOUT, 'Aprobadas: '.$aprobadas.' | Fallidas: '.$fallidas.PHP_EOL);
