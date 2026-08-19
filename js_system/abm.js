@@ -1924,7 +1924,7 @@ function imprimirCartaCompromiso(ventanaOrigen) {
 
     + '   <div class="carta-header">'
     + '       <p class="carta-titulo">Carta Compromiso de Responsabilidad por Entrega de Equipo</p>'
-    + '       <p class="carta-subtitulo"><b>FARAONE CAPITAL S.A.</b></p>'
+    + '       <p class="carta-subtitulo"><b>CLINIDENT SALUD</b></p>'
     + '   </div>'
 
     + '   <table class="carta-table">'
@@ -1936,7 +1936,7 @@ function imprimirCartaCompromiso(ventanaOrigen) {
     + '               <p class="pTituloC"><b>Responsable:</b>&nbsp;&nbsp;' + nombre + '</p>'
     + '               <p class="pTituloC"><b>C.I.:</b>&nbsp;&nbsp;' + ci + '</p>';
 	if (ventanaOrigen == "divAbmInventarioLocal") {
-		pagina += '               <p class="pTituloC"><b>Local:</b>&nbsp;&nbsp;' + document.getElementById('inptLocalMisDatos').selectedOptions[0].text + '</p>'
+		pagina += '               <p class="pTituloC"><b>Local:</b>&nbsp;&nbsp;' + document.getElementById('inptLocalInventarioInsumo').selectedOptions[0].text + '</p>'
 	}
     pagina += '           </td>'
     + '       </tr>'

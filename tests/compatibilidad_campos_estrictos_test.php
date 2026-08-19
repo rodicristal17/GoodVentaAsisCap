@@ -88,7 +88,7 @@ pruebaAfirmar(strpos($codigoUsuarios, '$mysqli->begin_transaction();') !== false
 pruebaAfirmar(strpos($codigoUsuarios, 'Los horarios anteriores se conservaron.') !== false, 'La sustitucion de horarios no informa el rollback.');
 
 $codigoInventario = file_get_contents($inventario);
-pruebaAfirmar(strpos($codigoInventario, "isset(\$_POST['cod_marcaFK'])") !== false, 'Inventario sigue condicionando la marca con otro campo.');
+pruebaAfirmar(strpos($codigoInventario, "inventarioLocalEnteroEntrada('cod_marcaFK')") !== false, 'Inventario no valida la marca desde su propio campo.');
 
 $codigoMigracion = file_get_contents($migracion);
 pruebaAfirmar(strpos($codigoMigracion, 'information_schema.COLUMNS') !== false, 'La migracion no comprueba el esquema actual.');

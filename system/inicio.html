@@ -32,7 +32,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=monitor-errores-20260812-1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=activos-fijos-20260818-1" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-4" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=trabajo-laboratorio-20260723-mini-hilo-1" />
@@ -61,7 +61,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js/jquery.js"></script>
 <script src="/GoodVentaAsisCap/js_system/agendamiento.js?x=performance-polling-20260718"></script>
 <script src="/GoodVentaAsisCap/js_system/consulta.js?x=interconsulta-local-20260801-1"></script>
-<script src="/GoodVentaAsisCap/js_system/abm.js?x=caja-print-ready-guard-20260625"></script>
+<script src="/GoodVentaAsisCap/js_system/abm.js?x=activos-fijos-20260818-1"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
 <script src="/GoodVentaAsisCap/js_system/inicio.js?x=historial-pagos-salteados-20260810-1"></script>
@@ -94,7 +94,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="../js_system/abmMecanicoDental.js?x=cuenta-telar-20260721-3"></script>
 <script src="../js_system/abmInterConsulta.js?x=tesoreria-multilocal-20260814-1"></script>
 <script src="../js_system/abmCentroFacturas.js?x=nomenclatura-legajos-20260721-1"></script>
-<script src="../js_system/abmInventarioLocal.js"></script>
+<script src="../js_system/abmInventarioLocal.js?v=20260818-1"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
 <script src="../js_system/abmRecetarioIndicaciones.js?x=20260605-recetario-historial-grupos"></script>
@@ -33970,7 +33970,130 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
   <table id="tdEfectoAbmInventarioLocal" class="magictime slideDownReturn" style='width:100%;height:100%;'>
     <tr><td>
       <center>
-        <div id="divAbmInventarioLocal1" class="divAbms" style="width: 90%;">
+        <div id="divAbmInventarioLocal1" class="divAbms inventario-local-modulo" style="width: 96%;">
+          <section class="inventario-local-panel" aria-labelledby="tituloInventarioLocal">
+            <header class="inventario-local-encabezado">
+              <div>
+                <h1 id="tituloInventarioLocal">Activos fijos</h1>
+                <p>Control físico y contable del patrimonio de Clinident Salud</p>
+              </div>
+              <div class="inventario-local-acciones-principales">
+                <button type="button" class="inventario-local-btn inventario-local-btn--primario" onclick="inventarioLocalNuevoActivo()">
+                  <span aria-hidden="true">＋</span> Nuevo activo
+                </button>
+                <div class="inventario-local-menu-impresion">
+                  <button type="button" class="inventario-local-btn inventario-local-btn--secundario" aria-haspopup="true" aria-expanded="false" onclick="inventarioLocalAlternarMenuImpresion(this)">
+                    Imprimir <span aria-hidden="true">⌄</span>
+                  </button>
+                  <div id="menuImpresionInventarioLocal" class="inventario-local-menu-impresion__opciones" hidden>
+                    <button type="button" onclick="imprimirInventarioLocal('valorizado')">Listado valorizado</button>
+                    <button type="button" onclick="imprimirInventarioLocal('conteo')">Planilla de conteo físico</button>
+                  </div>
+                </div>
+                <button type="button" class="inventario-local-btn-icono" title="Minimizar" aria-label="Minimizar" onclick="minimizarabmInventarioLocal()">−</button>
+                <button type="button" class="inventario-local-btn-icono inventario-local-btn-icono--cerrar" title="Cerrar" aria-label="Cerrar" onclick="verCerrarAbmInventarioLocal(false, false)">×</button>
+              </div>
+            </header>
+
+            <div class="inventario-local-resumen-barra">
+              <button id="btnResumenInventarioLocal" type="button" class="inventario-local-resumen-toggle" aria-expanded="false" aria-controls="resumenInventarioLocal" onclick="inventarioLocalAlternarResumen()">
+                <span class="inventario-local-resumen-toggle__titulo"><span aria-hidden="true">▦</span> Resumen del inventario</span>
+                <span class="inventario-local-resumen-toggle__alertas">
+                  <span class="inventario-local-chip inventario-local-chip--advertencia"><b id="resumenPendientesInventarioLocal">0</b> costos por validar</span>
+                  <span class="inventario-local-chip inventario-local-chip--peligro"><b id="resumenAtencionInventarioLocal">0</b> requieren atención</span>
+                  <span class="inventario-local-chip inventario-local-chip--neutro">Próxima verificación: <b id="resumenProximaInventarioLocal">Sin fecha</b></span>
+                  <span id="iconoResumenInventarioLocal" class="inventario-local-resumen-toggle__flecha" aria-hidden="true">⌄</span>
+                </span>
+              </button>
+              <div id="resumenInventarioLocal" class="inventario-local-resumen" hidden>
+                <article><span class="inventario-local-resumen__icono">▣</span><div><small>Activos registrados</small><strong id="resumenRegistrosInventarioLocal">0</strong><em>Total del sistema</em></div></article>
+                <article><span class="inventario-local-resumen__icono inventario-local-resumen__icono--turquesa">▦</span><div><small>Unidades</small><strong id="resumenUnidadesInventarioLocal">0</strong><em>Total de unidades</em></div></article>
+                <article><span class="inventario-local-resumen__icono">$</span><div><small>Valor registrado</small><strong id="resumenValorInventarioLocal">Gs. 0</strong><em>Según costo cargado</em></div></article>
+                <article><span class="inventario-local-resumen__icono inventario-local-resumen__icono--violeta">$</span><div><small>Valor contable</small><strong id="resumenValorContableInventarioLocal">Gs. 0</strong><em>Depreciación manual</em></div></article>
+              </div>
+            </div>
+
+            <nav class="inventario-local-vistas" aria-label="Vista del inventario">
+              <button type="button" class="activo" data-vista="general" onclick="inventarioLocalCambiarVista('general',this)">Control general</button>
+              <button type="button" data-vista="fisico" onclick="inventarioLocalCambiarVista('fisico',this)">Control físico</button>
+              <button type="button" data-vista="contable" onclick="inventarioLocalCambiarVista('contable',this)">Control contable</button>
+            </nav>
+
+            <div class="inventario-local-filtros">
+              <label class="inventario-local-busqueda">
+                <span aria-hidden="true">⌕</span>
+                <input id="filtroTextoInventarioLocal" type="search" placeholder="Buscar activo, código o serie" onkeyup="if(event.keyCode===13){obtenerVistaInformeInsumoLocal()}">
+              </label>
+              <label><span>Local</span><select id="filtroLocalInventarioLocal" onchange="inventarioLocalCargarSectores('filtro');obtenerVistaInformeInsumoLocal()"><option value="">Todos los locales</option></select></label>
+              <label><span>Sector</span><select id="filtroSectorInventarioLocal" onchange="obtenerVistaInformeInsumoLocal()"><option value="">Todos los sectores</option></select></label>
+              <label><span>Responsable</span><select id="filtroResponsableInventarioLocal" onchange="obtenerVistaInformeInsumoLocal()"><option value="">Todos los responsables</option><option value="-1">Sin responsable</option></select></label>
+              <label><span>Estado físico</span><select id="filtroEstadoFisicoInventarioLocal" onchange="obtenerVistaInformeInsumoLocal()"><option value="">Todos los estados</option><option value="excelente">Excelente</option><option value="mantenimiento">Mantenimiento</option><option value="dañado">Dañado</option></select></label>
+              <label class="inventario-local-filtro-inactivo"><span>Visibilidad</span><span><input type="checkbox" id="filtroOcultarInactivosInventarioLocal" checked onchange="obtenerVistaInformeInsumoLocal()"> Ocultar inactivos</span></label>
+              <button type="button" class="inventario-local-btn inventario-local-btn--filtro" onclick="inventarioLocalLimpiarFiltros()">Limpiar filtros</button>
+            </div>
+
+            <div id="avisoMigracionInventarioLocal" class="inventario-local-aviso" hidden>
+              El listado ya fue reorganizado. Para habilitar sectores, depreciación manual y conteos físicos falta aplicar la migración preparada.
+            </div>
+
+            <div class="inventario-local-tabla-contenedor">
+              <table class="inventario-local-tabla" id="tablaInventarioLocal">
+                <thead>
+                  <tr>
+                    <th class="col-foto">Foto</th>
+                    <th class="col-activo">Activo</th>
+                    <th class="col-ubicacion">Ubicación</th>
+                    <th class="col-personas">Personas</th>
+                    <th class="col-cantidad">Cant.</th>
+                    <th class="col-valor">Valor total</th>
+                    <th class="col-estado">Estado físico</th>
+                    <th class="col-verificacion">Última verificación</th>
+                    <th class="col-expandir"><span class="sr-only">Detalle</span></th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyInventarioLocal">
+                  <tr><td colspan="9" class="inventario-local-vacio">Use los filtros para consultar los activos.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <footer class="inventario-local-pie">
+              <div class="inventario-local-totales">
+                <span>Registros <b id="pieRegistrosInventarioLocal">0</b></span>
+                <span>Unidades <b id="pieUnidadesInventarioLocal">0</b></span>
+                <span>Valor filtrado <b id="pieValorInventarioLocal">Gs. 0</b></span>
+              </div>
+              <div id="accionesSeleccionInventarioLocal" class="inventario-local-acciones-seleccion" hidden>
+                <span>Activo <b id="registroSeleccionadoInventarioLocal">—</b></span>
+                <button type="button" onclick="inventarioLocalEditarSeleccionado()">Editar</button>
+                <button type="button" onclick="inventarioLocalAbrirAuditoria()">Auditoría</button>
+                <button type="button" onclick="inventarioLocalImprimirCompromisoSeleccionado()">Carta de compromiso</button>
+                <button id="btnVerificarSeleccionInventarioLocal" type="button" onclick="inventarioLocalAbrirVerificacion()">Registrar verificación</button>
+              </div>
+              <div class="inventario-local-paginacion">
+                <button type="button" id="paginaAnteriorInventarioLocal" onclick="inventarioLocalIrPagina(-1)" aria-label="Página anterior">‹</button>
+                <span id="paginaActualInventarioLocal">Página 1 de 1</span>
+                <button type="button" id="paginaSiguienteInventarioLocal" onclick="inventarioLocalIrPagina(1)" aria-label="Página siguiente">›</button>
+                <select id="limiteInventarioLocal" onchange="inventarioLocalCambiarLimite(this.value)" aria-label="Registros por página"><option value="10">10 por página</option><option value="25" selected>25 por página</option><option value="50">50 por página</option><option value="100">100 por página</option></select>
+              </div>
+            </footer>
+          </section>
+
+          <div id="modalVerificacionInventarioLocal" class="inventario-local-modal" hidden>
+            <div class="inventario-local-modal__contenido" role="dialog" aria-modal="true" aria-labelledby="tituloVerificacionInventarioLocal">
+              <header><div><h2 id="tituloVerificacionInventarioLocal">Registrar verificación física</h2><p id="subtituloVerificacionInventarioLocal">Activo seleccionado</p></div><button type="button" aria-label="Cerrar" onclick="inventarioLocalCerrarVerificacion()">×</button></header>
+              <div class="inventario-local-modal__campos">
+                <label><span>Fecha de verificación*</span><input type="date" id="fechaVerificacionInventarioLocal"></label>
+                <label><span>Cantidad esperada</span><input type="number" id="cantidadEsperadaVerificacionInventarioLocal" disabled></label>
+                <label><span>Cantidad encontrada*</span><input type="number" min="0" id="cantidadEncontradaVerificacionInventarioLocal"></label>
+                <label><span>Estado físico*</span><select id="estadoFisicoVerificacionInventarioLocal"><option value="excelente">Excelente</option><option value="mantenimiento">Mantenimiento</option><option value="dañado">Dañado</option></select></label>
+                <label class="inventario-local-modal__campo-completo"><span>Observación</span><textarea id="observacionVerificacionInventarioLocal" rows="3" placeholder="Incidencias, diferencias o aclaraciones"></textarea></label>
+              </div>
+              <footer><button type="button" class="inventario-local-btn inventario-local-btn--secundario" onclick="inventarioLocalCerrarVerificacion()">Cancelar</button><button type="button" class="inventario-local-btn inventario-local-btn--primario" onclick="inventarioLocalGuardarVerificacion()">Guardar verificación</button></footer>
+            </div>
+          </div>
+
+          <div class="inventario-local-legacy" style="display:none">
           <table class="tableMenuZ">
             <tbody>
               <tr>
@@ -34001,7 +34124,7 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                 <td style="width: 65%;"></td>
                 <td style="width: 20%;text-align: end;">
                   <input type="Button" value="Buscar" style="margin-top: 18px;" class="btn4" onclick="obtenerVistaInformeInsumoLocal()">
-                  <input type="button" value="Imprimir" class="btn4" onclick="ordenimpresion('insumosLocal')" style="width:100px;background-color: rgb(58 58 58);">
+                  <input type="button" value="Imprimir" class="btn4" onclick="imprimirInventarioLocal('valorizado')" style="width:100px;background-color: rgb(58 58 58);">
                 </td>
               </tr></table>
             </div>
@@ -34070,7 +34193,7 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                   </select>
                 </td>
                 <td class="td_registro" style="width:14%;">
-                  <input class="inputfiltro" type="text" id="inptBuscarAbmInventarioLocal5" onkeyup="if(event.keyCode == 13){obtenerVistaInformeInsumoLocal()}" placeholder="Parecido a">
+                  <input class="inputfiltro" type="text" id="inptBuscarAbmInventarioLocal5LegacyResponsable" onkeyup="if(event.keyCode == 13){obtenerVistaInformeInsumoLocal()}" placeholder="Parecido a">
                 </td>
                 <td class="td_registro" style="width:1%;">
                 <img class="inptLimpiarBP" src="/GoodVentaAsisCap/iconos/limpiar.png" onclick="vaciar('inptBuscarAbmInventarioLocal2')">
@@ -34083,7 +34206,7 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                   </select>
                 </td>
                 <td class="td_registro" style="width:5%;">
-                  <select class="inputfiltro" id="inptBuscarAbmInventarioLocal5">
+                  <select class="inputfiltro" id="inptBuscarAbmInventarioLocal8LegacyEstadoFisico">
                     <option value=''>Todos</option>
                     <option value='excelente'>Excelente</option>
                     <option value='mantenimiento'>Mantenimiento</option>
@@ -34134,6 +34257,7 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
               </tbody></table>
             </div>
           </center>
+          </div>
         </div>
         <div id="divAbmInventarioLocal2" class="divAbms" style="display:none;width: 1200px;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(15,23,42,0.08);">
@@ -34243,11 +34367,34 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                   </tr>
                 </table>
                 <br>
+                <div id="camposControlInventarioLocal">
+                <table style="width:100%">
+                  <tr>
+                  <td style="width:50%;padding-right:8px;box-sizing:border-box;">
+                  <p class="pTituloC">Tipo de control* :</p>
+                  <select class="inputSelect" id="inptTipoControlInventarioInsumo" onchange="inventarioLocalActualizarTipoControl()">
+                    <option value="pendiente">Pendiente de clasificar</option>
+                    <option value="individual">Activo individual</option>
+                    <option value="lote">Lote homogéneo</option>
+                  </select>
+                  </td>
+                  <td style="width:50%;padding-left:8px;box-sizing:border-box;">
+                  <p class="pTituloC">El costo cargado corresponde a* :</p>
+                  <select class="inputSelect" id="inptTipoCostoInventarioInsumo">
+                    <option value="pendiente">Pendiente de validar</option>
+                    <option value="unitario">Costo por unidad</option>
+                    <option value="lote">Costo total del lote</option>
+                  </select>
+                  </td>
+                  </tr>
+                </table>
+                <br>
+                </div>
                 <table style="width:100%">
                   <tr>
                   <td style="width:50%;padding-right:8px;box-sizing:border-box;">
                   <p class="pTituloC">Local* :</p>
-                  <select class="inputSelect" id="inptLocalInventarioInsumo">
+                  <select class="inputSelect" id="inptLocalInventarioInsumo" onchange="inventarioLocalCargarSectores('formulario')">
                   </select>
                   </td>
                   <td style="width:50%;padding-left:8px;box-sizing:border-box;">
@@ -34260,6 +34407,47 @@ id='inptTotalRegistoBanco' style='width:150px;text-align:center' />
                   </tr>
                 </table>
                 <br>
+                <div id="ubicacionControlInventarioLocal">
+                <table style="width:100%">
+                  <tr>
+                  <td style="width:62%;padding-right:8px;box-sizing:border-box;">
+                  <p class="pTituloC">Sector* :</p>
+                  <select class="inputSelect" id="inptSectorInventarioInsumo"><option value="">Seleccionar sector</option></select>
+                  </td>
+                  <td style="width:38%;padding-left:8px;box-sizing:border-box;vertical-align:bottom;">
+                  <input type="button" value="+ Crear sector" class="btn4" onclick="inventarioLocalCrearSector()" style="width:100%;background-color:#0f766e;">
+                  </td>
+                  </tr>
+                </table>
+                <br>
+                <table style="width:100%">
+                  <tr>
+                  <td style="width:50%;padding-right:8px;box-sizing:border-box;">
+                  <p class="pTituloC">Fecha de adquisición :</p>
+                  <input class="inputText" type="date" id="inptFechaAdquisicionInventarioInsumo">
+                  </td>
+                  <td style="width:50%;padding-left:8px;box-sizing:border-box;">
+                  <p class="pTituloC">Frecuencia de verificación* :</p>
+                  <select class="inputSelect" id="inptFrecuenciaVerificacionInventarioInsumo"><option value="semestral">Semestral</option><option value="mensual">Mensual</option></select>
+                  </td>
+                  </tr>
+                </table>
+                <br>
+                <div class="inventario-local-depreciacion-form">
+                  <p class="pTituloC"><b>Depreciación manual</b></p>
+                  <p class="pTituloC" style="color:#64748b;margin:4px 0 10px;">El sistema conserva el importe y la fecha ingresados; no calcula depreciación automáticamente.</p>
+                  <table style="width:100%"><tr>
+                    <td style="width:50%;padding-right:8px;box-sizing:border-box;"><p class="pTituloC">Depreciación acumulada :</p><input class="inputText" type="text" id="inptDepreciacionInventarioInsumo" onkeyup="separadordemiles(this)"></td>
+                    <td style="width:50%;padding-left:8px;box-sizing:border-box;"><p class="pTituloC">Fecha de depreciación :</p><input class="inputText" type="date" id="inptFechaDepreciacionInventarioInsumo"></td>
+                  </tr></table>
+                  <p class="pTituloC" style="margin-top:10px;">Motivo o referencia :</p>
+                  <input class="inputText" type="text" id="inptObservacionDepreciacionInventarioInsumo" placeholder="Ej.: ajuste contable semestral">
+                </div>
+                <br>
+                </div>
+                <div id="avisoControlNoDisponibleInventarioLocal" class="inventario-local-aviso" hidden>
+                  Los datos actuales pueden editarse, pero los campos de sector, control, depreciación y verificación se habilitarán al aplicar la migración preparada.
+                </div>
                 <table style="width:100%">
                   <tr>
                   <td>

@@ -16703,6 +16703,875 @@ text-align: justify;
   line-height: 1.2;
 }
 
+/* Activos fijos: listado compacto, control fisico y control contable. */
+#divAbmInventarioLocal1.inventario-local-modulo {
+  max-width: 1540px;
+  padding: 0;
+  border-radius: 16px;
+  overflow: visible;
+  background: #f8fafc;
+}
+
+#divAbmInventarioLocal1 [hidden],
+#modalVerificacionInventarioLocal[hidden] {
+  display: none !important;
+}
+
+#divAbmInventarioLocal1 .inventario-local-panel {
+  color: #10244a;
+  text-align: left;
+  border: 1px solid #dbe4f0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(15, 35, 72, 0.12);
+  overflow: visible;
+}
+
+#divAbmInventarioLocal1 .inventario-local-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 22px 14px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-encabezado h1 {
+  margin: 0;
+  color: #10244a;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-encabezado p {
+  margin: 6px 0 0;
+  color: #60708c;
+  font-size: 13px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-acciones-principales,
+#divAbmInventarioLocal1 .inventario-local-totales,
+#divAbmInventarioLocal1 .inventario-local-acciones-seleccion,
+#divAbmInventarioLocal1 .inventario-local-paginacion {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-btn,
+#divAbmInventarioLocal1 .inventario-local-btn-icono,
+#divAbmInventarioLocal1 .inventario-local-paginacion button,
+#divAbmInventarioLocal1 .inventario-local-acciones-seleccion button {
+  min-height: 38px;
+  border: 1px solid #b9cceb;
+  border-radius: 8px;
+  background: #fff;
+  color: #0b4fa5;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#divAbmInventarioLocal1 .inventario-local-btn {
+  padding: 0 15px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-btn--primario {
+  border-color: #0754ac;
+  background: #0754ac;
+  color: #fff;
+}
+
+#divAbmInventarioLocal1 .inventario-local-btn--primario:hover {
+  background: #06468f;
+}
+
+#divAbmInventarioLocal1 .inventario-local-btn--filtro {
+  align-self: end;
+  border-color: #bfd2ef;
+  background: #f8fbff;
+}
+
+#divAbmInventarioLocal1 .inventario-local-btn-icono {
+  width: 38px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+}
+
+#divAbmInventarioLocal1 .inventario-local-btn-icono--cerrar {
+  border-color: #fecaca;
+  color: #dc2626;
+  background: #fff7f7;
+}
+
+#divAbmInventarioLocal1 .inventario-local-menu-impresion {
+  position: relative;
+}
+
+#divAbmInventarioLocal1 .inventario-local-menu-impresion__opciones {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 220px;
+  padding: 6px;
+  border: 1px solid #d8e2ef;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(15, 35, 72, 0.18);
+}
+
+#divAbmInventarioLocal1 .inventario-local-menu-impresion__opciones button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 6px;
+  color: #253654;
+  background: transparent;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+#divAbmInventarioLocal1 .inventario-local-menu-impresion__opciones button:hover {
+  background: #eef5ff;
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen-barra {
+  margin: 0 22px;
+  border: 1px solid #dce6f3;
+  border-radius: 10px;
+  background: #f8fbff;
+  overflow: hidden;
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 45px;
+  padding: 7px 12px;
+  border: 0;
+  color: #123263;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen-toggle__titulo {
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen-toggle__alertas {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  min-width: 0;
+}
+
+#divAbmInventarioLocal1 .inventario-local-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 25px;
+  padding: 0 9px;
+  border: 1px solid #d7e1ee;
+  border-radius: 999px;
+  background: #fff;
+  color: #52637d;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+#divAbmInventarioLocal1 .inventario-local-chip--advertencia {
+  border-color: #fed7aa;
+  background: #fff8ed;
+  color: #a65405;
+}
+
+#divAbmInventarioLocal1 .inventario-local-chip--peligro {
+  border-color: #fecaca;
+  background: #fff2f2;
+  color: #b91c1c;
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen-toggle__flecha {
+  display: inline-block;
+  color: #0754ac;
+  font-size: 18px;
+  transition: transform 160ms ease;
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen-toggle[aria-expanded="true"] .inventario-local-resumen-toggle__flecha {
+  transform: rotate(180deg);
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 10px 10px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen article {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  padding: 10px;
+  border: 1px solid #e0e7f0;
+  border-radius: 9px;
+  background: #fff;
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen__icono {
+  display: grid;
+  flex: 0 0 39px;
+  width: 39px;
+  height: 39px;
+  place-items: center;
+  border-radius: 11px;
+  background: linear-gradient(145deg, #0869cf, #073e91);
+  color: #fff;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen__icono--turquesa {
+  background: linear-gradient(145deg, #14b8a6, #087f8c);
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen__icono--violeta {
+  background: linear-gradient(145deg, #8b5cf6, #6330bd);
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen article small,
+#divAbmInventarioLocal1 .inventario-local-resumen article strong,
+#divAbmInventarioLocal1 .inventario-local-resumen article em {
+  display: block;
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen article small {
+  color: #324664;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen article strong {
+  margin-top: 2px;
+  color: #10244a;
+  font-size: 18px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-resumen article em {
+  margin-top: 2px;
+  color: #7b899e;
+  font-size: 10px;
+  font-style: normal;
+}
+
+#divAbmInventarioLocal1 .inventario-local-vistas {
+  display: flex;
+  gap: 3px;
+  margin: 10px 22px 0;
+  border-bottom: 1px solid #dce5f0;
+}
+
+#divAbmInventarioLocal1 .inventario-local-vistas button {
+  padding: 10px 18px 9px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: #42526d;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+#divAbmInventarioLocal1 .inventario-local-vistas button.activo {
+  border-bottom-color: #0754ac;
+  color: #0754ac;
+}
+
+#divAbmInventarioLocal1 .inventario-local-filtros {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.25fr) repeat(4, minmax(145px, 0.8fr)) minmax(105px, 0.55fr) auto;
+  align-items: end;
+  gap: 9px;
+  padding: 11px 22px;
+  border-bottom: 1px solid #e1e7ef;
+  background: #fbfdff;
+}
+
+#divAbmInventarioLocal1 .inventario-local-filtros label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  color: #566780;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+#divAbmInventarioLocal1 .inventario-local-filtros input[type="search"],
+#divAbmInventarioLocal1 .inventario-local-filtros select,
+#divAbmInventarioLocal1 .inventario-local-paginacion select {
+  min-width: 0;
+  height: 36px;
+  padding: 0 9px;
+  border: 1px solid #ced9e8;
+  border-radius: 7px;
+  background: #fff;
+  color: #233653;
+  font-size: 11px;
+  box-sizing: border-box;
+}
+
+#divAbmInventarioLocal1 .inventario-local-busqueda {
+  position: relative;
+}
+
+#divAbmInventarioLocal1 .inventario-local-busqueda > span {
+  position: absolute;
+  z-index: 1;
+  left: 10px;
+  bottom: 8px;
+  color: #71819a;
+  font-size: 16px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-busqueda input[type="search"] {
+  width: 100%;
+  padding-left: 31px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-filtro-inactivo > span:last-child {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  color: #344967;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+#divAbmInventarioLocal1 .inventario-local-aviso,
+#divAbmInventarioLocal2 .inventario-local-aviso {
+  margin: 10px 22px;
+  padding: 9px 12px;
+  border: 1px solid #f4cf86;
+  border-radius: 8px;
+  background: #fff9ea;
+  color: #885307;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: left;
+}
+
+#divAbmInventarioLocal1 .inventario-local-tabla-contenedor {
+  min-height: 330px;
+  overflow: auto;
+}
+
+#divAbmInventarioLocal1 .inventario-local-tabla {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+#divAbmInventarioLocal1 .inventario-local-tabla th {
+  padding: 9px 8px;
+  border-bottom: 1px solid #d7e0ec;
+  background: #f4f7fb;
+  color: #263750;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: left;
+}
+
+#divAbmInventarioLocal1 .inventario-local-tabla td {
+  padding: 7px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #233653;
+  font-size: 11px;
+  line-height: 1.28;
+  vertical-align: middle;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+
+#divAbmInventarioLocal1 .inventario-local-tabla tr.inventario-local-fila {
+  cursor: pointer;
+}
+
+#divAbmInventarioLocal1 .inventario-local-tabla tr.inventario-local-fila:hover td,
+#divAbmInventarioLocal1 .inventario-local-tabla tr.inventario-local-fila.seleccionada td {
+  background: #f1f7ff;
+}
+
+#divAbmInventarioLocal1 .inventario-local-tabla tr.inventario-local-fila.seleccionada td:first-child {
+  box-shadow: inset 3px 0 #0754ac;
+}
+
+#divAbmInventarioLocal1 .inventario-local-btn-expandir {
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #0754ac;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+#divAbmInventarioLocal1 .inventario-local-btn-expandir:hover {
+  background: #e6f0fd;
+}
+
+#divAbmInventarioLocal1 .inventario-local-tabla .col-foto { width: 58px; text-align: center; }
+#divAbmInventarioLocal1 .inventario-local-tabla .col-activo { width: 230px; }
+#divAbmInventarioLocal1 .inventario-local-tabla .col-ubicacion { width: 125px; }
+#divAbmInventarioLocal1 .inventario-local-tabla .col-personas { width: 210px; }
+#divAbmInventarioLocal1 .inventario-local-tabla .col-cantidad { width: 48px; text-align: center; }
+#divAbmInventarioLocal1 .inventario-local-tabla .col-valor { width: 105px; text-align: right; }
+#divAbmInventarioLocal1 .inventario-local-tabla .col-estado { width: 105px; }
+#divAbmInventarioLocal1 .inventario-local-tabla .col-verificacion { width: 125px; }
+#divAbmInventarioLocal1 .inventario-local-tabla .col-expandir { width: 30px; text-align: center; }
+
+#divAbmInventarioLocal1 .inventario-local-foto {
+  width: 48px;
+  height: 48px;
+  border: 1px solid #d9e2ee;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #eef2f7;
+}
+
+#divAbmInventarioLocal1 .inventario-local-activo strong,
+#divAbmInventarioLocal1 .inventario-local-activo span,
+#divAbmInventarioLocal1 .inventario-local-ubicacion span,
+#divAbmInventarioLocal1 .inventario-local-persona__texto strong,
+#divAbmInventarioLocal1 .inventario-local-persona__texto small,
+#divAbmInventarioLocal1 .inventario-local-verificacion strong,
+#divAbmInventarioLocal1 .inventario-local-verificacion small {
+  display: block;
+}
+
+#divAbmInventarioLocal1 .inventario-local-activo strong {
+  color: #10244a;
+  font-size: 12px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-activo span,
+#divAbmInventarioLocal1 .inventario-local-ubicacion span,
+#divAbmInventarioLocal1 .inventario-local-persona__texto small,
+#divAbmInventarioLocal1 .inventario-local-verificacion small {
+  margin-top: 2px;
+  color: #687890;
+  font-size: 10px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-persona {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-persona + .inventario-local-persona {
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px dashed #dbe3ee;
+}
+
+#divAbmInventarioLocal1 .inventario-local-avatar,
+#divAbmInventarioLocal1 .inventario-local-avatar-iniciales {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #d5dfeb;
+  object-fit: cover;
+  background: #edf4ff;
+}
+
+#divAbmInventarioLocal1 .inventario-local-avatar-iniciales {
+  display: grid;
+  place-items: center;
+  color: #0754ac;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+#divAbmInventarioLocal1 .inventario-local-persona__texto strong {
+  overflow: hidden;
+  color: #263954;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#divAbmInventarioLocal1 .inventario-local-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid #bde2c8;
+  border-radius: 7px;
+  background: #effbf3;
+  color: #14783a;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+#divAbmInventarioLocal1 .inventario-local-etiqueta--advertencia {
+  border-color: #f4ce89;
+  background: #fff8e9;
+  color: #a85c05;
+}
+
+#divAbmInventarioLocal1 .inventario-local-etiqueta--peligro {
+  border-color: #f5b9bf;
+  background: #fff1f2;
+  color: #bd2637;
+}
+
+#divAbmInventarioLocal1 .inventario-local-etiqueta--neutro {
+  border-color: #d4dde9;
+  background: #f4f7fa;
+  color: #617087;
+}
+
+#divAbmInventarioLocal1 .inventario-local-costo-pendiente {
+  display: block;
+  margin-top: 3px;
+  color: #a85c05;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+#divAbmInventarioLocal1 .inventario-local-detalle td {
+  padding: 0;
+  background: #f8fbff;
+}
+
+#divAbmInventarioLocal1 .inventario-local-detalle-contenido {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1.1fr;
+  gap: 0;
+  margin: 8px 18px 11px 96px;
+  border: 1px solid #dce5f1;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+#divAbmInventarioLocal1 .inventario-local-detalle-bloque {
+  min-height: 64px;
+  padding: 10px 12px;
+  border-right: 1px solid #e2e8f0;
+}
+
+#divAbmInventarioLocal1 .inventario-local-detalle-bloque:last-child {
+  border-right: 0;
+}
+
+#divAbmInventarioLocal1 .inventario-local-detalle-bloque b,
+#divAbmInventarioLocal1 .inventario-local-detalle-bloque span {
+  display: block;
+}
+
+#divAbmInventarioLocal1 .inventario-local-detalle-bloque b {
+  margin-bottom: 5px;
+  color: #1d3150;
+  font-size: 10px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-detalle-bloque span {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 10px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-detalle-bloque button {
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  color: #0754ac;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+#divAbmInventarioLocal1 .inventario-local-vacio {
+  height: 210px;
+  color: #718096 !important;
+  font-size: 13px !important;
+  text-align: center;
+}
+
+#divAbmInventarioLocal1 .inventario-local-pie {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 55px;
+  padding: 8px 16px;
+  border-top: 1px solid #dce5f0;
+  background: #fbfdff;
+}
+
+#divAbmInventarioLocal1 .inventario-local-totales span {
+  padding-right: 12px;
+  border-right: 1px solid #dce4ef;
+  color: #65758d;
+  font-size: 10px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-totales b {
+  display: block;
+  margin-top: 2px;
+  color: #183051;
+  font-size: 12px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-acciones-seleccion {
+  flex-wrap: wrap;
+  padding: 4px 7px;
+  border: 1px solid #dce5f0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+#divAbmInventarioLocal1 .inventario-local-acciones-seleccion > span {
+  color: #61718a;
+  font-size: 10px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-acciones-seleccion button {
+  min-height: 30px;
+  padding: 0 9px;
+  font-size: 10px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-paginacion button {
+  min-height: 32px;
+  width: 32px;
+  padding: 0;
+  font-size: 18px;
+}
+
+#divAbmInventarioLocal1 .inventario-local-paginacion button:disabled {
+  color: #a8b3c2;
+  background: #f3f5f8;
+  cursor: default;
+}
+
+#divAbmInventarioLocal1 .inventario-local-paginacion span {
+  color: #51627b;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+#divAbmInventarioLocal1 .inventario-local-paginacion select {
+  height: 32px;
+}
+
+#divAbmInventarioLocal1[data-vista="fisico"] .col-valor,
+#divAbmInventarioLocal1[data-vista="contable"] .col-estado,
+#divAbmInventarioLocal1[data-vista="contable"] .col-verificacion {
+  display: none;
+}
+
+#modalVerificacionInventarioLocal.inventario-local-modal {
+  position: fixed;
+  z-index: 10020;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(9, 24, 49, 0.58);
+  box-sizing: border-box;
+}
+
+#modalVerificacionInventarioLocal .inventario-local-modal__contenido {
+  width: min(620px, 96vw);
+  padding: 18px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(9, 24, 49, 0.32);
+  box-sizing: border-box;
+  text-align: left;
+}
+
+#modalVerificacionInventarioLocal header,
+#modalVerificacionInventarioLocal footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#modalVerificacionInventarioLocal h2 {
+  margin: 0;
+  color: #10244a;
+  font-size: 20px;
+}
+
+#modalVerificacionInventarioLocal header p {
+  margin: 4px 0 0;
+  color: #687890;
+  font-size: 12px;
+}
+
+#modalVerificacionInventarioLocal header > button {
+  border: 0;
+  color: #64748b;
+  background: transparent;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+#modalVerificacionInventarioLocal .inventario-local-modal__campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+#modalVerificacionInventarioLocal label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #4e607a;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+#modalVerificacionInventarioLocal input,
+#modalVerificacionInventarioLocal select,
+#modalVerificacionInventarioLocal textarea {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #ccd8e7;
+  border-radius: 7px;
+  color: #213653;
+  background: #fff;
+  box-sizing: border-box;
+  font: inherit;
+  font-weight: 500;
+}
+
+#modalVerificacionInventarioLocal .inventario-local-modal__campo-completo {
+  grid-column: 1 / -1;
+}
+
+#modalVerificacionInventarioLocal footer {
+  justify-content: flex-end;
+}
+
+#divAbmInventarioLocal2 .inventario-local-depreciacion-form {
+  padding: 12px;
+  border: 1px solid #d9e6f4;
+  border-radius: 10px;
+  background: #f7fbff;
+}
+
+#divAbmInventarioLocal1 .sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (max-width: 1180px) {
+  #divAbmInventarioLocal1 .inventario-local-filtros {
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+  }
+
+  #divAbmInventarioLocal1 .inventario-local-busqueda {
+    grid-column: span 2;
+  }
+
+  #divAbmInventarioLocal1 .inventario-local-resumen-toggle {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #divAbmInventarioLocal1 .inventario-local-resumen-toggle__alertas {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  #divAbmInventarioLocal1 .inventario-local-pie {
+    grid-template-columns: 1fr auto;
+  }
+
+  #divAbmInventarioLocal1 .inventario-local-acciones-seleccion {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 760px) {
+  #divAbmInventarioLocal1 .inventario-local-encabezado {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #divAbmInventarioLocal1 .inventario-local-acciones-principales {
+    flex-wrap: wrap;
+  }
+
+  #divAbmInventarioLocal1 .inventario-local-resumen {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #divAbmInventarioLocal1 .inventario-local-chip--neutro {
+    display: none;
+  }
+
+  #divAbmInventarioLocal1 .inventario-local-filtros {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #divAbmInventarioLocal1 .inventario-local-busqueda {
+    grid-column: 1 / -1;
+  }
+
+  #divAbmInventarioLocal1 .inventario-local-pie {
+    grid-template-columns: 1fr;
+  }
+
+  #divAbmInventarioLocal1 .inventario-local-paginacion,
+  #divAbmInventarioLocal1 .inventario-local-acciones-seleccion {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  #modalVerificacionInventarioLocal .inventario-local-modal__campos {
+    grid-template-columns: 1fr;
+  }
+}
+
 #tdEfectoInformeAsistenca #tdTituloInformeAsistencia {
   display: none;
 }
