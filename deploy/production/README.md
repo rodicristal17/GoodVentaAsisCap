@@ -37,7 +37,11 @@ El directorio de Central Telefónica usa una credencial distinta de la lectura C
 
 ## Respaldo y restauración
 
-`backup.sh` genera un dump transaccional comprimido, valida el gzip, escribe SHA-256 y conserva 14 días. Para una restauración, detener primero el contenedor web, crear un respaldo previo y validar la restauración en un volumen separado antes de reemplazar producción.
+Las evidencias nuevas de trabajos de laboratorio se guardan fuera del directorio público en el volumen `telar_lab_media`, montado como `/var/lib/telar/trabajos_laboratorio`. El contenedor web recibe esa ruta mediante `TELAR_LAB_MEDIA_DIR` y prepara el directorio para `www-data` con modo `0770`. Las fotografías continúan disponibles solamente mediante el endpoint autenticado del módulo.
+
+`backup.sh` genera dos respaldos coordinados: el dump transaccional comprimido de la base y el archivo de evidencias de laboratorio. Antes de publicar los resultados valida el gzip, la estructura del archivo de evidencias y ambos SHA-256. Si el volumen no está montado o no es legible, el proceso falla y elimina los temporales en vez de dejar un respaldo vacío como si fuera válido. Ambos conjuntos se conservan durante 14 días.
+
+Para una restauración, detener primero el contenedor web, crear un respaldo previo y validar tanto la base como las evidencias en volúmenes separados antes de reemplazar producción. No restaurar rutas registradas en la base sin comprobar que sus archivos y miniaturas correspondientes estén presentes.
 
 ## Rendimiento
 

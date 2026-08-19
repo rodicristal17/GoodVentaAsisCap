@@ -6,7 +6,7 @@ services:
       args:
         PHP_VERSION: ${TELAR_PHP_VERSION:-7.4}
     restart: unless-stopped
-    command: ["sh", "-c", "install -d -o www-data -g www-data -m 0770 /var/log/telar && exec apache2-foreground"]
+    command: ["sh", "-c", "install -d -o www-data -g www-data -m 0770 /var/log/telar /var/lib/telar/trabajos_laboratorio && exec apache2-foreground"]
     depends_on:
       database:
         condition: service_healthy
@@ -30,6 +30,7 @@ services:
       TELAR_ISSABEL_DIRECTORY_USERS_TABLE: ${TELAR_ISSABEL_DIRECTORY_USERS_TABLE:-users}
       TELAR_ISSABEL_DIRECTORY_DEVICES_TABLE: ${TELAR_ISSABEL_DIRECTORY_DEVICES_TABLE:-devices}
       TELAR_ISSABEL_DIRECTORY_QUEUES_TABLE: ${TELAR_ISSABEL_DIRECTORY_QUEUES_TABLE:-queues_config}
+      TELAR_LAB_MEDIA_DIR: /var/lib/telar/trabajos_laboratorio
       TZ: America/Asuncion
     ports:
       - "${TELAR_BIND_IP:-10.220.100.201}:${TELAR_HTTP_PORT:-8080}:80"
@@ -37,6 +38,7 @@ services:
     volumes:
       - ../../:/var/www/html
       - telar_error_logs:/var/log/telar
+      - telar_lab_media:/var/lib/telar/trabajos_laboratorio
       - ./certs:/etc/apache2/ssl:ro
     security_opt:
       - no-new-privileges:true
@@ -190,3 +192,4 @@ services:
 volumes:
   telar_database:
   telar_error_logs:
+  telar_lab_media:
