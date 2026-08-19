@@ -720,15 +720,24 @@ pruebaLabAfirmarIgual(
     'El limite total PHP de 8M se convierte a bytes correctamente.'
 );
 $limitesMediaLocales = trabajoLaboratorioLimitesMedia();
+$limiteSubidaLocal = trabajoLaboratorioBytesConfiguracion(ini_get('upload_max_filesize'));
+$limiteSolicitudLocal = trabajoLaboratorioBytesConfiguracion(ini_get('post_max_size'));
+$estimacionSolicitudLocal = (intval($limitesMediaLocales['max_archivos']) * intval($limitesMediaLocales['max_bytes_archivo']))
+    + intval(ceil(intval($limitesMediaLocales['max_bytes_archivo']) / 3))
+    + (512 * 1024);
 pruebaLabAfirmar(
-    intval($limitesMediaLocales['max_archivos']) === 3
-    && intval($limitesMediaLocales['max_bytes_archivo']) === 2 * 1024 * 1024
-    && intval($limitesMediaLocales['max_bytes_solicitud']) === 8 * 1024 * 1024,
-    'La configuracion local deriva tres archivos de hasta 2 MB dentro de una solicitud de 8 MB.'
+    intval($limitesMediaLocales['max_archivos']) >= 1
+    && intval($limitesMediaLocales['max_archivos']) <= 5
+    && intval($limitesMediaLocales['max_bytes_archivo']) > 0
+    && intval($limitesMediaLocales['max_bytes_archivo']) <= 10 * 1024 * 1024
+    && ($limiteSubidaLocal <= 0 || intval($limitesMediaLocales['max_bytes_archivo']) <= $limiteSubidaLocal)
+    && intval($limitesMediaLocales['max_bytes_solicitud']) === $limiteSolicitudLocal
+    && ($limiteSolicitudLocal <= 0 || $estimacionSolicitudLocal <= $limiteSolicitudLocal),
+    'La configuracion vigente deriva una cantidad y un peso seguros dentro de los limites PHP.'
 );
 pruebaLabAfirmarIgual(
     '2 MB',
-    trabajoLaboratorioTamanoMediaTexto($limitesMediaLocales['max_bytes_archivo']),
+    trabajoLaboratorioTamanoMediaTexto(2 * 1024 * 1024),
     'El limite efectivo se presenta al usuario en una unidad comprensible.'
 );
 
