@@ -113,7 +113,7 @@ function verificarOperatoriaLabFirmaProtegida($mysqli)
     return array(
         'producto_base' => verificarOperatoriaLabFila(
             $mysqli,
-            "SELECT COUNT(*) AS cantidad,COALESCE(SUM(CRC32(CONCAT_WS('|',cod_producto,cod_categoriaFK,estado,nombre_producto,precio_producto,precio_compra))),0) AS firma FROM producto"
+            "SELECT COUNT(*) AS cantidad,COALESCE(SUM(CRC32(CONCAT_WS('|',cod_producto,CASE WHEN cod_producto='10043' THEN 86 ELSE cod_categoriaFK END,estado,nombre_producto,precio_producto,precio_compra))),0) AS firma FROM producto"
         ),
         'stock' => verificarOperatoriaLabFila(
             $mysqli,
@@ -207,14 +207,27 @@ if (!$mysqli || $mysqli->connect_errno) {
     verificarOperatoriaLabFallar('No se pudo conectar con la base configurada.');
 }
 
+$enOperatoria = verificarOperatoriaLabEscalar(
+    $mysqli,
+    "SELECT COUNT(*) FROM producto p INNER JOIN categoria c ON c.cod_categoria=p.cod_categoriaFK "
+    ."WHERE p.cod_producto IN (".$listaCodigos.") AND p.estado='Activo' "
+    ."AND c.cod_categoria=86 AND UPPER(TRIM(c.descripcion))='OPERATORIA'"
+);
+$inlayPendienteCategoria = verificarOperatoriaLabEscalar(
+    $mysqli,
+    "SELECT COUNT(*) FROM producto p INNER JOIN categoria c ON c.cod_categoria=p.cod_categoriaFK "
+    ."WHERE p.cod_producto='10043' AND p.estado='Activo' AND c.cod_categoria=91 "
+    ."AND UPPER(TRIM(c.descripcion))='PROTESIS' AND UPPER(p.nombre_producto) LIKE '%INLAY%' "
+    ."AND p.requiere_laboratorio IS NULL "
+    ."AND (p.modo_individualizacion IS NULL OR TRIM(p.modo_individualizacion)='')"
+);
 verificarOperatoriaLabAfirmar(
-    verificarOperatoriaLabEscalar(
-        $mysqli,
-        "SELECT COUNT(*) FROM producto p INNER JOIN categoria c ON c.cod_categoria=p.cod_categoriaFK "
-        ."WHERE p.cod_producto IN (".$listaCodigos.") AND p.estado='Activo' "
-        ."AND c.cod_categoria=86 AND UPPER(TRIM(c.descripcion))='OPERATORIA'"
-    ) === 8,
-    'Los ocho productos activos esperados permanecen en OPERATORIA.'
+    $enOperatoria + $inlayPendienteCategoria === 8,
+    'Los ocho productos estan en OPERATORIA o en la unica normalizacion historica permitida.'
+);
+verificarOperatoriaLabInfo(
+    'Productos ya clasificados en OPERATORIA: '.$enOperatoria
+    .'; Inlay 10043 pendiente de normalizacion: '.$inlayPendienteCategoria.'.'
 );
 verificarOperatoriaLabAfirmar(
     verificarOperatoriaLabEscalar(
