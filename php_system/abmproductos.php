@@ -24,7 +24,7 @@ exit;
 }
 //CONTROL DE ACCESO
 
-if($operacion==="nuevo" || $operacion==="editar"){
+if($operacion==="nuevo" || $operacion==="editar" || $operacion==="editar_laboratorio_producto"){
 	$mysqliPermisoProducto=conectar_al_servidor();
 	$codigoPermisoProducto=$operacion==="nuevo" ? "INSERTARLISTADOPRODUCTOS" : "EDITARLISTADOPRODUCTOS";
 	$permitidoProducto=trabajoLaboratorioTienePermiso($mysqliPermisoProducto,(int)$user,$codigoPermisoProducto);
@@ -244,6 +244,13 @@ $controllocal=controldeaccesoacasas($user,"CAMBIARLOCAL"," u.accion='SI' ");
 	$motivo=$_POST["motivo"];
  	$motivo=mb_convert_encoding((string)($motivo), 'ISO-8859-1', 'UTF-8');
  	EditarRiesgoFinancieroProducto($cod_producto,$nivel,$motivo,$user);
+ }
+
+ if($operacion=="editar_laboratorio_producto"){
+	$cod_producto=isset($_POST["cod_producto"]) ? $_POST["cod_producto"] : "";
+	$cod_producto=mb_convert_encoding((string)($cod_producto), 'ISO-8859-1', 'UTF-8');
+	$requiere_laboratorio=isset($_POST["requiere_laboratorio"]) ? trim((string)$_POST["requiere_laboratorio"]) : "";
+	EditarConfiguracionLaboratorioProductoRapida($cod_producto,$requiere_laboratorio,$user);
  }
 
  if($operacion=="riesgo_automatico_financiero"){
@@ -1050,13 +1057,17 @@ function ProductoLaboratorioColumnaDisponible($mysqli,$tabla,$campo)
 	if (array_key_exists($clave, $cache)) {
 		return $cache[$clave];
 	}
-	$stmt = $mysqli->prepare("SHOW COLUMNS FROM ".$tabla." LIKE ?");
+	$stmt = $mysqli->prepare("SELECT COUNT(*) AS total FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?");
 	if (!$stmt) {
 		$cache[$clave] = false;
 		return false;
 	}
-	$stmt->bind_param("s", $campo);
-	$disponible = $stmt->execute() && mysqli_num_rows($stmt->get_result()) > 0;
+	$stmt->bind_param("ss", $tabla, $campo);
+	$disponible = false;
+	if ($stmt->execute()) {
+		$fila = $stmt->get_result()->fetch_assoc();
+		$disponible = $fila && (int)$fila["total"] > 0;
+	}
 	$stmt->close();
 	$cache[$clave] = $disponible;
 	return $disponible;
@@ -1076,6 +1087,150 @@ function ProductoLaboratorioSelectSql($mysqli,$alias = "pr")
 		.$productoModo." AS producto_modo_individualizacion,\n"
 		."COALESCE(".$productoRequiere.", ".$categoriaRequiere.", 0) AS requiere_laboratorio_efectivo,\n"
 		."COALESCE(NULLIF(".$productoModo.", ''), NULLIF(".$categoriaModo.", ''), 'cantidad_libre') AS modo_individualizacion_efectivo";
+}
+
+function SelectorLaboratorioCatalogoProductoHtml($codProducto,$requiereEfectivo,$modoEfectivo)
+{
+	$codigo = htmlspecialchars((string)$codProducto, ENT_QUOTES, "UTF-8");
+	$requiere = (int)$requiereEfectivo === 1 ? "1" : "0";
+	$modo = htmlspecialchars((string)$modoEfectivo, ENT_QUOTES, "UTF-8");
+	$seleccionSi = $requiere === "1" ? " selected" : "";
+	$seleccionNo = $requiere === "0" ? " selected" : "";
+	$clase = $requiere === "1" ? " is-required" : " is-not-required";
+	return "<div class='catalogo-laboratorio-control".$clase."' data-laboratorio-producto='".$codigo."'>"
+		."<select class='catalogo-laboratorio-select' data-laboratorio-select data-cod-producto='".$codigo."' "
+		."data-valor-anterior='".$requiere."' data-modo-efectivo='".$modo."' "
+		."onclick='event.stopPropagation()' onfocus='catalogoLaboratorioRecordarValor(this)' "
+		."onchange='event.stopPropagation(); guardarLaboratorioProductoCatalogo(this)'>"
+		."<option value='1'".$seleccionSi.">Si, requiere</option>"
+		."<option value='0'".$seleccionNo.">No requiere</option>"
+		."</select>"
+		."<small class='catalogo-laboratorio-status' data-laboratorio-status aria-live='polite'></small>"
+		."</div>";
+}
+
+function ModoLaboratorioProductoDerivado($alcance)
+{
+	$alcance = strtolower(trim((string)$alcance));
+	$modos = array(
+		"pieza_dental" => "pieza_individual",
+		"pieza_superficie" => "pieza_individual",
+		"piezas_multiples" => "multipieza",
+		"arcada" => "arcada",
+		"cuadrante" => "sector",
+		"sector" => "sector",
+		"dispositivo" => "dispositivo"
+	);
+	return isset($modos[$alcance]) ? $modos[$alcance] : "";
+}
+
+function ResponderErrorLaboratorioProducto($mysqli,$codigo,$mensaje)
+{
+	if ($mysqli) {
+		@$mysqli->rollback();
+		@$mysqli->close();
+	}
+	echo json_encode(array("1"=>"error","codigo"=>$codigo,"mensaje"=>$mensaje));
+	exit;
+}
+
+function EditarConfiguracionLaboratorioProductoRapida($codProducto,$requiereEntrada,$user)
+{
+	$codProducto = trim((string)$codProducto);
+	$requiereEntrada = trim((string)$requiereEntrada);
+	if ($codProducto === "" || ($requiereEntrada !== "0" && $requiereEntrada !== "1")) {
+		echo json_encode(array("1"=>"error","codigo"=>"datos_invalidos","mensaje"=>"No se pudo identificar el producto o la opcion elegida."));
+		exit;
+	}
+	$mysqli = conectar_al_servidor();
+	if (!ProductoLaboratorioColumnaDisponible($mysqli,"producto","requiere_laboratorio")
+		|| !ProductoLaboratorioColumnaDisponible($mysqli,"producto","modo_individualizacion")) {
+		ResponderErrorLaboratorioProducto($mysqli,"sin_migracion","La configuracion de laboratorio todavia no esta disponible en este servidor.");
+	}
+	$mysqli->begin_transaction();
+	$stmt = $mysqli->prepare("SELECT pr.nombre_producto,pr.requiere_laboratorio,pr.modo_individualizacion,pr.alcance_odontologico,pr.cod_categoriaFK,COALESCE(ca.requiere_laboratorio,0) AS categoria_requiere,COALESCE(ca.modo_individualizacion,'cantidad_libre') AS categoria_modo FROM producto pr LEFT JOIN categoria ca ON ca.cod_categoria=pr.cod_categoriaFK WHERE pr.cod_producto=? LIMIT 1 FOR UPDATE");
+	if (!$stmt) {
+		ResponderErrorLaboratorioProducto($mysqli,"consulta_no_disponible","No se pudo preparar la actualizacion del producto.");
+	}
+	$stmt->bind_param("s",$codProducto);
+	if (!$stmt->execute()) {
+		$stmt->close();
+		ResponderErrorLaboratorioProducto($mysqli,"consulta_fallida","No se pudo consultar la configuracion actual del producto.");
+	}
+	$producto = $stmt->get_result()->fetch_assoc();
+	$stmt->close();
+	if (!$producto) {
+		ResponderErrorLaboratorioProducto($mysqli,"producto_no_encontrado","El producto ya no existe o no esta disponible.");
+	}
+
+	$requiereNuevo = (int)$requiereEntrada;
+	$requiereAnterior = $producto["requiere_laboratorio"] === null
+		? (int)$producto["categoria_requiere"]
+		: (int)$producto["requiere_laboratorio"];
+	$modoProducto = trim((string)$producto["modo_individualizacion"]);
+	$modoCategoria = trim((string)$producto["categoria_modo"]);
+	$modoEfectivoAnterior = $modoProducto !== "" ? $modoProducto : ($modoCategoria !== "" ? $modoCategoria : "cantidad_libre");
+	$modoGuardar = $modoProducto !== "" ? $modoProducto : null;
+	$modoEfectivoNuevo = $modoEfectivoAnterior;
+	$modosClinicos = array("pieza_individual","multipieza","arcada","sector","dispositivo");
+
+	if ($requiereNuevo === 1) {
+		if (in_array($modoProducto,$modosClinicos,true)) {
+			$modoGuardar = $modoProducto;
+		} elseif (in_array($modoCategoria,$modosClinicos,true)) {
+			$modoGuardar = $modoCategoria;
+		} else {
+			$modoGuardar = ModoLaboratorioProductoDerivado($producto["alcance_odontologico"]);
+		}
+		if (!in_array($modoGuardar,$modosClinicos,true)) {
+			ResponderErrorLaboratorioProducto($mysqli,"modo_laboratorio_requerido","No se puede determinar con seguridad como se individualiza este tratamiento. Abrilo con Editar y selecciona su unidad clinica antes de activar laboratorio.");
+		}
+		$modoEfectivoNuevo = $modoGuardar;
+	}
+
+	$sinCambios = $producto["requiere_laboratorio"] !== null
+		&& (int)$producto["requiere_laboratorio"] === $requiereNuevo
+		&& (($producto["modo_individualizacion"] === null && $modoGuardar === null) || (string)$producto["modo_individualizacion"] === (string)$modoGuardar);
+	if (!$sinCambios) {
+		$stmtActualizar = $mysqli->prepare("UPDATE producto SET requiere_laboratorio=?,modo_individualizacion=?,cod_user_edit=?,fecha_edit=NOW() WHERE cod_producto=? LIMIT 1");
+		if (!$stmtActualizar) {
+			ResponderErrorLaboratorioProducto($mysqli,"actualizacion_no_disponible","No se pudo preparar el guardado del producto.");
+		}
+		$usuarioNumero = (int)$user;
+		$stmtActualizar->bind_param("isis",$requiereNuevo,$modoGuardar,$usuarioNumero,$codProducto);
+		if (!$stmtActualizar->execute()) {
+			$stmtActualizar->close();
+			ResponderErrorLaboratorioProducto($mysqli,"actualizacion_fallida","No se pudo guardar el cambio. Intenta nuevamente.");
+		}
+		$stmtActualizar->close();
+
+		$localUsuario = (int)buscarlocaluser($user);
+		$anterior = ($requiereAnterior === 1 ? "Si" : "No")." | ".$modoEfectivoAnterior;
+		$nuevo = ($requiereNuevo === 1 ? "Si" : "No")." | ".$modoEfectivoNuevo;
+		$stmtAuditoria = $mysqli->prepare("INSERT INTO auditoriaproducto (nombre_descripcion,precio_compra,precio_venta,stock,cod_barra,nombredescripcionAnt,precio_compraAnt,precio_ventaAnt,stockAnt,cod_barraAnt,fecha,cod_usuarioFK,accion,cod_productoFK,cod_localfk) VALUES (?,0,0,0,'',?,0,0,0,'',NOW(),?,'LABORATORIO',?,?)");
+		if (!$stmtAuditoria) {
+			ResponderErrorLaboratorioProducto($mysqli,"auditoria_no_disponible","No se pudo registrar la trazabilidad del cambio.");
+		}
+		$stmtAuditoria->bind_param("ssisi",$nuevo,$anterior,$usuarioNumero,$codProducto,$localUsuario);
+		if (!$stmtAuditoria->execute()) {
+			$stmtAuditoria->close();
+			ResponderErrorLaboratorioProducto($mysqli,"auditoria_fallida","No se pudo registrar la trazabilidad del cambio.");
+		}
+		$stmtAuditoria->close();
+	}
+	if (!$mysqli->commit()) {
+		ResponderErrorLaboratorioProducto($mysqli,"confirmacion_fallida","No se pudo confirmar el cambio. Intenta nuevamente.");
+	}
+	$mysqli->close();
+	echo json_encode(array(
+		"1"=>"exito",
+		"cod_producto"=>$codProducto,
+		"requiere_laboratorio"=>(string)$requiereNuevo,
+		"modo_individualizacion"=>$modoGuardar === null ? "" : $modoGuardar,
+		"modo_individualizacion_efectivo"=>$modoEfectivoNuevo,
+		"mensaje"=>$sinCambios ? "La configuracion ya estaba guardada." : "Configuracion de laboratorio guardada."
+	));
+	exit;
 }
 
 function ValidarConfiguracionLaboratorioProductoEntrada()
@@ -1834,6 +1989,7 @@ $producto_modo_individualizacion = mb_convert_encoding((string)($valor['producto
 $requiere_laboratorio_efectivo = mb_convert_encoding((string)($valor['requiere_laboratorio_efectivo']), 'UTF-8', 'ISO-8859-1');
 $modo_individualizacion_efectivo = mb_convert_encoding((string)($valor['modo_individualizacion_efectivo']), 'UTF-8', 'ISO-8859-1');
 $badge_riesgo_financiero = BadgeNivelRiesgoFinancieroProducto($nivel_riesgo_financiero);
+$selector_laboratorio = SelectorLaboratorioCatalogoProductoHtml($cod_producto,$requiere_laboratorio_efectivo,$modo_individualizacion_efectivo);
 //anhadirStockA($stock_producto,$cod_producto,$cod_localFK);
 $totalcostos=$precio_compra*$stock_producto;
 $styleName=CargarStyleTable($styleName);
@@ -1853,7 +2009,7 @@ $styleName=CargarStyleTable($styleName);
 <td  id='td_datos_105_label' class='catalogo-riesgo-cell' style='width:10%'>".$badge_riesgo_financiero."</td>
 <td  id='td_datos_5' style='width:10%'>".number_format($precio_compra,'0',',','.')."</td>
 <td  id='td_datos_18' style='display:none'>".number_format($totalcostos,'0',',','.')."</td>
-<td  id='td_datos_22' style='width:10%'>".$proveedor."</td>
+<td id='td_datos_laboratorio' class='catalogo-laboratorio-cell' style='width:9%'>".$selector_laboratorio."</td>
 <td  id='td_datos_local_nombre' class='catalogo-local-cell' style='width:10%'>".$localnombre."</td>
 <td  id='td_datos_7' style='display:none'>".$cod_localFK."</td>
 <td  id='td_datos_8' style='display:none'>".$comision."</td>
@@ -1864,6 +2020,7 @@ $styleName=CargarStyleTable($styleName);
 <td  id='td_datos_16' style='display:none'>".$cod_ImpuestoFK."</td>
 <td  id='td_datos_17' style='display:none'>".$porcentaje."</td>
 <td  id='td_datos_20' style='display:none'>".$tipo."</td>
+<td  id='td_datos_22' style='display:none'>".$proveedor."</td>
 <td  id='td_datos_23' style='display:none'>".$CodProveedorFK."</td>
 <td  id='td_datos_100' style='display:none'>".$insertadopor."</td>
 <td  id='td_datos_101' style='display:none'>".$editadopor."</td>
@@ -2036,6 +2193,7 @@ $producto_modo_individualizacion = mb_convert_encoding((string)($valor['producto
 $requiere_laboratorio_efectivo = mb_convert_encoding((string)($valor['requiere_laboratorio_efectivo']), 'UTF-8', 'ISO-8859-1');
 $modo_individualizacion_efectivo = mb_convert_encoding((string)($valor['modo_individualizacion_efectivo']), 'UTF-8', 'ISO-8859-1');
 $badge_riesgo_financiero = BadgeNivelRiesgoFinancieroProducto($nivel_riesgo_financiero);
+$selector_laboratorio = SelectorLaboratorioCatalogoProductoHtml($cod_producto,$requiere_laboratorio_efectivo,$modo_individualizacion_efectivo);
 //anhadirStockA($stock_producto,$cod_producto,$cod_localFK);
 $totalcostos=$precio_compra*$stock_producto;
 $styleName=CargarStyleTable($styleName);
@@ -2055,7 +2213,7 @@ $styleName=CargarStyleTable($styleName);
 <td  id='td_datos_105_label' class='catalogo-riesgo-cell' style='width:10%'>".$badge_riesgo_financiero."</td>
 <td  id='td_datos_5' style='width:10%'>".number_format($precio_compra,'0',',','.')."</td>
 <td  id='td_datos_18' style='display:none'>".number_format($totalcostos,'0',',','.')."</td>
-<td  id='td_datos_22' style='width:10%'>".$proveedor."</td>
+<td id='td_datos_laboratorio' class='catalogo-laboratorio-cell' style='width:9%'>".$selector_laboratorio."</td>
 <td  id='td_datos_local_nombre' class='catalogo-local-cell' style='width:10%'>".$localnombre."</td>
 <td  id='td_datos_7' style='display:none'>".$cod_localFK."</td>
 <td  id='td_datos_8' style='display:none'>".$comision."</td>
@@ -2066,6 +2224,7 @@ $styleName=CargarStyleTable($styleName);
 <td  id='td_datos_16' style='display:none'>".$cod_ImpuestoFK."</td>
 <td  id='td_datos_17' style='display:none'>".$porcentaje."</td>
 <td  id='td_datos_20' style='display:none'>".$tipo."</td>
+<td  id='td_datos_22' style='display:none'>".$proveedor."</td>
 <td  id='td_datos_23' style='display:none'>".$CodProveedorFK."</td>
 <td  id='td_datos_100' style='display:none'>".$insertadopor."</td>
 <td  id='td_datos_101' style='display:none'>".$editadopor."</td>

@@ -2307,19 +2307,9 @@ function EstadoLaboratorioSelectSqlConsulta($mysqli, $detalleAlias = "dtv")
 		.$antecedenteHistorico." AS tiene_antecedente_laboratorio_historico";
 }
 
-function EsCategoriaProtesisLaboratorioConsulta($categoria, $requiereLaboratorio)
+function EsTratamientoLaboratorioConsulta($requiereLaboratorio)
 {
-	if ((int)$requiereLaboratorio !== 1) { return false; }
-	$texto = trim((string)$categoria);
-	if ($texto == "") { return false; }
-	if (!mb_check_encoding($texto, 'UTF-8')) {
-		$texto = mb_convert_encoding($texto, 'UTF-8', 'ISO-8859-1');
-	}
-	$texto = mb_strtoupper($texto, 'UTF-8');
-	$texto = strtr($texto, array(
-		'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ü' => 'U'
-	));
-	return $texto === "PROTESIS";
+	return (int)$requiereLaboratorio === 1;
 }
 
 function obtenerTratamientosVentaPlanConsulta($mysqli,$cod_venta)
@@ -2394,7 +2384,7 @@ function obtenerTratamientosVentaPlanConsulta($mysqli,$cod_venta)
 			"ubicacion_odontograma" => $ubicacion_odontograma,
 			"categoria_laboratorio" => $categoria_laboratorio,
 			"requiere_laboratorio" => $requiere_laboratorio,
-			"es_protesis_laboratorio" => EsCategoriaProtesisLaboratorioConsulta($categoria_laboratorio, $requiere_laboratorio),
+			"es_laboratorio" => EsTratamientoLaboratorioConsulta($requiere_laboratorio),
 			"tiene_trabajo_laboratorio_activo" => !empty($valor["tiene_trabajo_laboratorio_activo"]),
 			"tiene_antecedente_laboratorio_historico" => !empty($valor["tiene_antecedente_laboratorio_historico"]),
 			"riesgo_orden" => $nivel_riesgo_financiero,
@@ -3694,8 +3684,8 @@ function renderTemporalidadTratamientoConsulta($item,$claseBase)
 
 function atributosLaboratorioTratamientoConsulta($item, $ubicacion, $codProducto, $alcance)
 {
-	if (empty($item["es_protesis_laboratorio"])) { return ""; }
-	$categoria = isset($item["categoria_laboratorio"]) ? $item["categoria_laboratorio"] : "PROTESIS";
+	if (empty($item["es_laboratorio"])) { return ""; }
+	$categoria = isset($item["categoria_laboratorio"]) ? $item["categoria_laboratorio"] : "";
 	$cantidad = isset($item["cantidad_detalle_laboratorio"])
 		? $item["cantidad_detalle_laboratorio"]
 		: (isset($item["cantidad_detalle"]) ? $item["cantidad_detalle"] : 1);
@@ -3714,7 +3704,7 @@ function atributosLaboratorioTratamientoConsulta($item, $ubicacion, $codProducto
 
 function renderizarAccionLaboratorioTratamientoConsulta($item, $ubicacion, $modo = "accion")
 {
-	if (empty($item["es_protesis_laboratorio"])) { return ""; }
+	if (empty($item["es_laboratorio"])) { return ""; }
 	$faltaUbicacion = !empty($ubicacion["falta"]);
 	$cantidad = isset($item["cantidad_detalle_laboratorio"])
 		? $item["cantidad_detalle_laboratorio"]
@@ -3777,7 +3767,7 @@ function renderizarItemPlanTratamientoConsulta($tratamiento, $numero, &$styleNam
 	$descripcionHtml = $descripcion != "" ? "<span class='plan-tratamientos-descripcion'>".$descripcion."</span>" : "";
 	$ubicacionHtml = renderizarUbicacionOdontogramaConsulta($tratamiento["ubicacion_odontograma"], "plan-tratamientos-ubicacion");
 	$temporalidadHtml = renderTemporalidadTratamientoConsulta($tratamiento, "plan-tratamientos-temporalidad");
-	$esLaboratorio = !empty($tratamiento["es_protesis_laboratorio"]);
+	$esLaboratorio = !empty($tratamiento["es_laboratorio"]);
 	$atributosLaboratorio = atributosLaboratorioTratamientoConsulta($tratamiento, $tratamiento["ubicacion_odontograma"], $tratamiento["cod_producto"], $tratamiento["alcance_odontologico"]);
 	$accionLaboratorioHtml = renderizarAccionLaboratorioTratamientoConsulta($tratamiento, $tratamiento["ubicacion_odontograma"]);
 	$asignarUbicacionHtml = (!empty($tratamiento["ubicacion_odontograma"]["falta"]) && !$esLaboratorio)
@@ -3915,7 +3905,7 @@ function obtenerItemsPlanDefinitivoConsulta($mysqli,$plan_id)
 		$row["alcance_odontologico"] = isset($row["alcance_odontologico"]) ? $row["alcance_odontologico"] : "no_requiere";
 		$row["categoria_laboratorio"] = isset($row["categoria_laboratorio"]) ? mb_convert_encoding((string)$row["categoria_laboratorio"], 'UTF-8', 'ISO-8859-1') : "";
 		$row["requiere_laboratorio"] = isset($row["requiere_laboratorio_efectivo"]) ? (int)$row["requiere_laboratorio_efectivo"] : 0;
-		$row["es_protesis_laboratorio"] = EsCategoriaProtesisLaboratorioConsulta($row["categoria_laboratorio"], $row["requiere_laboratorio"]);
+		$row["es_laboratorio"] = EsTratamientoLaboratorioConsulta($row["requiere_laboratorio"]);
 		$row["tiene_trabajo_laboratorio_activo"] = !empty($row["tiene_trabajo_laboratorio_activo"]);
 		$row["tiene_antecedente_laboratorio_historico"] = !empty($row["tiene_antecedente_laboratorio_historico"]);
 		$row["precio_producto"] = isset($row["precio_producto"]) ? (float)$row["precio_producto"] : 0;
@@ -3967,7 +3957,7 @@ function renderizarItemPlanDefinitivoConsulta($item,$numero,$plan_id,$editable)
 	$nodoTitulo = ($estadoClase == "completado") ? "Paso ".$numero." completado" : "Paso ".$numero;
 	$ubicacionHtml = renderizarUbicacionOdontogramaConsulta($item["ubicacion_odontograma"], "plan-definitivo-ubicacion");
 	$temporalidadHtml = renderTemporalidadTratamientoConsulta($item, "plan-definitivo-temporalidad");
-	$esLaboratorio = !empty($item["es_protesis_laboratorio"]);
+	$esLaboratorio = !empty($item["es_laboratorio"]);
 	$atributosLaboratorio = atributosLaboratorioTratamientoConsulta($item, $item["ubicacion_odontograma"], $item["producto_id"], $item["alcance_odontologico"]);
 	$laboratorioActivo = $esLaboratorio && !empty($item["tiene_trabajo_laboratorio_activo"]);
 	$accionLaboratorioHtml = $laboratorioActivo

@@ -10387,7 +10387,7 @@ function datosTemporalidadProducto() {
 }
 
 function setConfiguracionLaboratorioProductoDefaults() {
-	setValorProductoTemporalidad("inptRequiereLaboratorioProducto", "");
+	setValorProductoTemporalidad("inptRequiereLaboratorioProducto", "0");
 	setValorProductoTemporalidad("inptModoIndividualizacionProducto", "");
 	var card = document.getElementById("productoLaboratorioCard");
 	if (card) {
@@ -10402,7 +10402,7 @@ function cargarConfiguracionLaboratorioProductoDesdeFila(fila) {
 	var modo = obtenerValorCeldaProductoTemporalidad(fila, "td_datos_131", "");
 	var requiereEfectivo = obtenerValorCeldaProductoTemporalidad(fila, "td_datos_132", "0");
 	var modoEfectivo = obtenerValorCeldaProductoTemporalidad(fila, "td_datos_133", "cantidad_libre");
-	setValorProductoTemporalidad("inptRequiereLaboratorioProducto", requiere);
+	setValorProductoTemporalidad("inptRequiereLaboratorioProducto", requiere === "0" || requiere === "1" ? requiere : requiereEfectivo);
 	setValorProductoTemporalidad("inptModoIndividualizacionProducto", modo);
 	var card = document.getElementById("productoLaboratorioCard");
 	if (card) {
@@ -10420,7 +10420,7 @@ function actualizarAyudaConfiguracionLaboratorioProducto() {
 	if (!requiereElemento || !modoElemento || !ayuda) { return; }
 	var requiere = requiereElemento.value;
 	var modo = modoElemento.value;
-	var requiereEfectivo = requiere !== "" ? requiere : (card ? card.getAttribute("data-requiere-efectivo") : "0");
+	var requiereEfectivo = requiere === "1" ? "1" : "0";
 	var modoEfectivo = modo !== "" ? modo : (card ? card.getAttribute("data-modo-efectivo") : "cantidad_libre");
 	var etiquetas = {
 		cantidad_libre: "cantidad libre",
@@ -10430,7 +10430,7 @@ function actualizarAyudaConfiguracionLaboratorioProducto() {
 		sector: "un tratamiento por sector",
 		dispositivo: "un dispositivo clinico independiente"
 	};
-	var origen = (requiere === "" || modo === "") ? " Los valores sin excepcion se heredan de la categoria." : "";
+	var origen = modo === "" ? " La unidad clinica se hereda de la categoria mientras no se indique una excepcion." : "";
 	ayuda.style.color = "";
 	if (modoEfectivo !== "cantidad_libre") {
 		ayuda.textContent = "Comportamiento efectivo: " + (requiereEfectivo == "1" ? "requiere laboratorio; " : "sin laboratorio; ") + (etiquetas[modoEfectivo] || modoEfectivo) + ". Cada tratamiento se presupuesta con cantidad 1; su ubicacion puede contener una o varias piezas segun el modo." + origen;
@@ -10463,7 +10463,7 @@ function validarConfiguracionLaboratorioProductoAntesDeGuardar() {
 
 function datosConfiguracionLaboratorioProducto() {
 	return {
-		requiere_laboratorio: document.getElementById("inptRequiereLaboratorioProducto") ? document.getElementById("inptRequiereLaboratorioProducto").value : "",
+		requiere_laboratorio: document.getElementById("inptRequiereLaboratorioProducto") ? document.getElementById("inptRequiereLaboratorioProducto").value : "0",
 		modo_individualizacion: document.getElementById("inptModoIndividualizacionProducto") ? document.getElementById("inptModoIndividualizacionProducto").value : ""
 	};
 }
@@ -10893,6 +10893,129 @@ function catalogoRiesgoOrigenTexto(origen){
 
 var catalogoRiesgoProductoActual={nivel:1,precio:"",origen:"automatico",observacion:"",usuario:"",fecha:""};
 
+function catalogoLaboratorioRecordarValor(selector){
+	if(!selector || selector.disabled){return;}
+	selector.setAttribute("data-valor-anterior",selector.value);
+}
+
+function catalogoLaboratorioControlesProducto(codProducto){
+	var controles=document.querySelectorAll("[data-laboratorio-select]");
+	var resultado=[];
+	for(var i=0;i<controles.length;i++){
+		if(String(controles[i].getAttribute("data-cod-producto"))===String(codProducto)){
+			resultado.push(controles[i]);
+		}
+	}
+	return resultado;
+}
+
+function catalogoLaboratorioEstadoControl(selector,estado,texto){
+	if(!selector){return;}
+	var control=selector.parentNode;
+	if(control){
+		control.classList.remove("is-saving","is-saved","is-error","is-required","is-not-required");
+		if(estado){control.classList.add("is-"+estado);}
+		control.classList.add(selector.value==="1" ? "is-required" : "is-not-required");
+	}
+	var mensaje=control ? control.querySelector("[data-laboratorio-status]") : null;
+	if(mensaje){mensaje.textContent=texto || "";}
+}
+
+function catalogoLaboratorioAplicarRespuesta(codProducto,datos){
+	var controles=catalogoLaboratorioControlesProducto(codProducto);
+	for(var i=0;i<controles.length;i++){
+		var selector=controles[i];
+		selector.value=String(datos.requiere_laboratorio)==="1" ? "1" : "0";
+		selector.disabled=false;
+		selector.setAttribute("data-valor-anterior",selector.value);
+		selector.setAttribute("data-modo-efectivo",datos.modo_individualizacion_efectivo || "cantidad_libre");
+		var fila=selector.closest ? selector.closest('tr[id="tbSelecRegistro"]') : null;
+		if(fila){
+			var valores={
+				td_datos_130: datos.requiere_laboratorio,
+				td_datos_131: datos.modo_individualizacion || "",
+				td_datos_132: datos.requiere_laboratorio,
+				td_datos_133: datos.modo_individualizacion_efectivo || "cantidad_libre"
+			};
+			for(var id in valores){
+				if(!valores.hasOwnProperty(id)){continue;}
+				var celda=fila.querySelector('td[id="'+id+'"]');
+				if(celda){celda.textContent=valores[id];}
+			}
+		}
+		catalogoLaboratorioEstadoControl(selector,"saved","Guardado");
+		var estadoToken=String(new Date().getTime())+"-"+String(i);
+		selector.setAttribute("data-laboratorio-estado-token",estadoToken);
+		(function(controlActual,tokenActual){
+			window.setTimeout(function(){
+				if(controlActual.getAttribute("data-laboratorio-estado-token")===tokenActual && !controlActual.disabled){
+					catalogoLaboratorioEstadoControl(controlActual,"","");
+				}
+			},2200);
+		})(selector,estadoToken);
+	}
+}
+
+function catalogoLaboratorioRestaurar(codProducto,valor,mensaje){
+	var controles=catalogoLaboratorioControlesProducto(codProducto);
+	for(var i=0;i<controles.length;i++){
+		controles[i].value=valor;
+		controles[i].disabled=false;
+		controles[i].setAttribute("data-valor-anterior",valor);
+		catalogoLaboratorioEstadoControl(controles[i],"error","No guardado");
+	}
+	if(mensaje){ver_vetana_informativa(String(mensaje).toUpperCase());}
+}
+
+function guardarLaboratorioProductoCatalogo(selector){
+	if(!selector){return;}
+	var codProducto=selector.getAttribute("data-cod-producto") || "";
+	var valorAnterior=selector.getAttribute("data-valor-anterior");
+	if(valorAnterior!=="0" && valorAnterior!=="1"){
+		valorAnterior=selector.value==="1" ? "0" : "1";
+	}
+	if(controlacceso("EDITARLISTADOPRODUCTOS","accion")==false){
+		selector.value=valorAnterior;
+		catalogoLaboratorioEstadoControl(selector,"error","Sin permiso");
+		return;
+	}
+	var controles=catalogoLaboratorioControlesProducto(codProducto);
+	for(var i=0;i<controles.length;i++){
+		controles[i].disabled=true;
+		catalogoLaboratorioEstadoControl(controles[i],"saving","Guardando...");
+	}
+	obtener_datos_user();
+	$.ajax({
+		data:{
+			useru:userid,
+			passu:passuser,
+			navegador:navegador,
+			cod_producto:codProducto,
+			requiere_laboratorio:selector.value,
+			funt:"editar_laboratorio_producto"
+		},
+		url:"/GoodVentaAsisCap/php_system/abmproductos.php",
+		type:"post",
+		error:function(jqXHR,textstatus,errorThrowm){
+			catalogoLaboratorioRestaurar(codProducto,valorAnterior,"No se pudo guardar el cambio. Revisa la conexion e intenta nuevamente.");
+			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
+		},
+		success:function(responseText){
+			try{
+				var datos=$.parseJSON(responseText);
+				if(datos["1"]==="exito"){
+					catalogoLaboratorioAplicarRespuesta(codProducto,datos);
+					return;
+				}
+				catalogoLaboratorioRestaurar(codProducto,valorAnterior,datos.mensaje || "No se pudo guardar la configuracion de laboratorio.");
+			}catch(error){
+				catalogoLaboratorioRestaurar(codProducto,valorAnterior,"La respuesta del servidor no pudo ser interpretada. El cambio no fue guardado.");
+				GuardarArchivosLog("Error: "+error+" \r\n Consola: "+responseText);
+			}
+		}
+	});
+}
+
 function actualizarPanelRiesgoCatalogoProducto(nivel, precioVenta, origen, observacion, usuario, fecha){
 	nivel=catalogoRiesgoNormalizarNivel(nivel, precioVenta);
 	var info=catalogoRiesgoInfo(nivel);
@@ -10953,6 +11076,11 @@ function prepararFilasCatalogoProductos(){
 		var celdaRiesgo=fila.querySelector(".catalogo-riesgo-cell");
 		if(celdaRiesgo && celdaRiesgo.innerHTML.replace(/\s/g,"")==""){
 			celdaRiesgo.innerHTML=catalogoRiesgoBadgeHtml(nivelRiesgo);
+		}
+		var selectorLaboratorio=fila.querySelector("[data-laboratorio-select]");
+		if(selectorLaboratorio){
+			selectorLaboratorio.setAttribute("data-valor-anterior",selectorLaboratorio.value);
+			catalogoLaboratorioEstadoControl(selectorLaboratorio,"","");
 		}
 	}
 	actualizarEstadoResultadosCatalogoProductos();

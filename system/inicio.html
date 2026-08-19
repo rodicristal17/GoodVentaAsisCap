@@ -32,7 +32,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=activos-fijos-20260818-1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=laboratorio-producto-20260819-1" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-4" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=trabajo-laboratorio-20260723-mini-hilo-1" />
@@ -64,7 +64,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/abm.js?x=activos-fijos-20260818-1"></script>
 <script src="/GoodVentaAsisCap/js_system/datosUsuario.js?x=x-ios10v1"></script>
 
-<script src="/GoodVentaAsisCap/js_system/inicio.js?x=historial-pagos-salteados-20260810-1"></script>
+<script src="/GoodVentaAsisCap/js_system/inicio.js?x=laboratorio-producto-20260819-1"></script>
 
 <script src="/GoodVentaAsisCap/js_system/dashboard_shortcuts.js?x=gestor-accesos-20260723-1"></script>
 <script src="/GoodVentaAsisCap/js_system/convertirnroaletras.js?x=x-ios10v2"></script>
@@ -11802,9 +11802,8 @@ style='background-color: #FF5722;'>
 <label class='producto-laboratorio-field'>
 <span>Requiere trabajo de laboratorio</span>
 <select class='inputSelect' id='inptRequiereLaboratorioProducto' onchange='actualizarAyudaConfiguracionLaboratorioProducto()'>
-<option value=''>Heredar de la categoria</option>
-<option value='1'>Si</option>
-<option value='0'>No</option>
+<option value='1'>Si, requiere laboratorio</option>
+<option value='0'>No requiere laboratorio</option>
 </select>
 </label>
 <label class='producto-laboratorio-field'>
@@ -11934,7 +11933,8 @@ style='background-color: #FF5722;'>
 #divAbmProducto1 .catalogo-table-head .td_registro:nth-child(6),#divAbmProducto1 #table_abm_producto td[id="td_datos_4"]{width:9%!important}
 #divAbmProducto1 .catalogo-table-head .td_registro:nth-child(7),#divAbmProducto1 #table_abm_producto td[id="td_datos_105_label"]{width:10%!important}
 #divAbmProducto1 .catalogo-table-head .td_registro:nth-child(8),#divAbmProducto1 #table_abm_producto td[id="td_datos_5"]{width:8%!important}
-#divAbmProducto1 .catalogo-table-head .td_registro:nth-child(9),#divAbmProducto1 #table_abm_producto td[id="td_datos_22"]{width:9%!important}
+#divAbmProducto1 .catalogo-table-head .td_registro:nth-child(9),#divAbmProducto1 #table_abm_producto td[id="td_datos_laboratorio"]{width:9%!important}
+#divAbmProducto1 #table_abm_producto td[id="td_datos_22"]{display:none!important}
 #divAbmProducto1 .catalogo-table-head .td_registro:nth-child(10),#divAbmProducto1 #table_abm_producto td[id="td_datos_local_nombre"]{width:6%!important}
 #divAbmProducto1 .catalogo-table-head .td_registro:nth-child(11),#divAbmProducto1 #table_abm_producto .catalogo-estado-cell{width:4%!important}
 #divAbmProducto1 #table_abm_producto tr.tableRegistroSelec td{background:#edf8f5!important;box-shadow:inset 3px 0 0 #216e5f}
@@ -12126,7 +12126,7 @@ style='background-color: #FF5722;'>
 <td class="td_registro" style="width:9%;">Precio venta</td>
 <td class="td_registro" style="width:10%;">Riesgo financiero</td>
 <td class="td_registro" style="width:8%;">Precio lista</td>
-<td class="td_registro" style="width:9%;">Proveedor</td>
+<td class="td_registro catalogo-laboratorio-head" style="width:9%;">Laboratorio<small>Configuraci&oacute;n por producto</small></td>
 <td class="td_registro" style="width:6%;">Local</td>
 <td class="td_registro" style="width:4%;">Estado</td>
 </tr>
