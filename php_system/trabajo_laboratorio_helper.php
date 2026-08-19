@@ -1897,6 +1897,27 @@ function trabajoLaboratorioEstadoPermiteAccion($estado, $accion)
     return isset($mapa[$accion]) && in_array($estado, $mapa[$accion], true);
 }
 
+function trabajoLaboratorioRecepcionDirectaCompletaLaboratorio(
+    $estado,
+    $codReceptor,
+    $codLocalReceptor,
+    $codTecnicoAsignado,
+    $codLocalTecnico
+) {
+    if (!in_array((string)$estado, array('pendiente_entrega_mecanico', 'ajuste_solicitado'), true)) {
+        return false;
+    }
+    $codReceptor = intval($codReceptor);
+    $codLocalReceptor = intval($codLocalReceptor);
+    $codTecnicoAsignado = intval($codTecnicoAsignado);
+    $codLocalTecnico = intval($codLocalTecnico);
+    if ($codReceptor <= 0 || $codTecnicoAsignado <= 0) {
+        return false;
+    }
+    return $codReceptor === $codTecnicoAsignado
+        || ($codLocalTecnico > 0 && $codLocalReceptor === $codLocalTecnico);
+}
+
 function trabajoLaboratorioResolverAcciones($estado, $contexto)
 {
     $acciones = array(
@@ -7807,8 +7828,11 @@ function trabajoLaboratorioIniciarTransferencia($mysqli, $codUsuario, $entrada)
             }
             $codDestinatarioEntrada = trabajoLaboratorioEntero(isset($entrada['cod_destinatario'])
                 ? $entrada['cod_destinatario'] : 0);
-            if ($codDestinatarioEntrada <= 0
-                || $codDestinatarioEntrada !== intval($tecnico['cod_usuarioFK'])) {
+            /* El tecnico asignado ya define el destino. Se conserva la
+               validacion si un cliente anterior envia otro destinatario, pero
+               la interfaz actual no obliga a volver a seleccionarlo. */
+            if ($codDestinatarioEntrada > 0
+                && $codDestinatarioEntrada !== intval($tecnico['cod_usuarioFK'])) {
                 trabajoLaboratorioLanzar('destinatario_no_autorizado', 'Seleccione al tecnico asignado como destinatario fisico.');
             }
             $evidencias = trabajoLaboratorioNormalizarEvidencias($entrada, 'evidencias');
@@ -8091,6 +8115,7 @@ function trabajoLaboratorioTomarHilo($mysqli, $codUsuario, $entrada, $accionComa
             $destinatarioPrevisto = null;
             $actuaEnRepresentacion = false;
             $completaTransferencia = false;
+            $recepcionDirecta = false;
             if ($estadoAnterior === 'en_transferencia_mecanico'
                 || $estadoAnterior === 'en_transferencia_clinica') {
                 $transferencia = trabajoLaboratorioObtenerTransferenciaPendiente($mysqli, $trabajo);
@@ -8123,31 +8148,65 @@ function trabajoLaboratorioTomarHilo($mysqli, $codUsuario, $entrada, $accionComa
                         $tipoEvento = 'devolucion_confirmada';
                     }
                 }
+            } elseif (in_array($estadoAnterior, array('pendiente_entrega_mecanico', 'ajuste_solicitado'), true)) {
+                /* Registrar una salida es opcional. Si el tecnico asignado o
+                   una cuenta de su local recibe directamente el objeto, la
+                   toma del Hilo completa la llegada sin exigir transferencia
+                   previa ni cambiar retrospectivamente al custodio anterior. */
+                $tecnicoDestino = trabajoLaboratorioObtenerTecnicoFormal(
+                    $mysqli,
+                    intval($trabajo['cod_tecnico_usuarioFK']),
+                    false
+                );
+                if ($tecnicoDestino) {
+                    $usuarioReceptor = trabajoLaboratorioUsuario($mysqli, $codUsuario);
+                    $localReceptor = $usuarioReceptor ? intval($usuarioReceptor['cod_localFK']) : 0;
+                    $destinatarioPrevisto = intval($tecnicoDestino['cod_usuarioFK']);
+                    /* Sin local tecnico no se infiere el local de la clinica:
+                       en ese caso solo el tecnico exacto completa la llegada. */
+                    $localDestino = intval($tecnicoDestino['cod_localFK']);
+                    $actuaEnRepresentacion = $destinatarioPrevisto !== intval($codUsuario);
+                    $completaTransferencia = trabajoLaboratorioRecepcionDirectaCompletaLaboratorio(
+                        $estadoAnterior,
+                        $codUsuario,
+                        $localReceptor,
+                        $destinatarioPrevisto,
+                        $localDestino
+                    );
+                    if ($completaTransferencia) {
+                        $recepcionDirecta = true;
+                        $estadoNuevo = 'en_laboratorio';
+                        $tipoEvento = 'recepcion_mecanico_confirmada';
+                        $remitente = intval($trabajo['cod_custodio_actualFK']);
+                    }
+                }
             }
 
             $versionAnterior = intval($trabajo['version']);
             $versionNueva = $versionAnterior + 1;
             $custodioAnterior = intval($trabajo['cod_custodio_actualFK']);
-            if ($completaTransferencia && $estadoAnterior === 'en_transferencia_mecanico') {
+            if ($completaTransferencia
+                && ($estadoAnterior === 'en_transferencia_mecanico' || $recepcionDirecta)) {
                 $stmt = $mysqli->prepare(
                     'UPDATE trabajo_laboratorio SET estado_derivado=?,cod_custodio_actualFK=?,'
                     .'id_transferencia_pendienteFK=NULL,fecha_retiro=COALESCE(fecha_retiro,NOW()),'
                     .'version=?,fecha_actualizacion=NOW(),cod_usuarioFK_update=? '
                     .'WHERE id=? AND version=? AND cod_custodio_actualFK=? '
-                    ."AND estado_derivado='en_transferencia_mecanico' LIMIT 1"
+                    .'AND estado_derivado=? LIMIT 1'
                 );
                 if (!$stmt) {
                     trabajoLaboratorioLanzar('custodia_no_guardada', 'No se pudo preparar la recepcion del trabajo.');
                 }
                 $stmt->bind_param(
-                    'siiiiii',
+                    'siiiiiis',
                     $estadoNuevo,
                     $codUsuario,
                     $versionNueva,
                     $codUsuario,
                     $idTrabajo,
                     $versionAnterior,
-                    $custodioAnterior
+                    $custodioAnterior,
+                    $estadoAnterior
                 );
             } elseif ($completaTransferencia && $estadoAnterior === 'en_transferencia_clinica') {
                 $stmt = $mysqli->prepare(
@@ -8225,8 +8284,9 @@ function trabajoLaboratorioTomarHilo($mysqli, $codUsuario, $entrada, $accionComa
                         ? $eventoCustodiaAnterior : null,
                     'estado_anterior' => $estadoAnterior,
                     'estado_resultante' => $estadoNuevo,
-                    'transferencia_completada' => $completaTransferencia ? 1 : 0,
+                    'transferencia_completada' => $idTransferencia !== null && $completaTransferencia ? 1 : 0,
                     'transferencia_continua' => $idTransferencia !== null && !$completaTransferencia ? 1 : 0,
+                    'recepcion_directa' => $recepcionDirecta ? 1 : 0,
                     'actuo_en_representacion' => $actuaEnRepresentacion ? 1 : 0,
                     'destinatario_previsto' => $destinatarioPrevisto
                 ),

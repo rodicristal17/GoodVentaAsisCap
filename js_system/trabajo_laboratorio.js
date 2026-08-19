@@ -34,7 +34,7 @@
   "use strict";
 
   var ENDPOINT = "/GoodVentaAsisCap/php_system/abmTrabajoLaboratorio.php";
-  var STYLE_URL = "/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260819-camera-1";
+  var STYLE_URL = "/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260819-direct-custody-1";
   var BRAND_MARK = "/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2";
   var ROOT_ID = "telarTrabajoLaboratorio";
   var PAGE_SIZE = 18;
@@ -87,12 +87,11 @@
       confirmation: "Confirmo el técnico para este trabajo y los trabajos pendientes del mismo código de origen."
     },
     iniciarTransferencia: {
-      label: "Entregar al mecánico dental",
+      label: "Registrar salida (opcional)",
       icon: "fa-arrow-right-arrow-left",
-      recipient: true,
       evidence: true,
       note: true,
-      confirmation: "Confirmo la entrega física y el destinatario indicado."
+      confirmation: "Confirmo que deseo dejar constancia de la salida. La custodia seguirá a mi nombre hasta que otra persona tome el hilo."
     },
     tomarHilo: {
       label: "Tomar el hilo",
@@ -5008,7 +5007,7 @@
       iniciarTrabajo: "Se creará el ciclo Original y la primera evidencia de custodia. Si no elegís técnico, quedará con Técnico pendiente.",
       iniciarTrabajosAgrupados: "Se creará un trabajo independiente por cada selección, todos con el mismo código de origen. Si no elegís técnico, quedarán con Técnico pendiente.",
       asignarTecnico: "Se asignará el técnico a todos los trabajos pendientes del mismo código de origen, sin iniciar el traslado.",
-      iniciarTransferencia: "Se registrará una entrega pendiente hasta que el destinatario confirme la recepción.",
+      iniciarTransferencia: "Este registro es opcional. Deja constancia de la salida hacia el técnico asignado, pero no cambia la custodia ni impide que otra persona tome el hilo directamente.",
       tomarHilo: "Se cerrará el período del custodio anterior y se abrirá un nuevo nodo a nombre del usuario autenticado.",
       registrarNovedad: "La novedad quedará dentro de tu período de custodia, sin transferir el trabajo ni borrar antecedentes.",
       rectificarCustodia: "La corrección administrativa cambiará el responsable actual y conservará el motivo, el actor y la hora para auditoría.",
@@ -5027,6 +5026,19 @@
     var config = state.action.config || {};
     var work = state.action.work || {};
     return asArray(config.destinatarios || config.destinatarios_permitidos || work.destinatarios_permitidos || (state.detailEnvelope && state.detailEnvelope.destinatarios_permitidos) || []);
+  }
+
+  function automaticTransferDestination() {
+    var recipients = eligibleRecipients();
+    return recipients.length ? person(recipients[0], "Mecánico dental") : null;
+  }
+
+  function transferDestinationHtml() {
+    var destination = automaticTransferDestination();
+    if (!destination) {
+      return '<section class="tlab-transfer-destination is-warning"><i class="fa-solid fa-user-clock" aria-hidden="true"></i><span><small>Salida opcional</small><strong>Técnico no disponible</strong><em>No necesitás registrar esta salida para guardar ni continuar el trabajo.</em></span></section>';
+    }
+    return '<section class="tlab-transfer-destination"><div>' + avatarHtml(destination) + '<span><small>Destino previsto automático</small><strong>' + escapeHtml(destination.name) + '</strong><em>' + escapeHtml(destination.role || "Mecánico dental") + '</em></span></div><p><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Seguirás siendo custodio hasta que otra persona confirme <strong>Tomar el hilo</strong>.</p></section>';
   }
 
   function adjustmentReasons() {
@@ -5145,6 +5157,9 @@
     if (action.code === "rectificarCustodia") {
       fields.push(selectField("Nuevo custodio interno", "cod_custodio_rectificado", custodyCorrectionPeople(), values.cod_custodio_rectificado, true, "Seleccionar usuario Telar", "Es una corrección administrativa; no representa una recepción normal."));
     }
+    if (action.code === "iniciarTransferencia") {
+      fields.push(transferDestinationHtml());
+    }
     if (config.recipient || boolValue(config.requiere_destinatario)) {
       recipients = eligibleRecipients();
       fields.push(selectField("Destinatario físico", "cod_destinatario", recipients, values.cod_destinatario, true, "Seleccionar destinatario autorizado"));
@@ -5217,7 +5232,10 @@
     var recipient = selectedOptionLabel("cod_destinatario");
     var mechanic = selectedOptionLabel("cod_tecnico_usuario");
     var correctedCustodian = selectedOptionLabel("cod_custodio_rectificado");
+    var automaticDestination = action.code === "iniciarTransferencia" ? automaticTransferDestination() : null;
     if (recipient) { items.push("Destinatario: " + recipient); }
+    if (automaticDestination) { items.push("Destino previsto: " + automaticDestination.name + " (automático)"); }
+    if (action.code === "iniciarTransferencia") { items.push("Custodia: seguirá con el responsable actual hasta que otra persona tome el hilo"); }
     if (mechanic) { items.push("Técnico: " + mechanic); }
     else if (isStartAction(action.code)) { items.push("Técnico: Técnico pendiente"); }
     if (correctedCustodian) { items.push("Nuevo custodio: " + correctedCustodian); }

@@ -443,6 +443,27 @@ pruebaLabAfirmar(
     )),
     'Una cuenta formal de tecnico tambien puede asumir una recepcion como cualquier cuenta autenticada activa.'
 );
+pruebaLabAfirmar(
+    trabajoLaboratorioRecepcionDirectaCompletaLaboratorio(
+        'pendiente_entrega_mecanico', 25, 3, 25, 7
+    ),
+    'El tecnico asignado puede recibir directamente sin una salida registrada.'
+);
+pruebaLabAfirmar(
+    trabajoLaboratorioRecepcionDirectaCompletaLaboratorio(
+        'ajuste_solicitado', 31, 7, 25, 7
+    ),
+    'Una cuenta del local del tecnico puede completar una recepcion directa en representacion.'
+);
+pruebaLabAfirmar(
+    !trabajoLaboratorioRecepcionDirectaCompletaLaboratorio(
+        'pendiente_entrega_mecanico', 31, 4, 25, 7
+    )
+    && !trabajoLaboratorioRecepcionDirectaCompletaLaboratorio(
+        'en_laboratorio', 25, 7, 25, 7
+    ),
+    'Una cuenta ajena al destino o un estado posterior no completan una llegada directa.'
+);
 
 $accionesLaboratorio = array(
     'asignarTecnico', 'iniciarTransferencia', 'tomarHilo', 'agregarEvidencia', 'agregarNota',
@@ -1185,7 +1206,7 @@ pruebaLabAfirmar(
     'Migrar ubicaciones autoriza antes de escribir, usa transaccion completa y comunica rechazos.'
 );
 pruebaLabAfirmar(
-    strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260819-camera-1') !== false,
+    strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260819-direct-custody-1') !== false,
     'La carga dinamica usa la misma version vigente de estilos del modulo.'
 );
 $bloqueCargaInicial = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'loadInitialData');
@@ -1197,7 +1218,7 @@ pruebaLabAfirmar(
     && strpos($bloqueCargaTrabajos, 'payload.respuesta_compacta = "1"') !== false
     && strpos($bloqueCargaCatalogos, 'respuesta_compacta: "1"') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'CATALOG_CACHE_MS = 5 * 60 * 1000') !== false
-    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260819-camera-1') !== false,
+    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260819-direct-custody-1') !== false,
     'La bandeja abre con su listado, difiere los catalogos y reutiliza su cache sin bloquear la vista.'
 );
 pruebaLabAfirmar(
@@ -1329,6 +1350,11 @@ pruebaLabAfirmar(
     'Las confirmaciones anteriores son aliases estrictos de Tomar el hilo y no conservan una escritura paralela.'
 );
 $bloqueTomarHilo = $bloquesTransicion['trabajoLaboratorioTomarHilo'];
+$bloqueIniciarTransferencia = $bloquesTransicion['trabajoLaboratorioIniciarTransferencia'];
+$bloqueRecepcionDirecta = pruebaLabBloqueFuncion(
+    $fuenteHelper,
+    'trabajoLaboratorioRecepcionDirectaCompletaLaboratorio'
+);
 $bloqueActualizarDatos = pruebaLabBloqueFuncion(
     $fuenteHelper,
     'trabajoLaboratorioActualizarDatos'
@@ -1429,6 +1455,24 @@ pruebaLabAfirmar(
     && strpos($bloqueTomarHilo, "'destinatario_no_autorizado'") === false
     && strpos($bloqueTomarHilo, "'receptor_clinica_invalido'") === false,
     'El usuario autenticado toma para si; un destinatario previsto distinto queda trazado como representacion.'
+);
+pruebaLabAfirmar(
+    strpos($bloqueIniciarTransferencia, '$codDestinatarioEntrada > 0') !== false
+    && strpos($bloqueIniciarTransferencia, '$codDestinatarioEntrada !== intval($tecnico[\'cod_usuarioFK\'])') !== false
+    && strpos($bloqueIniciarTransferencia, 'trabajoLaboratorioInsertarTransferencia') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'label: "Registrar salida (opcional)"') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'Destino previsto automático') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'Seleccioná el destinatario físico.') !== false,
+    'La salida es opcional, deriva al tecnico asignado y conserva la seleccion manual solo para otros recorridos.'
+);
+pruebaLabAfirmar(
+    $bloqueRecepcionDirecta !== ''
+    && strpos($bloqueRecepcionDirecta, "array('pendiente_entrega_mecanico', 'ajuste_solicitado')") !== false
+    && strpos($bloqueTomarHilo, 'trabajoLaboratorioRecepcionDirectaCompletaLaboratorio') !== false
+    && strpos($bloqueTomarHilo, '$recepcionDirecta = true;') !== false
+    && strpos($bloqueTomarHilo, "'recepcion_directa' =>") !== false
+    && strpos($bloqueTomarHilo, "'transferencia_completada' => \$idTransferencia !== null") !== false,
+    'Tomar el hilo puede completar la llegada al laboratorio sin exigir una transferencia previa.'
 );
 pruebaLabAfirmar(
     strpos($bloqueExigirAccion, 'trabajoLaboratorioExigirAcceso') !== false
@@ -2084,7 +2128,7 @@ pruebaLabAfirmar(
     && strpos($fuenteTrabajoLaboratorioJs, '!toStringSafe(values.motivo_excepcion).trim()') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'motivo_excepcion).trim().length < 5') === false
     && strpos($fuenteTrabajoLaboratorioJs, 'action.code === "rectificarCustodia" && toStringSafe(values.justificacion).trim().length < 5') === false
-    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260819-camera-1') !== false,
+    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260819-direct-custody-1') !== false,
     'La interfaz ofrece una observacion inicial opcional y solo exige contenido, sin minimo, en otras excepciones.'
 );
 $bloqueGuardarRegularizacion = pruebaLabBloqueFuncion(

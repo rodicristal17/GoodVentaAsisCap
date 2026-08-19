@@ -3317,6 +3317,32 @@ button[aria-pressed="true"] .tlab-group-count {
 .tlab-action-context small { color: var(--tlab-muted); font-size: 9px; text-transform: uppercase; }
 .tlab-action-context strong { overflow-wrap: anywhere; margin-top: 2px; color: var(--tlab-navy); font-size: 11px; }
 
+.tlab-shell .tlab-transfer-destination {
+  grid-column: 1 / -1;
+  padding: 11px;
+  border: 1px solid #b9ddd7;
+  border-radius: 12px;
+  background: #effaf8;
+}
+
+.tlab-shell .tlab-transfer-destination > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.tlab-shell .tlab-transfer-destination > div > span,
+.tlab-shell .tlab-transfer-destination > div small,
+.tlab-shell .tlab-transfer-destination > div strong,
+.tlab-shell .tlab-transfer-destination > div em { display: block; min-width: 0; }
+.tlab-shell .tlab-transfer-destination small { color: #54756f; font-size: 8px; font-weight: 900; text-transform: uppercase; }
+.tlab-shell .tlab-transfer-destination strong { margin-top: 2px; color: var(--tlab-navy); font-size: 12px; }
+.tlab-shell .tlab-transfer-destination em { margin-top: 1px; color: var(--tlab-muted); font-size: 9px; font-style: normal; }
+.tlab-shell .tlab-transfer-destination p { margin: 9px 0 0; padding-top: 8px; border-top: 1px solid #cfe8e4; color: #355f59; font-size: 10px; }
+.tlab-shell .tlab-transfer-destination p i { margin-right: 4px; color: var(--tlab-teal); }
+.tlab-shell .tlab-transfer-destination.is-warning { display: flex; align-items: center; gap: 9px; border-color: #eed49a; background: #fff9eb; }
+.tlab-shell .tlab-transfer-destination.is-warning > i { color: #b77a09; }
+
 .tlab-grouped-origin {
   display: grid;
   gap: 9px;
