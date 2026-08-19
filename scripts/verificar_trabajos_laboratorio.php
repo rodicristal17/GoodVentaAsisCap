@@ -1176,7 +1176,7 @@ pruebaLabAfirmar(
     'Migrar ubicaciones autoriza antes de escribir, usa transaccion completa y comunica rechazos.'
 );
 pruebaLabAfirmar(
-    strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260725-02') !== false,
+    strpos($fuenteTrabajoLaboratorioJs, 'trabajo_laboratorio.css?v=20260819-camera-1') !== false,
     'La carga dinamica usa la misma version vigente de estilos del modulo.'
 );
 $bloqueCargaInicial = pruebaLabBloqueJavascript($fuenteTrabajoLaboratorioJs, 'loadInitialData');
@@ -1188,7 +1188,7 @@ pruebaLabAfirmar(
     && strpos($bloqueCargaTrabajos, 'payload.respuesta_compacta = "1"') !== false
     && strpos($bloqueCargaCatalogos, 'respuesta_compacta: "1"') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'CATALOG_CACHE_MS = 5 * 60 * 1000') !== false
-    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260725-03') !== false,
+    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260819-camera-1') !== false,
     'La bandeja abre con su listado, difiere los catalogos y reutiliza su cache sin bloquear la vista.'
 );
 pruebaLabAfirmar(
@@ -1553,6 +1553,25 @@ pruebaLabAfirmar(
     'La interfaz adopta los limites del servidor y muestra tres archivos de 2 MB como valores seguros iniciales.'
 );
 pruebaLabAfirmar(
+    strpos($fuenteTrabajoLaboratorioJs, 'navigator.mediaDevices.getUserMedia') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'facingMode: { ideal: camera.facing }') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'data-tlab-command="capture-camera"') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'data-tlab-command="open-camera-action"') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'data-tlab-command="open-camera-node"') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'cameraFallbackInputHtml') !== false,
+    'La cámara integrada cubre acciones y nodos, prioriza la cámara trasera y conserva una alternativa externa.'
+);
+pruebaLabAfirmar(
+    strpos($fuenteTrabajoLaboratorioJs, 'readBlobAsArrayBuffer') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'prepareMediaSelection(fileList') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'IMAGE_MAX_DIMENSION = 1920') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'encodeCanvasWithinLimit') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, '_tlabDataUrl') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'action.filesProcessing') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'state.nodeFilesProcessing') !== false,
+    'Android se copia de inmediato, las fotos se optimizan y ningún flujo confirma mientras la evidencia está en preparación.'
+);
+pruebaLabAfirmar(
     $bloqueRegistrarNovedad !== ''
     && strpos($bloqueRegistrarNovedad, "'registrarNovedad'") !== false
     && strpos($bloqueRegistrarNovedad, "'novedad_custodia'") !== false
@@ -1876,7 +1895,8 @@ pruebaLabAfirmar(
     && strpos($bloqueNodeEditor, 'nodeSelectHtml("Doctor"') === false
     && strpos($bloqueNodeEditor, 'canManageWorkCost()') !== false
     && strpos($bloqueNodeEditor, 'name="condicion_recepcion"') !== false
-    && strpos($bloqueNodeEditor, 'data-tlab-node-file-input') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'function nodeMediaPickerHtml()') !== false
+    && strpos($fuenteTrabajoLaboratorioJs, 'data-tlab-node-file-input') !== false
     && strpos($bloqueNodeEditor, 'name="sin_foto"') === false
     && strpos($bloqueSubmitNode, 'Agregá al menos una fotografía nueva') !== false
     && strpos($bloqueSubmitNode, 'datos_trabajo:') !== false
@@ -2055,7 +2075,7 @@ pruebaLabAfirmar(
     && strpos($fuenteTrabajoLaboratorioJs, '!toStringSafe(values.motivo_excepcion).trim()') !== false
     && strpos($fuenteTrabajoLaboratorioJs, 'motivo_excepcion).trim().length < 5') === false
     && strpos($fuenteTrabajoLaboratorioJs, 'action.code === "rectificarCustodia" && toStringSafe(values.justificacion).trim().length < 5') === false
-    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260725-03') !== false,
+    && strpos($fuenteInicioHtml, 'trabajo-laboratorio-20260819-camera-1') !== false,
     'La interfaz ofrece una observacion inicial opcional y solo exige contenido, sin minimo, en otras excepciones.'
 );
 $bloqueGuardarRegularizacion = pruebaLabBloqueFuncion(

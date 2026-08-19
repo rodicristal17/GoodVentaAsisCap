@@ -34,13 +34,17 @@
   "use strict";
 
   var ENDPOINT = "/GoodVentaAsisCap/php_system/abmTrabajoLaboratorio.php";
-  var STYLE_URL = "/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260725-02";
+  var STYLE_URL = "/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260819-camera-1";
   var BRAND_MARK = "/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2";
   var ROOT_ID = "telarTrabajoLaboratorio";
   var PAGE_SIZE = 18;
   var CATALOG_CACHE_MS = 5 * 60 * 1000;
   var MAX_FILES = 3;
   var MAX_FILE_SIZE = 2 * 1024 * 1024;
+  var IMAGE_TARGET_SIZE = 1536 * 1024;
+  var IMAGE_MAX_DIMENSION = 1920;
+  var IMAGE_INPUT_MAX_SIZE = 30 * 1024 * 1024;
+  var IMAGE_INPUT_MAX_PIXELS = 40000000;
   var IMAGE_TYPES = { "image/jpeg": true, "image/png": true, "image/webp": true };
   var DOCUMENT_TYPES = { "application/pdf": true };
 
@@ -250,7 +254,10 @@
     nodeDetailCache: {},
     nodeEditor: null,
     nodeFiles: [],
-    nodeObjectUrls: []
+    nodeObjectUrls: [],
+    nodeFilesProcessing: false,
+    camera: null,
+    cameraRequest: 0
   };
 
   function toStringSafe(value) {
@@ -348,6 +355,236 @@
     return (Math.abs(megabytes - Math.round(megabytes)) < 0.01
       ? Math.round(megabytes).toString()
       : megabytes.toFixed(1).replace(".", ",")) + " MB";
+  }
+
+  function mediaFileName(file, fallback) {
+    return toStringSafe(file && file.name).trim() || fallback || "fotografia.jpg";
+  }
+
+  function imageMimeFromFile(file) {
+    var type = toStringSafe(file && file.type).toLowerCase().split(";")[0];
+    var name = mediaFileName(file, "").toLowerCase();
+    if (IMAGE_TYPES[type]) { return type; }
+    if (/\.jpe?g$/.test(name)) { return "image/jpeg"; }
+    if (/\.png$/.test(name)) { return "image/png"; }
+    if (/\.webp$/.test(name)) { return "image/webp"; }
+    return type;
+  }
+
+  function readBlobAsArrayBuffer(blob) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function (event) { resolve(event.target.result); };
+      reader.onerror = function () {
+        reject(new Error("La cámara no devolvió una fotografía legible. Volvé a tomarla o elegila de la galería."));
+      };
+      reader.onabort = function () {
+        reject(new Error("La selección de la fotografía se interrumpió. Podés intentarlo nuevamente sin perder los datos."));
+      };
+      reader.readAsArrayBuffer(blob);
+    });
+  }
+
+  function readBlobAsDataUrl(blob) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function (event) { resolve(event.target.result || ""); };
+      reader.onerror = function () { reject(new Error("No se pudo preparar la fotografía para guardarla.")); };
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function namedMediaBlob(blob, name, type, metadata) {
+    var named;
+    var properties = metadata || {};
+    try {
+      named = new File([blob], name, { type: type || blob.type, lastModified: Date.now() });
+    } catch (ignore) {
+      named = new Blob([blob], { type: type || blob.type });
+      try { named.name = name; } catch (ignoreName) {}
+    }
+    Object.keys(properties).forEach(function (key) {
+      try { named[key] = properties[key]; } catch (ignoreProperty) {}
+    });
+    return named;
+  }
+
+  function loadImageBlob(blob) {
+    return new Promise(function (resolve, reject) {
+      var image = new Image();
+      var url = URL.createObjectURL(blob);
+      image.onload = function () {
+        URL.revokeObjectURL(url);
+        resolve(image);
+      };
+      image.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error("La fotografía no pudo abrirse. Usá JPG, PNG o WEBP, o volvé a tomarla."));
+      };
+      image.src = url;
+    });
+  }
+
+  function canvasToJpeg(canvas, quality) {
+    return new Promise(function (resolve, reject) {
+      if (canvas.toBlob) {
+        canvas.toBlob(function (blob) {
+          if (blob) { resolve(blob); }
+          else { reject(new Error("No se pudo optimizar la fotografía en este dispositivo.")); }
+        }, "image/jpeg", quality);
+        return;
+      }
+      try {
+        var dataUrl = canvas.toDataURL("image/jpeg", quality);
+        var encoded = dataUrl.split(",")[1] || "";
+        var binary = window.atob(encoded);
+        var bytes = new Uint8Array(binary.length);
+        var i;
+        for (i = 0; i < binary.length; i += 1) { bytes[i] = binary.charCodeAt(i); }
+        resolve(new Blob([bytes], { type: "image/jpeg" }));
+      } catch (error) {
+        reject(new Error("No se pudo optimizar la fotografía en este dispositivo."));
+      }
+    });
+  }
+
+  function encodeCanvasWithinLimit(canvas, targetBytes, qualityIndex) {
+    var qualities = [0.88, 0.80, 0.72, 0.64, 0.56];
+    var index = qualityIndex || 0;
+    return canvasToJpeg(canvas, qualities[index]).then(function (blob) {
+      var smaller;
+      var context;
+      if (blob.size <= targetBytes || index >= qualities.length - 1) {
+        if (blob.size <= MAX_FILE_SIZE) { return blob; }
+        if (canvas.width <= 960 && canvas.height <= 960) {
+          throw new Error("La fotografía sigue siendo demasiado pesada después de optimizarla. Volvé a tomarla con menos zoom.");
+        }
+        smaller = document.createElement("canvas");
+        smaller.width = Math.max(1, Math.round(canvas.width * 0.78));
+        smaller.height = Math.max(1, Math.round(canvas.height * 0.78));
+        context = smaller.getContext("2d");
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, smaller.width, smaller.height);
+        context.drawImage(canvas, 0, 0, smaller.width, smaller.height);
+        return encodeCanvasWithinLimit(smaller, targetBytes, 0);
+      }
+      return encodeCanvasWithinLimit(canvas, targetBytes, index + 1);
+    });
+  }
+
+  function preparedImageFromRecord(record) {
+    var source = new Blob([record.buffer], { type: record.mime });
+    return loadImageBlob(source).then(function (image) {
+      var width = image.naturalWidth || image.width;
+      var height = image.naturalHeight || image.height;
+      var pixels = width * height;
+      var scale;
+      var canvas;
+      var context;
+      var targetBytes = Math.max(64 * 1024, Math.min(IMAGE_TARGET_SIZE, Math.floor(MAX_FILE_SIZE * 0.82)));
+      var needsOptimization = source.size > targetBytes || Math.max(width, height) > IMAGE_MAX_DIMENSION;
+      if (!width || !height || pixels > IMAGE_INPUT_MAX_PIXELS) {
+        throw new Error("La resolución de la fotografía es demasiado alta para procesarla de forma segura. Elegí una foto normal, no una panorámica.");
+      }
+      if (!needsOptimization) {
+        return { blob: source, type: record.mime, width: width, height: height, optimized: false };
+      }
+      scale = Math.min(1, IMAGE_MAX_DIMENSION / Math.max(width, height));
+      canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
+      context = canvas.getContext("2d");
+      if (!context) { throw new Error("La tablet no pudo preparar la fotografía. Probá nuevamente o elegila de la galería."); }
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      return encodeCanvasWithinLimit(canvas, targetBytes, 0).then(function (blob) {
+        return { blob: blob, type: "image/jpeg", width: canvas.width, height: canvas.height, optimized: true };
+      });
+    }).then(function (prepared) {
+      var originalName = mediaFileName(record.file, "fotografia.jpg");
+      var outputName = prepared.optimized
+        ? originalName.replace(/\.[^.]+$/, "") + ".jpg"
+        : originalName;
+      var named = namedMediaBlob(prepared.blob, outputName, prepared.type, {
+        _tlabOriginalName: originalName,
+        _tlabOriginalSize: record.file.size,
+        _tlabWidth: prepared.width,
+        _tlabHeight: prepared.height,
+        _tlabOptimized: prepared.optimized
+      });
+      return readBlobAsDataUrl(named).then(function (dataUrl) {
+        try { named._tlabDataUrl = dataUrl; } catch (ignore) {}
+        return named;
+      });
+    });
+  }
+
+  function preparedDocumentFromRecord(record) {
+    var blob = new Blob([record.buffer], { type: "application/pdf" });
+    if (blob.size > MAX_FILE_SIZE) {
+      return Promise.reject(new Error("El documento supera " + formatFileLimit(MAX_FILE_SIZE) + ". Las fotografías sí se optimizan automáticamente; los PDF deben respetar ese límite."));
+    }
+    return Promise.resolve(namedMediaBlob(blob, mediaFileName(record.file, "documento.pdf"), "application/pdf"));
+  }
+
+  function readSelectedMedia(file, allowDocuments) {
+    var mime = imageMimeFromFile(file);
+    var isDocument = toStringSafe(file && file.type).toLowerCase() === "application/pdf"
+      || /\.pdf$/i.test(mediaFileName(file, ""));
+    if (isDocument && !allowDocuments) {
+      return Promise.resolve({ error: "En esta acción se requieren fotografías JPG, PNG o WEBP." });
+    }
+    if (!isDocument && !IMAGE_TYPES[mime]) {
+      return Promise.resolve({ error: allowDocuments
+        ? "Usá fotografías JPG, PNG o WEBP, o un documento PDF."
+        : "Usá una fotografía JPG, PNG o WEBP. Si la cámara guarda HEIC, elegí JPG en sus ajustes." });
+    }
+    if (!isDocument && numberValue(file.size, 0) > IMAGE_INPUT_MAX_SIZE) {
+      return Promise.resolve({ error: "La fotografía es excepcionalmente grande y la tablet no puede procesarla de forma segura. Volvé a tomarla con resolución normal." });
+    }
+    if (isDocument && numberValue(file.size, 0) > MAX_FILE_SIZE) {
+      return Promise.resolve({ error: "El documento supera " + formatFileLimit(MAX_FILE_SIZE) + "." });
+    }
+    return readBlobAsArrayBuffer(file).then(function (buffer) {
+      if (!buffer || !buffer.byteLength) { throw new Error("La fotografía seleccionada está vacía."); }
+      return { file: file, buffer: buffer, mime: isDocument ? "application/pdf" : mime, document: isDocument };
+    }).then(null, function (error) {
+      return { error: error.message || "No se pudo leer el archivo seleccionado." };
+    });
+  }
+
+  function prepareMediaSelection(fileList, allowDocuments, availableSlots) {
+    var selected = Array.prototype.slice.call(fileList || []);
+    var overflow = selected.length > availableSlots;
+    var reads = selected.slice(0, Math.max(0, availableSlots)).map(function (file) {
+      return readSelectedMedia(file, allowDocuments);
+    });
+    return Promise.all(reads).then(function (records) {
+      var result = { files: [], error: overflow ? "Podés adjuntar hasta " + MAX_FILES + " archivos por acción." : "" };
+      var chain = Promise.resolve();
+      records.forEach(function (record) {
+        chain = chain.then(function () {
+          if (record.error) {
+            if (!result.error) { result.error = record.error; }
+            return;
+          }
+          return (record.document ? preparedDocumentFromRecord(record) : preparedImageFromRecord(record)).then(function (file) {
+            result.files.push(file);
+          }).then(null, function (error) {
+            if (!result.error) { result.error = error.message || "No se pudo preparar uno de los archivos."; }
+          });
+        });
+      });
+      return chain.then(function () { return result; });
+    });
+  }
+
+  function releasePreparedMedia(files) {
+    asArray(files).forEach(function (file) {
+      var url = file && (file._tlabUrl || file._tlabNodeUrl);
+      if (url) { try { URL.revokeObjectURL(url); } catch (ignore) {} }
+    });
   }
 
   function initials(name) {
@@ -568,6 +805,222 @@
     });
   }
 
+  function cameraTargetAvailable(target) {
+    if (target === "action") { return !!state.action; }
+    return !!(state.nodeEditor || state.historicalResolver);
+  }
+
+  function stopCameraStream(stream) {
+    if (!stream || !stream.getTracks) { return; }
+    stream.getTracks().forEach(function (track) {
+      try { track.stop(); } catch (ignore) {}
+    });
+  }
+
+  function closeCamera(returnFocus) {
+    var camera = state.camera;
+    var layer = state.root && state.root.querySelector("#tlabCameraLayer");
+    state.cameraRequest += 1;
+    state.camera = null;
+    if (camera) { stopCameraStream(camera.stream); }
+    if (layer) {
+      layer.hidden = true;
+      layer.innerHTML = "";
+    }
+    if (returnFocus !== false && camera && camera.returnFocus
+        && document.documentElement.contains(camera.returnFocus)
+        && typeof camera.returnFocus.focus === "function") {
+      camera.returnFocus.focus();
+    }
+  }
+
+  function cameraFallbackInputHtml(target) {
+    var attribute = target === "node" ? "data-tlab-node-file-input" : "data-tlab-file-input";
+    return '<label class="tlab-camera-fallback"><i class="fa-solid fa-camera" aria-hidden="true"></i><span><strong>Usar cámara del dispositivo</strong><small>Telar conservará este formulario y preparará la foto apenas regreses.</small></span><input type="file" accept="image/jpeg,image/png,image/webp,image/*" capture="environment" ' + attribute + ' aria-label="Abrir la cámara del dispositivo"></label>';
+  }
+
+  function renderCameraLayer() {
+    var camera = state.camera;
+    var layer = state.root && state.root.querySelector("#tlabCameraLayer");
+    var content;
+    var footer;
+    if (!layer || !camera) {
+      if (layer) { layer.hidden = true; layer.innerHTML = ""; }
+      return;
+    }
+    if (camera.error) {
+      content = '<div class="tlab-camera-state tlab-camera-state--error"><i class="fa-solid fa-camera-rotate" aria-hidden="true"></i><strong>No se pudo mantener la cámara dentro de Telar</strong><p>' + escapeHtml(camera.error) + '</p>' + cameraFallbackInputHtml(camera.target) + '<label class="tlab-camera-gallery"><i class="fa-solid fa-images" aria-hidden="true"></i><span>Elegir de galería</span><input type="file" accept="image/jpeg,image/png,image/webp,image/*" ' + (camera.target === "node" ? "data-tlab-node-file-input" : "data-tlab-file-input") + '></label></div>';
+      footer = '<button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="close-camera">Volver al formulario</button>';
+    } else if (camera.starting) {
+      content = '<div class="tlab-camera-state">' + loaderHtml("Preparando la cámara...", "compact") + '<p>Si Android solicita permiso, elegí Permitir mientras usás Telar.</p></div>';
+      footer = '<button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="close-camera">Cancelar</button>';
+    } else {
+      content = '<div class="tlab-camera-viewport"><video id="tlabCameraPreview" autoplay muted playsinline aria-label="Vista de la cámara"></video><span><i class="fa-solid fa-circle" aria-hidden="true"></i>Cámara lista</span></div>';
+      footer = '<button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="close-camera">Cancelar</button><button type="button" class="tlab-button tlab-button--ghost" data-tlab-command="switch-camera"><i class="fa-solid fa-camera-rotate" aria-hidden="true"></i>Cambiar cámara</button><button type="button" class="tlab-button tlab-button--primary" data-tlab-command="capture-camera"><i class="fa-solid fa-camera" aria-hidden="true"></i>Tomar fotografía</button>';
+    }
+    layer.innerHTML = '<section class="tlab-camera-dialog" role="dialog" aria-modal="true" aria-labelledby="tlabCameraTitle"><header><div><small>Evidencia fotográfica</small><h2 id="tlabCameraTitle">Tomar foto sin salir de Telar</h2></div><button type="button" class="tlab-icon-button tlab-icon-button--light" data-tlab-command="close-camera" aria-label="Cerrar cámara"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header><div class="tlab-camera-dialog__body">' + content + '</div><footer>' + footer + '</footer></section>';
+    layer.hidden = false;
+    if (camera.stream && !camera.starting && !camera.error) {
+      window.setTimeout(function () {
+        var video = state.root && state.root.querySelector("#tlabCameraPreview");
+        if (!video || state.camera !== camera) { return; }
+        try {
+          video.srcObject = camera.stream;
+          var playResult = video.play();
+          if (playResult && playResult.then) { playResult.then(null, function () {}); }
+        } catch (error) {
+          camera.error = "Android no pudo mostrar la vista previa. Podés continuar con la cámara del dispositivo o la galería.";
+          stopCameraStream(camera.stream);
+          camera.stream = null;
+          renderCameraLayer();
+        }
+      }, 0);
+    }
+  }
+
+  function cameraErrorMessage(error) {
+    var name = toStringSafe(error && error.name);
+    if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+      return "El permiso de cámara está bloqueado. Podés habilitarlo en el candado del navegador o continuar con la cámara del dispositivo.";
+    }
+    if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+      return "Android no informó una cámara disponible al navegador.";
+    }
+    if (name === "NotReadableError" || name === "TrackStartError") {
+      return "Otra aplicación está usando la cámara. Cerrala y probá nuevamente, o usá la cámara del dispositivo.";
+    }
+    return "La cámara integrada no está disponible en esta conexión. Podés continuar sin perder los datos usando la cámara del dispositivo o la galería.";
+  }
+
+  function requestCameraStream(camera, requestId, genericConstraints) {
+    var constraints = genericConstraints
+      ? { video: true, audio: false }
+      : { video: { facingMode: { ideal: camera.facing }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false };
+    navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+      var current = state.camera;
+      if (!current || current !== camera || requestId !== state.cameraRequest || !cameraTargetAvailable(camera.target)) {
+        stopCameraStream(stream);
+        return;
+      }
+      camera.stream = stream;
+      camera.starting = false;
+      camera.error = "";
+      renderCameraLayer();
+    }).then(null, function (error) {
+      var name = toStringSafe(error && error.name);
+      if (!genericConstraints && (name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError")) {
+        requestCameraStream(camera, requestId, true);
+        return;
+      }
+      if (state.camera !== camera || requestId !== state.cameraRequest) { return; }
+      camera.starting = false;
+      camera.error = cameraErrorMessage(error);
+      renderCameraLayer();
+    });
+  }
+
+  function openCamera(target) {
+    var used = target === "action" && state.action ? state.action.files.length : state.nodeFiles.length;
+    var camera;
+    if (!cameraTargetAvailable(target)) { return; }
+    /* La cámara integrada también puede redibujar el formulario al regresar.
+       Guardamos sus valores antes de abrirla, igual que en el selector externo. */
+    if (target === "action") {
+      captureActionValues();
+    } else if (state.historicalResolver) {
+      captureHistoricalResolverValues();
+    } else if (state.nodeEditor) {
+      state.nodeEditor.values = Object.assign({}, state.nodeEditor.values, nodeFormValues());
+    }
+    if ((target === "action" && state.action.filesProcessing) || (target === "node" && state.nodeFilesProcessing)) {
+      notify("Telar todavía está preparando la fotografía anterior.", "info");
+      return;
+    }
+    if (used >= MAX_FILES) {
+      notify("Ya alcanzaste el máximo de " + MAX_FILES + " fotografías.", "info");
+      return;
+    }
+    closeCamera(false);
+    camera = {
+      target: target,
+      facing: "environment",
+      starting: true,
+      capturing: false,
+      error: "",
+      stream: null,
+      returnFocus: document.activeElement
+    };
+    state.camera = camera;
+    state.cameraRequest += 1;
+    renderCameraLayer();
+    if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      camera.starting = false;
+      camera.error = "Esta tablet no autorizó la cámara dentro de la página. El formulario seguirá abierto mientras usás la cámara del dispositivo.";
+      renderCameraLayer();
+      return;
+    }
+    requestCameraStream(camera, state.cameraRequest, false);
+  }
+
+  function switchCamera() {
+    var camera = state.camera;
+    if (!camera || camera.starting || camera.capturing) { return; }
+    stopCameraStream(camera.stream);
+    camera.stream = null;
+    camera.facing = camera.facing === "environment" ? "user" : "environment";
+    camera.starting = true;
+    camera.error = "";
+    state.cameraRequest += 1;
+    renderCameraLayer();
+    requestCameraStream(camera, state.cameraRequest, false);
+  }
+
+  function captureCameraPhoto() {
+    var camera = state.camera;
+    var video = state.root && state.root.querySelector("#tlabCameraPreview");
+    var button = state.root && state.root.querySelector('[data-tlab-command="capture-camera"]');
+    var width;
+    var height;
+    var scale;
+    var canvas;
+    var context;
+    if (!camera || camera.capturing || !video || video.readyState < 2) {
+      notify("Esperá un instante hasta que la cámara muestre la imagen.", "info");
+      return;
+    }
+    width = video.videoWidth;
+    height = video.videoHeight;
+    if (!width || !height) { notify("La cámara todavía no está lista.", "info"); return; }
+    camera.capturing = true;
+    if (button) { button.disabled = true; button.innerHTML = '<i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>Preparando...'; }
+    scale = Math.min(1, IMAGE_MAX_DIMENSION / Math.max(width, height));
+    canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
+    context = canvas.getContext("2d");
+    if (!context) {
+      camera.capturing = false;
+      notify("La tablet no pudo preparar la fotografía. Podés usar la cámara del dispositivo.", "error");
+      return;
+    }
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvasToJpeg(canvas, 0.88).then(function (blob) {
+      var target = camera.target;
+      var named = namedMediaBlob(blob, "fotografia-" + Date.now() + ".jpg", "image/jpeg");
+      closeCamera(false);
+      if (target === "node") { addNodeFiles([named]); }
+      else { addFiles([named]); }
+    }).then(null, function (error) {
+      if (state.camera === camera) {
+        camera.capturing = false;
+        camera.error = error.message || "No se pudo preparar la fotografía.";
+        renderCameraLayer();
+      }
+    });
+  }
+
   function rootTemplate() {
     return ''
       + '<div class="tlab-app" role="application" aria-label="Trabajos de laboratorio dental">'
@@ -615,6 +1068,7 @@
       + '<div class="tlab-node-popover" id="tlabNodePopover" role="dialog" aria-modal="false" aria-label="Detalle del evento" hidden></div>'
       + '<div class="tlab-dialog-layer" id="tlabActionLayer" hidden></div>'
       + '<div class="tlab-viewer-layer" id="tlabViewerLayer" hidden></div>'
+      + '<div class="tlab-camera-layer" id="tlabCameraLayer" hidden></div>'
       + '<div class="tlab-live-region" id="tlabLiveRegion" aria-live="polite" aria-atomic="true"></div>';
   }
 
@@ -676,8 +1130,9 @@
     var nodeAction = event.target.closest("[data-tlab-popover-action]");
     var nodePreviewRemove = event.target.closest("[data-tlab-node-preview-remove]");
     var popover = event.target.closest("#tlabNodePopover");
+    var cameraLayer = event.target.closest("#tlabCameraLayer");
     if (state.nodePopover && !nodeTrigger && !takeNode && !resolveHistorical
-        && !popover && closeNodePopover() === false) { return; }
+        && !popover && !cameraLayer && closeNodePopover() === false) { return; }
     if (command) {
       handleCommand(command.getAttribute("data-tlab-command"), command, event);
       return;
@@ -808,6 +1263,11 @@
       case "close-action": closeAction(); break;
       case "action-back": actionBack(); break;
       case "action-next": actionNext(); break;
+      case "open-camera-action": openCamera("action"); break;
+      case "open-camera-node": openCamera("node"); break;
+      case "capture-camera": captureCameraPhoto(); break;
+      case "switch-camera": switchCamera(); break;
+      case "close-camera": closeCamera(); break;
       case "historical-cancel": closeHistoricalWizard(); break;
       case "historical-back": historicalWizardBack(); break;
       case "historical-next": historicalWizardNext(); break;
@@ -850,11 +1310,15 @@
 
   function onRootChange(event) {
     if (event.target.matches("[data-tlab-node-file-input]")) {
+      var nodeInputFromCamera = event.target.closest("#tlabCameraLayer");
       if (state.historicalResolver) {
         captureHistoricalResolverValues();
         state.historicalResolver.values.sin_foto_historica = "0";
+      } else if (state.nodeEditor) {
+        state.nodeEditor.values = Object.assign({}, state.nodeEditor.values, nodeFormValues());
       }
       addNodeFiles(event.target.files);
+      if (nodeInputFromCamera) { closeCamera(); }
       event.target.value = "";
       return;
     }
@@ -879,6 +1343,10 @@
       }
       if (event.target.name === "sin_foto_historica") {
         state.historicalResolver.error = "";
+        if (event.target.checked) {
+          revokeNodeObjectUrls();
+          state.nodeFiles = [];
+        }
       }
       if (event.target.name === "modo_resolucion"
           || event.target.name === "condicion_pre_entrega"
@@ -889,8 +1357,10 @@
       return;
     }
     if (event.target.matches("[data-tlab-file-input]")) {
+      var actionInputFromCamera = event.target.closest("#tlabCameraLayer");
       captureActionValues();
       addFiles(event.target.files);
+      if (actionInputFromCamera) { closeCamera(); }
       event.target.value = "";
       return;
     }
@@ -1002,7 +1472,8 @@
     if (!state.open) { return; }
     layer = activeLayer();
     if (event.key === "Escape") {
-      if (!state.root.querySelector("#tlabViewerLayer").hidden) { closeViewer(); }
+      if (!state.root.querySelector("#tlabCameraLayer").hidden) { closeCamera(); }
+      else if (!state.root.querySelector("#tlabViewerLayer").hidden) { closeViewer(); }
       else if (!state.root.querySelector("#tlabActionLayer").hidden) { closeAction(); }
       else if (state.historicalWizard) { closeHistoricalWizard(); }
       else if (state.nodePopover) { closeNodePopover(true); }
@@ -1014,7 +1485,7 @@
   }
 
   function activeLayer() {
-    var selectors = ["#tlabViewerLayer", "#tlabActionLayer"];
+    var selectors = ["#tlabCameraLayer", "#tlabViewerLayer", "#tlabActionLayer"];
     var i;
     var node;
     if (!state.root) { return null; }
@@ -1117,6 +1588,7 @@
       return;
     }
     closeViewer();
+    closeCamera();
     closeAction();
     closeNodePopover();
     closeDetail(true);
@@ -2542,7 +3014,14 @@
       file._tlabNodeUrl = url;
       state.nodeObjectUrls.push(url);
     }
-    return '<figure class="tlab-node-file-preview"><img src="' + escapeAttr(url) + '" alt="Nueva fotografía ' + (index + 1) + '"><button type="button" data-tlab-node-preview-remove="' + index + '" aria-label="Quitar fotografía"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></figure>';
+    return '<figure class="tlab-node-file-preview" data-tlab-prepared-size="' + escapeAttr(file.size || 0) + '"><img src="' + escapeAttr(url) + '" alt="Nueva fotografía ' + (index + 1) + '"><figcaption><i class="fa-solid fa-circle-check" aria-hidden="true"></i>Lista</figcaption><button type="button" data-tlab-node-preview-remove="' + index + '" aria-label="Quitar fotografía"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></figure>';
+  }
+
+  function nodeMediaPickerHtml() {
+    var processing = state.nodeFilesProcessing;
+    return '<div class="tlab-node-media-actions"><button type="button" data-tlab-command="open-camera-node" ' + (processing ? "disabled" : "") + '><i class="fa-solid fa-camera" aria-hidden="true"></i><span>Tomar foto</span></button><label class="' + (processing ? "is-disabled" : "") + '"><i class="fa-solid fa-images" aria-hidden="true"></i><span>Galería</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple data-tlab-node-file-input ' + (processing ? "disabled" : "") + '></label></div>'
+      + (processing ? '<p class="tlab-file-processing tlab-file-processing--compact"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span><strong>Preparando fotografía...</strong>Podés continuar cuando aparezca la miniatura.</span></p>' : '')
+      + '<div class="tlab-node-file-list">' + state.nodeFiles.map(nodeFilePreviewHtml).join("") + '</div>';
   }
 
   function nodeEditorHtml() {
@@ -2560,7 +3039,7 @@
       : "";
     var existingMedia = record.raw && eventId(record.raw)
       ? '<section class="tlab-node-existing-media"><small>Archivos de la versión que estás revisando</small>' + nodeMediaHtml(record, custodyEvent(record.raw)) + '</section>' : '';
-    var newMedia = '<section class="tlab-node-new-media"><div><strong>' + (taking ? 'Nueva fotografía *' : 'Nueva fotografía') + '</strong><small>Se mostrará únicamente en ' + (taking ? 'el nuevo nodo' : 'esta versión activa') + '; las anteriores permanecen en su nodo.</small></div><label><i class="fa-solid fa-camera" aria-hidden="true"></i>Seleccionar<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-tlab-node-file-input></label><div class="tlab-node-file-list">' + state.nodeFiles.map(nodeFilePreviewHtml).join("") + '</div></section>';
+    var newMedia = '<section class="tlab-node-new-media" aria-busy="' + (state.nodeFilesProcessing ? "true" : "false") + '"><div><strong>' + (taking ? 'Nueva fotografía *' : 'Nueva fotografía') + '</strong><small>Se mostrará únicamente en ' + (taking ? 'el nuevo nodo' : 'esta versión activa') + '; Telar ajusta el peso automáticamente.</small></div>' + nodeMediaPickerHtml() + '</section>';
     return '<header class="tlab-node-popover__header"><div><small>' + (taking ? 'Trabajo a recibir' : 'Versión activa') + '</small><h3>' + (taking ? 'Revisar y tomar el hilo' : 'Editar datos del nodo') + '</h3></div><span class="tlab-node-status">' + escapeHtml(humanizeHistoricalValue(snapshot.estado, "PENDIENTE")) + '</span><button type="button" data-tlab-command="close-node-popover" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>'
       + '<form id="tlabNodeVersionForm" class="tlab-node-form" novalidate><div class="tlab-node-readonly"><span><small>Paciente</small><strong>' + escapeHtml(snapshot.paciente || normalizeWork(work).patient) + '</strong></span><span><small>Tipo de trabajo</small><strong>' + escapeHtml(snapshot.producto || normalizeWork(work).product) + '</strong></span><span><small>Iniciado por</small><strong>' + escapeHtml(snapshot.iniciador || pick(work, ["iniciador", "nombre_iniciador"], "No asignado")) + '</strong></span><span><small>Estado del proceso</small><strong>' + escapeHtml(humanizeHistoricalValue(snapshot.estado, "PENDIENTE")) + '</strong></span></div>'
       + existingMedia + newMedia
@@ -2574,7 +3053,7 @@
       + '<label class="tlab-node-form__field tlab-node-form__field--wide"><span>Observación del trabajo</span><textarea name="datos_observacion" maxlength="1000" rows="3">' + escapeHtml(snapshot.observacion || "") + '</textarea></label>'
       + (taking ? '<fieldset class="tlab-node-condition-field"><legend>¿Cómo recibís el trabajo? *</legend><label><input type="radio" name="condicion_recepcion" value="conforme" checked><span><i class="fa-solid fa-circle-check" aria-hidden="true"></i>Conforme</span></label><label><input type="radio" name="condicion_recepcion" value="con_observaciones"><span><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>Con observaciones</span></label></fieldset><label class="tlab-node-form__field tlab-node-form__field--wide"><span>Observación de recepción</span><textarea name="observacion_recepcion" maxlength="1000" rows="2" placeholder="Obligatoria si recibís con observaciones"></textarea></label>' : '')
       + '<div class="tlab-form-error" id="tlabNodeFormError"' + (editor.error ? '' : ' hidden') + '>' + escapeHtml(editor.error || "") + '</div>'
-      + '<footer class="tlab-node-form__footer"><button type="button" class="tlab-button tlab-button--secondary" data-tlab-node-edit-cancel ' + (editor.saving ? 'disabled' : '') + '>Cancelar</button><button type="submit" class="tlab-button tlab-button--primary" ' + (editor.saving ? 'disabled' : '') + '><i class="fa-solid ' + (editor.saving ? 'fa-hourglass-half' : (taking ? 'fa-hand-holding' : 'fa-floppy-disk')) + '" aria-hidden="true"></i>' + (editor.saving ? 'Guardando...' : (taking ? 'Confirmar recepción' : 'Guardar cambios')) + '</button></footer></form>';
+      + '<footer class="tlab-node-form__footer"><button type="button" class="tlab-button tlab-button--secondary" data-tlab-node-edit-cancel ' + (editor.saving ? 'disabled' : '') + '>Cancelar</button><button type="submit" class="tlab-button tlab-button--primary" ' + (editor.saving || state.nodeFilesProcessing ? 'disabled' : '') + '><i class="fa-solid ' + (editor.saving || state.nodeFilesProcessing ? 'fa-hourglass-half' : (taking ? 'fa-hand-holding' : 'fa-floppy-disk')) + '" aria-hidden="true"></i>' + (editor.saving ? 'Guardando...' : (state.nodeFilesProcessing ? 'Preparando foto...' : (taking ? 'Confirmar recepción' : 'Guardar cambios'))) + '</button></footer></form>';
   }
 
   function renderNodeEditor() {
@@ -2603,6 +3082,7 @@
     state.nodeEditor = { mode: "edit", values: snapshot, idempotencyKey: makeIdempotencyKey(), saving: false, error: "" };
     revokeNodeObjectUrls();
     state.nodeFiles = [];
+    state.nodeFilesProcessing = false;
     renderNodeEditor();
   }
 
@@ -2610,8 +3090,10 @@
     var mode = state.nodeEditor ? state.nodeEditor.mode : "";
     if (state.nodeEditor && state.nodeEditor.saving) { return; }
     state.nodeEditor = null;
+    if (state.camera && state.camera.target === "node") { closeCamera(false); }
     revokeNodeObjectUrls();
     state.nodeFiles = [];
+    state.nodeFilesProcessing = false;
     if (mode === "take") { closeNodePopover(true); return; }
     if (state.nodePopoverRecord) {
       var popover = state.root.querySelector("#tlabNodePopover");
@@ -2622,17 +3104,31 @@
   }
 
   function addNodeFiles(fileList) {
-    var error = "";
-    Array.prototype.slice.call(fileList || []).forEach(function (file) {
-      if (state.nodeFiles.length >= MAX_FILES) { error = "Podés adjuntar hasta " + MAX_FILES + " fotografías."; return; }
-      if (!IMAGE_TYPES[file.type]) { error = "Sólo se admiten imágenes JPG, PNG o WEBP."; return; }
-      if (file.size > MAX_FILE_SIZE) { error = "Cada imagen debe pesar como máximo " + formatFileLimit(MAX_FILE_SIZE) + "."; return; }
-      state.nodeFiles.push(file);
-    });
-    if (state.nodeEditor) { state.nodeEditor.error = error; }
-    if (state.historicalResolver) { state.historicalResolver.error = error; }
+    var owner = state.nodeEditor || state.historicalResolver;
+    var preparation;
+    if (!owner || state.nodeFilesProcessing) { return; }
+    preparation = prepareMediaSelection(fileList, false, MAX_FILES - state.nodeFiles.length);
+    state.nodeFilesProcessing = true;
+    owner.error = "";
     if (state.historicalResolver) { renderHistoricalResolver(); }
     else { renderNodeEditor(); }
+    preparation.then(function (result) {
+      if ((state.nodeEditor || state.historicalResolver) !== owner) {
+        releasePreparedMedia(result.files);
+        return;
+      }
+      result.files.forEach(function (file) { state.nodeFiles.push(file); });
+      state.nodeFilesProcessing = false;
+      owner.error = result.error || "";
+      if (state.historicalResolver) { renderHistoricalResolver(); }
+      else { renderNodeEditor(); }
+    }).then(null, function (error) {
+      if ((state.nodeEditor || state.historicalResolver) !== owner) { return; }
+      state.nodeFilesProcessing = false;
+      owner.error = error.message || "No se pudo preparar la fotografía.";
+      if (state.historicalResolver) { renderHistoricalResolver(); }
+      else { renderNodeEditor(); }
+    });
   }
 
   function removeNodeFile(index) {
@@ -2644,6 +3140,8 @@
       state.nodeObjectUrls = state.nodeObjectUrls.filter(function (url) { return url !== file._tlabNodeUrl; });
     }
     state.nodeFiles.splice(index, 1);
+    if (state.nodeEditor) { state.nodeEditor.error = ""; }
+    if (state.historicalResolver) { state.historicalResolver.error = ""; }
     if (state.historicalResolver) { renderHistoricalResolver(); }
     else { renderNodeEditor(); }
   }
@@ -2675,6 +3173,7 @@
     var payload;
     var endpoint;
     if (!editor || !record || editor.saving) { return; }
+    if (state.nodeFilesProcessing) { showNodeEditorError("Esperá a que Telar termine de preparar la fotografía."); return; }
     values = nodeFormValues();
     if (!values.cod_local) { showNodeEditorError("Seleccioná el local."); return; }
     if (editor.mode === "take" && values.condicion_recepcion !== "conforme" && values.condicion_recepcion !== "con_observaciones") { showNodeEditorError("Indicá cómo recibís el trabajo."); return; }
@@ -2761,6 +3260,7 @@
       state.nodeEditor = { mode: "take", values: snapshot, idempotencyKey: makeIdempotencyKey(), saving: false, error: "" };
       revokeNodeObjectUrls();
       state.nodeFiles = [];
+      state.nodeFilesProcessing = false;
       renderNodeEditor();
       focusFirst(popover);
     }).then(null, function (error) {
@@ -2909,6 +3409,8 @@
     state.nodeEditor = null;
     state.historicalResolver = null;
     state.nodeFiles = [];
+    state.nodeFilesProcessing = false;
+    if (state.camera && state.camera.target === "node") { closeCamera(false); }
     revokeNodeObjectUrls();
     if (returnFocus && trigger && typeof trigger.focus === "function" && document.documentElement.contains(trigger)) { trigger.focus(); }
     return true;
@@ -3070,10 +3572,10 @@
       "Usuario autenticado"
     );
     var photoSection = modesInstalled
-      ? '<section class="tlab-node-new-media tlab-historical-final-media"><div><strong>Evidencia del cierre histórico</strong><small>Adjuntá una fotografía si todavía está disponible. Las versiones anteriores permanecen intactas.</small></div>'
+      ? '<section class="tlab-node-new-media tlab-historical-final-media" aria-busy="' + (state.nodeFilesProcessing ? "true" : "false") + '"><div><strong>Evidencia del cierre histórico</strong><small>Adjuntá una fotografía si todavía está disponible. Telar ajusta el peso automáticamente.</small></div>'
         + (noHistoricalPhoto
           ? '<p class="tlab-historical-no-photo__notice"><i class="fa-solid fa-camera-slash" aria-hidden="true"></i><span>El último nodo indicará <strong>Sin fotografía histórica disponible</strong>.</span></p>'
-          : '<label><i class="fa-solid fa-camera" aria-hidden="true"></i>Seleccionar fotografía<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-tlab-node-file-input></label><div class="tlab-node-file-list">' + state.nodeFiles.map(nodeFilePreviewHtml).join("") + '</div>')
+          : nodeMediaPickerHtml())
         + '<div class="tlab-historical-no-photo"><label><input type="checkbox" name="sin_foto_historica" value="1"' + (noHistoricalPhoto ? " checked" : "") + '><span><strong>No se dispone de fotografía histórica</strong><small>Usar únicamente cuando la imagen ya no existe. El motivo de regularización quedará como respaldo.</small></span></label></div></section>'
       : "";
     var modeFields = modesInstalled
@@ -3107,7 +3609,7 @@
       + '<label class="tlab-node-form__field tlab-node-form__field--wide"><span>Observación del trabajo</span><textarea name="observacion_trabajo" maxlength="1000" rows="3">' + escapeHtml(values.observacion_trabajo || "") + '</textarea></label>'
       + '<label class="tlab-node-form__field tlab-node-form__field--wide"><span>Motivo de regularización *</span><textarea name="justificacion" maxlength="750" rows="2" required placeholder="Explicá brevemente por qué se continúa o se cierra este registro">' + escapeHtml(values.justificacion || "") + '</textarea></label>'
       + (modesInstalled ? '<p class="tlab-historical-close-note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>Este cierre no genera una evolución clínica. Conserva la declaración y ' + (noHistoricalPhoto ? 'la ausencia explícita de fotografía' : 'la fotografía disponible') + ' como última versión del hilo de laboratorio.</p>' : '')
-      + '<footer class="tlab-node-form__footer"><button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="close-node-popover" ' + (resolver.saving ? "disabled" : "") + '>Cancelar</button><button type="submit" class="tlab-button tlab-button--primary" ' + (resolver.saving ? "disabled" : "") + '><i class="fa-solid ' + (resolver.saving ? "fa-hourglass-half" : (modesInstalled ? "fa-flag-checkered" : "fa-hand-holding")) + '" aria-hidden="true"></i>' + (resolver.saving ? "Guardando..." : (modesInstalled ? "Confirmar instalación y entrega" : "Continuar y asumir responsabilidad")) + '</button></footer></form>';
+      + '<footer class="tlab-node-form__footer"><button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="close-node-popover" ' + (resolver.saving ? "disabled" : "") + '>Cancelar</button><button type="submit" class="tlab-button tlab-button--primary" ' + (resolver.saving || state.nodeFilesProcessing ? "disabled" : "") + '><i class="fa-solid ' + (resolver.saving || state.nodeFilesProcessing ? "fa-hourglass-half" : (modesInstalled ? "fa-flag-checkered" : "fa-hand-holding")) + '" aria-hidden="true"></i>' + (resolver.saving ? "Guardando..." : (state.nodeFilesProcessing ? "Preparando foto..." : (modesInstalled ? "Confirmar instalación y entrega" : "Continuar y asumir responsabilidad"))) + '</button></footer></form>';
   }
 
   function renderHistoricalResolver() {
@@ -3171,6 +3673,7 @@
       };
       revokeNodeObjectUrls();
       state.nodeFiles = [];
+      state.nodeFilesProcessing = false;
       renderHistoricalResolver();
       focusFirst(popover);
     }).then(null, function (error) {
@@ -3203,6 +3706,7 @@
     var installed;
     var noHistoricalPhoto;
     if (!resolver || resolver.saving) { return; }
+    if (state.nodeFilesProcessing) { showHistoricalResolverError("Esperá a que Telar termine de preparar la fotografía."); return; }
     captureHistoricalResolverValues();
     form = state.root && state.root.querySelector("#tlabHistoricalResolverForm");
     checkedMode = form && form.querySelector('input[name="modo_resolucion"]:checked');
@@ -4422,6 +4926,8 @@
         ? { modo_resolucion: "instalado_entregado", condicion_pre_entrega: "conforme" }
         : {},
       files: [],
+      filesProcessing: false,
+      fileError: "",
       saving: false,
       idempotencyKey: makeIdempotencyKey()
     };
@@ -4454,7 +4960,7 @@
     layer.innerHTML = '<section class="tlab-dialog" role="dialog" aria-modal="true" aria-labelledby="tlabActionTitle" aria-busy="' + (action.saving ? 'true' : 'false') + '"><header class="tlab-dialog__header"><div><small>Acción guiada</small><h2 id="tlabActionTitle">' + escapeHtml(action.config.label) + '</h2></div><button type="button" class="tlab-icon-button tlab-icon-button--light" data-tlab-command="close-action" aria-label="Cerrar" ' + (action.saving ? 'disabled' : '') + '><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header>'
       + '<form class="tlab-dialog__form" id="tlabActionForm"><div class="tlab-dialog__body"><div class="tlab-steps" aria-label="Progreso"><span class="tlab-step ' + (action.step === 1 ? "is-current" : "is-done") + '" data-step="1">Revisar</span><span class="tlab-step ' + (action.step === 2 ? "is-current" : (action.step > 2 ? "is-done" : "")) + '" data-step="2">Completar</span><span class="tlab-step ' + (action.step === 3 ? "is-current" : "") + '" data-step="3">Confirmar</span></div>' + body + '<div class="tlab-form-error" id="tlabActionError" hidden></div><div class="tlab-upload-progress" id="tlabUploadProgress" hidden><span></span></div></div>'
       + '<footer class="tlab-dialog__footer"><button type="button" class="tlab-button tlab-button--ghost" data-tlab-command="action-back" ' + (action.step === 1 || action.saving ? "disabled" : "") + '><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Volver</button><div class="tlab-dialog__footer-actions"><button type="button" class="tlab-button tlab-button--secondary" data-tlab-command="close-action" ' + (action.saving ? 'disabled' : '') + '>Cancelar</button>'
-      + (action.step === 3 ? '<button type="submit" class="tlab-button ' + (action.config.danger ? "tlab-button--danger" : "tlab-button--primary") + '" id="tlabActionSubmit">' : '<button type="button" class="tlab-button tlab-button--primary" data-tlab-command="action-next">') + '<i class="fa-solid ' + escapeAttr(action.config.icon || "fa-arrow-right") + '" aria-hidden="true"></i>' + escapeHtml(nextLabel) + '</button></div></footer></form></section>';
+      + (action.step === 3 ? '<button type="submit" class="tlab-button ' + (action.config.danger ? "tlab-button--danger" : "tlab-button--primary") + '" id="tlabActionSubmit" ' + (action.filesProcessing ? "disabled" : "") + '>' : '<button type="button" class="tlab-button tlab-button--primary" data-tlab-command="action-next" ' + (action.filesProcessing ? "disabled" : "") + '>') + '<i class="fa-solid ' + escapeAttr(action.filesProcessing ? "fa-hourglass-half" : (action.config.icon || "fa-arrow-right")) + '" aria-hidden="true"></i>' + escapeHtml(action.filesProcessing ? "Preparando foto..." : nextLabel) + '</button></div></footer></form></section>';
     layer.hidden = false;
     focusFirst(layer);
   }
@@ -4683,9 +5189,14 @@
   function renderEvidencePicker(required, allowDocuments) {
     var files = state.action.files || [];
     var accept = allowDocuments ? "image/jpeg,image/png,image/webp,application/pdf" : "image/jpeg,image/png,image/webp";
-    return '<section class="tlab-evidence-box"><div class="tlab-evidence-box__heading"><div><strong>' + (allowDocuments ? "Archivos" : "Fotografías") + ' ' + (required ? (allowDocuments ? "obligatorios" : "obligatorias") : "opcionales") + '</strong><small>' + (allowDocuments ? "JPG, PNG, WEBP o PDF" : "JPG, PNG o WEBP") + ' · máximo ' + escapeHtml(formatFileLimit(MAX_FILE_SIZE)) + ' por archivo.</small></div><span class="tlab-status ' + (files.length ? "tlab-status--ok" : "tlab-status--neutral") + '">' + files.length + ' de ' + MAX_FILES + '</span></div>'
-      + '<div class="tlab-evidence-choices"><label class="tlab-file-choice"><i class="fa-solid fa-camera" aria-hidden="true"></i><span>Tomar foto</span><input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" data-tlab-file-input aria-label="Tomar fotografía con la cámara"></label><label class="tlab-file-choice"><i class="fa-solid ' + (allowDocuments ? "fa-paperclip" : "fa-images") + '" aria-hidden="true"></i><span>' + (allowDocuments ? "Elegir archivos" : "Elegir de galería") + '</span><input type="file" accept="' + accept + '" multiple data-tlab-file-input aria-label="' + (allowDocuments ? "Seleccionar archivos" : "Seleccionar fotografías de la galería") + '"></label></div>'
-      + '<div class="tlab-preview-list" id="tlabPreviewList">' + files.map(previewHtml).join("") + '</div><div class="tlab-file-error" id="tlabFileError" hidden></div></section>';
+    var processing = state.action.filesProcessing;
+    var helper = allowDocuments
+      ? "Telar optimiza las fotografías automáticamente. Los PDF pueden pesar hasta " + formatFileLimit(MAX_FILE_SIZE) + "."
+      : "Telar ajusta el peso y el tamaño automáticamente; no necesitás comprimir la foto.";
+    return '<section class="tlab-evidence-box" aria-busy="' + (processing ? "true" : "false") + '"><div class="tlab-evidence-box__heading"><div><strong>' + (allowDocuments ? "Archivos" : "Fotografías") + ' ' + (required ? (allowDocuments ? "obligatorios" : "obligatorias") : "opcionales") + '</strong><small>' + escapeHtml(helper) + '</small></div><span class="tlab-status ' + (processing ? "tlab-status--warning" : (files.length ? "tlab-status--ok" : "tlab-status--neutral")) + '">' + (processing ? "Preparando..." : files.length + " de " + MAX_FILES) + '</span></div>'
+      + '<div class="tlab-evidence-choices"><button type="button" class="tlab-file-choice" data-tlab-command="open-camera-action" ' + (processing ? "disabled" : "") + '><i class="fa-solid fa-camera" aria-hidden="true"></i><span><strong>Tomar foto</strong><small>Sin salir de Telar cuando Android lo permite</small></span></button><label class="tlab-file-choice ' + (processing ? "is-disabled" : "") + '"><i class="fa-solid ' + (allowDocuments ? "fa-paperclip" : "fa-images") + '" aria-hidden="true"></i><span><strong>' + (allowDocuments ? "Elegir archivos" : "Elegir de galería") + '</strong><small>También se prepara automáticamente</small></span><input type="file" accept="' + accept + '" multiple data-tlab-file-input aria-label="' + (allowDocuments ? "Seleccionar archivos" : "Seleccionar fotografías de la galería") + '" ' + (processing ? "disabled" : "") + '></label></div>'
+      + (processing ? '<p class="tlab-file-processing"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span><strong>Preparando fotografía...</strong>No cierres esta ventana; normalmente tarda sólo unos segundos.</span></p>' : '')
+      + '<div class="tlab-preview-list" id="tlabPreviewList">' + files.map(previewHtml).join("") + '</div><div class="tlab-file-error" id="tlabFileError" ' + (state.action.fileError ? "" : "hidden") + '>' + escapeHtml(state.action.fileError || "") + '</div></section>';
   }
 
   function previewHtml(file, index) {
@@ -4696,7 +5207,7 @@
       file._tlabUrl = url;
       state.objectUrls.push(url);
     }
-    return '<figure class="tlab-preview ' + (isPdf ? "tlab-preview--document" : "") + '">' + (isPdf ? '<span><i class="fa-solid fa-file-pdf" aria-hidden="true"></i><small title="' + escapeAttr(file.name || "Documento PDF") + '">' + escapeHtml(file.name || "Documento PDF") + '</small></span>' : '<img src="' + escapeAttr(url) + '" alt="Vista previa ' + (index + 1) + '">') + '<button type="button" data-tlab-preview-remove="' + index + '" aria-label="Quitar ' + escapeAttr(file.name || "archivo") + '"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></figure>';
+    return '<figure class="tlab-preview ' + (isPdf ? "tlab-preview--document" : "") + '" data-tlab-prepared-size="' + escapeAttr(file.size || 0) + '">' + (isPdf ? '<span><i class="fa-solid fa-file-pdf" aria-hidden="true"></i><small title="' + escapeAttr(file.name || "Documento PDF") + '">' + escapeHtml(file.name || "Documento PDF") + '</small></span>' : '<img src="' + escapeAttr(url) + '" alt="Vista previa ' + (index + 1) + '"><figcaption><i class="fa-solid fa-circle-check" aria-hidden="true"></i>Foto lista</figcaption>') + '<button type="button" data-tlab-preview-remove="' + index + '" aria-label="Quitar ' + escapeAttr(file.name || "archivo") + '"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></figure>';
   }
 
   function renderActionConfirmation(work) {
@@ -4771,6 +5282,8 @@
   function actionNext() {
     var error;
     if (!state.action || state.action.saving) { return; }
+    if (state.action.filesProcessing) { showActionError("Esperá a que Telar termine de preparar la fotografía."); return; }
+    if (state.camera && state.camera.target === "action") { closeCamera(false); }
     captureActionValues();
     error = validateActionStep(state.action.step);
     if (error) { showActionError(error); return; }
@@ -4798,6 +5311,7 @@
     var config = action.config;
     var values = action.values;
     if (step < 2) { return ""; }
+    if (action.filesProcessing) { return "Esperá a que Telar termine de preparar la fotografía."; }
     if ((config.recipient || boolValue(config.requiere_destinatario)) && !values.cod_destinatario) { return "Seleccioná el destinatario físico."; }
     if ((config.mechanic || boolValue(config.requiere_mecanico)) && !values.cod_tecnico_usuario) { return "Seleccioná el mecánico responsable."; }
     if ((config.reason || boolValue(config.requiere_motivo)) && !values.motivo) { return "Seleccioná el motivo del ajuste."; }
@@ -4827,22 +5341,29 @@
   }
 
   function addFiles(fileList) {
-    var files = Array.prototype.slice.call(fileList || []);
-    var error = "";
+    var action = state.action;
     var allowDocuments;
-    if (!state.action) { return; }
-    allowDocuments = boolValue(state.action.config.documents);
-    files.forEach(function (file) {
-      if (state.action.files.length >= MAX_FILES) { error = "Podés adjuntar hasta " + MAX_FILES + " archivos por acción."; return; }
-      if (!IMAGE_TYPES[file.type] && !(allowDocuments && DOCUMENT_TYPES[file.type])) { error = allowDocuments ? "Sólo se admiten imágenes JPG, PNG, WEBP o documentos PDF." : "Sólo se admiten imágenes JPG, PNG o WEBP."; return; }
-      if (file.size > MAX_FILE_SIZE) { error = "Cada archivo debe pesar como máximo " + formatFileLimit(MAX_FILE_SIZE) + "."; return; }
-      state.action.files.push(file);
-    });
+    var preparation;
+    if (!action || action.filesProcessing) { return; }
+    allowDocuments = boolValue(action.config.documents);
+    /* Las lecturas comienzan antes de redibujar para copiar el archivo temporal
+       que Android entrega cuando se vuelve desde su aplicación de cámara. */
+    preparation = prepareMediaSelection(fileList, allowDocuments, MAX_FILES - action.files.length);
+    action.filesProcessing = true;
+    action.fileError = "";
     renderActionDialog();
-    if (error) {
-      var box = state.root.querySelector("#tlabFileError");
-      if (box) { box.textContent = error; box.hidden = false; }
-    }
+    preparation.then(function (result) {
+      if (state.action !== action) { releasePreparedMedia(result.files); return; }
+      result.files.forEach(function (file) { action.files.push(file); });
+      action.filesProcessing = false;
+      action.fileError = result.error || "";
+      renderActionDialog();
+    }).then(null, function (error) {
+      if (state.action !== action) { return; }
+      action.filesProcessing = false;
+      action.fileError = error.message || "No se pudo preparar la fotografía.";
+      renderActionDialog();
+    });
   }
 
   function removePreview(index) {
@@ -4854,6 +5375,7 @@
       state.objectUrls = state.objectUrls.filter(function (url) { return url !== file._tlabUrl; });
     }
     state.action.files.splice(index, 1);
+    state.action.fileError = "";
     renderActionDialog();
   }
 
@@ -4869,6 +5391,7 @@
       notify("La acción se está guardando. Esperá la confirmación del servidor.", "info");
       return false;
     }
+    if (state.camera && state.camera.target === "action") { closeCamera(false); }
     layer = state.root.querySelector("#tlabActionLayer");
     layer.hidden = true;
     layer.innerHTML = "";
@@ -4936,21 +5459,17 @@
     if (!isStartAction(action.code) || !files.length) {
       return Promise.resolve({ payload: payload, files: files });
     }
-    return new Promise(function (resolve, reject) {
-      var initialFile = files.shift();
-      var reader = new FileReader();
-      reader.onload = function (event) {
-        payload.evidencia_inicial = {
-          data_base64: event.target.result || "",
-          nombre_archivo: initialFile.name || "evidencia-inicial.jpg",
-          descripcion: state.action.values.observacion || "Evidencia inicial del trabajo"
-        };
-        resolve({ payload: payload, files: files });
+    var initialFile = files.shift();
+    var readyData = initialFile._tlabDataUrl
+      ? Promise.resolve(initialFile._tlabDataUrl)
+      : readBlobAsDataUrl(initialFile);
+    return readyData.then(function (dataUrl) {
+      payload.evidencia_inicial = {
+        data_base64: dataUrl,
+        nombre_archivo: initialFile.name || "evidencia-inicial.jpg",
+        descripcion: state.action.values.observacion || "Evidencia inicial del trabajo"
       };
-      reader.onerror = function () {
-        reject(new Error("No se pudo preparar la evidencia inicial. Volvé a seleccionar la fotografía."));
-      };
-      reader.readAsDataURL(initialFile);
+      return { payload: payload, files: files };
     });
   }
 
@@ -4960,6 +5479,7 @@
     var submit = state.root.querySelector("#tlabActionSubmit");
     var progress = state.root.querySelector("#tlabUploadProgress");
     if (!action || action.saving) { return; }
+    if (action.filesProcessing) { showActionError("Esperá a que Telar termine de preparar la fotografía."); return; }
     if (!confirmed || !confirmed.checked) { showActionError("Confirmá la declaración antes de guardar."); return; }
     action.saving = true;
     if (submit) { submit.disabled = true; submit.innerHTML = '<i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>Guardando...'; }
