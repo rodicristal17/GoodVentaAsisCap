@@ -161,7 +161,7 @@ function gastoTesoreriaPuedeCrearEgresoDesdeHilo(contexto) {
 }
 
 function gastoTesoreriaEsEdicionAcotada() {
-	if (!gastoTesoreriaEsResponsableOficial() || String(typeof idAbmGasto == "undefined" ? "" : (idAbmGasto || "")) == "" || !gastoTesoreriaEstadoPermiteFlujo()) {
+	if (!gastoTesoreriaEsResponsableOficial() || String(typeof idAbmGasto == "undefined" ? "" : (idAbmGasto || "")) == "") {
 		return false;
 	}
 	var tipo = document.getElementById("inptTipoGasto");
@@ -370,6 +370,30 @@ function gastoTesoreriaEstadoPermiteFlujo() {
 
 function gastoTesoreriaEsMovimientoPagado() {
 	return String(gastoTesoreriaEstadoOriginal || "").toLowerCase().trim() == "activo";
+}
+
+function gastoTesoreriaNormalizarEstadoPersistido(valor) {
+	var original = String(valor || "").replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+	var estado = original.toLowerCase();
+	if (estado == "activo" || estado.indexOf("pagado") === 0) { return "Activo"; }
+	if (estado.indexOf("inactivo") !== -1) { return "Inactivo"; }
+	if (estado.indexOf("rechazado") !== -1) { return "Rechazado"; }
+	if (estado == "baja" || estado.indexOf("dado de baja") !== -1) { return "Baja"; }
+	if (estado.indexOf("solicitado") !== -1) { return "solicitado"; }
+	if (estado.indexOf("pendiente") !== -1) { return "pendiente"; }
+	return original;
+}
+
+function gastoTesoreriaEstadoDesdeFila(fila) {
+	if (!fila) { return ""; }
+	var estadoAtributo = fila.getAttribute ? fila.getAttribute("data-estado-real") : "";
+	if (estadoAtributo) {
+		return gastoTesoreriaNormalizarEstadoPersistido(estadoAtributo);
+	}
+	var celda = fila.querySelector ? fila.querySelector('td[id="td_datos_5"]') : null;
+	if (!celda) { return ""; }
+	var estadoCelda = celda.getAttribute ? celda.getAttribute("data-estado-real") : "";
+	return gastoTesoreriaNormalizarEstadoPersistido(estadoCelda || celda.textContent || celda.innerText || "");
 }
 
 function gastoTesoreriaValorRadio(nombre, valorDefault) {
@@ -2345,9 +2369,10 @@ function obtenerdatosabmGasto(datostr) {
 	gastoTesoreriaFechaOriginal = $(datostr).children('td[id="td_datos_3"]').html() || "";
 	document.getElementById('inptProyectoGasto').value = $(datostr).children('td[id="td_datos_22"]').html();
 	document.getElementById('inptIdGasto').value = $(datostr).children('td[id="td_id"]').html();
+	idAbmGasto = $(datostr).children('td[id="td_id"]').html();
 	
-	document.getElementById('inptEstadoGasto').value = ($(datostr).children('td[id="td_datos_5"]').html() == 'Inactivo' ? 'Inactivo' : 'Activo');
-	gastoTesoreriaEstadoOriginal = $(datostr).children('td[id="td_datos_5"]').html() || "";
+	gastoTesoreriaEstadoOriginal = gastoTesoreriaEstadoDesdeFila(datostr);
+	document.getElementById('inptEstadoGasto').value = (String(gastoTesoreriaEstadoOriginal).toLowerCase() == 'inactivo' ? 'Inactivo' : 'Activo');
 	document.getElementById('inptlocalMisGastos').value = $(datostr).children('td[id="td_datos_7"]').html();
 	document.getElementById('inptNroBoletaGasto').value = $(datostr).children('td[id="td_datos_8"]').html();
 	document.getElementById('inptBancoGasto').value = $(datostr).children('td[id="td_datos_9"]').html();
@@ -2362,15 +2387,16 @@ function obtenerdatosabmGasto(datostr) {
 	}
 	document.getElementById('inptArregloGasto').value = $(datostr).children('td[id="td_datos_11"]').html();
 	document.getElementById('btnAbmGastos').value = "Actualizar movimiento";
-	if (gastoTesoreriaEsResponsableOficial() && String(gastoTesoreriaEstadoOriginal).toLowerCase().trim() == "activo") {
-		document.getElementById('btnAbmGastos').value = "Registrar correccion trazable";
+	if (gastoTesoreriaEsResponsableOficial()
+		&& normalizarTipoMovimientoFinanciero(tipoMovimientoSeleccionado) == "Egreso"
+		&& gastoTesoreriaEstadoPermiteFlujo()) {
+		document.getElementById('btnAbmGastos').value = "Revisar modificacion";
 	}
 	configurarModalMovimientoFinanciero({ modo: "editar", tipoMovimiento: tipoMovimientoSeleccionado });
 	document.getElementById('btnEditarGastos').style.backgroundColor="";
 	document.getElementById('btnImprimirRegistroGastos').style.backgroundColor="";
 	document.getElementById('btnAutorizarGastos').style.backgroundColor="#28a745";
 	document.getElementById('btnInterConsultaGastos').style.backgroundColor= "";
-	idAbmGasto = $(datostr).children('td[id="td_id"]').html();
 	usuarioCreadorEgresoIngreso = $(datostr).children('td[id="td_datos_21"]').html() || "";
 	gastoIniciarCargaEdicion(idAbmGasto);
 	cargarDistribucionGastoParaEdicion(idAbmGasto);
@@ -2393,7 +2419,7 @@ function obtenerdatosabmGasto(datostr) {
 	document.getElementById("inptCodigoAutorizacionEgreso").value= $(datostr).children('td[id="td_id"]').html();
 	document.getElementById("inptMotivoAutorizacionEgreso").value= $(datostr).children('td[id="td_datos_14"]').html();
 	document.getElementById('inptMontoAutorizacionEgreso').value = $(datostr).children('td[id="td_datos_1"]').html();
-	var estadoAutorizacionEgreso = String($(datostr).children('td[id="td_datos_5"]').html() || "").toLowerCase().trim();
+	var estadoAutorizacionEgreso = String(gastoTesoreriaEstadoOriginal || "").toLowerCase().trim();
 	if (estadoAutorizacionEgreso == 'solicitado' || estadoAutorizacionEgreso == 'pendiente') {
 		document.getElementById("inptUsuarioAutorizacionEgreso").value= "";
 		document.getElementById("inptFechaAutorizacionEgreso").value= "";
@@ -3055,7 +3081,7 @@ function gastoSeleccionadoTieneCuotasAsociadas() {
 function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion, cantCuotas= 0, periodicidad= "", proyecto_gasto="", distribucionValidada) {
 	if (gastoGuardadoEnCurso) { return false; }
 	if (accion == "editar" && gastoTesoreriaEsResponsableOficial()
-		&& normalizarTipoMovimientoFinanciero(tipo) == "Egreso" && gastoTesoreriaEstadoPermiteFlujo()) {
+		&& normalizarTipoMovimientoFinanciero(tipo) == "Egreso") {
 		gastoTesoreriaAbrirModificacion({
 			idgastos: idgastos,
 			monto: monto,
@@ -3160,6 +3186,23 @@ function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha
 			console.log(Respuesta)
 			try {
 				var datos = $.parseJSON(Respuesta);
+				if (accion == "editar" && datos.codigo == "TESORERIA_FLUJO_GUIADO") {
+					gastoTesoreriaCargarContexto(function (ok) {
+						if (!ok || !gastoTesoreriaEsResponsableOficial()) {
+							ver_vetana_informativa("No se pudo actualizar el contexto de Tesoreria. Intente nuevamente.");
+							return;
+						}
+						gastoTesoreriaAbrirModificacion({
+							idgastos: idgastos,
+							monto: monto,
+							fecha: fecha,
+							cod_local: cod_local,
+							periodicidad: periodicidad,
+							distribucionValidada: distribucionValidada
+						});
+					}, true);
+					return;
+				}
 				Respuesta = datos["1"];
 				Respuesta=respuestaJqueryAjax(Respuesta)
 				   if (Respuesta == true) {

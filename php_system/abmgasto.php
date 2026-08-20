@@ -1423,7 +1423,8 @@ if (controldeaccesoacasas($user, $permisoMovimiento, " u.accion='SI' ") != 1 && 
 if ($operacion == 'editar' && $esResponsableTesoreriaSolicitud) {
 	$informacion= array(
 		"1" => "error",
-		"2" => "La responsable de Tesoreria debe usar la modificacion guiada con vista previa. Actualice la pantalla y vuelva a abrir el movimiento."
+		"codigo" => "TESORERIA_FLUJO_GUIADO",
+		"2" => "El movimiento debe continuar por el recorrido guiado de Tesoreria."
 	);
 	echo json_encode($informacion);
 	exit;
@@ -2250,7 +2251,7 @@ if ($operacion == "obtenerGastosAsociados") {
 		if ($soloLecturaHistorica) {
 			$estado .= " <span class='flujo-pago-unico-solo-lectura'>Hist&oacute;rico &middot; solo lectura</span>";
 		}
-		$pagina .= "<table border='1' cellspacing='1' cellpadding='5' class='tableRegistroSearch2'><tr id='tbSelecRegistro' id='tbSelecRegistro' onclick='".($soloLecturaHistorica ? "" : "seleccionarGastosAsociados(this);")."' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "").";text-align: center;'>
+		$pagina .= "<table border='1' cellspacing='1' cellpadding='5' class='tableRegistroSearch2'><tr id='tbSelecRegistro' id='tbSelecRegistro' data-estado-real='".flujoGastoTextoSeguro($gast['estado'])."' onclick='".($soloLecturaHistorica ? "" : "seleccionarGastosAsociados(this);")."' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "").";text-align: center;'>
 			<td id='td_id' style='width:5%; display: none; background-color: #efeded;color:red;'>".$gast['idgastos']."</td>
 			<td  style='width:10%;border: none;'>".($key + 1)."/".count($gastos)."</td>
 			<td  id='td_datos_3' style='width:15%;border: none;'>".$gast['fecha']."</td>

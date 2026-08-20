@@ -140,7 +140,7 @@ afirmar(
 afirmar(
 	fuenteHtml.includes("id='avisoDistribucionTesoreriaGasto'")
 		&& fuenteHtml.includes("id='ayudaDistribucionPersonalizadaGasto'")
-		&& fuenteHtml.includes("tesoreria-responsable-20260820-2"),
+		&& fuenteHtml.includes("tesoreria-responsable-20260820-3"),
 	"La interfaz explica el modo Tesoreria y fuerza la carga de los recursos actualizados."
 );
 afirmar(

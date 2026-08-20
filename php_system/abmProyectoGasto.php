@@ -136,7 +136,7 @@
                     break;
             }
 
-            $pagina .= "<tr id='tbSelecRegistro' class='tableRegistroSearch2' style='border: none;font-size: 9pt;' onclick='seleccionarGastosAsociados(this);' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
+            $pagina .= "<tr id='tbSelecRegistro' class='tableRegistroSearch2' data-estado-real='".htmlspecialchars((string)$gast['estado'], ENT_QUOTES, 'UTF-8')."' style='border: none;font-size: 9pt;' onclick='seleccionarGastosAsociados(this);' style='".($estado=="Rechazado" || $estado=="Inactivo" ? "text-decoration: line-through;" : "")."'>
                 <td id='td_id' style='width:5%; display: none; background-color: #efeded;color:red;'>".$gast['idgastos']."</td>
                 <td  style='width:10%;border: none;'>".($key + 1)."/".count($gastos)."</td>
                 <td  id='td_datos_3' style='width:15%;border: none;'>".$gast['fecha']."</td>

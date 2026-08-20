@@ -7,6 +7,7 @@ const leer = ruta => fs.readFileSync(path.join(raiz, ruta), "utf8");
 const js = leer("js_system/abmGasto_ingresosEgresos.js");
 const php = leer("php_system/abmgasto.php");
 const helper = leer("php_system/gasto_tesoreria_helper.php");
+const proyectos = leer("php_system/abmProyectoGasto.php");
 const dashboard = leer("php_system/dashboard_flujo_financiero.php");
 const html = leer("system/inicio.html");
 const sql = leer("actualizacion_20082026_responsable_tesoreria_correcciones.sql");
@@ -112,15 +113,26 @@ afirmar(
 afirmar(
 	php.includes("$puedePagarDesdeAdministracionTesoreria= intval($cod_local) === 1")
 		&& php.includes("Tesoreria debe registrar el pago desde Administracion")
-		&& php.includes("La responsable de Tesoreria debe usar la modificacion guiada con vista previa"),
+		&& php.includes('"codigo" => "TESORERIA_FLUJO_GUIADO"'),
 	"La excepcion queda limitada a Administracion como caja pagadora y la edicion comun no elude la correccion trazable."
 );
 afirmar(
 	js.includes("gastoTesoreriaCargarContexto(null, true)")
 		&& js.includes("function gastoTesoreriaPuedeCrearEgresoDesdeHilo")
 		&& js.includes("contexto.contextoTesoreriaActualizado")
-		&& html.includes("tesoreria-responsable-20260820-2"),
+		&& html.includes("tesoreria-responsable-20260820-3"),
 	"La pantalla refresca la designacion al abrir el modulo y antes de iniciar el egreso desde un Hilo."
+);
+const edicionAcotada = extraerFuncion(js, "gastoTesoreriaEsEdicionAcotada");
+afirmar(
+	!edicionAcotada.includes("gastoTesoreriaEstadoPermiteFlujo")
+		&& !js.includes('normalizarTipoMovimientoFinanciero(tipo) == "Egreso" && gastoTesoreriaEstadoPermiteFlujo()')
+		&& js.includes("function gastoTesoreriaEstadoDesdeFila")
+		&& js.includes('datos.codigo == "TESORERIA_FLUJO_GUIADO"')
+		&& js.includes('document.getElementById(\'btnAbmGastos\').value = "Revisar modificacion"')
+		&& proyectos.includes("data-estado-real")
+		&& php.includes("data-estado-real"),
+	"Toda edicion de egreso de Tesoreria se deriva sin interrupcion al recorrido guiado, incluso desde cuotas con estado visual."
 );
 const aprobacion = extraerFuncion(php, "aprobarMovimiento");
 afirmar(
@@ -137,6 +149,21 @@ const reparto = gastoDistribucionEscalarProporcional(333, { 3: 600, 5: 400 });
 afirmar(
 	reparto[3] + reparto[5] === 333 && reparto[3] === 200 && reparto[5] === 133,
 	"Al cambiar el monto, la distribucion personalizada se recalcula proporcionalmente sin perder guaranies."
+);
+
+globalThis.eval(`${extraerFuncion(js, "gastoTesoreriaNormalizarEstadoPersistido")}\n${extraerFuncion(js, "gastoTesoreriaEstadoDesdeFila")}\n//# sourceURL=estado-tesoreria.js`);
+const filaPagadaAsociada = {
+	getAttribute: () => "",
+	querySelector: () => ({ getAttribute: () => "", textContent: "Pagado" })
+};
+const filaPendienteConEtiqueta = {
+	getAttribute: nombre => nombre == "data-estado-real" ? "pendiente" : "",
+	querySelector: () => ({ getAttribute: () => "", textContent: "solicitado" })
+};
+afirmar(
+	gastoTesoreriaEstadoDesdeFila(filaPagadaAsociada) === "Activo"
+		&& gastoTesoreriaEstadoDesdeFila(filaPendienteConEtiqueta) === "pendiente",
+	"Las etiquetas visuales Pagado y solicitado no reemplazan el estado persistido usado por Tesoreria."
 );
 
 for (const fuente of [helper, php, dashboard]) {
