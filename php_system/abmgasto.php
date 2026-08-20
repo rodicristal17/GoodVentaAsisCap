@@ -12,6 +12,7 @@ include_once("abmInterConsulta.php");
 include_once("abmPresupuestoMotivoGasto.php");
 include_once("abmaperturacierrecaja.php");
 include_once("abmProyectoGasto.php");
+include_once("gasto_tesoreria_helper.php");
 
 date_default_timezone_set('America/Asuncion');
 
@@ -764,6 +765,19 @@ function gastoDistribucionMontoUsadoPresupuesto($mysqli, $codLocal, $codMotivo, 
 			$total += $baseAdministracion + ($indiceLocalAdministracion < $residuoAdministracion ? 1 : 0);
 		}
 	}
+	if (function_exists('gastoTesoreriaTablaExiste') && gastoTesoreriaTablaExiste($mysqli, 'gasto_tesoreria_impacto')) {
+		$excluirImpactos= count($idsExcluir) > 0 ? ' AND i.idgastosFK NOT IN ('.implode(',', $idsExcluir).')' : '';
+		$sqlImpactos= "SELECT IFNULL(SUM(i.monto_impacto),0) AS monto
+			FROM gasto_tesoreria_impacto i
+			WHERE i.cod_localFK=$codLocal AND i.cod_motivoIngresoEgresoFK=$codMotivo
+			AND i.fecha_impacto>='$fechaDesde' AND i.fecha_impacto<='$fechaHasta'$excluirImpactos";
+		$resultadoImpactos= $mysqli->query($sqlImpactos);
+		if (!$resultadoImpactos) {
+			throw new Exception('No se pudieron calcular las correcciones de Tesoreria del presupuesto.');
+		}
+		$filaImpactos= $resultadoImpactos->fetch_assoc();
+		$total += $filaImpactos ? (int)round($filaImpactos['monto']) : 0;
+	}
 	return $total;
 }
 
@@ -1113,16 +1127,47 @@ echo json_encode($informacion);
 exit;
 }
 
+if ($operacion == 'obtener_contexto_tesoreria')
+{
+	echo json_encode(gastoTesoreriaObtenerContexto($user), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	exit;
+}
+
+if ($operacion == 'guardar_responsable_tesoreria')
+{
+	$codResponsable= isset($_POST['cod_usuario_responsable']) ? (int)$_POST['cod_usuario_responsable'] : 0;
+	echo json_encode(gastoTesoreriaGuardarResponsable($user, $codResponsable), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	exit;
+}
+
+if ($operacion == 'previsualizar_modificacion_tesoreria')
+{
+	echo json_encode(gastoTesoreriaPrevisualizar($user, $_POST), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	exit;
+}
+
+if ($operacion == 'aplicar_modificacion_tesoreria')
+{
+	echo json_encode(gastoTesoreriaAplicar($user, $_POST), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	exit;
+}
+
 if ($operacion == 'obtener_distribucion_gasto')
 {
-	if (controldeaccesoacasas($user, 'VERLISTADOEGRESOINGRESO', " u.accion='SI' ") != 1
+	$mysqliAccesoTesoreria= conectar_al_servidor();
+	$esResponsableTesoreria= gastoTesoreriaEstructuraDisponible($mysqliAccesoTesoreria)
+		&& gastoTesoreriaEsResponsable($mysqliAccesoTesoreria, $user);
+	$mysqliAccesoTesoreria->close();
+	if (!$esResponsableTesoreria
+		&& controldeaccesoacasas($user, 'VERLISTADOEGRESOINGRESO', " u.accion='SI' ") != 1
 		&& controldeaccesoacasas($user, 'EDITARLISTADOEGRESOINGRESO', " u.accion='SI' ") != 1) {
 		echo json_encode(array('1' => 'NI', '2' => 'No tiene permiso para consultar la distribucion del gasto.'));
 		exit;
 	}
 	$idDistribucion= isset($_POST['idgastos']) ? (int)$_POST['idgastos'] : 0;
 	$clasificacionDistribucion= obtenerClasificacionGastoActual($idDistribucion);
-	if (!$clasificacionDistribucion['existe'] || !usuarioPuedeGestionarLocalGasto($user, $clasificacionDistribucion['cod_local'])) {
+	if (!$clasificacionDistribucion['existe']
+		|| (!usuarioPuedeGestionarLocalGasto($user, $clasificacionDistribucion['cod_local']) && !$esResponsableTesoreria)) {
 		echo json_encode(array('1' => 'NI', '2' => 'El gasto no existe o no pertenece a un local autorizado.'));
 		exit;
 	}
@@ -1162,14 +1207,19 @@ if ($operacion == 'obtener_distribucion_gasto')
 
 if ($operacion == 'estado_presupuesto_distribucion')
 {
-	if ((string)$user !== '2' && controldeaccesoacasas($user, 'VERLISTADOEGRESOINGRESO', " u.accion='SI' ") != 1
+	$mysqliAccesoPresupuestoTesoreria= conectar_al_servidor();
+	$esResponsablePresupuestoTesoreria= gastoTesoreriaEstructuraDisponible($mysqliAccesoPresupuestoTesoreria)
+		&& gastoTesoreriaEsResponsable($mysqliAccesoPresupuestoTesoreria, $user);
+	$mysqliAccesoPresupuestoTesoreria->close();
+	if (!$esResponsablePresupuestoTesoreria && (string)$user !== '2' && controldeaccesoacasas($user, 'VERLISTADOEGRESOINGRESO', " u.accion='SI' ") != 1
 		&& controldeaccesoacasas($user, 'EDITARLISTADOEGRESOINGRESO', " u.accion='SI' ") != 1) {
 		echo json_encode(array('1' => 'NI', '2' => 'No tiene permiso para consultar el presupuesto del movimiento.'));
 		exit;
 	}
 	$idPresupuesto= isset($_POST['idgastos']) ? (int)$_POST['idgastos'] : 0;
 	$clasificacionPresupuesto= obtenerClasificacionGastoActual($idPresupuesto);
-	if (!$clasificacionPresupuesto['existe'] || !usuarioPuedeGestionarLocalGasto($user, $clasificacionPresupuesto['cod_local'])) {
+	if (!$clasificacionPresupuesto['existe']
+		|| (!usuarioPuedeGestionarLocalGasto($user, $clasificacionPresupuesto['cod_local']) && !$esResponsablePresupuestoTesoreria)) {
 		echo json_encode(array('1' => 'NI', '2' => 'El movimiento no existe o no pertenece a un local autorizado.'));
 		exit;
 	}
@@ -2049,16 +2099,22 @@ if ($operacion == "buscarProximosPagos") {
 }
 
 if ($operacion == "obtenerGastosAsociados") {
+	$mysqliAccesoSerieTesoreria= conectar_al_servidor();
+	$esResponsableSerieTesoreria= gastoTesoreriaEstructuraDisponible($mysqliAccesoSerieTesoreria)
+		&& gastoTesoreriaEsResponsable($mysqliAccesoSerieTesoreria, $user);
+	$mysqliAccesoSerieTesoreria->close();
 	$puedeVerGastos= ((string)$user === '2'
 		|| controldeaccesoacasas($user, 'VERLISTADOEGRESOINGRESO', " u.accion='SI' ") == 1
-		|| controldeaccesoacasas($user, 'EDITARLISTADOEGRESOINGRESO', " u.accion='SI' ") == 1);
+		|| controldeaccesoacasas($user, 'EDITARLISTADOEGRESOINGRESO', " u.accion='SI' ") == 1
+		|| $esResponsableSerieTesoreria);
 	if (!$puedeVerGastos) {
 		echo json_encode(array('1'=>'NI', '2'=>'No tiene permiso para consultar cuotas asociadas.'));
 		exit;
 	}
 	$idgastos= isset($_POST['idgastos']) ? (int)$_POST['idgastos'] : 0;
 	$clasificacionGastoAsociado= obtenerClasificacionGastoActual($idgastos);
-	if (!$clasificacionGastoAsociado['existe'] || !usuarioPuedeGestionarLocalGasto($user, $clasificacionGastoAsociado['cod_local'])) {
+	if (!$clasificacionGastoAsociado['existe']
+		|| (!usuarioPuedeGestionarLocalGasto($user, $clasificacionGastoAsociado['cod_local']) && !$esResponsableSerieTesoreria)) {
 		echo json_encode(array('1'=>'NI', '2'=>'El movimiento no existe o no pertenece a un local autorizado.'));
 		exit;
 	}
@@ -2067,8 +2123,8 @@ if ($operacion == "obtenerGastosAsociados") {
 	$gastos= $serieEstricta
 		? obtenerGastosSerieEstricta($idgastos)
 		: obtenerGastosAsociados($idgastos);
-	$gastos= array_values(array_filter($gastos, function($gasto) use ($user) {
-		return isset($gasto['cod_local']) && usuarioPuedeGestionarLocalGasto($user, $gasto['cod_local']);
+	$gastos= array_values(array_filter($gastos, function($gasto) use ($user, $esResponsableSerieTesoreria) {
+		return isset($gasto['cod_local']) && ($esResponsableSerieTesoreria || usuarioPuedeGestionarLocalGasto($user, $gasto['cod_local']));
 	}));
 	$tieneSerieEditable= false;
 	$mysqliSerieEditable= conectar_al_servidor();
@@ -2912,9 +2968,15 @@ function aprobarMovimiento($idgastos, $cod_usuarioFK, $decision) {
 		}
 		$cajaCreador= null;
 		if ($decision == 'Activo') {
-			$cajaCreador= gastoBuscarCajaActivaDelCreador($mysqli, $registroBloqueado, true);
+			$actorTesoreria= ((int)$registroBloqueado['cod_local'] === 1)
+				? gastoTesoreriaActorUltimaEdicionPendiente($mysqli, $idgastos) : 0;
+			$cajaCreador= $actorTesoreria > 0
+				? gastoTesoreriaCajaActivaUsuarioLocal($mysqli, $actorTesoreria, 1, true)
+				: gastoBuscarCajaActivaDelCreador($mysqli, $registroBloqueado, true);
 			if (!$cajaCreador) {
-				throw new Exception('No se puede aprobar: la persona que registro el gasto no tiene una caja activa en el local de origen.');
+				throw new Exception($actorTesoreria > 0
+					? 'No se puede aprobar: la responsable que modifico el gasto no tiene una caja activa en Administracion.'
+					: 'No se puede aprobar: la persona que registro el gasto no tiene una caja activa en el local de origen.');
 			}
 		}
 		// Current read posterior al bloqueo del gasto: una asignacion parcial
@@ -3846,6 +3908,11 @@ try {
 			$estado= $gastoPreliminarEdicion['estado'];
 		} else if (esTipoDepositoCentral($tipo)) {
 			$estado= (mb_strtolower((string)$estado, 'UTF-8') == 'inactivo') ? 'Inactivo' : 'Activo';
+		} else if (strtolower(trim((string)$gastoPreliminarEdicion['estado'])) === 'activo') {
+			// Un pago confirmado es historico. El ABM comun solo puede conservar sus
+			// datos financieros; los cambios de monto, fecha o distribucion pasan por
+			// la correccion trazable de la responsable oficial de Tesoreria.
+			$estado= $gastoPreliminarEdicion['estado'];
 		} else if ($mantener_estado_por_documento_firmado && isset($gastoPreliminarEdicion['estado'])) {
 			$estado= $gastoPreliminarEdicion['estado'];
 		} else {
@@ -4042,6 +4109,28 @@ try {
 			'codApertura' => $idaperturacierrecaja, 'cod_interConsultaFK' => $cod_interConsultaFK,
 			'cod_proyecto_gastoFK' => $cod_proyecto_gastoFK,
 		);
+		if (strtolower(trim((string)$gastoActualBloqueado['estado'])) === 'activo'
+			&& strtolower(trim((string)$gastoActualBloqueado['tipo'])) === 'egreso') {
+			$snapshotPagadoActual= gastoTesoreriaSnapshotBase($mysqli, $gastoActualBloqueado, true);
+			$cambioFinancieroPagado= (int)$snapshotPagadoActual['monto'] !== (int)round($monto)
+				|| (string)$snapshotPagadoActual['fecha'] !== substr((string)$fecha, 0, 10)
+				|| (int)$snapshotPagadoActual['cod_local_pago'] !== (int)$cod_local
+				|| (int)$gastoActualBloqueado['cod_motivoIngresoEgresoFK'] !== (int)$cod_motivo
+				|| strtolower(trim((string)$tipo)) !== 'egreso';
+			if (!$cambioFinancieroPagado && empty($distribucionGasto['conservar_legacy'])) {
+				$distribucionSolicitadaPagada= array(
+					'modo' => isset($distribucionGasto['modo']) ? (string)$distribucionGasto['modo'] : '',
+					'asignaciones' => isset($distribucionGasto['asignaciones']) ? $distribucionGasto['asignaciones'] : array(),
+				);
+				$cambioFinancieroPagado= gastoDistribucionCanonica(array(
+					'modo' => $snapshotPagadoActual['modo_distribucion'],
+					'asignaciones' => $snapshotPagadoActual['asignaciones'],
+				)) !== gastoDistribucionCanonica($distribucionSolicitadaPagada);
+			}
+			if ($cambioFinancieroPagado) {
+				throw new Exception('El movimiento ya esta pagado y no puede reescribirse. La responsable oficial de Tesoreria debe registrar una correccion trazable.');
+			}
+		}
 		if (!empty($distribucionGasto['conservar_legacy'])) {
 			$distribucionLegacyActual= gastoDistribucionObtenerEfectiva($mysqli, $idGastoBloqueo, true);
 			if (empty($distribucionLegacyActual['legacy_no_materializable'])) {

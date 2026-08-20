@@ -42,6 +42,7 @@ function extraerFuncion(fuente, nombre) {
 }
 
 const funciones = [
+	"gastoTesoreriaEsResponsableOficial",
 	"gastoDistribucionNumero",
 	"gastoDistribucionTotalMovimiento",
 	"gastoDistribucionLocalPago",
@@ -49,6 +50,7 @@ const funciones = [
 	"gastoDistribucionMinimoPersonalizado",
 	"gastoAplicarImpactoTesoreriaDesdeLocalHilo",
 	"gastoDistribucionEquitativa",
+	"gastoDistribucionEscalarProporcional",
 	"gastoDistribucionAsignacionesActuales",
 	"validarDistribucionGasto",
 	"actualizarDistribucionPorMontoGasto"
@@ -67,6 +69,7 @@ globalThis.ver_vetana_informativa = () => {};
 globalThis.renderizarDistribucionLocalGasto = () => {};
 globalThis.idAbmGasto = "";
 globalThis.cod_localFKUSer = "6";
+globalThis.gastoContextoTesoreria = { cargado: true, esResponsable: false };
 
 let permisoTesoreria = true;
 globalThis.permisoAccesoUser = codigo => codigo === "INSERTARLISTADOEGRESOINGRESO" || permisoTesoreria;
@@ -137,8 +140,8 @@ afirmar(
 afirmar(
 	fuenteHtml.includes("id='avisoDistribucionTesoreriaGasto'")
 		&& fuenteHtml.includes("id='ayudaDistribucionPersonalizadaGasto'")
-		&& (fuenteHtml.match(/tesoreria-multilocal-20260814-1/g) || []).length === 2,
-	"La interfaz explica el modo Tesoreria y fuerza la carga de ambos JavaScript actualizados."
+		&& fuenteHtml.includes("tesoreria-responsable-20260820-1"),
+	"La interfaz explica el modo Tesoreria y fuerza la carga de los recursos actualizados."
 );
 afirmar(
 	fuenteJsInterConsulta.includes('localDetalleInterConsulta.setAttribute("data-cod-local"')

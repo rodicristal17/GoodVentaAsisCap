@@ -21,6 +21,8 @@ function verCerrarAbmGasto(){
 	document.getElementById("divSegundoPlano").style.display="none";
 	if(document.getElementById("divAbmGastos").style.display==""){
 		conciliarEgresoUenoMostrarModal(false);
+		gastoTesoreriaCerrarConfiguracion();
+		gastoTesoreriaCerrarModificacion();
 		document.getElementById("divMinimizadoEgresoIngreso").style.display="none"
 		document.getElementById("tdEfectoAbmGasto").className="magictime vanishOut"
 		$("div[id=divAbmGastos]").fadeOut(500);	
@@ -33,6 +35,7 @@ function verCerrarAbmGasto(){
         buscaroptionMotivoEgresoIngreso();
 		buscarabmGasto();
 		buscarProyectosVistaSelecc();
+		gastoTesoreriaCargarContexto();
 		document.getElementById("divAbmGastos").style.display=""
         document.getElementById("tdEfectoAbmGasto").className="magictime slideDownReturn"
 	}
@@ -52,6 +55,8 @@ function limpiarcamposbuscadoregresoingreso(){
 }
 function minimizarventanaingresoegreso(){
 	conciliarEgresoUenoMostrarModal(false);
+	gastoTesoreriaCerrarConfiguracion();
+	gastoTesoreriaCerrarModificacion();
 	document.getElementById("divMinimizadoEgresoIngreso").style.display=""
     document.getElementById("tdEfectoAbmGasto").className="magictime slideDown"
 	$("div[id=divAbmGastos]").fadeOut(500);
@@ -80,6 +85,21 @@ var gastoAsociadosSecuenciaEdicion = 0;
 var gastoGuardadoEnCurso = false;
 var conciliacionEgresoUenoGuardadoEnCurso = false;
 var gastoCargaEdicionActual = { token: 0, id: "", distribucion: true, proyecto: true, asociados: true, error: false };
+var gastoContextoTesoreria = {
+	cargado: false,
+	cargando: false,
+	estructuraDisponible: false,
+	puedeConfigurar: false,
+	esResponsable: false,
+	responsable: null,
+	usuarios: []
+};
+var gastoTesoreriaEstadoOriginal = "";
+var gastoTesoreriaMontoOriginal = 0;
+var gastoTesoreriaFechaOriginal = "";
+var gastoTesoreriaPreviaValida = false;
+var gastoTesoreriaFirmaPrevia = "";
+var gastoTesoreriaSolicitudPendiente = null;
 
 function gastoIniciarCargaEdicion(idgastos) {
 	gastoCargaEdicionActual = {
@@ -106,11 +126,407 @@ function gastoMarcarCargaEdicion(componente, token, idgastos, ok) {
 function gastoActualizarEstadoBotonGuardar() {
 	var boton = document.getElementById("btnAbmGastos");
 	if (!boton) { return; }
+	gastoTesoreriaConfigurarEdicionAcotada();
+	var edicionTesoreriaAcotada = gastoTesoreriaEsEdicionAcotada();
 	var edicionCargando = String(idAbmGasto || "") != ""
 		&& gastoCargaEdicionActual.id == String(idAbmGasto)
-		&& (!gastoCargaEdicionActual.distribucion || !gastoCargaEdicionActual.proyecto || !gastoCargaEdicionActual.asociados || gastoCargaEdicionActual.error);
+		&& (edicionTesoreriaAcotada
+			? !gastoCargaEdicionActual.distribucion
+			: (!gastoCargaEdicionActual.distribucion || !gastoCargaEdicionActual.proyecto || !gastoCargaEdicionActual.asociados || gastoCargaEdicionActual.error));
 	boton.disabled = !!gastoGuardadoEnCurso || !!edicionCargando || !!gastoDistribucionEstado.cargando;
 	gastoActualizarEstadoBotonImprimir();
+}
+
+function gastoTesoreriaAjaxDatos(operacion) {
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", operacion);
+	return datos;
+}
+
+function gastoTesoreriaEsResponsableOficial() {
+	return !!(gastoContextoTesoreria.cargado && gastoContextoTesoreria.esResponsable);
+}
+
+function gastoTesoreriaEsEdicionAcotada() {
+	if (!gastoTesoreriaEsResponsableOficial() || String(typeof idAbmGasto == "undefined" ? "" : (idAbmGasto || "")) == "" || !gastoTesoreriaEstadoPermiteFlujo()) {
+		return false;
+	}
+	var tipo = document.getElementById("inptTipoGasto");
+	return !!tipo && normalizarTipoMovimientoFinanciero(tipo.value) == "Egreso";
+}
+
+function gastoTesoreriaConfigurarEdicionAcotada() {
+	var contenedor = document.getElementById("divAbmGasto2");
+	if (!contenedor) { return; }
+	var activo = gastoTesoreriaEsEdicionAcotada();
+	contenedor.classList.toggle("movimiento-tesoreria-scope-active", activo);
+	var aviso = document.getElementById("avisoEdicionAcotadaTesoreria");
+	if (aviso) { aviso.hidden = !activo; }
+	var controles = contenedor.querySelectorAll("[data-tesoreria-fuera-alcance] input, [data-tesoreria-fuera-alcance] select, [data-tesoreria-fuera-alcance] textarea, [data-tesoreria-fuera-alcance] button, button[data-tesoreria-fuera-alcance]");
+	for (var i = 0; i < controles.length; i++) {
+		var control = controles[i];
+		if (activo) {
+			if (!control.hasAttribute("data-tesoreria-disabled-original")) {
+				control.setAttribute("data-tesoreria-disabled-original", control.disabled ? "1" : "0");
+			}
+			control.disabled = true;
+		} else if (control.hasAttribute("data-tesoreria-disabled-original")) {
+			control.disabled = control.getAttribute("data-tesoreria-disabled-original") == "1";
+			control.removeAttribute("data-tesoreria-disabled-original");
+		}
+	}
+}
+
+function gastoTesoreriaAvatarHtml(usuario, clase) {
+	usuario = usuario || {};
+	var nombre = usuario.nombre || "Usuario de Telar";
+	var avatar = usuario.avatar || "/GoodVentaAsisCap/iconos/user.png";
+	return "<img class='" + (clase || "movimiento-tesoreria-avatar") + "' src='" + planificacionGastoEscape(avatar) + "' alt='Foto de " + planificacionGastoEscape(nombre) + "' onerror=\"this.onerror=null;this.src='/GoodVentaAsisCap/iconos/user.png';\">";
+}
+
+function gastoTesoreriaRenderizarContexto() {
+	var boton = document.getElementById("btnConfigurarResponsableTesoreria");
+	var estado = document.getElementById("estadoResponsableTesoreria");
+	if (boton) {
+		boton.hidden = !gastoContextoTesoreria.puedeConfigurar;
+	}
+	if (!estado) { return; }
+	var responsable = gastoContextoTesoreria.responsable;
+	if (!gastoContextoTesoreria.estructuraDisponible) {
+		estado.hidden = !gastoContextoTesoreria.puedeConfigurar;
+		estado.innerHTML = gastoContextoTesoreria.puedeConfigurar ? "La configuraci&oacute;n de Tesorer&iacute;a todav&iacute;a no est&aacute; disponible en la base de datos." : "";
+		return;
+	}
+	if (!responsable || !responsable.cod_usuario) {
+		estado.hidden = false;
+		estado.innerHTML = "<i class='fa-solid fa-circle-exclamation' aria-hidden='true'></i><span><b>Responsable de Tesorer&iacute;a pendiente.</b> Carlos Faraone debe seleccionarla desde el engranaje.</span>";
+		return;
+	}
+	var etiquetaPropia = gastoContextoTesoreria.esResponsable ? " &middot; Sos la responsable activa" : "";
+	estado.hidden = false;
+	estado.innerHTML = gastoTesoreriaAvatarHtml(responsable) + "<span><b>Responsable oficial de Tesorer&iacute;a:</b> " + planificacionGastoEscape(responsable.nombre || "") + etiquetaPropia + "<br><small>" + planificacionGastoEscape(responsable.rol || "") + (responsable.nombre_local ? " &middot; " + planificacionGastoEscape(responsable.nombre_local) : "") + "</small></span>";
+}
+
+function gastoTesoreriaCargarContexto(callback, forzar) {
+	if (gastoContextoTesoreria.cargando) {
+		setTimeout(function () { gastoTesoreriaCargarContexto(callback, false); }, 180);
+		return;
+	}
+	if (gastoContextoTesoreria.cargado && !forzar) {
+		gastoTesoreriaRenderizarContexto();
+		gastoActualizarEstadoBotonGuardar();
+		if (typeof callback == "function") { callback(true); }
+		return;
+	}
+	gastoContextoTesoreria.cargando = true;
+	var datos = gastoTesoreriaAjaxDatos("obtener_contexto_tesoreria");
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		complete: function () { gastoContextoTesoreria.cargando = false; },
+		success: function (responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") { throw new Error(respuesta["2"] || "No se pudo cargar la configuracion."); }
+				gastoContextoTesoreria.cargado = true;
+				gastoContextoTesoreria.estructuraDisponible = Number(respuesta.estructura_disponible || 0) == 1;
+				gastoContextoTesoreria.puedeConfigurar = Number(respuesta.puede_configurar || 0) == 1;
+				gastoContextoTesoreria.esResponsable = Number(respuesta.es_responsable || 0) == 1;
+				gastoContextoTesoreria.responsable = respuesta.responsable || null;
+				gastoContextoTesoreria.usuarios = respuesta.usuarios || [];
+				gastoTesoreriaRenderizarContexto();
+				gastoActualizarEstadoBotonGuardar();
+				if (typeof callback == "function") { callback(true); }
+			} catch (error) {
+				if (typeof callback == "function") { callback(false); }
+			}
+		},
+		error: function () {
+			if (typeof callback == "function") { callback(false); }
+		}
+	});
+}
+
+function gastoTesoreriaAbrirConfiguracion() {
+	gastoTesoreriaCargarContexto(function (ok) {
+		if (!ok || !gastoContextoTesoreria.puedeConfigurar) {
+			ver_vetana_informativa("Solo Carlos Faraone puede configurar la responsable oficial de Tesoreria.");
+			return;
+		}
+		var dialogo = document.getElementById("dialogoResponsableTesoreria");
+		var buscador = document.getElementById("buscarResponsableTesoreria");
+		if (buscador) { buscador.value = ""; }
+		gastoTesoreriaRenderizarUsuarios();
+		if (dialogo) { dialogo.hidden = false; }
+		setTimeout(function () { if (buscador) { buscador.focus(); } }, 80);
+	}, true);
+}
+
+function gastoTesoreriaCerrarConfiguracion() {
+	var dialogo = document.getElementById("dialogoResponsableTesoreria");
+	if (dialogo) { dialogo.hidden = true; }
+}
+
+function gastoTesoreriaRenderizarUsuarios() {
+	var contenedor = document.getElementById("listaUsuariosResponsableTesoreria");
+	if (!contenedor) { return; }
+	var filtro = String(document.getElementById("buscarResponsableTesoreria") ? document.getElementById("buscarResponsableTesoreria").value : "").toLowerCase().trim();
+	var actual = gastoContextoTesoreria.responsable ? String(gastoContextoTesoreria.responsable.cod_usuario || "") : "";
+	var html = "";
+	for (var i = 0; i < gastoContextoTesoreria.usuarios.length; i++) {
+		var usuario = gastoContextoTesoreria.usuarios[i] || {};
+		var texto = [usuario.nombre, usuario.rol, usuario.nombre_local].join(" ").toLowerCase();
+		if (filtro && texto.indexOf(filtro) < 0) { continue; }
+		var seleccionado = String(usuario.cod_usuario || "") == actual;
+		html += "<label class='movimiento-tesoreria-user" + (seleccionado ? " is-selected" : "") + "'>"
+			+ "<input type='radio' name='responsableTesoreria' value='" + Number(usuario.cod_usuario || 0) + "' " + (seleccionado ? "checked" : "") + " onchange='gastoTesoreriaSeleccionarUsuario(this)'>"
+			+ gastoTesoreriaAvatarHtml(usuario)
+			+ "<span><b>" + planificacionGastoEscape(usuario.nombre || "Sin nombre") + "</b><small>" + planificacionGastoEscape(usuario.rol || "Usuario") + (usuario.nombre_local ? " &middot; " + planificacionGastoEscape(usuario.nombre_local) : "") + "</small></span></label>";
+	}
+	contenedor.innerHTML = html || "<div class='movimiento-tesoreria-selection'>No se encontraron usuarios activos con ese criterio.</div>";
+	gastoTesoreriaActualizarResumenSeleccion();
+}
+
+function gastoTesoreriaFiltrarUsuarios() {
+	gastoTesoreriaRenderizarUsuarios();
+}
+
+function gastoTesoreriaSeleccionarUsuario(input) {
+	var filas = document.querySelectorAll("#listaUsuariosResponsableTesoreria .movimiento-tesoreria-user");
+	for (var i = 0; i < filas.length; i++) {
+		var radio = filas[i].querySelector("input[type='radio']");
+		filas[i].classList.toggle("is-selected", !!(radio && radio.checked));
+	}
+	gastoTesoreriaActualizarResumenSeleccion();
+}
+
+function gastoTesoreriaActualizarResumenSeleccion() {
+	var resumen = document.getElementById("resumenResponsableTesoreria");
+	var seleccionado = document.querySelector("input[name='responsableTesoreria']:checked");
+	if (!resumen) { return; }
+	if (!seleccionado) {
+		resumen.textContent = "Selecciona una persona.";
+		return;
+	}
+	var nombre = seleccionado.closest("label").querySelector("b");
+	resumen.innerHTML = "Quedara como unica responsable oficial: <b>" + planificacionGastoEscape(nombre ? nombre.textContent : "") + "</b>.";
+}
+
+function gastoTesoreriaGuardarResponsable() {
+	var seleccionado = document.querySelector("input[name='responsableTesoreria']:checked");
+	if (!seleccionado) {
+		ver_vetana_informativa("Seleccione una usuaria activa de Telar.");
+		return;
+	}
+	var boton = document.getElementById("btnGuardarResponsableTesoreria");
+	if (boton) { boton.disabled = true; }
+	var datos = gastoTesoreriaAjaxDatos("guardar_responsable_tesoreria");
+	datos.append("cod_usuario_responsable", seleccionado.value);
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		complete: function () { if (boton) { boton.disabled = false; } },
+		success: function (responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") { throw new Error(respuesta["2"] || "No se pudo guardar la responsable."); }
+				gastoTesoreriaCerrarConfiguracion();
+				gastoTesoreriaCargarContexto(function () {
+					ver_vetana_informativa("Responsable oficial de Tesoreria actualizada.", "Desde ahora sus cambios financieros quedaran guiados y auditados.", "info");
+				}, true);
+			} catch (error) {
+				ver_vetana_informativa(error.message || "No se pudo guardar la responsable.");
+			}
+		},
+		error: function () { ver_vetana_informativa("No se pudo comunicar con Tesoreria."); }
+	});
+}
+
+function gastoTesoreriaEstadoPermiteFlujo() {
+	var estado = String(gastoTesoreriaEstadoOriginal || "").toLowerCase().trim();
+	return estado == "activo" || estado == "pendiente" || estado == "solicitado";
+}
+
+function gastoTesoreriaEsMovimientoPagado() {
+	return String(gastoTesoreriaEstadoOriginal || "").toLowerCase().trim() == "activo";
+}
+
+function gastoTesoreriaValorRadio(nombre, valorDefault) {
+	var seleccionado = document.querySelector("input[name='" + nombre + "']:checked");
+	return seleccionado ? seleccionado.value : valorDefault;
+}
+
+function gastoTesoreriaConstruirSolicitud(base) {
+	base = base || gastoTesoreriaSolicitudPendiente || {};
+	return {
+		idgastos: base.idgastos || idAbmGasto,
+		monto: base.monto || (document.getElementById("inptMontoGasto") ? document.getElementById("inptMontoGasto").value : ""),
+		fecha: base.fecha || (document.getElementById("inptFechaGasto") ? document.getElementById("inptFechaGasto").value : ""),
+		cod_local: base.cod_local || (document.getElementById("inptlocalMisGastos") ? document.getElementById("inptlocalMisGastos").value : ""),
+		periodicidad: base.periodicidad || (document.getElementById("inptPeriodicidadGasto") ? document.getElementById("inptPeriodicidadGasto").value : ""),
+		modo_distribucion: base.distribucionValidada ? base.distribucionValidada.modo : gastoDistribucionEstado.modo,
+		distribucion_locales: JSON.stringify(base.distribucionValidada ? (base.distribucionValidada.asignaciones || []) : gastoDistribucionAsignacionesActuales()),
+		alcance_monto: gastoTesoreriaValorRadio("alcanceMontoTesoreria", "actual"),
+		alcance_fecha: gastoTesoreriaValorRadio("alcanceFechaTesoreria", "mantener"),
+		motivo_correccion: document.getElementById("motivoModificacionTesoreria") ? document.getElementById("motivoModificacionTesoreria").value.trim() : ""
+	};
+}
+
+function gastoTesoreriaAbrirModificacion(base) {
+	gastoTesoreriaSolicitudPendiente = base || {};
+	gastoTesoreriaPreviaValida = false;
+	var pagado = gastoTesoreriaEsMovimientoPagado();
+	var dialogo = document.getElementById("dialogoModificacionTesoreria");
+	var aviso = document.getElementById("avisoTipoModificacionTesoreria");
+	var opcionMontoPendientes = document.getElementById("opcionMontoPendientesTesoreria");
+	var opcionFechaPendientes = document.getElementById("opcionFechaPendientesTesoreria");
+	var radiosMonto = document.querySelectorAll("input[name='alcanceMontoTesoreria']");
+	var radiosFecha = document.querySelectorAll("input[name='alcanceFechaTesoreria']");
+	for (var i = 0; i < radiosMonto.length; i++) { radiosMonto[i].checked = radiosMonto[i].value == "actual"; }
+	for (var j = 0; j < radiosFecha.length; j++) { radiosFecha[j].checked = radiosFecha[j].value == "mantener"; }
+	if (opcionMontoPendientes) { opcionMontoPendientes.hidden = pagado; }
+	if (opcionFechaPendientes) { opcionFechaPendientes.hidden = pagado; }
+	if (aviso) {
+		aviso.className = "movimiento-tesoreria-type" + (pagado ? " is-paid" : "");
+		aviso.innerHTML = pagado
+			? "<b>Movimiento pagado:</b> el registro y la caja historica no se reescribiran. Se registrara una correccion con reversion y nueva aplicacion por sucursal."
+			: "<b>Movimiento pendiente:</b> puede editarse directamente. Si elegis la serie, solo se tocaran esta cuota y las siguientes que sigan pendientes.";
+	}
+	var motivo = document.getElementById("motivoModificacionTesoreria");
+	if (motivo) { motivo.value = ""; }
+	gastoTesoreriaInvalidarPrevia();
+	if (dialogo) { dialogo.hidden = false; }
+}
+
+function gastoTesoreriaCerrarModificacion() {
+	var dialogo = document.getElementById("dialogoModificacionTesoreria");
+	if (dialogo) { dialogo.hidden = true; }
+	gastoTesoreriaPreviaValida = false;
+	gastoTesoreriaFirmaPrevia = "";
+	gastoTesoreriaSolicitudPendiente = null;
+}
+
+function gastoTesoreriaInvalidarPrevia() {
+	gastoTesoreriaPreviaValida = false;
+	gastoTesoreriaFirmaPrevia = "";
+	var previa = document.getElementById("vistaPreviaModificacionTesoreria");
+	var aplicar = document.getElementById("btnAplicarModificacionTesoreria");
+	if (previa) {
+		previa.className = "movimiento-tesoreria-preview";
+		previa.innerHTML = "<b>Vista previa pendiente</b><span>Revisa los alcances y prepara el resumen antes de confirmar.</span>";
+	}
+	if (aplicar) { aplicar.disabled = true; }
+}
+
+function gastoTesoreriaAgregarSolicitudAFormData(datos, solicitud) {
+	for (var clave in solicitud) {
+		if (Object.prototype.hasOwnProperty.call(solicitud, clave)) {
+			datos.append(clave, solicitud[clave]);
+		}
+	}
+}
+
+function gastoTesoreriaSolicitarPrevia() {
+	var solicitud = gastoTesoreriaConstruirSolicitud();
+	if (solicitud.motivo_correccion.length < 8) {
+		ver_vetana_informativa("Explique brevemente el motivo del cambio (minimo 8 caracteres).");
+		return;
+	}
+	var boton = document.getElementById("btnPrevisualizarModificacionTesoreria");
+	if (boton) { boton.disabled = true; }
+	var datos = gastoTesoreriaAjaxDatos("previsualizar_modificacion_tesoreria");
+	gastoTesoreriaAgregarSolicitudAFormData(datos, solicitud);
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		complete: function () { if (boton) { boton.disabled = false; } },
+		success: function (responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") { throw new Error(respuesta["2"] || "No se pudo preparar la vista previa."); }
+				var resumen = respuesta.resumen || {};
+				var previa = document.getElementById("vistaPreviaModificacionTesoreria");
+				var fechaTexto = resumen.fecha_anterior == resumen.fecha_nueva ? "Se mantiene " + (resumen.fecha_anterior || "") : (resumen.fecha_anterior || "") + " a " + (resumen.fecha_nueva || "");
+				if (previa) {
+					previa.className = "movimiento-tesoreria-preview is-ready";
+					previa.innerHTML = "<b>Resumen antes de guardar</b>"
+						+ "<span>Monto: Gs. " + gastoDistribucionFormato(resumen.monto_anterior || 0) + " a Gs. " + gastoDistribucionFormato(resumen.monto_nuevo || 0) + ". Alcance: " + Number(resumen.cuotas_monto || 0) + " movimiento(s).</span>"
+						+ "<span>Fecha: " + planificacionGastoEscape(fechaTexto) + ". Alcance: " + Number(resumen.cuotas_fecha || 0) + " movimiento(s).</span>"
+						+ "<span>Distribucion: " + planificacionGastoEscape(resumen.modo_anterior || "") + " a " + planificacionGastoEscape(resumen.modo_nuevo || "") + ".</span>"
+						+ "<span>" + planificacionGastoEscape(resumen.mensaje || "") + "</span>";
+				}
+				gastoTesoreriaFirmaPrevia = String(respuesta.firma_previa || "");
+				if (!gastoTesoreriaFirmaPrevia) { throw new Error("La vista previa no pudo quedar vinculada al cambio."); }
+				gastoTesoreriaPreviaValida = true;
+				var aplicar = document.getElementById("btnAplicarModificacionTesoreria");
+				if (aplicar) { aplicar.disabled = false; }
+			} catch (error) {
+				gastoTesoreriaInvalidarPrevia();
+				ver_vetana_informativa(error.message || "No se pudo preparar la vista previa.");
+			}
+		},
+		error: function () { gastoTesoreriaInvalidarPrevia(); ver_vetana_informativa("No se pudo comunicar con Tesoreria."); }
+	});
+}
+
+function gastoTesoreriaAplicarModificacion() {
+	if (!gastoTesoreriaPreviaValida || gastoGuardadoEnCurso) { return; }
+	var solicitud = gastoTesoreriaConstruirSolicitud();
+	solicitud.firma_previa = gastoTesoreriaFirmaPrevia;
+	var boton = document.getElementById("btnAplicarModificacionTesoreria");
+	gastoGuardadoEnCurso = true;
+	if (boton) { boton.disabled = true; }
+	gastoActualizarEstadoBotonGuardar();
+	verCerrarEfectoCargando("1");
+	var datos = gastoTesoreriaAjaxDatos("aplicar_modificacion_tesoreria");
+	gastoTesoreriaAgregarSolicitudAFormData(datos, solicitud);
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmgasto.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		complete: function () {
+			gastoGuardadoEnCurso = false;
+			if (boton) { boton.disabled = !gastoTesoreriaPreviaValida; }
+			gastoActualizarEstadoBotonGuardar();
+			verCerrarEfectoCargando("");
+		},
+		success: function (responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") { throw new Error(respuesta["2"] || "No se pudo guardar la modificacion."); }
+				var fueCorreccion = respuesta.tipo == "correccion_pagada";
+				gastoTesoreriaCerrarModificacion();
+				ver_vetana_informativa(fueCorreccion ? "Correccion registrada." : "Movimiento pendiente actualizado.", fueCorreccion ? "El pago original se conservo y el nuevo impacto ya quedo trazado por sucursal." : "Solo se modificaron las cuotas pendientes incluidas en la vista previa.", "info");
+				limpiarcamposGasto();
+				idAbmGasto = "";
+				buscarabmGasto();
+				verCerrarVentanaAbmGasto(false, false);
+			} catch (error) {
+				gastoTesoreriaPreviaValida = false;
+				ver_vetana_informativa(error.message || "No se pudo guardar la modificacion.");
+			}
+		},
+		error: function (jqXHR, textstatus) { manejadordeerroresjquery(jqXHR.status, textstatus, "tesoreria"); }
+	});
 }
 
 function gastoActualizarEstadoBotonImprimir() {
@@ -179,9 +595,10 @@ function gastoDistribucionLocalPago() {
 }
 
 function gastoUsuarioPuedeRegistrarTesoreriaMultilocal() {
-	return typeof permisoAccesoUser == "function"
+	return gastoTesoreriaEsResponsableOficial()
+		|| (typeof permisoAccesoUser == "function"
 		&& permisoAccesoUser("VERCIERRESTESORERIA", "accion")
-		&& permisoAccesoUser("INSERTARLISTADOEGRESOINGRESO", "accion");
+		&& permisoAccesoUser("INSERTARLISTADOEGRESOINGRESO", "accion"));
 }
 
 function gastoDistribucionMinimoPersonalizado() {
@@ -208,7 +625,7 @@ function gastoAplicarImpactoTesoreriaDesdeLocalHilo(codLocalHilo) {
 		|| !selectLocalPago
 		|| !tipo
 		|| normalizarTipoMovimientoFinanciero(tipo.value) != "Egreso"
-		|| String(typeof idAbmGasto == "undefined" ? "" : (idAbmGasto || "")) != ""
+		|| (String(typeof idAbmGasto == "undefined" ? "" : (idAbmGasto || "")) != "" && !gastoTesoreriaEsResponsableOficial())
 		|| !gastoUsuarioPuedeRegistrarTesoreriaMultilocal()) {
 		return false;
 	}
@@ -232,6 +649,33 @@ function gastoDistribucionEquitativa(monto, locales) {
 	var residuo = monto % locales.length;
 	for (var i = 0; i < locales.length; i++) {
 		salida[locales[i]] = base + (i < residuo ? 1 : 0);
+	}
+	return salida;
+}
+
+function gastoDistribucionEscalarProporcional(monto, valores) {
+	var codigos = Object.keys(valores || {}).map(Number).filter(function (codigo) { return codigo > 0; });
+	codigos.sort(function (a, b) { return a - b; });
+	var totalAnterior = 0;
+	for (var i = 0; i < codigos.length; i++) {
+		totalAnterior += gastoDistribucionNumero(valores[codigos[i]] || 0);
+	}
+	if (monto <= 0 || totalAnterior <= 0 || codigos.length == 0) { return valores || {}; }
+	var salida = {};
+	var restos = [];
+	var asignado = 0;
+	for (var j = 0; j < codigos.length; j++) {
+		var codigo = codigos[j];
+		var exacto = monto * gastoDistribucionNumero(valores[codigo] || 0) / totalAnterior;
+		var base = Math.floor(exacto);
+		salida[codigo] = base;
+		asignado += base;
+		restos.push({ codigo: codigo, resto: exacto - base });
+	}
+	restos.sort(function (a, b) { return b.resto - a.resto || a.codigo - b.codigo; });
+	var residuo = monto - asignado;
+	for (var k = 0; k < residuo; k++) {
+		salida[restos[k % restos.length].codigo]++;
 	}
 	return salida;
 }
@@ -378,6 +822,12 @@ function cambiarModoDistribucionGasto(modo) {
 		return;
 	}
 	if (["local", "compartido", "personalizado"].indexOf(modo) < 0) { return; }
+	if (gastoTesoreriaEsResponsableOficial() && modo != "local") {
+		var localPagoTesoreria = document.getElementById("inptlocalMisGastos");
+		if (localPagoTesoreria) {
+			localPagoTesoreria.value = "1";
+		}
+	}
 	gastoDistribucionEstado.legacyNoMaterializable = false;
 	if (modo == "local" && gastoDistribucionLocalPago() == 1) {
 		gastoDistribucionEstado.modo = "compartido";
@@ -454,11 +904,11 @@ function actualizarDistribucionPorMontoGasto() {
 		gastoDistribucionEstado.valores[gastoDistribucionLocalPago()] = gastoDistribucionTotalMovimiento();
 	} else if (gastoDistribucionEstado.modo == "compartido") {
 		gastoDistribucionEstado.valores = gastoDistribucionEquitativa(gastoDistribucionTotalMovimiento(), gastoDistribucionLocalesGraficos);
-	} else if (gastoDistribucionEstado.modo == "personalizado" && gastoDistribucionMinimoPersonalizado() == 1) {
-		var seleccionados = Object.keys(gastoDistribucionEstado.valores);
-		if (seleccionados.length == 1) {
-			gastoDistribucionEstado.valores[seleccionados[0]] = gastoDistribucionTotalMovimiento();
-		}
+	} else if (gastoDistribucionEstado.modo == "personalizado") {
+		gastoDistribucionEstado.valores = gastoDistribucionEscalarProporcional(
+			gastoDistribucionTotalMovimiento(),
+			gastoDistribucionEstado.valores
+		);
 	}
 	renderizarDistribucionLocalGasto();
 }
@@ -1718,7 +2168,8 @@ function conciliarEgresoUenoVerAsignacionesBanco(idMovimiento) {
 
 function verCerrarVentanaAbmGasto(mostrar, limpiar= false, recargarProyectos= true) {
 	if (mostrar) {
-		if(idabmAperturacierrecaja==""){
+		var edicionProtegidaTesoreria = !limpiar && String(idAbmGasto || "") != "" && gastoTesoreriaEsResponsableOficial();
+		if(idabmAperturacierrecaja=="" && !edicionProtegidaTesoreria){
 			document.getElementById("divAbmGastos").style.display="none"
 		   ver_vetana_informativa("FALTO INICIAR UNA CAJA")
 		   verCerrarVentanaAbmAperturaCierreCaja1()
@@ -1752,8 +2203,24 @@ function verCerrarVentanaAbmGasto(mostrar, limpiar= false, recargarProyectos= tr
 }
 
 function verVentanaEditarGasto(vent_anterior= "") {
-	if(controlacceso("EDITARLISTADOEGRESOINGRESO","accion")==false){return;}
-	if(idabmAperturacierrecaja==""){
+	if (!gastoContextoTesoreria.cargado) {
+		gastoTesoreriaCargarContexto(function () { verVentanaEditarGasto(vent_anterior); });
+		return;
+	}
+	var puedeEditarGeneral = typeof permisoAccesoUser == "function" && permisoAccesoUser("EDITARLISTADOEGRESOINGRESO", "accion");
+	if (!puedeEditarGeneral && !gastoTesoreriaEsResponsableOficial()) {
+		controlacceso("EDITARLISTADOEGRESOINGRESO", "accion");
+		return;
+	}
+	if (gastoTesoreriaEsMovimientoPagado() && !gastoTesoreriaEsResponsableOficial()) {
+		ver_vetana_informativa("Este movimiento ya esta pagado.", "Para conservar la caja y el historial, la responsable oficial de Tesoreria debe registrar una correccion trazable.", "advertencia");
+		return;
+	}
+	if (gastoTesoreriaEsMovimientoPagado() && gastoTesoreriaEsResponsableOficial()) {
+		var botonCorreccionTesoreria = document.getElementById("btnAbmGastos");
+		if (botonCorreccionTesoreria) { botonCorreccionTesoreria.value = "Registrar correccion trazable"; }
+	}
+	if(idabmAperturacierrecaja=="" && !gastoTesoreriaEsResponsableOficial()){
 		document.getElementById("divAbmGastos").style.display="none"
 		ver_vetana_informativa("FALTO INICIAR UNA CAJA")
 		verCerrarVentanaAbmAperturaCierreCaja1()
@@ -1852,14 +2319,17 @@ function obtenerdatosabmGasto(datostr) {
 	});
 	datostr.className = 'tableRegistroSelec'
 	document.getElementById('inptMontoGasto').value = $(datostr).children('td[id="td_datos_1"]').html();
+	gastoTesoreriaMontoOriginal = gastoDistribucionNumero($(datostr).children('td[id="td_datos_1"]').html());
 	document.getElementById('inptRegistroSeleccGasto').value = $(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptDescripcionGasto').value = $(datostr).children('td[id="td_datos_13"]').html();
 	document.getElementById('inptMotivoMisGastos').value = $(datostr).children('td[id="td_datos_20"]').html();
 	document.getElementById('inptFechaGasto').value = $(datostr).children('td[id="td_datos_3"]').html();
+	gastoTesoreriaFechaOriginal = $(datostr).children('td[id="td_datos_3"]').html() || "";
 	document.getElementById('inptProyectoGasto').value = $(datostr).children('td[id="td_datos_22"]').html();
 	document.getElementById('inptIdGasto').value = $(datostr).children('td[id="td_id"]').html();
 	
 	document.getElementById('inptEstadoGasto').value = ($(datostr).children('td[id="td_datos_5"]').html() == 'Inactivo' ? 'Inactivo' : 'Activo');
+	gastoTesoreriaEstadoOriginal = $(datostr).children('td[id="td_datos_5"]').html() || "";
 	document.getElementById('inptlocalMisGastos').value = $(datostr).children('td[id="td_datos_7"]').html();
 	document.getElementById('inptNroBoletaGasto').value = $(datostr).children('td[id="td_datos_8"]').html();
 	document.getElementById('inptBancoGasto').value = $(datostr).children('td[id="td_datos_9"]').html();
@@ -1874,6 +2344,9 @@ function obtenerdatosabmGasto(datostr) {
 	}
 	document.getElementById('inptArregloGasto').value = $(datostr).children('td[id="td_datos_11"]').html();
 	document.getElementById('btnAbmGastos').value = "Actualizar movimiento";
+	if (gastoTesoreriaEsResponsableOficial() && String(gastoTesoreriaEstadoOriginal).toLowerCase().trim() == "activo") {
+		document.getElementById('btnAbmGastos').value = "Registrar correccion trazable";
+	}
 	configurarModalMovimientoFinanciero({ modo: "editar", tipoMovimiento: tipoMovimientoSeleccionado });
 	document.getElementById('btnEditarGastos').style.backgroundColor="";
 	document.getElementById('btnImprimirRegistroGastos').style.backgroundColor="";
@@ -2477,6 +2950,27 @@ function verificarcamposGasto() {
 
     const inptMotivoMisGastos= document.getElementById('inptMotivoMisGastos').value;
 	const esDepositoCentral= normalizarTipoMovimientoFinanciero(inptTipoGasto) == "Deposito";
+	var esEdicionTesoreriaAcotada = gastoTesoreriaEsEdicionAcotada();
+
+	if (esEdicionTesoreriaAcotada) {
+		if (inptMontoGasto == "") {
+			ver_vetana_informativa("FALTO INGRESAR EL MONTO DEL GASTO");
+			return false;
+		}
+		if (inptFechaGasto == "") {
+			ver_vetana_informativa("FALTO SELECCIONAR LA FECHA DEL GASTO");
+			return false;
+		}
+		var distribucionTesoreriaValidada = validarDistribucionGasto(true);
+		if (!distribucionTesoreriaValidada.ok) {
+			return false;
+		}
+		abmgastos(inptArregloGasto, inptNroBoletaGasto, inptBancoGasto, inptCuentaGasto,
+			inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto,
+			inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos, "editar", inptCantCuotaGasto,
+			inptPeriodicidadGasto, inptProyectoGasto, distribucionTesoreriaValidada);
+		return false;
+	}
 
     if (inptMotivoMisGastos == '') {
         ver_vetana_informativa("FALTO SELECCIONAR UN MOTIVO DE LA LISTA.");
@@ -2525,7 +3019,7 @@ function verificarcamposGasto() {
 	var accion = "";
 	if (idAbmGasto != "") {
 		accion = "editar";
-		if(controlacceso("EDITARLISTADOEGRESOINGRESO","accion")==false){return;}	
+		if (!gastoTesoreriaEsResponsableOficial() && controlacceso("EDITARLISTADOEGRESOINGRESO","accion")==false){return;}
 	} else {
 		if(controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false){return;}	
 		accion = "nuevo";
@@ -2539,13 +3033,25 @@ function gastoSeleccionadoTieneCuotasAsociadas() {
 
 function abmgastos(Arreglo,nroboleta ,banco ,nrocuenta,monto, descripcion, fecha, estado, idgastos, tipo, cod_local,cod_motivoFK, accion, cantCuotas= 0, periodicidad= "", proyecto_gasto="", distribucionValidada) {
 	if (gastoGuardadoEnCurso) { return false; }
+	if (accion == "editar" && gastoTesoreriaEsResponsableOficial()
+		&& normalizarTipoMovimientoFinanciero(tipo) == "Egreso" && gastoTesoreriaEstadoPermiteFlujo()) {
+		gastoTesoreriaAbrirModificacion({
+			idgastos: idgastos,
+			monto: monto,
+			fecha: fecha,
+			cod_local: cod_local,
+			periodicidad: periodicidad,
+			distribucionValidada: distribucionValidada
+		});
+		return false;
+	}
 	gastoGuardadoEnCurso = true;
 	gastoActualizarEstadoBotonGuardar();
 	verCerrarEfectoCargando("1")
 	let editar_cuotas= false;
 	
 	if (accion == "editar" && gastoSeleccionadoTieneCuotasAsociadas()) {
-		editar_cuotas= confirm("¿Modificar tambien las cuotas asociadas?");
+		editar_cuotas= confirm("Este cambio puede aplicarse a las cuotas pendientes de la serie. Aceptar: modifica esta y las siguientes pendientes. Cancelar: modifica solo la seleccionada. Las cuotas pagadas nunca se modifican.");
 	}
 	var datos = new FormData();
 	obtener_datos_user();
@@ -4174,6 +4680,13 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 }
 function limpiarcamposGasto() {
 	gastoUenoMovimientoOrigen = null;
+	gastoTesoreriaEstadoOriginal = "";
+	gastoTesoreriaMontoOriginal = 0;
+	gastoTesoreriaFechaOriginal = "";
+	gastoTesoreriaPreviaValida = false;
+	gastoTesoreriaFirmaPrevia = "";
+	gastoTesoreriaSolicitudPendiente = null;
+	gastoTesoreriaConfigurarEdicionAcotada();
 	document.getElementById('inptMontoGasto').value = "";
 	document.getElementById('inptRegistroSeleccGasto').value = "";
 	document.getElementById('inptDescripcionGasto').value = "";

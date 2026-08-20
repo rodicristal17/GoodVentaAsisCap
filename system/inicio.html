@@ -32,7 +32,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
  
 
 <link rel="stylesheet" href="/GoodVentaAsisCap/css/info.css" />
-<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=laboratorio-producto-20260819-1" />
+<link id='cssTema' rel="stylesheet" href="/GoodVentaAsisCap/css_system/inicio.css?x=tesoreria-responsable-20260820-1" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-4" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=trabajo-laboratorio-20260723-mini-hilo-1" />
@@ -82,7 +82,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/jsCalendar.js?x=planificacion-fuente-agenda-20260807-01"></script>
 <script src="/GoodVentaAsisCap/js_system/abmConsultorio.js?x=performance-polling-20260718"></script>
 <script src="/GoodVentaAsisCap/js_system/abmTareaUsuario.js?x=gestion-personal-agenda-dashboard-equal-20260613"></script>   
-<script src="../js_system/abmGasto_ingresosEgresos.js?x=tesoreria-multilocal-20260814-1"></script>
+<script src="../js_system/abmGasto_ingresosEgresos.js?x=tesoreria-responsable-20260820-1"></script>
 <script src="../js_system/abmAsistencia.js?x=presencia-segura-20260717-1"></script>
 <script src="../js_system/abmLogInactivos.js?x=20260529b"></script>
 <script src="../js_system/abmErroresSistema.js?x=20260812-1"></script>
@@ -8898,11 +8898,17 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 <header class='presupuesto-header'>
 <h2 id='tituloMovimientoFinanciero'>Movimiento financiero</h2>
 <div class='header-actions'>
+<button type='button' id='btnConfigurarResponsableTesoreria' class='movimiento-tesoreria-gear' title='Configurar responsable oficial de Tesorer&iacute;a' aria-label='Configurar responsable oficial de Tesorer&iacute;a' onclick='gastoTesoreriaAbrirConfiguracion()' hidden><i class='fa-solid fa-gear' aria-hidden='true'></i></button>
 <img src='/GoodVentaAsisCap/iconos/limpiarcampos.png' class='iconoBtn' title='Limpiar campos' onclick='limpiarcamposGasto()' />
 <img src='/GoodVentaAsisCap/iconos/minimizar2.png' class='iconoBtn' title='Minimizar Ventana' onclick='minimizarventanaingresoegreso()' />
 <img src='/GoodVentaAsisCap/iconos/flechaderecha.png' class='iconoBtn' title='Volver Atras' onclick='verCerrarVentanaAbmGasto(false, false)' />
 </div>
 </header>
+<div id='estadoResponsableTesoreria' class='movimiento-tesoreria-status' hidden></div>
+<div id='avisoEdicionAcotadaTesoreria' class='movimiento-tesoreria-scope' hidden>
+  <i class='fa-solid fa-shield-halved' aria-hidden='true'></i>
+  <span><b>Edici&oacute;n protegida de Tesorer&iacute;a.</b> En esta pantalla solo pod&eacute;s cambiar monto, fecha, periodicidad y distribuci&oacute;n por sucursal. Los dem&aacute;s datos se conservan sin cambios.</span>
+</div>
 <div id='chipContextoMovimientoFinanciero' class='movimiento-financiero-contexto-chip' style='display:none;'></div>
 <div id='avisoDepositoCentral' class='movimiento-financiero-deposito-aviso' style='display:none;'>
   <i class='fa-solid fa-building-columns' aria-hidden='true'></i>
@@ -8917,14 +8923,14 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 <label for='inptIdGasto'>Cod. gasto :</label>
 <input class='inputTextDisable' type='text' disabled id='inptIdGasto' />
 </div>
-<div class='form-row flex-grow' style='flex:1 1 100%;'>
+<div class='form-row flex-grow' style='flex:1 1 100%;' data-tesoreria-fuera-alcance>
 <label for='inptMotivoMisGastos'>Concepto contable* :</label>
 <div style='display:flex;gap:10px;align-items:flex-end;width:100%;'>
 <select class="inputSelect" id="inptMotivoMisGastos" onchange="manejarCambioConceptoMovimientoFinanciero();actualizarVistaPreviaPlanificacionGasto()"></select>
 <input type='button' value='+ Concepto' class='btn4 movimiento-financiero-inline-action' onclick='verCerrarAbmNuevoMotivo()' />
 </div>
 </div>
-<div class='form-row flex-grow' style='flex:1 1 100%;'>
+<div class='form-row flex-grow' style='flex:1 1 100%;' data-tesoreria-fuera-alcance>
 <label for='inptDescripcionGasto'>Descripcion* :</label>
 <textarea class='textarea1' placeholder='Obligatorio (*)' id='inptDescripcionGasto' onkeyup='actualizarVistaPreviaPlanificacionGasto()' style='width:100%;min-height:120px;box-sizing:border-box;resize:vertical;border-radius:12px;padding:12px;border:1px solid #ccd8e6;background:#f9fbfe;box-shadow:inset 0 1px 2px rgba(37,71,106,0.06);'></textarea>
 </div>
@@ -8940,14 +8946,14 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 <label for='inptlocalMisGastos'>Local/caja que paga* :</label>
 <select class='inputSelect' id='inptlocalMisGastos' onchange='manejarCambioLocalPagoGasto()'></select>
 </div>
-<div class='form-row flex-grow' style='flex:1 1 100%;'>
+<div class='form-row flex-grow' style='flex:1 1 100%;' data-tesoreria-fuera-alcance>
 <label for='inptAbmInterConsultaGasto'>Hilo relacionado (opcional) :</label>
 <div style='display:flex;gap:10px;align-items:flex-end;width:100%;'>
 <input type='text' class='inputTextDisable' id='inptAbmInterConsultaGasto' disabled style='flex:1 1 auto;min-width:0;'>
 <input type='button' value='Seleccionar' class='btn4 movimiento-financiero-inline-action' onclick="verCerrarVentanaListadoInterConsulta(true, 'divAbmGastos')">
 </div>
 </div>
-<div class='form-row flex-grow' style='flex:1 1 100%;'>
+<div class='form-row flex-grow' style='flex:1 1 100%;' data-tesoreria-fuera-alcance>
 <label for='inptProyectoGasto'>Proyecto dentro del hilo :</label>
 <select class='inputSelect' id='inptProyectoGasto' onchange='manejarCambioProyectoGasto();actualizarVistaPreviaPlanificacionGasto()'>
   <option value="0">PAGO AISLADO (sin proyecto)</option>
@@ -8959,34 +8965,34 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 <div class='presupuesto-panel tabla-cuotas movimiento-financiero-panel'>
 <div class='movimiento-financiero-panel-head'>
 <div class='panel-title'>Pago y planificaci&oacute;n</div>
-<button type='button' class='movimiento-financiero-nuevo-proyecto' title='Crear proyecto dentro del hilo actual' onclick='crearProyectoGastoDesdeVentanaMovimiento(event)'><span>+</span> Proyecto</button>
+<button type='button' class='movimiento-financiero-nuevo-proyecto' data-tesoreria-fuera-alcance title='Crear proyecto dentro del hilo actual' onclick='crearProyectoGastoDesdeVentanaMovimiento(event)'><span>+</span> Proyecto</button>
 </div>
 <div class='form-section' style='margin-bottom:0;'>
 <div class='form-row'>
 <label for='inptMontoGasto'>Monto* :</label>
 <input class='inputText' type='text' placeholder='Obligatorio (*)' id='inptMontoGasto' onkeyup='separadordemiles(this);actualizarVistaPreviaPlanificacionGasto();actualizarDistribucionPorMontoGasto()' />
 </div>
-<div class='form-row'>
+<div class='form-row' data-tesoreria-fuera-alcance>
 <label for='inptTipoGasto'>Tipo* :</label>
 <select class='inputSelect' id='inptTipoGasto' onchange='manejarCambioTipoMovimientoAdjuntoGuiado();actualizarVistaPreviaPlanificacionGasto();actualizarVisibilidadDistribucionGasto()'>
 <option value='Ingreso'>INGRESO</option>
 <option value='Egreso'>EGRESOS</option>
 </select>
 </div>
-<div class='form-row'>
+<div class='form-row' data-tesoreria-fuera-alcance>
 <label for='inptEstadoGasto'>Estado :</label>
 <select class='inputSelect' id='inptEstadoGasto' onchange='actualizarVistaPreviaPlanificacionGasto()'>
 <option value='Activo'>PAGADO</option>
 <option value='Inactivo'>INACTIVO</option>
 </select>
 </div>
-<div class='form-row'>
+<div class='form-row' data-tesoreria-fuera-alcance>
 <label for='inptNroBoletaGasto'>Nro de Boleta :</label>
 <input class='inputText' type='text' id='inptNroBoletaGasto' />
 </div>
 <input type='hidden' id='inptBancoGasto' value='' />
 <input type='hidden' id='inptCuentaGasto' value='' />
-<div class='form-row' style='display:none;'>
+<div class='form-row' style='display:none;' data-tesoreria-fuera-alcance>
 <label for='inptArregloGasto'>Arreglo :</label>
 <select class='inputSelect' id='inptArregloGasto'>
 <option value=''>SELECCIONAR</option>
@@ -8994,7 +9000,7 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 <option value='EXTERNO'>EXTERNO</option>
 </select>
 </div>
-<div class='form-row' id='tablePeriodicidad'>
+<div class='form-row' id='tablePeriodicidad' data-tesoreria-fuera-alcance>
 <label for='inptCantCuotaGasto'>Cantidad de cuotas :</label>
 <input class='inputText' type='number' min='1' max='120' id='inptCantCuotaGasto' onkeyup='actualizarVistaPreviaPlanificacionGasto()' onchange='actualizarVistaPreviaPlanificacionGasto()'/>
 </div>
@@ -9035,7 +9041,7 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 </div>
 </div>
 
-<div class='presupuesto-panel tabla-detalles movimiento-financiero-panel movimiento-financiero-adjuntos'>
+<div class='presupuesto-panel tabla-detalles movimiento-financiero-panel movimiento-financiero-adjuntos' data-tesoreria-fuera-alcance>
 <div class='panel-title'>Respaldo documental</div>
 <button type='button' id='btnAdjuntarMovimientoFinanciero' class='movimiento-financiero-attachment-action' aria-haspopup='dialog' aria-controls='dialogoAdjuntoDocumentoGuiado' onclick="abrirAdjuntoDocumentoGuiado('gasto')">
 <span id='imgfotoGasto' class='imgFotoProducto' style="background-image:url('/GoodVentaAsisCap/iconos/imagenphoto.png');"></span>
@@ -9055,6 +9061,44 @@ title='Volver Atras' onclick='verCerrarVentanaSeleccionDictamen(false)' />
 <div id='divGastoAsociadosGastos' data-es-credito='false' style='display:none;'></div>
 <div id='divNombreProyectoGasto' style='display:none;'></div>
 <div id='divTableProyecto' style='display:none;'></div>
+
+<div id='dialogoResponsableTesoreria' class='movimiento-tesoreria-dialog-backdrop' hidden role='dialog' aria-modal='true' aria-labelledby='tituloResponsableTesoreria'>
+<section class='movimiento-tesoreria-dialog movimiento-tesoreria-dialog--responsable'>
+<header>
+<div><span class='movimiento-tesoreria-kicker'>CONFIGURACI&Oacute;N RESTRINGIDA</span><h3 id='tituloResponsableTesoreria'>Responsable oficial de Tesorer&iacute;a</h3></div>
+<button type='button' class='movimiento-tesoreria-close' aria-label='Cerrar' onclick='gastoTesoreriaCerrarConfiguracion()'>&times;</button>
+</header>
+<p class='movimiento-tesoreria-help'>Seleccion&aacute; una &uacute;nica usuaria activa de Telar. Tendr&aacute; la facultad acotada de modificar monto, fecha y distribuci&oacute;n multilocal, siempre con vista previa y trazabilidad.</p>
+<label class='movimiento-tesoreria-search'><i class='fa-solid fa-magnifying-glass' aria-hidden='true'></i><input type='search' id='buscarResponsableTesoreria' placeholder='Buscar por nombre, cargo o local' oninput='gastoTesoreriaFiltrarUsuarios()'></label>
+<div id='listaUsuariosResponsableTesoreria' class='movimiento-tesoreria-users'></div>
+<div id='resumenResponsableTesoreria' class='movimiento-tesoreria-selection'>Seleccion&aacute; una persona.</div>
+<footer><button type='button' class='btn4' onclick='gastoTesoreriaCerrarConfiguracion()'>Cancelar</button><button type='button' id='btnGuardarResponsableTesoreria' class='btn1' onclick='gastoTesoreriaGuardarResponsable()'>Guardar responsable</button></footer>
+</section>
+</div>
+
+<div id='dialogoModificacionTesoreria' class='movimiento-tesoreria-dialog-backdrop' hidden role='dialog' aria-modal='true' aria-labelledby='tituloModificacionTesoreria'>
+<section class='movimiento-tesoreria-dialog movimiento-tesoreria-dialog--alcance'>
+<header>
+<div><span class='movimiento-tesoreria-kicker'>ACCI&Oacute;N GUIADA</span><h3 id='tituloModificacionTesoreria'>Revisar modificaci&oacute;n de Tesorer&iacute;a</h3></div>
+<button type='button' class='movimiento-tesoreria-close' aria-label='Cerrar' onclick='gastoTesoreriaCerrarModificacion()'>&times;</button>
+</header>
+<div id='avisoTipoModificacionTesoreria' class='movimiento-tesoreria-type'></div>
+<div class='movimiento-tesoreria-scopes'>
+<fieldset id='grupoAlcanceMontoTesoreria'><legend>1. Alcance del monto y la distribuci&oacute;n</legend>
+<label><input type='radio' name='alcanceMontoTesoreria' value='actual' checked onchange='gastoTesoreriaInvalidarPrevia()'><span><b>Solo este movimiento</b><small>No modifica otras cuotas de la serie.</small></span></label>
+<label id='opcionMontoPendientesTesoreria'><input type='radio' name='alcanceMontoTesoreria' value='pendientes' onchange='gastoTesoreriaInvalidarPrevia()'><span><b>Este y los siguientes pendientes</b><small>Nunca alcanza cuotas pagadas.</small></span></label>
+</fieldset>
+<fieldset id='grupoAlcanceFechaTesoreria'><legend>2. Alcance de las fechas</legend>
+<label><input type='radio' name='alcanceFechaTesoreria' value='mantener' checked onchange='gastoTesoreriaInvalidarPrevia()'><span><b>Mantener fechas actuales</b><small>El cambio de monto no reprograma vencimientos.</small></span></label>
+<label><input type='radio' name='alcanceFechaTesoreria' value='actual' onchange='gastoTesoreriaInvalidarPrevia()'><span><b>Modificar solo esta fecha</b><small>Usa la fecha indicada en el formulario.</small></span></label>
+<label id='opcionFechaPendientesTesoreria'><input type='radio' name='alcanceFechaTesoreria' value='pendientes' onchange='gastoTesoreriaInvalidarPrevia()'><span><b>Reprogramar pendientes siguientes</b><small>Respeta la periodicidad y deja intactas las pagadas.</small></span></label>
+</fieldset>
+</div>
+<label class='movimiento-tesoreria-reason'><span>3. Motivo obligatorio del cambio</span><textarea id='motivoModificacionTesoreria' maxlength='500' placeholder='Ej.: correcci&oacute;n del importe informado en la cuota' oninput='gastoTesoreriaInvalidarPrevia()'></textarea><small>Quedar&aacute; registrado qui&eacute;n hizo el cambio, cu&aacute;ndo y cu&aacute;les eran los valores anteriores.</small></label>
+<div id='vistaPreviaModificacionTesoreria' class='movimiento-tesoreria-preview'><b>Vista previa pendiente</b><span>Revis&aacute; los alcances y prepar&aacute; el resumen antes de confirmar.</span></div>
+<footer><button type='button' class='btn4' onclick='gastoTesoreriaCerrarModificacion()'>Cancelar</button><button type='button' id='btnPrevisualizarModificacionTesoreria' class='btn4' onclick='gastoTesoreriaSolicitarPrevia()'>Ver vista previa</button><button type='button' id='btnAplicarModificacionTesoreria' class='btn1' onclick='gastoTesoreriaAplicarModificacion()' disabled>Confirmar cambio</button></footer>
+</section>
+</div>
 </div>
 
 <div id='divConciliarEgresoUeno' class='conciliacion-egreso-modal' style='display:none;'>

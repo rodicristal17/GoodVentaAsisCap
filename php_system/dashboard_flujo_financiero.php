@@ -6,6 +6,7 @@ ini_set('display_errors', '0');
 require("conexion.php");
 include("verificar_navegador.php");
 include("buscar_nivel.php");
+include_once("gasto_tesoreria_helper.php");
 
 date_default_timezone_set('America/Asuncion');
 
@@ -403,6 +404,40 @@ function flujo_dashboard_sumar_movimientos($mysqli, $ids, $desde, $hasta)
 		$totales[$codLocal][$categoria] += (int)round($row['total']);
     }
 
+    if (gastoTesoreriaTablaExiste($mysqli, 'gasto_tesoreria_impacto')) {
+        $sqlCorrecciones = "SELECT i.cod_localFK AS cod_local,'Egreso' AS tipo,
+            IFNULL(m.descripcion,'') AS concepto,
+            IF(i.cod_local_pago_snapshot=".(int)FLUJO_DASHBOARD_LOCAL_ADMIN.",
+                'administracion',IFNULL(m.categoria,'')) AS categoria,
+            IFNULL(SUM(i.monto_impacto),0) AS total
+            FROM gasto_tesoreria_impacto i
+            LEFT JOIN motivos_ingreso_egreso m
+                ON m.cod_motivo_ingreso_egreso=i.cod_motivoIngresoEgresoFK
+            WHERE i.fecha_impacto>='$desdeSql' AND i.fecha_impacto<='$hastaSql'
+              AND i.cod_localFK IN ($idsSql)
+            GROUP BY i.cod_localFK,i.cod_motivoIngresoEgresoFK,
+                i.cod_local_pago_snapshot,IFNULL(m.descripcion,''),IFNULL(m.categoria,'')
+            HAVING total<>0";
+        $resultadoCorrecciones = $mysqli->query($sqlCorrecciones);
+        if (!$resultadoCorrecciones) {
+            flujo_dashboard_json(array('1' => 'error', '2' => 'No se pudieron consultar las correcciones de Tesoreria'));
+        }
+        while ($row = $resultadoCorrecciones->fetch_assoc()) {
+            if (flujo_dashboard_es_migracion_caja($row['concepto'])) {
+                continue;
+            }
+            $codLocal = (int)$row['cod_local'];
+            $categoria = flujo_dashboard_categoria($row['categoria'], $row['tipo']);
+            if (!isset($totales[$codLocal])) {
+                $totales[$codLocal] = array();
+            }
+            if (!isset($totales[$codLocal][$categoria])) {
+                $totales[$codLocal][$categoria] = 0;
+            }
+            $totales[$codLocal][$categoria] += (int)round($row['total']);
+        }
+    }
+
     return $totales;
 }
 
@@ -612,6 +647,35 @@ function flujo_dashboard_movimiento_gasto($row, $montoAsignado = null, $localDes
     return $movimiento;
 }
 
+function flujo_dashboard_movimiento_correccion_tesoreria($row)
+{
+    $monto = (int)round($row['monto_impacto']);
+    $concepto = flujo_dashboard_to_utf8($row['concepto']);
+    if ($concepto == '') {
+        $concepto = 'Sin concepto';
+    }
+    $motivo = flujo_dashboard_to_utf8($row['motivo_correccion']);
+    $descripcion = 'Correccion trazable de Tesoreria';
+    if ($motivo != '') {
+        $descripcion .= ': '.$motivo;
+    }
+    return array(
+        'id' => 'CORR-'.(int)$row['id_modificacion'],
+        'tipo' => 'Egreso',
+        'fecha' => $row['fecha_impacto'],
+        'concepto' => $concepto,
+        'descripcion' => $descripcion,
+        'monto' => $monto,
+        'montoOriginal' => $monto,
+        'montoAsignado' => $monto,
+        'estado' => 'Correccion trazable',
+        'responsable' => flujo_dashboard_to_utf8($row['usuario_nombre']),
+        'localOrigen' => flujo_dashboard_to_utf8($row['nombrelocal_pago']),
+        'localDestino' => flujo_dashboard_to_utf8($row['nombrelocal_destino']),
+        'referencia' => 'Movimiento #'.(int)$row['idgastosFK']
+    );
+}
+
 function flujo_dashboard_detalle_pagos($mysqli, &$categorias, $codLocal, $desde, $hasta)
 {
     $codLocal = (int)$codLocal;
@@ -704,6 +768,46 @@ function flujo_dashboard_detalle_gastos_local($mysqli, &$categorias, $codLocal, 
             $conceptoNombre,
             flujo_dashboard_movimiento_gasto($row, $montoAsignado, $localDestino)
         );
+    }
+
+    if (gastoTesoreriaTablaExiste($mysqli, 'gasto_tesoreria_impacto')) {
+        $sqlCorrecciones = "SELECT i.id_modificacionFK AS id_modificacion,i.idgastosFK,
+            i.fecha_impacto,SUM(i.monto_impacto) AS monto_impacto,
+            i.cod_motivoIngresoEgresoFK,tm.motivo AS motivo_correccion,
+            IFNULL(m.descripcion,'') AS concepto,
+            IF(i.cod_local_pago_snapshot=".(int)FLUJO_DASHBOARD_LOCAL_ADMIN.",
+                'administracion',IFNULL(m.categoria,'')) AS categoria,
+            IFNULL(p.nombre_persona,'') AS usuario_nombre,
+            IFNULL(lp.Nombre,'') AS nombrelocal_pago,
+            IFNULL(ld.Nombre,'') AS nombrelocal_destino
+            FROM gasto_tesoreria_impacto i
+            INNER JOIN gasto_tesoreria_modificacion tm ON tm.id_modificacion=i.id_modificacionFK
+            LEFT JOIN motivos_ingreso_egreso m
+                ON m.cod_motivo_ingreso_egreso=i.cod_motivoIngresoEgresoFK
+            LEFT JOIN persona p ON p.cod_persona=i.cod_usuario_actorFK
+            LEFT JOIN local lp ON lp.cod_local=i.cod_local_pago_snapshot
+            LEFT JOIN local ld ON ld.cod_local=i.cod_localFK
+            WHERE i.cod_localFK=$codLocal
+              AND i.fecha_impacto>='$desdeSql' AND i.fecha_impacto<='$hastaSql'
+            GROUP BY i.id_modificacionFK,i.idgastosFK,i.fecha_impacto,i.cod_localFK,
+                i.cod_local_pago_snapshot,i.cod_motivoIngresoEgresoFK,tm.motivo,
+                m.descripcion,m.categoria,p.nombre_persona,lp.Nombre,ld.Nombre
+            HAVING monto_impacto<>0
+            ORDER BY i.fecha_impacto DESC,i.id_modificacionFK DESC";
+        $resultadoCorrecciones = $mysqli->query($sqlCorrecciones);
+        if (!$resultadoCorrecciones) {
+            flujo_dashboard_json(array('1' => 'error', '2' => 'No se pudo consultar el detalle de correcciones de Tesoreria'));
+        }
+        while ($row = $resultadoCorrecciones->fetch_assoc()) {
+            $categoria = flujo_dashboard_nombre_categoria($row['categoria'], 'Egreso');
+            flujo_dashboard_agregar_movimiento(
+                $categorias,
+                $categoria,
+                trim((string)$row['cod_motivoIngresoEgresoFK']),
+                flujo_dashboard_to_utf8($row['concepto']),
+                flujo_dashboard_movimiento_correccion_tesoreria($row)
+            );
+        }
     }
 }
 
