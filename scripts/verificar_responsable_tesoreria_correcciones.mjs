@@ -102,6 +102,34 @@ afirmar(
 		&& php.includes("monto_impacto"),
 	"Las correcciones impactan el resumen, el detalle y el presupuesto por sucursal."
 );
+afirmar(
+	php.includes("gastoUsuarioPuedeRegistrarTesoreriaMultilocal($codUsuario, $mysqli = null)")
+		&& php.includes("function gastoUsuarioEsResponsableTesoreria")
+		&& php.includes("if ($esResponsableTesoreria) {\n\t\treturn true;")
+		&& php.includes("obtenerCategoriaPrincipalHilo($filaHilo['tipo']) !== 'pagos_egresos'"),
+	"La responsable oficial puede operar Hilos activos de Pagos y Egresos sin administrar ni integrar la sucursal."
+);
+afirmar(
+	php.includes("$puedePagarDesdeAdministracionTesoreria= intval($cod_local) === 1")
+		&& php.includes("Tesoreria debe registrar el pago desde Administracion")
+		&& php.includes("La responsable de Tesoreria debe usar la modificacion guiada con vista previa"),
+	"La excepcion queda limitada a Administracion como caja pagadora y la edicion comun no elude la correccion trazable."
+);
+afirmar(
+	js.includes("gastoTesoreriaCargarContexto(null, true)")
+		&& js.includes("function gastoTesoreriaPuedeCrearEgresoDesdeHilo")
+		&& js.includes("contexto.contextoTesoreriaActualizado")
+		&& html.includes("tesoreria-responsable-20260820-2"),
+	"La pantalla refresca la designacion al abrir el modulo y antes de iniciar el egreso desde un Hilo."
+);
+const aprobacion = extraerFuncion(php, "aprobarMovimiento");
+afirmar(
+	aprobacion.includes("AUTORIZAREGRESOINGRESO")
+		&& aprobacion.includes("usuarioPuedeGestionarLocalGasto")
+		&& !aprobacion.includes("gastoUsuarioEsResponsableTesoreria")
+		&& !aprobacion.includes("gastoTesoreriaEsResponsable"),
+	"La designacion de Tesoreria no concede automaticamente el permiso separado para aprobar pagos."
+);
 
 globalThis.gastoDistribucionNumero = valor => Math.round(Number(valor) || 0);
 globalThis.eval(`${extraerFuncion(js, "gastoDistribucionEscalarProporcional")}\n//# sourceURL=proporcional.js`);

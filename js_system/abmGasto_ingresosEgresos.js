@@ -35,7 +35,7 @@ function verCerrarAbmGasto(){
         buscaroptionMotivoEgresoIngreso();
 		buscarabmGasto();
 		buscarProyectosVistaSelecc();
-		gastoTesoreriaCargarContexto();
+		gastoTesoreriaCargarContexto(null, true);
 		document.getElementById("divAbmGastos").style.display=""
         document.getElementById("tdEfectoAbmGasto").className="magictime slideDownReturn"
 	}
@@ -149,6 +149,15 @@ function gastoTesoreriaAjaxDatos(operacion) {
 
 function gastoTesoreriaEsResponsableOficial() {
 	return !!(gastoContextoTesoreria.cargado && gastoContextoTesoreria.esResponsable);
+}
+
+function gastoTesoreriaPuedeCrearEgresoDesdeHilo(contexto) {
+	contexto = contexto || {};
+	return gastoTesoreriaEsResponsableOficial()
+		&& contexto.modo == "crear"
+		&& normalizarTipoMovimientoFinanciero(contexto.tipoMovimiento) == "Egreso"
+		&& /^\d+$/.test(String(contexto.interconsultaId || ""))
+		&& String(contexto.interconsultaId) != "0";
 }
 
 function gastoTesoreriaEsEdicionAcotada() {
@@ -1335,6 +1344,13 @@ function abrirMovimientoFinancieroDesdeDebitoUeno(movimiento) {
 
 function abrirMovimientoFinanciero(contexto) {
 	contexto = contexto || {};
+	if (!contexto.contextoTesoreriaActualizado) {
+		contexto.contextoTesoreriaActualizado = true;
+		gastoTesoreriaCargarContexto(function () {
+			abrirMovimientoFinanciero(contexto);
+		}, true);
+		return;
+	}
 	if (contexto.modo == "editar") {
 		var filaMovimiento = contexto.fila || obtenerFilaMovimientoFinancieroPorId(contexto.movimientoId);
 		if (filaMovimiento) {
@@ -1349,12 +1365,13 @@ function abrirMovimientoFinanciero(contexto) {
 		return;
 	}
 	if (contexto.modo == "crear") {
-		if(controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false){return;}
+		if (!gastoTesoreriaPuedeCrearEgresoDesdeHilo(contexto)
+			&& controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false) { return; }
 		if(idabmAperturacierrecaja==""){
-			verCerrarVentanaAbmGasto(true, true, false);
+			verCerrarVentanaAbmGasto(true, true, false, contexto);
 			return;
 		}
-		verCerrarVentanaAbmGasto(true, true, false);
+		verCerrarVentanaAbmGasto(true, true, false, contexto);
 		aplicarContextoCrearMovimientoFinanciero(contexto);
 		return;
 	}
@@ -2166,7 +2183,7 @@ function conciliarEgresoUenoVerAsignacionesBanco(idMovimiento) {
 	});
 }
 
-function verCerrarVentanaAbmGasto(mostrar, limpiar= false, recargarProyectos= true) {
+function verCerrarVentanaAbmGasto(mostrar, limpiar= false, recargarProyectos= true, contextoCreacion= null) {
 	if (mostrar) {
 		var edicionProtegidaTesoreria = !limpiar && String(idAbmGasto || "") != "" && gastoTesoreriaEsResponsableOficial();
 		if(idabmAperturacierrecaja=="" && !edicionProtegidaTesoreria){
@@ -2182,7 +2199,8 @@ function verCerrarVentanaAbmGasto(mostrar, limpiar= false, recargarProyectos= tr
 				buscarProyectosVistaSelecc();
 			}
             BuscarAbmMotivoEgresoIngreso();
-			if(controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false){return;}	
+			if (!gastoTesoreriaPuedeCrearEgresoDesdeHilo(contextoCreacion)
+				&& controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false) { return; }
 		}
 		$("div[id=divAbmGasto2]").fadeIn(250)
 		document.getElementById('divAbmGasto1').style.display = "none"
@@ -3021,7 +3039,10 @@ function verificarcamposGasto() {
 		accion = "editar";
 		if (!gastoTesoreriaEsResponsableOficial() && controlacceso("EDITARLISTADOEGRESOINGRESO","accion")==false){return;}
 	} else {
-		if(controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false){return;}	
+		var altaTesoreriaDesdeHilo = gastoTesoreriaEsResponsableOficial()
+			&& normalizarTipoMovimientoFinanciero(inptTipoGasto) == "Egreso"
+			&& gastoObtenerHiloFormulario() != "";
+		if (!altaTesoreriaDesdeHilo && controlacceso("INSERTARLISTADOEGRESOINGRESO","accion")==false) { return; }
 		accion = "nuevo";
 	}
 	abmgastos(inptArregloGasto,inptNroBoletaGasto, inptBancoGasto , inptCuentaGasto ,inptMontoGasto, inptDescripcionGasto, inptFechaGasto, inptEstadoGasto, idAbmGasto, inptTipoGasto, inptlocalMisGastos, inptMotivoMisGastos,accion, inptCantCuotaGasto, inptPeriodicidadGasto, inptProyectoGasto, distribucionValidada);

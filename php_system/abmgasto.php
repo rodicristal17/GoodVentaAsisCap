@@ -146,19 +146,45 @@ function usuarioPuedeGestionarLocalGasto($codUsuario, $codLocal)
 	return controldeaccesoacasas($codUsuario, 'CAMBIARLOCAL', " u.accion='SI' ") == 1;
 }
 
-function gastoUsuarioPuedeRegistrarTesoreriaMultilocal($codUsuario)
+function gastoUsuarioEsResponsableTesoreria($codUsuario, $mysqli = null)
 {
 	$codUsuario= intval($codUsuario);
 	if ($codUsuario <= 0) {
 		return false;
 	}
+	$conexionPropia= false;
+	$esResponsable= false;
+	try {
+		if (!($mysqli instanceof mysqli)) {
+			$mysqli= conectar_al_servidor();
+			$conexionPropia= true;
+		}
+		$esResponsable= gastoTesoreriaEsResponsable($mysqli, $codUsuario);
+	} catch (Exception $e) {
+		$esResponsable= false;
+	}
+	if ($conexionPropia && $mysqli instanceof mysqli) {
+		$mysqli->close();
+	}
+	return $esResponsable;
+}
+
+function gastoUsuarioPuedeRegistrarTesoreriaMultilocal($codUsuario, $mysqli = null)
+{
+	$codUsuario= intval($codUsuario);
+	if ($codUsuario <= 0) {
+		return false;
+	}
+	if (gastoUsuarioEsResponsableTesoreria($codUsuario, $mysqli)) {
+		return true;
+	}
 	return controldeaccesoacasas($codUsuario, 'VERCIERRESTESORERIA', " u.accion='SI' ") == 1
 		&& controldeaccesoacasas($codUsuario, 'INSERTARLISTADOEGRESOINGRESO', " u.accion='SI' ") == 1;
 }
 
-function gastoDistribucionMinimoPersonalizado($codUsuario, $codLocalPago)
+function gastoDistribucionMinimoPersonalizado($codUsuario, $codLocalPago, $mysqli = null)
 {
-	return intval($codLocalPago) === 1 && gastoUsuarioPuedeRegistrarTesoreriaMultilocal($codUsuario) ? 1 : 2;
+	return intval($codLocalPago) === 1 && gastoUsuarioPuedeRegistrarTesoreriaMultilocal($codUsuario, $mysqli) ? 1 : 2;
 }
 
 function gastoUsuarioPuedeGestionarLocalPorHilo($mysqli, $codUsuario, $codLocal, $codInterConsulta)
@@ -166,8 +192,12 @@ function gastoUsuarioPuedeGestionarLocalPorHilo($mysqli, $codUsuario, $codLocal,
 	$codUsuario= intval($codUsuario);
 	$codLocal= intval($codLocal);
 	$codInterConsulta= intval($codInterConsulta);
-	if (!($mysqli instanceof mysqli) || $codUsuario <= 0 || $codLocal <= 0 || $codInterConsulta <= 0
-		|| controldeaccesoacasas($codUsuario, 'INSERTARLISTADOEGRESOINGRESO', " u.accion='SI' ") != 1) {
+	if (!($mysqli instanceof mysqli) || $codUsuario <= 0 || $codLocal <= 0 || $codInterConsulta <= 0) {
+		return false;
+	}
+	$esResponsableTesoreria= gastoUsuarioEsResponsableTesoreria($codUsuario, $mysqli);
+	if (!$esResponsableTesoreria
+		&& controldeaccesoacasas($codUsuario, 'INSERTARLISTADOEGRESOINGRESO', " u.accion='SI' ") != 1) {
 		return false;
 	}
 	$stmt= $mysqli->prepare("SELECT tipo FROM interconsulta
@@ -183,8 +213,13 @@ function gastoUsuarioPuedeGestionarLocalPorHilo($mysqli, $codUsuario, $codLocal,
 	}
 	$stmt->close();
 	if (!$filaHilo || !function_exists('obtenerCategoriaPrincipalHilo')
-		|| obtenerCategoriaPrincipalHilo($filaHilo['tipo']) !== 'pagos_egresos'
-		|| !function_exists('interconsultaParticipantesActualesHilos')) {
+		|| obtenerCategoriaPrincipalHilo($filaHilo['tipo']) !== 'pagos_egresos') {
+		return false;
+	}
+	if ($esResponsableTesoreria) {
+		return true;
+	}
+	if (!function_exists('interconsultaParticipantesActualesHilos')) {
 		return false;
 	}
 	$participantes= interconsultaParticipantesActualesHilos(array($codInterConsulta), $mysqli);
@@ -297,7 +332,7 @@ function gastoDistribucionValidarLocales($mysqli, $asignaciones, $codUsuario, $c
 		throw new Exception('El local de pago ya no esta activo.');
 	}
 	$puedeTesoreriaAdministracion= $codLocalPago === 1
-		&& gastoUsuarioPuedeRegistrarTesoreriaMultilocal($codUsuario);
+		&& gastoUsuarioPuedeRegistrarTesoreriaMultilocal($codUsuario, $mysqli);
 	$puedeLocalPago= usuarioPuedeGestionarLocalGasto($codUsuario, $codLocalPago)
 		|| $puedeTesoreriaAdministracion;
 	$puedeLocalPagoPorHilo= !$puedeLocalPago
@@ -360,7 +395,7 @@ function gastoDistribucionNormalizarSolicitud($mysqli, $tipo, $codLocalPago, $mo
 			}
 			$asignaciones[$codLocal]= gastoDistribucionMontoEntero(isset($item['monto']) ? $item['monto'] : '');
 		}
-		$minimoPersonalizado= gastoDistribucionMinimoPersonalizado($codUsuario, $codLocalPago);
+		$minimoPersonalizado= gastoDistribucionMinimoPersonalizado($codUsuario, $codLocalPago, $mysqli);
 		if (count($asignaciones) < $minimoPersonalizado) {
 			$mensajeMinimo= $minimoPersonalizado === 1
 				? 'Tesoreria debe seleccionar al menos una sucursal para el impacto del egreso.'
@@ -1368,9 +1403,28 @@ if (esTipoDepositoCentral($tipo) && !$esDepositoCentral) {
 	echo json_encode($informacion);
 	exit;
 }
+$esEgresoSolicitud= strtolower(trim((string)$tipo)) == 'egreso';
+$esResponsableTesoreriaSolicitud= false;
+if ($esEgresoSolicitud) {
+	$mysqliResponsableSolicitud= conectar_al_servidor();
+	$esResponsableTesoreriaSolicitud= gastoUsuarioEsResponsableTesoreria($user, $mysqliResponsableSolicitud);
+	$mysqliResponsableSolicitud->close();
+}
+$altaTesoreriaDesdeHilo= $operacion == 'nuevo'
+	&& $esEgresoSolicitud
+	&& intval($cod_interConsultaFK) > 0
+	&& $esResponsableTesoreriaSolicitud;
 $permisoMovimiento= ($operacion == 'editar') ? 'EDITARLISTADOEGRESOINGRESO' : 'INSERTARLISTADOEGRESOINGRESO';
-if (controldeaccesoacasas($user, $permisoMovimiento, " u.accion='SI' ") != 1) {
+if (controldeaccesoacasas($user, $permisoMovimiento, " u.accion='SI' ") != 1 && !$altaTesoreriaDesdeHilo) {
 	$informacion= array("1" => "NI", "2" => "No tiene permiso para guardar este movimiento financiero.");
+	echo json_encode($informacion);
+	exit;
+}
+if ($operacion == 'editar' && $esResponsableTesoreriaSolicitud) {
+	$informacion= array(
+		"1" => "error",
+		"2" => "La responsable de Tesoreria debe usar la modificacion guiada con vista previa. Actualice la pantalla y vuelva a abrir el movimiento."
+	);
 	echo json_encode($informacion);
 	exit;
 }
@@ -1396,9 +1450,11 @@ if ($operacion == 'nuevo' && strtolower(trim((string)$tipo)) == 'egreso' && intv
 		exit;
 	}
 	$localAutorizadoPorHiloNuevo= true;
-	if (!usuarioPuedeGestionarLocalGasto($user, intval($cod_local))) {
+	$puedePagarDesdeAdministracionTesoreria= intval($cod_local) === 1
+		&& gastoUsuarioPuedeRegistrarTesoreriaMultilocal($user, $mysqliLocalHilo);
+	if (!usuarioPuedeGestionarLocalGasto($user, intval($cod_local)) && !$puedePagarDesdeAdministracionTesoreria) {
 		$mysqliLocalHilo->close();
-		echo json_encode(array('1'=>'NI', '2'=>'No tiene permiso para registrar el pago desde el local seleccionado.'));
+		echo json_encode(array('1'=>'NI', '2'=>'Tesoreria debe registrar el pago desde Administracion y asignar el impacto a la sucursal del Hilo.'));
 		exit;
 	}
 	if (intval($idaperturacierrecaja) > 0 && intval($codcaja) > 0) {
