@@ -369,10 +369,13 @@ function cliente_normalizar_fecha_mysql($fecha)
 function cliente_normalizar_numero_nullable($valor)
 {
 	$valor = trim((string)$valor);
-	if ($valor == "") {
-		return null;
+	$marcador = strtoupper($valor);
+	if ($valor === "" || $marcador === "-" || $marcador === "--" || $marcador === "N/A" || $marcador === "NA" || $marcador === "NO APLICA") {
+		return 0;
 	}
-	return quitarseparadormiles($valor);
+
+	$numero = quitarseparadormiles($valor);
+	return is_numeric($numero) ? $numero : 0;
 }
 
 

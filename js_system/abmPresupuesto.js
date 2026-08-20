@@ -175,6 +175,25 @@ function textoRespuestaAjaxPresupuesto(respuesta) {
 	}
 }
 
+function mensajeErrorAjaxPresupuesto(error, respuesta) {
+	var datos = null;
+	try {
+		datos = parsearRespuestaAjaxPresupuesto(respuesta);
+	} catch (ignorado) {
+		datos = null;
+	}
+	if (datos && datos.mensaje) {
+		return String(datos.mensaje);
+	}
+	if (datos && datos["mensaje"]) {
+		return String(datos["mensaje"]);
+	}
+	if (error && error.responseJSON && error.responseJSON.mensaje) {
+		return String(error.responseJSON.mensaje);
+	}
+	return "No se pudo crear el presupuesto. Intente nuevamente.";
+}
+
 function obtenerAgendaPresupuestoDoctorActual() {
 	if (
 		idAgendaPresupuestoDoctorActiva != "" &&
@@ -276,8 +295,7 @@ function abmPresupuesto(cod_presupuesto, cant_cuotas, cod_clienteFK, cod_ventaFK
 				if (opciones.mostrarError !== false) {
 					ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ", responseText, "error")
 				}
-				var titulo="Error: "+error+" \r\n Consola: "+textoRespuestaAjaxPresupuesto(responseText)
-				GuardarArchivosLog(titulo);
+				console.error("Error al guardar presupuesto", error, textoRespuestaAjaxPresupuesto(responseText));
 				if (opciones.conservarDatosEnError !== true) {
 					limpirarPresupuesto();
 				}
@@ -3155,11 +3173,12 @@ function crearPresupuestoDoctorSiHaceFalta(callback) {
 			}
 			callback();
 		},
-		onError: function () {
+		onError: function (error, respuesta) {
 			presupuestoGuardando = false;
 			verCerrarEfectoCargando("");
-			ver_vetana_informativa("Error al guardar", "No se pudo crear el presupuesto. Revise la conexion e intente agregar el tratamiento nuevamente.", "error");
-			presupuestoDocNotificarAutoOdontogramaError({ origenOdontogramaAuto: presupuestoDocOdontogramaAutoActivo() }, "No se pudo crear el presupuesto para agregar el tratamiento.");
+			var mensaje = mensajeErrorAjaxPresupuesto(error, respuesta);
+			ver_vetana_informativa("Error al guardar", mensaje, "error");
+			presupuestoDocNotificarAutoOdontogramaError({ origenOdontogramaAuto: presupuestoDocOdontogramaAutoActivo() }, mensaje);
 		}
 	});
 	return false;

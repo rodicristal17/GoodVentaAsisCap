@@ -636,16 +636,13 @@ volverAtrasCliente();
 				}
 			} else if (datos[1] == 'error') {
 				ver_vetana_informativa("No se pudo guardar el cliente", datos[2] || "Revise los datos e intente nuevamente.", "error");
-				if (datos[3] && typeof GuardarArchivosLog == "function") {
-					GuardarArchivosLog("Error al guardar cliente: " + datos[3]);
-				}
+				console.error("Error al guardar cliente:", datos[3] || datos[2]);
 			}
 			
 			}catch(error)
 				{
-					 ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
-				var titulo="Error: "+error+" \r\n Consola: "+responseText
-				GuardarArchivosLog(titulo)
+				ver_vetana_informativa("LO SENTIMOS HA OCURRIDO UN ERROR ")
+				console.error("Error al procesar la respuesta al guardar cliente:", error, responseText);
 				}
 		 
 					
