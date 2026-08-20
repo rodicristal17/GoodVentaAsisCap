@@ -946,7 +946,7 @@ function ueno_pago_aplicar_movimiento_seleccionado($mysqli, $idControlUeno, $idP
 		throw new Exception("El movimiento bancario seleccionado no es un credito disponible.");
 	}
 	$estadoMovimientoActual = strtolower(trim((string)$movimiento["estado"]));
-	if (in_array($estadoMovimientoActual, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"))) {
+	if (in_array($estadoMovimientoActual, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada", "duplicado", "ignorado"))) {
 		throw new Exception("El movimiento bancario seleccionado ya no esta disponible.");
 	}
 
@@ -1109,7 +1109,7 @@ function ueno_pago_validar_transferencias($totalregistro)
 					ueno_pago_responder_error("movimientoinvalido", "El movimiento bancario seleccionado no esta disponible para cobrar cuotas.");
 				}
 				$estadoMovimiento = strtolower(trim((string)$movimiento["estado"]));
-				if (in_array($estadoMovimiento, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"))) {
+				if (in_array($estadoMovimiento, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada", "duplicado", "ignorado"))) {
 					ueno_pago_responder_error("movimientoinvalido", "El movimiento bancario seleccionado ya no esta disponible.");
 				}
 				$comprobanteUeno = trim(str_replace(array("\r", "\n", "\t", " "), "", (string)$movimiento["nro_comprobante"]));

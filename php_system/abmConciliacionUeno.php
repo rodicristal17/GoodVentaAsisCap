@@ -3,6 +3,7 @@ require_once("conexion.php");
 require_once("ueno_saldo_helper.php");
 include_once("verificar_navegador.php");
 include_once("buscar_nivel.php");
+require_once("ueno_transferencia_interna_helper.php");
 
 function ueno_json($informacion)
 {
@@ -305,6 +306,9 @@ function ueno_estado_movimiento_debito_texto($debito, $aplicado = 0)
 function ueno_estado_movimiento_texto($estado, $credito = 0, $disponible = 0, $debito = 0, $debito_aplicado = 0)
 {
 	$estado = (string)$estado;
+	if (strtolower(trim($estado)) == "ignorado") {
+		return "Ignorado";
+	}
 	$credito = (int)$credito;
 	$disponible = (int)$disponible;
 	$debito = (int)$debito;
@@ -343,6 +347,9 @@ function ueno_estado_movimiento_texto($estado, $credito = 0, $disponible = 0, $d
 function ueno_estado_movimiento_clave($estado_visual)
 {
 	$estado_visual = strtolower(trim((string)$estado_visual));
+	if (strpos($estado_visual, "transferencia interna") !== false) {
+		return "interno";
+	}
 	if ($estado_visual == "conciliado") {
 		return "conciliado";
 	}
@@ -375,6 +382,9 @@ function ueno_movimiento_cumple_filtro_rapido($filtro, $estado_clave, $credito, 
 	}
 	if ($filtro == "conciliados") {
 		return $estado_clave == "conciliado";
+	}
+	if ($filtro == "internos") {
+		return $estado_clave == "interno";
 	}
 	if ($filtro == "con_saldo") {
 		return (int)$disponible > 0;
@@ -1892,6 +1902,7 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 	$tieneConciliacionMigracion = ueno_tabla_existe($mysqli, "ueno_movimiento_migracion_caja") && ueno_tabla_existe($mysqli, "migrar_caja");
 	$tieneVinculosDepositoFaraone = ueno_tabla_existe($mysqli, "ueno_movimiento_deposito");
 	$tieneDepositosFaraone = $tieneVinculosDepositoFaraone && ueno_tabla_existe($mysqli, "migrar_caja");
+	$tieneTransferenciasInternas = ueno_tabla_existe($mysqli, "ueno_transferencia_interna");
 	$condicion = "";
 	$monto = (int)$monto;
 	if ($banco != "") {
@@ -1980,6 +1991,27 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 			AND NOT EXISTS (SELECT 1 FROM ueno_movimiento_deposito udm WHERE udm.origen_tipo='migrar_caja' AND udm.origen_id=mcd.idmigrar_caja AND udm.estado='activo'))
 		) AS sugerencias_deposito"
 		: ", 0 AS sugerencias_deposito";
+	$camposTransferenciaInterna = $tieneTransferenciasInternas
+		? ", IFNULL(ti.id_transferencia,0) AS id_transferencia_interna,
+		IFNULL(ti.id_movimiento_debitoFK,0) AS transferencia_id_debito,
+		IFNULL(ti.id_movimiento_creditoFK,0) AS transferencia_id_credito,
+		IFNULL(ti.banco_origen,'') AS transferencia_banco_origen,
+		IFNULL(ti.banco_destino,'') AS transferencia_banco_destino,
+		IFNULL(ti.monto,0) AS transferencia_monto,
+		IFNULL(ti.fecha_debito,'') AS transferencia_fecha_debito,
+		IFNULL(ti.fecha_credito,'') AS transferencia_fecha_credito,
+		IFNULL(ti.cod_usuario_vinculaFK,0) AS transferencia_usuario_id,
+		IFNULL(per_ti.nombre_persona,'') AS transferencia_usuario_nombre,
+		IFNULL(ti.fecha_hora_vinculacion,'') AS transferencia_fecha_hora"
+		: ", 0 AS id_transferencia_interna, 0 AS transferencia_id_debito, 0 AS transferencia_id_credito,
+		'' AS transferencia_banco_origen, '' AS transferencia_banco_destino, 0 AS transferencia_monto,
+		'' AS transferencia_fecha_debito, '' AS transferencia_fecha_credito, 0 AS transferencia_usuario_id,
+		'' AS transferencia_usuario_nombre, '' AS transferencia_fecha_hora";
+	$joinTransferenciaInterna = $tieneTransferenciasInternas
+		? "LEFT JOIN ueno_transferencia_interna ti
+			ON ti.id_movimiento_debitoFK=mv.id_movimiento OR ti.id_movimiento_creditoFK=mv.id_movimiento
+		LEFT JOIN persona per_ti ON per_ti.cod_persona=ti.cod_usuario_vinculaFK"
+		: "";
 
 	$sql = "SELECT mv.id_movimiento, mv.id_importacion, mv.banco_codigo, mv.fecha_confirmacion, mv.fecha_transaccion, mv.nro_comprobante, mv.descripcion, mv.cuenta,
 		mv.concepto, mv.importe_debito, mv.importe_credito, mv.monto_disponible, mv.estado, imp.nombre_archivo_original,
@@ -2001,8 +2033,10 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		$subqueryMigracion
 		$subqueryVinculosDeposito
 		$subqueryDepositos
+		$camposTransferenciaInterna
 		FROM ueno_movimiento_bancario mv
 		INNER JOIN ueno_importacion_extracto imp ON imp.id_importacion=mv.id_importacion
+		$joinTransferenciaInterna
 		WHERE mv.id_movimiento!='0' $condicion
 		ORDER BY mv.fecha_confirmacion DESC, mv.id_movimiento DESC
 		LIMIT 400";
@@ -2021,12 +2055,16 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		"disponibles" => 0,
 		"parciales" => 0,
 		"conciliados" => 0,
+		"internos" => 0,
 		"con_saldo" => 0,
 		"saldo_disponible" => 0,
 		"saldo_disponible_fmt" => "0"
 	);
 	$styleName = "tableRegistroSearch";
 	$puedeGestionarEgresos = ueno_usuario_tiene_permiso($usuario, "CONCILIAREGRESOUENO");
+	$puedeGestionarTransferencias = $tieneTransferenciasInternas
+		&& gastoTesoreriaEstructuraDisponible($mysqli)
+		&& gastoTesoreriaEsResponsable($mysqli, $usuario);
 
 	while ($row = mysqli_fetch_assoc($result)) {
 		$credito = (int)$row["importe_credito"];
@@ -2038,6 +2076,8 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		$depositosConciliacion = isset($row["depositos_conciliacion"]) ? trim((string)$row["depositos_conciliacion"]) : "";
 		$usuariosDeposito = isset($row["usuarios_deposito"]) ? trim((string)$row["usuarios_deposito"]) : "";
 		$tieneDepositoConciliado = $depositosConciliacion != "";
+		$transferenciaId = isset($row["id_transferencia_interna"]) ? (int)$row["id_transferencia_interna"] : 0;
+		$tieneTransferenciaInterna = $transferenciaId > 0;
 		$disponible = $credito > 0 ? ueno_saldo_disponible_movimiento($mysqli, $row) : (int)$row["monto_disponible"];
 		$aplicado = $credito > 0 ? max(0, $credito - $disponible) : 0;
 		$baseAplicacion = $credito;
@@ -2049,8 +2089,14 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		if ($credito > 0 && $aplicado > $credito) {
 			$aplicado = $credito;
 		}
+		if ($tieneTransferenciaInterna) {
+			$aplicado = $baseAplicacion;
+			$disponible = 0;
+		}
 		$porcentaje_aplicado = $baseAplicacion > 0 ? min(100, max(0, round(($aplicado * 100) / $baseAplicacion))) : 0;
-		$estado_visual = ueno_estado_movimiento_texto($row["estado"], $credito, $disponible, $debito, $aplicadoDebito);
+		$estado_visual = $tieneTransferenciaInterna
+			? "Transferencia interna · sin efecto contable"
+			: ueno_estado_movimiento_texto($row["estado"], $credito, $disponible, $debito, $aplicadoDebito);
 		$estado_clave = ueno_estado_movimiento_clave($estado_visual);
 		$resumen["total_base"]++;
 		if ($estado_clave == "disponible") {
@@ -2062,6 +2108,9 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		if ($estado_clave == "conciliado") {
 			$resumen["conciliados"]++;
 		}
+		if ($estado_clave == "interno") {
+			$resumen["internos"]++;
+		}
 		if (($credito > 0 || $debito > 0) && $disponible > 0) {
 			$resumen["con_saldo"]++;
 			$resumen["saldo_disponible"] += $disponible;
@@ -2069,7 +2118,9 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		if (!ueno_movimiento_cumple_filtro_rapido($filtro_rapido, $estado_clave, $credito, $disponible)) {
 			continue;
 		}
-		$clasificacionOrigen = ueno_clasificar_origen_movimiento($credito, $disponible, $sugerenciasDeposito, $tieneDepositoConciliado);
+		$clasificacionOrigen = $tieneTransferenciaInterna
+			? "interno"
+			: ueno_clasificar_origen_movimiento($credito, $disponible, $sugerenciasDeposito, $tieneDepositoConciliado);
 		if (!ueno_origen_cumple_filtro($origen_probable, $clasificacionOrigen)) {
 			continue;
 		}
@@ -2106,14 +2157,41 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 			"depositos_conciliacion" => $depositosConciliacion,
 			"estado_bancario" => strtolower(trim((string)$row["estado"])),
 			"estado" => $estado_visual,
-			"estado_clave" => $estado_clave
+			"estado_clave" => $estado_clave,
+			"puede_gestionar_transferencia_interna" => $puedeGestionarTransferencias,
+			"transferencia_interna" => $tieneTransferenciaInterna ? array(
+				"id_transferencia" => $transferenciaId,
+				"id_movimiento_debito" => (int)$row["transferencia_id_debito"],
+				"id_movimiento_credito" => (int)$row["transferencia_id_credito"],
+				"banco_origen" => ueno_banco_codigo($row["transferencia_banco_origen"]),
+				"banco_origen_nombre" => ueno_banco_nombre($row["transferencia_banco_origen"]),
+				"banco_destino" => ueno_banco_codigo($row["transferencia_banco_destino"]),
+				"banco_destino_nombre" => ueno_banco_nombre($row["transferencia_banco_destino"]),
+				"monto" => (int)$row["transferencia_monto"],
+				"monto_fmt" => number_format((int)$row["transferencia_monto"], 0, ",", "."),
+				"fecha_debito" => ueno_from_db($row["transferencia_fecha_debito"]),
+				"fecha_credito" => ueno_from_db($row["transferencia_fecha_credito"]),
+				"usuario_id" => (int)$row["transferencia_usuario_id"],
+				"usuario_nombre" => ueno_from_db($row["transferencia_usuario_nombre"]),
+				"fecha_hora" => ueno_from_db($row["transferencia_fecha_hora"])
+			) : null
 		);
 		$datos_js = htmlspecialchars(json_encode($datos_movimiento), ENT_QUOTES, 'UTF-8');
 		$asignacionesVisiblesDebito = 0;
 		$aplicacion_contable_html = ($debito > 0 && $aplicado > 0)
 			? ueno_html_aplicacion_contable_debito($mysqli, (int)$row["id_movimiento"], $usuario, $asignacionesVisiblesDebito)
 			: "<span class='ueno-row-note ueno-row-note--muted'>-</span>";
-		if ($clasificacionOrigen == "deposito_conciliado") {
+		if ($tieneTransferenciaInterna) {
+			$aplicacion_contable_html = "<button type='button' class='ueno-internal-chain' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")' title='Ver trazabilidad de la transferencia interna'>"
+				. "<span>" . ueno_escape_html(ueno_banco_nombre($row["transferencia_banco_origen"])) . "</span>"
+				. "<i aria-hidden='true'>&rarr;</i>"
+				. "<span>" . ueno_escape_html(ueno_banco_nombre($row["transferencia_banco_destino"])) . "</span>"
+				. "</button>";
+		}
+		if ($clasificacionOrigen == "interno") {
+			$etiquetaOrigen = "Transferencia interna";
+			$claseOrigen = "interno";
+		} elseif ($clasificacionOrigen == "deposito_conciliado") {
 			$etiquetaOrigen = "Depósito Faraone conciliado";
 			$claseOrigen = "deposito-conciliado";
 		} elseif ($clasificacionOrigen == "deposito") {
@@ -2133,7 +2211,9 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		if ($estado_clave != "conciliado" && $etiquetaOrigen != "") {
 			$creditoHtml .= "<button type='button' class='ueno-origin-badge ueno-origin-badge--" . $claseOrigen . "' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")'>" . ueno_escape_html($etiquetaOrigen) . "</button>";
 		}
-		if ($credito > 0 && $disponible > 0 && $estado_clave != "revisar") {
+		if ($tieneTransferenciaInterna) {
+			$accion = "<input type='button' value='Ver transferencia' class='btn4 ueno-row-action ueno-row-action--internal' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")'>";
+		} elseif ($credito > 0 && $disponible > 0 && $estado_clave != "revisar") {
 			if ($estado_clave == "parcial") {
 				$accion = "<input type='button' value='Ver aplicaciones' class='btn4 ueno-row-action ueno-row-action--trace' onclick='uenoVerAplicacionMovimiento(" . (int)$row["id_movimiento"] . ")'>";
 			} else if ($sugerenciasMigracion > 0) {
@@ -2158,11 +2238,20 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		} else {
 			$accion = "<span class='ueno-row-note ueno-row-note--muted'>Sin accion</span>";
 		}
+		$puedeIntentarVinculo = !$tieneTransferenciaInterna
+			&& $puedeGestionarTransferencias
+			&& (($credito > 0 && $disponible === $credito) || ($debito > 0 && $aplicadoDebito === 0 && $disponible === $debito));
+		if ($puedeIntentarVinculo) {
+			$accion .= "<input type='button' value='Vincular bancos' class='btn4 ueno-row-action ueno-row-action--internal' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")'>";
+		}
 		$aplicado_html = ($credito > 0 || $debito > 0)
 			? "<div class='ueno-applied-cell'><strong>" . number_format($aplicado, 0, ",", ".") . "</strong>"
 				. ($estado_clave == "parcial" ? "<small>de " . number_format($baseAplicacion, 0, ",", ".") . "</small><span class='ueno-progress'><i style='width:" . $porcentaje_aplicado . "%'></i></span>" : "")
 				. "</div>"
 			: "<span class='ueno-muted-money'>-</span>";
+		if ($tieneTransferenciaInterna) {
+			$aplicado_html = "<div class='ueno-applied-cell ueno-applied-cell--internal'><strong>Neutralizado</strong><small>sin efecto contable</small></div>";
+		}
 		$usuarios_conciliacion = ($credito > 0 && $aplicado > 0) ? trim((string)$row["usuarios_conciliacion"]) : "";
 		$usuarios_migracion = ($credito > 0 && $aplicadoMigracion > 0) ? trim((string)$row["usuarios_migracion"]) : "";
 		if ($usuarios_migracion != "") {
@@ -2170,6 +2259,9 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		}
 		if ($tieneDepositoConciliado && $usuariosDeposito != "") {
 			$usuarios_conciliacion .= ($usuarios_conciliacion != "" ? ", " : "") . $usuariosDeposito;
+		}
+		if ($tieneTransferenciaInterna) {
+			$usuarios_conciliacion = trim((string)$row["transferencia_usuario_nombre"]);
 		}
 		$usuarios_html = $usuarios_conciliacion != ""
 			? "<span class='ueno-user-cell' title='" . ueno_escape_html($usuarios_conciliacion) . "'>" . ueno_escape_html($usuarios_conciliacion) . "</span>"
@@ -2181,6 +2273,9 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		}
 		if ($clientes_conciliacion == "" && $sugerenciasMigracion > 0) {
 			$clientes_conciliacion = "Posible monto migrado (" . $sugerenciasMigracion . ")";
+		}
+		if ($tieneTransferenciaInterna) {
+			$clientes_conciliacion = "Sin efecto contable operativo";
 		}
 		$clientes_html = $clientes_conciliacion != ""
 			? "<span class='ueno-client-cell' title='" . ueno_escape_html($clientes_conciliacion) . "'>" . ueno_escape_html($clientes_conciliacion) . "</span>"
@@ -2267,7 +2362,7 @@ function ueno_buscar_movimientos_cobro($usuario)
 
 	$condicion = "mv.tipo_movimiento='credito'
 		AND mv.importe_credito>0
-		AND LOWER(IFNULL(mv.estado,'')) NOT IN ('conciliado','conciliada','asignado_total','anulado','anulada','rechazado','rechazada')
+		AND LOWER(IFNULL(mv.estado,'')) NOT IN ('conciliado','conciliada','asignado_total','anulado','anulada','rechazado','rechazada','duplicado','ignorado')
 		";
 
 	if ($id_movimiento != "") {
@@ -2327,7 +2422,7 @@ function ueno_buscar_movimientos_cobro($usuario)
 		$movimientosVistos[$claveMovimientoVisible] = true;
 		$estado = ueno_from_db($row["estado"]);
 		$estadoNormalizado = strtolower(trim($estado));
-		$estadoDisponible = !in_array($estadoNormalizado, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"));
+		$estadoDisponible = !in_array($estadoNormalizado, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada", "duplicado", "ignorado"));
 		$montoValido = ($monto > 0 && $disponible > 0 && $monto <= $disponible);
 		$fechaCoincide = ($fecha_pago != "" && $fechaMovimiento != "" && $fechaMovimiento == $fecha_pago);
 		$mensajeAccion = "Usar movimiento";
@@ -4190,6 +4285,15 @@ function ueno_buscar_resumen_tesoreria($usuario)
 				AND mv.fecha_confirmacion='$fecha_bancaria_sql'
 				AND mv.tipo_movimiento='credito'");
 		}
+		$total_transferencias_internas = 0;
+		if (ueno_tabla_existe($mysqli, "ueno_transferencia_interna")) {
+			$condicionBancoTransferencia = $banco != ""
+				? " AND ti.banco_destino='" . $mysqli->real_escape_string($banco) . "'"
+				: "";
+			$total_transferencias_internas = ueno_scalar($mysqli, "SELECT IFNULL(SUM(ti.monto),0)
+				FROM ueno_transferencia_interna ti
+				WHERE ti.fecha_credito='$fecha_bancaria_sql' $condicionBancoTransferencia");
+		}
 
 		$sqlCierres = "SELECT ar.idarqueocaja, ar.fechaapertura, ar.fechacierre, ar.estado, ar.lote, ar.montoapertura, ar.montocierre,
 			ar.cod_local, IFNULL(l.Nombre,'') as local_nombre, IFNULL(cj.cajanro,'') as caja_nombre,
@@ -4292,7 +4396,7 @@ function ueno_buscar_resumen_tesoreria($usuario)
 		if ($cierres_pendientes < 0) {
 			$cierres_pendientes = 0;
 		}
-		$diferencia = $total_ueno - $total_gv - $total_migracion_interna;
+		$diferencia = $total_ueno - $total_gv - $total_migracion_interna - $total_transferencias_internas;
 
 		mysqli_close($mysqli);
 		ueno_json(array(
@@ -4308,6 +4412,7 @@ function ueno_buscar_resumen_tesoreria($usuario)
 			"total_ueno" => ueno_numero($total_ueno),
 			"total_gv" => ueno_numero($total_gv),
 			"total_migracion_interna" => ueno_numero($total_migracion_interna),
+			"total_transferencias_internas" => ueno_numero($total_transferencias_internas),
 			"diferencia" => ueno_numero($diferencia),
 			"total_conciliado" => ueno_numero($total_conciliado),
 			"total_pendiente" => ueno_numero($total_pendiente),
@@ -4358,6 +4463,7 @@ function ueno_buscar_auditoria($usuario)
 		ELSE IFNULL(mv_auditoria.importe_debito,0)
 	END)";
 	$montoDisponibleMovimiento = "(CASE
+		WHEN LOWER(TRIM(IFNULL(mv_auditoria.estado,''))) IN ('ignorado','anulado','anulada','rechazado','rechazada','duplicado') THEN 0
 		WHEN IFNULL(mv_auditoria.importe_credito,0)>0 THEN GREATEST(0,IFNULL(mv_auditoria.monto_disponible,0))
 		ELSE GREATEST(0,IFNULL(mv_auditoria.importe_debito,0)-$aplicadoDebitoMovimiento)
 	END)";
@@ -4369,7 +4475,8 @@ function ueno_buscar_auditoria($usuario)
 		FROM ueno_movimiento_bancario mv_importacion
 		WHERE mv_importacion.id_importacion=CAST(a.registro_id AS UNSIGNED)),0)";
 	$montoDisponibleImportacion = "IFNULL((SELECT SUM(
-		CASE WHEN IFNULL(mv_importacion.importe_credito,0)>0
+		CASE WHEN LOWER(TRIM(IFNULL(mv_importacion.estado,''))) IN ('ignorado','anulado','anulada','rechazado','rechazada','duplicado') THEN 0
+			WHEN IFNULL(mv_importacion.importe_credito,0)>0
 			THEN GREATEST(0,IFNULL(mv_importacion.monto_disponible,0))
 			ELSE GREATEST(0,IFNULL(mv_importacion.importe_debito,0)-$aplicadoDebitoImportacion)
 		END)
@@ -4555,6 +4662,15 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
 	}
 	if ($operacion == "buscar_movimientos") {
 		ueno_buscar_movimientos($usuario);
+	}
+	if ($operacion == "buscar_sugerencias_transferencia_interna") {
+		ueno_ti_buscar_sugerencias($usuario);
+	}
+	if ($operacion == "vincular_transferencia_interna") {
+		ueno_ti_vincular($usuario);
+	}
+	if ($operacion == "revertir_transferencia_interna") {
+		ueno_ti_revertir($usuario);
 	}
 	if ($operacion == "buscar_movimientos_cobro") {
 		ueno_buscar_movimientos_cobro($usuario);

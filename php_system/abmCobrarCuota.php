@@ -763,7 +763,7 @@ function cc_buscar_movimiento_ueno($usuario)
 		$bancoNombre = $bancoCodigo == "FAMILIAR" ? "Banco Familiar" : "Ueno";
 		$estado = cc_from_db($row["estado"]);
 		$estadoNormalizado = strtolower(trim($estado));
-		$estadoDisponible = !in_array($estadoNormalizado, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"));
+		$estadoDisponible = !in_array($estadoNormalizado, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada", "duplicado", "ignorado"));
 		$montoValido = ($monto > 0 && $disponible > 0 && $monto <= $disponible);
 		$pagoParcialSugerido = ($monto > 0 && $disponible > 0 && $monto > $disponible);
 		$puedeUsar = ($estadoDisponible && ($montoValido || $pagoParcialSugerido));
@@ -978,7 +978,7 @@ function cc_conciliar_transferencia($usuario)
 			throw new Exception("El comprobante ingresado no coincide con el movimiento bancario seleccionado. Debe revisarse desde conciliacion.");
 		}
 		$estadoMovimiento = strtolower(trim(cc_from_db($movimiento["estado"])));
-		if (in_array($estadoMovimiento, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada"))) {
+		if (in_array($estadoMovimiento, array("conciliado", "conciliada", "asignado_total", "anulado", "anulada", "rechazado", "rechazada", "duplicado", "ignorado"))) {
 			throw new Exception("El movimiento bancario seleccionado ya no esta disponible.");
 		}
 		$disponibleMovimiento = ueno_saldo_disponible_movimiento($mysqli, $movimiento);

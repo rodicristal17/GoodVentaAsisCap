@@ -42,7 +42,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 
 <link id="telarPlanificacionEspecialistasCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/planificacion_especialistas.css?v=20260807-01" />
 <link id="telarCentralTelefonicaCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/central_telefonica.css?v=20260818-03" />
-<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=conciliacion-multibanco-20260813-1" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=transferencias-internas-20260820-1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-avatar-flotante-20260801-01" />
 <script src="/GoodVentaAsisCap/js_system/JsBarcode.all.min.js"></script>
@@ -74,7 +74,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="/GoodVentaAsisCap/js_system/sha256Local.js?x=20260813-1"></script>
 <script src="/GoodVentaAsisCap/js_system/conciliacionBancoFamiliarPdf.js?x=20260808-3"></script>
 <script src="/GoodVentaAsisCap/js_system/conciliacionBancoFamiliarExcel.js?x=20260813-1"></script>
-<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=conciliacion-multibanco-20260813-2"></script>
+<script src="/GoodVentaAsisCap/js_system/abmConciliacionUeno.js?x=transferencias-internas-20260820-1"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCobrarCuota.js?x=cobrar-cuota-orden-sin-entrega-20260730"></script>
 <script src="/GoodVentaAsisCap/js_system/abmCuotasSalteadas.js?x=20260810-9"></script>
 <script src="/GoodVentaAsisCap/js_system/abmHistorialPagosSalteados.js?x=20260810-4"></script>
@@ -28064,7 +28064,11 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <p class='pTituloC'>Movimientos sin aplicar</p>
 <input class='inputTextDisable' type='text' id='inptUenoTesSinAplicar' disabled style='width:90px;text-align:center'>
 </td>
-<td style='width:88%;text-align:left'>
+<td style='width:18%;text-align:left'>
+<p class='pTituloC'>Transferencias internas</p>
+<input class='inputTextDisable' type='text' id='inptUenoTesTransferenciasInternas' disabled style='width:120px;text-align:right'>
+</td>
+<td style='width:70%;text-align:left'>
 <div id='divUenoTesoreriaEstado' style='min-height:26px'></div>
 </td>
 </tr>
@@ -28165,7 +28169,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <header class='ueno-workbench-detail-head'>
 <div>
 <p class='ueno-section-title' id='lblUenoDetalleMesaTitulo'>Detalle del movimiento bancario</p>
-<p class='ueno-section-help'>Revisa el credito, sus posibles depositos y la trazabilidad sin salir de la mesa.</p>
+<p class='ueno-section-help'>Revisa el movimiento, sus posibles aplicaciones y la trazabilidad sin salir de la mesa.</p>
 </div>
 <button type='button' class='ueno-workbench-detail-close' title='Cerrar detalle' onclick='uenoCerrarDetalleMesaTrabajo()' aria-label='Cerrar detalle'>&times;</button>
 </header>
@@ -28198,7 +28202,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <div class='ueno-section-head ueno-workbench-hidden-summary'>
 <div>
 <p class='ueno-section-title' id='lblUenoMesaTitulo'>5. Movimientos bancarios - mesa de trabajo</p>
-<p class='ueno-section-help'>Pantalla administrativa de consulta. El saldo disponible se muestra para control; las cuotas se procesan desde caja y las migraciones internas se confirman manualmente.</p>
+<p class='ueno-section-help'>Revisa movimientos y su aplicaci&oacute;n. Las cuotas se procesan desde Caja; la responsable oficial de Tesorer&iacute;a puede vincular transferencias entre cuentas propias sin salir de esta mesa.</p>
 </div>
 </div>
 <table style='width:98%'>
@@ -28227,6 +28231,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <option value='registrado'>REGISTRADO</option>
 <option value='asignado_parcial'>ASIGNADO PARCIAL</option>
 <option value='asignado_total'>ASIGNADO TOTAL</option>
+<option value='ignorado'>IGNORADO / TRANSFERENCIA INTERNA</option>
 </select>
 </td>
 <td style='width:20%;text-align:right'>
@@ -28241,6 +28246,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <option value='todos'>TODOS</option>
 <option value='deposito'>DEPOSITOS</option>
 <option value='cuota'>POSIBLES CUOTAS</option>
+<option value='interno'>TRANSFERENCIAS INTERNAS</option>
 <option value='revisar'>REVISAR</option>
 </select>
 </div>
@@ -28249,6 +28255,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <button type='button' class='ueno-quick-filter' data-ueno-mov-filter='disponibles' onclick='uenoCambiarFiltroRapidoMovimientos("disponibles")'>Disponibles <span id='lblUenoChipDisponibles'>0</span></button>
 <button type='button' class='ueno-quick-filter' data-ueno-mov-filter='parciales' onclick='uenoCambiarFiltroRapidoMovimientos("parciales")'>Parciales <span id='lblUenoChipParciales'>0</span></button>
 <button type='button' class='ueno-quick-filter' data-ueno-mov-filter='conciliados' onclick='uenoCambiarFiltroRapidoMovimientos("conciliados")'>Conciliados <span id='lblUenoChipConciliados'>0</span></button>
+<button type='button' class='ueno-quick-filter' data-ueno-mov-filter='internos' onclick='uenoCambiarFiltroRapidoMovimientos("internos")'>Internos <span id='lblUenoChipInternos'>0</span></button>
 <button type='button' class='ueno-quick-filter' data-ueno-mov-filter='con_saldo' onclick='uenoCambiarFiltroRapidoMovimientos("con_saldo")'>Con saldo <span id='lblUenoChipConSaldo'>0</span></button>
 </div>
 <table class='ueno-workbench-hidden-summary' style='width:98%'>
@@ -28272,6 +28279,7 @@ aria-label='Cerrar Ventana' onclick='verCerrarConciliacionUeno()'>&times;</butto
 <span><b>Disponibles</b><strong id='lblUenoMovDisponibles'>0</strong></span>
 <span><b>Parciales</b><strong id='lblUenoMovParciales'>0</strong></span>
 <span><b>Conciliados</b><strong id='lblUenoMovConciliados'>0</strong></span>
+<span><b>Internos</b><strong id='lblUenoMovInternos'>0</strong></span>
 <span><b>Saldo disponible</b><strong id='lblUenoMovSaldoDisponible'>0</strong></span>
 </div>
 <table class="tableCabeceraRegistro ueno-table-head">

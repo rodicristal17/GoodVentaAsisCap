@@ -139,6 +139,10 @@ function ueno_saldo_disponible_movimiento($mysqli, $movimiento, $excluirCodPago 
 	if (!$movimiento) {
 		return 0;
 	}
+	$estadoMovimiento = isset($movimiento["estado"]) ? strtolower(trim((string)$movimiento["estado"])) : "";
+	if (in_array($estadoMovimiento, array("ignorado", "anulado", "anulada", "rechazado", "rechazada", "duplicado"), true)) {
+		return 0;
+	}
 	$importe = isset($movimiento["importe_credito"]) ? (int)$movimiento["importe_credito"] : 0;
 	if ($importe <= 0) {
 		return 0;
@@ -186,7 +190,8 @@ function ueno_saldo_sincronizar_movimiento($mysqli, $idMovimiento, $disponible, 
 		return;
 	}
 	$estado = ueno_saldo_estado_credito($importeCredito, $disponible);
-	$stmt = $mysqli->prepare("UPDATE ueno_movimiento_bancario SET monto_disponible=?, estado=? WHERE id_movimiento=?");
+	$stmt = $mysqli->prepare("UPDATE ueno_movimiento_bancario SET monto_disponible=?, estado=?
+		WHERE id_movimiento=? AND LOWER(TRIM(IFNULL(estado,'')))<>'ignorado'");
 	if (!$stmt) {
 		return;
 	}

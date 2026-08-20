@@ -661,6 +661,8 @@ function uenoMostrarMovimientoTrabajo() {
 	var debito = movimiento["importe_debito_fmt"] || uenoFormatoMonto(movimiento["importe_debito"] || "0");
 	var saldoDebito = uenoNumeroMonto(movimiento["saldo_disponible"] || movimiento["monto_disponible"] || 0);
 	var sugerenciasMigracion = Number(movimiento["sugerencias_migracion"] || 0);
+	var transferenciaInterna = movimiento["transferencia_interna"] || null;
+	var puedeGestionarTransferencia = movimiento["puede_gestionar_transferencia_interna"] === true || movimiento["puede_gestionar_transferencia_interna"] === 1;
 	var depositoFaraone = String(movimiento["depositos_conciliacion"] || "").trim();
 	var depositoFaraoneHtml = depositoFaraone != ""
 		? "<span class='ueno-selected-wide'><b>Depósito Faraone</b>Conciliado con " + uenoEscapeHtml(depositoFaraone) + "</span>"
@@ -668,7 +670,7 @@ function uenoMostrarMovimientoTrabajo() {
 	var puedeConciliarEgreso = uenoTienePermiso("CONCILIAREGRESOUENO") || uenoTienePermiso("ASIGNARMANUALUENO");
 	var estadoDebito = String(movimiento["estado_bancario"] || "").toLowerCase().trim();
 	var estadoDebitoDisponible = ["registrado", "disponible", "asignado_parcial"].indexOf(estadoDebito) >= 0;
-	var accionGasto = puedeConciliarEgreso && estadoDebitoDisponible && uenoNumeroMonto(movimiento["importe_debito"] || 0) > 0 && saldoDebito > 0
+	var accionGasto = !transferenciaInterna && puedeConciliarEgreso && estadoDebitoDisponible && uenoNumeroMonto(movimiento["importe_debito"] || 0) > 0 && saldoDebito > 0
 		? "<input type='button' value='Registrar gasto distribuido' class='btn4 ueno-row-action ueno-row-action--available' onclick='uenoRegistrarGastoDesdeDebito(uenoMovimientoTrabajo)' style='width:190px'>"
 		: "";
 	var accion = accionGasto
@@ -676,6 +678,26 @@ function uenoMostrarMovimientoTrabajo() {
 		+ "<input type='button' value='Limpiar seleccion' class='btn4 ueno-btn-secondary' onclick='uenoLimpiarMovimientoTrabajo(true)' style='width:145px'>";
 	var avisoMigracion = sugerenciasMigracion > 0
 		? "<div class='ueno-migration-hint'><b>Coincidencia sugerida</b><span>Hay " + sugerenciasMigracion + " deposito/s pendiente/s con este mismo importe exacto.</span></div>"
+		: "";
+	var transferenciaHtml = "";
+	if (transferenciaInterna) {
+		transferenciaHtml = "<section class='ueno-internal-detail'>"
+			+ "<div class='ueno-internal-detail-title'><b>Transferencia interna · sin efecto contable</b><span>Ambos asientos siguen visibles en sus extractos, pero no impactan cuotas, gastos ni el flujo consolidado.</span></div>"
+			+ "<div class='ueno-internal-route'>"
+			+ "<span><b>Salida</b>" + uenoEscapeHtml(transferenciaInterna["banco_origen_nombre"] || transferenciaInterna["banco_origen"] || "") + "<small>" + uenoEscapeHtml(transferenciaInterna["fecha_debito"] || "") + "</small></span>"
+			+ "<i aria-hidden='true'>&rarr;</i>"
+			+ "<strong>Gs. " + uenoEscapeHtml(transferenciaInterna["monto_fmt"] || uenoFormatoMonto(transferenciaInterna["monto"] || 0)) + "</strong>"
+			+ "<i aria-hidden='true'>&rarr;</i>"
+			+ "<span><b>Ingreso</b>" + uenoEscapeHtml(transferenciaInterna["banco_destino_nombre"] || transferenciaInterna["banco_destino"] || "") + "<small>" + uenoEscapeHtml(transferenciaInterna["fecha_credito"] || "") + "</small></span>"
+			+ "</div>"
+			+ "<div class='ueno-internal-audit'><b>Vinculada por</b> " + uenoEscapeHtml(transferenciaInterna["usuario_nombre"] || "Usuario Telar") + " · " + uenoEscapeHtml(transferenciaInterna["fecha_hora"] || "") + "</div>"
+			+ (puedeGestionarTransferencia
+				? "<div class='ueno-internal-reversal'><label for='inptUenoMotivoReversionInterna'>Motivo de la reversi&oacute;n</label><textarea id='inptUenoMotivoReversionInterna' rows='2' placeholder='Explique por qu&eacute; debe deshacerse este v&iacute;nculo'></textarea><button type='button' class='btn4 ueno-btn-secondary' onclick='uenoRevertirTransferenciaInterna()'>Revertir v&iacute;nculo</button></div>"
+				: "")
+			+ "</section>";
+	}
+	var sugerenciasTransferenciaHtml = !transferenciaInterna && puedeGestionarTransferencia
+		? "<div id='divUenoTransferenciaInternaSugerida' class='ueno-internal-suggestions'><div class='ueno-loading-inline'>Buscando la contrapartida exacta en el otro banco...</div></div>"
 		: "";
 
 	contenedor.innerHTML = "<div class='ueno-selected-card'>"
@@ -690,6 +712,8 @@ function uenoMostrarMovimientoTrabajo() {
 		+ depositoFaraoneHtml
 		+ "<span class='ueno-selected-wide'><b>Concepto</b>" + uenoEscapeHtml((movimiento["concepto"] || movimiento["descripcion"] || "")) + "</span>"
 		+ "</div>"
+		+ transferenciaHtml
+		+ sugerenciasTransferenciaHtml
 		+ avisoMigracion
 		+ "<div id='divUenoMigracionSugerida' class='ueno-migration-suggestions'></div>"
 		+ "<div class='ueno-selected-actions'>" + accion + "</div>"
@@ -761,6 +785,7 @@ function uenoSeleccionarMovimientoTrabajo(movimiento) {
 	uenoMostrarMovimientoTrabajo();
 	uenoLimpiarAsignacionManual();
 	uenoAbrirDetalleMesaTrabajo();
+	uenoBuscarSugerenciasTransferenciaInterna();
 	uenoBuscarSugerenciasMigracion();
 }
 
@@ -802,6 +827,170 @@ function uenoMostrarVistaDetalleMesa(vista) {
 	if (traza) { traza.style.display = esTraza ? "block" : "none"; }
 	if (btnDetalle) { btnDetalle.classList.toggle("ueno-workbench-detail-tab--active", !esTraza); }
 	if (btnTraza) { btnTraza.classList.toggle("ueno-workbench-detail-tab--active", esTraza); }
+}
+
+function uenoBuscarSugerenciasTransferenciaInterna() {
+	var contenedor = document.getElementById("divUenoTransferenciaInternaSugerida");
+	if (!contenedor || !uenoMovimientoTrabajo || !uenoMovimientoTrabajo["id_movimiento"] || uenoMovimientoTrabajo["transferencia_interna"]) {
+		return;
+	}
+	obtener_datos_user();
+	var idConsultado = String(uenoMovimientoTrabajo["id_movimiento"]);
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "buscar_sugerencias_transferencia_interna");
+	datos.append("id_movimiento", idConsultado);
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConciliacionUeno.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		success: function(responseText) {
+			if (!uenoMovimientoTrabajo || String(uenoMovimientoTrabajo["id_movimiento"]) != idConsultado) { return; }
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") {
+					contenedor.innerHTML = "<div class='ueno-internal-empty'>" + uenoEscapeHtml(respuesta["2"] || "No se pudieron buscar contrapartidas.") + "</div>";
+					return;
+				}
+				uenoRenderSugerenciasTransferenciaInterna(contenedor, respuesta);
+			} catch (error) {
+				contenedor.innerHTML = "<div class='ueno-internal-empty'>No se pudo interpretar la b&uacute;squeda de transferencias internas.</div>";
+			}
+		},
+		error: function() {
+			contenedor.innerHTML = "<div class='ueno-internal-empty'>No se pudo conectar para buscar la contrapartida bancaria.</div>";
+		}
+	});
+}
+
+function uenoRenderSugerenciasTransferenciaInterna(contenedor, respuesta) {
+	var seleccionado = respuesta["seleccionado"] || {};
+	var candidatos = respuesta["candidatos"] || [];
+	var html = "<div class='ueno-internal-suggestions-head'><b>Posible transferencia entre cuentas propias</b><span>Telar s&oacute;lo propone importes exactos, bancos distintos y fechas separadas por hasta 3 d&iacute;as.</span></div>";
+	if (!candidatos.length) {
+		html += "<div class='ueno-internal-empty'>No se encontr&oacute; una contrapartida exacta disponible. El movimiento conserva su estado actual.</div>";
+		contenedor.innerHTML = html;
+		return;
+	}
+	for (var i = 0; i < candidatos.length; i++) {
+		var candidato = candidatos[i] || {};
+		var salida = seleccionado["tipo_movimiento"] == "debito" ? seleccionado : candidato;
+		var ingreso = seleccionado["tipo_movimiento"] == "credito" ? seleccionado : candidato;
+		html += "<article class='ueno-internal-candidate'>"
+			+ "<div class='ueno-internal-route ueno-internal-route--candidate'>"
+			+ "<span><b>Salida</b>" + uenoEscapeHtml(salida["banco_nombre"] || "") + "<small>" + uenoEscapeHtml(salida["fecha"] || "") + " · #" + Number(salida["id_movimiento"] || 0) + "</small></span>"
+			+ "<i aria-hidden='true'>&rarr;</i><strong>Gs. " + uenoEscapeHtml(salida["monto_fmt"] || "0") + "</strong><i aria-hidden='true'>&rarr;</i>"
+			+ "<span><b>Ingreso</b>" + uenoEscapeHtml(ingreso["banco_nombre"] || "") + "<small>" + uenoEscapeHtml(ingreso["fecha"] || "") + " · #" + Number(ingreso["id_movimiento"] || 0) + "</small></span>"
+			+ "</div>"
+			+ "<button type='button' class='btn4 ueno-btn-primary' onclick='uenoVincularTransferenciaInterna(" + Number(candidato["id_movimiento"] || 0) + ",this)'>Confirmar v&iacute;nculo</button>"
+			+ "</article>";
+	}
+	contenedor.innerHTML = html;
+}
+
+function uenoVincularTransferenciaInterna(idContraparte, boton) {
+	if (!uenoMovimientoTrabajo || !uenoMovimientoTrabajo["id_movimiento"] || !idContraparte) {
+		ver_vetana_informativa("No se pudieron identificar ambos movimientos bancarios.", "", "error");
+		return;
+	}
+	if (boton) { boton.disabled = true; boton.value = "Guardando..."; boton.textContent = "Guardando..."; }
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "vincular_transferencia_interna");
+	datos.append("id_movimiento", uenoMovimientoTrabajo["id_movimiento"]);
+	datos.append("id_contraparte", idContraparte);
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConciliacionUeno.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") {
+					if (boton) { boton.disabled = false; boton.value = "Confirmar v&iacute;nculo"; boton.textContent = "Confirmar v&iacute;nculo"; }
+					ver_vetana_informativa(respuesta["2"] || "No se pudo vincular la transferencia interna.", "", "error");
+					return;
+				}
+				ver_vetana_informativa(respuesta["2"], "", "exito");
+				uenoRefrescarDespuesTransferenciaInterna();
+			} catch (error) {
+				if (boton) { boton.disabled = false; }
+				ver_vetana_informativa("Respuesta inesperada al vincular la transferencia.", String(error), "error");
+			}
+		},
+		error: function(jqXHR, textstatus) {
+			if (boton) { boton.disabled = false; }
+			manejadordeerroresjquery(jqXHR.status, textstatus, "uenoVincularTransferenciaInterna");
+		}
+	});
+}
+
+function uenoRevertirTransferenciaInterna() {
+	var transferencia = uenoMovimientoTrabajo ? uenoMovimientoTrabajo["transferencia_interna"] : null;
+	var motivoCampo = document.getElementById("inptUenoMotivoReversionInterna");
+	var motivo = motivoCampo ? String(motivoCampo.value || "").trim() : "";
+	if (!transferencia || !transferencia["id_transferencia"]) {
+		ver_vetana_informativa("No se pudo identificar la transferencia interna.", "", "error");
+		return;
+	}
+	if (motivo.length < 5) {
+		ver_vetana_informativa("Explique brevemente el motivo de la reversi&oacute;n.", "", "error");
+		if (motivoCampo) { motivoCampo.focus(); }
+		return;
+	}
+	obtener_datos_user();
+	var datos = new FormData();
+	datos.append("useru", userid);
+	datos.append("passu", passuser);
+	datos.append("navegador", navegador);
+	datos.append("funt", "revertir_transferencia_interna");
+	datos.append("id_transferencia", transferencia["id_transferencia"]);
+	datos.append("motivo", motivo);
+	verCerrarEfectoCargando("1");
+	$.ajax({
+		data: datos,
+		url: "/GoodVentaAsisCap/php_system/abmConciliacionUeno.php",
+		type: "post",
+		cache: false,
+		contentType: false,
+		processData: false,
+		complete: function() { verCerrarEfectoCargando(""); },
+		success: function(responseText) {
+			try {
+				var respuesta = $.parseJSON(responseText);
+				if (respuesta["1"] != "exito") {
+					ver_vetana_informativa(respuesta["2"] || "No se pudo revertir el v&iacute;nculo.", "", "error");
+					return;
+				}
+				ver_vetana_informativa(respuesta["2"], "", "exito");
+				uenoRefrescarDespuesTransferenciaInterna();
+			} catch (error) {
+				ver_vetana_informativa("Respuesta inesperada al revertir la transferencia.", String(error), "error");
+			}
+		},
+		error: function(jqXHR, textstatus) {
+			manejadordeerroresjquery(jqXHR.status, textstatus, "uenoRevertirTransferenciaInterna");
+		}
+	});
+}
+
+function uenoRefrescarDespuesTransferenciaInterna() {
+	uenoCerrarDetalleMesaTrabajo();
+	uenoLimpiarMovimientoTrabajo(false);
+	uenoBuscarMovimientos(uenoIdImportacionSeleccionada || "");
+	uenoBuscarResumenTesoreria();
+	uenoBuscarAuditoria();
 }
 
 function uenoBuscarSugerenciasMigracion() {
@@ -1876,10 +2065,12 @@ function uenoActualizarFiltrosRapidosMovimientos(resumen) {
 	uenoSetTexto("lblUenoChipDisponibles", resumen.disponibles || "0");
 	uenoSetTexto("lblUenoChipParciales", resumen.parciales || "0");
 	uenoSetTexto("lblUenoChipConciliados", resumen.conciliados || "0");
+	uenoSetTexto("lblUenoChipInternos", resumen.internos || "0");
 	uenoSetTexto("lblUenoChipConSaldo", resumen.con_saldo || "0");
 	uenoSetTexto("lblUenoMovDisponibles", resumen.disponibles || "0");
 	uenoSetTexto("lblUenoMovParciales", resumen.parciales || "0");
 	uenoSetTexto("lblUenoMovConciliados", resumen.conciliados || "0");
+	uenoSetTexto("lblUenoMovInternos", resumen.internos || "0");
 	uenoSetTexto("lblUenoMovSaldoDisponible", resumen.saldo_disponible_fmt || "0");
 
 	var contenedor = document.getElementById("divUenoMovFiltrosRapidos");
@@ -2062,6 +2253,7 @@ function uenoBuscarResumenTesoreria() {
 				uenoSetValorTesoreria("inptUenoTesTotalUeno", datos["total_ueno"]);
 				uenoSetValorTesoreria("inptUenoTesTotalGV", datos["total_gv"]);
 				uenoSetValorTesoreria("inptUenoTesMigracionInterna", datos["total_migracion_interna"]);
+				uenoSetValorTesoreria("inptUenoTesTransferenciasInternas", datos["total_transferencias_internas"]);
 				uenoSetValorTesoreria("inptUenoTesDiferencia", datos["diferencia"]);
 				uenoSetValorTesoreria("inptUenoTesConciliado", datos["total_conciliado"]);
 				uenoSetValorTesoreria("inptUenoTesPendiente", datos["total_pendiente"]);
