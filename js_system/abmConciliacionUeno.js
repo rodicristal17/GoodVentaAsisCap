@@ -661,6 +661,7 @@ function uenoMostrarMovimientoTrabajo() {
 	var debito = movimiento["importe_debito_fmt"] || uenoFormatoMonto(movimiento["importe_debito"] || "0");
 	var saldoDebito = uenoNumeroMonto(movimiento["saldo_disponible"] || movimiento["monto_disponible"] || 0);
 	var sugerenciasMigracion = Number(movimiento["sugerencias_migracion"] || 0);
+	var sugerenciasTransferencia = Number(movimiento["sugerencias_transferencia_interna"] || 0);
 	var transferenciaInterna = movimiento["transferencia_interna"] || null;
 	var puedeGestionarTransferencia = movimiento["puede_gestionar_transferencia_interna"] === true || movimiento["puede_gestionar_transferencia_interna"] === 1;
 	var depositoFaraone = String(movimiento["depositos_conciliacion"] || "").trim();
@@ -696,9 +697,17 @@ function uenoMostrarMovimientoTrabajo() {
 				: "")
 			+ "</section>";
 	}
-	var sugerenciasTransferenciaHtml = !transferenciaInterna && puedeGestionarTransferencia
-		? "<div id='divUenoTransferenciaInternaSugerida' class='ueno-internal-suggestions'><div class='ueno-loading-inline'>Buscando la contrapartida exacta en el otro banco...</div></div>"
-		: "";
+	var sugerenciasTransferenciaHtml = "";
+	if (!transferenciaInterna && sugerenciasTransferencia > 0) {
+		if (puedeGestionarTransferencia) {
+			sugerenciasTransferenciaHtml = "<div id='divUenoTransferenciaInternaSugerida' class='ueno-internal-suggestions'><div class='ueno-loading-inline'>Buscando la contrapartida exacta en el otro banco...</div></div>";
+		} else {
+			var textoCoincidencias = sugerenciasTransferencia == 1 ? "1 coincidencia exacta" : sugerenciasTransferencia + " coincidencias exactas";
+			sugerenciasTransferenciaHtml = "<div class='ueno-internal-suggestions ueno-internal-suggestions--readonly'>"
+				+ "<div class='ueno-internal-suggestions-head'><b>Posible transferencia interna</b><span>" + uenoEscapeHtml(textoCoincidencias) + " entre cuentas propias. La responsable oficial de Tesorer&iacute;a debe revisar y confirmar antes de neutralizar.</span></div>"
+				+ "</div>";
+		}
+	}
 
 	contenedor.innerHTML = "<div class='ueno-selected-card'>"
 		+ "<div class='ueno-selected-title'>Detalle del movimiento - " + uenoEscapeHtml(uenoBancoNombre(movimiento["banco_codigo"] || uenoBancoActual())) + "</div>"

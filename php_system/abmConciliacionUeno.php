@@ -2046,6 +2046,15 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		ueno_json(array("1" => "error", "2" => $stmt->error));
 	}
 	$result = $stmt->get_result();
+	$filasMovimientos = array();
+	$idsMovimientos = array();
+	while ($filaMovimiento = mysqli_fetch_assoc($result)) {
+		$filasMovimientos[] = $filaMovimiento;
+		$idsMovimientos[] = (int)$filaMovimiento["id_movimiento"];
+	}
+	$conteosTransferenciaInterna = $tieneTransferenciasInternas
+		? ueno_ti_conteos_sugerencias_lista($mysqli, $idsMovimientos)
+		: array();
 	$html = "";
 	$total = 0;
 	$total_creditos = 0;
@@ -2066,7 +2075,7 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		&& gastoTesoreriaEstructuraDisponible($mysqli)
 		&& gastoTesoreriaEsResponsable($mysqli, $usuario);
 
-	while ($row = mysqli_fetch_assoc($result)) {
+	foreach ($filasMovimientos as $row) {
 		$credito = (int)$row["importe_credito"];
 		$debito = (int)$row["importe_debito"];
 		$aplicadoDebito = (int)$row["monto_aplicado_gasto"];
@@ -2078,6 +2087,9 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		$tieneDepositoConciliado = $depositosConciliacion != "";
 		$transferenciaId = isset($row["id_transferencia_interna"]) ? (int)$row["id_transferencia_interna"] : 0;
 		$tieneTransferenciaInterna = $transferenciaId > 0;
+		$sugerenciasTransferenciaInterna = isset($conteosTransferenciaInterna[(int)$row["id_movimiento"]])
+			? (int)$conteosTransferenciaInterna[(int)$row["id_movimiento"]]
+			: 0;
 		$disponible = $credito > 0 ? ueno_saldo_disponible_movimiento($mysqli, $row) : (int)$row["monto_disponible"];
 		$aplicado = $credito > 0 ? max(0, $credito - $disponible) : 0;
 		$baseAplicacion = $credito;
@@ -2154,6 +2166,7 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 			"monto_asignado_migracion_fmt" => number_format($aplicadoMigracion, 0, ",", "."),
 			"sugerencias_migracion" => $sugerenciasMigracion,
 			"sugerencias_deposito" => $sugerenciasDeposito,
+			"sugerencias_transferencia_interna" => $sugerenciasTransferenciaInterna,
 			"depositos_conciliacion" => $depositosConciliacion,
 			"estado_bancario" => strtolower(trim((string)$row["estado"])),
 			"estado" => $estado_visual,
@@ -2186,6 +2199,14 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 				. "<span>" . ueno_escape_html(ueno_banco_nombre($row["transferencia_banco_origen"])) . "</span>"
 				. "<i aria-hidden='true'>&rarr;</i>"
 				. "<span>" . ueno_escape_html(ueno_banco_nombre($row["transferencia_banco_destino"])) . "</span>"
+				. "</button>";
+		} elseif ($sugerenciasTransferenciaInterna > 0) {
+			$textoCoincidenciaInterna = $sugerenciasTransferenciaInterna == 1
+				? "Coincidencia exacta"
+				: $sugerenciasTransferenciaInterna . " coincidencias exactas";
+			$aplicacion_contable_html = "<button type='button' class='ueno-internal-potential' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")' title='Revisar antes de neutralizar'>"
+				. "<strong>Posible transferencia interna</strong>"
+				. "<small>" . ueno_escape_html($textoCoincidenciaInterna) . " · revisar para neutralizar</small>"
 				. "</button>";
 		}
 		if ($clasificacionOrigen == "interno") {
@@ -2240,9 +2261,10 @@ function ueno_tabla_movimientos($mysqli, $id_importacion, $fecha_desde, $fecha_h
 		}
 		$puedeIntentarVinculo = !$tieneTransferenciaInterna
 			&& $puedeGestionarTransferencias
+			&& $sugerenciasTransferenciaInterna > 0
 			&& (($credito > 0 && $disponible === $credito) || ($debito > 0 && $aplicadoDebito === 0 && $disponible === $debito));
 		if ($puedeIntentarVinculo) {
-			$accion .= "<input type='button' value='Vincular bancos' class='btn4 ueno-row-action ueno-row-action--internal' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")'>";
+			$accion = "<input type='button' value='Revisar y neutralizar' class='btn4 ueno-row-action ueno-row-action--internal' onclick='uenoSeleccionarMovimientoTrabajo(" . $datos_js . ")'>";
 		}
 		$aplicado_html = ($credito > 0 || $debito > 0)
 			? "<div class='ueno-applied-cell'><strong>" . number_format($aplicado, 0, ",", ".") . "</strong>"

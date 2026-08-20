@@ -151,6 +151,112 @@ function ueno_ti_validar_movimiento_libre($mysqli, $movimiento)
 	return true;
 }
 
+function ueno_ti_sql_comprobante_normalizado($expresion)
+{
+	return "REPLACE(REPLACE(REPLACE(REPLACE(IFNULL(" . $expresion . ",''),CHAR(13),''),CHAR(10),''),CHAR(9),''),' ','')";
+}
+
+function ueno_ti_sql_movimiento_libre($mysqli, $alias)
+{
+	$alias = preg_replace('/[^a-z0-9_]/i', '', (string)$alias);
+	if ($alias == '') {
+		throw new Exception('No se pudo preparar la deteccion de transferencias internas.');
+	}
+	$estadoLibre = "LOWER(TRIM(IFNULL($alias.estado,''))) NOT IN
+		('conciliado','conciliada','asignado_total','anulado','anulada','rechazado','rechazada','duplicado','ignorado')";
+	$debitoLibre = "$alias.tipo_movimiento='debito' AND $alias.importe_debito>0";
+	if (ueno_tabla_existe($mysqli, 'ueno_movimiento_gasto')) {
+		$debitoLibre .= " AND NOT EXISTS (SELECT 1 FROM ueno_movimiento_gasto umg_libre
+			WHERE umg_libre.id_movimiento=$alias.id_movimiento AND umg_libre.estado='activo')";
+	}
+
+	$creditoLibre = "$alias.tipo_movimiento='credito' AND $alias.importe_credito>0
+		AND $alias.monto_disponible=$alias.importe_credito";
+	$tieneMovimientosPago = ueno_tabla_existe($mysqli, 'ueno_movimiento_pago');
+	if ($tieneMovimientosPago) {
+		$creditoLibre .= " AND NOT EXISTS (SELECT 1 FROM ueno_movimiento_pago ump_libre
+			WHERE ump_libre.id_movimiento=$alias.id_movimiento AND ump_libre.estado='activo')";
+	}
+	if (ueno_tabla_existe($mysqli, 'pago_transferencia_conciliacion')) {
+		$comprobanteControl = ueno_ti_sql_comprobante_normalizado('pc_libre.nro_comprobante_informado');
+		$comprobanteBanco = ueno_ti_sql_comprobante_normalizado($alias . '.nro_comprobante');
+		$condicionBanco = ueno_saldo_columna_existe($mysqli, 'pago_transferencia_conciliacion', 'banco_codigo')
+			? " AND UPPER(IFNULL(pc_libre.banco_codigo,''))=UPPER(IFNULL($alias.banco_codigo,''))"
+			: '';
+		$condicionSinVinculo = $tieneMovimientosPago
+			? " AND NOT EXISTS (SELECT 1 FROM ueno_movimiento_pago ump_control
+				WHERE ump_control.cod_pagoFK=pc_libre.cod_pagoFK AND ump_control.estado='activo')"
+			: '';
+		$creditoLibre .= " AND ($comprobanteBanco='' OR NOT EXISTS (SELECT 1 FROM pago_transferencia_conciliacion pc_libre
+			WHERE pc_libre.activo='SI'
+			AND pc_libre.estado_conciliacion NOT IN ('anulado','rechazado')
+			AND $comprobanteControl=$comprobanteBanco
+			$condicionBanco
+			$condicionSinVinculo))";
+	}
+	if (ueno_tabla_existe($mysqli, 'cobrar_cuota_auditoria')) {
+		$creditoLibre .= " AND NOT EXISTS (SELECT 1 FROM cobrar_cuota_auditoria cca_libre
+			WHERE cca_libre.id_movimiento_ueno=$alias.id_movimiento
+			AND cca_libre.accion IN ('REGISTRAR_Y_CONCILIAR_UENO','REGISTRAR_Y_CONCILIAR_UENO_MULTIPLE')
+			AND cca_libre.estado_pago='registrado'
+			AND cca_libre.estado_conciliacion='conciliado_ueno'
+			AND cca_libre.monto>0)";
+	}
+
+	return "($estadoLibre AND (($debitoLibre) OR ($creditoLibre)))";
+}
+
+function ueno_ti_conteos_sugerencias_lista($mysqli, $idsMovimientos)
+{
+	$conteos = array();
+	if (!ueno_ti_estructura_disponible($mysqli) || !is_array($idsMovimientos)) {
+		return $conteos;
+	}
+	$ids = array();
+	foreach ($idsMovimientos as $idMovimiento) {
+		$idMovimiento = (int)$idMovimiento;
+		if ($idMovimiento > 0) {
+			$ids[$idMovimiento] = $idMovimiento;
+		}
+	}
+	if (empty($ids)) {
+		return $conteos;
+	}
+	$listaIds = implode(',', array_values($ids));
+	$origenLibre = ueno_ti_sql_movimiento_libre($mysqli, 'mv_origen');
+	$candidatoLibre = ueno_ti_sql_movimiento_libre($mysqli, 'mv_candidato');
+	$fechaOrigen = "COALESCE(NULLIF(mv_origen.fecha_confirmacion,'0000-00-00'),mv_origen.fecha_transaccion)";
+	$fechaCandidato = "COALESCE(NULLIF(mv_candidato.fecha_confirmacion,'0000-00-00'),mv_candidato.fecha_transaccion)";
+	$sql = "SELECT mv_origen.id_movimiento,COUNT(DISTINCT mv_candidato.id_movimiento) AS total
+		FROM ueno_movimiento_bancario mv_origen
+		INNER JOIN ueno_movimiento_bancario mv_candidato ON mv_candidato.id_movimiento<>mv_origen.id_movimiento
+			AND UPPER(mv_candidato.banco_codigo)<>UPPER(mv_origen.banco_codigo)
+			AND ABS(DATEDIFF($fechaOrigen,$fechaCandidato))<=3
+			AND ((mv_origen.tipo_movimiento='debito' AND mv_candidato.tipo_movimiento='credito'
+				AND mv_origen.importe_debito=mv_candidato.importe_credito)
+				OR (mv_origen.tipo_movimiento='credito' AND mv_candidato.tipo_movimiento='debito'
+				AND mv_origen.importe_credito=mv_candidato.importe_debito))
+		WHERE mv_origen.id_movimiento IN ($listaIds)
+		AND $origenLibre
+		AND $candidatoLibre
+		AND NOT EXISTS (SELECT 1 FROM ueno_transferencia_interna ti_origen
+			WHERE ti_origen.id_movimiento_debitoFK=mv_origen.id_movimiento
+			OR ti_origen.id_movimiento_creditoFK=mv_origen.id_movimiento)
+		AND NOT EXISTS (SELECT 1 FROM ueno_transferencia_interna ti_candidato
+			WHERE ti_candidato.id_movimiento_debitoFK=mv_candidato.id_movimiento
+			OR ti_candidato.id_movimiento_creditoFK=mv_candidato.id_movimiento)
+		GROUP BY mv_origen.id_movimiento";
+	$resultado = $mysqli->query($sql);
+	if (!$resultado) {
+		error_log('Telar: no se pudieron detectar posibles transferencias internas en la mesa bancaria.');
+		return $conteos;
+	}
+	while ($fila = $resultado->fetch_assoc()) {
+		$conteos[(int)$fila['id_movimiento']] = (int)$fila['total'];
+	}
+	return $conteos;
+}
+
 function ueno_ti_datos_movimiento($movimiento)
 {
 	$tipo = ueno_ti_tipo_movimiento($movimiento);

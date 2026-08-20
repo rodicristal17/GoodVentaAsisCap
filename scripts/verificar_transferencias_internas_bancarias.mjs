@@ -48,6 +48,14 @@ afirmar(
 	"Vinculacion y reversion son atomicas, bloquean los registros y conservan los valores anteriores."
 );
 afirmar(
+	helper.includes("function ueno_ti_conteos_sugerencias_lista")
+		&& helper.includes("mv_origen.importe_debito=mv_candidato.importe_credito")
+		&& helper.includes("ABS(DATEDIFF($fechaOrigen,$fechaCandidato))<=3")
+		&& helper.includes("ueno_movimiento_gasto umg_libre")
+		&& helper.includes("ueno_movimiento_pago ump_libre"),
+	"La mesa detecta coincidencias exactas en lote y excluye movimientos que ya tienen aplicaciones."
+);
+afirmar(
 	helper.includes('$estadoInterno = "ignorado"')
 		&& helper.includes("monto_disponible=?")
 		&& saldo.includes('array("ignorado", "anulado"')
@@ -74,10 +82,18 @@ afirmar(
 	"La mesa muestra la previsualizacion y permite confirmar o revertir sin ventanas nativas encadenadas."
 );
 afirmar(
+	banco.includes('"sugerencias_transferencia_interna"')
+		&& banco.includes("Posible transferencia interna")
+		&& banco.includes("Revisar y neutralizar")
+		&& js.includes("La responsable oficial de Tesorer&iacute;a debe revisar y confirmar antes de neutralizar")
+		&& css.includes(".ueno-internal-potential"),
+	"Ambas filas muestran la posible vinculacion y la confirmacion sigue reservada a Tesoreria."
+);
+afirmar(
 	html.includes("IGNORADO / TRANSFERENCIA INTERNA")
 		&& html.includes("lblUenoChipInternos")
 		&& html.includes("inptUenoTesTransferenciasInternas")
-		&& html.includes("transferencias-internas-20260820-1")
+		&& html.includes("transferencias-internas-20260820-2")
 		&& css.includes(".ueno-internal-route"),
 	"La interfaz incorpora filtro, resumen, recorrido entre bancos y recursos con cache actualizado."
 );
