@@ -1199,7 +1199,7 @@ function centroFacturaCatalogos($codUsuario)
         }
     }
     $funcionarios = array();
-    $sqlUsuarios = "SELECT u.cod_usuario,u.cod_localFK,p.nombre_persona,u.rut_usuario,
+    $sqlUsuarios = "SELECT u.cod_usuario,u.cod_localFK,p.nombre_persona,u.rut_usuario,u.tipo AS rol,IFNULL(u.url,'') AS avatar,
         CASE WHEN EXISTS (
             SELECT 1
             FROM accesosuser acu
@@ -1221,6 +1221,31 @@ function centroFacturaCatalogos($codUsuario)
         $funcionarios[] = centroFacturaFilaUtf8($fila);
     }
     $stmt->close();
+    $usuariosTelar = array();
+    $resultado = $mysqli->query("SELECT u.cod_usuario,u.cod_localFK,p.nombre_persona,u.tipo AS rol,
+        IFNULL(u.url,'') AS avatar,IFNULL(l.Nombre,'Sin local') AS nombre_local,
+        CASE WHEN
+          MAX(CASE WHEN au.accion='SI' AND la.codigo='VERCENTROFACTURAS' THEN 1 ELSE 0 END)=1
+          AND (MAX(CASE WHEN au.accion='SI' AND la.codigo='VERLEGAJOSVENTA' THEN 1 ELSE 0 END)=1
+            OR MAX(CASE WHEN au.accion='SI' AND la.codigo='ADMINCENTROFACTURAS' THEN 1 ELSE 0 END)=1)
+          AND (MAX(CASE WHEN au.accion='SI' AND la.codigo='GESTIONARLEGAJOSVENTA' THEN 1 ELSE 0 END)=1
+            OR MAX(CASE WHEN au.accion='SI' AND la.codigo='ADMINCENTROFACTURAS' THEN 1 ELSE 0 END)=1)
+        THEN 1 ELSE 0 END AS habilitado_pagare
+      FROM usuario u
+      INNER JOIN persona p ON p.cod_persona=u.cod_usuario
+      LEFT JOIN local l ON l.cod_local=u.cod_localFK
+      LEFT JOIN accesosuser au ON au.usuarios_idusario=u.cod_usuario
+      LEFT JOIN listadodeacceso la ON la.idlistadodeacceso=au.idlistadodeaccesoFK
+      WHERE u.estado='Activo'
+      GROUP BY u.cod_usuario,u.cod_localFK,p.nombre_persona,u.tipo,u.url,l.Nombre
+      ORDER BY p.nombre_persona");
+    if ($resultado) {
+        while ($fila = $resultado->fetch_assoc()) {
+            $usuariosTelar[] = centroFacturaFilaUtf8($fila);
+        }
+    }
+    $responsablesCobranza = function_exists('centroLegajoPagareResponsablesCobranza')
+        ? centroLegajoPagareResponsablesCobranza($mysqli) : array();
     $configuracion = centroFacturaFilaUtf8(centroFacturaConfiguracion($mysqli));
     $mysqli->close();
     $codigosPermiso = array(
@@ -1241,6 +1266,8 @@ function centroFacturaCatalogos($codUsuario)
         'locales_destino' => $localesDestino,
         'proveedores' => $proveedores,
         'funcionarios' => $funcionarios,
+        'usuarios_telar' => $usuariosTelar,
+        'responsables_cobranza' => $responsablesCobranza,
         'configuracion' => $configuracion,
         'permisos' => $permisos,
         'legajos_disponibles' => function_exists('centroLegajoEstructuraDisponible') && centroLegajoEstructuraDisponible() ? 1 : 0,

@@ -80,7 +80,7 @@ function centroFacturasFiltrosPost()
     $claves = array(
         'busqueda','cod_local','estado_pago','estado_original','estado_validacion','tipo_contraparte',
         'fecha_desde','fecha_hasta','fecha_limite_desde','fecha_limite_hasta','filtro_rapido',
-        'incluir_anuladas','estado','cod_proveedor','cod_funcionario'
+        'incluir_anuladas','estado','cod_proveedor','cod_funcionario','cod_hilo'
     );
     foreach ($claves as $clave) {
         if (isset($_POST[$clave])) {
@@ -169,12 +169,25 @@ switch ($accion) {
         ));
         break;
     case 'listarSolicitudesPagare':
-        centroFacturasResponder(centroLegajoPagareListar(
+        $filtrosSolicitudesPagare = centroFacturasFiltrosPost();
+        $listadoSolicitudesPagare = centroLegajoPagareListar(
             $codUsuario,
-            centroFacturasFiltrosPost(),
+            $filtrosSolicitudesPagare,
             intval(centroFacturasPost('limite', 80)),
             intval(centroFacturasPost('offset', 0))
-        ));
+        );
+        if (!empty($listadoSolicitudesPagare['ok'])
+            && (!empty($filtrosSolicitudesPagare['busqueda']) || !empty($filtrosSolicitudesPagare['cod_hilo']))) {
+            $candidatosPagare = centroLegajoPagareBuscarElegibles(
+                $codUsuario,
+                isset($filtrosSolicitudesPagare['busqueda']) ? $filtrosSolicitudesPagare['busqueda'] : '',
+                30,
+                isset($filtrosSolicitudesPagare['cod_hilo']) ? intval($filtrosSolicitudesPagare['cod_hilo']) : 0
+            );
+            $listadoSolicitudesPagare['candidatos'] = !empty($candidatosPagare['ok']) ? $candidatosPagare['registros'] : array();
+            $listadoSolicitudesPagare['total_candidatos'] = !empty($candidatosPagare['ok']) ? intval($candidatosPagare['total']) : 0;
+        }
+        centroFacturasResponder($listadoSolicitudesPagare);
         break;
     case 'detalleSolicitudPagare':
         centroFacturasResponder(centroLegajoPagareDetalle(intval(centroFacturasPost('id_solicitud')), $codUsuario));
@@ -215,7 +228,14 @@ switch ($accion) {
         ));
         break;
     case 'prepararSolicitudPagare':
+    case 'tomarCustodiaSolicitudPagare':
         centroFacturasResponder(centroLegajoPagarePreparar(intval(centroFacturasPost('id_solicitud')), $codUsuario));
+        break;
+    case 'guardarResponsablesCobranzaPagare':
+        centroFacturasResponder(centroLegajoPagareGuardarResponsablesCobranza(
+            centroFacturasJsonPost('usuarios', array()),
+            $codUsuario
+        ));
         break;
     case 'entregarSolicitudPagare':
         $datosEntregaPagare = centroFacturasJsonPost('datos', array());

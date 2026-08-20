@@ -36,7 +36,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_identidad.css?x=20260720-4" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/telar_dashboard.css?x=20260720-2" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/interconsulta_seguimientos.css?x=trabajo-laboratorio-20260723-mini-hilo-1" />
-<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=buscador-pagare-20260721-1" />
+<link rel="stylesheet" href="/GoodVentaAsisCap/css_system/centro_facturas.css?x=devolucion-pagare-guiada-20260819-1" />
 <link id="telarTrabajoLaboratorioCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/trabajo_laboratorio.css?v=20260725-02" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/cuotas_salteadas.css?x=20260810-9" />
 
@@ -92,8 +92,8 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="../js_system/planificacion_especialistas.js?x=20260807-01"></script>
 <script src="../js_system/central_telefonica.js?x=20260818-03"></script>
 <script src="../js_system/abmMecanicoDental.js?x=cuenta-telar-20260721-3"></script>
-<script src="../js_system/abmInterConsulta.js?x=tesoreria-multilocal-20260814-1"></script>
-<script src="../js_system/abmCentroFacturas.js?x=nomenclatura-legajos-20260721-1"></script>
+<script src="../js_system/abmInterConsulta.js?x=devolucion-pagare-guiada-20260819-1"></script>
+<script src="../js_system/abmCentroFacturas.js?x=devolucion-pagare-guiada-20260819-1"></script>
 <script src="../js_system/abmInventarioLocal.js?v=20260818-1"></script>
 <script src="../js_system/abmCompra.js"></script>
 <script src="../js_system/abmDictamen.js?x=interconsulta-detalle-hilo-20260529"></script>
@@ -8333,7 +8333,7 @@ style='background-color:#5bc572'>
           <div class="interconsulta-detail-actions">
             <button type="button" class="interconsulta-detail-action interconsulta-detail-action--promissory" id="btnDevolucionPagareDesdeHilo" style="display:none;" title="Solicitar devolucion de pagare para una venta saldada" onclick="if(typeof centroFacturasAbrirDevolucionPagareDesdeHilo==='function'){centroFacturasAbrirDevolucionPagareDesdeHilo(cod_interConsulta);}">
               <i class="fa-solid fa-file-signature" aria-hidden="true"></i>
-              <span>Devoluci&oacute;n de pagar&eacute;</span>
+              <span id="btnDevolucionPagareDesdeHiloTexto">Devoluci&oacute;n de pagar&eacute;</span>
             </button>
             <button type="button" class="interconsulta-detail-action" id="btnUnificarSeguimientoPaciente" title="Unificar hilos vinculados a ventas de la misma cedula" onclick="previsualizarUnificacionSeguimientoPaciente()">
               <i class="fa-solid fa-people-arrows" aria-hidden="true"></i>
@@ -36972,11 +36972,13 @@ id='vantana_info_001' style='display:none'>
   <section class="centro-facturas-app" aria-labelledby="centroFacturasTitulo">
     <header class="centro-facturas-header">
       <div>
-        <span class="centro-facturas-eyebrow">Administraci&oacute;n documental y financiera</span>
+        <span class="centro-facturas-eyebrow" id="centroFacturasEyebrow">Administraci&oacute;n documental y financiera</span>
         <h2 id="centroFacturasTitulo">Centro de Facturas y Documentos</h2>
-        <p>Controle facturas, legajos, documentos y su recorrido f&iacute;sico sin perder el Hilo de origen.</p>
+        <p id="centroFacturasSubtitulo">Controle facturas, legajos, documentos y su recorrido f&iacute;sico sin perder el Hilo de origen.</p>
       </div>
       <div class="centro-facturas-header__actions">
+        <button type="button" class="cf-button cf-button--secondary" id="btnCentroFacturasVolverHilo" onclick="centroFacturasVolverAlHilo()" hidden><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Volver al Hilo</button>
+        <button type="button" class="cf-icon-button cf-pagare-config-button" id="btnCentroFacturasConfigPagare" onclick="centroFacturasAbrirResponsablesCobranza()" title="Configurar responsables de Cobranza" aria-label="Configurar responsables de Cobranza" hidden><i class="fa-solid fa-gear" aria-hidden="true"></i></button>
         <button type="button" class="cf-button cf-button--secondary" id="btnCentroFacturasActualizar" onclick="centroFacturasRecargar()"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Actualizar</button>
         <button type="button" class="cf-icon-button" onclick="verCerrarCentroFacturas(false)" title="Cerrar Centro de Facturas y Documentos" aria-label="Cerrar Centro de Facturas y Documentos">&times;</button>
       </div>
@@ -36984,7 +36986,7 @@ id='vantana_info_001' style='display:none'>
 
     <div id="centroFacturasAviso" class="centro-facturas-notice" hidden role="status"></div>
 
-    <nav class="centro-facturas-tabs" aria-label="Secciones del Centro de Facturas y Documentos">
+    <nav class="centro-facturas-tabs" id="centroFacturasTabs" aria-label="Secciones del Centro de Facturas y Documentos">
       <button type="button" class="is-active" data-cf-tab="entrantes" onclick="centroFacturasCambiarTab('entrantes')"><i class="fa-solid fa-inbox" aria-hidden="true"></i> Recibidas</button>
       <button type="button" data-cf-tab="emitidas" onclick="centroFacturasCambiarTab('emitidas')"><i class="fa-solid fa-file-export" aria-hidden="true"></i> Emitidas</button>
       <button type="button" data-cf-tab="lotes" onclick="centroFacturasCambiarTab('lotes')"><i class="fa-solid fa-box-archive" aria-hidden="true"></i> Lotes de comprobantes</button>

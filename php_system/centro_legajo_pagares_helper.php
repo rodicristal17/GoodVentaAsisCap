@@ -11,7 +11,10 @@ function centroLegajoPagareEstructuraDisponible($mysqli = null)
     }
     $disponible = centroFacturaTablaExiste($mysqli, 'centro_legajo_pagare_solicitud')
         && centroFacturaTablaExiste($mysqli, 'centro_legajo_pagare_solicitud_evento')
-        && centroFacturaColumnaExiste($mysqli, 'centro_legajo_pagare_solicitud', 'evidencia_nombre_fisico');
+        && centroFacturaTablaExiste($mysqli, 'centro_legajo_pagare_responsable_cobranza')
+        && centroFacturaTablaExiste($mysqli, 'centro_legajo_pagare_responsable_evento')
+        && centroFacturaColumnaExiste($mysqli, 'centro_legajo_pagare_solicitud', 'evidencia_nombre_fisico')
+        && centroFacturaColumnaExiste($mysqli, 'centro_legajo_pagare_solicitud', 'cod_interConsultaFK');
     if ($disponible) {
         $stmt = $mysqli->prepare("SELECT 1 FROM information_schema.columns
             WHERE table_schema=DATABASE() AND table_name='centro_legajo_documento'
@@ -41,7 +44,121 @@ function centroLegajoPagarePuedeGestionar($codUsuario)
 
 function centroLegajoPagarePuedeAprobar($codUsuario)
 {
-    return centroFacturaTienePermiso($codUsuario, 'ADMINCENTROFACTURAS');
+    $mysqli = conectar_al_servidor();
+    $puede = centroLegajoPagareEsResponsableCobranza($mysqli, $codUsuario);
+    $mysqli->close();
+    return $puede;
+}
+
+function centroLegajoPagareEsResponsableCobranza($mysqli, $codUsuario)
+{
+    static $cache = array();
+    $codUsuario = intval($codUsuario);
+    if ($codUsuario <= 0) return false;
+    if (array_key_exists($codUsuario, $cache)) return $cache[$codUsuario];
+    if (!centroFacturaTablaExiste($mysqli, 'centro_legajo_pagare_responsable_cobranza')) {
+        $cache[$codUsuario] = false;
+        return false;
+    }
+    $stmt = $mysqli->prepare("SELECT 1 FROM centro_legajo_pagare_responsable_cobranza rc
+        INNER JOIN usuario u ON u.cod_usuario=rc.cod_usuarioFK AND u.estado='Activo'
+        WHERE rc.cod_usuarioFK=? AND rc.estado='activo' LIMIT 1");
+    if (!$stmt) {
+        $cache[$codUsuario] = false;
+        return false;
+    }
+    $stmt->bind_param('i', $codUsuario);
+    $puede = $stmt->execute() && $stmt->get_result()->num_rows > 0;
+    $stmt->close();
+    $cache[$codUsuario] = $puede;
+    return $puede;
+}
+
+function centroLegajoPagareResponsablesCobranza($mysqli)
+{
+    $responsables = array();
+    if (!centroFacturaTablaExiste($mysqli, 'centro_legajo_pagare_responsable_cobranza')) return $responsables;
+    $resultado = $mysqli->query("SELECT rc.cod_usuarioFK AS cod_usuario,p.nombre_persona,u.tipo AS rol,
+        IFNULL(u.url,'') AS avatar,l.Nombre AS nombre_local
+      FROM centro_legajo_pagare_responsable_cobranza rc
+      INNER JOIN usuario u ON u.cod_usuario=rc.cod_usuarioFK AND u.estado='Activo'
+      INNER JOIN persona p ON p.cod_persona=u.cod_usuario
+      LEFT JOIN local l ON l.cod_local=u.cod_localFK
+      WHERE rc.estado='activo' ORDER BY p.nombre_persona");
+    if ($resultado) {
+        while ($fila = $resultado->fetch_assoc()) $responsables[] = centroFacturaFilaUtf8($fila);
+    }
+    return $responsables;
+}
+
+function centroLegajoPagareGuardarResponsablesCobranza($codigos, $codUsuario)
+{
+    if (!centroFacturaTienePermiso($codUsuario, 'ADMINCENTROFACTURAS')) {
+        return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'Solo un administrador puede configurar responsables de Cobranza.');
+    }
+    if (!centroLegajoPagareEstructuraDisponible()) return centroLegajoPagareErrorEstructura();
+    $seleccion = array();
+    foreach ((array)$codigos as $codigo) {
+        $codigo = intval($codigo);
+        if ($codigo > 0) $seleccion[$codigo] = $codigo;
+    }
+    if (count($seleccion) < 1) {
+        return array('ok' => false, 'codigo' => 'responsables', 'mensaje' => 'Seleccione al menos un responsable de Cobranza.');
+    }
+    $mysqli = conectar_al_servidor();
+    $mysqli->begin_transaction();
+    try {
+        $actuales = array();
+        $resultado = $mysqli->query('SELECT cod_usuarioFK,estado FROM centro_legajo_pagare_responsable_cobranza FOR UPDATE');
+        if (!$resultado) throw new Exception('No se pudo bloquear la configuracion actual.');
+        while ($fila = $resultado->fetch_assoc()) $actuales[intval($fila['cod_usuarioFK'])] = (string)$fila['estado'];
+
+        $ids = array_values($seleccion);
+        $marcadores = implode(',', array_fill(0, count($ids), '?'));
+        $tipos = str_repeat('i', count($ids));
+        $stmt = centroLegajoPrepararEscritura($mysqli, "SELECT cod_usuario FROM usuario WHERE estado='Activo' AND cod_usuario IN (".$marcadores.")");
+        centroFacturaBind($stmt, $tipos, $ids);
+        if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudieron validar los usuarios seleccionados.'); }
+        $validos = array();
+        $resultado = $stmt->get_result();
+        while ($fila = $resultado->fetch_assoc()) {
+            $id = intval($fila['cod_usuario']);
+            if (!centroLegajoPagarePuedeGestionar($id) || !centroLegajoPagarePuedeVer($id)) continue;
+            $validos[$id] = $id;
+        }
+        $stmt->close();
+        if (count($validos) !== count($seleccion)) {
+            throw new Exception('Todos los responsables deben ser usuarios activos con acceso a Legajos y permiso para gestionarlos.');
+        }
+
+        $universe = $actuales;
+        foreach ($validos as $id) if (!isset($universe[$id])) $universe[$id] = '';
+        foreach ($universe as $id => $estadoAnterior) {
+            $estadoNuevo = isset($validos[$id]) ? 'activo' : 'inactivo';
+            if ($estadoAnterior === $estadoNuevo) continue;
+            $stmt = centroLegajoPrepararEscritura($mysqli, "INSERT INTO centro_legajo_pagare_responsable_cobranza
+                (cod_usuarioFK,estado,cod_usuario_configuraFK,fecha_creacion,fecha_actualizacion)
+                VALUES (?,?,?,NOW(),NOW()) ON DUPLICATE KEY UPDATE estado=VALUES(estado),
+                cod_usuario_configuraFK=VALUES(cod_usuario_configuraFK),fecha_actualizacion=NOW()");
+            $stmt->bind_param('isi', $id, $estadoNuevo, $codUsuario);
+            if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudo guardar la configuracion de Cobranza.'); }
+            $stmt->close();
+            $anteriorDb = $estadoAnterior === '' ? null : $estadoAnterior;
+            $stmt = centroLegajoPrepararEscritura($mysqli, "INSERT INTO centro_legajo_pagare_responsable_evento
+                (cod_usuario_responsableFK,estado_anterior,estado_nuevo,cod_usuario_actorFK) VALUES (?,?,?,?)");
+            $stmt->bind_param('issi', $id, $anteriorDb, $estadoNuevo, $codUsuario);
+            if (!$stmt->execute()) { $stmt->close(); throw new Exception('No se pudo auditar la configuracion de Cobranza.'); }
+            $stmt->close();
+        }
+        if (!$mysqli->commit()) throw new Exception('No se pudo confirmar la configuracion.');
+        $responsables = centroLegajoPagareResponsablesCobranza($mysqli);
+        $mysqli->close();
+        return array('ok' => true, 'responsables_cobranza' => $responsables);
+    } catch (Exception $e) {
+        $mysqli->rollback();
+        $mysqli->close();
+        return array('ok' => false, 'codigo' => 'responsables', 'mensaje' => $e->getMessage());
+    }
 }
 
 function centroLegajoPagarePuedeOperarUbicacion($codUsuario, $documento, $mysqli)
@@ -246,10 +363,17 @@ function centroLegajoPagareValidarHiloVenta($mysqli, $codInterConsulta, $codVent
               SELECT 1 FROM interconsulta_paciente_venta ipv
               WHERE ipv.cod_interConsultaFK=ic.cod_interConsulta
                 AND ipv.cod_ventaFK=? AND ipv.estado='activo'
+          ) OR EXISTS(
+              SELECT 1 FROM venta vsol
+              LEFT JOIN interconsulta_paciente ip
+                ON ip.cod_interConsultaFK=ic.cod_interConsulta AND ip.estado='activo'
+              LEFT JOIN venta vor ON vor.cod_venta=ic.cod_ventaFK
+              WHERE vsol.cod_venta=?
+                AND vsol.cod_clienteFK=COALESCE(ip.cod_clienteFK_principal,vor.cod_clienteFK)
           ))
         LIMIT 1 FOR UPDATE");
     if (!$stmt) throw new Exception('No se pudo validar el Hilo de la solicitud.');
-    $stmt->bind_param('iii', $codInterConsulta, $codVenta, $codVenta);
+    $stmt->bind_param('iiii', $codInterConsulta, $codVenta, $codVenta, $codVenta);
     if (!$stmt->execute()) {
         $stmt->close();
         throw new Exception('No se pudo consultar el Hilo de la solicitud.');
@@ -289,8 +413,11 @@ function centroLegajoPagareSolicitudCompleta($mysqli, $idSolicitud)
         GREATEST(0,IFNULL(v.total_venta,0)-IFNULL(v.descuento,0)) AS importe_venta,
         p.nombre_persona AS titular,COALESCE(NULLIF(TRIM(c.rut_cliente),''),NULLIF(TRIM(c.ci_cliente),''),'') AS documento_cliente,
         lo.Nombre AS nombre_local_origen,lu.Nombre AS nombre_local_ubicacion,
-        ps.nombre_persona AS usuario_solicita,pa.nombre_persona AS usuario_aprueba,pp.nombre_persona AS usuario_prepara,
-        pe.nombre_persona AS usuario_entrega,pr.nombre_persona AS usuario_rechaza,pc.nombre_persona AS usuario_cancela
+        ps.nombre_persona AS usuario_solicita,IFNULL(us.url,'') AS avatar_solicita,IFNULL(us.tipo,'') AS rol_solicita,
+        pa.nombre_persona AS usuario_aprueba,IFNULL(ua.url,'') AS avatar_aprueba,IFNULL(ua.tipo,'') AS rol_aprueba,
+        pp.nombre_persona AS usuario_prepara,IFNULL(up.url,'') AS avatar_prepara,IFNULL(up.tipo,'') AS rol_prepara,
+        pe.nombre_persona AS usuario_entrega,IFNULL(ue.url,'') AS avatar_entrega,IFNULL(ue.tipo,'') AS rol_entrega,
+        pr.nombre_persona AS usuario_rechaza,pc.nombre_persona AS usuario_cancela
       FROM centro_legajo_pagare_solicitud s
       INNER JOIN centro_legajo_documento d ON d.id_documento=s.id_documentoFK
       INNER JOIN venta v ON v.cod_venta=s.cod_ventaFK
@@ -298,10 +425,14 @@ function centroLegajoPagareSolicitudCompleta($mysqli, $idSolicitud)
       INNER JOIN persona p ON p.cod_persona=c.cod_cliente
       INNER JOIN local lo ON lo.cod_local=v.cod_local
       LEFT JOIN local lu ON lu.cod_local=d.cod_local_ubicacionFK
-      LEFT JOIN persona ps ON ps.cod_persona=s.cod_usuario_solicitaFK
-      LEFT JOIN persona pa ON pa.cod_persona=s.cod_usuario_apruebaFK
-      LEFT JOIN persona pp ON pp.cod_persona=s.cod_usuario_preparaFK
-      LEFT JOIN persona pe ON pe.cod_persona=s.cod_usuario_entregaFK
+      LEFT JOIN usuario us ON us.cod_usuario=s.cod_usuario_solicitaFK
+      LEFT JOIN persona ps ON ps.cod_persona=us.cod_usuario
+      LEFT JOIN usuario ua ON ua.cod_usuario=s.cod_usuario_apruebaFK
+      LEFT JOIN persona pa ON pa.cod_persona=ua.cod_usuario
+      LEFT JOIN usuario up ON up.cod_usuario=s.cod_usuario_preparaFK
+      LEFT JOIN persona pp ON pp.cod_persona=up.cod_usuario
+      LEFT JOIN usuario ue ON ue.cod_usuario=s.cod_usuario_entregaFK
+      LEFT JOIN persona pe ON pe.cod_persona=ue.cod_usuario
       LEFT JOIN persona pr ON pr.cod_persona=s.cod_usuario_rechazaFK
       LEFT JOIN persona pc ON pc.cod_persona=s.cod_usuario_cancelaFK
       WHERE s.id_solicitud=? LIMIT 1");
@@ -343,57 +474,38 @@ function centroLegajoPagareDecorarSolicitud($fila, $mysqli, $codUsuario)
     }
     $estado = (string)$fila['estado'];
     $actoresEstado = array(
-        'solicitada' => array('usuario_solicita', 'fecha_solicitud', 'registro_solicitud', 'Responsable de la solicitud'),
-        'aprobada' => array('usuario_aprueba', 'fecha_aprobacion', 'aprobacion_solicitud', 'Responsable administrativo'),
-        'esperando_recepcion' => array('usuario_aprueba', 'fecha_esperando_recepcion', 'espera_recepcion', 'Responsable administrativo'),
-        'preparada' => array('usuario_prepara', 'fecha_preparacion', 'preparacion_entrega', 'Responsable de preparación'),
-        'entregada' => array('usuario_entrega', 'fecha_entrega', 'entrega_cliente', 'Responsable de entrega al cliente'),
-        'rechazada' => array('usuario_rechaza', 'fecha_rechazo', 'rechazo_solicitud', 'Responsable del cierre'),
-        'cancelada' => array('usuario_cancela', 'fecha_cancelacion', 'cancelacion_solicitud', 'Responsable del cierre')
+        'solicitada' => array('', 'fecha_solicitud', 'confirmacion_cobranza_pendiente', 'Equipo de Cobranza'),
+        'aprobada' => array('', 'fecha_aprobacion', 'custodia_pendiente', 'Pendiente de tomar custodia'),
+        'esperando_recepcion' => array('', 'fecha_aprobacion', 'custodia_pendiente', 'Pendiente de tomar custodia'),
+        'preparada' => array('usuario_prepara', 'fecha_preparacion', 'custodia_pagare', 'Poseedor actual del pagaré'),
+        'entregada' => array('usuario_entrega', 'fecha_entrega', 'entrega_cliente', 'Entrega final registrada'),
+        'rechazada' => array('usuario_rechaza', 'fecha_rechazo', 'rechazo_solicitud', 'Solicitud cerrada'),
+        'cancelada' => array('usuario_cancela', 'fecha_cancelacion', 'cancelacion_solicitud', 'Solicitud cerrada')
     );
     $definicionActor = isset($actoresEstado[$estado]) ? $actoresEstado[$estado] : $actoresEstado['solicitada'];
-    $actorSolicitud = !empty($fila[$definicionActor[0]]) ? (string)$fila[$definicionActor[0]] : '';
+    $actorSolicitud = $definicionActor[0] !== '' && !empty($fila[$definicionActor[0]]) ? (string)$fila[$definicionActor[0]] : '';
     $fechaSolicitud = !empty($fila[$definicionActor[1]]) ? (string)$fila[$definicionActor[1]]
         : (!empty($fila['fecha_actualizacion']) ? (string)$fila['fecha_actualizacion'] : (isset($fila['fecha_solicitud']) ? (string)$fila['fecha_solicitud'] : ''));
-    $responsableActual = $actorSolicitud;
+    $responsableActual = $actorSolicitud !== '' ? $actorSolicitud : $definicionActor[3];
     $rolResponsable = $definicionActor[3];
-    if (!empty($loteUtf8)) {
-        $estadoLote = isset($loteUtf8['estado']) ? (string)$loteUtf8['estado'] : '';
-        if ($estadoLote === 'pendiente_custodia') {
-            $responsableActual = isset($loteUtf8['usuario_transportista']) ? $loteUtf8['usuario_transportista'] : '';
-            $rolResponsable = 'Transportista asignado · custodia pendiente';
-        } elseif ($estadoLote === 'en_transito') {
-            $responsableActual = !empty($loteUtf8['usuario_custodia']) ? $loteUtf8['usuario_custodia']
-                : (isset($loteUtf8['usuario_transportista']) ? $loteUtf8['usuario_transportista'] : '');
-            $rolResponsable = 'Custodia durante el traslado';
-        } elseif (in_array($estadoLote, array('recibido','recibido_parcial','observado'), true)) {
-            $responsableActual = isset($loteUtf8['usuario_recepcion']) ? $loteUtf8['usuario_recepcion'] : '';
-            $rolResponsable = 'Custodia en destino';
-        } elseif ($estadoLote === 'borrador') {
-            $responsableActual = isset($loteUtf8['usuario_creador']) ? $loteUtf8['usuario_creador'] : '';
-            $rolResponsable = 'Responsable de preparación';
-        }
-    }
     $fila['responsable_actual'] = $responsableActual !== '' ? $responsableActual : 'Sin asignar';
     $fila['responsable_actual_rol'] = $rolResponsable;
     $fila['ultima_accion_usuario'] = $actorSolicitud;
     $fila['ultima_accion_fecha'] = $fechaSolicitud;
     $fila['ultima_accion_tipo'] = $definicionActor[2];
-    if (!empty($loteUtf8['ultima_accion_fecha']) && ($fechaSolicitud === '' || strcmp((string)$loteUtf8['ultima_accion_fecha'], $fechaSolicitud) > 0)) {
-        $fila['ultima_accion_usuario'] = isset($loteUtf8['usuario_ultima_accion']) ? $loteUtf8['usuario_ultima_accion'] : '';
-        $fila['ultima_accion_fecha'] = $loteUtf8['ultima_accion_fecha'];
-        $fila['ultima_accion_tipo'] = 'actualizacion_custodia';
-    }
     $gestiona = centroLegajoPagarePuedeGestionar($codUsuario);
-    $admin = centroLegajoPagarePuedeAprobar($codUsuario);
+    $responsableCobranza = centroLegajoPagareEsResponsableCobranza($mysqli, $codUsuario);
     $documentoDisponible = in_array($fila['estado_documental'], array('disponible','validado'), true);
     $documentoEnSucursal = in_array($fila['estado_fisico'], array('en_sucursal','recibido'), true);
-    $operaUbicacion = centroLegajoPagarePuedeOperarUbicacion($codUsuario, $fila, $mysqli);
-    $fila['puede_aprobar'] = $admin && $estado === 'solicitada' ? 1 : 0;
-    $fila['puede_rechazar'] = $admin && $estado === 'solicitada' ? 1 : 0;
-    $fila['puede_preparar'] = $gestiona && $operaUbicacion && in_array($estado, array('aprobada','esperando_recepcion'), true)
-        && $documentoDisponible && $documentoEnSucursal ? 1 : 0;
-    $fila['puede_entregar'] = $gestiona && $operaUbicacion && $estado === 'preparada' && $documentoDisponible && $documentoEnSucursal ? 1 : 0;
+    $esCustodioActual = $estado === 'preparada' && intval($fila['cod_usuario_preparaFK']) === intval($codUsuario);
+    $fila['puede_confirmar_cobranza'] = $responsableCobranza && $estado === 'solicitada' ? 1 : 0;
+    $fila['puede_aprobar'] = $fila['puede_confirmar_cobranza'];
+    $fila['puede_rechazar'] = $responsableCobranza && $estado === 'solicitada' ? 1 : 0;
+    $fila['puede_tomar_custodia'] = $gestiona && in_array($estado, array('aprobada','esperando_recepcion','preparada'), true)
+        && !$esCustodioActual ? 1 : 0;
+    $fila['puede_preparar'] = $fila['puede_tomar_custodia'];
+    $fila['es_custodio_actual'] = $esCustodioActual ? 1 : 0;
+    $fila['puede_entregar'] = $gestiona && $esCustodioActual && $documentoDisponible && $documentoEnSucursal ? 1 : 0;
     $fila['puede_cancelar'] = $gestiona && in_array($estado, centroLegajoPagareEstadosAbiertos(), true) ? 1 : 0;
     $fila['evidencia_disponible'] = !empty($fila['evidencia_nombre_fisico']) ? 1 : 0;
     $fila['tiene_evidencia'] = $fila['evidencia_disponible'];
@@ -437,6 +549,24 @@ function centroLegajoPagareListar($codUsuario, $filtros, $limite = 80, $offset =
     if (in_array($estado, $estados, true)) {
         $condiciones[] = 's.estado=?'; $tipos .= 's'; $parametros[] = $estado;
     }
+    if (!empty($filtros['cod_hilo'])) {
+        $codHilo = intval($filtros['cod_hilo']);
+        $condiciones[] = "(s.cod_interConsultaFK=? OR EXISTS(
+            SELECT 1 FROM interconsulta ich
+            LEFT JOIN interconsulta_paciente iph
+              ON iph.cod_interConsultaFK=ich.cod_interConsulta AND iph.estado='activo'
+            LEFT JOIN venta vh ON vh.cod_venta=ich.cod_ventaFK
+            WHERE ich.cod_interConsulta=? AND ich.estado<>'inactivo'
+              AND (ich.cod_ventaFK=s.cod_ventaFK OR EXISTS(
+                    SELECT 1 FROM interconsulta_paciente_venta ipvh
+                    WHERE ipvh.cod_interConsultaFK=ich.cod_interConsulta
+                      AND ipvh.cod_ventaFK=s.cod_ventaFK AND ipvh.estado='activo'
+                  ) OR v.cod_clienteFK=COALESCE(iph.cod_clienteFK_principal,vh.cod_clienteFK))
+        ))";
+        $tipos .= 'ii';
+        $parametros[] = $codHilo;
+        $parametros[] = $codHilo;
+    }
     if (!empty($filtros['busqueda'])) {
         $patron = '%'.centroFacturaTextoBaseDatos($filtros['busqueda'], 100).'%';
         $condiciones[] = '(s.codigo_solicitud LIKE ? OR s.solicitante_nombre LIKE ? OR s.solicitante_documento LIKE ?
@@ -456,8 +586,11 @@ function centroLegajoPagareListar($codUsuario, $filtros, $limite = 80, $offset =
         GREATEST(0,IFNULL(v.total_venta,0)-IFNULL(v.descuento,0)) AS importe_venta,
         p.nombre_persona AS titular,COALESCE(NULLIF(TRIM(c.rut_cliente),''),NULLIF(TRIM(c.ci_cliente),''),'') AS documento_cliente,
         lo.Nombre AS nombre_local_origen,lu.Nombre AS nombre_local_ubicacion,
-        ps.nombre_persona AS usuario_solicita,pa.nombre_persona AS usuario_aprueba,pp.nombre_persona AS usuario_prepara,
-        pe.nombre_persona AS usuario_entrega,pr.nombre_persona AS usuario_rechaza,pc.nombre_persona AS usuario_cancela
+        ps.nombre_persona AS usuario_solicita,IFNULL(us.url,'') AS avatar_solicita,IFNULL(us.tipo,'') AS rol_solicita,
+        pa.nombre_persona AS usuario_aprueba,IFNULL(ua.url,'') AS avatar_aprueba,IFNULL(ua.tipo,'') AS rol_aprueba,
+        pp.nombre_persona AS usuario_prepara,IFNULL(up.url,'') AS avatar_prepara,IFNULL(up.tipo,'') AS rol_prepara,
+        pe.nombre_persona AS usuario_entrega,IFNULL(ue.url,'') AS avatar_entrega,IFNULL(ue.tipo,'') AS rol_entrega,
+        pr.nombre_persona AS usuario_rechaza,pc.nombre_persona AS usuario_cancela
       FROM centro_legajo_pagare_solicitud s
       INNER JOIN centro_legajo_documento d ON d.id_documento=s.id_documentoFK
       INNER JOIN venta v ON v.cod_venta=s.cod_ventaFK
@@ -465,10 +598,14 @@ function centroLegajoPagareListar($codUsuario, $filtros, $limite = 80, $offset =
       INNER JOIN persona p ON p.cod_persona=c.cod_cliente
       INNER JOIN local lo ON lo.cod_local=v.cod_local
       LEFT JOIN local lu ON lu.cod_local=d.cod_local_ubicacionFK
-      LEFT JOIN persona ps ON ps.cod_persona=s.cod_usuario_solicitaFK
-      LEFT JOIN persona pa ON pa.cod_persona=s.cod_usuario_apruebaFK
-      LEFT JOIN persona pp ON pp.cod_persona=s.cod_usuario_preparaFK
-      LEFT JOIN persona pe ON pe.cod_persona=s.cod_usuario_entregaFK
+      LEFT JOIN usuario us ON us.cod_usuario=s.cod_usuario_solicitaFK
+      LEFT JOIN persona ps ON ps.cod_persona=us.cod_usuario
+      LEFT JOIN usuario ua ON ua.cod_usuario=s.cod_usuario_apruebaFK
+      LEFT JOIN persona pa ON pa.cod_persona=ua.cod_usuario
+      LEFT JOIN usuario up ON up.cod_usuario=s.cod_usuario_preparaFK
+      LEFT JOIN persona pp ON pp.cod_persona=up.cod_usuario
+      LEFT JOIN usuario ue ON ue.cod_usuario=s.cod_usuario_entregaFK
+      LEFT JOIN persona pe ON pe.cod_persona=ue.cod_usuario
       LEFT JOIN persona pr ON pr.cod_persona=s.cod_usuario_rechazaFK
       LEFT JOIN persona pc ON pc.cod_persona=s.cod_usuario_cancelaFK
       WHERE ".implode(' AND ', $condiciones)." ORDER BY s.fecha_solicitud DESC,s.id_solicitud DESC";
@@ -481,9 +618,20 @@ function centroLegajoPagareListar($codUsuario, $filtros, $limite = 80, $offset =
     while ($fila = $resultado->fetch_assoc()) $registros[] = centroLegajoPagareDecorarSolicitud($fila, $mysqli, $codUsuario);
     $stmt->close();
     $total = count($registros);
+    $metricas = array('solicitudes' => $total, 'pendientes_cobranza' => 0, 'por_localizar' => 0,
+        'en_custodia' => 0, 'devueltas' => 0, 'incidencias' => 0);
+    foreach ($registros as $registro) {
+        $estadoRegistro = isset($registro['estado']) ? (string)$registro['estado'] : '';
+        if ($estadoRegistro === 'solicitada') $metricas['pendientes_cobranza']++;
+        elseif (in_array($estadoRegistro, array('aprobada','esperando_recepcion'), true)) $metricas['por_localizar']++;
+        elseif ($estadoRegistro === 'preparada') $metricas['en_custodia']++;
+        elseif ($estadoRegistro === 'entregada') $metricas['devueltas']++;
+        elseif (in_array($estadoRegistro, array('rechazada','cancelada'), true)) $metricas['incidencias']++;
+    }
     $pagina = array_slice($registros, $offset, $limite);
     $mysqli->close();
-    return array('ok' => true, 'registros' => $pagina, 'total' => $total, 'limite' => $limite, 'offset' => $offset);
+    return array('ok' => true, 'registros' => $pagina, 'total' => $total, 'limite' => $limite,
+        'offset' => $offset, 'metricas' => $metricas);
 }
 
 function centroLegajoPagareDetalle($idSolicitud, $codUsuario)
@@ -529,7 +677,11 @@ function centroLegajoPagareSolicitudActivaVenta($codVenta, $codUsuario, $mysqli 
     $stmt = $mysqli->prepare("SELECT s.*,d.tipo_documento,d.estado_documental,d.estado_fisico,d.cod_local_ubicacionFK,
         d.ubicacion_fisica,v.fecha_venta,v.TipoVenta AS tipo_venta,v.cod_local,p.nombre_persona AS titular,
         COALESCE(NULLIF(TRIM(c.rut_cliente),''),NULLIF(TRIM(c.ci_cliente),''),'') AS documento_cliente,
-        lo.Nombre AS nombre_local_origen,lu.Nombre AS nombre_local_ubicacion
+        lo.Nombre AS nombre_local_origen,lu.Nombre AS nombre_local_ubicacion,
+        ps.nombre_persona AS usuario_solicita,IFNULL(us.url,'') AS avatar_solicita,IFNULL(us.tipo,'') AS rol_solicita,
+        pa.nombre_persona AS usuario_aprueba,IFNULL(ua.url,'') AS avatar_aprueba,IFNULL(ua.tipo,'') AS rol_aprueba,
+        pp.nombre_persona AS usuario_prepara,IFNULL(up.url,'') AS avatar_prepara,IFNULL(up.tipo,'') AS rol_prepara,
+        pe.nombre_persona AS usuario_entrega,IFNULL(ue.url,'') AS avatar_entrega,IFNULL(ue.tipo,'') AS rol_entrega
       FROM centro_legajo_pagare_solicitud s
       INNER JOIN centro_legajo_documento d ON d.id_documento=s.id_documentoFK
       INNER JOIN venta v ON v.cod_venta=s.cod_ventaFK
@@ -537,6 +689,14 @@ function centroLegajoPagareSolicitudActivaVenta($codVenta, $codUsuario, $mysqli 
       INNER JOIN persona p ON p.cod_persona=c.cod_cliente
       INNER JOIN local lo ON lo.cod_local=v.cod_local
       LEFT JOIN local lu ON lu.cod_local=d.cod_local_ubicacionFK
+      LEFT JOIN usuario us ON us.cod_usuario=s.cod_usuario_solicitaFK
+      LEFT JOIN persona ps ON ps.cod_persona=us.cod_usuario
+      LEFT JOIN usuario ua ON ua.cod_usuario=s.cod_usuario_apruebaFK
+      LEFT JOIN persona pa ON pa.cod_persona=ua.cod_usuario
+      LEFT JOIN usuario up ON up.cod_usuario=s.cod_usuario_preparaFK
+      LEFT JOIN persona pp ON pp.cod_persona=up.cod_usuario
+      LEFT JOIN usuario ue ON ue.cod_usuario=s.cod_usuario_entregaFK
+      LEFT JOIN persona pe ON pe.cod_persona=ue.cod_usuario
       WHERE s.cod_ventaFK=? AND s.solicitud_abierta=1 ORDER BY s.id_solicitud DESC LIMIT 1");
     $codVenta = intval($codVenta);
     $fila = array();
@@ -586,27 +746,15 @@ function centroLegajoPagareEvaluarBusqueda($fila, $finanzas, $finanzasDisponible
     $motivos = array();
     $esAnulada = !empty($fila['es_anulada']);
     $esCredito = strtoupper(trim((string)$fila['tipo_venta'])) === 'CREDITO';
-    $idDocumento = isset($fila['id_documento']) ? intval($fila['id_documento']) : 0;
 
     if ($esAnulada) {
         centroLegajoPagareAgregarMotivo($motivos, 'venta_anulada', 'La venta está anulada.');
     } elseif (!$esCredito) {
         centroLegajoPagareAgregarMotivo($motivos, 'venta_contado', 'Venta contado: no corresponde pagaré.');
     } else {
-        if ($idDocumento <= 0) {
-            centroLegajoPagareAgregarMotivo($motivos, 'pagare_sin_registro', 'El pagaré todavía no fue confirmado en el legajo.');
-        } else {
-            $estadoDocumental = isset($fila['estado_documental']) ? (string)$fila['estado_documental'] : '';
-            $estadoFisico = isset($fila['estado_fisico']) ? (string)$fila['estado_fisico'] : '';
-            if (!in_array($estadoDocumental, array('disponible','validado'), true)) {
-                centroLegajoPagareAgregarMotivo($motivos, 'pagare_no_confirmado',
-                    $estadoDocumental === 'observado' ? 'El pagaré está observado.' : 'El pagaré está pendiente de confirmación.');
-            }
-            if ($estadoFisico === 'devuelto_cliente') {
-                centroLegajoPagareAgregarMotivo($motivos, 'pagare_devuelto', 'El pagaré ya fue devuelto al cliente.');
-            } elseif (!in_array($estadoFisico, array('en_sucursal','en_lote','pendiente_custodia','en_transito','recibido'), true)) {
-                centroLegajoPagareAgregarMotivo($motivos, 'pagare_sin_ubicacion', 'El pagaré no tiene una ubicación física confirmada.');
-            }
+        $estadoFisico = isset($fila['estado_fisico']) ? (string)$fila['estado_fisico'] : '';
+        if ($estadoFisico === 'devuelto_cliente') {
+            centroLegajoPagareAgregarMotivo($motivos, 'pagare_devuelto', 'El pagaré ya fue devuelto al cliente.');
         }
 
         if (!$finanzasDisponibles) {
@@ -626,7 +774,7 @@ function centroLegajoPagareEvaluarBusqueda($fila, $finanzas, $finanzasDisponible
         $descripcion = 'Esta venta ya tiene una solicitud de devolución activa.';
     } elseif ($elegible) {
         $estado = 'elegible';
-        $descripcion = 'Pagaré localizado y cuenta saldada: puede solicitar la devolución.';
+        $descripcion = 'Cuenta saldada: puede iniciar la solicitud. La existencia y custodia se confirmarán después.';
     } else {
         $estado = 'no_elegible';
         $descripcion = isset($motivos[0]['mensaje']) ? $motivos[0]['mensaje'] : 'La venta no está habilitada para devolución.';
@@ -692,8 +840,15 @@ function centroLegajoPagareBuscarElegibles($codUsuario, $busqueda, $limite = 30,
               SELECT 1 FROM interconsulta_paciente_venta ipvh
               INNER JOIN interconsulta ich2 ON ich2.cod_interConsulta=ipvh.cod_interConsultaFK AND ich2.estado<>'inactivo'
               WHERE ipvh.cod_interConsultaFK=? AND ipvh.cod_ventaFK=v.cod_venta AND ipvh.estado='activo'
+            ) OR v.cod_clienteFK=(
+              SELECT COALESCE(iph.cod_clienteFK_principal,vh.cod_clienteFK)
+              FROM interconsulta ich3
+              LEFT JOIN interconsulta_paciente iph ON iph.cod_interConsultaFK=ich3.cod_interConsulta AND iph.estado='activo'
+              LEFT JOIN venta vh ON vh.cod_venta=ich3.cod_ventaFK
+              WHERE ich3.cod_interConsulta=? AND ich3.estado<>'inactivo' LIMIT 1
             ))";
-        $tipos .= 'ii';
+        $tipos .= 'iii';
+        $parametros[] = $codInterConsulta;
         $parametros[] = $codInterConsulta;
         $parametros[] = $codInterConsulta;
     }
@@ -878,9 +1033,6 @@ function centroLegajoPagareCrear($codVenta, $datos, $codUsuario)
     $documentoSolicitante = centroFacturaTextoBaseDatos(isset($datos['solicitante_documento']) ? $datos['solicitante_documento'] : '', 45);
     $motivo = centroFacturaTextoBaseDatos(isset($datos['motivo_solicitud']) ? $datos['motivo_solicitud'] : '', 3000, true);
     $codInterConsulta = isset($datos['cod_interConsulta']) ? intval($datos['cod_interConsulta']) : 0;
-    if ($solicitante === '' || $documentoSolicitante === '' || $motivo === '') {
-        return array('ok' => false, 'codigo' => 'datos', 'mensaje' => 'Identifique al solicitante con nombre y documento, e indique el motivo.');
-    }
     $mysqli = conectar_al_servidor();
     $mysqli->begin_transaction();
     try {
@@ -891,6 +1043,10 @@ function centroLegajoPagareCrear($codVenta, $datos, $codUsuario)
         $stmt->close();
         $venta = centroLegajoVentaRaw($mysqli, $codVenta);
         if (!$venta || !centroLegajoPuedeUsarVenta($codUsuario, $venta, $mysqli)) throw new Exception('No puede solicitar el pagare de otro local.');
+        if ($solicitante === '') $solicitante = centroFacturaTextoBaseDatos(isset($venta['titular']) ? $venta['titular'] : 'Cliente', 255);
+        if ($documentoSolicitante === '') $documentoSolicitante = centroFacturaTextoBaseDatos(isset($venta['documento']) ? $venta['documento'] : '', 45);
+        if ($motivo === '') $motivo = centroFacturaTextoBaseDatos('Solicitud de devolucion de pagare registrada.', 3000, true);
+        if ($solicitante === '') throw new Exception('No se pudo identificar al solicitante.');
         $codInterConsulta = centroLegajoPagareValidarHiloVenta($mysqli, $codInterConsulta, $codVenta);
         $estadoFinanciero = centroLegajoPagareEstadoFinancieroVenta($mysqli, $codVenta, true);
         if (!$estadoFinanciero['saldada']) {
@@ -907,10 +1063,6 @@ function centroLegajoPagareCrear($codVenta, $datos, $codUsuario)
         $documento = $stmt->get_result()->fetch_assoc(); $stmt->close();
         $error = centroLegajoPagareVentaValida($venta, $documento, false);
         if ($error !== '') throw new Exception($error);
-        if (!in_array($documento['estado_documental'], array('disponible','validado'), true)
-            || !in_array($documento['estado_fisico'], array('en_sucursal','en_lote','pendiente_custodia','en_transito','recibido'), true)) {
-            throw new Exception('El pagare debe estar confirmado y localizado antes de solicitar su devolucion.');
-        }
         $idDocumento = intval($documento['id_documento']);
         $stmt = centroLegajoPrepararEscritura($mysqli, 'SELECT id_solicitud,codigo_solicitud FROM centro_legajo_pagare_solicitud
             WHERE id_documentoFK=? AND solicitud_abierta=1 LIMIT 1 FOR UPDATE');
@@ -977,13 +1129,16 @@ function centroLegajoPagareCrear($codVenta, $datos, $codUsuario)
 
 function centroLegajoPagareResolver($idSolicitud, $aprobar, $observacion, $codUsuario)
 {
-    if (!centroLegajoPagarePuedeAprobar($codUsuario)) {
-        return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'La aprobacion o rechazo requiere permiso administrativo superior.');
-    }
     if (!centroLegajoPagareEstructuraDisponible()) return centroLegajoPagareErrorEstructura();
     $observacion = centroFacturaTextoBaseDatos($observacion, 3000, true);
     if (!$aprobar && $observacion === '') return array('ok' => false, 'codigo' => 'motivo', 'mensaje' => 'Indique el motivo del rechazo.');
-    $mysqli = conectar_al_servidor(); $mysqli->begin_transaction();
+    $mysqli = conectar_al_servidor();
+    if (!centroLegajoPagarePuedeVer($codUsuario) || !centroLegajoPagarePuedeGestionar($codUsuario)
+        || !centroLegajoPagareEsResponsableCobranza($mysqli, $codUsuario)) {
+        $mysqli->close();
+        return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'Solo un responsable de Cobranza configurado puede confirmar o rechazar la solicitud.');
+    }
+    $mysqli->begin_transaction();
     try {
         $bloqueo = centroLegajoPagareBloquearOperacion($mysqli, $idSolicitud);
         $solicitud = $bloqueo['solicitud']; $documento = $bloqueo['documento']; $venta = $bloqueo['venta']; $lote = $bloqueo['lote'];
@@ -997,16 +1152,15 @@ function centroLegajoPagareResolver($idSolicitud, $aprobar, $observacion, $codUs
         $idSolicitud = intval($solicitud['id_solicitud']);
         $ahora = date('Y-m-d H:i:s');
         if ($aprobar) {
-            $espera = in_array($documento['estado_fisico'], array('en_lote','pendiente_custodia','en_transito'), true);
-            $nuevoEstado = $espera ? 'esperando_recepcion' : 'aprobada';
-            $fechaEspera = $espera ? $ahora : null;
+            $nuevoEstado = 'aprobada';
+            $fechaEspera = null;
             $stmt = centroLegajoPrepararEscritura($mysqli, "UPDATE centro_legajo_pagare_solicitud SET estado=?,observacion_resolucion=?,
                 cod_usuario_apruebaFK=?,fecha_aprobacion=?,fecha_esperando_recepcion=?,cod_usuarioFK_update=?,
                 fecha_actualizacion=?,version_registro=version_registro+1 WHERE id_solicitud=? AND estado='solicitada'");
             $parametros = array($nuevoEstado, $observacion, intval($codUsuario), $ahora, $fechaEspera, intval($codUsuario), $ahora, $idSolicitud);
             centroFacturaBind($stmt, 'ssissisi', $parametros);
-            $tipoEvento = 'aprobar_solicitud';
-            $detalle = $observacion !== '' ? $observacion : ($espera ? 'Aprobada; debe esperar la recepcion fisica del pagare.' : 'Solicitud aprobada.');
+            $tipoEvento = 'confirmar_cuenta_saldada';
+            $detalle = $observacion !== '' ? $observacion : 'Cobranza confirmo oficialmente que la cuenta esta saldada.';
         } else {
             $nuevoEstado = 'rechazada';
             $stmt = centroLegajoPrepararEscritura($mysqli, "UPDATE centro_legajo_pagare_solicitud SET estado='rechazada',observacion_resolucion=?,
@@ -1042,7 +1196,7 @@ function centroLegajoPagareRechazar($idSolicitud, $observacion, $codUsuario)
 function centroLegajoPagarePreparar($idSolicitud, $codUsuario)
 {
     if (!centroLegajoPagarePuedeGestionar($codUsuario)) {
-        return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permiso para preparar la devolucion.');
+        return array('ok' => false, 'codigo' => 'NI', 'mensaje' => 'No tiene permiso para tomar la custodia del pagare.');
     }
     if (!centroLegajoPagareEstructuraDisponible()) return centroLegajoPagareErrorEstructura();
     $mysqli = conectar_al_servidor(); $mysqli->begin_transaction();
@@ -1050,29 +1204,50 @@ function centroLegajoPagarePreparar($idSolicitud, $codUsuario)
         $bloqueo = centroLegajoPagareBloquearOperacion($mysqli, $idSolicitud);
         $solicitud = $bloqueo['solicitud']; $documento = $bloqueo['documento']; $venta = $bloqueo['venta']; $lote = $bloqueo['lote'];
         if (!centroLegajoPuedeUsarVenta($codUsuario, $venta, $mysqli)) throw new Exception('La solicitud pertenece a otro local.');
-        if (!centroLegajoPagarePuedeOperarUbicacion($codUsuario, $documento, $mysqli)) {
-            throw new Exception('Solo el local que tiene fisicamente el pagare puede prepararlo para entrega.');
+        if (!in_array($solicitud['estado'], array('aprobada','esperando_recepcion','preparada'), true)) {
+            throw new Exception('Cobranza debe confirmar la cuenta antes de tomar la custodia.');
         }
-        if (!in_array($solicitud['estado'], array('aprobada','esperando_recepcion'), true)) throw new Exception('La solicitud no esta aprobada para preparacion.');
+        if ($solicitud['estado'] === 'preparada' && intval($solicitud['cod_usuario_preparaFK']) === intval($codUsuario)) {
+            throw new Exception('Usted ya figura como poseedor actual del pagare.');
+        }
         $error = centroLegajoPagareVentaValida($venta, $documento, false);
         if ($error !== '') throw new Exception($error);
-        centroLegajoPagareExigirCuentaSaldada($mysqli, intval($solicitud['cod_ventaFK']), 'preparar');
-        if (!in_array($documento['estado_documental'], array('disponible','validado'), true)) {
-            throw new Exception('El pagare ya no tiene un estado documental habilitado para preparacion.');
-        }
-        if (!in_array($documento['estado_fisico'], array('en_sucursal','recibido'), true)) {
-            throw new Exception('El pagare debe estar fisicamente en sucursal o recibido antes de prepararlo.');
-        }
+        centroLegajoPagareExigirCuentaSaldada($mysqli, intval($solicitud['cod_ventaFK']), 'continuar');
+        $contexto = centroFacturaContextoUsuario($codUsuario, $mysqli);
+        if (!$contexto || intval($contexto['cod_localFK']) <= 0) throw new Exception('No se pudo determinar el local del nuevo poseedor.');
+        $local = intval($contexto['cod_localFK']);
+        $ubicacion = centroFacturaTextoBaseDatos(isset($contexto['nombre_local']) ? $contexto['nombre_local'] : 'Local del poseedor', 255);
+        $nuevoDocumento = $documento['estado_documental'] === 'validado' ? 'validado' : 'disponible';
+        $detalleDocumento = 'Custodia fisica confirmada por el usuario que tomo el pagare mediante '.$solicitud['codigo_solicitud'].'.';
+        $ahora = date('Y-m-d H:i:s');
+        $idDocumento = intval($documento['id_documento']);
+        $stmt = centroLegajoPrepararEscritura($mysqli, "UPDATE centro_legajo_documento SET estado_documental=?,estado_fisico='en_sucursal',
+            cod_local_ubicacionFK=?,ubicacion_fisica=?,observaciones=CONCAT_WS('\n',NULLIF(observaciones,''),?),
+            cod_usuario_confirmacionFK=?,fecha_confirmacion=?,cod_usuarioFK_update=?,fecha_actualizacion=?,
+            version_registro=version_registro+1 WHERE id_documento=? AND estado_fisico<>'devuelto_cliente'");
+        $stmt->bind_param('sissisisi', $nuevoDocumento, $local, $ubicacion, $detalleDocumento,
+            $codUsuario, $ahora, $codUsuario, $ahora, $idDocumento);
+        if (!$stmt->execute() || $stmt->affected_rows !== 1) { $stmt->close(); throw new Exception('No se pudo confirmar la ubicacion del pagare.'); }
+        $stmt->close();
         $idSolicitud = intval($solicitud['id_solicitud']); $anterior = $solicitud['estado'];
         $stmt = centroLegajoPrepararEscritura($mysqli, "UPDATE centro_legajo_pagare_solicitud SET estado='preparada',
             cod_usuario_preparaFK=?,fecha_preparacion=NOW(),cod_usuarioFK_update=?,fecha_actualizacion=NOW(),
-            version_registro=version_registro+1 WHERE id_solicitud=? AND estado IN ('aprobada','esperando_recepcion')");
+            version_registro=version_registro+1 WHERE id_solicitud=? AND estado IN ('aprobada','esperando_recepcion','preparada')");
         $stmt->bind_param('iii', $codUsuario, $codUsuario, $idSolicitud);
-        if (!$stmt->execute() || $stmt->affected_rows !== 1) { $stmt->close(); throw new Exception('No se pudo preparar la solicitud.'); }
+        if (!$stmt->execute() || $stmt->affected_rows !== 1) { $stmt->close(); throw new Exception('No se pudo registrar la nueva custodia.'); }
         $stmt->close();
-        if (!centroLegajoPagareRegistrarEvento($mysqli, $solicitud, 'preparar_entrega', $anterior, 'preparada',
-            'Pagare localizado y preparado para la entrega.', $codUsuario, $documento, $lote)) throw new Exception('No se pudo auditar la preparacion.');
-        if (!$mysqli->commit()) throw new Exception('No se pudo confirmar la preparacion.');
+        if (!centroLegajoRegistrarEventoDocumento($mysqli, $documento, 'tomar_custodia_pagare',
+            $documento['estado_documental'], $nuevoDocumento, $documento['estado_fisico'], 'en_sucursal',
+            $detalleDocumento, $codUsuario)) throw new Exception('No se pudo auditar la ubicacion del pagare.');
+        $documentoFinal = $documento;
+        $documentoFinal['estado_documental'] = $nuevoDocumento;
+        $documentoFinal['estado_fisico'] = 'en_sucursal';
+        $documentoFinal['cod_local_ubicacionFK'] = $local;
+        $documentoFinal['ubicacion_fisica'] = $ubicacion;
+        if (!centroLegajoPagareRegistrarEvento($mysqli, $solicitud, 'tomar_custodia', $anterior, 'preparada',
+            'El usuario confirmo que posee fisicamente el pagare. Resultado: custodia transferida.',
+            $codUsuario, $documentoFinal, $lote)) throw new Exception('No se pudo auditar la custodia.');
+        if (!$mysqli->commit()) throw new Exception('No se pudo confirmar la custodia.');
         $mysqli->close();
         return array('ok' => true, 'id_solicitud' => $idSolicitud, 'estado' => 'preparada');
     } catch (Exception $e) {
@@ -1201,10 +1376,10 @@ function centroLegajoPagareEntregar($idSolicitud, $datos, $archivos, $codUsuario
         $bloqueo = centroLegajoPagareBloquearOperacion($mysqli, $idSolicitud);
         $solicitud = $bloqueo['solicitud']; $documento = $bloqueo['documento']; $venta = $bloqueo['venta']; $lote = $bloqueo['lote'];
         if (!centroLegajoPuedeUsarVenta($codUsuario, $venta, $mysqli)) throw new Exception('La solicitud pertenece a otro local.');
-        if (!centroLegajoPagarePuedeOperarUbicacion($codUsuario, $documento, $mysqli)) {
-            throw new Exception('Solo el local que tiene fisicamente el pagare puede registrar su entrega.');
+        if ($solicitud['estado'] !== 'preparada') throw new Exception('Alguien debe tomar la custodia antes de entregar el pagare.');
+        if (intval($solicitud['cod_usuario_preparaFK']) !== intval($codUsuario)) {
+            throw new Exception('Solo el poseedor actual puede registrar la entrega. Use Tomar custodia para continuar el hilo.');
         }
-        if ($solicitud['estado'] !== 'preparada') throw new Exception('La solicitud debe estar preparada antes de entregar el pagare.');
         $error = centroLegajoPagareVentaValida($venta, $documento, false);
         if ($error !== '') throw new Exception($error);
         centroLegajoPagareExigirCuentaSaldada($mysqli, intval($solicitud['cod_ventaFK']), 'entregar');

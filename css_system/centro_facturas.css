@@ -346,6 +346,111 @@
 .interconsulta-message-invoice--pending { border-color: #fed7aa; background: #fff7ed; color: #9a3412; }
 .interconsulta-message-invoice button { padding: 5px 7px; border-radius: 6px; background: #0f766e; color: #fff; font-size: 10px; font-weight: 700; }
 
+/* Devolucion de pagares: listado guiado de solicitud, Cobranza, custodia y entrega. */
+.centro-facturas-window.is-pagare-dedicated { background: #f6f8fc; color: #12244a; }
+.is-pagare-dedicated .centro-facturas-header { padding: 16px 24px 12px; border-bottom-color: #dce4f2; }
+.is-pagare-dedicated .centro-facturas-header h2 { color: #102758; }
+.is-pagare-dedicated .centro-facturas-eyebrow { color: #087f85; }
+.is-pagare-dedicated .centro-facturas-toolbar { padding: 12px 24px 9px; border-bottom: 0; }
+.is-pagare-dedicated .centro-facturas-period,
+.is-pagare-dedicated #centroFacturasFiltroPago,
+.is-pagare-dedicated #centroFacturasFiltroOriginal,
+.is-pagare-dedicated #btnCentroFacturasMasFiltros,
+.is-pagare-dedicated #btnCentroFacturasManual,
+.is-pagare-dedicated #btnCentroFacturasConfig { display: none !important; }
+.is-pagare-dedicated .centro-facturas-search { min-width: 300px; border-color: #cbd8ec; }
+.is-pagare-dedicated #centroFacturasFiltroLocal,
+.is-pagare-dedicated #centroFacturasFiltroEstadoCompacto { min-width: 185px; border-color: #cbd8ec; }
+.cf-pagare-config-button { border: 1px solid #d4deed; background: #fff; color: #173c80; font-size: 15px; }
+
+.cf-legajo-summary.is-pagare-summary { display: flex; align-items: center; gap: 12px; margin-top: 1px; padding: 0 2px; }
+.cf-pagare-origin { display: grid; min-width: 230px; grid-template-columns: 30px minmax(0,1fr); align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid #c6d8f2; border-radius: 9px; background: #f2f7ff; color: #164b9d; }
+.cf-pagare-origin > i { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 7px; background: #dceafe; }
+.cf-pagare-origin span { min-width: 0; }
+.cf-pagare-origin b,
+.cf-pagare-origin small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cf-pagare-origin b { font-size: 10.5px; }
+.cf-pagare-origin small { margin-top: 2px; color: #58729b; font-size: 8.5px; }
+.cf-pagare-metrics { display: flex; flex: 1 1 auto; align-items: center; gap: 20px; min-height: 36px; flex-wrap: wrap; color: #23406f; font-size: 10.5px; }
+.cf-pagare-metrics span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.cf-pagare-metrics i { color: #0d9488; font-size: 8px; }
+.cf-pagare-metrics .is-yellow i { color: #eab308; }
+.cf-pagare-metrics .is-orange i { color: #f59e0b; }
+.cf-pagare-metrics .is-blue i { color: #1d70d6; }
+.cf-pagare-metrics .is-green i { color: #16a05d; }
+.cf-pagare-legend { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; color: #5b6f8f; font-size: 8.5px; }
+.cf-pagare-legend b { color: #233b65; }
+.cf-pagare-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.cf-pagare-legend span::before { width: 8px; height: 8px; border: 2px solid transparent; border-radius: 50%; background: #cbd5e1; content: ""; }
+.cf-pagare-legend .is-complete::before { background: #16a05d; }
+.cf-pagare-legend .is-current::before { border-color: #1d70d6; background: #fff; }
+.cf-pagare-legend .is-attention::before { background: #dc3545; }
+
+.centro-facturas-table--pagares { min-width: 1040px; table-layout: fixed; }
+.centro-facturas-table--pagares th:nth-child(1) { width: 190px; }
+.centro-facturas-table--pagares th:nth-child(2) { width: auto; }
+.centro-facturas-table--pagares th:nth-child(3) { width: 235px; }
+.centro-facturas-table--pagares th { background: #f2f5fa; color: #263d65; }
+.centro-facturas-table--pagares td { padding: 8px 11px; border-bottom-color: #e2e8f2; }
+.centro-facturas-table--pagares tbody tr.cf-row--pending { background: #fff; box-shadow: inset 3px 0 #e7a817; }
+.centro-facturas-table--pagares tbody tr.cf-row--complete { box-shadow: inset 3px 0 #16a05d; }
+.centro-facturas-table--pagares tbody tr.cf-row--observed { box-shadow: inset 3px 0 #dc3545; }
+.centro-facturas-table--pagares .cf-badge { margin-top: 5px; }
+.cf-pagare-candidate { background: #f8fbff !important; box-shadow: inset 3px 0 #1d70d6; }
+
+.cf-pagare-route { display: grid; min-width: 0; grid-template-columns: repeat(4,minmax(125px,1fr)); align-items: start; }
+.cf-pagare-node { position: relative; display: grid; min-width: 0; justify-items: center; padding: 0 7px; color: #6c7c95; text-align: center; }
+.cf-pagare-node::after { position: absolute; z-index: 0; top: 23px; left: calc(50% + 24px); width: calc(100% - 48px); height: 2px; background: #cbd5e1; content: ""; }
+.cf-pagare-node:last-child::after { display: none; }
+.cf-pagare-node.is-complete::after { background: #25b879; }
+.cf-pagare-node__avatar { position: relative; z-index: 1; display: flex; min-height: 48px; align-items: flex-start; justify-content: center; }
+.cf-pagare-avatar { display: inline-grid; width: 44px; height: 44px; flex: 0 0 44px; overflow: hidden; place-items: center; border: 3px solid #fff; border-radius: 50%; background: #e9eef5; color: #64748b; font-size: 12px; font-style: normal; font-weight: 800; box-shadow: 0 0 0 1px #cbd5e1; }
+.cf-pagare-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.cf-pagare-avatar--icon { font-size: 15px; }
+.cf-pagare-avatar-stack { display: flex; padding-left: 11px; }
+.cf-pagare-avatar-stack .cf-pagare-avatar { margin-left: -11px; }
+.cf-pagare-node.is-complete .cf-pagare-avatar { background: #e9f9f0; color: #138653; box-shadow: 0 0 0 2px #21a867; }
+.cf-pagare-node.is-current .cf-pagare-avatar,
+.cf-pagare-node.is-current .cf-pagare-avatar-stack .cf-pagare-avatar { background: #eaf2ff; color: #155fc1; box-shadow: 0 0 0 3px #1d70d6; }
+.cf-pagare-node.is-attention .cf-pagare-avatar { background: #fff0f1; color: #b42334; box-shadow: 0 0 0 2px #dc3545; }
+.cf-pagare-node__avatar em { position: absolute; top: 37px; left: 50%; z-index: 2; padding: 2px 6px; border-radius: 4px; background: #1768d1; color: #fff; font-size: 7px; font-style: normal; font-weight: 800; line-height: 1.2; transform: translateX(-50%); white-space: nowrap; }
+.cf-pagare-node > b { margin-top: 5px; color: #243858; font-size: 9px; }
+.cf-pagare-node > strong { display: block; overflow: hidden; max-width: 100%; margin-top: 2px; color: #102758; font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
+.cf-pagare-node > small { display: -webkit-box; overflow: hidden; min-height: 21px; margin-top: 2px; color: #65758e; font-size: 8px; line-height: 1.25; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.cf-pagare-node > time { margin-top: 2px; color: #8290a5; font-size: 7.5px; }
+.cf-pagare-node.is-current > b,
+.cf-pagare-node.is-current > strong { color: #155fc1; }
+.cf-pagare-node.is-attention > b,
+.cf-pagare-node.is-attention > strong { color: #a61b2b; }
+
+.cf-pagare-actions { display: grid; align-content: center; justify-items: start; gap: 6px; }
+.centro-facturas-table .cf-pagare-next-action { min-height: 34px; padding: 7px 12px; border: 1px solid #1d70d6; background: #fff; color: #155fc1; font-size: 10px; }
+.centro-facturas-table .cf-pagare-next-action:hover { background: #edf5ff; }
+.centro-facturas-table .cf-pagare-detail-action { position: absolute; right: 9px; width: 28px; min-width: 28px; height: 30px; padding: 0; background: transparent; color: #526987; }
+.cf-pagare-actions small { max-width: 200px; color: #6e7f98; font-size: 8.5px; line-height: 1.35; }
+.cf-pagare-waiting { color: #63748d; font-size: 9.5px; font-weight: 700; }
+.centro-facturas-table--pagares td:last-child { position: relative; padding-right: 38px; }
+
+.cf-pagare-user-search { display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid #cbd8ec; border-radius: 9px; color: #6a7c99; }
+.cf-pagare-user-search input { width: 100%; border: 0; box-shadow: none !important; }
+.cf-pagare-user-list { display: grid; max-height: 420px; gap: 5px; margin-top: 10px; overflow-y: auto; }
+.cf-pagare-user { display: grid; grid-template-columns: 20px 42px minmax(0,1fr); align-items: center; gap: 9px; padding: 8px; border: 1px solid #e0e7f1; border-radius: 9px; background: #fff; cursor: pointer; }
+.cf-pagare-user:hover { background: #f7faff; }
+.cf-pagare-user input { width: 17px; min-height: 17px; }
+.cf-pagare-user .cf-pagare-avatar { width: 38px; height: 38px; flex-basis: 38px; }
+.cf-pagare-user span { display: grid; min-width: 0; }
+.cf-pagare-user b { overflow: hidden; color: #142c59; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.cf-pagare-user small { margin-top: 2px; color: #677894; font-size: 9px; }
+.cf-pagare-user em { margin-top: 3px; color: #b45309; font-size: 8px; font-style: normal; }
+.cf-pagare-user.is-disabled { background: #f8f9fb; opacity: .72; }
+.cf-pagare-user-count { margin-top: 9px; color: #526987; font-size: 10px; font-weight: 700; }
+.cf-confirm-box { display: grid; grid-template-columns: 34px minmax(0,1fr); align-items: center; gap: 3px 10px; padding: 11px; border: 1px solid #bfdbfe; border-radius: 9px; background: #eff6ff; color: #1e477b; }
+.cf-confirm-box > i { grid-row: 1 / span 2; font-size: 20px; text-align: center; }
+.cf-confirm-box b { font-size: 11px; }
+.cf-confirm-box span { font-size: 9.5px; line-height: 1.35; }
+.cf-pagare-detail-route { overflow-x: auto; }
+.cf-pagare-detail-route h4 { margin: 0 0 8px; color: #18345f; font-size: 11px; }
+
 @media (max-width: 1100px) {
   .centro-facturas-toolbar { flex-wrap: wrap; }
   .centro-facturas-search { flex-basis: calc(100% - 285px); }
@@ -355,6 +460,9 @@
   .cf-legajo-summary { grid-template-columns: minmax(260px, 1.5fr) repeat(3, minmax(90px, .7fr)); }
   .centro-facturas-drawer.is-legajo-detail { width: 100vw; }
   .cf-legajo-document-row { grid-template-columns: 28px minmax(125px, 1fr) minmax(90px, .65fr) minmax(110px, .8fr) minmax(165px, 1.15fr) minmax(195px, 1.35fr); gap: 6px; }
+  .centro-facturas-table--legajos.centro-facturas-table--pagares { min-width: 1000px; }
+  .cf-legajo-summary.is-pagare-summary { flex-wrap: wrap; }
+  .cf-pagare-legend { width: 100%; justify-content: flex-start; }
 }
 
 @media (max-width: 760px) {
@@ -404,6 +512,24 @@
   .cf-pagare-eligible-card .cf-button { width: 100%; }
   .cf-pagare-no-action { width: 100%; }
   .interconsulta-attachment-type { min-width: 120px; }
+  .is-pagare-dedicated .centro-facturas-header { padding: 11px 12px; }
+  .is-pagare-dedicated .centro-facturas-header p { display: block; font-size: 10px; }
+  .is-pagare-dedicated .centro-facturas-header__actions { gap: 4px; }
+  .is-pagare-dedicated #btnCentroFacturasVolverHilo { min-height: 36px; padding: 6px 8px; font-size: 9px; }
+  .is-pagare-dedicated .centro-facturas-toolbar { padding: 8px 12px; }
+  .is-pagare-dedicated .centro-facturas-search { min-width: 100%; }
+  .is-pagare-dedicated #centroFacturasFiltroLocal,
+  .is-pagare-dedicated #centroFacturasFiltroEstadoCompacto { width: calc(50% - 4px); min-width: 0; }
+  .cf-legajo-summary.is-pagare-summary { display: flex; margin-left: 12px; margin-right: 12px; }
+  .cf-pagare-origin { width: 100%; }
+  .cf-pagare-metrics { width: 100%; gap: 8px 14px; }
+  .centro-facturas-table--legajos.centro-facturas-table--pagares { min-width: 920px; }
+  .centro-facturas-table--pagares th:nth-child(1) { width: 165px; }
+  .centro-facturas-table--pagares th:nth-child(3) { width: 205px; }
+  .cf-pagare-route { grid-template-columns: repeat(4,minmax(115px,1fr)); }
+  .cf-pagare-node { padding-left: 4px; padding-right: 4px; }
+  .cf-pagare-detail-route .cf-pagare-route { min-width: 620px; }
+  .cf-pagare-user-list { max-height: 52vh; }
 }
 
 @media (max-width: 620px) {

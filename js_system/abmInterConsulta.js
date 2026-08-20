@@ -2087,6 +2087,11 @@ function actualizarCabeceraDetalleHilo(datosHilo, opcionesDictamen= "") {
         var flujoPagareDisponible= typeof centroFacturasAbrirDevolucionPagareDesdeHilo == "function";
         btnDevolucionPagare.style.display= esHiloClienteVenta && flujoPagareDisponible ? "" : "none";
         btnDevolucionPagare.disabled= !(esHiloClienteVenta && flujoPagareDisponible);
+        var textoPagare= document.getElementById("btnDevolucionPagareDesdeHiloTexto");
+        if (textoPagare) { textoPagare.textContent= "Devolución de pagaré"; }
+        if (esHiloClienteVenta && flujoPagareDisponible && typeof centroFacturasActualizarAccesoPagareHilo == "function") {
+            centroFacturasActualizarAccesoPagareHilo(codigo, btnDevolucionPagare);
+        }
     }
     if (Number(datosHilo.resumen_seguimiento_cargado || 0) > 0) {
         actualizarAvisosSeguimientoPacienteDetalle(datosHilo);
