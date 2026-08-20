@@ -672,7 +672,12 @@ function centroFacturasRenderResumenLegajos(respuesta) {
         respuesta = respuesta || {};
         var metricasPagare = respuesta.metricas || {};
         var hilo = Number(centroFacturasEstado.solicitudPagareOrigenHilo || 0);
+        var responsablesCobranza = (centroFacturasEstado.contexto || {}).responsables_cobranza || [];
+        var avisoConfiguracion = responsablesCobranza.length ? "" : '<div class="cf-pagare-config-warning"><i class="fa-solid fa-user-gear" aria-hidden="true"></i><span><b>Cobranza sin responsables configurados</b><small>'
+            + (centroFacturasPermiso("ADMINCENTROFACTURAS") ? 'Use el engranaje para elegir usuarios activos de Telar.' : 'Un administrador debe elegir qui&eacute;nes confirmar&aacute;n las cuentas saldadas.')
+            + '</small></span></div>';
         panel.innerHTML = (hilo > 0 ? '<div class="cf-pagare-origin"><i class="fa-solid fa-link" aria-hidden="true"></i><span><b>Origen: Hilo #' + hilo + '</b><small>Se muestran las ventas y solicitudes relacionadas.</small></span></div>' : '')
+            + avisoConfiguracion
             + '<div class="cf-pagare-metrics" aria-label="Resumen de solicitudes">'
             + '<span><i class="fa-solid fa-circle" aria-hidden="true"></i><b>' + Number(metricasPagare.solicitudes || 0) + '</b> solicitudes</span>'
             + '<span class="is-yellow"><i class="fa-solid fa-circle" aria-hidden="true"></i><b>' + Number(metricasPagare.pendientes_cobranza || 0) + '</b> por confirmar</span>'

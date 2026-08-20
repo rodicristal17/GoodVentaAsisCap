@@ -60,27 +60,9 @@ CREATE TABLE IF NOT EXISTS `centro_legajo_pagare_responsable_evento` (
   CONSTRAINT `fk_clpre_actor` FOREIGN KEY (`cod_usuario_actorFK`) REFERENCES `usuario` (`cod_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
--- Primera instalacion: conserva como responsables iniciales a quienes ya podian
--- resolver solicitudes por ADMINCENTROFACTURAS. Las ejecuciones posteriores no
--- reactivan usuarios que un administrador haya desmarcado.
-SET @clprc_configurados := (SELECT COUNT(*) FROM centro_legajo_pagare_responsable_cobranza);
-
-INSERT INTO centro_legajo_pagare_responsable_cobranza
-  (cod_usuarioFK,estado,cod_usuario_configuraFK,fecha_creacion,fecha_actualizacion)
-SELECT DISTINCT u.cod_usuario,'activo',u.cod_usuario,NOW(),NOW()
-FROM usuario u
-INNER JOIN accesosuser au ON au.usuarios_idusario=u.cod_usuario AND au.accion='SI'
-INNER JOIN listadodeacceso la ON la.idlistadodeacceso=au.idlistadodeaccesoFK
-WHERE @clprc_configurados=0
-  AND u.estado='Activo'
-  AND la.codigo='ADMINCENTROFACTURAS'
-  AND EXISTS (
-    SELECT 1
-    FROM accesosuser auv
-    INNER JOIN listadodeacceso lav ON lav.idlistadodeacceso=auv.idlistadodeaccesoFK
-    WHERE auv.usuarios_idusario=u.cod_usuario AND auv.accion='SI'
-      AND lav.codigo='VERCENTROFACTURAS'
-  );
+-- La configuracion comienza vacia: ADMINCENTROFACTURAS debe seleccionar de
+-- forma explicita a los responsables reales de Cobranza desde el engranaje.
+-- No se amplian permisos ni se presume el cargo por el rol general del usuario.
 
 SELECT
   (SELECT COUNT(*) FROM centro_legajo_pagare_responsable_cobranza WHERE estado='activo') AS responsables_cobranza_activos,

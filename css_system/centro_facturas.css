@@ -371,6 +371,13 @@
 .cf-pagare-origin small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cf-pagare-origin b { font-size: 10.5px; }
 .cf-pagare-origin small { margin-top: 2px; color: #58729b; font-size: 8.5px; }
+.cf-pagare-config-warning { display: grid; min-width: 245px; grid-template-columns: 28px minmax(0,1fr); align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid #f2cf86; border-radius: 9px; background: #fff9eb; color: #8b5a06; }
+.cf-pagare-config-warning > i { display: grid; width: 27px; height: 27px; place-items: center; border-radius: 7px; background: #ffedbd; }
+.cf-pagare-config-warning span,
+.cf-pagare-config-warning b,
+.cf-pagare-config-warning small { display: block; min-width: 0; }
+.cf-pagare-config-warning b { font-size: 9.5px; }
+.cf-pagare-config-warning small { margin-top: 2px; color: #8d6b2d; font-size: 8px; }
 .cf-pagare-metrics { display: flex; flex: 1 1 auto; align-items: center; gap: 20px; min-height: 36px; flex-wrap: wrap; color: #23406f; font-size: 10.5px; }
 .cf-pagare-metrics span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .cf-pagare-metrics i { color: #0d9488; font-size: 8px; }
