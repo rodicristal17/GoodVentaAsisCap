@@ -221,6 +221,22 @@ function centroLegajoPagareLoteDocumento($mysqli, $idDocumento)
     return $fila ? $fila : array();
 }
 
+function centroLegajoPagareLoteBloqueaCustodia($documento, $lote)
+{
+    if (empty($lote)) return false;
+    $estadoLote = isset($lote['estado']) ? (string)$lote['estado'] : '';
+    $estadoFisico = isset($documento['estado_fisico']) ? (string)$documento['estado_fisico'] : '';
+    return in_array($estadoLote, array('borrador','pendiente_custodia','en_transito','recibido_parcial','observado'), true)
+        && in_array($estadoFisico, array('en_lote','pendiente_custodia','en_transito','faltante','observado'), true);
+}
+
+function centroLegajoPagareMensajeLoteCustodia($lote)
+{
+    $codigo = !empty($lote['codigo_lote']) ? (string)$lote['codigo_lote'] : 'el lote documental vigente';
+    $estado = !empty($lote['estado']) ? str_replace('_', ' ', (string)$lote['estado']) : 'activo';
+    return 'El pagare figura en '.$codigo.' ('.$estado.'). Complete o regularice la recepcion del lote antes de tomar esta custodia.';
+}
+
 function centroLegajoPagareSnapshot($documento, $lote)
 {
     return array(
@@ -497,13 +513,16 @@ function centroLegajoPagareDecorarSolicitud($fila, $mysqli, $codUsuario)
     $responsableCobranza = centroLegajoPagareEsResponsableCobranza($mysqli, $codUsuario);
     $documentoDisponible = in_array($fila['estado_documental'], array('disponible','validado'), true);
     $documentoEnSucursal = in_array($fila['estado_fisico'], array('en_sucursal','recibido'), true);
+    $loteBloqueaCustodia = centroLegajoPagareLoteBloqueaCustodia($fila, $lote);
     $esCustodioActual = $estado === 'preparada' && intval($fila['cod_usuario_preparaFK']) === intval($codUsuario);
     $fila['puede_confirmar_cobranza'] = $responsableCobranza && $estado === 'solicitada' ? 1 : 0;
     $fila['puede_aprobar'] = $fila['puede_confirmar_cobranza'];
     $fila['puede_rechazar'] = $responsableCobranza && $estado === 'solicitada' ? 1 : 0;
     $fila['puede_tomar_custodia'] = $gestiona && in_array($estado, array('aprobada','esperando_recepcion','preparada'), true)
-        && !$esCustodioActual ? 1 : 0;
+        && !$esCustodioActual && !$loteBloqueaCustodia ? 1 : 0;
     $fila['puede_preparar'] = $fila['puede_tomar_custodia'];
+    $fila['custodia_bloqueada_lote'] = $loteBloqueaCustodia ? 1 : 0;
+    $fila['custodia_bloqueo_mensaje'] = $loteBloqueaCustodia ? centroLegajoPagareMensajeLoteCustodia($lote) : '';
     $fila['es_custodio_actual'] = $esCustodioActual ? 1 : 0;
     $fila['puede_entregar'] = $gestiona && $esCustodioActual && $documentoDisponible && $documentoEnSucursal ? 1 : 0;
     $fila['puede_cancelar'] = $gestiona && in_array($estado, centroLegajoPagareEstadosAbiertos(), true) ? 1 : 0;
@@ -1209,6 +1228,9 @@ function centroLegajoPagarePreparar($idSolicitud, $codUsuario)
         }
         if ($solicitud['estado'] === 'preparada' && intval($solicitud['cod_usuario_preparaFK']) === intval($codUsuario)) {
             throw new Exception('Usted ya figura como poseedor actual del pagare.');
+        }
+        if (centroLegajoPagareLoteBloqueaCustodia($documento, $lote)) {
+            throw new Exception(centroLegajoPagareMensajeLoteCustodia($lote));
         }
         $error = centroLegajoPagareVentaValida($venta, $documento, false);
         if ($error !== '') throw new Exception($error);

@@ -1105,6 +1105,9 @@ function centroFacturasTrayectoPagare(solicitud) {
     var custodia = ["preparada", "entregada"].indexOf(estado) >= 0;
     var entregada = estado === "entregada";
     var cerrada = ["rechazada", "cancelada"].indexOf(estado) >= 0;
+    var custodiaBloqueada = Number(solicitud.custodia_bloqueada_lote || 0) === 1;
+    var loteActual = solicitud.lote_actual || {};
+    var loteBloqueado = solicitud.codigo_lote_actual || loteActual.codigo_lote || "Lote documental";
     var nodos = [
         {
             titulo: "Solicitud",
@@ -1126,12 +1129,12 @@ function centroFacturasTrayectoPagare(solicitud) {
         },
         {
             titulo: "Custodia",
-            nombre: custodia ? (solicitud.usuario_prepara || "Poseedor identificado") : "Custodia pendiente",
+            nombre: custodia ? (solicitud.usuario_prepara || "Poseedor identificado") : (custodiaBloqueada ? loteBloqueado : "Custodia pendiente"),
             avatar: custodia ? solicitud.avatar_prepara : "",
-            icono: "fa-hand-holding",
-            resultado: custodia ? "Pagaré localizado" : "Resultado esperado: poseedor identificado",
+            icono: custodiaBloqueada ? "fa-truck-ramp-box" : "fa-hand-holding",
+            resultado: custodia ? "Pagaré localizado" : (custodiaBloqueada ? "Debe: completar recepción del lote" : "Resultado esperado: poseedor identificado"),
             fecha: custodia ? solicitud.fecha_preparacion : "",
-            estado: custodia ? (entregada ? "complete" : "current") : (confirmada ? "current" : "next")
+            estado: custodia ? (entregada ? "complete" : "current") : (custodiaBloqueada ? "attention" : (confirmada ? "current" : "next"))
         },
         {
             titulo: "Entrega",
@@ -1149,6 +1152,9 @@ function centroFacturasTrayectoPagare(solicitud) {
 function centroFacturasResultadoSolicitudPagare(solicitud) {
     var estado = String(solicitud.estado || "");
     if (estado === "solicitada") { return "Resultado esperado: cuenta confirmada por Cobranza."; }
+    if (Number(solicitud.custodia_bloqueada_lote || 0) === 1) {
+        return solicitud.custodia_bloqueo_mensaje || "Complete la recepción del lote documental antes de tomar la custodia.";
+    }
     if (["aprobada", "esperando_recepcion"].indexOf(estado) >= 0) { return "Resultado esperado: pagaré localizado y poseedor identificado."; }
     if (estado === "preparada") { return "Resultado esperado: entrega con constancia firmada."; }
     if (estado === "entregada") { return "Proceso finalizado con trazabilidad completa."; }
@@ -1170,7 +1176,7 @@ function centroFacturasAccionesSolicitudPagare(solicitud, incluirDetalle) {
         acciones += '<button type="button" class="cf-pagare-next-action" onclick="centroFacturasPrepararEntregaPagare(' + id + ')">Registrar entrega</button>';
     }
     if (!acciones) {
-        acciones = '<span class="cf-pagare-waiting">' + (estado === "entregada" ? "Proceso finalizado" : "Esperando al responsable actual") + '</span>';
+        acciones = '<span class="cf-pagare-waiting">' + (estado === "entregada" ? "Proceso finalizado" : (Number(solicitud.custodia_bloqueada_lote || 0) === 1 ? "Regularizar lote" : "Esperando al responsable actual")) + '</span>';
     }
     if (incluirDetalle !== false) {
         acciones += '<button type="button" class="cf-pagare-detail-action" onclick="centroFacturasAbrirSolicitudPagare(' + id + ')" aria-label="Ver trazabilidad"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>';
