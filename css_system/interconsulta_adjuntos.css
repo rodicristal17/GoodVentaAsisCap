@@ -531,10 +531,24 @@ body.adjunto-documento-dialog-open {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 9px;
   padding: 12px 20px;
   border-top: 1px solid #e2eaf1;
   background: #f9fbfd;
+}
+
+.adjunto-documento-dialog__status {
+  flex: 1 1 260px;
+  margin-right: auto;
+  padding: 8px 10px;
+  border: 1px solid #efb1b1;
+  border-radius: 9px;
+  background: #fff2f2;
+  color: #a92e2e;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.35;
 }
 
 .adjunto-documento-dialog__footer button {

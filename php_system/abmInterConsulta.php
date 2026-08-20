@@ -4781,11 +4781,32 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         );
     }
 
-    function guardarArchivoPreparadoMensajeInterconsulta($codMensaje, $archivo) {
+    function validarDirectorioAdjuntosMensajeInterconsulta() {
         $directorio= dirname(__DIR__).DIRECTORY_SEPARATOR.'fotos'.DIRECTORY_SEPARATOR.'fotosMensaje';
-        if (!is_dir($directorio) && !mkdir($directorio, 0775, true)) {
-            return array('ok' => false, 'mensaje' => 'No se pudo preparar la carpeta de adjuntos.');
+        if (!is_dir($directorio) && !@mkdir($directorio, 0775, true)) {
+            return array(
+                'ok' => false,
+                'codigo' => 'almacenamiento_no_disponible',
+                'mensaje' => 'El almacenamiento de adjuntos no esta disponible. La imagen sigue seleccionada; reintente en unos segundos o avise a Sistemas.'
+            );
         }
+        clearstatcache(true, $directorio);
+        if (!is_writable($directorio)) {
+            return array(
+                'ok' => false,
+                'codigo' => 'almacenamiento_no_disponible',
+                'mensaje' => 'El almacenamiento de adjuntos no esta disponible. La imagen sigue seleccionada; reintente en unos segundos o avise a Sistemas.'
+            );
+        }
+        return array('ok' => true, 'directorio' => $directorio);
+    }
+
+    function guardarArchivoPreparadoMensajeInterconsulta($codMensaje, $archivo) {
+        $almacenamiento= validarDirectorioAdjuntosMensajeInterconsulta();
+        if (empty($almacenamiento['ok'])) {
+            return $almacenamiento;
+        }
+        $directorio= $almacenamiento['directorio'];
         try {
             $sufijo= bin2hex(random_bytes(6));
         } catch (Exception $e) {
@@ -5090,10 +5111,11 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         if (!in_array($mime, $permitidas[$ext], true)) {
             return array('ok' => false, 'mensaje' => 'El contenido del archivo no coincide con su extension.');
         }
-        $directorio= dirname(__DIR__).DIRECTORY_SEPARATOR.'fotos'.DIRECTORY_SEPARATOR.'fotosMensaje';
-        if (!is_dir($directorio) && !mkdir($directorio, 0775, true)) {
-            return array('ok' => false, 'mensaje' => 'No se pudo preparar la carpeta de adjuntos.');
+        $almacenamiento= validarDirectorioAdjuntosMensajeInterconsulta();
+        if (empty($almacenamiento['ok'])) {
+            return $almacenamiento;
         }
+        $directorio= $almacenamiento['directorio'];
         try {
             $sufijo= bin2hex(random_bytes(6));
         } catch (Exception $e) {

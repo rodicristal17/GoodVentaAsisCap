@@ -5118,6 +5118,7 @@ var adjuntoDocumentoGuiadoEstado= {
     mime: "",
     lecturaArchivo: 0,
     guardando: false,
+    requiereReintento: false,
     focoAnterior: null,
     hilo: "",
     tipoMovimiento: "Egreso"
@@ -5182,9 +5183,31 @@ function obtenerFechaHoyAdjuntoDocumentoGuiado() {
 
 function mostrarErrorAdjuntoDocumentoGuiado(mensaje) {
     var error= document.getElementById("errorAdjuntoDocumentoGuiado");
-    if (!error) { return; }
-    error.textContent= mensaje || "";
-    error.hidden= !mensaje;
+    var estadoPie= document.getElementById("estadoAdjuntoDocumentoGuiado");
+    [error, estadoPie].forEach(function(elemento) {
+        if (!elemento) { return; }
+        elemento.textContent= mensaje || "";
+        elemento.hidden= !mensaje;
+    });
+    if (mensaje && error && typeof error.scrollIntoView == "function") {
+        setTimeout(function() {
+            error.scrollIntoView({block: "nearest"});
+        }, 0);
+    }
+}
+
+function actualizarEtiquetaBotonAdjuntoDocumentoGuiado() {
+    var boton= document.getElementById("btnConfirmarAdjuntoDocumentoGuiado");
+    if (!boton) { return; }
+    if (adjuntoDocumentoGuiadoEstado.guardando) {
+        boton.innerHTML= '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Guardando...';
+    } else if (adjuntoDocumentoGuiadoEstado.origen == "gasto") {
+        boton.innerHTML= '<i class="fa-solid fa-check" aria-hidden="true"></i> Usar en el movimiento';
+    } else if (adjuntoDocumentoGuiadoEstado.requiereReintento) {
+        boton.innerHTML= '<i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reintentar adjunto';
+    } else {
+        boton.innerHTML= '<i class="fa-solid fa-paperclip" aria-hidden="true"></i> Adjuntar al Hilo';
+    }
 }
 
 function obtenerProveedorAdjuntoDocumentoGuiado() {
@@ -5312,6 +5335,7 @@ function limpiarFormularioAdjuntoDocumentoGuiado() {
     adjuntoDocumentoGuiadoEstado.extension= "";
     adjuntoDocumentoGuiadoEstado.nombreArchivo= "";
     adjuntoDocumentoGuiadoEstado.mime= "";
+    adjuntoDocumentoGuiadoEstado.requiereReintento= false;
     actualizarVistaPreviaAdjuntoDocumentoGuiado("", "");
     document.querySelectorAll("#tiposAdjuntoDocumentoGuiado [data-tipo-adjunto]").forEach(function(boton) {
         boton.classList.remove("is-selected");
@@ -5363,9 +5387,7 @@ function abrirAdjuntoDocumentoGuiado(origen) {
     }
     document.getElementById("etiquetaAdjuntoDocumentoGuiado").textContent= origen == "gasto" ? "Respaldo del movimiento" : "Respaldo del Hilo";
     document.getElementById("tituloAdjuntoDocumentoGuiado").textContent= origen == "gasto" ? "Preparar comprobante" : "Adjuntar archivo o imagen";
-    document.getElementById("btnConfirmarAdjuntoDocumentoGuiado").innerHTML= origen == "gasto"
-        ? '<i class="fa-solid fa-check" aria-hidden="true"></i> Usar en el movimiento'
-        : '<i class="fa-solid fa-paperclip" aria-hidden="true"></i> Adjuntar al Hilo';
+    actualizarEtiquetaBotonAdjuntoDocumentoGuiado();
     dialogo.hidden= false;
     document.body.classList.add("adjunto-documento-dialog-open");
     configurarTiposAdjuntoDocumentoGuiado();
@@ -5456,6 +5478,7 @@ function leerArchivoAdjuntoDocumentoGuiado(input) {
     adjuntoDocumentoGuiadoEstado.extension= "";
     adjuntoDocumentoGuiadoEstado.nombreArchivo= "";
     adjuntoDocumentoGuiadoEstado.mime= "";
+    adjuntoDocumentoGuiadoEstado.requiereReintento= false;
     actualizarVistaPreviaAdjuntoDocumentoGuiado("", "");
     var nombreArchivo= document.getElementById("nombreArchivoAdjuntoDocumento");
     if (!adjuntoDocumentoGuiadoEstado.tipo) {
@@ -5552,6 +5575,7 @@ function actualizarResumenAdjuntoDocumentoGuiado() {
     var boton= document.getElementById("btnConfirmarAdjuntoDocumentoGuiado");
     var validacion= validarAdjuntoDocumentoGuiado(true);
     boton.disabled= !validacion.ok || adjuntoDocumentoGuiadoEstado.guardando;
+    actualizarEtiquetaBotonAdjuntoDocumentoGuiado();
     if (!adjuntoDocumentoGuiadoEstado.tipo) {
         resumen.hidden= true;
         return;
@@ -5671,7 +5695,9 @@ function enviarAdjuntoDocumentoGuiadoHilo(validacion) {
     datos.append("nombre_archivo", adjuntoDocumentoGuiadoEstado.nombreArchivo);
     datos.append("datos_documento", JSON.stringify(validacion.datos || {}));
     adjuntoDocumentoGuiadoEstado.guardando= true;
+    adjuntoDocumentoGuiadoEstado.requiereReintento= false;
     document.getElementById("btnConfirmarAdjuntoDocumentoGuiado").disabled= true;
+    actualizarEtiquetaBotonAdjuntoDocumentoGuiado();
     document.getElementById("dialogoAdjuntoDocumentoGuiado").setAttribute("aria-busy", "true");
     mostrarErrorAdjuntoDocumentoGuiado("");
     verCerrarEfectoCargando("1");
@@ -5684,6 +5710,7 @@ function enviarAdjuntoDocumentoGuiadoHilo(validacion) {
         processData: false,
         error: function(jqXHR, textstatus) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
+            adjuntoDocumentoGuiadoEstado.requiereReintento= true;
             mostrarErrorAdjuntoDocumentoGuiado("No se pudo enviar el adjunto. Los datos se conservaron para reintentar.");
         },
         success: function(responseText) {
@@ -5705,6 +5732,7 @@ function enviarAdjuntoDocumentoGuiadoHilo(validacion) {
                     centroFacturasActualizarBadge();
                 }
             } catch (error) {
+                adjuntoDocumentoGuiadoEstado.requiereReintento= true;
                 mostrarErrorAdjuntoDocumentoGuiado(error.message || "No se pudo guardar el adjunto.");
             }
         },
