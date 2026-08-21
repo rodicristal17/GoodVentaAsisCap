@@ -127,6 +127,50 @@ services:
         max-size: 10m
         max-file: "3"
 
+  central-telefonica-live:
+    image: production-web:latest
+    restart: unless-stopped
+    init: true
+    user: "www-data:www-data"
+    command:
+      - php
+      - /var/www/html/scripts/procesar_central_telefonica_tiempo_real.php
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      TELAR_DB_HOST: database
+      TELAR_DB_NAME: ${TELAR_DB_NAME}
+      TELAR_DB_USER: ${TELAR_DB_USER}
+      TELAR_DB_PASSWORD: ${TELAR_DB_PASSWORD}
+      TELAR_ISSABEL_DB_HOST: ${TELAR_ISSABEL_DB_HOST}
+      TELAR_ISSABEL_AMI_HOST: ${TELAR_ISSABEL_AMI_HOST:-10.220.100.230}
+      TELAR_ISSABEL_AMI_PORT: ${TELAR_ISSABEL_AMI_PORT:-5038}
+      TELAR_ISSABEL_AMI_EVENT_USER: ${TELAR_ISSABEL_AMI_EVENT_USER:-telar_eventos}
+      TELAR_ISSABEL_AMI_EVENT_SECRET_FILE: /run/secrets/issabel_ami_event_secret
+      TELAR_ISSABEL_AMI_ORIGINATE_USER: ${TELAR_ISSABEL_AMI_ORIGINATE_USER:-telar_origenacion}
+      TELAR_ISSABEL_AMI_ORIGINATE_SECRET_FILE: /run/secrets/issabel_ami_originate_secret
+      TELAR_ISSABEL_AMI_CHANNEL_TEMPLATE: ${TELAR_ISSABEL_AMI_CHANNEL_TEMPLATE:-Local/{extension}@from-internal/n}
+      TELAR_ISSABEL_AMI_OUTBOUND_CONTEXT: ${TELAR_ISSABEL_AMI_OUTBOUND_CONTEXT:-from-internal}
+      TELAR_ISSABEL_AMI_NUMBER_MODE: ${TELAR_ISSABEL_AMI_NUMBER_MODE:-local}
+      TELAR_ISSABEL_AMI_ORIGINATE_TIMEOUT_MS: ${TELAR_ISSABEL_AMI_ORIGINATE_TIMEOUT_MS:-30000}
+      TZ: America/Asuncion
+    volumes:
+      - ../../:/var/www/html:ro
+      - ./secrets:/run/secrets:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=0700,uid=33,gid=33
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    cpus: 0.25
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
   central-telefonica-transcription:
     image: production-web:latest
     restart: unless-stopped

@@ -542,6 +542,84 @@ body.central-telefonica-open { overflow: hidden; }
 .central-telefonica-toast--error { background: #a33d47; }
 .central-telefonica-sr-only { position: absolute!important; width: 1px!important; height: 1px!important; padding: 0!important; margin: -1px!important; overflow: hidden!important; clip: rect(0,0,0,0)!important; white-space: nowrap!important; border: 0!important; }
 
+[data-central-history][hidden] { display: none!important; }
+
+.central-telefonica-operation { margin-bottom: 10px; padding: 14px; border-top: 3px solid #1595a3; }
+.central-telefonica-operation__heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.central-telefonica-operation__heading h2 { display: inline; margin: 0; color: #17334b; font-size: 16px; }
+.central-telefonica-operation__heading > div:first-child > span { display: block; margin-top: 3px; color: #687e90; font-size: 10.5px; }
+.central-telefonica-operation__identity { display: flex; align-items: center; gap: 8px; color: #4d677a; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.central-telefonica-operation-badge { padding: 6px 9px; border-radius: 999px; color: #52697b; background: #edf2f6; }
+.central-telefonica-operation-badge--ok { color: #167047; background: #e2f5e9; }
+.central-telefonica-operation-badge--warning { color: #9a6416; background: #fff2d7; }
+.central-telefonica-operation__search { margin-top: 11px; display: grid; grid-template-columns: auto minmax(180px, 1fr) auto; align-items: center; gap: 9px; padding: 5px 6px 5px 12px; border: 1px solid #cbdbe5; border-radius: 11px; background: #fbfdff; }
+.central-telefonica-operation__search > i { color: #688093; }
+.central-telefonica-operation__search input { min-width: 0; height: 34px; border: 0; outline: 0; color: #18364d; background: transparent; font: 11px "Segoe UI", Arial, sans-serif; }
+.central-telefonica-operation__search button { height: 34px; padding: 0 15px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 8px; color: #fff; background: linear-gradient(135deg,#128a9d,#246ca6); font: 750 10.5px "Segoe UI",Arial,sans-serif; cursor: pointer; }
+.central-telefonica-operation__guide { margin-top: 9px; display: flex; align-items: center; gap: 20px; color: #6f8190; font-size: 9.5px; }
+.central-telefonica-operation__guide strong { color: #167c91; }
+.central-telefonica-operation__guide span { position: relative; }
+.central-telefonica-operation__guide span::before { content: ""; position: absolute; left: -11px; top: 50%; width: 4px; height: 4px; border-radius: 50%; background: #b2c2cc; transform: translateY(-50%); }
+.central-telefonica-operation__message { margin-top: 9px; padding: 8px 10px; border-radius: 8px; color: #526b7e; background: #eff5f8; font-size: 10px; }
+.central-telefonica-operation__message--ok { color: #176e48; background: #e5f5eb; }
+.central-telefonica-operation__message--warning { color: #946015; background: #fff3da; }
+.central-telefonica-operation__message--error { color: #9e3c49; background: #fdebed; }
+.central-telefonica-patient-results { margin-top: 9px; display: grid; gap: 7px; }
+.central-telefonica-patient-card { padding: 9px 10px; display: grid; grid-template-columns: 34px minmax(180px,1.2fr) minmax(135px,.7fr) minmax(250px,1.5fr); align-items: center; gap: 10px; border: 1px solid #dce7ee; border-radius: 11px; background: #fff; }
+.central-telefonica-patient-card__avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: #176f8d; background: #e1f1f5; }
+.central-telefonica-patient-card__identity strong,
+.central-telefonica-patient-card__identity span,
+.central-telefonica-patient-card__finance span,
+.central-telefonica-patient-card__finance strong,
+.central-telefonica-patient-card__finance small { display: block; }
+.central-telefonica-patient-card__identity strong { color: #193a52; font-size: 11px; }
+.central-telefonica-patient-card__identity span { margin-top: 3px; color: #718492; font-size: 9px; }
+.central-telefonica-patient-card__finance { padding-left: 10px; border-left: 1px solid #e2e9ee; }
+.central-telefonica-patient-card__finance span { color: #748794; font-size: 8px; text-transform: uppercase; }
+.central-telefonica-patient-card__finance strong { margin-top: 2px; color: #214b63; font-size: 11px; }
+.central-telefonica-patient-card__finance small { margin-top: 2px; color: #a05d1c; font-size: 8.5px; }
+.central-telefonica-patient-card__phones { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+.central-telefonica-patient-card__phones button { min-height: 36px; padding: 5px 8px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid #bcd7e1; border-radius: 9px; color: #17677f; background: #f2fafb; font: 700 9px "Segoe UI",Arial,sans-serif; cursor: pointer; }
+.central-telefonica-patient-card__phones button i { color: #168d93; }
+.central-telefonica-patient-card__phones button span { text-align: left; }
+.central-telefonica-patient-card__phones button small { display: block; color: #738894; font-size: 7.5px; font-weight: 600; }
+.central-telefonica-patient-card__phones button strong { color: #146b80; font-size: 8.5px; }
+.central-telefonica-patient-card__phones button:disabled { cursor: not-allowed; opacity: .48; }
+.central-telefonica-no-phone { color: #8a99a5; font-size: 9px; }
+.central-telefonica-recent-requests { margin-top: 8px; display: flex; gap: 7px; overflow-x: auto; }
+.central-telefonica-request { min-width: 210px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; border-radius: 9px; color: #456176; background: #f0f5f8; }
+.central-telefonica-request > i { color: #197f96; }
+.central-telefonica-request strong,
+.central-telefonica-request span { display: block; }
+.central-telefonica-request strong { font-size: 9.5px; }
+.central-telefonica-request span { margin-top: 2px; font-size: 8.5px; }
+.central-telefonica-request--conectada,
+.central-telefonica-request--finalizada { color: #176e48; background: #e5f5eb; }
+.central-telefonica-request--error,
+.central-telefonica-request--ocupada,
+.central-telefonica-request--no_contestada { color: #9e3c49; background: #fdebed; }
+
+.central-telefonica-inbound { position: fixed; right: 18px; bottom: 18px; z-index: 1000000000000005; width: min(390px,calc(100vw - 24px)); overflow: hidden; border: 1px solid #b9d7e3; border-radius: 15px; color: #17364e; background: #fff; box-shadow: 0 18px 55px rgba(8,35,54,.3); font-family: "Segoe UI",Arial,sans-serif; }
+.central-telefonica-inbound[hidden] { display: none; }
+.central-telefonica-inbound__header { padding: 11px 13px; display: flex; align-items: center; justify-content: space-between; color: #fff; background: linear-gradient(120deg,#117d90,#2666a4); font-size: 12px; font-weight: 800; }
+.central-telefonica-inbound__header span { display: inline-flex; align-items: center; gap: 7px; }
+.central-telefonica-inbound__header button { width: 28px; height: 28px; border: 0; border-radius: 8px; color: #fff; background: rgba(255,255,255,.13); cursor: pointer; }
+.central-telefonica-inbound__number { padding: 10px 13px 6px; color: #4b677b; font-size: 10px; font-weight: 700; }
+.central-telefonica-inbound__identity { padding: 3px 13px 10px; }
+.central-telefonica-inbound__identity strong,
+.central-telefonica-inbound__identity span { display: block; }
+.central-telefonica-inbound__identity strong { color: #17364e; font-size: 14px; }
+.central-telefonica-inbound__identity span { margin-top: 3px; color: #6d8191; font-size: 9.5px; line-height: 1.4; }
+.central-telefonica-inbound__finance { margin: 0 13px 9px; padding: 9px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; border-radius: 10px; background: #f2f7fa; }
+.central-telefonica-inbound__finance span { min-width: 0; }
+.central-telefonica-inbound__finance small,
+.central-telefonica-inbound__finance strong { display: block; overflow-wrap: anywhere; }
+.central-telefonica-inbound__finance small { color: #708492; font-size: 7.5px; text-transform: uppercase; }
+.central-telefonica-inbound__finance strong { margin-top: 3px; color: #214b63; font-size: 9.5px; }
+.central-telefonica-inbound__note { margin: 0 13px 9px; padding: 7px 8px; border-radius: 8px; color: #5f7180; background: #f5f7f9; font-size: 8.5px; }
+.central-telefonica-inbound__note i { margin-right: 4px; color: #2b7e97; }
+.central-telefonica-inbound__open { width: calc(100% - 26px); height: 36px; margin: 0 13px 13px; border: 0; border-radius: 9px; color: #fff; background: #176e9a; font: 750 10px "Segoe UI",Arial,sans-serif; cursor: pointer; }
+
 @media (max-width: 1180px) {
   .central-telefonica-summary { grid-template-columns: repeat(4, minmax(125px, 1fr)); }
   .central-telefonica-filters-panel { padding: 0; }
@@ -588,6 +666,13 @@ body.central-telefonica-open { overflow: hidden; }
   .central-telefonica-directory-toolbar { grid-template-columns: minmax(0, 1fr) 135px; }
   .central-telefonica-directory-summary { grid-column: 1 / -1; border-left: 0; border-top: 2px solid #9fd9dc; }
   .central-telefonica-directory-card__fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .central-telefonica-operation__heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .central-telefonica-operation__identity { width: 100%; justify-content: space-between; }
+  .central-telefonica-patient-card { grid-template-columns: 34px minmax(0,1fr); }
+  .central-telefonica-patient-card__finance,
+  .central-telefonica-patient-card__phones { grid-column: 2; }
+  .central-telefonica-patient-card__finance { padding-left: 0; border-left: 0; }
+  .central-telefonica-patient-card__phones { justify-content: flex-start; }
 }
 
 @media (max-width: 560px) {
@@ -601,4 +686,14 @@ body.central-telefonica-open { overflow: hidden; }
   .central-telefonica-directory-status { justify-self: start; }
   .central-telefonica-directory-card__actions { align-items: stretch; flex-direction: column; }
   .central-telefonica-directory-card__actions button { width: 100%; justify-content: center; }
+  .central-telefonica-operation__search { grid-template-columns: auto minmax(0,1fr); }
+  .central-telefonica-operation__search button { grid-column: 1 / -1; }
+  .central-telefonica-operation__guide { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .central-telefonica-operation__guide span::before { display: none; }
+  .central-telefonica-patient-card { grid-template-columns: 1fr; }
+  .central-telefonica-patient-card__avatar { display: none; }
+  .central-telefonica-patient-card__finance,
+  .central-telefonica-patient-card__phones { grid-column: 1; }
+  .central-telefonica-patient-card__phones button { width: 100%; justify-content: space-between; }
+  .central-telefonica-inbound { right: 12px; bottom: 12px; }
 }

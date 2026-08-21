@@ -38610,14 +38610,6 @@ function removeToMenu(){
 	$("table[id=divMenuPlanificacionEspecialistas]").remove()
 	}
 
-	if(typeof permisoAccesoUser != "function"
-		|| permisoAccesoUser("VERCENTRALTELEFONICA", "accion") == false)
-	{
-	$("table[id=divMenuCentralTelefonica]").remove()
-	}
-	
-	
-	
 		/*MENU LISTADOS*/
 	var controllistado=0;	
 	

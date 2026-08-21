@@ -20,6 +20,8 @@ La configuración secreta vive únicamente en `/opt/telar/app/deploy/production/
 
 El directorio de Central Telefónica usa una credencial distinta de la lectura CDR. Debe comenzar con `TELAR_ISSABEL_DIRECTORY_ENABLED=false` y activarse únicamente después de validar en `--dry-run` un usuario MySQL con `SELECT` limitado a `asterisk.users`, `asterisk.devices` y `asterisk.queues_config`. Su ausencia no detiene la sincronización principal de llamadas.
 
+Las llamadas iniciadas desde Telar y el reconocimiento entrante usan dos cuentas AMI separadas. Las claves se guardan solamente en `secrets/issabel_ami_event_secret` y `secrets/issabel_ami_originate_secret`; no se incorporan a `.env`, Git ni al vault. La cuenta de eventos no puede escribir y la cuenta de origenacion no recibe lectura de eventos. Si el servicio `central-telefonica-live` se detiene, MicroSIP y la sincronizacion CDR siguen funcionando de manera independiente. El procedimiento detallado esta en `README-central-telefonica-nivel1.md`.
+
 ## Acceso
 
 - URL VPN/LAN: `http://10.220.100.201:8080/`

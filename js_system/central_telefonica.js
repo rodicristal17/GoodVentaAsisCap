@@ -96,7 +96,7 @@
         });
     }
 
-    function hasPermission() {
+    function hasHistoryPermission() {
         if (typeof window.permisoAccesoUser === "function") {
             return window.permisoAccesoUser("VERCENTRALTELEFONICA", "accion") !== false;
         }
@@ -132,18 +132,18 @@
             + "  <header class='central-telefonica-header'>"
             + "    <div class='central-telefonica-heading'>"
             + "      <span class='central-telefonica-heading__icon'><img src='/GoodVentaAsisCap/iconos/central-telefonica.svg' alt='' /></span>"
-            + "      <div><p class='central-telefonica-eyebrow'>Telar · Control operativo</p><h1>Central Telefónica</h1><span>CDR de Issabel/Asterisk en consulta · transcripción bajo demanda</span></div>"
+            + "      <div><p class='central-telefonica-eyebrow'>Telar · Control operativo</p><h1>Central Telefónica</h1><span>Llamadas desde Telar · identificación entrante · historial según acceso</span></div>"
             + "    </div>"
             + "    <div class='central-telefonica-header__actions'>"
-            + "      <div class='central-telefonica-sync' id='centralTelefonicaSync' role='status'><i class='fa-solid fa-circle-notch' aria-hidden='true'></i><span>Verificando sincronización…</span></div>"
-            + "      <button type='button' class='central-telefonica-icon-button' data-central-action='refresh' title='Actualizar listado'><i class='fa-solid fa-rotate-right' aria-hidden='true'></i><span>Actualizar</span></button>"
+            + "      <div class='central-telefonica-sync' id='centralTelefonicaSync' data-central-history role='status'><i class='fa-solid fa-circle-notch' aria-hidden='true'></i><span>Verificando sincronización…</span></div>"
+            + "      <button type='button' class='central-telefonica-icon-button' id='centralTelefonicaRefresh' data-central-history data-central-action='refresh' title='Actualizar listado'><i class='fa-solid fa-rotate-right' aria-hidden='true'></i><span>Actualizar</span></button>"
             + "      <button type='button' class='central-telefonica-icon-button central-telefonica-icon-button--compact' id='centralTelefonicaDirectoryButton' data-central-action='open-directory' title='Administrar extensiones' hidden><i class='fa-solid fa-gear' aria-hidden='true'></i><span class='central-telefonica-sr-only'>Administrar extensiones</span></button>"
             + "      <button type='button' class='central-telefonica-icon-button central-telefonica-icon-button--compact' data-central-action='minimize' title='Minimizar'><i class='fa-solid fa-window-minimize' aria-hidden='true'></i><span class='central-telefonica-sr-only'>Minimizar</span></button>"
             + "      <button type='button' class='central-telefonica-icon-button central-telefonica-icon-button--close' data-central-action='close' title='Cerrar'><i class='fa-solid fa-xmark' aria-hidden='true'></i><span class='central-telefonica-sr-only'>Cerrar</span></button>"
             + "    </div>"
             + "  </header>"
             + "  <main class='central-telefonica-main'>"
-            + "    <section class='central-telefonica-summary-section central-telefonica-summary-section--collapsed' aria-label='Resumen de llamadas'>"
+            + "    <section class='central-telefonica-summary-section central-telefonica-summary-section--collapsed' data-central-history aria-label='Resumen de llamadas'>"
             + "      <button type='button' class='central-telefonica-summary-toggle' data-central-action='toggle-summary' aria-expanded='false' aria-controls='centralTelefonicaSummaryCards'>"
             + "        <span class='central-telefonica-summary-toggle__title'><i class='fa-solid fa-chart-simple' aria-hidden='true'></i><span>Indicadores</span></span>"
             + "        <span class='central-telefonica-summary-compact' aria-live='polite'>"
@@ -163,7 +163,7 @@
             + summaryCard("internas", "fa-building", "Internas")
             + "      </div>"
             + "    </section>"
-            + "    <section class='central-telefonica-panel central-telefonica-filters-panel'>"
+            + "    <section class='central-telefonica-panel central-telefonica-filters-panel' data-central-history>"
             + "      <h2 class='central-telefonica-sr-only'>Filtros de llamadas</h2>"
             + "      <button type='button' class='central-telefonica-filters-toggle' data-central-action='toggle-filters' aria-expanded='false' aria-controls='centralTelefonicaFilters'>"
             + "        <span><i class='fa-solid fa-sliders' aria-hidden='true'></i> Filtros</span>"
@@ -182,7 +182,7 @@
             + "        <button type='button' class='central-telefonica-filter-clear' data-central-action='clear'>Limpiar</button>"
             + "      </form>"
             + "    </section>"
-            + "    <section class='central-telefonica-panel central-telefonica-list-panel'>"
+            + "    <section class='central-telefonica-panel central-telefonica-list-panel' data-central-history>"
             + "      <div class='central-telefonica-panel__title'><div><p class='central-telefonica-eyebrow'>Movimientos</p><h2>Listado de llamadas</h2><span id='centralTelefonicaResultCount'>0 registros</span></div><span class='central-telefonica-readonly-badge'><i class='fa-solid fa-lock' aria-hidden='true'></i> CDR solo lectura</span></div>"
             + "      <div class='central-telefonica-table-wrap'>"
             + "        <table class='central-telefonica-table'>"
@@ -532,6 +532,18 @@
             bindEvents();
         }
         return true;
+    }
+
+    function applyHistoryAccess() {
+        var allowed = hasHistoryPermission();
+        var elements;
+        var index;
+        if (!state.root) { return allowed; }
+        elements = state.root.querySelectorAll('[data-central-history]');
+        for (index = 0; index < elements.length; index++) {
+            elements[index].hidden = !allowed;
+        }
+        return allowed;
     }
 
     function bindEvents() {
@@ -1288,21 +1300,21 @@
     window.abrirCentralTelefonica = function () {
         var container = document.getElementById("divCentralTelefonica");
         var marker;
-        if (!hasPermission()) {
-            if (typeof window.ver_vetana_informativa === "function") {
-                window.ver_vetana_informativa("Acceso restringido", "No tiene permiso para ver Central Telefónica.", "advertencia");
-            }
-            return;
-        }
         if (!container || !ensureRoot()) { return; }
+        var historyAllowed = applyHistoryAccess();
+        if (typeof window.centralTelefonicaNivel1Montar === "function") {
+            window.centralTelefonicaNivel1Montar(state.root, historyAllowed);
+        }
         container.style.display = "";
         container.setAttribute("aria-hidden", "false");
         state.open = true;
         marker = document.getElementById("divMinimizadoCentralTelefonica");
         if (marker) { marker.style.display = "none"; }
         if (document.body) { document.body.classList.add("central-telefonica-open"); }
-        loadCalls(false);
-        scheduleRefresh();
+        if (historyAllowed) {
+            loadCalls(false);
+            scheduleRefresh();
+        }
     };
 
     window.cerrarCentralTelefonica = function () {

@@ -138,13 +138,13 @@ centralTelefonicaDbPrueba(
 
 $resultado = $mysqli->query(
     "SELECT COUNT(*) total FROM dashboard_access_catalog "
-    ."WHERE access_key='central_telefonica' AND permission_key='VERCENTRALTELEFONICA' "
+    ."WHERE access_key='central_telefonica' AND IFNULL(permission_key,'')='' "
     ."AND is_active=1 AND is_default_quick_access=1"
 );
 $fila = $resultado ? $resultado->fetch_assoc() : array('total' => 0);
 centralTelefonicaDbPrueba(
     intval($fila['total']) === 1,
-    'El acceso rapido activo depende del permiso principal.'
+    'La mesa operativa no exige permiso adicional en el acceso rapido.'
 );
 
 $resultado = $mysqli->query(
