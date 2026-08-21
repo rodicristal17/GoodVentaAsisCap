@@ -180,8 +180,9 @@ function miCarteraConfiguracionBase($mysqli)
 {
     $base = array(
         'cod_jefe' => 0,
+        'jefe' => null,
         'dias_prevencion' => 7,
-        'dias_escalamiento' => 30,
+        'dias_escalamiento' => 90,
         'intentos_escalamiento' => 2,
         'activo' => true,
         'gestores' => array(),
@@ -225,11 +226,13 @@ function miCarteraConfiguracionBase($mysqli)
             $base['gestores'][] = $item;
         } elseif ($equipo['rol'] === 'cobrador_central') {
             $base['cobradores'][] = $item;
+        } elseif ($equipo['rol'] === 'jefe') {
+            $base['jefe'] = $item;
         }
     }
     $base['completa'] = $base['cod_jefe'] > 0
-        && count($base['gestores']) === 5
-        && count($base['cobradores']) === 2;
+        && count($base['gestores']) >= 1
+        && count($base['cobradores']) >= 1;
     return $base;
 }
 
@@ -334,17 +337,25 @@ function miCarteraRegistrarEvento(
     return $ok;
 }
 
-function miCarteraGuardarConfiguracion($mysqli, $contexto, $entrada)
+function miCarteraValidarConfiguracionEntrada($mysqli, $entrada)
 {
-    miCarteraExigirConfigurador($contexto);
     $jefe = intval(isset($entrada['cod_jefe']) ? $entrada['cod_jefe'] : 0);
+    $diasEscalamiento = intval(
+        isset($entrada['dias_escalamiento']) ? $entrada['dias_escalamiento'] : 90
+    );
     $gestores = json_decode(isset($entrada['gestores']) ? $entrada['gestores'] : '[]', true);
     $cobradores = json_decode(isset($entrada['cobradores']) ? $entrada['cobradores'] : '[]', true);
-    if ($jefe <= 0 || !is_array($gestores) || count($gestores) !== 5
-        || !is_array($cobradores) || count($cobradores) !== 2) {
+    if ($jefe <= 0 || !is_array($gestores) || count($gestores) < 1
+        || !is_array($cobradores) || count($cobradores) < 1) {
         miCarteraLanzar(
             'configuracion_incompleta',
-            'Seleccione un jefe, cinco gestores de sucursal y dos cobradores centrales.'
+            'Seleccione un jefe, al menos un gestor de clinica y un cobrador central.'
+        );
+    }
+    if ($diasEscalamiento < 30 || $diasEscalamiento > 365) {
+        miCarteraLanzar(
+            'configuracion_invalida',
+            'Los dias para pasar a Cobranza central deben estar entre 30 y 365.'
         );
     }
     $mapaGestores = array();
@@ -365,7 +376,7 @@ function miCarteraGuardarConfiguracion($mysqli, $contexto, $entrada)
     foreach ($cobradores as $cobrador) {
         $usuario = intval($cobrador);
         if ($usuario <= 0 || isset($mapaCobradores[$usuario]) || isset($usuariosEquipo[$usuario])) {
-            miCarteraLanzar('configuracion_invalida', 'Los dos cobradores deben ser usuarios distintos del resto del equipo.');
+            miCarteraLanzar('configuracion_invalida', 'Cada cobrador debe ser distinto del resto del equipo.');
         }
         $mapaCobradores[$usuario] = $usuario;
         $usuariosEquipo[$usuario] = $usuario;
@@ -384,14 +395,227 @@ function miCarteraGuardarConfiguracion($mysqli, $contexto, $entrada)
         array_keys($mapaGestores),
         "AND UPPER(TRIM(estado))='ACTIVO'"
     );
-    if (count($usuariosValidos) !== 8 || count($localesValidos) !== 5) {
+    if (count($usuariosValidos) !== count($usuariosEquipo)
+        || count($localesValidos) !== count($mapaGestores)) {
         miCarteraLanzar('configuracion_invalida', 'Uno de los usuarios o locales seleccionados ya no esta activo.');
     }
 
-    $anterior = miCarteraConfiguracionBase($mysqli);
+    return array(
+        'cod_jefe' => $jefe,
+        'dias_escalamiento' => $diasEscalamiento,
+        'gestores' => $mapaGestores,
+        'cobradores' => array_values($mapaCobradores),
+        'usuarios_equipo' => $usuariosEquipo
+    );
+}
+
+function miCarteraIdsOrdenados($ids)
+{
+    $resultado = array_values(array_unique(array_map('intval', $ids)));
+    sort($resultado, SORT_NUMERIC);
+    return $resultado;
+}
+
+function miCarteraPlanReconfiguracion($mysqli, $propuesta, $bloquear)
+{
+    $bloquear = (bool)$bloquear;
+    $actual = miCarteraConfiguracionBase($mysqli);
+    $actualCobradores = array();
+    foreach ($actual['cobradores'] as $cobrador) {
+        $actualCobradores[] = intval($cobrador['cod_usuario']);
+    }
+    $nuevosCobradores = miCarteraIdsOrdenados($propuesta['cobradores']);
+    $cobradoresCambiaron = miCarteraIdsOrdenados($actualCobradores) !== $nuevosCobradores;
+    $resultado = $mysqli->query(
+        "SELECT id_asignacion,cod_clienteFK,cod_usuario_responsableFK,cod_local_origenFK,"
+        ."tipo_responsable,prioridad,motivo_asignacion FROM cartera_asignacion "
+        ."WHERE estado='activa' ORDER BY id_asignacion".($bloquear ? " FOR UPDATE" : "")
+    );
+    if (!$resultado) {
+        miCarteraLanzar('configuracion_no_disponible', 'No se pudieron revisar las asignaciones actuales.');
+    }
+    $asignaciones = array();
+    $clientes = array();
+    while ($fila = $resultado->fetch_assoc()) {
+        $asignaciones[] = $fila;
+        $clientes[] = intval($fila['cod_clienteFK']);
+    }
+    $finanzas = miCarteraResumenesFinancieros($mysqli, $clientes);
+    $especialesJefe = array(
+        'promesa_incumplida',
+        'solicita_revision',
+        'escalamiento_manual',
+        'toma_jefe'
+    );
+    $preparados = array();
+    $centrales = array();
+    foreach ($asignaciones as $asignacion) {
+        $cliente = intval($asignacion['cod_clienteFK']);
+        $dias = isset($finanzas[$cliente]) ? intval($finanzas[$cliente]['dias_mora']) : 0;
+        $motivoActual = (string)$asignacion['motivo_asignacion'];
+        $tipoActual = (string)$asignacion['tipo_responsable'];
+        $destino = array(
+            'asignacion' => $asignacion,
+            'cod_usuario' => 0,
+            'tipo' => 'sin_asignar',
+            'prioridad' => $dias > 0 ? 'media' : 'baja',
+            'motivo' => 'local_sin_gestor',
+            'dias_mora' => $dias
+        );
+        if ($tipoActual === 'jefe_cobranza' || in_array($motivoActual, $especialesJefe, true)) {
+            $destino['cod_usuario'] = intval($propuesta['cod_jefe']);
+            $destino['tipo'] = 'jefe_cobranza';
+            $destino['prioridad'] = 'alta';
+            $destino['motivo'] = in_array($motivoActual, $especialesJefe, true)
+                ? $motivoActual : 'toma_jefe';
+        } elseif ($motivoActual === 'dos_intentos_sin_respuesta'
+            || $dias >= intval($propuesta['dias_escalamiento'])) {
+            $destino['tipo'] = 'cobranza_central';
+            $destino['prioridad'] = 'alta';
+            $destino['motivo'] = $motivoActual === 'dos_intentos_sin_respuesta'
+                ? $motivoActual : 'mora_'.intval($propuesta['dias_escalamiento']).'_dias';
+            $centrales[] = count($preparados);
+        } elseif (isset($propuesta['gestores'][intval($asignacion['cod_local_origenFK'])])) {
+            $destino['cod_usuario'] = intval(
+                $propuesta['gestores'][intval($asignacion['cod_local_origenFK'])]
+            );
+            $destino['tipo'] = 'gestor_local';
+            $destino['motivo'] = 'local_origen';
+        }
+        $preparados[] = $destino;
+    }
+
+    $cargas = array();
+    foreach ($nuevosCobradores as $cobrador) {
+        $cargas[$cobrador] = 0;
+    }
+    if (!$cobradoresCambiaron) {
+        foreach ($centrales as $indice) {
+            $actualUsuario = intval($preparados[$indice]['asignacion']['cod_usuario_responsableFK']);
+            if (isset($cargas[$actualUsuario])) {
+                $preparados[$indice]['cod_usuario'] = $actualUsuario;
+                $cargas[$actualUsuario]++;
+            }
+        }
+    }
+    foreach ($centrales as $indice) {
+        if (intval($preparados[$indice]['cod_usuario']) > 0) {
+            continue;
+        }
+        $preparados[$indice]['cod_usuario'] = miCarteraCobradorMenorCarga($cargas);
+        if (intval($preparados[$indice]['cod_usuario']) <= 0) {
+            $preparados[$indice]['tipo'] = 'sin_asignar';
+            $preparados[$indice]['motivo'] = 'central_sin_responsable';
+        }
+    }
+
+    $impacto = array(
+        'total_activo' => count($preparados),
+        'reasignaciones' => 0,
+        'sin_cambios' => 0,
+        'gestores_locales' => 0,
+        'cobranza_central' => 0,
+        'jefe_cobranza' => 0,
+        'sin_asignar' => 0,
+        'cambios' => array()
+    );
+    foreach ($preparados as $destino) {
+        if ($destino['tipo'] === 'gestor_local') {
+            $impacto['gestores_locales']++;
+        } elseif ($destino['tipo'] === 'cobranza_central') {
+            $impacto['cobranza_central']++;
+        } elseif ($destino['tipo'] === 'jefe_cobranza') {
+            $impacto['jefe_cobranza']++;
+        } else {
+            $impacto['sin_asignar']++;
+        }
+        $asignacion = $destino['asignacion'];
+        $cambio = intval($asignacion['cod_usuario_responsableFK']) !== intval($destino['cod_usuario'])
+            || (string)$asignacion['tipo_responsable'] !== (string)$destino['tipo'];
+        if ($cambio) {
+            $impacto['reasignaciones']++;
+            $impacto['cambios'][] = $destino;
+        } else {
+            $impacto['sin_cambios']++;
+        }
+    }
+    return $impacto;
+}
+
+function miCarteraFirmaReconfiguracion($propuesta, $impacto)
+{
+    $cambios = array();
+    foreach ($impacto['cambios'] as $cambio) {
+        $cambios[] = array(
+            'id_asignacion' => intval($cambio['asignacion']['id_asignacion']),
+            'cod_usuario' => intval($cambio['cod_usuario']),
+            'tipo' => (string)$cambio['tipo'],
+            'motivo' => (string)$cambio['motivo']
+        );
+    }
+    return hash('sha256', json_encode(array(
+        'cod_jefe' => intval($propuesta['cod_jefe']),
+        'dias_escalamiento' => intval($propuesta['dias_escalamiento']),
+        'gestores' => $propuesta['gestores'],
+        'cobradores' => miCarteraIdsOrdenados($propuesta['cobradores']),
+        'total_activo' => intval($impacto['total_activo']),
+        'cambios' => $cambios
+    )));
+}
+
+function miCarteraPrevisualizarConfiguracion($mysqli, $contexto, $entrada)
+{
+    miCarteraExigirConfigurador($contexto);
+    $propuesta = miCarteraValidarConfiguracionEntrada($mysqli, $entrada);
+    $impacto = miCarteraPlanReconfiguracion($mysqli, $propuesta, false);
+    $firma = miCarteraFirmaReconfiguracion($propuesta, $impacto);
+    unset($impacto['cambios']);
+    return array(
+        'propuesta' => array(
+            'cod_jefe' => intval($propuesta['cod_jefe']),
+            'dias_escalamiento' => intval($propuesta['dias_escalamiento']),
+            'cantidad_gestores' => count($propuesta['gestores']),
+            'cantidad_cobradores' => count($propuesta['cobradores'])
+        ),
+        'impacto' => $impacto,
+        'firma_impacto' => $firma
+    );
+}
+
+function miCarteraGuardarConfiguracion($mysqli, $contexto, $entrada)
+{
+    miCarteraExigirConfigurador($contexto);
+    if ((string)(isset($entrada['confirmar']) ? $entrada['confirmar'] : '') !== '1') {
+        miCarteraLanzar(
+            'confirmacion_requerida',
+            'Revise la vista previa antes de confirmar los cambios del equipo.'
+        );
+    }
+    $propuesta = miCarteraValidarConfiguracionEntrada($mysqli, $entrada);
+    $jefe = intval($propuesta['cod_jefe']);
+    $diasEscalamiento = intval($propuesta['dias_escalamiento']);
+    $mapaGestores = $propuesta['gestores'];
+    $mapaCobradores = array();
+    foreach ($propuesta['cobradores'] as $cobrador) {
+        $mapaCobradores[intval($cobrador)] = intval($cobrador);
+    }
+    $usuariosEquipo = $propuesta['usuarios_equipo'];
     $actor = intval($contexto['cod_usuario']);
+    $firmaEsperada = preg_replace(
+        '/[^a-f0-9]/',
+        '',
+        strtolower((string)(isset($entrada['firma_impacto']) ? $entrada['firma_impacto'] : ''))
+    );
     $mysqli->begin_transaction();
     try {
+        $planReconfiguracion = miCarteraPlanReconfiguracion($mysqli, $propuesta, true);
+        $firmaActual = miCarteraFirmaReconfiguracion($propuesta, $planReconfiguracion);
+        if (strlen($firmaEsperada) !== 64 || !hash_equals($firmaActual, $firmaEsperada)) {
+            throw new Exception(
+                'La cartera cambio desde la vista previa. Vuelva a revisar el impacto antes de confirmar.'
+            );
+        }
+        $anterior = miCarteraConfiguracionBase($mysqli);
         if (!$mysqli->query("UPDATE cartera_equipo SET activo=0,fecha_actualizacion=NOW() WHERE activo=1")) {
             throw new Exception('No se pudo preparar la nueva configuracion.');
         }
@@ -427,13 +651,13 @@ function miCarteraGuardarConfiguracion($mysqli, $contexto, $entrada)
         $stmt->close();
         $stmt = $mysqli->prepare(
             "UPDATE cartera_configuracion SET cod_jefeFK=?,dias_prevencion=7,"
-            ."dias_escalamiento=30,intentos_escalamiento=2,activo=1,"
+            ."dias_escalamiento=?,intentos_escalamiento=2,activo=1,"
             ."cod_usuario_actualizaFK=?,fecha_actualizacion=NOW() WHERE id_configuracion=1"
         );
         if (!$stmt) {
             throw new Exception('No se pudo preparar la configuracion.');
         }
-        $stmt->bind_param('ii', $jefe, $actor);
+        $stmt->bind_param('iii', $jefe, $diasEscalamiento, $actor);
         if (!$stmt->execute()) {
             throw new Exception('No se pudo guardar la configuracion.');
         }
@@ -453,8 +677,58 @@ function miCarteraGuardarConfiguracion($mysqli, $contexto, $entrada)
         if (!$mysqli->query($sqlAccesos)) {
             throw new Exception('No se pudieron habilitar los accesos del equipo.');
         }
+        $stmtReasignar = $mysqli->prepare(
+            "UPDATE cartera_asignacion SET cod_usuario_responsableFK=?,tipo_responsable=?,"
+            ."prioridad=?,motivo_asignacion=?,fecha_actualizacion=NOW() "
+            ."WHERE id_asignacion=? AND estado='activa'"
+        );
+        if (!$stmtReasignar && count($planReconfiguracion['cambios']) > 0) {
+            throw new Exception('No se pudo preparar la redistribucion de carteras existentes.');
+        }
+        foreach ($planReconfiguracion['cambios'] as $cambio) {
+            $asignacion = $cambio['asignacion'];
+            $nuevoUsuario = intval($cambio['cod_usuario']) > 0 ? intval($cambio['cod_usuario']) : null;
+            $nuevoTipo = (string)$cambio['tipo'];
+            $nuevaPrioridad = (string)$cambio['prioridad'];
+            $nuevoMotivo = miCarteraTextoDb((string)$cambio['motivo'], 80);
+            $idAsignacion = intval($asignacion['id_asignacion']);
+            $stmtReasignar->bind_param(
+                'isssi',
+                $nuevoUsuario,
+                $nuevoTipo,
+                $nuevaPrioridad,
+                $nuevoMotivo,
+                $idAsignacion
+            );
+            if (!$stmtReasignar->execute()) {
+                throw new Exception('No se pudo redistribuir una cartera existente.');
+            }
+            if (!miCarteraRegistrarEvento(
+                $mysqli,
+                $contexto,
+                'reasignacion_configuracion',
+                'La asignacion cambio despues de confirmar la nueva configuracion.',
+                intval($asignacion['cod_clienteFK']),
+                $idAsignacion,
+                array(
+                    'responsable' => intval($asignacion['cod_usuario_responsableFK']),
+                    'tipo' => (string)$asignacion['tipo_responsable']
+                ),
+                array(
+                    'responsable' => intval($cambio['cod_usuario']),
+                    'tipo' => $nuevoTipo,
+                    'motivo' => (string)$cambio['motivo']
+                )
+            )) {
+                throw new Exception('No se pudo auditar una reasignacion de configuracion.');
+            }
+        }
+        if ($stmtReasignar) {
+            $stmtReasignar->close();
+        }
         $nueva = array(
             'cod_jefe' => $jefe,
+            'dias_escalamiento' => $diasEscalamiento,
             'gestores' => $mapaGestores,
             'cobradores' => array_values($mapaCobradores)
         );
@@ -475,7 +749,11 @@ function miCarteraGuardarConfiguracion($mysqli, $contexto, $entrada)
         $mysqli->rollback();
         miCarteraLanzar('configuracion_no_guardada', $e->getMessage());
     }
-    return miCarteraConfiguracionBase($mysqli);
+    $resultado = miCarteraConfiguracionBase($mysqli);
+    $impacto = $planReconfiguracion;
+    unset($impacto['cambios']);
+    $resultado['impacto'] = $impacto;
+    return $resultado;
 }
 
 function miCarteraPagoActivoSql($alias)
@@ -646,7 +924,7 @@ function miCarteraPlanAsignacion($mysqli)
     if (empty($configuracion['completa'])) {
         miCarteraLanzar(
             'equipo_incompleto',
-            'Configure el jefe, los cinco gestores y los dos cobradores antes de repartir la cartera.'
+            'Configure el jefe, al menos un gestor de clinica y un cobrador central antes de repartir la cartera.'
         );
     }
     $mapa = miCarteraMapaEquipo($configuracion);
@@ -670,13 +948,15 @@ function miCarteraPlanAsignacion($mysqli)
         if ($candidato['dias_mora'] >= intval($configuracion['dias_escalamiento'])) {
             $usuario = miCarteraCobradorMenorCarga($cargas);
             $tipo = $usuario > 0 ? 'cobranza_central' : 'sin_asignar';
-            $motivo = $usuario > 0 ? 'mora_30_dias' : 'central_sin_responsable';
+            $motivo = $usuario > 0
+                ? 'mora_'.intval($configuracion['dias_escalamiento']).'_dias'
+                : 'central_sin_responsable';
         } elseif (isset($mapa['gestores'][$candidato['cod_local_origen']])) {
             $usuario = intval($mapa['gestores'][$candidato['cod_local_origen']]);
             $tipo = 'gestor_local';
             $motivo = 'local_origen';
         }
-        $prioridad = $candidato['dias_mora'] >= 30
+        $prioridad = $candidato['dias_mora'] >= intval($configuracion['dias_escalamiento'])
             ? 'alta' : ($candidato['dias_mora'] > 0 ? 'media' : 'baja');
         $candidato['cod_usuario'] = $usuario;
         $candidato['tipo_responsable'] = $tipo;
@@ -693,6 +973,8 @@ function miCarteraPrevisualizarAsignacion($mysqli, $contexto)
     $plan = miCarteraPlanAsignacion($mysqli);
     $resumen = array(
         'total' => count($plan['items']),
+        'dias_escalamiento' => intval($plan['configuracion']['dias_escalamiento']),
+        'cantidad_cobradores' => count($plan['configuracion']['cobradores']),
         'gestores_locales' => 0,
         'cobranza_central' => 0,
         'sin_asignar' => 0,
@@ -848,7 +1130,7 @@ function miCarteraResultadoEtiqueta($resultado)
         'numero_incorrecto' => 'Numero incorrecto',
         'promesa_pago' => 'Promesa de pago',
         'solicita_revision' => 'Solicita revision',
-        'escalar_cobranza' => 'Escalar a Cobranza',
+        'escalar_cobranza' => 'Escalar al jefe de Cobranza',
         'pago_confirmado' => 'Pago confirmado'
     );
     return isset($mapa[$resultado]) ? $mapa[$resultado] : 'Sin gestion';
@@ -1230,6 +1512,77 @@ function miCarteraEscalarAsignacion($mysqli, $contexto, $asignacion, $motivo)
     return $nuevoResponsable;
 }
 
+function miCarteraAsignarAJefe($mysqli, $contexto, $asignacion, $motivo)
+{
+    $configuracion = miCarteraConfiguracionBase($mysqli);
+    $nuevoResponsable = intval($configuracion['cod_jefe']);
+    if ($nuevoResponsable <= 0) {
+        miCarteraLanzar(
+            'jefe_sin_configurar',
+            'Configure un jefe de Cobranza para recibir los casos especiales.'
+        );
+    }
+    if ((string)$asignacion['tipo_responsable'] === 'jefe_cobranza'
+        && intval($asignacion['cod_usuario_responsableFK']) === $nuevoResponsable) {
+        return $nuevoResponsable;
+    }
+    $idAsignacion = intval($asignacion['id_asignacion']);
+    $motivoDb = miCarteraTextoDb($motivo, 80);
+    $stmt = $mysqli->prepare(
+        "UPDATE cartera_asignacion SET cod_usuario_responsableFK=?,"
+        ."tipo_responsable='jefe_cobranza',prioridad='alta',motivo_asignacion=?,"
+        ."fecha_actualizacion=NOW() WHERE id_asignacion=? AND estado='activa'"
+    );
+    if (!$stmt) {
+        miCarteraLanzar('asignacion_jefe_no_guardada', 'No se pudo preparar el caso especial del jefe.');
+    }
+    $stmt->bind_param('isi', $nuevoResponsable, $motivoDb, $idAsignacion);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        miCarteraLanzar('asignacion_jefe_no_guardada', 'No se pudo transferir el caso al jefe de Cobranza.');
+    }
+    $stmt->close();
+    if (!miCarteraRegistrarEvento(
+        $mysqli,
+        $contexto,
+        'asignacion_jefe_cobranza',
+        'El jefe de Cobranza asumio un caso especial.',
+        intval($asignacion['cod_clienteFK']),
+        $idAsignacion,
+        array(
+            'responsable' => intval($asignacion['cod_usuario_responsableFK']),
+            'tipo' => (string)$asignacion['tipo_responsable']
+        ),
+        array('responsable' => $nuevoResponsable, 'tipo' => 'jefe_cobranza', 'motivo' => $motivo)
+    )) {
+        miCarteraLanzar('asignacion_jefe_no_guardada', 'No se pudo auditar el caso especial del jefe.');
+    }
+    return $nuevoResponsable;
+}
+
+function miCarteraTomarCasoJefe($mysqli, $contexto, $idAsignacion)
+{
+    if (empty($contexto['es_jefe'])) {
+        miCarteraLanzar(
+            'accion_no_autorizada',
+            'Solo el jefe de Cobranza puede tomar un caso para su cartera especial.'
+        );
+    }
+    $asignacion = miCarteraAsignacionVisible($mysqli, $contexto, $idAsignacion, false);
+    $mysqli->begin_transaction();
+    try {
+        $responsable = miCarteraAsignarAJefe($mysqli, $contexto, $asignacion, 'toma_jefe');
+        $mysqli->commit();
+        return array('id_asignacion' => intval($idAsignacion), 'cod_responsable' => $responsable);
+    } catch (MiCarteraExcepcion $e) {
+        $mysqli->rollback();
+        throw $e;
+    } catch (Exception $e) {
+        $mysqli->rollback();
+        miCarteraLanzar('asignacion_jefe_no_guardada', $e->getMessage());
+    }
+}
+
 function miCarteraGuardarGestion($mysqli, $contexto, $entrada)
 {
     $idAsignacion = intval(isset($entrada['id_asignacion']) ? $entrada['id_asignacion'] : 0);
@@ -1392,7 +1745,9 @@ function miCarteraGuardarGestion($mysqli, $contexto, $entrada)
             $stmt->close();
         }
         if ($resultadoGestion === 'escalar_cobranza') {
-            miCarteraEscalarAsignacion($mysqli, $contexto, $asignacion, 'escalamiento_manual');
+            miCarteraAsignarAJefe($mysqli, $contexto, $asignacion, 'escalamiento_manual');
+        } elseif ($resultadoGestion === 'solicita_revision') {
+            miCarteraAsignarAJefe($mysqli, $contexto, $asignacion, 'solicita_revision');
         } elseif ($resultadoGestion === 'sin_respuesta') {
             $stmt = $mysqli->prepare(
                 "SELECT COUNT(*) total FROM cartera_gestion WHERE id_asignacionFK=? "
@@ -1521,8 +1876,8 @@ function miCarteraSincronizar($mysqli, $contexto)
             } elseif (!$actualizado) {
                 throw new Exception('No se pudo actualizar una promesa incumplida.');
             }
-            if ($huboCambio && (string)$promesa['tipo_responsable'] !== 'cobranza_central') {
-                miCarteraEscalarAsignacion($mysqli, $contexto, array(
+            if ($huboCambio && (string)$promesa['tipo_responsable'] !== 'jefe_cobranza') {
+                miCarteraAsignarAJefe($mysqli, $contexto, array(
                     'id_asignacion' => intval($promesa['id_asignacionFK']),
                     'cod_clienteFK' => intval($promesa['cod_clienteFK']),
                     'cod_usuario_responsableFK' => intval($promesa['cod_usuario_responsableFK']),
@@ -1554,7 +1909,12 @@ function miCarteraSincronizar($mysqli, $contexto)
         $cliente = intval($asignacion['cod_clienteFK']);
         $dias = isset($finanzas[$cliente]) ? intval($finanzas[$cliente]['dias_mora']) : 0;
         if ($dias >= intval($configuracion['dias_escalamiento'])) {
-            miCarteraEscalarAsignacion($mysqli, $contexto, $asignacion, 'mora_30_dias');
+                miCarteraEscalarAsignacion(
+                    $mysqli,
+                    $contexto,
+                    $asignacion,
+                    'mora_'.intval($configuracion['dias_escalamiento']).'_dias'
+                );
             $escalados++;
         }
     }
@@ -1605,7 +1965,7 @@ function miCarteraContextoModulo($mysqli, $contexto)
             array('valor' => 'numero_incorrecto', 'etiqueta' => 'Numero incorrecto'),
             array('valor' => 'promesa_pago', 'etiqueta' => 'Promesa de pago'),
             array('valor' => 'solicita_revision', 'etiqueta' => 'Solicita revision'),
-            array('valor' => 'escalar_cobranza', 'etiqueta' => 'Escalar a Cobranza')
+            array('valor' => 'escalar_cobranza', 'etiqueta' => 'Escalar al jefe de Cobranza')
         )
     );
 }

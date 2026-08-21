@@ -117,6 +117,15 @@ try {
                 200
             );
             break;
+        case 'previsualizar_configuracion':
+            miCarteraResponder(
+                true,
+                'configuracion_previsualizada',
+                'Revise el impacto antes de guardar la configuracion.',
+                miCarteraPrevisualizarConfiguracion($mysqli, $contexto, $_POST),
+                200
+            );
+            break;
         case 'previsualizar_asignacion':
             miCarteraResponder(
                 true,
@@ -136,6 +145,19 @@ try {
                 'La cartera fue repartida y quedo trazable.',
                 miCarteraConfirmarAsignacion($mysqli, $contexto),
                 201
+            );
+            break;
+        case 'tomar_caso_jefe':
+            miCarteraResponder(
+                true,
+                'caso_asignado_al_jefe',
+                'El caso ya forma parte de la cartera especial del jefe.',
+                miCarteraTomarCasoJefe(
+                    $mysqli,
+                    $contexto,
+                    miCarteraParametro('id_asignacion', 0)
+                ),
+                200
             );
             break;
         default:

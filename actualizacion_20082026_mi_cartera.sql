@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS cartera_configuracion (
   id_configuracion TINYINT UNSIGNED NOT NULL,
   cod_jefeFK INT DEFAULT NULL,
   dias_prevencion SMALLINT UNSIGNED NOT NULL DEFAULT 7,
-  dias_escalamiento SMALLINT UNSIGNED NOT NULL DEFAULT 30,
+  dias_escalamiento SMALLINT UNSIGNED NOT NULL DEFAULT 90,
   intentos_escalamiento TINYINT UNSIGNED NOT NULL DEFAULT 2,
   activo TINYINT(1) NOT NULL DEFAULT 1,
   cod_usuario_actualizaFK INT DEFAULT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS cartera_configuracion (
 INSERT INTO cartera_configuracion
   (id_configuracion,cod_jefeFK,dias_prevencion,dias_escalamiento,
    intentos_escalamiento,activo,cod_usuario_actualizaFK,fecha_actualizacion)
-VALUES (1,NULL,7,30,2,1,NULL,NOW())
+VALUES (1,NULL,7,90,2,1,NULL,NOW())
 ON DUPLICATE KEY UPDATE id_configuracion=VALUES(id_configuracion);
 
 CREATE TABLE IF NOT EXISTS cartera_equipo (

@@ -16,6 +16,8 @@ function carteraContenido($raiz, $archivo)
 
 $migracion = carteraContenido($raiz, 'actualizacion_20082026_mi_cartera.sql');
 $rollback = carteraContenido($raiz, 'actualizacion_20082026_mi_cartera_rollback.sql');
+$migracionFlexible = carteraContenido($raiz, 'actualizacion_21082026_mi_cartera_configuracion_flexible.sql');
+$rollbackFlexible = carteraContenido($raiz, 'actualizacion_21082026_mi_cartera_configuracion_flexible_rollback.sql');
 $helper = carteraContenido($raiz, 'php_system/mi_cartera_helper.php');
 $endpoint = carteraContenido($raiz, 'php_system/abmMiCartera.php');
 $javascript = carteraContenido($raiz, 'js_system/mi_cartera.js');
@@ -30,11 +32,21 @@ carteraPrueba('una asignacion actual por paciente', strpos($migracion, 'uq_carte
 carteraPrueba('registra llamada vinculada', strpos($migracion, 'id_solicitud_llamadaFK') !== false, $pruebas);
 carteraPrueba('compromiso conserva base pagada', strpos($migracion, 'monto_pagado_base') !== false, $pruebas);
 carteraPrueba('rollback conserva auditoria', strpos(strtoupper($rollback), 'DROP TABLE') === false, $pruebas);
+carteraPrueba('migracion flexible inicia en noventa dias', strpos($migracionFlexible, 'dias_escalamiento=90') !== false && strpos($migracion, 'DEFAULT 90') !== false, $pruebas);
+carteraPrueba('migracion flexible no pisa una configuracion posterior', strpos($migracionFlexible, 'migracion_regla_90') !== false && strpos($migracionFlexible, 'rollback_regla_90') !== false, $pruebas);
+carteraPrueba('rollback flexible conserva historicos', $rollbackFlexible !== '' && strpos(strtoupper($rollbackFlexible), 'DROP TABLE') === false, $pruebas);
 carteraPrueba('saldo proviene de credito y pago', strpos($helper, 'FROM credito cr') !== false && strpos($helper, 'FROM pago pg') !== false, $pruebas);
 carteraPrueba('pagos anulados no impactan', strpos($helper, "NOT IN ('si','anulado','activo')") !== false, $pruebas);
 carteraPrueba('ventana preventiva de siete dias', strpos($helper, 'INTERVAL 7 DAY') !== false, $pruebas);
-carteraPrueba('escalamiento desde treinta dias', strpos($helper, 'mora_30_dias') !== false, $pruebas);
+carteraPrueba('escalamiento configurable entre treinta y trescientos sesenta y cinco dias', strpos($helper, '$diasEscalamiento < 30') !== false && strpos($helper, '$diasEscalamiento > 365') !== false, $pruebas);
 carteraPrueba('dos intentos sin respuesta', strpos($helper, 'dos_intentos_sin_respuesta') !== false, $pruebas);
+carteraPrueba('equipo admite cantidad flexible', strpos($helper, 'count($gestores) < 1') !== false && strpos($helper, 'count($cobradores) < 1') !== false, $pruebas);
+carteraPrueba('cada clinica conserva un gestor unico', strpos($helper, 'Cada clinica debe tener un unico gestor') !== false, $pruebas);
+carteraPrueba('configuracion requiere vista previa confirmada', strpos($endpoint, "case 'previsualizar_configuracion'") !== false && strpos($helper, 'confirmacion_requerida') !== false, $pruebas);
+carteraPrueba('confirmacion rechaza una vista previa desactualizada', strpos($helper, 'firma_impacto') !== false && strpos($helper, 'hash_equals') !== false && strpos($helper, 'FOR UPDATE') !== false, $pruebas);
+carteraPrueba('reasignacion de configuracion queda auditada', strpos($helper, 'reasignacion_configuracion') !== false, $pruebas);
+carteraPrueba('jefe recibe casos especiales', strpos($helper, 'jefe_cobranza') !== false && strpos($helper, 'promesa_incumplida') !== false && strpos($helper, 'toma_jefe') !== false, $pruebas);
+carteraPrueba('jefe puede tomar caso desde endpoint', strpos($endpoint, "case 'tomar_caso_jefe'") !== false && strpos($javascript, 'take-chief-case') !== false, $pruebas);
 carteraPrueba('pago confirmado no es resultado manual', strpos($helper, "'pago_confirmado' => 'Pago confirmado'") !== false && strpos($helper, "'pago_confirmado',\n        'contactado'") === false, $pruebas);
 carteraPrueba('endpoint exige sesion', strpos($endpoint, 'verificar_navegador') !== false, $pruebas);
 carteraPrueba('configuracion protegida para Carlos', strpos($helper, 'intval($codUsuario) === 5994') !== false, $pruebas);
@@ -43,6 +55,8 @@ carteraPrueba('ventana independiente en dashboard', strpos($inicio, "id='divMiCa
 carteraPrueba('catalogo de accesos registra mi cartera', strpos($dashboardJs, 'mi_cartera:') !== false, $pruebas);
 carteraPrueba('servidor filtra equipo configurado', strpos($dashboardPhp, 'dashboard_user_can_access_mi_cartera') !== false, $pruebas);
 carteraPrueba('interfaz lista y flujo guiado', strpos($javascript, 'Un vistazo al proceso') !== false && strpos($javascript, 'Guardar resultado y próxima acción') !== false, $pruebas);
+carteraPrueba('interfaz permite sumar y quitar integrantes', strpos($javascript, 'add-config-manager') !== false && strpos($javascript, 'remove-config-manager') !== false && strpos($javascript, 'add-config-collector') !== false && strpos($javascript, 'remove-config-collector') !== false, $pruebas);
+carteraPrueba('interfaz muestra impacto antes de redistribuir', strpos($javascript, 'Reasignaciones') !== false && strpos($javascript, 'Confirmar cambios') !== false, $pruebas);
 carteraPrueba('interfaz adaptable a tablet', strpos($css, '@media (max-width: 820px)') !== false, $pruebas);
 carteraPrueba('informe morosos queda fuera del flujo', stripos($helper.$endpoint.$javascript.$migracion, 'clientes_morosos') === false && stripos($helper.$endpoint.$javascript.$migracion, 'VERINFORMEMOROSO') === false, $pruebas);
 carteraPrueba('sin sintaxis exclusiva de PHP 8', strpos($helper, 'match (') === false && strpos($helper, 'fn(') === false && strpos($helper, 'str_contains(') === false, $pruebas);

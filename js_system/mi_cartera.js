@@ -17,6 +17,7 @@
         details: {},
         pendingCalls: {},
         configCatalog: null,
+        pendingConfig: null,
         searchTimer: null
     };
 
@@ -245,7 +246,7 @@
         if (!config.completa) {
             setMessage(
                 user.puede_configurar
-                    ? "Antes del primer reparto, configure los cinco gestores, el jefe y los dos cobradores desde el engranaje."
+                    ? "Antes del primer reparto, configure el jefe, al menos un gestor y un cobrador desde el engranaje."
                     : "El equipo de cartera todavía no está completamente configurado.",
                 "warning"
             );
@@ -296,8 +297,12 @@
     function expandedHtml(item) {
         var detail = state.details[item.id_asignacion];
         var resultOptions = state.context ? state.context.resultados || [] : [];
+        var currentUser = state.context ? state.context.usuario || {} : {};
         var phoneOptions = "<option value=''>Seleccione el teléfono utilizado</option>";
         var resultHtml = "<option value=''>Seleccione el resultado</option>";
+        var takeChief = currentUser.es_jefe && Number(item.cod_responsable || 0) !== Number(currentUser.cod_usuario || 0)
+            ? "<button type='button' class='mi-cartera-btn mi-cartera-btn--chief' data-cartera-action='take-chief-case' data-assignment='" + item.id_asignacion + "'><i class='fa-solid fa-user-shield'></i><span>Tomar como caso especial</span></button>"
+            : "";
         var history = "";
         var sales = "";
         (item.telefonos || []).forEach(function (phone) {
@@ -322,7 +327,7 @@
             + "<div class='mi-cartera-manage__grid'><label><span>Teléfono usado</span><select data-manage-field='telefono'>" + phoneOptions + "</select></label><label><span>Resultado de la llamada</span><select data-manage-field='resultado'>" + resultHtml + "</select></label><label><span>Prioridad</span><select data-manage-field='prioridad'><option value='alta' " + (item.prioridad === "alta" ? "selected" : "") + ">Alta</option><option value='media' " + (item.prioridad === "media" ? "selected" : "") + ">Media</option><option value='baja' " + (item.prioridad === "baja" ? "selected" : "") + ">Baja</option></select></label><label><span>Próxima acción</span><input type='datetime-local' data-manage-field='proxima_accion'></label></div>"
             + "<div class='mi-cartera-promise' data-promise-fields hidden><label><span>Fecha prometida</span><input type='date' data-manage-field='fecha_compromiso'></label><label><span>Monto prometido</span><input type='number' min='1' step='1' data-manage-field='monto_compromiso' placeholder='Gs.'></label><p><i class='fa-solid fa-circle-info'></i> Telar confirmará el pago únicamente contra pagos reales registrados.</p></div>"
             + "<label class='mi-cartera-notes'><span>Nota breve</span><textarea data-manage-field='nota' maxlength='1000' placeholder='Ej.: atiende, solicita llamada el lunes por la mañana'></textarea></label>"
-            + "<div class='mi-cartera-manage__actions'><button type='button' class='mi-cartera-call mi-cartera-call--secondary' data-cartera-action='call-selected' data-assignment='" + item.id_asignacion + "' data-client='" + item.cod_cliente + "'><i class='fa-solid fa-phone'></i> Llamar al número elegido</button><button type='button' class='mi-cartera-btn mi-cartera-btn--primary' data-cartera-action='save-management' data-assignment='" + item.id_asignacion + "'><i class='fa-solid fa-check'></i><span>Guardar resultado y próxima acción</span></button></div><div class='mi-cartera-inline-message' data-inline-message></div></section>"
+            + "<div class='mi-cartera-manage__actions'>" + takeChief + "<button type='button' class='mi-cartera-call mi-cartera-call--secondary' data-cartera-action='call-selected' data-assignment='" + item.id_asignacion + "' data-client='" + item.cod_cliente + "'><i class='fa-solid fa-phone'></i> Llamar al número elegido</button><button type='button' class='mi-cartera-btn mi-cartera-btn--primary' data-cartera-action='save-management' data-assignment='" + item.id_asignacion + "'><i class='fa-solid fa-check'></i><span>Guardar resultado y próxima acción</span></button></div><div class='mi-cartera-inline-message' data-inline-message></div></section>"
             + "<aside class='mi-cartera-detail'><div><h3>Cuentas incluidas</h3><div class='mi-cartera-sales'>" + (detail ? (sales || "<p>Sin cuentas pendientes.</p>") : "<p>Cargando detalle…</p>") + "</div></div><div><h3>Últimas gestiones</h3><div class='mi-cartera-history'>" + (detail ? (history || "<p>Todavía no hay gestiones.</p>") : "<p>Cargando historial…</p>") + "</div></div></aside>"
             + "</div></div></td></tr>";
     }
@@ -527,32 +532,111 @@
         setMessage("Cargando usuarios activos de Telar…", "info");
         request("configuracion").then(function (data) {
             state.configCatalog = data;
+            state.pendingConfig = null;
             renderConfigModal();
             setMessage("", "info");
         }).catch(function (error) { setMessage(error.message, "error"); });
     }
 
-    function renderConfigModal() {
+    function configManagerRow(item, index, users, locals) {
+        item = item || {};
+        return "<div class='mi-cartera-config-row' data-config-manager-row><b>Clínica " + (index + 1) + "</b>"
+            + "<select data-config-local>" + localOptions(locals, item.cod_local || 0) + "</select>"
+            + "<select data-config-manager>" + userOptions(users, item.cod_usuario || 0) + "</select>"
+            + "<button type='button' class='mi-cartera-config-remove' data-cartera-action='remove-config-manager' title='Quitar gestor' aria-label='Quitar gestor'><i class='fa-solid fa-trash-can'></i></button></div>";
+    }
+
+    function configCollectorRow(item, index, users) {
+        var selected = item && typeof item === "object" ? item.cod_usuario : item;
+        return "<div class='mi-cartera-config-collector' data-config-collector-row><b>Cobrador " + (index + 1) + "</b>"
+            + "<select data-config-collector>" + userOptions(users, selected || 0) + "</select>"
+            + "<button type='button' class='mi-cartera-config-remove' data-cartera-action='remove-config-collector' title='Quitar cobrador' aria-label='Quitar cobrador'><i class='fa-solid fa-trash-can'></i></button></div>";
+    }
+
+    function renumberConfigRows() {
+        var layer = state.root.querySelector("#miCarteraModalLayer");
+        Array.prototype.forEach.call(layer.querySelectorAll("[data-config-manager-row]"), function (row, index) {
+            row.querySelector("b").textContent = "Clínica " + (index + 1);
+        });
+        Array.prototype.forEach.call(layer.querySelectorAll("[data-config-collector-row]"), function (row, index) {
+            row.querySelector("b").textContent = "Cobrador " + (index + 1);
+        });
+    }
+
+    function renderConfigModal(draft) {
         var layer = state.root.querySelector("#miCarteraModalLayer");
         var data = state.configCatalog;
         var config = data.configuracion || {};
         var users = data.usuarios || [];
         var locals = data.locales || [];
-        var managerBySlot = config.gestores || [];
-        var collectors = config.cobradores || [];
+        var managerBySlot = draft ? draft.gestores || [] : config.gestores || [];
+        var collectors = draft ? draft.cobradores || [] : config.cobradores || [];
+        var chief = draft ? draft.cod_jefe : config.cod_jefe || 0;
+        var days = draft ? draft.dias_escalamiento : config.dias_escalamiento || 90;
         var htmlManagers = "";
+        var htmlCollectors = "";
         var i;
-        for (i = 0; i < 5; i++) {
-            htmlManagers += "<div class='mi-cartera-config-row'><b>Clínica " + (i + 1) + "</b><select data-config-local>" + localOptions(locals, managerBySlot[i] ? managerBySlot[i].cod_local : 0) + "</select><select data-config-manager>" + userOptions(users, managerBySlot[i] ? managerBySlot[i].cod_usuario : 0) + "</select></div>";
+        if (!managerBySlot.length) { managerBySlot = [{}]; }
+        if (!collectors.length) { collectors = [0]; }
+        for (i = 0; i < managerBySlot.length; i++) {
+            htmlManagers += configManagerRow(managerBySlot[i], i, users, locals);
+        }
+        for (i = 0; i < collectors.length; i++) {
+            htmlCollectors += configCollectorRow(collectors[i], i, users);
         }
         layer.innerHTML = "<section class='mi-cartera-modal mi-cartera-config-modal' role='dialog' aria-modal='true' aria-labelledby='miCarteraConfigTitle'>"
             + "<header><div><small>CONFIGURACIÓN PROTEGIDA</small><h2 id='miCarteraConfigTitle'>Equipo de Mi cartera</h2><p>Solo Carlos Faraone puede cambiar estos responsables. Los selectores buscan entre usuarios activos de Telar.</p></div><button type='button' data-cartera-action='close-modal' aria-label='Cerrar'><i class='fa-solid fa-xmark'></i></button></header>"
-            + "<div class='mi-cartera-modal__body'><section class='mi-cartera-config-chief'><span><i class='fa-solid fa-user-shield'></i></span><label><strong>Jefe de Cobranza</strong><small>Supervisa el equipo, revisa excepciones y confirma el reparto inicial.</small><select data-config-chief>" + userOptions(users, config.cod_jefe || 0) + "</select></label></section>"
-            + "<section><h3><b>1</b> Un gestor por cada clínica</h3><p class='mi-cartera-help'>Seleccione exactamente cinco locales clínicos y un usuario diferente para cada uno.</p><div class='mi-cartera-config-grid'>" + htmlManagers + "</div></section>"
-            + "<section><h3><b>2</b> Dos cobradores centrales</h3><p class='mi-cartera-help'>Reciben automáticamente casos con 30 días de mora, dos intentos fallidos, promesas incumplidas o escalamiento manual.</p><div class='mi-cartera-config-collectors'><select data-config-collector>" + userOptions(users, collectors[0] ? collectors[0].cod_usuario : 0) + "</select><select data-config-collector>" + userOptions(users, collectors[1] ? collectors[1].cod_usuario : 0) + "</select></div></section>"
+            + "<div class='mi-cartera-modal__body'><section class='mi-cartera-config-rule'><div><span><i class='fa-solid fa-calendar-days'></i></span><label><strong>Paso a Cobranza central</strong><small>Antes de este plazo el paciente permanece con su clínica. Al cumplirlo pasa al equipo central.</small></label></div><label class='mi-cartera-config-days'><input type='number' min='30' max='365' step='1' value='" + escapeHtml(days) + "' data-config-days><b>días de mora</b></label></section>"
+            + "<section class='mi-cartera-config-chief'><span><i class='fa-solid fa-user-shield'></i></span><label><strong>Jefe de Cobranza</strong><small>Supervisa y recibe promesas incumplidas, revisiones, escalamientos manuales y casos que decida tomar.</small><select data-config-chief>" + userOptions(users, chief) + "</select></label></section>"
+            + "<section><h3><b>1</b> Gestores por clínica</h3><p class='mi-cartera-help'>Cada clínica puede tener un único gestor. Agregue solamente las clínicas que participarán.</p><div class='mi-cartera-config-grid' data-config-managers>" + htmlManagers + "</div><button type='button' class='mi-cartera-config-add' data-cartera-action='add-config-manager'><i class='fa-solid fa-plus'></i> Agregar clínica y gestor</button></section>"
+            + "<section><h3><b>2</b> Cobradores centrales</h3><p class='mi-cartera-help'>Los casos que cumplen el plazo se equilibran entre todos los cobradores configurados.</p><div class='mi-cartera-config-collectors' data-config-collectors>" + htmlCollectors + "</div><button type='button' class='mi-cartera-config-add' data-cartera-action='add-config-collector'><i class='fa-solid fa-plus'></i> Agregar cobrador central</button></section>"
             + "<div class='mi-cartera-modal-message' data-modal-message></div></div>"
-            + "<footer><button type='button' class='mi-cartera-btn mi-cartera-btn--ghost' data-cartera-action='close-modal'><span>Cancelar</span></button><button type='button' class='mi-cartera-btn mi-cartera-btn--primary' data-cartera-action='save-config'><i class='fa-solid fa-floppy-disk'></i><span>Guardar responsables</span></button></footer></section>";
+            + "<footer><button type='button' class='mi-cartera-btn mi-cartera-btn--ghost' data-cartera-action='close-modal'><span>Cancelar</span></button><button type='button' class='mi-cartera-btn mi-cartera-btn--primary' data-cartera-action='save-config'><i class='fa-solid fa-eye'></i><span>Revisar cambios</span></button></footer></section>";
         layer.hidden = false;
+    }
+
+    function addConfigManager() {
+        var container = state.root.querySelector("[data-config-managers]");
+        var data = state.configCatalog || {};
+        if (!container) { return; }
+        container.insertAdjacentHTML(
+            "beforeend",
+            configManagerRow({}, container.querySelectorAll("[data-config-manager-row]").length, data.usuarios || [], data.locales || [])
+        );
+        renumberConfigRows();
+    }
+
+    function removeConfigManager(button) {
+        var rows = state.root.querySelectorAll("[data-config-manager-row]");
+        if (rows.length <= 1) {
+            modalMessage("Debe quedar al menos una clínica con su gestor.", "error");
+            return;
+        }
+        button.closest("[data-config-manager-row]").remove();
+        renumberConfigRows();
+        modalMessage("", "info");
+    }
+
+    function addConfigCollector() {
+        var container = state.root.querySelector("[data-config-collectors]");
+        var data = state.configCatalog || {};
+        if (!container) { return; }
+        container.insertAdjacentHTML(
+            "beforeend",
+            configCollectorRow({}, container.querySelectorAll("[data-config-collector-row]").length, data.usuarios || [])
+        );
+        renumberConfigRows();
+    }
+
+    function removeConfigCollector(button) {
+        var rows = state.root.querySelectorAll("[data-config-collector-row]");
+        if (rows.length <= 1) {
+            modalMessage("Debe quedar al menos un cobrador central.", "error");
+            return;
+        }
+        button.closest("[data-config-collector-row]").remove();
+        renumberConfigRows();
+        modalMessage("", "info");
     }
 
     function modalMessage(text, kind) {
@@ -562,9 +646,10 @@
         element.textContent = text;
     }
 
-    function saveConfig(button) {
+    function configDraft() {
         var layer = state.root.querySelector("#miCarteraModalLayer");
         var chief = layer.querySelector("[data-config-chief]").value;
+        var days = layer.querySelector("[data-config-days]").value;
         var localFields = layer.querySelectorAll("[data-config-local]");
         var managerFields = layer.querySelectorAll("[data-config-manager]");
         var collectorFields = layer.querySelectorAll("[data-config-collector]");
@@ -575,23 +660,82 @@
             managers.push({ cod_local: localFields[i].value, cod_usuario: managerFields[i].value });
         }
         for (i = 0; i < collectorFields.length; i++) { collectors.push(collectorFields[i].value); }
+        return { cod_jefe: chief, dias_escalamiento: days, gestores: managers, cobradores: collectors };
+    }
+
+    function configPayload(draft, confirm) {
+        return {
+            cod_jefe: draft.cod_jefe,
+            dias_escalamiento: draft.dias_escalamiento,
+            gestores: JSON.stringify(draft.gestores || []),
+            cobradores: JSON.stringify(draft.cobradores || []),
+            firma_impacto: draft.firma_impacto || "",
+            confirmar: confirm ? "1" : "0"
+        };
+    }
+
+    function renderConfigPreview(data) {
+        var layer = state.root.querySelector("#miCarteraModalLayer");
+        var proposal = data.propuesta || {};
+        var impact = data.impacto || {};
+        layer.innerHTML = "<section class='mi-cartera-modal mi-cartera-config-preview' role='dialog' aria-modal='true'><header><div><small>VISTA PREVIA · SIN CAMBIOS TODAVÍA</small><h2>Confirmar equipo y reglas</h2><p>Revise el impacto sobre las carteras existentes antes de guardar.</p></div><button type='button' data-cartera-action='close-modal' aria-label='Cerrar'><i class='fa-solid fa-xmark'></i></button></header>"
+            + "<div class='mi-cartera-modal__body'><div class='mi-cartera-config-preview__summary'><article><small>Paso a central</small><strong>" + Number(proposal.dias_escalamiento || 90) + " días</strong></article><article><small>Gestores locales</small><strong>" + Number(proposal.cantidad_gestores || 0) + "</strong></article><article><small>Cobradores centrales</small><strong>" + Number(proposal.cantidad_cobradores || 0) + "</strong></article><article class='is-warning'><small>Reasignaciones</small><strong>" + Number(impact.reasignaciones || 0) + "</strong></article></div>"
+            + "<section class='mi-cartera-config-impact'><h3>Cómo quedarían las carteras activas</h3><div><span><b>" + Number(impact.gestores_locales || 0) + "</b> en clínicas</span><span><b>" + Number(impact.cobranza_central || 0) + "</b> en Cobranza central</span><span><b>" + Number(impact.jefe_cobranza || 0) + "</b> casos especiales del jefe</span><span><b>" + Number(impact.sin_asignar || 0) + "</b> sin asignar</span></div><p><i class='fa-solid fa-shield-halved'></i> Las gestiones, promesas y pagos no se eliminan. Sólo cambiará el responsable de los casos indicados.</p></section>"
+            + "<div class='mi-cartera-modal-message' data-modal-message></div></div><footer><button type='button' class='mi-cartera-btn mi-cartera-btn--ghost' data-cartera-action='back-config'><i class='fa-solid fa-arrow-left'></i><span>Volver a editar</span></button><button type='button' class='mi-cartera-btn mi-cartera-btn--primary' data-cartera-action='confirm-config'><i class='fa-solid fa-check-double'></i><span>Confirmar cambios</span></button></footer></section>";
+    }
+
+    function saveConfig(button) {
+        var draft = configDraft();
+        state.pendingConfig = draft;
         button.disabled = true;
-        modalMessage("Validando usuarios, clínicas y responsables…", "info");
-        request("guardar_configuracion", {
-            cod_jefe: chief,
-            gestores: JSON.stringify(managers),
-            cobradores: JSON.stringify(collectors)
-        }).then(function () {
-            modalMessage("Equipo guardado. Ya puede previsualizar el reparto.", "success");
+        modalMessage("Calculando el impacto sin modificar la cartera…", "info");
+        request("previsualizar_configuracion", configPayload(draft, false), 90000).then(function (data) {
+            state.pendingConfig.firma_impacto = data.firma_impacto || "";
+            renderConfigPreview(data);
+        }).catch(function (error) {
+            modalMessage(error.message, "error");
+            button.disabled = false;
+        });
+    }
+
+    function confirmConfig(button) {
+        if (!state.pendingConfig) { return; }
+        button.disabled = true;
+        modalMessage("Guardando el equipo y las reasignaciones confirmadas…", "info");
+        request("guardar_configuracion", configPayload(state.pendingConfig, true), 120000).then(function (data) {
+            var impact = data.impacto || {};
+            modalMessage("Configuración guardada. " + Number(impact.reasignaciones || 0) + " caso(s) fueron reasignados.", "success");
             return request("contexto");
         }).then(function (data) {
             state.context = data;
             applyContext();
+            state.pendingConfig = null;
             window.setTimeout(closeModal, 700);
             return loadList(false);
         }).catch(function (error) {
             modalMessage(error.message, "error");
-        }).then(function () { button.disabled = false; });
+            button.disabled = false;
+        });
+    }
+
+    function backToConfig() {
+        if (!state.pendingConfig) { return; }
+        renderConfigModal(state.pendingConfig);
+    }
+
+    function takeChiefCase(button) {
+        var assignment = Number(button.getAttribute("data-assignment") || 0);
+        if (!assignment) { return; }
+        button.disabled = true;
+        inlineMessage(button, "Asignando el caso especial al jefe…", "info");
+        request("tomar_caso_jefe", { id_asignacion: assignment }).then(function () {
+            delete state.details[assignment];
+            inlineMessage(button, "El caso ya está en su cartera especial.", "success");
+            return loadList(false);
+        }).catch(function (error) {
+            inlineMessage(button, error.message, "error");
+            button.disabled = false;
+        });
     }
 
     function previewDistribution() {
@@ -603,7 +747,7 @@
             (data.por_responsable || []).forEach(function (item) {
                 responsibleRows += "<li><span>" + escapeHtml(item.nombre) + "</span><strong>" + Number(item.total) + " pacientes</strong></li>";
             });
-            layer.innerHTML = "<section class='mi-cartera-modal mi-cartera-distribution-modal' role='dialog' aria-modal='true'><header><div><small>VISTA PREVIA · SIN CAMBIOS TODAVÍA</small><h2>Confirmar reparto de cartera</h2><p>El saldo se calculó desde cuotas y pagos reales. Confirme únicamente después de revisar el resumen.</p></div><button type='button' data-cartera-action='close-modal'><i class='fa-solid fa-xmark'></i></button></header><div class='mi-cartera-modal__body'><div class='mi-cartera-distribution-summary'><article><small>Total nuevo</small><strong>" + Number(data.total || 0) + "</strong></article><article><small>Gestores locales</small><strong>" + Number(data.gestores_locales || 0) + "</strong></article><article><small>Cobranza central</small><strong>" + Number(data.cobranza_central || 0) + "</strong></article><article class='is-warning'><small>Sin asignar</small><strong>" + Number(data.sin_asignar || 0) + "</strong></article></div><div class='mi-cartera-distribution-rules'><h3>Reglas aplicadas</h3><p><i class='fa-solid fa-building'></i> El local de origen es el de la obligación vencida más antigua.</p><p><i class='fa-solid fa-arrow-trend-up'></i> Desde 30 días de mora el caso pasa al equipo central.</p><p><i class='fa-solid fa-scale-balanced'></i> Los casos centrales se equilibran entre los dos cobradores.</p></div><ul class='mi-cartera-distribution-list'>" + (responsibleRows || "<li><span>No hay nuevos casos por repartir.</span></li>") + "</ul><div class='mi-cartera-modal-message' data-modal-message></div></div><footer><button type='button' class='mi-cartera-btn mi-cartera-btn--ghost' data-cartera-action='close-modal'><span>Volver sin cambios</span></button><button type='button' class='mi-cartera-btn mi-cartera-btn--primary' data-cartera-action='confirm-distribution' " + (!data.total ? "disabled" : "") + "><i class='fa-solid fa-check-double'></i><span>Confirmar reparto</span></button></footer></section>";
+            layer.innerHTML = "<section class='mi-cartera-modal mi-cartera-distribution-modal' role='dialog' aria-modal='true'><header><div><small>VISTA PREVIA · SIN CAMBIOS TODAVÍA</small><h2>Confirmar reparto de cartera</h2><p>El saldo se calculó desde cuotas y pagos reales. Confirme únicamente después de revisar el resumen.</p></div><button type='button' data-cartera-action='close-modal'><i class='fa-solid fa-xmark'></i></button></header><div class='mi-cartera-modal__body'><div class='mi-cartera-distribution-summary'><article><small>Total nuevo</small><strong>" + Number(data.total || 0) + "</strong></article><article><small>Gestores locales</small><strong>" + Number(data.gestores_locales || 0) + "</strong></article><article><small>Cobranza central</small><strong>" + Number(data.cobranza_central || 0) + "</strong></article><article class='is-warning'><small>Sin asignar</small><strong>" + Number(data.sin_asignar || 0) + "</strong></article></div><div class='mi-cartera-distribution-rules'><h3>Reglas aplicadas</h3><p><i class='fa-solid fa-building'></i> El local de origen es el de la obligación vencida más antigua.</p><p><i class='fa-solid fa-arrow-trend-up'></i> Desde " + Number(data.dias_escalamiento || 90) + " días de mora el caso pasa al equipo central.</p><p><i class='fa-solid fa-scale-balanced'></i> Los casos centrales se equilibran entre " + Number(data.cantidad_cobradores || 0) + " cobrador(es) configurado(s).</p><p><i class='fa-solid fa-user-shield'></i> El jefe recibe excepciones y puede tomar casos especiales manualmente.</p></div><ul class='mi-cartera-distribution-list'>" + (responsibleRows || "<li><span>No hay nuevos casos por repartir.</span></li>") + "</ul><div class='mi-cartera-modal-message' data-modal-message></div></div><footer><button type='button' class='mi-cartera-btn mi-cartera-btn--ghost' data-cartera-action='close-modal'><span>Volver sin cambios</span></button><button type='button' class='mi-cartera-btn mi-cartera-btn--primary' data-cartera-action='confirm-distribution' " + (!data.total ? "disabled" : "") + "><i class='fa-solid fa-check-double'></i><span>Confirmar reparto</span></button></footer></section>";
         }).catch(function (error) {
             layer.hidden = true;
             setMessage(error.message, "error");
@@ -627,6 +771,7 @@
         if (!layer) { return; }
         layer.hidden = true;
         layer.innerHTML = "";
+        state.pendingConfig = null;
     }
 
     function clearFilters() {
@@ -672,6 +817,13 @@
             else if (action === "open-config") { openConfig(); }
             else if (action === "close-modal") { closeModal(); }
             else if (action === "save-config") { saveConfig(actionButton); }
+            else if (action === "add-config-manager") { addConfigManager(); }
+            else if (action === "remove-config-manager") { removeConfigManager(actionButton); }
+            else if (action === "add-config-collector") { addConfigCollector(); }
+            else if (action === "remove-config-collector") { removeConfigCollector(actionButton); }
+            else if (action === "back-config") { backToConfig(); }
+            else if (action === "confirm-config") { confirmConfig(actionButton); }
+            else if (action === "take-chief-case") { takeChiefCase(actionButton); }
             else if (action === "preview-distribution") { previewDistribution(); }
             else if (action === "confirm-distribution") { confirmDistribution(actionButton); }
             else if (action === "clear-filters") { clearFilters(); }

@@ -43,10 +43,10 @@ $resultado = $mysqli->query(
 );
 $fila = $resultado ? $resultado->fetch_assoc() : null;
 $reglasOk = $fila && intval($fila['dias_prevencion']) === 7
-    && intval($fila['dias_escalamiento']) === 30
+    && intval($fila['dias_escalamiento']) === 90
     && intval($fila['intentos_escalamiento']) === 2
     && intval($fila['activo']) === 1;
-echo ($reglasOk ? '[OK] ' : '[ERROR] ').'reglas 7 dias / 30 dias / 2 intentos'.PHP_EOL;
+echo ($reglasOk ? '[OK] ' : '[ERROR] ').'reglas 7 dias / 90 dias / 2 intentos'.PHP_EOL;
 if (!$reglasOk) { $errores++; }
 
 $mysqli->close();
