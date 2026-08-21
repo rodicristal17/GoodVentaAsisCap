@@ -96,7 +96,7 @@ centralTelefonicaNivel1Prueba(
     'La nueva interfaz posee estilos aislados y adaptacion para tablet.'
 );
 centralTelefonicaNivel1Prueba(
-    strpos($inicio, 'central_telefonica_operacion.js?x=20260820-01') !== false
+    strpos($inicio, 'central_telefonica_operacion.js?x=20260821-01') !== false
         && strpos($compose, 'central-telefonica-live:') !== false
         && strpos($compose, 'issabel_ami_event_secret') !== false,
     'La pantalla y el servicio aislado estan incorporados al despliegue.'

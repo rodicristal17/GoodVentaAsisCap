@@ -453,6 +453,11 @@ function centralTelefonicaFilaVisible(
         $funcionarioExtension = '';
     }
 
+    $telefonoNormalizado = $tipo === 'entrante_externa'
+        ? (isset($fila['origen_normalizado']) ? $fila['origen_normalizado'] : '')
+        : ($tipo === 'saliente_externa'
+            ? (isset($fila['destino_normalizado']) ? $fila['destino_normalizado'] : '')
+            : '');
     return array(
         'id_llamada' => intval($fila['id_llamada']),
         'fecha_inicio' => $fila['fecha_inicio'],
@@ -496,8 +501,92 @@ function centralTelefonicaFilaVisible(
             $contexto,
             $estructuraTranscripcion
         ),
-        'paciente' => null
+        'paciente' => null,
+        '_telefono_normalizado' => (string)$telefonoNormalizado
     );
+}
+
+function centralTelefonicaAplicarPacienteVisible($mysqli, $items)
+{
+    if (!$items || !centralTelefonicaTablaExiste($mysqli, 'central_telefonica_paciente_telefono')) {
+        return $items;
+    }
+    $telefonos = array();
+    foreach ($items as $item) {
+        $telefono = isset($item['_telefono_normalizado'])
+            ? trim((string)$item['_telefono_normalizado']) : '';
+        if ($telefono !== '') {
+            $telefonos[$telefono] = true;
+        }
+    }
+    if (!$telefonos) {
+        foreach ($items as $indice => $item) { unset($items[$indice]['_telefono_normalizado']); }
+        return $items;
+    }
+    $telefonos = array_keys($telefonos);
+    $marcas = implode(',', array_fill(0, count($telefonos), '?'));
+    $tipos = str_repeat('s', count($telefonos));
+    $stmt = centralTelefonicaEjecutarConsulta(
+        $mysqli,
+        "SELECT ct.telefono_normalizado,COUNT(DISTINCT ct.cod_clienteFK) coincidencias,"
+        ."MIN(ct.cod_clienteFK) cod_cliente,MAX(IFNULL(p.nombre_persona,'')) nombre,"
+        ."MAX(IFNULL(c.ci_cliente,'')) documento "
+        ."FROM central_telefonica_paciente_telefono ct "
+        ."LEFT JOIN cliente c ON c.cod_cliente=ct.cod_clienteFK "
+        ."LEFT JOIN persona p ON p.cod_persona=ct.cod_clienteFK "
+        ."WHERE ct.activo=1 AND ct.telefono_normalizado IN (".$marcas.") "
+        ."GROUP BY ct.telefono_normalizado",
+        $tipos,
+        $telefonos
+    );
+    $porTelefono = array();
+    $clientesUnicos = array();
+    $resultado = $stmt->get_result();
+    while ($resultado && ($fila = $resultado->fetch_assoc())) {
+        $telefono = (string)$fila['telefono_normalizado'];
+        $coincidencias = intval($fila['coincidencias']);
+        $cliente = intval($fila['cod_cliente']);
+        $porTelefono[$telefono] = array(
+            'cod_cliente' => $coincidencias === 1 ? $cliente : 0,
+            'nombre' => $coincidencias === 1 ? (string)$fila['nombre'] : '',
+            'documento' => $coincidencias === 1 ? (string)$fila['documento'] : '',
+            'cod_interconsulta' => 0,
+            'coincidencias' => $coincidencias,
+            'compartido' => $coincidencias > 1
+        );
+        if ($coincidencias === 1 && $cliente > 0) { $clientesUnicos[$cliente] = true; }
+    }
+    $stmt->close();
+    if ($clientesUnicos && centralTelefonicaTablaExiste($mysqli, 'interconsulta_paciente')) {
+        $ids = array_keys($clientesUnicos);
+        $sqlHilos = "SELECT ip.cod_clienteFK_principal cod_cliente,ip.cod_interConsultaFK,"
+            ."IF(IFNULL(ic.estado,'') IN ('proceso','pendiente'),0,1) prioridad "
+            ."FROM interconsulta_paciente ip INNER JOIN interconsulta ic "
+            ."ON ic.cod_interConsulta=ip.cod_interConsultaFK "
+            ."WHERE ip.estado='activo' AND ip.cod_clienteFK_principal IN ("
+            .implode(',', array_map('intval', $ids)).") "
+            ."ORDER BY prioridad,ip.cod_interConsultaFK DESC";
+        $resultadoHilos = $mysqli->query($sqlHilos);
+        $hilos = array();
+        while ($resultadoHilos && ($filaHilo = $resultadoHilos->fetch_assoc())) {
+            $cliente = intval($filaHilo['cod_cliente']);
+            if (!isset($hilos[$cliente])) { $hilos[$cliente] = intval($filaHilo['cod_interConsultaFK']); }
+        }
+        foreach ($porTelefono as $telefono => $paciente) {
+            $cliente = intval($paciente['cod_cliente']);
+            if ($cliente > 0 && isset($hilos[$cliente])) {
+                $porTelefono[$telefono]['cod_interconsulta'] = $hilos[$cliente];
+            }
+        }
+    }
+    foreach ($items as $indice => $item) {
+        $telefono = isset($item['_telefono_normalizado']) ? (string)$item['_telefono_normalizado'] : '';
+        if ($telefono !== '' && isset($porTelefono[$telefono])) {
+            $items[$indice]['paciente'] = $porTelefono[$telefono];
+        }
+        unset($items[$indice]['_telefono_normalizado']);
+    }
+    return $items;
 }
 
 function centralTelefonicaAplicarDirectorioVisible($mysqli, $items)
@@ -853,7 +942,7 @@ function centralTelefonicaListar($mysqli, $contexto, $entrada)
             ."'' AS funcionario_sede,'' AS funcionario_destino_extension,"
             ."'' AS funcionario_destino_nombre,'' AS funcionario_destino_sede";
     $sql = "SELECT l.id_llamada,l.fecha_inicio,l.tipo,l.estado,
-            l.origen_original,l.destino_original,l.extension,
+            l.origen_original,l.destino_original,l.origen_normalizado,l.destino_normalizado,l.extension,
             l.duracion_seg,l.hablado_seg,l.cantidad_segmentos,
             l.grabacion_disponible".$camposDirectorio.$camposTranscripcion."
         FROM central_telefonica_llamada l
@@ -877,6 +966,7 @@ function centralTelefonicaListar($mysqli, $contexto, $entrada)
     }
     $stmt->close();
     $items = centralTelefonicaAplicarDirectorioVisible($mysqli, $items);
+    $items = centralTelefonicaAplicarPacienteVisible($mysqli, $items);
 
     return array(
         'rango' => array('desde' => $rango['desde'], 'hasta' => $rango['hasta']),

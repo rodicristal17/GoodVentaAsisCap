@@ -1161,12 +1161,24 @@ function miCarteraAsignacionesBase($mysqli, $contexto, $vista, $entrada)
     }
     $buscar = miCarteraTextoDb(isset($entrada['buscar']) ? $entrada['buscar'] : '', 100);
     if ($buscar !== '') {
-        $condiciones[] = "(p.nombre_persona LIKE ? OR c.ci_cliente LIKE ? OR CAST(ca.cod_clienteFK AS CHAR) LIKE ?)";
+        $condicionBuscar = "(p.nombre_persona LIKE ? OR c.ci_cliente LIKE ? OR CAST(ca.cod_clienteFK AS CHAR) LIKE ?";
         $como = '%'.$buscar.'%';
         $tipos .= 'sss';
         $parametros[] = $como;
         $parametros[] = $como;
         $parametros[] = $como;
+        $digitosBuscar = preg_replace('/[^0-9]/', '', $buscar);
+        if (strlen($digitosBuscar) >= 6 && miCarteraTablaExiste($mysqli, 'central_telefonica_paciente_telefono')) {
+            $telefonoNormalizado = centralTelefonicaNormalizarTelefono($buscar);
+            $sufijoTelefono = substr(preg_replace('/[^0-9]/', '', $telefonoNormalizado), -9);
+            $condicionBuscar .= " OR EXISTS(SELECT 1 FROM central_telefonica_paciente_telefono ct_buscar "
+                ."WHERE ct_buscar.cod_clienteFK=ca.cod_clienteFK AND ct_buscar.activo=1 "
+                ."AND (ct_buscar.telefono_normalizado=? OR REPLACE(ct_buscar.telefono_normalizado,'+','') LIKE ?))";
+            $tipos .= 'ss';
+            $parametros[] = $telefonoNormalizado;
+            $parametros[] = '%'.$sufijoTelefono;
+        }
+        $condiciones[] = $condicionBuscar.")";
     }
     $local = intval(isset($entrada['cod_local']) ? $entrada['cod_local'] : 0);
     if ($local > 0) {

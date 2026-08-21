@@ -1806,3 +1806,29 @@ button.interconsulta-lab-mini-node:focus-visible,
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
+/* Accion telefonica compacta del listado de Hilos. El estado tecnico permanece
+   en una celda oculta para conservar edicion, filtros y compatibilidad legacy. */
+.interconsulta-state-badge { margin-left: 6px; padding: 2px 6px; display: inline-flex; align-items: center; flex: 0 0 auto; border: 1px solid #cbd9e1; border-radius: 999px; color: #627887; background: #f3f6f8; font-size: 7.5px; font-style: normal; font-weight: 750; white-space: nowrap; }
+.interconsulta-state-badge--proceso { color: #16647c; border-color: #b5d8e2; background: #eaf7fa; }
+.interconsulta-state-badge--pendiente { color: #8a5d0d; border-color: #ecd393; background: #fff5d9; }
+.interconsulta-state-badge--finalizado { color: #177047; border-color: #b8dfca; background: #e9f7ef; }
+.interconsulta-state-badge--inactivo { color: #697986; border-color: #d7dfe4; background: #f1f3f5; }
+.interconsulta-call-cell { vertical-align: middle; text-align: center; }
+.interconsulta-call-button { min-width: 62px; min-height: 28px; padding: 4px 7px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid #93d2d4; border-radius: 8px; color: #0e6e7a; background: #eaf8f7; font: 750 8.5px "Segoe UI",Arial,sans-serif; cursor: pointer; }
+.interconsulta-call-button:hover { color: #fff; background: #117f88; }
+.interconsulta-call-button small { min-width: 14px; padding: 1px 4px; border-radius: 999px; color: #fff; background: #1675ad; font-size: 7px; }
+.interconsulta-call-button--disabled { color: #8998a2; border-color: #d7e0e5; background: #f4f6f7; cursor: not-allowed; }
+.interconsulta-call-button--disabled:hover { color: #8998a2; background: #f4f6f7; }
+
+.interconsulta-call-timeline-card { margin: 7px 10px; padding: 10px 12px; display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 10px; border: 1px solid #c9e1e7; border-left: 3px solid #148794; border-radius: 11px; color: #264c61; background: #f7fcfc; }
+.interconsulta-call-timeline-card__avatar { width: 32px; height: 32px; overflow: hidden; border: 2px solid #b8dfe1; border-radius: 50%; background: #e5f4f4; }
+.interconsulta-call-timeline-card__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.interconsulta-call-timeline-card__body header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.interconsulta-call-timeline-card__body header span { color: #117d89; font-size: 8px; font-weight: 800; text-transform: uppercase; }
+.interconsulta-call-timeline-card__body header strong { padding: 2px 6px; border-radius: 999px; color: #176a49; background: #e1f5ea; font-size: 7.5px; }
+.interconsulta-call-timeline-card__body h4 { margin: 3px 0 5px; color: #183f58; font-size: 10.5px; }
+.interconsulta-call-timeline-card__body > div { display: flex; flex-wrap: wrap; gap: 5px 12px; color: #647c8a; font-size: 8px; }
+.interconsulta-call-timeline-card__body > div span { display: inline-flex; align-items: center; gap: 4px; }
+.interconsulta-call-timeline-card__body > small { margin-top: 6px; display: block; color: #7b8c97; font-size: 7.5px; }
+.interconsulta-call-timeline-card--no_contestada,.interconsulta-call-timeline-card--error,.interconsulta-call-timeline-card--ocupada { border-left-color: #c94b5a; background: #fff9f9; }
+.interconsulta-call-timeline-card--no_contestada .interconsulta-call-timeline-card__body header strong,.interconsulta-call-timeline-card--error .interconsulta-call-timeline-card__body header strong,.interconsulta-call-timeline-card--ocupada .interconsulta-call-timeline-card__body header strong { color: #9f3c49; background: #fde7ea; }

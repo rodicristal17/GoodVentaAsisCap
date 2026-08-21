@@ -985,6 +985,111 @@ function buscarTimelineUnificadoInterConsulta($codInterConsulta, $codUsuario, $l
     }
 
     $relacion = interconsultaOperacionVentasPacienteHilo($mysqli, $codInterConsulta);
+    // Las llamadas son eventos virtuales: la solicitud/CDR sigue siendo la
+    // fuente de verdad y no se duplica como mensaje del Hilo.
+    if (interconsultaOperacionTablaExiste($mysqli, 'central_telefonica_solicitud_llamada')
+        && interconsultaOperacionColumnaExiste($mysqli, 'central_telefonica_solicitud_llamada', 'cod_interConsultaFK')) {
+        $stmt = $mysqli->prepare("SELECT s.id_solicitud,s.estado,s.mensaje,s.origen_solicitud,"
+            ."s.cod_usuarioFK,s.fecha_solicitud,s.fecha_fin,s.linkedid,"
+            ."IFNULL(p.nombre_persona,'Usuario de Telar') nombre_usuario,IFNULL(u.url,'') url_usuario,"
+            ."IFNULL(l.id_llamada,0) id_llamada,IFNULL(l.estado,'') estado_cdr,"
+            ."IFNULL(l.fecha_inicio,'') fecha_llamada,IFNULL(l.duracion_seg,0) duracion_seg,"
+            ."IFNULL(l.hablado_seg,0) hablado_seg "
+            ."FROM central_telefonica_solicitud_llamada s "
+            ."LEFT JOIN persona p ON p.cod_persona=s.cod_usuarioFK "
+            ."LEFT JOIN usuario u ON u.cod_usuario=s.cod_usuarioFK "
+            ."LEFT JOIN central_telefonica_llamada l ON l.id_llamada=(SELECT MAX(l2.id_llamada) "
+            ."FROM central_telefonica_llamada l2 WHERE s.linkedid<>'' AND l2.cdr_linkedid=s.linkedid) "
+            ."WHERE s.cod_interConsultaFK=? ORDER BY s.fecha_solicitud,s.id_solicitud");
+        if ($stmt) {
+            $stmt->bind_param('i', $codInterConsulta);
+            if ($stmt->execute()) {
+                $resultado = $stmt->get_result();
+                while ($fila = $resultado->fetch_assoc()) {
+                    $id = intval($fila['id_solicitud']);
+                    $fechaRegistro = (string)$fila['fecha_solicitud'];
+                    $items[] = array(
+                        'tipo' => 'llamada',
+                        'id' => $id,
+                        'fecha_registro' => $fechaRegistro,
+                        'fecha_evento' => $fila['fecha_llamada'] !== '' ? (string)$fila['fecha_llamada'] : $fechaRegistro,
+                        'orden_estable' => sprintf('%010d-l-%010d', interconsultaOperacionFechaOrden($fechaRegistro), $id),
+                        'es_legacy' => 0,
+                        'precision_fecha_registro' => 'exacta',
+                        'datos' => array(
+                            'fuente' => 'telar',
+                            'direccion' => 'saliente',
+                            'estado' => $fila['estado_cdr'] !== '' ? interconsultaOperacionUtf8($fila['estado_cdr']) : interconsultaOperacionUtf8($fila['estado']),
+                            'mensaje' => interconsultaOperacionUtf8($fila['mensaje']),
+                            'origen_solicitud' => interconsultaOperacionUtf8($fila['origen_solicitud']),
+                            'cod_usuario' => intval($fila['cod_usuarioFK']),
+                            'nombre_usuario' => interconsultaOperacionUtf8($fila['nombre_usuario']),
+                            'url_usuario' => interconsultaOperacionUtf8($fila['url_usuario']),
+                            'duracion_seg' => intval($fila['duracion_seg']),
+                            'hablado_seg' => intval($fila['hablado_seg'])
+                        )
+                    );
+                }
+            }
+            $stmt->close();
+        }
+    }
+    if (count($relacion['pacientes']) > 0
+        && interconsultaOperacionTablaExiste($mysqli, 'central_telefonica_paciente_telefono')
+        && interconsultaOperacionTablaExiste($mysqli, 'central_telefonica_llamada')) {
+        $idsPacientes = array_values(array_unique(array_map('intval', $relacion['pacientes'])));
+        $sqlTelefonos = "SELECT DISTINCT ct.telefono_normalizado FROM central_telefonica_paciente_telefono ct "
+            ."WHERE ct.activo=1 AND ct.cod_clienteFK IN (".implode(',', $idsPacientes).") "
+            ."AND 1=(SELECT COUNT(DISTINCT otro.cod_clienteFK) FROM central_telefonica_paciente_telefono otro "
+            ."WHERE otro.activo=1 AND otro.telefono_normalizado=ct.telefono_normalizado)";
+        $resultadoTelefonos = $mysqli->query($sqlTelefonos);
+        $telefonos = array();
+        while ($resultadoTelefonos && ($filaTelefono = $resultadoTelefonos->fetch_assoc())) {
+            $telefono = trim((string)$filaTelefono['telefono_normalizado']);
+            if ($telefono !== '') { $telefonos[] = "'".$mysqli->real_escape_string($telefono)."'"; }
+        }
+        if ($telefonos) {
+            $condicionSolicitud = interconsultaOperacionTablaExiste($mysqli, 'central_telefonica_solicitud_llamada')
+                ? "AND NOT EXISTS(SELECT 1 FROM central_telefonica_solicitud_llamada sx "
+                    ."WHERE (sx.linkedid<>'' AND sx.linkedid=l.cdr_linkedid) "
+                    ."OR (sx.cod_clienteFK IN (".implode(',', $idsPacientes).") "
+                    ."AND ABS(TIMESTAMPDIFF(SECOND,sx.fecha_solicitud,l.fecha_inicio))<=600)) "
+                : '';
+            $sqlLlamadas = "SELECT l.id_llamada,l.fecha_inicio,l.tipo,l.estado,l.duracion_seg,l.hablado_seg,"
+                ."IFNULL(l.funcionario_cod_usuario,0) cod_usuario,IFNULL(l.funcionario_nombre,'') nombre_usuario,"
+                ."IFNULL(u.url,'') url_usuario FROM central_telefonica_llamada l "
+                ."LEFT JOIN usuario u ON u.cod_usuario=l.funcionario_cod_usuario "
+                ."WHERE ((l.tipo='entrante_externa' AND l.origen_normalizado IN (".implode(',', $telefonos).")) "
+                ."OR (l.tipo='saliente_externa' AND l.destino_normalizado IN (".implode(',', $telefonos)."))) "
+                .$condicionSolicitud." ORDER BY l.fecha_inicio,l.id_llamada";
+            $resultadoLlamadas = $mysqli->query($sqlLlamadas);
+            while ($resultadoLlamadas && ($fila = $resultadoLlamadas->fetch_assoc())) {
+                $id = intval($fila['id_llamada']);
+                $fechaRegistro = (string)$fila['fecha_inicio'];
+                $items[] = array(
+                    'tipo' => 'llamada',
+                    'id' => $id,
+                    'fecha_registro' => $fechaRegistro,
+                    'fecha_evento' => $fechaRegistro,
+                    'orden_estable' => sprintf('%010d-c-%010d', interconsultaOperacionFechaOrden($fechaRegistro), $id),
+                    'es_legacy' => 0,
+                    'precision_fecha_registro' => 'exacta',
+                    'datos' => array(
+                        'fuente' => 'cdr',
+                        'direccion' => $fila['tipo'] === 'entrante_externa' ? 'entrante' : 'saliente',
+                        'estado' => interconsultaOperacionUtf8($fila['estado']),
+                        'mensaje' => '',
+                        'origen_solicitud' => 'microsip',
+                        'cod_usuario' => intval($fila['cod_usuario']),
+                        'nombre_usuario' => interconsultaOperacionUtf8($fila['nombre_usuario']),
+                        'url_usuario' => interconsultaOperacionUtf8($fila['url_usuario']),
+                        'duracion_seg' => intval($fila['duracion_seg']),
+                        'hablado_seg' => intval($fila['hablado_seg'])
+                    )
+                );
+            }
+        }
+    }
     $condicionesAgenda = array();
     if (count($relacion['ventas']) > 0) {
         $condicionesAgenda[] = 'ag.cod_ventaFK IN ('.implode(',', array_map('intval', $relacion['ventas'])).')';

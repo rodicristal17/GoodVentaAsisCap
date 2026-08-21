@@ -108,6 +108,53 @@ try {
                 200
             );
             break;
+        case 'obtener_paciente':
+            $codCliente = intval(centralTelefonicaOperacionParametro('cod_cliente', 0));
+            $paciente = centralTelefonicaOperacionPaciente($mysqli, $codCliente, false);
+            if (!$paciente) {
+                centralTelefonicaOperacionLanzar(
+                    'paciente_no_disponible',
+                    'No se encontro el paciente seleccionado.'
+                );
+            }
+            centralTelefonicaOperacionResponder(
+                true,
+                'paciente_obtenido',
+                'Paciente y telefonos obtenidos.',
+                array('paciente' => $paciente),
+                200
+            );
+            break;
+        case 'resolver_hilo_paciente':
+            $codCliente = intval(centralTelefonicaOperacionParametro('cod_cliente', 0));
+            $paciente = centralTelefonicaOperacionPaciente($mysqli, $codCliente, false);
+            if (!$paciente) {
+                centralTelefonicaOperacionLanzar(
+                    'paciente_no_disponible',
+                    'No se encontro el paciente seleccionado.'
+                );
+            }
+            $hilo = centralTelefonicaOperacionResolverHiloPaciente(
+                $mysqli,
+                $codCliente,
+                intval($contexto['cod_usuario']),
+                intval(centralTelefonicaOperacionParametro('cod_interconsulta', 0)),
+                true
+            );
+            if (!$hilo) {
+                centralTelefonicaOperacionLanzar(
+                    'hilo_no_disponible',
+                    'El paciente no tiene una venta desde la cual preparar su Hilo.'
+                );
+            }
+            centralTelefonicaOperacionResponder(
+                true,
+                'hilo_resuelto',
+                'Hilo del paciente localizado.',
+                array('hilo' => $hilo),
+                200
+            );
+            break;
         case 'solicitar_llamada':
             centralTelefonicaOperacionResponder(
                 true,

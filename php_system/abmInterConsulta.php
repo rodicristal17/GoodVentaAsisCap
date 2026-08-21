@@ -2509,6 +2509,40 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             .'<aside class="interconsulta-followup-card__aside"><span class="interconsulta-followup-status interconsulta-followup-status--cita">'.escaparHtmlInterconsulta($estado).'</span></aside></article>';
     }
 
+    function obtenerVistaTarjetaLlamadaTimelineInterConsulta($item) {
+        $datos= isset($item['datos']) && is_array($item['datos']) ? $item['datos'] : array();
+        $direccion= isset($datos['direccion']) && $datos['direccion'] === 'entrante' ? 'entrante' : 'saliente';
+        $estado= strtolower(trim((string)(isset($datos['estado']) ? $datos['estado'] : 'detectada')));
+        $etiquetas= array(
+            'contestada' => 'Contestada', 'finalizada' => 'Finalizada', 'conectada' => 'Conectada',
+            'no_contestada' => 'No contestada', 'ocupada' => 'Ocupada', 'error' => 'Error',
+            'pendiente' => 'Pendiente', 'solicitada' => 'Solicitada', 'detectada' => 'Detectada'
+        );
+        $estadoEtiqueta= isset($etiquetas[$estado]) ? $etiquetas[$estado] : ($estado !== '' ? ucfirst(str_replace('_', ' ', $estado)) : 'Registrada');
+        $nombre= trim((string)(isset($datos['nombre_usuario']) ? $datos['nombre_usuario'] : ''));
+        if ($nombre === '') { $nombre= $direccion === 'entrante' ? 'Llamada entrante' : 'Usuario no identificado'; }
+        $url= trim((string)(isset($datos['url_usuario']) ? $datos['url_usuario'] : ''));
+        if ($url === '') { $url= '/GoodVentaAsisCap/iconos/user.png'; }
+        $duracion= intval(isset($datos['duracion_seg']) ? $datos['duracion_seg'] : 0);
+        $hablado= intval(isset($datos['hablado_seg']) ? $datos['hablado_seg'] : 0);
+        $formatear= function ($segundos) {
+            $segundos= max(0, intval($segundos));
+            return sprintf('%02d:%02d', floor($segundos / 60), $segundos % 60);
+        };
+        $fecha= !empty($item['fecha_evento']) && strtotime($item['fecha_evento'])
+            ? date('d/m/Y H:i', strtotime($item['fecha_evento'])) : (string)$item['fecha_evento'];
+        $titulo= $direccion === 'entrante' ? 'Llamada entrante' : 'Llamada realizada';
+        $origen= isset($datos['origen_solicitud']) && $datos['origen_solicitud'] === 'microsip'
+            ? 'Registrada automaticamente desde MicroSIP' : 'Iniciada desde Telar';
+        return '<article id="llamadaInterConsulta-'.intval($item['id']).'" class="interconsulta-call-timeline-card interconsulta-call-timeline-card--'.escaparHtmlInterconsulta($estado).'">'
+            .'<span class="interconsulta-call-timeline-card__avatar"><img src="'.escaparHtmlInterconsulta($url).'" alt="Foto de '.escaparHtmlInterconsulta($nombre).'" onerror="this.onerror=null;this.src=\'/GoodVentaAsisCap/iconos/user.png\';"></span>'
+            .'<div class="interconsulta-call-timeline-card__body"><header><span><i class="fa-solid '.($direccion === 'entrante' ? 'fa-arrow-down' : 'fa-arrow-up').'" aria-hidden="true"></i> '.escaparHtmlInterconsulta($titulo).'</span><strong>'.escaparHtmlInterconsulta($estadoEtiqueta).'</strong></header>'
+            .'<h4>'.escaparHtmlInterconsulta($nombre).'</h4><div><span><i class="fa-regular fa-calendar"></i>'.escaparHtmlInterconsulta($fecha).'</span>'
+            .'<span><i class="fa-regular fa-clock"></i>Duracion '.$formatear($duracion).'</span>'
+            .'<span><i class="fa-solid fa-comment-dots"></i>Conversacion '.$formatear($hablado).'</span></div>'
+            .'<small>'.escaparHtmlInterconsulta($origen).'. Un solo evento se actualiza con el resultado del CDR.</small></div></article>';
+    }
+
     function obtenerVistaTimelineUnificadoInterConsulta($codInterConsulta, $codUsuario, $limite, $offset= 0, $usuarios= null) {
         $resultado= buscarTimelineUnificadoInterConsulta($codInterConsulta, $codUsuario, $limite, $offset);
         if (empty($resultado['ok'])) {
@@ -2562,6 +2596,8 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 $html.= obtenerVistaTarjetaSeguimientoTimelineInterConsulta($seguimientoTimeline, $codInterConsulta, $codUsuario);
             } else if ($item['tipo'] === 'cita') {
                 $html.= obtenerVistaTarjetaCitaTimelineInterConsulta($item);
+            } else if ($item['tipo'] === 'llamada') {
+                $html.= obtenerVistaTarjetaLlamadaTimelineInterConsulta($item);
             } else if ($item['tipo'] === 'asistencia') {
                 $datosAsistencia= isset($item['datos']) && is_array($item['datos']) ? $item['datos'] : array();
                 $eventoAsistencia= isset($datosAsistencia['evento']) && $datosAsistencia['evento'] === 'salida' ? 'salida' : 'entrada';
@@ -4004,9 +4040,12 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
 
     function enriquecerVisualListadoHilosInterConsulta($registros, $codUsuario) {
         $ids= array();
+        $clientes= array();
         foreach ((array)$registros as $registro) {
             $id= intval(isset($registro['cod_interConsulta']) ? $registro['cod_interConsulta'] : 0);
             if ($id > 0) { $ids[]= $id; }
+            $cliente= intval(isset($registro['cod_clienteFK']) ? $registro['cod_clienteFK'] : 0);
+            if ($cliente > 0) { $clientes[$cliente]= true; }
         }
         if (count($ids) === 0) { return $registros; }
         $mysqli= conectar_al_servidor();
@@ -4015,6 +4054,18 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         $conteosLectura= interconsultaLecturasEstructuraDisponible($mysqli)
             ? interconsultaLecturasNoLeidosHilos($ids, intval($codUsuario), $mysqli)
             : array();
+        $telefonosPorCliente= array();
+        if ($clientes && function_exists('interconsultaOperacionTablaExiste')
+            && interconsultaOperacionTablaExiste($mysqli, 'central_telefonica_paciente_telefono')) {
+            $resultadoTelefonos= $mysqli->query(
+                "SELECT cod_clienteFK,COUNT(DISTINCT telefono_normalizado) total "
+                ."FROM central_telefonica_paciente_telefono WHERE activo=1 AND cod_clienteFK IN ("
+                .implode(',', array_map('intval', array_keys($clientes))).") GROUP BY cod_clienteFK"
+            );
+            while ($resultadoTelefonos && ($filaTelefono= $resultadoTelefonos->fetch_assoc())) {
+                $telefonosPorCliente[intval($filaTelefono['cod_clienteFK'])]= intval($filaTelefono['total']);
+            }
+        }
         $mysqli->close();
         foreach ($registros as &$registro) {
             $id= intval(isset($registro['cod_interConsulta']) ? $registro['cod_interConsulta'] : 0);
@@ -4026,6 +4077,9 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 $registro['cantMensajesNoLeidosOtrosUsuarios']= 0;
             }
             $registro['esHiloColaborador']= isset($colaboradores[$id]) ? 1 : 0;
+            $cliente= intval(isset($registro['cod_clienteFK']) ? $registro['cod_clienteFK'] : 0);
+            $registro['telefonos_disponibles']= isset($telefonosPorCliente[$cliente])
+                ? intval($telefonosPorCliente[$cliente]) : 0;
             if (isset($colaboradores[$id])) {
                 $datos= $colaboradores[$id];
                 $registro['cod_funcionario']= intval($datos['cod_usuarioFK']);
@@ -4037,6 +4091,31 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
         }
         unset($registro);
         return $registros;
+    }
+
+    function renderEstadoCompactoListadoInterConsulta($estado) {
+        $estadoTexto= strtolower(trim((string)$estado));
+        $etiquetas= array(
+            'proceso' => 'En proceso',
+            'pendiente' => 'Pendiente',
+            'finalizado' => 'Finalizado',
+            'inactivo' => 'Inactivo'
+        );
+        $etiqueta= isset($etiquetas[$estadoTexto]) ? $etiquetas[$estadoTexto] : ($estadoTexto !== '' ? ucfirst($estadoTexto) : 'Sin estado');
+        $clase= preg_replace('/[^a-z0-9_-]/', '', $estadoTexto);
+        return '<span class="interconsulta-state-badge interconsulta-state-badge--'.htmlspecialchars($clase, ENT_QUOTES, 'UTF-8').'">'
+            .htmlspecialchars($etiqueta, ENT_QUOTES, 'UTF-8').'</span>';
+    }
+
+    function renderLlamarListadoInterConsulta($registro, $style= '') {
+        $cliente= intval(isset($registro['cod_clienteFK']) ? $registro['cod_clienteFK'] : 0);
+        $hilo= intval(isset($registro['cod_interConsulta']) ? $registro['cod_interConsulta'] : 0);
+        $cantidad= intval(isset($registro['telefonos_disponibles']) ? $registro['telefonos_disponibles'] : 0);
+        if ($cliente <= 0 || $cantidad <= 0) {
+            return '<td class="interconsulta-call-cell" style="'.$style.'"><button type="button" class="interconsulta-call-button interconsulta-call-button--disabled" disabled title="Este Hilo no tiene un paciente con telefono vigente"><i class="fa-solid fa-phone-slash"></i><span>Sin teléfono</span></button></td>';
+        }
+        $detalle= $cantidad > 1 ? $cantidad.' numeros disponibles' : 'Llamar al numero vigente';
+        return '<td class="interconsulta-call-cell" style="'.$style.'"><button type="button" class="interconsulta-call-button" data-hilo-action="llamar_paciente" data-cod-cliente="'.$cliente.'" data-cod-interconsulta="'.$hilo.'" title="'.htmlspecialchars($detalle, ENT_QUOTES, 'UTF-8').'"><i class="fa-solid fa-phone"></i><span>Llamar</span>'.($cantidad > 1 ? '<small>'.$cantidad.'</small>' : '').'</button></td>';
     }
 
     function renderCredencialColaboradorListadoInterConsulta($registro) {
@@ -4177,7 +4256,8 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             $badgePendiente= $esPendiente ? '<span class="interconsulta-pending-badge interconsulta-unread-count" title="'.intval($value['cantMensajesNoLeidos']).' mensaje(s) sin leer" aria-label="'.intval($value['cantMensajesNoLeidos']).' mensaje(s) sin leer">'.intval($value['cantMensajesNoLeidos']).'</span>' : '';
             $iconoVinculado= $esVinculado ? ' <i class="fa-solid fa-link interconsulta-linked-icon" title="Hilo vinculado" aria-hidden="true"></i>' : '';
             $credencialColaborador= renderCredencialColaboradorListadoInterConsulta($value);
-            $formatAsunto= '<div class="interconsulta-thread-main">'.$credencialColaborador.'<div class="interconsulta-subject-wrap"><div class="interconsulta-subject-line"><p class="interconsulta-subject-text interconsulta-subject-title">'.htmlspecialchars($asuntoVista, ENT_QUOTES, 'UTF-8').$iconoVinculado.'</p>'.$badgePendiente.'</div></div></div>';
+            $estadoCompacto= renderEstadoCompactoListadoInterConsulta($value['estado']);
+            $formatAsunto= '<div class="interconsulta-thread-main">'.$credencialColaborador.'<div class="interconsulta-subject-wrap"><div class="interconsulta-subject-line"><p class="interconsulta-subject-text interconsulta-subject-title">'.htmlspecialchars($asuntoVista, ENT_QUOTES, 'UTF-8').$iconoVinculado.'</p>'.$badgePendiente.$estadoCompacto.'</div></div></div>';
             $participantesHtml= isset($value['participantes_html']) ? $value['participantes_html'] : interconsultaRenderGrupoParticipantes(array(), 5);
             $placeholder= renderResumenSeguimientoInterConsulta('muted','Cargando','Información complementaria');
 
@@ -4202,7 +4282,8 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 '.$celdaGestion.'
                 <td id="td_datos_11" style="display:none;">'.$value['cod_localFK'].'</td>
                 <td id="td_datos_12" style="width:'.$anchoLocal.';">'.htmlspecialchars((string)$value['nombre_local'], ENT_QUOTES, 'UTF-8').'</td>
-                <td id="td_datos_2" style="width:'.$anchoEstado.';">'.htmlspecialchars((string)$value['estado'], ENT_QUOTES, 'UTF-8').'</td>
+                <td id="td_datos_2" style="display:none;">'.htmlspecialchars((string)$value['estado'], ENT_QUOTES, 'UTF-8').'</td>
+                '.renderLlamarListadoInterConsulta($value, 'width:'.$anchoEstado.';').'
                 <td class="interconsulta-participants-cell" style="width:'.$anchoTipo.';">'.$participantesHtml.'</td>
                 <td id="td_datos_6" style="display:none;">'.htmlspecialchars((string)$value['tipo'], ENT_QUOTES, 'UTF-8').'</td>
                 '.$columnasSeguimiento.'
@@ -4578,6 +4659,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 : '';
             $credencialColaborador= renderCredencialColaboradorListadoInterConsulta($value);
             $participantesHtml= isset($value['participantes_html']) ? $value['participantes_html'] : interconsultaRenderGrupoParticipantes(array(), 5);
+            $estadoCompacto= renderEstadoCompactoListadoInterConsulta($value['estado']);
             $formatAsunto= '<div class="interconsulta-thread-main">'.$credencialColaborador.'<div class="interconsulta-subject-wrap">'
                 .'<div class="interconsulta-subject-line">'
                 .'<p'.$claseHiloVinculado.$tituloHiloVinculado.' style="'.$colorText.'">'
@@ -4586,6 +4668,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                 .$contenidoAsuntoPendienteFin
                 .'</p>'
                 .$badgePendienteRespuesta
+                .$estadoCompacto
                 .'</div>'
                 .$lineaSeguimientoPaciente
                 .'</div></div>';
@@ -4615,7 +4698,8 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
                     '.$celdaGestionOPaciente.'
                     <td id="td_datos_11" style="display: none;'.$style.'">'.$value['cod_localFK'].'</td>
                     <td id="td_datos_12" style="width: '.$anchoLocal.';'.$style.'">'.$value['nombre_local'].'</td>
-                    <td id="td_datos_2" style="width: '.$anchoEstado.';'.$style.'">'.$value['estado'].'</td>
+                    <td id="td_datos_2" style="display: none;'.$style.'">'.$value['estado'].'</td>
+                    '.renderLlamarListadoInterConsulta($value, 'width: '.$anchoEstado.';'.$style).'
                     <td class="interconsulta-participants-cell" style="width: '.$anchoTipo.';'.$style.'">'.$participantesHtml.'</td>
                     <td id="td_datos_6" style="display: none;'.$style.'">'.$value['tipo'].'</td>
                     '.$columnasSeguimiento.'

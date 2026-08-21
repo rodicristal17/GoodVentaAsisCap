@@ -13,7 +13,8 @@
         seen: {},
         pollTimer: null,
         stopped: false,
-        historyAllowed: false
+        historyAllowed: false,
+        quickCallOptions: null
     };
 
     function escapeHtml(value) {
@@ -165,6 +166,153 @@
         element.textContent = text;
     }
 
+    function quickCallLayer() {
+        var layer = document.getElementById("centralTelefonicaQuickCallLayer");
+        if (layer) { return layer; }
+        layer = document.createElement("div");
+        layer.id = "centralTelefonicaQuickCallLayer";
+        layer.className = "central-telefonica-quick-call-layer";
+        layer.hidden = true;
+        layer.innerHTML = "<button type='button' class='central-telefonica-quick-call__backdrop' data-quick-call-action='close' aria-label='Cerrar'></button>"
+            + "<section class='central-telefonica-quick-call' role='dialog' aria-modal='true' aria-labelledby='centralTelefonicaQuickCallTitle'>"
+            + "<header><div><small>LLAMADA DESDE TELAR</small><h2 id='centralTelefonicaQuickCallTitle'>Llamar al paciente</h2></div><button type='button' data-quick-call-action='close' aria-label='Cerrar'><i class='fa-solid fa-xmark'></i></button></header>"
+            + "<div id='centralTelefonicaQuickCallBody' class='central-telefonica-quick-call__body'></div>"
+            + "<div id='centralTelefonicaQuickCallMessage' class='central-telefonica-quick-call__message' hidden></div>"
+            + "</section>";
+        layer.addEventListener("click", function (event) {
+            var button = event.target.closest ? event.target.closest("[data-quick-call-action]") : null;
+            var action;
+            if (!button) { return; }
+            action = button.getAttribute("data-quick-call-action");
+            if (action === "close") {
+                layer.hidden = true;
+                return;
+            }
+            if (action === "phone") {
+                requestCall({
+                    codCliente: button.getAttribute("data-client"),
+                    telefono: button.getAttribute("data-phone"),
+                    codHilo: state.quickCallOptions ? state.quickCallOptions.codHilo : 0,
+                    origen: state.quickCallOptions ? state.quickCallOptions.origen : "central_telefonica"
+                }, button).catch(function () {});
+            }
+        }, false);
+        document.body.appendChild(layer);
+        return layer;
+    }
+
+    function quickCallMessage(text, kind) {
+        var message = quickCallLayer().querySelector("#centralTelefonicaQuickCallMessage");
+        if (!message) { return; }
+        message.hidden = false;
+        message.className = "central-telefonica-quick-call__message central-telefonica-quick-call__message--" + (kind || "info");
+        message.textContent = text;
+    }
+
+    function quickCallPatientHtml(patient, selecting) {
+        var phones = patient.telefonos || [];
+        var html = "<div class='central-telefonica-quick-call__patient'><span><i class='fa-solid fa-user'></i></span><div><strong>" + escapeHtml(patient.nombre || "Paciente") + "</strong><small>Documento: " + escapeHtml(patient.documento || "Sin registrar") + "</small></div></div>";
+        if (selecting) {
+            html += "<p>Este paciente tiene varios números. Elegí cuál corresponde a esta llamada.</p><div class='central-telefonica-quick-call__phones'>";
+            phones.forEach(function (phone) {
+                html += "<button type='button' data-quick-call-action='phone' data-client='" + escapeHtml(patient.cod_cliente) + "' data-phone='" + escapeHtml(phone.numero) + "'><i class='fa-solid fa-phone'></i><span><small>" + escapeHtml(sourceLabel(phone.fuente)) + "</small><strong>" + escapeHtml(phone.numero) + "</strong></span></button>";
+            });
+            html += "</div>";
+        } else {
+            html += "<p>Telar está preparando la llamada. Cuando suene, atendé tu MicroSIP para comunicarte con el paciente.</p>";
+        }
+        return html;
+    }
+
+    function requestCall(options, button) {
+        var layer = quickCallLayer();
+        var payload = {
+            cod_cliente: options.codCliente,
+            telefono: options.telefono,
+            cod_interconsulta: options.codHilo || 0,
+            origen: options.origen || "central_telefonica"
+        };
+        if (button) { button.disabled = true; }
+        layer.hidden = false;
+        quickCallMessage("Enviando la solicitud a Issabel…", "info");
+        return request("solicitar_llamada", payload).then(function (data) {
+            quickCallMessage(data.mensaje || "Solicitud enviada. Atienda su MicroSIP.", "ok");
+            pollNow();
+            return data;
+        }).catch(function (error) {
+            quickCallMessage(error.message, "error");
+            if (button) { button.disabled = false; }
+            throw error;
+        });
+    }
+
+    function quickCallPatient(options) {
+        var codCliente = Number(options && options.codCliente || 0);
+        var layer = quickCallLayer();
+        var body = layer.querySelector("#centralTelefonicaQuickCallBody");
+        var message = layer.querySelector("#centralTelefonicaQuickCallMessage");
+        if (codCliente <= 0) { return; }
+        state.quickCallOptions = {
+            codHilo: Number(options.codHilo || 0),
+            origen: options.origen || "central_telefonica"
+        };
+        layer.hidden = false;
+        body.innerHTML = "<div class='central-telefonica-quick-call__loading'><i class='fa-solid fa-circle-notch fa-spin'></i><span>Consultando teléfonos vigentes…</span></div>";
+        message.hidden = true;
+        request("obtener_paciente", { cod_cliente: codCliente }).then(function (data) {
+            var patient = data.paciente || {};
+            var phones = patient.telefonos || [];
+            if (!phones.length) {
+                body.innerHTML = quickCallPatientHtml(patient, false);
+                quickCallMessage("El paciente no tiene un teléfono vigente registrado.", "warning");
+                return;
+            }
+            body.innerHTML = quickCallPatientHtml(patient, phones.length > 1);
+            if (phones.length === 1) {
+                requestCall({
+                    codCliente: patient.cod_cliente,
+                    telefono: phones[0].numero,
+                    codHilo: state.quickCallOptions.codHilo,
+                    origen: state.quickCallOptions.origen
+                }).catch(function () {});
+            } else {
+                quickCallMessage("Seleccioná el número que querés llamar.", "info");
+            }
+        }).catch(function (error) {
+            body.innerHTML = "";
+            quickCallMessage(error.message, "error");
+        });
+    }
+
+    function openPatientThread(codCliente, codHilo) {
+        request("resolver_hilo_paciente", {
+            cod_cliente: codCliente,
+            cod_interconsulta: codHilo || 0
+        }).then(function (data) {
+            var hilo = data.hilo || {};
+            var id = Number(hilo.cod_interconsulta || 0);
+            if (!id) { throw new Error("No se pudo localizar el Hilo del paciente."); }
+            if (typeof window.cerrarCentralTelefonica === "function") { window.cerrarCentralTelefonica(); }
+            if (typeof window.seleccionarCategoriaHilosInterConsulta === "function") {
+                window.seleccionarCategoriaHilosInterConsulta(hilo.categoria || "administrativo_clinico", false);
+            }
+            if (typeof window.verCerrarVentanaListadoInterConsulta === "function") {
+                window.verCerrarVentanaListadoInterConsulta(true);
+            }
+            window.setTimeout(function () {
+                if (typeof window.limpiarCamposDetallesInterConsulta === "function") { window.limpiarCamposDetallesInterConsulta(); }
+                if (typeof window.buscarInterConsultasYContenido === "function") { window.buscarInterConsultasYContenido(id); }
+                if (typeof window.verCerrarVentanaDetalleInterConsulta === "function") {
+                    window.verCerrarVentanaDetalleInterConsulta(true, "divListadoInterConsulta");
+                }
+            }, 200);
+        }).catch(function (error) {
+            if (typeof window.ver_vetana_informativa === "function") {
+                window.ver_vetana_informativa("No se pudo abrir el Hilo", error.message, "info");
+            }
+        });
+    }
+
     function searchPatients() {
         var input = state.root ? state.root.querySelector("#centralTelefonicaPatientQuery") : null;
         var value = input ? input.value.trim() : "";
@@ -218,17 +366,16 @@
 
     function placeCall(button) {
         if (!button || button.disabled) { return; }
-        button.disabled = true;
         operationMessage("Enviando la solicitud a Issabel…", "info");
-        request("solicitar_llamada", {
-            cod_cliente: button.getAttribute("data-client"),
-            telefono: button.getAttribute("data-phone")
-        }).then(function (data) {
+        requestCall({
+            codCliente: button.getAttribute("data-client"),
+            telefono: button.getAttribute("data-phone"),
+            codHilo: 0,
+            origen: "central_telefonica"
+        }, button).then(function (data) {
             operationMessage(data.mensaje || "Solicitud enviada. Atienda su MicroSIP.", "ok");
-            pollNow();
         }).catch(function (error) {
             operationMessage(error.message, "error");
-            button.disabled = false;
         });
     }
 
@@ -352,6 +499,8 @@
 
     window.centralTelefonicaNivel1Montar = mount;
     window.centralTelefonicaNivel1Actualizar = pollNow;
+    window.centralTelefonicaLlamarPaciente = quickCallPatient;
+    window.centralTelefonicaAbrirHiloPaciente = openPatientThread;
 
     function start() { schedulePoll(800); }
     if (document.readyState === "loading") {

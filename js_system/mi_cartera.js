@@ -173,7 +173,7 @@
             + "<div class='mi-cartera-toolbar__actions'><button id='miCarteraDistributeButton' type='button' class='mi-cartera-btn mi-cartera-btn--primary' data-cartera-action='preview-distribution' hidden><i class='fa-solid fa-diagram-project'></i><span>Repartir cartera</span></button></div>"
             + "</section>"
             + "<section class='mi-cartera-filters'>"
-            + "<label class='mi-cartera-search'><i class='fa-solid fa-magnifying-glass'></i><input id='miCarteraSearch' type='search' placeholder='Buscar paciente, cédula o código' autocomplete='off'></label>"
+            + "<label class='mi-cartera-search'><i class='fa-solid fa-magnifying-glass'></i><input id='miCarteraSearch' type='search' placeholder='Buscar paciente, cédula, código o teléfono' autocomplete='off'></label>"
             + "<label><span>Estado</span><select id='miCarteraStateFilter'><option value=''>Todos</option><option value='preventivo'>Por vencer</option><option value='vencido'>Vencido</option><option value='urgente'>Urgente</option><option value='pagado'>Pago confirmado</option></select></label>"
             + "<label><span>Local de origen</span><select id='miCarteraLocalFilter'><option value='0'>Todos</option></select></label>"
             + "<label data-supervisor-only hidden><span>Responsable</span><select id='miCarteraResponsibleFilter'><option value='0'>Todos</option></select></label>"
@@ -471,7 +471,11 @@
         }
         button.disabled = true;
         inlineMessage(button, "Enviando la llamada a su MicroSIP…", "info");
-        phoneRequest("solicitar_llamada", { cod_cliente: client, telefono: phone }).then(function (data) {
+        phoneRequest("solicitar_llamada", {
+            cod_cliente: client,
+            telefono: phone,
+            origen: "mi_cartera"
+        }).then(function (data) {
             state.pendingCalls[assignment] = data.id_solicitud || 0;
             inlineMessage(button, data.mensaje || "Atienda su MicroSIP para continuar.", "success");
             button.disabled = false;

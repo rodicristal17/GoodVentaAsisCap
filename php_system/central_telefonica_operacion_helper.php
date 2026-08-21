@@ -9,6 +9,7 @@
 
 require_once __DIR__.'/central_telefonica_helper.php';
 require_once __DIR__.'/central_telefonica_directorio_helper.php';
+require_once __DIR__.'/interconsulta_seguimiento_paciente_helper.php';
 
 class CentralTelefonicaOperacionExcepcion extends Exception
 {
@@ -51,6 +52,174 @@ function centralTelefonicaOperacionTexto($valor, $maximo)
         $valor = mb_substr($valor, 0, $maximo, 'UTF-8');
     }
     return $valor;
+}
+
+function centralTelefonicaOperacionColumnaExiste($mysqli, $tabla, $columna)
+{
+    $tabla = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$tabla);
+    $columna = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$columna);
+    if ($tabla === '' || $columna === '') {
+        return false;
+    }
+    $stmt = $mysqli->prepare(
+        "SELECT COUNT(*) total FROM information_schema.columns "
+        ."WHERE table_schema=DATABASE() AND table_name=? AND column_name=?"
+    );
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('ss', $tabla, $columna);
+    $fila = null;
+    if ($stmt->execute()) {
+        $resultado = $stmt->get_result();
+        $fila = $resultado ? $resultado->fetch_assoc() : null;
+    }
+    $stmt->close();
+    return $fila && intval($fila['total']) > 0;
+}
+
+function centralTelefonicaOperacionCategoriaHilo($tipo)
+{
+    $tipo = strtolower(trim((string)$tipo));
+    $tipo = preg_replace('/[^a-z0-9]+/', '_', $tipo);
+    $tipo = trim($tipo, '_');
+    if (in_array($tipo, array('pagos_egresos','pagos','pago','compras','compra','egresos','egreso','colaborador','rrhh'), true)) {
+        return 'pagos_egresos';
+    }
+    if (in_array($tipo, array('judicial','judiciales'), true)) {
+        return 'judiciales';
+    }
+    return 'administrativo_clinico';
+}
+
+function centralTelefonicaOperacionHiloPaciente($mysqli, $codHilo, $codCliente)
+{
+    $codHilo = intval($codHilo);
+    $codCliente = intval($codCliente);
+    if ($codHilo <= 0 || $codCliente <= 0) {
+        return null;
+    }
+    $stmt = $mysqli->prepare(
+        "SELECT ic.cod_interConsulta,IFNULL(ic.tipo,'') tipo "
+        ."FROM interconsulta ic "
+        ."LEFT JOIN venta vt ON vt.cod_venta=ic.cod_ventaFK "
+        ."LEFT JOIN interconsulta_paciente ip ON ip.cod_interConsultaFK=ic.cod_interConsulta AND ip.estado='activo' "
+        ."WHERE ic.cod_interConsulta=? AND (vt.cod_clienteFK=? OR ip.cod_clienteFK_principal=? "
+        ."OR EXISTS(SELECT 1 FROM interconsulta_paciente_venta ipv "
+        ."WHERE ipv.cod_interConsultaFK=ic.cod_interConsulta AND ipv.cod_clienteFK=? AND ipv.estado='activo')) "
+        ."LIMIT 1"
+    );
+    if (!$stmt) {
+        return null;
+    }
+    $stmt->bind_param('iiii', $codHilo, $codCliente, $codCliente, $codCliente);
+    $fila = null;
+    if ($stmt->execute()) {
+        $resultado = $stmt->get_result();
+        $fila = $resultado ? $resultado->fetch_assoc() : null;
+    }
+    $stmt->close();
+    if (!$fila) {
+        return null;
+    }
+    return array(
+        'cod_interconsulta' => intval($fila['cod_interConsulta']),
+        'categoria' => centralTelefonicaOperacionCategoriaHilo($fila['tipo']),
+        'creado' => 0
+    );
+}
+
+function centralTelefonicaOperacionBuscarHiloPaciente($mysqli, $codCliente)
+{
+    $codCliente = intval($codCliente);
+    if ($codCliente <= 0) {
+        return null;
+    }
+    $stmt = $mysqli->prepare(
+        "SELECT ic.cod_interConsulta,IFNULL(ic.tipo,'') tipo "
+        ."FROM interconsulta ic "
+        ."WHERE EXISTS(SELECT 1 FROM interconsulta_paciente ip "
+        ."WHERE ip.cod_interConsultaFK=ic.cod_interConsulta AND ip.cod_clienteFK_principal=? AND ip.estado='activo') "
+        ."OR EXISTS(SELECT 1 FROM interconsulta_paciente_venta ipv "
+        ."WHERE ipv.cod_interConsultaFK=ic.cod_interConsulta AND ipv.cod_clienteFK=? AND ipv.estado='activo') "
+        ."ORDER BY CASE WHEN IFNULL(ic.estado,'') IN ('proceso','pendiente') THEN 0 ELSE 1 END,ic.cod_interConsulta DESC LIMIT 1"
+    );
+    if (!$stmt) {
+        return null;
+    }
+    $stmt->bind_param('ii', $codCliente, $codCliente);
+    $fila = null;
+    if ($stmt->execute()) {
+        $resultado = $stmt->get_result();
+        $fila = $resultado ? $resultado->fetch_assoc() : null;
+    }
+    $stmt->close();
+    if (!$fila) {
+        return null;
+    }
+    return array(
+        'cod_interconsulta' => intval($fila['cod_interConsulta']),
+        'categoria' => centralTelefonicaOperacionCategoriaHilo($fila['tipo']),
+        'creado' => 0
+    );
+}
+
+function centralTelefonicaOperacionResolverHiloPaciente($mysqli, $codCliente, $codUsuario, $codHiloPreferido, $crear)
+{
+    $codCliente = intval($codCliente);
+    $codUsuario = intval($codUsuario);
+    $codHiloPreferido = intval($codHiloPreferido);
+    if ($codHiloPreferido > 0) {
+        $hilo = centralTelefonicaOperacionHiloPaciente($mysqli, $codHiloPreferido, $codCliente);
+        if (!$hilo) {
+            centralTelefonicaOperacionLanzar(
+                'hilo_paciente_invalido',
+                'El Hilo seleccionado ya no corresponde al paciente de la llamada.'
+            );
+        }
+        return $hilo;
+    }
+    $hilo = centralTelefonicaOperacionBuscarHiloPaciente($mysqli, $codCliente);
+    if ($hilo || !$crear) {
+        return $hilo;
+    }
+    $stmt = $mysqli->prepare(
+        "SELECT vt.cod_venta FROM venta vt "
+        ."WHERE vt.cod_clienteFK=? AND vt.cod_clienteFK<>7 "
+        ."AND IFNULL((SELECT COUNT(*) FROM cancelaciones ca WHERE ca.cod_venta=vt.cod_venta LIMIT 1),0)=0 "
+        ."ORDER BY vt.cod_venta DESC LIMIT 1"
+    );
+    if (!$stmt) {
+        return null;
+    }
+    $stmt->bind_param('i', $codCliente);
+    $fila = null;
+    if ($stmt->execute()) {
+        $resultado = $stmt->get_result();
+        $fila = $resultado ? $resultado->fetch_assoc() : null;
+    }
+    $stmt->close();
+    if (!$fila || intval($fila['cod_venta']) <= 0) {
+        return null;
+    }
+    $asegurado = seguimientoPacienteAsegurarHiloPorVentaConConexion(
+        $mysqli,
+        intval($fila['cod_venta']),
+        $codUsuario,
+        'central_telefonica'
+    );
+    if (empty($asegurado['ok']) || intval($asegurado['cod_interConsulta']) <= 0) {
+        return null;
+    }
+    $hilo = centralTelefonicaOperacionHiloPaciente(
+        $mysqli,
+        intval($asegurado['cod_interConsulta']),
+        $codCliente
+    );
+    if ($hilo) {
+        $hilo['creado'] = !empty($asegurado['creado']) ? 1 : 0;
+    }
+    return $hilo;
 }
 
 function centralTelefonicaOperacionContextoUsuario($mysqli, $codUsuario)
@@ -417,31 +586,83 @@ function centralTelefonicaOperacionSolicitarLlamada($mysqli, $contexto, $entrada
         );
     }
 
+    $origen = centralTelefonicaOperacionTexto(
+        isset($entrada['origen']) ? $entrada['origen'] : 'central_telefonica',
+        30
+    );
+    if (!in_array($origen, array('central_telefonica','mi_cartera','hilos'), true)) {
+        $origen = 'central_telefonica';
+    }
+    $codHiloPreferido = intval(isset($entrada['cod_interconsulta']) ? $entrada['cod_interconsulta'] : 0);
+    $hilo = centralTelefonicaOperacionResolverHiloPaciente(
+        $mysqli,
+        $codCliente,
+        $usuario,
+        $codHiloPreferido,
+        true
+    );
+    $codHilo = $hilo ? intval($hilo['cod_interconsulta']) : 0;
+
     $token = centralTelefonicaOperacionToken();
     $extension = (string)$contexto['extension'];
     $estado = 'pendiente';
     $mensaje = 'Solicitud recibida. En instantes sonara su MicroSIP.';
     $ip = centralTelefonicaOperacionTexto($ip, 45);
-    $stmt = $mysqli->prepare(
-        "INSERT INTO central_telefonica_solicitud_llamada "
-        ."(token,cod_usuarioFK,cod_clienteFK,extension,telefono_normalizado,estado,mensaje,"
-        ."ip_solicitud,fecha_solicitud,fecha_actualizacion) "
-        ."VALUES (?,?,?,?,?,?,?,?,NOW(),NOW())"
+    $vinculoHiloDisponible = centralTelefonicaOperacionColumnaExiste(
+        $mysqli,
+        'central_telefonica_solicitud_llamada',
+        'cod_interConsultaFK'
+    ) && centralTelefonicaOperacionColumnaExiste(
+        $mysqli,
+        'central_telefonica_solicitud_llamada',
+        'origen_solicitud'
     );
+    if ($vinculoHiloDisponible) {
+        $stmt = $mysqli->prepare(
+            "INSERT INTO central_telefonica_solicitud_llamada "
+            ."(token,cod_usuarioFK,cod_clienteFK,cod_interConsultaFK,origen_solicitud,"
+            ."extension,telefono_normalizado,estado,mensaje,ip_solicitud,fecha_solicitud,fecha_actualizacion) "
+            ."VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),NOW())"
+        );
+    } else {
+        $stmt = $mysqli->prepare(
+            "INSERT INTO central_telefonica_solicitud_llamada "
+            ."(token,cod_usuarioFK,cod_clienteFK,extension,telefono_normalizado,estado,mensaje,"
+            ."ip_solicitud,fecha_solicitud,fecha_actualizacion) "
+            ."VALUES (?,?,?,?,?,?,?,?,NOW(),NOW())"
+        );
+    }
     if (!$stmt) {
         centralTelefonicaOperacionLanzar('solicitud_no_disponible', 'No se pudo preparar la llamada.');
     }
-    $stmt->bind_param(
-        'siisssss',
-        $token,
-        $usuario,
-        $codCliente,
-        $extension,
-        $telefono,
-        $estado,
-        $mensaje,
-        $ip
-    );
+    if ($vinculoHiloDisponible) {
+        $codHiloDb = $codHilo > 0 ? $codHilo : null;
+        $stmt->bind_param(
+            'siiissssss',
+            $token,
+            $usuario,
+            $codCliente,
+            $codHiloDb,
+            $origen,
+            $extension,
+            $telefono,
+            $estado,
+            $mensaje,
+            $ip
+        );
+    } else {
+        $stmt->bind_param(
+            'siisssss',
+            $token,
+            $usuario,
+            $codCliente,
+            $extension,
+            $telefono,
+            $estado,
+            $mensaje,
+            $ip
+        );
+    }
     if (!$stmt->execute()) {
         $stmt->close();
         centralTelefonicaOperacionLanzar('solicitud_no_disponible', 'No se pudo guardar la solicitud de llamada.');
@@ -458,14 +679,16 @@ function centralTelefonicaOperacionSolicitarLlamada($mysqli, $contexto, $entrada
         $extension,
         $usuario,
         $codCliente,
-        'Solicitud creada desde Telar.'
+        'Solicitud creada desde '.str_replace('_', ' ', $origen).'.'
     );
     return array(
         'id_solicitud' => $id,
         'token' => $token,
         'estado' => $estado,
         'mensaje' => $mensaje,
-        'extension' => $extension
+        'extension' => $extension,
+        'cod_interconsulta' => $codHilo,
+        'origen' => $origen
     );
 }
 

@@ -620,6 +620,42 @@ body.central-telefonica-open { overflow: hidden; }
 .central-telefonica-inbound__note i { margin-right: 4px; color: #2b7e97; }
 .central-telefonica-inbound__open { width: calc(100% - 26px); height: 36px; margin: 0 13px 13px; border: 0; border-radius: 9px; color: #fff; background: #176e9a; font: 750 10px "Segoe UI",Arial,sans-serif; cursor: pointer; }
 
+.central-telefonica-patient-link { min-width: 132px; padding: 0; display: inline-flex; align-items: center; gap: 7px; border: 0; color: #174b70; background: transparent; text-align: left; font: inherit; cursor: pointer; }
+.central-telefonica-patient-link > i { width: 24px; height: 24px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; color: #0c808a; background: #e0f4f3; }
+.central-telefonica-patient-link span,.central-telefonica-patient-link strong,.central-telefonica-patient-link small { display: block; }
+.central-telefonica-patient-link strong { max-width: 150px; overflow: hidden; color: #183e59; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.central-telefonica-patient-link small { margin-top: 2px; color: #738796; font-size: 7.5px; }
+.central-telefonica-patient-link--muted,.central-telefonica-patient-link--shared { cursor: default; }
+.central-telefonica-patient-link--muted > i { color: #81919d; background: #edf1f3; }
+.central-telefonica-patient-link--shared > i { color: #a66a08; background: #fff2ce; }
+
+.central-telefonica-quick-call-layer { position: fixed; inset: 0; z-index: 1000000000000010; display: grid; place-items: center; padding: 18px; font-family: "Segoe UI",Arial,sans-serif; }
+.central-telefonica-quick-call-layer[hidden] { display: none; }
+.central-telefonica-quick-call__backdrop { position: absolute; inset: 0; border: 0; background: rgba(8,30,48,.56); }
+.central-telefonica-quick-call { position: relative; width: min(480px,calc(100vw - 28px)); overflow: hidden; border: 1px solid #bed5e0; border-radius: 16px; color: #183d58; background: #fff; box-shadow: 0 22px 70px rgba(8,31,48,.35); }
+.central-telefonica-quick-call > header { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #dfeaf0; }
+.central-telefonica-quick-call > header small { color: #16808d; font-size: 8px; font-weight: 800; letter-spacing: .08em; }
+.central-telefonica-quick-call > header h2 { margin: 2px 0 0; font-size: 18px; }
+.central-telefonica-quick-call > header button { width: 30px; height: 30px; border: 1px solid #d8e3e9; border-radius: 9px; color: #547080; background: #fff; cursor: pointer; }
+.central-telefonica-quick-call__body { padding: 16px; }
+.central-telefonica-quick-call__patient { display: flex; align-items: center; gap: 10px; }
+.central-telefonica-quick-call__patient > span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; color: #087c87; background: #dff4f2; }
+.central-telefonica-quick-call__patient strong,.central-telefonica-quick-call__patient small { display: block; }
+.central-telefonica-quick-call__patient strong { font-size: 13px; }
+.central-telefonica-quick-call__patient small { margin-top: 3px; color: #718592; font-size: 9px; }
+.central-telefonica-quick-call__body > p { margin: 14px 0 9px; color: #647b8a; font-size: 10px; line-height: 1.45; }
+.central-telefonica-quick-call__phones { display: grid; gap: 7px; }
+.central-telefonica-quick-call__phones button { padding: 9px 11px; display: flex; align-items: center; gap: 10px; border: 1px solid #badbe0; border-radius: 10px; color: #176982; background: #f1fafb; cursor: pointer; text-align: left; }
+.central-telefonica-quick-call__phones button span { flex: 1; }
+.central-telefonica-quick-call__phones button small,.central-telefonica-quick-call__phones button strong { display: block; }
+.central-telefonica-quick-call__phones button small { color: #718792; font-size: 8px; }
+.central-telefonica-quick-call__phones button strong { margin-top: 2px; font-size: 11px; }
+.central-telefonica-quick-call__loading { min-height: 70px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #497286; font-size: 10px; }
+.central-telefonica-quick-call__message { margin: 0 16px 16px; padding: 9px 11px; border-radius: 9px; color: #34596d; background: #eaf2f6; font-size: 9.5px; }
+.central-telefonica-quick-call__message--ok { color: #176b48; background: #e4f5eb; }
+.central-telefonica-quick-call__message--warning { color: #8b5d0b; background: #fff4d6; }
+.central-telefonica-quick-call__message--error { color: #9b3e49; background: #fdebed; }
+
 @media (max-width: 1180px) {
   .central-telefonica-summary { grid-template-columns: repeat(4, minmax(125px, 1fr)); }
   .central-telefonica-filters-panel { padding: 0; }

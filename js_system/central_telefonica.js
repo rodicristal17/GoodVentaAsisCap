@@ -186,7 +186,7 @@
             + "      <div class='central-telefonica-panel__title'><div><p class='central-telefonica-eyebrow'>Movimientos</p><h2>Listado de llamadas</h2><span id='centralTelefonicaResultCount'>0 registros</span></div><span class='central-telefonica-readonly-badge'><i class='fa-solid fa-lock' aria-hidden='true'></i> CDR solo lectura</span></div>"
             + "      <div class='central-telefonica-table-wrap'>"
             + "        <table class='central-telefonica-table'>"
-            + "          <thead><tr><th>Fecha y hora</th><th>Dirección</th><th>Número</th><th>Ruta / cola</th><th>Atendida / realizada por</th><th>Estado</th><th>Duración</th><th>Hablado</th><th>Grabación</th><th>Transcripción</th><th><span class='central-telefonica-sr-only'>Acciones</span></th></tr></thead>"
+            + "          <thead><tr><th>Fecha y hora</th><th>Dirección</th><th>Paciente / cliente</th><th>Número</th><th>Ruta / cola</th><th>Atendida / realizada por</th><th>Estado</th><th>Duración</th><th>Hablado</th><th>Grabación</th><th>Transcripción</th><th><span class='central-telefonica-sr-only'>Acciones</span></th></tr></thead>"
             + "          <tbody id='centralTelefonicaRows'></tbody>"
             + "        </table>"
             + "        <div id='centralTelefonicaTableState' class='central-telefonica-table-state'><i class='fa-solid fa-circle-notch fa-spin' aria-hidden='true'></i><span>Cargando movimientos…</span></div>"
@@ -568,6 +568,12 @@
             if (action === "minimize") { window.minimizarCentralTelefonica(); }
             if (action === "close-detail") { closeDetail(); }
             if (action === "detail") { openDetail(actionElement.getAttribute("data-call-id")); }
+            if (action === "open-patient-thread" && typeof window.centralTelefonicaAbrirHiloPaciente === "function") {
+                window.centralTelefonicaAbrirHiloPaciente(
+                    actionElement.getAttribute("data-client"),
+                    actionElement.getAttribute("data-thread")
+                );
+            }
             if (action === "transcribe") {
                 requestTranscription(actionElement.getAttribute("data-call-id"), actionElement);
             }
@@ -1049,6 +1055,7 @@
             html += "<tr>"
                 + "<td><strong>" + escapeHtml(call.fecha) + "</strong><span>" + escapeHtml(call.hora) + "</span></td>"
                 + "<td><span class='central-telefonica-type central-telefonica-type--" + escapeHtml(call.tipo) + "'><i class='fa-solid " + typeIcon(call.tipo) + "' aria-hidden='true'></i>" + escapeHtml(typeLabel(call.tipo)) + "</span></td>"
+                + "<td>" + renderPatientCell(call.paciente) + "</td>"
                 + "<td class='central-telefonica-number'>" + escapeHtml(call.numero_principal || "—") + "</td>"
                 + "<td>" + renderRouteCell(call) + "</td>"
                 + "<td>" + renderFuncionarioCell(call) + "</td>"
@@ -1064,6 +1071,20 @@
         });
         rows.innerHTML = html;
         tableState.hidden = true;
+    }
+
+    function renderPatientCell(patient) {
+        if (!patient) {
+            return "<span class='central-telefonica-patient-link central-telefonica-patient-link--muted'><i class='fa-solid fa-user-slash'></i><span><strong>Sin vincular</strong><small>No coincide exactamente</small></span></span>";
+        }
+        if (patient.compartido || Number(patient.coincidencias || 0) > 1) {
+            return "<span class='central-telefonica-patient-link central-telefonica-patient-link--shared'><i class='fa-solid fa-users'></i><span><strong>Número compartido</strong><small>Confirmar identidad</small></span></span>";
+        }
+        return "<button type='button' class='central-telefonica-patient-link' data-central-action='open-patient-thread' data-client='"
+            + escapeHtml(patient.cod_cliente) + "' data-thread='" + escapeHtml(patient.cod_interconsulta || 0)
+            + "' title='Abrir el Hilo del paciente'><i class='fa-solid fa-user-check'></i><span><strong>"
+            + escapeHtml(patient.nombre || "Paciente") + "</strong><small>CI "
+            + escapeHtml(patient.documento || "sin registrar") + " · abrir Hilo</small></span></button>";
     }
 
     function renderPagination(pagination) {

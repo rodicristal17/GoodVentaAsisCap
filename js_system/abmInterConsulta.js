@@ -951,6 +951,8 @@ function manejarAccionSeguimientoHilo(event) {
         abrirCitaSeguimientoDesdeHilo(objetivo);
     } else if (accion == "abrir_pago_mora") {
         abrirPagoMoraSeguimientoDesdeHilo(objetivo);
+    } else if (accion == "llamar_paciente") {
+        llamarPacienteDesdeHilo(objetivo);
     } else if (accion == "confirmar_reposicion") {
         confirmarReposicionInsumosDesdeHilo(objetivo);
     }
@@ -5194,6 +5196,24 @@ function mostrarErrorAdjuntoDocumentoGuiado(mensaje) {
             error.scrollIntoView({block: "nearest"});
         }, 0);
     }
+}
+
+function llamarPacienteDesdeHilo(elemento) {
+    var codCliente= Number(elemento.getAttribute("data-cod-cliente") || 0);
+    var codHilo= Number(elemento.getAttribute("data-cod-interconsulta") || 0);
+    if (codCliente <= 0) {
+        ver_vetana_informativa("Llamada no disponible", "El Hilo no tiene un paciente identificado.", "info");
+        return;
+    }
+    if (typeof window.centralTelefonicaLlamarPaciente !== "function") {
+        ver_vetana_informativa("Central Telefonica no disponible", "Actualice la pantalla e intente nuevamente.", "info");
+        return;
+    }
+    window.centralTelefonicaLlamarPaciente({
+        codCliente: codCliente,
+        codHilo: codHilo,
+        origen: "hilos"
+    });
 }
 
 function actualizarEtiquetaBotonAdjuntoDocumentoGuiado() {

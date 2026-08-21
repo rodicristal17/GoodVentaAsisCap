@@ -312,9 +312,9 @@ centralTelefonicaPrueba(
     'El listado combina numero, nombre, cargo y sede con la configuracion actual.'
 );
 centralTelefonicaPrueba(
-    strpos($inicio, 'central_telefonica.css?v=20260820-01') !== false
-        && strpos($inicio, 'central_telefonica.js?x=20260820-01') !== false
-        && strpos($inicio, 'central_telefonica_operacion.js?x=20260820-01') !== false,
+    strpos($inicio, 'central_telefonica.css?v=20260821-01') !== false
+        && strpos($inicio, 'central_telefonica.js?x=20260821-01') !== false
+        && strpos($inicio, 'central_telefonica_operacion.js?x=20260821-01') !== false,
     'La pantalla principal publica historial y operacion sin reutilizar recursos en cache.'
 );
 
