@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Mi cartera - prueba visual</title>
+    <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/mi_cartera.css?v=visual">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>html,body{width:100%;height:100%;margin:0}#divMiCartera{display:block!important}</style>
+</head>
+<body>
+<div id="divMiCartera" aria-hidden="false"><div id="telarMiCartera"></div></div>
+<div id="divMinimizadoMiCartera" hidden></div>
+<script>
+window.userid=5994; window.passuser="visual"; window.navegador="visual";
+window.obtener_datos_user=function(){};
+(function(){
+    var baseItems=[
+        {id_asignacion:101,cod_cliente:501,paciente:"Paciente Alfa",documento:"4.123.456",cod_local_origen:1,local_origen:"Clinident Centro",tipo_responsable:"gestor_local",cod_responsable:10,responsable:"Camila R.",avatar_responsable:"/GoodVentaAsisCap/iconos/sinperfil.png",prioridad:"alta",prioridad_etiqueta:"Alta",resultado:"promesa_pago",resultado_etiqueta:"Promesa de pago",ultima_nota:"Confirma pago parcial el viernes.",ultima_gestion:"2026-08-20 10:20:00",proxima_accion:"2026-08-22 09:00:00",compromiso:{estado:"vigente",fecha:"2026-08-22",monto:850000},estado:"urgente",finanzas:{saldo_total:2850000,saldo_vencido:2850000,cuotas_vencidas:3,cuotas_pendientes:3,ventas:2,proximo_vencimiento:"2026-05-12",dias_mora:101,locales:"Clinident Centro / Clinident Norte"},telefonos:[{numero:"0981111111",fuente:"principal"}]},
+        {id_asignacion:102,cod_cliente:502,paciente:"Paciente Beta",documento:"3.789.012",cod_local_origen:2,local_origen:"Clinident Villarrica",tipo_responsable:"gestor_local",cod_responsable:11,responsable:"Diego P.",avatar_responsable:"/GoodVentaAsisCap/iconos/sinperfil.png",prioridad:"media",prioridad_etiqueta:"Media",resultado:"sin_respuesta",resultado_etiqueta:"No contesta",ultima_nota:"Primer intento sin respuesta.",ultima_gestion:"2026-08-20 15:30:00",proxima_accion:"2026-08-21 11:00:00",compromiso:{estado:"",fecha:"",monto:0},estado:"vencido",finanzas:{saldo_total:1275000,saldo_vencido:600000,cuotas_vencidas:1,cuotas_pendientes:2,ventas:1,proximo_vencimiento:"2026-07-29",dias_mora:23,locales:"Clinident Villarrica"},telefonos:[{numero:"0972111111",fuente:"whatsapp"},{numero:"054111111",fuente:"principal"}]},
+        {id_asignacion:103,cod_cliente:503,paciente:"Paciente Gamma",documento:"5.207.901",cod_local_origen:3,local_origen:"Clinident Coronel Oviedo",tipo_responsable:"gestor_local",cod_responsable:12,responsable:"Ana S.",avatar_responsable:"/GoodVentaAsisCap/iconos/sinperfil.png",prioridad:"baja",prioridad_etiqueta:"Baja",resultado:"contactado",resultado_etiqueta:"Contactado",ultima_nota:"Solicita recordatorio antes del vencimiento.",ultima_gestion:"2026-08-20 16:00:00",proxima_accion:"2026-08-24 08:30:00",compromiso:{estado:"",fecha:"",monto:0},estado:"preventivo",finanzas:{saldo_total:930000,saldo_vencido:0,cuotas_vencidas:0,cuotas_pendientes:1,ventas:1,proximo_vencimiento:"2026-08-25",dias_mora:0,locales:"Clinident Coronel Oviedo"},telefonos:[{numero:"0983111111",fuente:"principal"}]},
+        {id_asignacion:104,cod_cliente:504,paciente:"Paciente Delta",documento:"2.998.110",cod_local_origen:4,local_origen:"Clinident Villa Morra",tipo_responsable:"cobranza_central",cod_responsable:20,responsable:"Laura G.",avatar_responsable:"/GoodVentaAsisCap/iconos/sinperfil.png",prioridad:"alta",prioridad_etiqueta:"Alta",resultado:"escalar_cobranza",resultado_etiqueta:"Escalar a Cobranza",ultima_nota:"Caso recibido por mora prolongada.",ultima_gestion:"2026-08-20 13:40:00",proxima_accion:"",compromiso:{estado:"incumplido",fecha:"2026-08-19",monto:500000},estado:"urgente",finanzas:{saldo_total:4880000,saldo_vencido:4880000,cuotas_vencidas:5,cuotas_pendientes:5,ventas:2,proximo_vencimiento:"2026-03-12",dias_mora:162,locales:"Clinident Villa Morra"},telefonos:[{numero:"0974111111",fuente:"principal"}]},
+        {id_asignacion:105,cod_cliente:505,paciente:"Paciente Epsilon",documento:"4.881.220",cod_local_origen:5,local_origen:"Clinident San Lorenzo",tipo_responsable:"gestor_local",cod_responsable:13,responsable:"Sofía M.",avatar_responsable:"/GoodVentaAsisCap/iconos/sinperfil.png",prioridad:"media",prioridad_etiqueta:"Media",resultado:"pago_confirmado",resultado_etiqueta:"Pago confirmado",ultima_nota:"",ultima_gestion:"",proxima_accion:"",compromiso:{estado:"cumplido",fecha:"2026-08-20",monto:720000},estado:"pagado",finanzas:{saldo_total:0,saldo_vencido:0,cuotas_vencidas:0,cuotas_pendientes:0,ventas:1,proximo_vencimiento:"",dias_mora:0,locales:"Clinident San Lorenzo"},telefonos:[{numero:"0985111111",fuente:"principal"}]}
+    ];
+    var context={usuario:{cod_usuario:5994,nombre:"Carlos Faraone",avatar:"/GoodVentaAsisCap/iconos/sinperfil.png",puede_configurar:true,puede_supervisar:true},configuracion:{cod_jefe:30,dias_prevencion:7,dias_escalamiento:30,intentos_escalamiento:2,activo:true,completa:true,gestores:[{cod_usuario:10,nombre:"Camila R.",cod_local:1,local:"Clinident Centro"},{cod_usuario:11,nombre:"Diego P.",cod_local:2,local:"Clinident Villarrica"},{cod_usuario:12,nombre:"Ana S.",cod_local:3,local:"Clinident Coronel Oviedo"},{cod_usuario:13,nombre:"Sofía M.",cod_local:5,local:"Clinident San Lorenzo"},{cod_usuario:14,nombre:"Marcos F.",cod_local:4,local:"Clinident Villa Morra"}],cobradores:[{cod_usuario:20,nombre:"Laura G."},{cod_usuario:21,nombre:"Andrea B."}]},telefonia:{activo:true,mensaje:"Conector disponible",extension:"1005"},resultados:[{valor:"contactado",etiqueta:"Contactado"},{valor:"sin_respuesta",etiqueta:"No contesta"},{valor:"numero_incorrecto",etiqueta:"Número incorrecto"},{valor:"promesa_pago",etiqueta:"Promesa de pago"},{valor:"solicita_revision",etiqueta:"Solicita revisión"},{valor:"escalar_cobranza",etiqueta:"Escalar a Cobranza"}]};
+    function response(action){
+        if(action==="contexto")return context;
+        if(action==="sincronizar")return {promesas_cumplidas:0,promesas_incumplidas:0,escalados:0};
+        if(action==="listar")return {vista:"mi_cartera",items:baseItems,total:5,pagina:1,paginas:1,por_pagina:15,kpis:{pacientes:5,saldo_total:9935000,urgentes:2,promesas_hoy:1,sin_contacto:1,recuperado_mes:2340000}};
+        if(action==="detalle")return {ventas:[{cod_venta:7411,venta:"7411",local:"Clinident Centro",productos:"Plan odontológico integral",cuotas:3,saldo:1850000,proximo_vencimiento:"2026-05-12"},{cod_venta:7520,venta:"7520",local:"Clinident Norte",productos:"Tratamiento de ejemplo",cuotas:1,saldo:1000000,proximo_vencimiento:"2026-07-01"}],gestiones:[{id_gestion:1,resultado:"promesa_pago",resultado_etiqueta:"Promesa de pago",telefono:"0981111111",nota:"Confirma pago parcial el viernes.",proxima_accion:"2026-08-22 09:00:00",fecha:"2026-08-20 10:20:00",usuario:"Camila R.",avatar:"/GoodVentaAsisCap/iconos/sinperfil.png"}]};
+        if(action==="configuracion")return {configuracion:context.configuracion,usuarios:[{cod_usuario:30,nombre:"Jefe de ejemplo",tipo:"Administrativo",local:"Administración"},{cod_usuario:10,nombre:"Camila R.",tipo:"Gestora",local:"Clinident Centro"},{cod_usuario:11,nombre:"Diego P.",tipo:"Gestor",local:"Clinident Villarrica"},{cod_usuario:12,nombre:"Ana S.",tipo:"Gestora",local:"Clinident Coronel Oviedo"},{cod_usuario:13,nombre:"Sofía M.",tipo:"Gestora",local:"Clinident San Lorenzo"},{cod_usuario:14,nombre:"Marcos F.",tipo:"Gestor",local:"Clinident Villa Morra"},{cod_usuario:20,nombre:"Laura G.",tipo:"Cobranza",local:"Administración"},{cod_usuario:21,nombre:"Andrea B.",tipo:"Cobranza",local:"Administración"}],locales:context.configuracion.gestores.map(function(x){return {cod_local:x.cod_local,nombre:x.local};})};
+        if(action==="previsualizar_asignacion")return {total:128,gestores_locales:84,cobranza_central:40,sin_asignar:4,por_responsable:[{cod_usuario:10,nombre:"Camila R. · Clinident Centro",total:18},{cod_usuario:20,nombre:"Laura G. · Cobranza central",total:20}]};
+        if(action==="solicitar_llamada")return {id_solicitud:600,mensaje:"Solicitud enviada. Atienda su MicroSIP."};
+        return {};
+    }
+    function FakeXHR(){this.readyState=0;this.status=0;this.responseText="";this.timeout=0;}
+    FakeXHR.prototype.open=function(method,url){this.url=url;};
+    FakeXHR.prototype.setRequestHeader=function(){};
+    FakeXHR.prototype.send=function(form){var self=this;setTimeout(function(){var action=form.get("accion");self.status=200;self.readyState=4;self.responseText=JSON.stringify({ok:true,codigo:"ok",mensaje:"ok",datos:response(action)});if(self.onreadystatechange)self.onreadystatechange();},25);};
+    window.XMLHttpRequest=FakeXHR;
+})();
+</script>
+<script src="/GoodVentaAsisCap/js_system/mi_cartera.js?v=visual"></script>
+<script>window.addEventListener("load",function(){abrirMiCartera();});</script>
+</body>
+</html>

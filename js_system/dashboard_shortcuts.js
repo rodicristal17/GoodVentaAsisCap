@@ -31,7 +31,8 @@ var DASHBOARD_SHORTCUT_DEFAULT_KEYS = [
 	"recibir_caja",
 	"diagrama_gant",
 	"agenda_dia",
-	"central_telefonica"
+	"central_telefonica",
+	"mi_cartera"
 ];
 
 var DASHBOARD_ACCESS_REGISTRY = {
@@ -60,6 +61,7 @@ var DASHBOARD_ACCESS_REGISTRY = {
 	diagrama_gant: { sourceSelector: "#divMenuDiagramaGant" },
 	agenda_dia: { sourceSelector: "#divMenuAgendaDia" },
 	central_telefonica: { sourceSelector: "#divMenuCentralTelefonica", allowHiddenTemplate: true },
+	mi_cartera: { sourceSelector: "#divMenuMiCartera", allowHiddenTemplate: true },
 
 	historial_clinico_evolucion: { sourceSelector: "#divMenuHistorialClinicoEvolucion" },
 	sugerencias_calificaciones: { sourceSelector: "#divMenuSugerenciasyCalificaciones" },

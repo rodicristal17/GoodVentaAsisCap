@@ -210,6 +210,30 @@ function dashboard_user_can_access($mysqli, $user, $permissionKey)
     return isset($row[0]) && (int)$row[0] > 0;
 }
 
+function dashboard_user_can_access_mi_cartera($mysqli, $user)
+{
+    if ((int)$user === 5994) {
+        return true;
+    }
+    $resultado = $mysqli->query(
+        "SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() "
+        ."AND table_name='cartera_equipo' LIMIT 1"
+    );
+    if (!$resultado || $resultado->num_rows !== 1) {
+        return false;
+    }
+    $stmt = $mysqli->prepare(
+        "SELECT 1 FROM cartera_equipo WHERE cod_usuarioFK=? AND activo=1 LIMIT 1"
+    );
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('s', $user);
+    $permitido = $stmt->execute() && $stmt->get_result()->num_rows === 1;
+    $stmt->close();
+    return $permitido;
+}
+
 function dashboard_format_access_row($row)
 {
     return array(
@@ -239,6 +263,9 @@ function dashboard_filter_access_rows($mysqli, $user, $rows)
     foreach ($rows as $row) {
         $accessKey = dashboard_to_utf8($row['access_key']);
         if ($esMecanico && !isset($accesosMecanico[$accessKey])) {
+            continue;
+        }
+        if ($accessKey === 'mi_cartera' && !dashboard_user_can_access_mi_cartera($mysqli, $user)) {
             continue;
         }
         $permissionKey = dashboard_permission_key($accessKey, $row['permission_key']);
@@ -396,6 +423,9 @@ function dashboard_save_user_shortcuts($mysqli, $user)
         $accessKey = dashboard_to_utf8($row['access_key']);
         if ($esMecanico && !isset($accesosMecanico[$accessKey])) {
             dashboard_json(array('1' => 'NI', '2' => 'El acceso no corresponde al perfil de mecanico dental'));
+        }
+        if ($accessKey === 'mi_cartera' && !dashboard_user_can_access_mi_cartera($mysqli, $user)) {
+            dashboard_json(array('1' => 'NI', '2' => 'El usuario no forma parte del equipo de cartera'));
         }
         $permissionKey = dashboard_permission_key($accessKey, $row['permission_key']);
 
