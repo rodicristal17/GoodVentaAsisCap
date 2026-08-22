@@ -990,6 +990,14 @@
             + (entity.sede || "Sede sin asignar");
     }
 
+    function entityAvatar(entity, extraClass) {
+        entity = entity || {};
+        return "<span class='central-telefonica-user-avatar " + escapeHtml(extraClass || "") + "'><img src='"
+            + escapeHtml(entity.avatar || "/GoodVentaAsisCap/iconos/sinperfil.png")
+            + "' alt='" + escapeHtml(entity.nombre ? "Avatar de " + entity.nombre : "Usuario sin identificar")
+            + "'></span>";
+    }
+
     function renderRouteCell(call) {
         var route = call.ruta || {};
         var source = call.funcionario || {};
@@ -1023,20 +1031,23 @@
             site = source.sede && destination.sede && source.sede !== destination.sede
                 ? source.sede + " → " + destination.sede
                 : (source.sede || destination.sede || "Sede sin asignar");
-            return "<div class='central-telefonica-entity central-telefonica-person'><strong>"
+            return "<div class='central-telefonica-person-cell'><span class='central-telefonica-user-avatars'>"
+                + entityAvatar(source, "is-source") + entityAvatar(destination, "is-destination")
+                + "</span><div class='central-telefonica-entity central-telefonica-person'><strong>"
                 + escapeHtml(main) + "</strong><span>"
                 + escapeHtml((source.cargo || "Cargo pendiente") + " → "
                     + (destination.cargo || "Cargo pendiente") + " · " + site)
-                + "</span></div>";
+                + "</span></div></div>";
         }
         if (!source.extension) {
             return "<div class='central-telefonica-entity central-telefonica-entity--unknown'><strong>Sin identificar</strong><span>La cola no informó un funcionario</span></div>";
         }
         main = entityPersonMain(source);
         site = entityCargoSite(source);
-        return "<div class='central-telefonica-entity central-telefonica-person'><strong>"
+        return "<div class='central-telefonica-person-cell'>" + entityAvatar(source, "")
+            + "<div class='central-telefonica-entity central-telefonica-person'><strong>"
             + escapeHtml(main) + "</strong><span>" + escapeHtml(site)
-            + entityBadge(source.sin_renombrar ? "pendiente" : "funcionario") + "</span></div>";
+            + entityBadge(source.sin_renombrar ? "pendiente" : "funcionario") + "</span></div></div>";
     }
 
     function renderRows(calls) {

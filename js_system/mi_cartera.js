@@ -258,7 +258,7 @@
         kpis = kpis || {};
         container.innerHTML = ""
             + "<article><span class='mi-cartera-kpi-icon mi-cartera-kpi-icon--blue'><i class='fa-solid fa-address-book'></i></span><div><small>Pacientes en seguimiento</small><strong>" + Number(kpis.pacientes || 0) + "</strong></div></article>"
-            + "<article><span class='mi-cartera-kpi-icon mi-cartera-kpi-icon--violet'><i class='fa-solid fa-wallet'></i></span><div><small>Saldo de la vista</small><strong>" + escapeHtml(money(kpis.saldo_total || 0)) + "</strong></div></article>"
+            + "<article><span class='mi-cartera-kpi-icon mi-cartera-kpi-icon--violet'><i class='fa-solid fa-wallet'></i></span><div><small>Saldo de tratamientos</small><strong>" + escapeHtml(money(kpis.saldo_total || 0)) + "</strong></div></article>"
             + "<article><span class='mi-cartera-kpi-icon mi-cartera-kpi-icon--red'><i class='fa-solid fa-triangle-exclamation'></i></span><div><small>Atención urgente</small><strong>" + Number(kpis.urgentes || 0) + "</strong></div></article>"
             + "<article><span class='mi-cartera-kpi-icon mi-cartera-kpi-icon--amber'><i class='fa-solid fa-handshake'></i></span><div><small>Promesas para hoy</small><strong>" + Number(kpis.promesas_hoy || 0) + "</strong></div></article>"
             + "<article><span class='mi-cartera-kpi-icon mi-cartera-kpi-icon--teal'><i class='fa-solid fa-coins'></i></span><div><small>Recuperado este mes</small><strong>" + escapeHtml(money(kpis.recuperado_mes || 0)) + "</strong></div></article>";
@@ -281,13 +281,20 @@
         var phones = item.telefonos || [];
         var mainPhone = phones.length ? phones[0].numero : "";
         var phoneReady = state.context && state.context.telefonia && state.context.telefonia.activo && mainPhone;
+        var mixed = Boolean(finance.es_mixta);
+        var legacyWarning = mixed
+            ? "<span class='mi-cartera-legacy-warning' title='" + escapeHtml(finance.mensaje_heredado || "Incluye deuda correspondiente a la administración anterior.") + "'><i class='fa-solid fa-triangle-exclamation'></i> " + escapeHtml(finance.etiqueta_heredada || "Administración anterior") + "</span>"
+            : "";
+        var balanceBreakdown = mixed
+            ? "<small class='mi-cartera-balance-breakdown'><span>Tratamientos: " + escapeHtml(money(finance.saldo_operativo || 0)) + "</span><span>Anterior: " + escapeHtml(money(finance.saldo_heredado || 0)) + "</span></small>"
+            : "";
         var next = item.proxima_accion
             ? "<strong>" + escapeHtml(dateLabel(item.proxima_accion, true)) + "</strong><small>Seguimiento programado</small>"
             : "<strong class='is-missing'>Definir siguiente acción</strong><small>El caso necesita continuidad</small>";
         return "<tr class='mi-cartera-row mi-cartera-row--" + escapeHtml(item.estado) + "' data-assignment='" + item.id_asignacion + "'>"
             + "<td><div class='mi-cartera-patient'><span class='mi-cartera-patient__avatar'><i class='fa-solid fa-user'></i></span><div><strong>" + escapeHtml(item.paciente) + "</strong><span>CI " + escapeHtml(item.documento || "sin registrar") + " · Paciente " + item.cod_cliente + "</span><small>" + escapeHtml(mainPhone || "Sin teléfono vigente") + "</small></div></div></td>"
-            + "<td><strong>" + escapeHtml(item.local_origen || "Sin local") + "</strong><small>Origen: obligación más antigua</small><span>" + escapeHtml(finance.locales || "") + "</span></td>"
-            + "<td><strong class='mi-cartera-money'>" + escapeHtml(money(finance.saldo_total || 0)) + "</strong><div class='mi-cartera-row-badges'>" + stateBadge(item) + "<span class='mi-cartera-priority mi-cartera-priority--" + escapeHtml(item.prioridad) + "'>" + escapeHtml(item.prioridad_etiqueta) + "</span></div><small>" + Number(finance.dias_mora || 0) + " días · " + Number(finance.cuotas_vencidas || 0) + " cuota(s) vencida(s)</small></td>"
+            + "<td><strong>" + escapeHtml(item.local_origen || "Sin local") + "</strong><small>Origen registrado de la asignación</small><span>" + escapeHtml(finance.locales || "") + "</span>" + legacyWarning + "</td>"
+            + "<td><strong class='mi-cartera-money'>" + escapeHtml(money(finance.saldo_total || 0)) + "</strong>" + balanceBreakdown + "<div class='mi-cartera-row-badges'>" + stateBadge(item) + "<span class='mi-cartera-priority mi-cartera-priority--" + escapeHtml(item.prioridad) + "'>" + escapeHtml(item.prioridad_etiqueta) + "</span></div><small>" + Number(finance.dias_mora || 0) + " días de mora operativa · " + Number(finance.cuotas_vencidas || 0) + " cuota(s) vencida(s) en total</small></td>"
             + "<td><div class='mi-cartera-owner'><img src='" + escapeHtml(item.avatar_responsable) + "' alt=''><div><strong>" + escapeHtml(item.responsable || "Sin asignar") + "</strong><small>Responsable actual</small></div></div>" + resultBadge(item) + "</td>"
             + "<td class='mi-cartera-next'>" + next + "</td>"
             + "<td class='mi-cartera-row-actions'><button type='button' class='mi-cartera-call' data-cartera-action='call' data-assignment='" + item.id_asignacion + "' data-client='" + item.cod_cliente + "' data-phone='" + escapeHtml(mainPhone) + "' " + (phoneReady ? "" : "disabled") + " title='" + escapeHtml(phoneReady ? "Llamar desde Telar" : "Puede llamar directamente desde MicroSIP y registrar el resultado") + "'><i class='fa-solid fa-phone'></i><span>Llamar</span></button><button type='button' class='mi-cartera-expand' data-cartera-action='expand' data-assignment='" + item.id_asignacion + "' aria-label='Abrir seguimiento'><i class='fa-solid " + (state.expanded === item.id_asignacion ? "fa-chevron-up" : "fa-chevron-down") + "'></i></button></td></tr>"
@@ -296,6 +303,7 @@
 
     function expandedHtml(item) {
         var detail = state.details[item.id_asignacion];
+        var finance = item.finanzas || {};
         var resultOptions = state.context ? state.context.resultados || [] : [];
         var currentUser = state.context ? state.context.usuario || {} : {};
         var phoneOptions = "<option value=''>Seleccione el teléfono utilizado</option>";
@@ -305,6 +313,9 @@
             : "";
         var history = "";
         var sales = "";
+        var legacyNotice = finance.es_mixta
+            ? "<div class='mi-cartera-legacy-notice'><i class='fa-solid fa-triangle-exclamation'></i><div><strong>Paciente con cuentas de dos administraciones</strong><span>Los importes están separados. La prioridad y el seguimiento operativo se calculan únicamente con los tratamientos actuales.</span></div></div>"
+            : "";
         (item.telefonos || []).forEach(function (phone) {
             phoneOptions += "<option value='" + escapeHtml(phone.numero) + "'>" + escapeHtml(sourceLabel(phone.fuente) + " · " + phone.numero) + "</option>";
         });
@@ -316,7 +327,7 @@
                 history += "<article><img src='" + escapeHtml(entry.avatar) + "' alt=''><div><strong>" + escapeHtml(entry.resultado_etiqueta) + "</strong><span>" + escapeHtml(entry.usuario) + " · " + escapeHtml(dateLabel(entry.fecha, true)) + "</span><p>" + escapeHtml(entry.nota || "Sin observación") + "</p></div></article>";
             });
             detail.ventas.forEach(function (sale) {
-                sales += "<article><strong>Venta " + escapeHtml(sale.venta) + "</strong><span>" + escapeHtml(sale.local) + " · " + Number(sale.cuotas) + " cuota(s)</span><small>" + escapeHtml(sale.productos || "Sin detalle de tratamiento") + "</small><b>" + escapeHtml(money(sale.saldo)) + "</b></article>";
+                sales += "<article class='" + (sale.es_heredada ? "is-legacy" : "") + "'><strong>Venta " + escapeHtml(sale.venta) + "</strong><span>" + escapeHtml(sale.local) + " · " + Number(sale.cuotas) + " cuota(s)</span><small>" + escapeHtml(sale.productos || "Sin detalle de tratamiento") + "</small>" + (sale.es_heredada ? "<em><i class='fa-solid fa-triangle-exclamation'></i> " + escapeHtml(sale.etiqueta_heredada || "Administración anterior") + "</em>" : "") + "<b>" + escapeHtml(money(sale.saldo)) + "</b></article>";
             });
         }
         return "<tr class='mi-cartera-expanded'><td colspan='6'>"
@@ -328,7 +339,7 @@
             + "<div class='mi-cartera-promise' data-promise-fields hidden><label><span>Fecha prometida</span><input type='date' data-manage-field='fecha_compromiso'></label><label><span>Monto prometido</span><input type='number' min='1' step='1' data-manage-field='monto_compromiso' placeholder='Gs.'></label><p><i class='fa-solid fa-circle-info'></i> Telar confirmará el pago únicamente contra pagos reales registrados.</p></div>"
             + "<label class='mi-cartera-notes'><span>Nota breve</span><textarea data-manage-field='nota' maxlength='1000' placeholder='Ej.: atiende, solicita llamada el lunes por la mañana'></textarea></label>"
             + "<div class='mi-cartera-manage__actions'>" + takeChief + "<button type='button' class='mi-cartera-call mi-cartera-call--secondary' data-cartera-action='call-selected' data-assignment='" + item.id_asignacion + "' data-client='" + item.cod_cliente + "'><i class='fa-solid fa-phone'></i> Llamar al número elegido</button><button type='button' class='mi-cartera-btn mi-cartera-btn--primary' data-cartera-action='save-management' data-assignment='" + item.id_asignacion + "'><i class='fa-solid fa-check'></i><span>Guardar resultado y próxima acción</span></button></div><div class='mi-cartera-inline-message' data-inline-message></div></section>"
-            + "<aside class='mi-cartera-detail'><div><h3>Cuentas incluidas</h3><div class='mi-cartera-sales'>" + (detail ? (sales || "<p>Sin cuentas pendientes.</p>") : "<p>Cargando detalle…</p>") + "</div></div><div><h3>Últimas gestiones</h3><div class='mi-cartera-history'>" + (detail ? (history || "<p>Todavía no hay gestiones.</p>") : "<p>Cargando historial…</p>") + "</div></div></aside>"
+            + "<aside class='mi-cartera-detail'>" + legacyNotice + "<div><h3>Cuentas incluidas</h3><div class='mi-cartera-sales'>" + (detail ? (sales || "<p>Sin cuentas pendientes.</p>") : "<p>Cargando detalle…</p>") + "</div></div><div><h3>Últimas gestiones</h3><div class='mi-cartera-history'>" + (detail ? (history || "<p>Todavía no hay gestiones.</p>") : "<p>Cargando historial…</p>") + "</div></div></aside>"
             + "</div></div></td></tr>";
     }
 

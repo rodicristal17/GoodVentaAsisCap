@@ -312,8 +312,16 @@ centralTelefonicaPrueba(
     'El listado combina numero, nombre, cargo y sede con la configuracion actual.'
 );
 centralTelefonicaPrueba(
-    strpos($inicio, 'central_telefonica.css?v=20260821-01') !== false
-        && strpos($inicio, 'central_telefonica.js?x=20260821-01') !== false
+    strpos($directorio, "IFNULL(u.url,'') avatar_visible") !== false
+        && strpos($endpoint, 'centralTelefonicaUsuariosVisibles') !== false
+        && strpos($endpoint, 'funcionario_cod_usuario') !== false
+        && strpos($js, 'central-telefonica-user-avatars') !== false
+        && strpos($css, '.central-telefonica-user-avatar') !== false,
+    'La atribucion muestra el avatar historico y ambos usuarios en llamadas internas.'
+);
+centralTelefonicaPrueba(
+    strpos($inicio, 'central_telefonica.css?v=20260822-01') !== false
+        && strpos($inicio, 'central_telefonica.js?x=20260822-01') !== false
         && strpos($inicio, 'central_telefonica_operacion.js?x=20260821-01') !== false,
     'La pantalla principal publica historial y operacion sin reutilizar recursos en cache.'
 );

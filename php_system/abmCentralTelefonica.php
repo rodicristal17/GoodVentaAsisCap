@@ -479,6 +479,9 @@ function centralTelefonicaFilaVisible(
             'nombre' => isset($fila['funcionario_nombre']) ? $fila['funcionario_nombre'] : '',
             'cargo' => '',
             'sede' => isset($fila['funcionario_sede']) ? $fila['funcionario_sede'] : '',
+            'cod_usuario' => isset($fila['funcionario_cod_usuario'])
+                ? intval($fila['funcionario_cod_usuario']) : 0,
+            'avatar' => '',
             'sin_renombrar' => $funcionarioExtension !== ''
         ),
         'funcionario_destino' => array(
@@ -488,6 +491,9 @@ function centralTelefonicaFilaVisible(
             'cargo' => '',
             'sede' => isset($fila['funcionario_destino_sede'])
                 ? $fila['funcionario_destino_sede'] : '',
+            'cod_usuario' => isset($fila['funcionario_destino_cod_usuario'])
+                ? intval($fila['funcionario_destino_cod_usuario']) : 0,
+            'avatar' => '',
             'sin_renombrar' => $funcionarioDestinoExtension !== ''
         ),
         'duracion_seg' => intval($fila['duracion_seg']),
@@ -589,12 +595,42 @@ function centralTelefonicaAplicarPacienteVisible($mysqli, $items)
     return $items;
 }
 
+function centralTelefonicaUsuariosVisibles($mysqli, $codigos)
+{
+    $ids = array();
+    foreach ((array)$codigos as $codigo) {
+        $codigo = intval($codigo);
+        if ($codigo > 0) {
+            $ids[$codigo] = $codigo;
+        }
+    }
+    if (!$ids) {
+        return array();
+    }
+    $sql = "SELECT u.cod_usuario,COALESCE(NULLIF(p.nombre_persona,''),u.login) nombre,"
+        ."IFNULL(u.url,'') avatar FROM usuario u "
+        ."LEFT JOIN persona p ON p.cod_persona=u.cod_usuario WHERE u.cod_usuario IN ("
+        .implode(',', $ids).")";
+    $resultado = $mysqli->query($sql);
+    $usuarios = array();
+    while ($resultado && ($fila = $resultado->fetch_assoc())) {
+        $codigo = intval($fila['cod_usuario']);
+        $usuarios[$codigo] = array(
+            'nombre' => (string)$fila['nombre'],
+            'avatar' => trim((string)$fila['avatar']) !== ''
+                ? (string)$fila['avatar'] : '/GoodVentaAsisCap/iconos/sinperfil.png'
+        );
+    }
+    return $usuarios;
+}
+
 function centralTelefonicaAplicarDirectorioVisible($mysqli, $items)
 {
     if (!centralTelefonicaDirectorioEstructuraDisponible($mysqli) || !$items) {
         return $items;
     }
     $extensiones = array();
+    $codigosUsuarios = array();
     foreach ($items as $item) {
         foreach (array('funcionario', 'funcionario_destino') as $clave) {
             $extension = isset($item[$clave]['extension'])
@@ -602,9 +638,15 @@ function centralTelefonicaAplicarDirectorioVisible($mysqli, $items)
             if ($extension !== '') {
                 $extensiones[$extension] = true;
             }
+            $codigo = isset($item[$clave]['cod_usuario'])
+                ? intval($item[$clave]['cod_usuario']) : 0;
+            if ($codigo > 0) {
+                $codigosUsuarios[$codigo] = true;
+            }
         }
     }
     $directorio = centralTelefonicaDirectorioResolver($mysqli, array_keys($extensiones));
+    $usuarios = centralTelefonicaUsuariosVisibles($mysqli, array_keys($codigosUsuarios));
     foreach ($items as $indice => $item) {
         foreach (array('funcionario', 'funcionario_destino') as $clave) {
             $extension = isset($item[$clave]['extension'])
@@ -612,15 +654,36 @@ function centralTelefonicaAplicarDirectorioVisible($mysqli, $items)
             if ($extension === '') {
                 continue;
             }
+            $codigoSnapshot = isset($item[$clave]['cod_usuario'])
+                ? intval($item[$clave]['cod_usuario']) : 0;
+            $actual = isset($directorio[$extension]) ? $directorio[$extension] : null;
             if (isset($directorio[$extension])) {
-                $actual = $directorio[$extension];
-                $items[$indice][$clave]['nombre'] = (string)$actual['nombre'];
-                $items[$indice][$clave]['cargo'] = (string)$actual['cargo'];
-                $items[$indice][$clave]['sede'] = (string)$actual['sede'];
-                $items[$indice][$clave]['sin_renombrar'] = !empty($actual['sin_renombrar']);
+                $codigoDirectorio = intval($actual['cod_usuario']);
+                $identidadCompatible = $codigoSnapshot <= 0
+                    || ($codigoDirectorio > 0 && $codigoSnapshot === $codigoDirectorio);
+                if ($codigoSnapshot <= 0 && $codigoDirectorio > 0) {
+                    $codigoSnapshot = $codigoDirectorio;
+                    $items[$indice][$clave]['cod_usuario'] = $codigoDirectorio;
+                }
+                if ($identidadCompatible) {
+                    $items[$indice][$clave]['nombre'] = (string)$actual['nombre'];
+                    $items[$indice][$clave]['cargo'] = (string)$actual['cargo'];
+                    $items[$indice][$clave]['sede'] = (string)$actual['sede'];
+                    $items[$indice][$clave]['sin_renombrar'] = !empty($actual['sin_renombrar']);
+                }
             } else {
                 $items[$indice][$clave]['cargo'] = '';
                 $items[$indice][$clave]['sin_renombrar'] = true;
+            }
+            if ($codigoSnapshot > 0 && isset($usuarios[$codigoSnapshot])) {
+                if (trim((string)$items[$indice][$clave]['nombre']) === '') {
+                    $items[$indice][$clave]['nombre'] = $usuarios[$codigoSnapshot]['nombre'];
+                }
+                $items[$indice][$clave]['avatar'] = $usuarios[$codigoSnapshot]['avatar'];
+            } elseif ($actual && intval($actual['cod_usuario']) > 0) {
+                $items[$indice][$clave]['avatar'] = (string)$actual['avatar'];
+            } else {
+                $items[$indice][$clave]['avatar'] = '/GoodVentaAsisCap/iconos/sinperfil.png';
             }
         }
     }
@@ -935,12 +998,14 @@ function centralTelefonicaListar($mysqli, $contexto, $entrada)
     $camposDirectorio = $directorioDisponible
         ? ",l.ruta_extension,l.ruta_tipo,l.ruta_nombre,"
             ."l.funcionario_extension,l.funcionario_nombre,l.funcionario_sede,"
+            ."l.funcionario_cod_usuario,"
             ."l.funcionario_destino_extension,l.funcionario_destino_nombre,"
-            ."l.funcionario_destino_sede"
+            ."l.funcionario_destino_sede,l.funcionario_destino_cod_usuario"
         : ",'' AS ruta_extension,'' AS ruta_tipo,'' AS ruta_nombre,"
             ."'' AS funcionario_extension,'' AS funcionario_nombre,"
-            ."'' AS funcionario_sede,'' AS funcionario_destino_extension,"
-            ."'' AS funcionario_destino_nombre,'' AS funcionario_destino_sede";
+            ."'' AS funcionario_sede,NULL AS funcionario_cod_usuario,"
+            ."'' AS funcionario_destino_extension,'' AS funcionario_destino_nombre,"
+            ."'' AS funcionario_destino_sede,NULL AS funcionario_destino_cod_usuario";
     $sql = "SELECT l.id_llamada,l.fecha_inicio,l.tipo,l.estado,
             l.origen_original,l.destino_original,l.origen_normalizado,l.destino_normalizado,l.extension,
             l.duracion_seg,l.hablado_seg,l.cantidad_segmentos,
@@ -1341,12 +1406,14 @@ function centralTelefonicaDetalle($mysqli, $contexto, $entrada)
     $camposDirectorio = $directorioDisponible
         ? ",l.ruta_extension,l.ruta_tipo,l.ruta_nombre,"
             ."l.funcionario_extension,l.funcionario_nombre,l.funcionario_sede,"
+            ."l.funcionario_cod_usuario,"
             ."l.funcionario_destino_extension,l.funcionario_destino_nombre,"
-            ."l.funcionario_destino_sede"
+            ."l.funcionario_destino_sede,l.funcionario_destino_cod_usuario"
         : ",'' AS ruta_extension,'' AS ruta_tipo,'' AS ruta_nombre,"
             ."'' AS funcionario_extension,'' AS funcionario_nombre,"
-            ."'' AS funcionario_sede,'' AS funcionario_destino_extension,"
-            ."'' AS funcionario_destino_nombre,'' AS funcionario_destino_sede";
+            ."'' AS funcionario_sede,NULL AS funcionario_cod_usuario,"
+            ."'' AS funcionario_destino_extension,'' AS funcionario_destino_nombre,"
+            ."'' AS funcionario_destino_sede,NULL AS funcionario_destino_cod_usuario";
     $sql = "SELECT l.id_llamada,l.grupo_clave,l.cdr_linkedid,l.cdr_uniqueid_principal,
             l.fecha_inicio,l.fecha_fin,l.tipo,l.estado,l.origen_original,l.destino_original,
             l.extension,l.duracion_seg,l.hablado_seg,l.cantidad_segmentos,

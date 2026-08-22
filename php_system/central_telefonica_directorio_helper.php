@@ -261,7 +261,7 @@ function centralTelefonicaDirectorioResolver($mysqli, $extensiones)
     $cargoCampo = centralTelefonicaDirectorioManualDisponible($mysqli)
         ? 'd.cargo_visible' : "''";
     $sql = "SELECT d.extension,d.tipo,d.nombre,d.sede_nombre,d.cod_usuarioFK,d.cod_localFK,"
-        .$cargoCampo." cargo_visible,"
+        .$cargoCampo." cargo_visible,IFNULL(u.url,'') avatar_visible,"
         ."COALESCE(NULLIF(p.nombre_persona,''),NULLIF(d.nombre,''),'') nombre_visible,"
         ."COALESCE(NULLIF(l.Nombre,''),NULLIF(d.sede_nombre,''),'') sede_visible "
         ."FROM central_telefonica_directorio d "
@@ -292,6 +292,8 @@ function centralTelefonicaDirectorioResolver($mysqli, $extensiones)
             'nombre_tecnico' => $fila['nombre'],
             'cargo' => $fila['cargo_visible'],
             'sede' => $fila['sede_visible'],
+            'avatar' => trim((string)$fila['avatar_visible']) !== ''
+                ? (string)$fila['avatar_visible'] : '/GoodVentaAsisCap/iconos/sinperfil.png',
             'cod_usuario' => $fila['cod_usuarioFK'] === null ? 0 : intval($fila['cod_usuarioFK']),
             'cod_local' => $fila['cod_localFK'] === null ? 0 : intval($fila['cod_localFK']),
             'sin_renombrar' => trim((string)$fila['cargo_visible']) === ''

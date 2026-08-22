@@ -14,7 +14,8 @@ $esperadas = array(
     'cartera_asignacion',
     'cartera_gestion',
     'cartera_compromiso',
-    'cartera_evento'
+    'cartera_evento',
+    'cartera_fuente_heredada'
 );
 $errores = 0;
 foreach ($esperadas as $tabla) {
@@ -48,6 +49,17 @@ $reglasOk = $fila && intval($fila['dias_prevencion']) === 7
     && intval($fila['activo']) === 1;
 echo ($reglasOk ? '[OK] ' : '[ERROR] ').'reglas 7 dias / 90 dias / 2 intentos'.PHP_EOL;
 if (!$reglasOk) { $errores++; }
+
+$resultado = $mysqli->query(
+    "SELECT COUNT(*) total FROM cartera_fuente_heredada fh "
+    ."INNER JOIN local l ON l.cod_local=fh.cod_localFK "
+    ."WHERE fh.activo=1 AND fh.cod_localFK=1 "
+    ."AND UPPER(TRIM(l.Nombre))='CLINIDENT (ADMINISTRACION) COMPARTIDOS'"
+);
+$fila = $resultado ? $resultado->fetch_assoc() : null;
+$fuenteOk = $fila && intval($fila['total']) === 1;
+echo ($fuenteOk ? '[OK] ' : '[ERROR] ').'fuente heredada Administracion Compartidos'.PHP_EOL;
+if (!$fuenteOk) { $errores++; }
 
 $mysqli->close();
 exit($errores > 0 ? 1 : 0);

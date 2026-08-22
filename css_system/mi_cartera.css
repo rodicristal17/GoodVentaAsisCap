@@ -584,6 +584,32 @@ body.mi-cartera-open {
 .mi-cartera-money { color: #142e59 !important; font-size: 14px !important; }
 .mi-cartera-row-badges { gap: 5px; margin-top: 6px; flex-wrap: wrap; }
 
+.mi-cartera-row td > .mi-cartera-legacy-warning {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: max-content;
+    max-width: 100%;
+    margin-top: 6px;
+    padding: 4px 7px;
+    border: 1px solid #efc46f;
+    border-radius: 7px;
+    color: #8a5706;
+    background: #fff7df;
+    font-size: 8px;
+    font-weight: 800;
+}
+
+.mi-cartera-balance-breakdown {
+    display: grid !important;
+    gap: 2px;
+    margin-top: 4px;
+    color: #66758a !important;
+    font-size: 8px !important;
+}
+
+.mi-cartera-balance-breakdown span:last-child { color: #94610d; }
+
 .mi-cartera-badge,
 .mi-cartera-priority,
 .mi-cartera-result {
@@ -791,6 +817,24 @@ body.mi-cartera-open {
     gap: 14px;
 }
 
+.mi-cartera-legacy-notice {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 9px 10px;
+    border: 1px solid #edc16b;
+    border-radius: 9px;
+    color: #805208;
+    background: #fff8e5;
+}
+
+.mi-cartera-legacy-notice > i { margin-top: 2px; }
+.mi-cartera-legacy-notice strong,
+.mi-cartera-legacy-notice span { display: block; }
+.mi-cartera-legacy-notice strong { font-size: 9px; }
+.mi-cartera-legacy-notice span { margin-top: 2px; font-size: 8px; line-height: 1.35; }
+
 .mi-cartera-sales,
 .mi-cartera-history {
     max-height: 220px;
@@ -803,6 +847,11 @@ body.mi-cartera-open {
     border-bottom: 1px solid #e1e8ef;
 }
 
+.mi-cartera-sales article.is-legacy {
+    border-left: 3px solid #dfa12b;
+    background: #fffaf0;
+}
+
 .mi-cartera-sales strong,
 .mi-cartera-sales span,
 .mi-cartera-sales small { display: block; }
@@ -810,6 +859,19 @@ body.mi-cartera-open {
 .mi-cartera-sales span,
 .mi-cartera-sales small { margin-top: 2px; color: var(--muted); font-size: 8px; }
 .mi-cartera-sales b { position: absolute; top: 9px; right: 7px; color: #173b69; font-size: 9px; }
+.mi-cartera-sales em {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 4px;
+    padding: 2px 5px;
+    border-radius: 999px;
+    color: #865608;
+    background: #ffefc7;
+    font-size: 7px;
+    font-style: normal;
+    font-weight: 800;
+}
 
 .mi-cartera-history article {
     display: flex;

@@ -69,7 +69,8 @@ function miCarteraEstructuraDisponible($mysqli)
         'cartera_asignacion',
         'cartera_gestion',
         'cartera_compromiso',
-        'cartera_evento'
+        'cartera_evento',
+        'cartera_fuente_heredada'
     );
     foreach ($tablas as $tabla) {
         if (!miCarteraTablaExiste($mysqli, $tabla)) {
@@ -429,7 +430,9 @@ function miCarteraPlanReconfiguracion($mysqli, $propuesta, $bloquear)
     $resultado = $mysqli->query(
         "SELECT id_asignacion,cod_clienteFK,cod_usuario_responsableFK,cod_local_origenFK,"
         ."tipo_responsable,prioridad,motivo_asignacion FROM cartera_asignacion "
-        ."WHERE estado='activa' ORDER BY id_asignacion".($bloquear ? " FOR UPDATE" : "")
+        ."WHERE estado='activa' AND "
+        .miCarteraCondicionClienteVisibleSql('cod_clienteFK', 'reconfiguracion')
+        ." ORDER BY id_asignacion".($bloquear ? " FOR UPDATE" : "")
     );
     if (!$resultado) {
         miCarteraLanzar('configuracion_no_disponible', 'No se pudieron revisar las asignaciones actuales.');
@@ -778,6 +781,73 @@ function miCarteraPagoAgrupadoSql()
         ."FROM pago pg GROUP BY cod_creditoFK) pagos ON pagos.cod_creditoFK=cr.idcredito ";
 }
 
+function miCarteraAliasSql($alias)
+{
+    return preg_replace('/[^a-zA-Z0-9_]/', '', (string)$alias);
+}
+
+function miCarteraFuenteHeredadaJoinSql($aliasVenta, $aliasFuente)
+{
+    $aliasVenta = miCarteraAliasSql($aliasVenta);
+    $aliasFuente = miCarteraAliasSql($aliasFuente);
+    return "LEFT JOIN cartera_fuente_heredada ".$aliasFuente." ON "
+        .$aliasFuente.".cod_localFK=".$aliasVenta.".cod_local AND "
+        .$aliasFuente.".activo=1 ";
+}
+
+function miCarteraPagoAgrupadoAliasSql($aliasCredito, $aliasPagos, $aliasPago)
+{
+    $aliasCredito = miCarteraAliasSql($aliasCredito);
+    $aliasPagos = miCarteraAliasSql($aliasPagos);
+    $aliasPago = miCarteraAliasSql($aliasPago);
+    return "LEFT JOIN (SELECT cod_creditoFK,"
+        ."SUM(CASE WHEN Tipo='Pago Cuota' AND ".miCarteraPagoActivoSql($aliasPago)
+        ." THEN Monto ELSE 0 END) pago_cuota,"
+        ."SUM(CASE WHEN Tipo='Interes' AND ".miCarteraPagoActivoSql($aliasPago)
+        ." THEN Monto ELSE 0 END) pago_interes FROM pago ".$aliasPago
+        ." GROUP BY cod_creditoFK) ".$aliasPagos." ON ".$aliasPagos
+        .".cod_creditoFK=".$aliasCredito.".idcredito ";
+}
+
+function miCarteraCondicionClienteSaldoSql($clienteSql, $sufijo, $heredada)
+{
+    $sufijo = miCarteraAliasSql($sufijo);
+    $credito = 'cr_op_'.$sufijo;
+    $venta = 'vt_op_'.$sufijo;
+    $pagos = 'pagos_op_'.$sufijo;
+    $pago = 'pg_op_'.$sufijo;
+    $fuente = 'fh_op_'.$sufijo;
+    $saldo = miCarteraSaldoSql($credito, $pagos);
+    $condicionFuente = $heredada
+        ? $fuente.'.id_fuente IS NOT NULL' : $fuente.'.id_fuente IS NULL';
+    return "EXISTS (SELECT 1 FROM credito ".$credito
+        ." INNER JOIN venta ".$venta." ON ".$venta.".cod_venta=".$credito.".cod_venta "
+        .miCarteraPagoAgrupadoAliasSql($credito, $pagos, $pago)
+        .miCarteraFuenteHeredadaJoinSql($venta, $fuente)
+        ."WHERE ".$venta.".cod_clienteFK=".$clienteSql." AND ".$condicionFuente." "
+        ."AND IFNULL(".$venta.".anulado,'')='' AND IFNULL(".$venta
+        .".estadocuenta,'Activo')<>'Anulado' AND ".$credito
+        .".fechapago<=DATE_ADD(CURDATE(),INTERVAL 7 DAY) AND ".$saldo.">0)";
+}
+
+function miCarteraCondicionClienteOperativoSql($clienteSql, $sufijo)
+{
+    return miCarteraCondicionClienteSaldoSql($clienteSql, $sufijo, false);
+}
+
+function miCarteraCondicionClienteVisibleSql($clienteSql, $sufijo)
+{
+    return '('.miCarteraCondicionClienteSaldoSql(
+        $clienteSql,
+        $sufijo.'_operativa',
+        false
+    ).' OR NOT '.miCarteraCondicionClienteSaldoSql(
+        $clienteSql,
+        $sufijo.'_heredada',
+        true
+    ).')';
+}
+
 function miCarteraResumenesFinancieros($mysqli, $codClientes)
 {
     $ids = array();
@@ -791,17 +861,30 @@ function miCarteraResumenesFinancieros($mysqli, $codClientes)
         return array();
     }
     $saldo = miCarteraSaldoSql('cr', 'pagos');
+    $operativa = 'fh.id_fuente IS NULL';
+    $heredada = 'fh.id_fuente IS NOT NULL';
     $sql = "SELECT vt.cod_clienteFK,COUNT(DISTINCT vt.cod_venta) ventas,"
         ."SUM(CASE WHEN ".$saldo.">0 THEN ".$saldo." ELSE 0 END) saldo_total,"
+        ."SUM(CASE WHEN ".$operativa." AND ".$saldo.">0 THEN ".$saldo." ELSE 0 END) saldo_operativo,"
+        ."SUM(CASE WHEN ".$heredada." AND ".$saldo.">0 THEN ".$saldo." ELSE 0 END) saldo_heredado,"
         ."SUM(CASE WHEN ".$saldo.">0 AND cr.fechapago<CURDATE() THEN ".$saldo." ELSE 0 END) saldo_vencido,"
+        ."SUM(CASE WHEN ".$operativa." AND ".$saldo.">0 AND cr.fechapago<CURDATE() "
+        ."THEN ".$saldo." ELSE 0 END) saldo_vencido_operativo,"
         ."SUM(CASE WHEN ".$saldo.">0 AND cr.fechapago<CURDATE() THEN 1 ELSE 0 END) cuotas_vencidas,"
+        ."SUM(CASE WHEN ".$operativa." AND ".$saldo.">0 AND cr.fechapago<CURDATE() THEN 1 ELSE 0 END) cuotas_vencidas_operativas,"
+        ."SUM(CASE WHEN ".$heredada." AND ".$saldo.">0 AND cr.fechapago<CURDATE() THEN 1 ELSE 0 END) cuotas_vencidas_heredadas,"
         ."SUM(CASE WHEN ".$saldo.">0 THEN 1 ELSE 0 END) cuotas_pendientes,"
-        ."MIN(CASE WHEN ".$saldo.">0 THEN cr.fechapago ELSE NULL END) proximo_vencimiento,"
-        ."MAX(CASE WHEN ".$saldo.">0 AND cr.fechapago<CURDATE() "
+        ."MIN(CASE WHEN ".$operativa." AND ".$saldo.">0 THEN cr.fechapago ELSE NULL END) proximo_vencimiento,"
+        ."MAX(CASE WHEN ".$operativa." AND ".$saldo.">0 AND cr.fechapago<CURDATE() "
         ."THEN DATEDIFF(CURDATE(),cr.fechapago) ELSE 0 END) dias_mora,"
-        ."GROUP_CONCAT(DISTINCT l.Nombre ORDER BY l.Nombre SEPARATOR ' / ') locales "
+        ."MAX(CASE WHEN ".$heredada." AND ".$saldo.">0 AND cr.fechapago<CURDATE() "
+        ."THEN DATEDIFF(CURDATE(),cr.fechapago) ELSE 0 END) dias_mora_heredada,"
+        ."GROUP_CONCAT(DISTINCT l.Nombre ORDER BY l.Nombre SEPARATOR ' / ') locales,"
+        ."MAX(CASE WHEN ".$heredada." AND ".$saldo.">0 THEN fh.etiqueta ELSE '' END) etiqueta_heredada,"
+        ."MAX(CASE WHEN ".$heredada." AND ".$saldo.">0 THEN fh.mensaje ELSE '' END) mensaje_heredado "
         ."FROM credito cr INNER JOIN venta vt ON vt.cod_venta=cr.cod_venta "
         .miCarteraPagoAgrupadoSql()
+        .miCarteraFuenteHeredadaJoinSql('vt', 'fh')
         ."LEFT JOIN local l ON l.cod_local=vt.cod_local "
         ."WHERE vt.cod_clienteFK IN (".implode(',', $ids).") "
         ."AND IFNULL(vt.anulado,'')='' AND IFNULL(vt.estadocuenta,'Activo')<>'Anulado' "
@@ -815,27 +898,46 @@ function miCarteraResumenesFinancieros($mysqli, $codClientes)
         $id = intval($fila['cod_clienteFK']);
         $resumenes[$id] = array(
             'saldo_total' => (float)$fila['saldo_total'],
+            'saldo_operativo' => (float)$fila['saldo_operativo'],
+            'saldo_heredado' => (float)$fila['saldo_heredado'],
             'saldo_vencido' => (float)$fila['saldo_vencido'],
+            'saldo_vencido_operativo' => (float)$fila['saldo_vencido_operativo'],
             'cuotas_vencidas' => intval($fila['cuotas_vencidas']),
+            'cuotas_vencidas_operativas' => intval($fila['cuotas_vencidas_operativas']),
+            'cuotas_vencidas_heredadas' => intval($fila['cuotas_vencidas_heredadas']),
             'cuotas_pendientes' => intval($fila['cuotas_pendientes']),
             'ventas' => intval($fila['ventas']),
             'proximo_vencimiento' => $fila['proximo_vencimiento']
                 ? (string)$fila['proximo_vencimiento'] : '',
             'dias_mora' => intval($fila['dias_mora']),
-            'locales' => (string)$fila['locales']
+            'dias_mora_heredada' => intval($fila['dias_mora_heredada']),
+            'locales' => (string)$fila['locales'],
+            'es_mixta' => (float)$fila['saldo_operativo'] > 0
+                && (float)$fila['saldo_heredado'] > 0,
+            'etiqueta_heredada' => (string)$fila['etiqueta_heredada'],
+            'mensaje_heredado' => (string)$fila['mensaje_heredado']
         );
     }
     foreach ($ids as $id) {
         if (!isset($resumenes[$id])) {
             $resumenes[$id] = array(
                 'saldo_total' => 0,
+                'saldo_operativo' => 0,
+                'saldo_heredado' => 0,
                 'saldo_vencido' => 0,
+                'saldo_vencido_operativo' => 0,
                 'cuotas_vencidas' => 0,
+                'cuotas_vencidas_operativas' => 0,
+                'cuotas_vencidas_heredadas' => 0,
                 'cuotas_pendientes' => 0,
                 'ventas' => 0,
                 'proximo_vencimiento' => '',
                 'dias_mora' => 0,
-                'locales' => ''
+                'dias_mora_heredada' => 0,
+                'locales' => '',
+                'es_mixta' => false,
+                'etiqueta_heredada' => '',
+                'mensaje_heredado' => ''
             );
         }
     }
@@ -845,17 +947,23 @@ function miCarteraResumenesFinancieros($mysqli, $codClientes)
 function miCarteraCandidatosPendientes($mysqli)
 {
     $saldo = miCarteraSaldoSql('cr', 'pagos');
+    $operativa = 'fh.id_fuente IS NULL';
+    $heredada = 'fh.id_fuente IS NOT NULL';
     $sql = "SELECT vt.cod_clienteFK,"
         ."SUM(CASE WHEN ".$saldo.">0 THEN ".$saldo." ELSE 0 END) saldo_total,"
-        ."MAX(CASE WHEN ".$saldo.">0 AND cr.fechapago<CURDATE() "
+        ."SUM(CASE WHEN ".$operativa." AND ".$saldo.">0 THEN ".$saldo." ELSE 0 END) saldo_operativo,"
+        ."SUM(CASE WHEN ".$heredada." AND ".$saldo.">0 THEN ".$saldo." ELSE 0 END) saldo_heredado,"
+        ."MAX(CASE WHEN ".$operativa." AND ".$saldo.">0 AND cr.fechapago<CURDATE() "
         ."THEN DATEDIFF(CURDATE(),cr.fechapago) ELSE 0 END) dias_mora,"
-        ."CAST(SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN ".$saldo.">0 THEN vt.cod_local ELSE NULL END "
+        ."CAST(SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN ".$operativa." AND ".$saldo.">0 "
+        ."THEN vt.cod_local ELSE NULL END "
         ."ORDER BY CASE WHEN cr.fechapago<CURDATE() THEN 0 ELSE 1 END,cr.fechapago,cr.idcredito),',',1) AS UNSIGNED) cod_local_origen "
         ."FROM credito cr INNER JOIN venta vt ON vt.cod_venta=cr.cod_venta "
         .miCarteraPagoAgrupadoSql()
+        .miCarteraFuenteHeredadaJoinSql('vt', 'fh')
         ."WHERE IFNULL(vt.anulado,'')='' AND IFNULL(vt.estadocuenta,'Activo')<>'Anulado' "
         ."AND cr.fechapago<=DATE_ADD(CURDATE(),INTERVAL 7 DAY) GROUP BY vt.cod_clienteFK "
-        ."HAVING saldo_total>0 ORDER BY dias_mora DESC,vt.cod_clienteFK";
+        ."HAVING saldo_operativo>0 ORDER BY dias_mora DESC,vt.cod_clienteFK";
     $resultado = $mysqli->query($sql);
     if (!$resultado) {
         miCarteraLanzar('cartera_no_disponible', 'No se pudo preparar la cartera desde las cuotas vigentes.');
@@ -866,6 +974,8 @@ function miCarteraCandidatosPendientes($mysqli)
             'cod_cliente' => intval($fila['cod_clienteFK']),
             'cod_local_origen' => intval($fila['cod_local_origen']),
             'saldo_total' => (float)$fila['saldo_total'],
+            'saldo_operativo' => (float)$fila['saldo_operativo'],
+            'saldo_heredado' => (float)$fila['saldo_heredado'],
             'dias_mora' => intval($fila['dias_mora'])
         );
     }
@@ -898,6 +1008,7 @@ function miCarteraCargasCentrales($mysqli, $cobradores)
         "SELECT cod_usuario_responsableFK,COUNT(*) total FROM cartera_asignacion "
         ."WHERE estado='activa' AND tipo_responsable='cobranza_central' "
         ."AND cod_usuario_responsableFK IN (".implode(',', array_keys($cargas)).") "
+        ."AND ".miCarteraCondicionClienteOperativoSql('cod_clienteFK', 'carga')." "
         ."GROUP BY cod_usuario_responsableFK"
     );
     while ($resultado && ($fila = $resultado->fetch_assoc())) {
@@ -931,7 +1042,10 @@ function miCarteraPlanAsignacion($mysqli)
     $cargas = miCarteraCargasCentrales($mysqli, $mapa['cobradores']);
     $candidatos = miCarteraCandidatosPendientes($mysqli);
     $existentes = array();
-    $resultado = $mysqli->query("SELECT cod_clienteFK,estado FROM cartera_asignacion");
+    $resultado = $mysqli->query(
+        "SELECT cod_clienteFK,estado FROM cartera_asignacion WHERE "
+        .miCarteraCondicionClienteOperativoSql('cod_clienteFK', 'plan')
+    );
     while ($resultado && ($fila = $resultado->fetch_assoc())) {
         if ((string)$fila['estado'] === 'activa') {
             $existentes[intval($fila['cod_clienteFK'])] = true;
@@ -1149,7 +1263,10 @@ function miCarteraAsignacionesBase($mysqli, $contexto, $vista, $entrada)
     if (($vista === 'equipo' || $vista === 'sin_asignar') && empty($contexto['puede_supervisar'])) {
         $vista = 'mi_cartera';
     }
-    $condiciones = array("ca.estado='activa'");
+    $condiciones = array(
+        "ca.estado='activa'",
+        miCarteraCondicionClienteVisibleSql('ca.cod_clienteFK', 'listado')
+    );
     $tipos = '';
     $parametros = array();
     if ($vista === 'mi_cartera' || $vista === 'seguimiento') {
@@ -1239,8 +1356,10 @@ function miCarteraMontoRecuperadoMes($mysqli, $contexto, $vista)
     }
     $sql = "SELECT IFNULL(SUM(pg.Monto),0) total FROM pago pg "
         ."INNER JOIN venta vt ON vt.cod_venta=pg.cod_venta_fk "
+        .miCarteraFuenteHeredadaJoinSql('vt', 'fh_recuperado')
         ."INNER JOIN cartera_asignacion ca ON ca.cod_clienteFK=vt.cod_clienteFK "
-        ."WHERE ca.estado='activa' ".$condicion." AND ".miCarteraPagoActivoSql('pg')." "
+        ."WHERE ca.estado='activa' AND fh_recuperado.id_fuente IS NULL "
+        .$condicion." AND ".miCarteraPagoActivoSql('pg')." "
         ."AND pg.Fecha>=DATE_FORMAT(CURDATE(),'%Y-%m-01') "
         ."AND pg.Fecha>=DATE(ca.fecha_asignacion) AND pg.Tipo IN ('Pago Cuota','Interes')";
     $resultado = $mysqli->query($sql);
@@ -1272,13 +1391,20 @@ function miCarteraListar($mysqli, $contexto, $entrada)
         $cliente = intval($fila['cod_clienteFK']);
         $resumen = isset($finanzas[$cliente]) ? $finanzas[$cliente] : array();
         $saldo = isset($resumen['saldo_total']) ? (float)$resumen['saldo_total'] : 0;
+        $saldoOperativo = isset($resumen['saldo_operativo'])
+            ? (float)$resumen['saldo_operativo'] : 0;
+        $saldoHeredado = isset($resumen['saldo_heredado'])
+            ? (float)$resumen['saldo_heredado'] : 0;
         $dias = isset($resumen['dias_mora']) ? intval($resumen['dias_mora']) : 0;
+        if ($saldoOperativo <= 0 && $saldoHeredado > 0) {
+            continue;
+        }
         $resultado = (string)$fila['ultimo_resultado'];
-        if ($saldo <= 0) {
+        if ($saldoOperativo <= 0) {
             $resultado = 'pago_confirmado';
         }
         $compromisoEstado = (string)$fila['compromiso_estado'];
-        $estado = $saldo <= 0 ? 'pagado'
+        $estado = $saldoOperativo <= 0 ? 'pagado'
             : ($compromisoEstado === 'incumplido' || $dias >= 30 ? 'urgente'
             : ($dias > 0 ? 'vencido' : 'preventivo'));
         if ($filtroEstado !== '' && $filtroEstado !== $estado) {
@@ -1291,7 +1417,7 @@ function miCarteraListar($mysqli, $contexto, $entrada)
             }
         }
         $kpis['pacientes']++;
-        $kpis['saldo_total'] += $saldo;
+        $kpis['saldo_total'] += $saldoOperativo;
         if ($estado === 'urgente') {
             $kpis['urgentes']++;
         }
@@ -1358,7 +1484,8 @@ function miCarteraAsignacionVisible($mysqli, $contexto, $idAsignacion, $exigirRe
     $stmt = $mysqli->prepare(
         "SELECT id_asignacion,cod_clienteFK,cod_usuario_responsableFK,cod_local_origenFK,"
         ."tipo_responsable,estado,prioridad,motivo_asignacion,fecha_asignacion "
-        ."FROM cartera_asignacion WHERE id_asignacion=? LIMIT 1"
+        ."FROM cartera_asignacion WHERE id_asignacion=? AND "
+        .miCarteraCondicionClienteVisibleSql('cod_clienteFK', 'visible')." LIMIT 1"
     );
     if (!$stmt) {
         miCarteraLanzar('asignacion_no_disponible', 'No se pudo validar la asignacion.');
@@ -1393,15 +1520,19 @@ function miCarteraDetalle($mysqli, $contexto, $idAsignacion)
         ."IFNULL(l.Nombre,'') local_nombre,COUNT(DISTINCT cr.idcredito) cuotas,"
         ."SUM(CASE WHEN ".$saldo.">0 THEN ".$saldo." ELSE 0 END) saldo,"
         ."MIN(CASE WHEN ".$saldo.">0 THEN cr.fechapago ELSE NULL END) proximo_vencimiento,"
+        ."MAX(CASE WHEN fh.id_fuente IS NOT NULL THEN 1 ELSE 0 END) es_heredada,"
+        ."MAX(IFNULL(fh.etiqueta,'')) etiqueta_heredada,"
+        ."MAX(IFNULL(fh.mensaje,'')) mensaje_heredado,"
         ."IFNULL((SELECT GROUP_CONCAT(DISTINCT pr.nombre_producto ORDER BY pr.nombre_producto SEPARATOR ', ') "
         ."FROM detalle_venta dv LEFT JOIN producto pr ON pr.cod_producto=dv.cod_productoFK "
         ."WHERE dv.cod_ventaFK=vt.cod_venta),'') productos "
         ."FROM venta vt INNER JOIN credito cr ON cr.cod_venta=vt.cod_venta "
         .miCarteraPagoAgrupadoSql()
+        .miCarteraFuenteHeredadaJoinSql('vt', 'fh')
         ."LEFT JOIN local l ON l.cod_local=vt.cod_local WHERE vt.cod_clienteFK=".$cliente." "
         ."AND IFNULL(vt.anulado,'')='' AND IFNULL(vt.estadocuenta,'Activo')<>'Anulado' "
         ."GROUP BY vt.cod_venta,vt.num_factura,vt.puntoexpedicion,l.Nombre HAVING saldo>0 "
-        ."ORDER BY proximo_vencimiento,vt.cod_venta";
+        ."ORDER BY es_heredada,proximo_vencimiento,vt.cod_venta";
     $resultado = $mysqli->query($sql);
     $ventas = array();
     while ($resultado && ($fila = $resultado->fetch_assoc())) {
@@ -1415,7 +1546,10 @@ function miCarteraDetalle($mysqli, $contexto, $idAsignacion)
             'productos' => (string)$fila['productos'],
             'cuotas' => intval($fila['cuotas']),
             'saldo' => (float)$fila['saldo'],
-            'proximo_vencimiento' => (string)$fila['proximo_vencimiento']
+            'proximo_vencimiento' => (string)$fila['proximo_vencimiento'],
+            'es_heredada' => intval($fila['es_heredada']) === 1,
+            'etiqueta_heredada' => (string)$fila['etiqueta_heredada'],
+            'mensaje_heredado' => (string)$fila['mensaje_heredado']
         );
     }
     $stmt = $mysqli->prepare(
@@ -1463,7 +1597,9 @@ function miCarteraTotalPagadoCliente($mysqli, $codCliente)
     $codCliente = intval($codCliente);
     $sql = "SELECT IFNULL(SUM(pg.Monto),0) total FROM pago pg "
         ."INNER JOIN venta vt ON vt.cod_venta=pg.cod_venta_fk "
-        ."WHERE vt.cod_clienteFK=".$codCliente." AND ".miCarteraPagoActivoSql('pg')." "
+        .miCarteraFuenteHeredadaJoinSql('vt', 'fh_pagado')
+        ."WHERE vt.cod_clienteFK=".$codCliente." AND fh_pagado.id_fuente IS NULL "
+        ."AND ".miCarteraPagoActivoSql('pg')." "
         ."AND pg.Tipo IN ('Pago Cuota','Interes')";
     $resultado = $mysqli->query($sql);
     $fila = $resultado ? $resultado->fetch_assoc() : null;
@@ -1727,9 +1863,10 @@ function miCarteraGuardarGestion($mysqli, $contexto, $entrada)
             $fechaCompromiso = $fechaCompromisoEntrada;
             $monto = $montoCompromisoEntrada;
             $resumen = miCarteraResumenesFinancieros($mysqli, array($cliente));
-            $saldo = isset($resumen[$cliente]) ? (float)$resumen[$cliente]['saldo_total'] : 0;
+            $saldo = isset($resumen[$cliente])
+                ? (float)$resumen[$cliente]['saldo_operativo'] : 0;
             if ($monto > $saldo + 0.01) {
-                throw new Exception('El monto prometido no puede superar el saldo actual.');
+                throw new Exception('El monto prometido no puede superar el saldo de tratamientos actuales.');
             }
             $basePagada = miCarteraTotalPagadoCliente($mysqli, $cliente);
             $stmt = $mysqli->prepare(
@@ -1818,7 +1955,9 @@ function miCarteraSincronizar($mysqli, $contexto)
         ."cp.monto_comprometido,cp.monto_pagado_base,ca.cod_usuario_responsableFK,"
         ."ca.cod_local_origenFK,ca.tipo_responsable,ca.estado,ca.prioridad,ca.motivo_asignacion,ca.fecha_asignacion "
         ."FROM cartera_compromiso cp INNER JOIN cartera_asignacion ca ON ca.id_asignacion=cp.id_asignacionFK "
-        ."WHERE cp.estado='vigente' AND ca.estado='activa' ORDER BY cp.fecha_compromiso LIMIT 500"
+        ."WHERE cp.estado='vigente' AND ca.estado='activa' AND "
+        .miCarteraCondicionClienteOperativoSql('ca.cod_clienteFK', 'promesas')
+        ." ORDER BY cp.fecha_compromiso LIMIT 500"
     );
     $promesas = array();
     if (!$stmt || !$stmt->execute()) {
@@ -1839,7 +1978,7 @@ function miCarteraSincronizar($mysqli, $contexto)
         $avance = max(0, $pagado - (float)$promesa['monto_pagado_base']);
         $resumen = miCarteraResumenesFinancieros($mysqli, array(intval($promesa['cod_clienteFK'])));
         $saldo = isset($resumen[intval($promesa['cod_clienteFK'])])
-            ? (float)$resumen[intval($promesa['cod_clienteFK'])]['saldo_total'] : 0;
+            ? (float)$resumen[intval($promesa['cod_clienteFK'])]['saldo_operativo'] : 0;
         if ($saldo <= 0 || $avance + 0.01 >= (float)$promesa['monto_comprometido']) {
             $actualizado = $mysqli->query(
                 "UPDATE cartera_compromiso SET estado='cumplido',fecha_resolucion=NOW(),"
@@ -1904,7 +2043,9 @@ function miCarteraSincronizar($mysqli, $contexto)
     $resultado = $mysqli->query(
         "SELECT id_asignacion,cod_clienteFK,cod_usuario_responsableFK,cod_local_origenFK,"
         ."tipo_responsable,estado,prioridad,motivo_asignacion,fecha_asignacion "
-        ."FROM cartera_asignacion WHERE estado='activa' AND tipo_responsable='gestor_local' LIMIT 2000"
+        ."FROM cartera_asignacion WHERE estado='activa' AND tipo_responsable='gestor_local' AND "
+        .miCarteraCondicionClienteOperativoSql('cod_clienteFK', 'sincronizacion')
+        ." LIMIT 2000"
     );
     if (!$resultado) {
         throw new Exception('No se pudieron revisar los casos con mora prolongada.');
