@@ -24,6 +24,9 @@ Las llamadas iniciadas desde Telar y el reconocimiento entrante usan dos cuentas
 
 ## Acceso
 
+- Proxmox: `https://10.220.100.200:8006/`, nodo `clinident`.
+- VM `100 (cld-telar)`: Sistema Telar, IP `10.220.100.201`.
+- VM `101 (cld-pbx)`: Issabel PBX. Mantenerla fuera de los despliegues de Telar salvo solicitud explícita.
 - URL VPN/LAN: `http://10.220.100.201:8080/`
 - La raíz redirige a `/GoodVentaAsisCap/system/login.html`.
 - UFW permite SSH y HTTP solamente desde `10.220.100.0/24`.
