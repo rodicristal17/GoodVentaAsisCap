@@ -137,8 +137,16 @@
     function dateLabel(value) {
         var text = String(value || "");
         var date;
+        var timestamp;
         if (!text) { return "Sin fecha"; }
-        date = new Date(text);
+        if (/^[0-9]{10,16}$/.test(text)) {
+            timestamp = Number(text);
+            if (text.length === 10) { timestamp *= 1000; }
+            else if (text.length > 13) { timestamp = Math.floor(timestamp / Math.pow(10, text.length - 13)); }
+            date = new Date(timestamp);
+        } else {
+            date = new Date(text);
+        }
         if (isNaN(date.getTime())) { return escapeHtml(text.substring(0, 16).replace("T", " ")); }
         try { return date.toLocaleString("es-PY", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
         catch (ignore) { return escapeHtml(text.substring(0, 16).replace("T", " ")); }
