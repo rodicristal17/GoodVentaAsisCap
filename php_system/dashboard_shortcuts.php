@@ -234,6 +234,31 @@ function dashboard_user_can_access_mi_cartera($mysqli, $user)
     return $permitido;
 }
 
+function dashboard_user_can_access_gohighlevel($mysqli, $user)
+{
+    if ((int)$user === 5994) {
+        return true;
+    }
+    $resultado = $mysqli->query(
+        "SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() "
+        ."AND table_name='gohighlevel_permiso_usuario' LIMIT 1"
+    );
+    if (!$resultado || $resultado->num_rows !== 1) {
+        return false;
+    }
+    $stmt = $mysqli->prepare(
+        "SELECT 1 FROM gohighlevel_permiso_usuario "
+        ."WHERE cod_usuarioFK=? AND puede_ver=1 AND activo=1 LIMIT 1"
+    );
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('s', $user);
+    $permitido = $stmt->execute() && $stmt->get_result()->num_rows === 1;
+    $stmt->close();
+    return $permitido;
+}
+
 function dashboard_format_access_row($row)
 {
     return array(
@@ -257,7 +282,8 @@ function dashboard_filter_access_rows($mysqli, $user, $rows)
     $accesosMecanico = array(
         'trabajos_mecanicos_dentales' => true,
         'mis_datos' => true,
-        'central_telefonica' => true
+        'central_telefonica' => true,
+        'gohighlevel' => true
     );
 
     foreach ($rows as $row) {
@@ -266,6 +292,9 @@ function dashboard_filter_access_rows($mysqli, $user, $rows)
             continue;
         }
         if ($accessKey === 'mi_cartera' && !dashboard_user_can_access_mi_cartera($mysqli, $user)) {
+            continue;
+        }
+        if ($accessKey === 'gohighlevel' && !dashboard_user_can_access_gohighlevel($mysqli, $user)) {
             continue;
         }
         $permissionKey = dashboard_permission_key($accessKey, $row['permission_key']);
@@ -416,7 +445,8 @@ function dashboard_save_user_shortcuts($mysqli, $user)
     $accesosMecanico = array(
         'trabajos_mecanicos_dentales' => true,
         'mis_datos' => true,
-        'central_telefonica' => true
+        'central_telefonica' => true,
+        'gohighlevel' => true
     );
 
     foreach ($rows as $row) {
@@ -426,6 +456,9 @@ function dashboard_save_user_shortcuts($mysqli, $user)
         }
         if ($accessKey === 'mi_cartera' && !dashboard_user_can_access_mi_cartera($mysqli, $user)) {
             dashboard_json(array('1' => 'NI', '2' => 'El usuario no forma parte del equipo de cartera'));
+        }
+        if ($accessKey === 'gohighlevel' && !dashboard_user_can_access_gohighlevel($mysqli, $user)) {
+            dashboard_json(array('1' => 'NI', '2' => 'El usuario no tiene acceso a GoHighLevel'));
         }
         $permissionKey = dashboard_permission_key($accessKey, $row['permission_key']);
 

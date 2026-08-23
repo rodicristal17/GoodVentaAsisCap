@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fixture GoHighLevel fase 1</title>
+  <link rel="stylesheet" href="/css_system/gohighlevel.css">
+</head>
+<body>
+  <div id="divMinimizadoGoHighLevel" style="display:none"></div>
+  <div id="divGoHighLevel" aria-hidden="true"><div id="telarGoHighLevel"></div></div>
+  <script>
+    window.userid = 5994;
+    window.passuser = "fixture";
+    window.navegador = "fixture";
+    window.obtener_datos_user = function () {};
+    (function () {
+      var responses = {
+        contexto: { usuario: { puede_configurar: true }, integracion: { configurado: true, modo: "solo_lectura" } },
+        conversaciones: { total: 3, items: [
+          { id: "1", nombre: "Ana Demo", telefono: "+595900000001", canal: "TYPE_WHATSAPP", ultimo_mensaje: "Quisiera confirmar el horario de mi consulta.", fecha: "2026-08-23T09:42:00Z", no_leidos: 2, responsable: "Recepción", vinculo: { estado: "vinculado", paciente: { nombre: "Ana Demo" } } },
+          { id: "2", nombre: "Bruno Ejemplo", telefono: "+595900000002", canal: "TYPE_WHATSAPP", ultimo_mensaje: "Gracias, quedo atento.", fecha: "2026-08-23T09:25:00Z", no_leidos: 0, vinculo: { estado: "ambiguo", coincidencias: 2 } },
+          { id: "3", nombre: "Carla Prueba", canal: "TYPE_EMAIL", ultimo_mensaje: "Consulta recibida desde el formulario.", fecha: "2026-08-23T08:15:00Z", vinculo: { estado: "sin_coincidencia" } }
+        ] },
+        resumen: { contactos: 124, conversaciones: 38, oportunidades: 17, calendarios: 4 },
+        contactos: { total: 2, items: [] },
+        oportunidades: { total: 0, items: [], pipelines: [{ id: "p1", nombre: "Ventas", etapas: [{ id: "e1", nombre: "Nuevo" }] }] },
+        calendarios: { total: 1, items: [{ id: "c1", nombre: "Primera consulta", descripcion: "Agenda de evaluación", activo: true }] },
+        sincronizacion: { configurado: true, vinculos: { vinculados: 11, ambiguos: 2, sin_coincidencia: 5 }, protecciones: ["No crea contactos.", "No mueve oportunidades.", "Solo vincula coincidencias únicas."] },
+        configuracion_permisos: { usuarios: [{ cod_usuario: 5994, nombre: "Administrador Demo", local: "Central", puede_ver: true, puede_configurar: true, bloqueado: true }] },
+        guardar_permisos: { usuarios: [] }
+      };
+      function MockXHR() { this.readyState = 0; this.status = 0; this.responseText = ""; this.onreadystatechange = null; }
+      MockXHR.prototype.open = function () {};
+      MockXHR.prototype.setRequestHeader = function () {};
+      MockXHR.prototype.send = function (form) {
+        var self = this;
+        var action = form.get("accion");
+        setTimeout(function () {
+          self.readyState = 4;
+          self.status = 200;
+          self.responseText = JSON.stringify({ ok: true, codigo: "fixture", mensaje: "ok", datos: responses[action] || {} });
+          if (self.onreadystatechange) { self.onreadystatechange(); }
+        }, 90);
+      };
+      window.XMLHttpRequest = MockXHR;
+    })();
+  </script>
+  <script src="/js_system/gohighlevel.js"></script>
+  <script>window.abrirGoHighLevel();</script>
+</body>
+</html>

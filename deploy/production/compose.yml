@@ -52,6 +52,10 @@ services:
       TELAR_ISSABEL_DIRECTORY_USERS_TABLE: ${TELAR_ISSABEL_DIRECTORY_USERS_TABLE:-users}
       TELAR_ISSABEL_DIRECTORY_DEVICES_TABLE: ${TELAR_ISSABEL_DIRECTORY_DEVICES_TABLE:-devices}
       TELAR_ISSABEL_DIRECTORY_QUEUES_TABLE: ${TELAR_ISSABEL_DIRECTORY_QUEUES_TABLE:-queues_config}
+      TELAR_GOHIGHLEVEL_API_BASE: ${TELAR_GOHIGHLEVEL_API_BASE:-https://services.leadconnectorhq.com}
+      TELAR_GOHIGHLEVEL_API_VERSION: ${TELAR_GOHIGHLEVEL_API_VERSION:-2021-07-28}
+      TELAR_GOHIGHLEVEL_LOCATION_ID: ${TELAR_GOHIGHLEVEL_LOCATION_ID:-axvRkLhtUCmmbsYeSUXq}
+      TELAR_GOHIGHLEVEL_TOKEN_FILE: /run/secrets/gohighlevel_readonly_token
       TELAR_LAB_MEDIA_DIR: /var/lib/telar/trabajos_laboratorio
       TZ: America/Asuncion
     ports:
@@ -62,6 +66,7 @@ services:
       - telar_error_logs:/var/log/telar
       - telar_lab_media:/var/lib/telar/trabajos_laboratorio
       - ./certs:/etc/apache2/ssl:ro
+      - ./secrets:/run/secrets:ro
     security_opt:
       - no-new-privileges:true
     healthcheck:

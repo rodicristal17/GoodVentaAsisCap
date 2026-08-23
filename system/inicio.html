@@ -43,6 +43,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <link id="telarPlanificacionEspecialistasCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/planificacion_especialistas.css?v=20260807-01" />
 <link id="telarCentralTelefonicaCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/central_telefonica.css?v=20260822-01" />
 <link id="telarMiCarteraCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/mi_cartera.css?v=20260822-01" />
+<link id="telarGoHighLevelCss" rel="stylesheet" href="/GoodVentaAsisCap/css_system/gohighlevel.css?v=20260823-01" />
 <link rel="stylesheet" href="/GoodVentaAsisCap/css_system/conciliacion_ueno_panel.css?x=transferencias-internas-20260820-2" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/magic.css?x=x-ios10v1" />
 <link  rel="stylesheet" href="/GoodVentaAsisCap/css_system/cssCalendar.css?x=agenda-avatar-flotante-20260801-01" />
@@ -94,6 +95,7 @@ content="width=device-width,user-scalable=no,initial-scale=1,minimun-scalable=1,
 <script src="../js_system/central_telefonica.js?x=20260822-01"></script>
 <script src="../js_system/central_telefonica_operacion.js?x=20260821-01"></script>
 <script src="../js_system/mi_cartera.js?x=20260822-01"></script>
+<script src="../js_system/gohighlevel.js?x=20260823-01"></script>
 <script src="../js_system/abmMecanicoDental.js?x=cuenta-telar-20260721-3"></script>
 <script src="../js_system/abmInterConsulta.js?x=central-hilos-20260821-1"></script>
 <script src="../js_system/abmCentroFacturas.js?x=devolucion-pagare-guiada-20260819-1"></script>
@@ -2985,6 +2987,18 @@ style='display:none' class='divMinimizado'>
 <p class='pTitulo4'>Mi cartera</p>
 <center>
 <div id='divMinimizadoMiCartera' style='display:none' class='divMinimizado'></div>
+</center>
+</td>
+</tr>
+</table>
+
+<table class='divMenub' id='divMenuGoHighLevel' data-access-key="gohighlevel" onclick='abrirGoHighLevel()' style='width:20%;text-align:center;display:none' title='Abrir GoHighLevel'>
+<tr>
+<td>
+<img class='imgIconoMenu' src='/GoodVentaAsisCap/iconos/gohighlevel.svg?v=20260823-01' />
+<p class='pTitulo4'>GoHighLevel</p>
+<center>
+<div id='divMinimizadoGoHighLevel' style='display:none' class='divMinimizado'></div>
 </center>
 </td>
 </tr>
@@ -28968,6 +28982,10 @@ onclick='buscarvistaaperturacierrecaja()' />
 
 <div id='divMiCartera' class='divAbms' style='width:100%;height:100vh;position:fixed;display:none;' aria-hidden='true'>
     <div id='telarMiCartera'></div>
+</div>
+
+<div id='divGoHighLevel' class='divAbms' style='width:100%;height:100vh;position:fixed;display:none;' aria-hidden='true'>
+    <div id='telarGoHighLevel'></div>
 </div>
 
 <div id='divAgendaConsultorios' class='divAbms agenda-ventana' style='width:100%;height:100vh;position: absolute;display:none;'>

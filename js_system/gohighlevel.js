@@ -1,0 +1,460 @@
+/* Sistema Telar - GoHighLevel fase 1 (solo lectura). */
+(function (window, document) {
+    "use strict";
+
+    var ENDPOINT = "/GoodVentaAsisCap/php_system/abmGoHighLevel.php";
+    var state = {
+        root: null,
+        open: false,
+        mounted: false,
+        loading: false,
+        context: null,
+        tab: "conversaciones",
+        summaryOpen: false,
+        summary: null,
+        cache: {},
+        settings: null
+    };
+
+    function escapeHtml(value) {
+        return String(value === null || typeof value === "undefined" ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function safeImage(value) {
+        var text = String(value || "").trim();
+        if (/^https:\/\//i.test(text) || /^\/GoodVentaAsisCap\//i.test(text)) { return escapeHtml(text); }
+        return "";
+    }
+
+    function initials(name) {
+        var parts = String(name || "?").trim().split(/\s+/).filter(Boolean);
+        return ((parts[0] || "?").charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : "")).toUpperCase();
+    }
+
+    function avatar(name, image, extraClass) {
+        var source = safeImage(image);
+        if (source) {
+            return "<span class='ghl-avatar " + escapeHtml(extraClass || "") + "'><img src='" + source + "' alt='' loading='lazy' onerror=\"this.parentNode.innerHTML='" + escapeHtml(initials(name)) + "'\"></span>";
+        }
+        return "<span class='ghl-avatar " + escapeHtml(extraClass || "") + "'>" + escapeHtml(initials(name)) + "</span>";
+    }
+
+    function credentials(form) {
+        try { if (typeof window.obtener_datos_user === "function") { window.obtener_datos_user(); } } catch (ignore) {}
+        form.append("useru", typeof window.userid !== "undefined" ? window.userid : "");
+        form.append("passu", typeof window.passuser !== "undefined" ? window.passuser : "");
+        form.append("navegador", typeof window.navegador !== "undefined" ? window.navegador : "");
+    }
+
+    function request(action, payload, timeout) {
+        return new Promise(function (resolve, reject) {
+            var xhr = new XMLHttpRequest();
+            var form = new FormData();
+            var key;
+            form.append("accion", action);
+            credentials(form);
+            payload = payload || {};
+            for (key in payload) {
+                if (Object.prototype.hasOwnProperty.call(payload, key)) { form.append(key, payload[key]); }
+            }
+            xhr.open("POST", ENDPOINT, true);
+            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+            xhr.timeout = timeout || 35000;
+            xhr.onreadystatechange = function () {
+                var data;
+                var error;
+                if (xhr.readyState !== 4) { return; }
+                try { data = JSON.parse((xhr.responseText || "").replace(/^\uFEFF/, "")); }
+                catch (ignore) { reject(new Error("Telar no devolvió una respuesta válida.")); return; }
+                if (xhr.status < 200 || xhr.status >= 300 || !data.ok) {
+                    error = new Error(data.mensaje || "No se pudo completar la consulta.");
+                    error.code = data.codigo || "";
+                    reject(error);
+                    return;
+                }
+                resolve(data.datos || {});
+            };
+            xhr.onerror = function () { reject(new Error("No se pudo comunicar con Telar.")); };
+            xhr.ontimeout = function () { reject(new Error("La consulta tardó demasiado. Intente nuevamente.")); };
+            xhr.send(form);
+        });
+    }
+
+    function mount() {
+        if (state.mounted) { return true; }
+        state.root = document.getElementById("telarGoHighLevel");
+        if (!state.root) { return false; }
+        state.root.innerHTML =
+            "<section class='ghl-shell'>" +
+                "<header class='ghl-header'>" +
+                    "<div class='ghl-brand'><img src='/GoodVentaAsisCap/iconos/gohighlevel.svg?v=20260823-01' alt=''><div><small>TELAR · INTEGRACIÓN</small><h1>GoHighLevel</h1><p>Conversaciones y seguimiento vinculados con pacientes</p></div></div>" +
+                    "<div class='ghl-header__actions'><span id='ghlConnection' class='ghl-connection'>Comprobando conexión…</span><button type='button' id='ghlSettingsButton' data-ghl-action='settings' title='Configuraciones y permisos' hidden><i class='fa-solid fa-gear'></i></button><button type='button' data-ghl-action='refresh' title='Actualizar'><i class='fa-solid fa-rotate-right'></i></button><button type='button' data-ghl-action='minimize' title='Minimizar'><i class='fa-solid fa-window-minimize'></i></button><button type='button' data-ghl-action='close' title='Cerrar'><i class='fa-solid fa-xmark'></i></button></div>" +
+                "</header>" +
+                "<div id='ghlMessage' class='ghl-message' hidden></div>" +
+                "<section class='ghl-summary-strip' id='ghlSummaryStrip'><button type='button' data-ghl-action='toggle-summary'><span><i class='fa-solid fa-chart-line'></i><strong>Resumen general</strong><small>Indicadores plegables para priorizar conversaciones</small></span><i class='fa-solid fa-chevron-down' data-summary-chevron></i></button><div id='ghlSummaryBody' hidden></div></section>" +
+                "<nav class='ghl-tabs' aria-label='Secciones de GoHighLevel'>" +
+                    tabButton("resumen", "fa-chart-pie", "Resumen") +
+                    tabButton("contactos", "fa-address-book", "Contactos") +
+                    tabButton("oportunidades", "fa-filter-circle-dollar", "Oportunidades") +
+                    tabButton("conversaciones", "fa-comments", "Conversaciones", true) +
+                    tabButton("calendarios", "fa-calendar-days", "Calendarios") +
+                    tabButton("sincronizacion", "fa-arrows-rotate", "Sincronización") +
+                "</nav>" +
+                "<main id='ghlContent' class='ghl-content'></main>" +
+                "<div id='ghlModalLayer' class='ghl-modal-layer' hidden></div>" +
+            "</section>";
+        bindEvents();
+        state.mounted = true;
+        return true;
+    }
+
+    function tabButton(tab, icon, label, active) {
+        return "<button type='button' data-ghl-tab='" + tab + "' class='" + (active ? "is-active" : "") + "'><i class='fa-solid " + icon + "'></i><span>" + label + "</span></button>";
+    }
+
+    function setMessage(text, kind) {
+        var message = state.root ? state.root.querySelector("#ghlMessage") : null;
+        if (!message) { return; }
+        if (!text) { message.hidden = true; message.textContent = ""; return; }
+        message.hidden = false;
+        message.className = "ghl-message ghl-message--" + (kind || "info");
+        message.textContent = text;
+    }
+
+    function setLoading(label) {
+        var content = state.root.querySelector("#ghlContent");
+        state.loading = true;
+        content.innerHTML = "<div class='ghl-loading'><i class='fa-solid fa-spinner fa-spin'></i><strong>" + escapeHtml(label || "Consultando GoHighLevel…") + "</strong><small>Solo lectura: ninguna automatización será modificada.</small></div>";
+    }
+
+    function dateLabel(value) {
+        var text = String(value || "");
+        var date;
+        if (!text) { return "Sin fecha"; }
+        date = new Date(text);
+        if (isNaN(date.getTime())) { return escapeHtml(text.substring(0, 16).replace("T", " ")); }
+        try { return date.toLocaleString("es-PY", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
+        catch (ignore) { return escapeHtml(text.substring(0, 16).replace("T", " ")); }
+    }
+
+    function money(value) {
+        try { return new Intl.NumberFormat("es-PY", { maximumFractionDigits: 0 }).format(Number(value || 0)) + " Gs."; }
+        catch (ignore) { return String(Math.round(Number(value || 0))) + " Gs."; }
+    }
+
+    function channelLabel(channel) {
+        var value = String(channel || "").toLowerCase();
+        if (value.indexOf("whatsapp") >= 0) { return "WhatsApp"; }
+        if (value.indexOf("email") >= 0) { return "Correo"; }
+        if (value.indexOf("sms") >= 0) { return "SMS"; }
+        if (value.indexOf("facebook") >= 0 || value.indexOf("messenger") >= 0) { return "Facebook"; }
+        if (value.indexOf("instagram") >= 0) { return "Instagram"; }
+        return channel ? channel : "Conversación";
+    }
+
+    function linkBadge(link) {
+        link = link || {};
+        if (link.estado === "vinculado" && link.paciente) {
+            return "<span class='ghl-link ghl-link--ok'><i class='fa-solid fa-link'></i>Paciente: " + escapeHtml(link.paciente.nombre) + "</span>";
+        }
+        if (link.estado === "ambiguo") {
+            return "<span class='ghl-link ghl-link--warning' title='Hay más de un paciente con este teléfono. No se vinculó automáticamente.'><i class='fa-solid fa-triangle-exclamation'></i>Coincidencia ambigua</span>";
+        }
+        return "<span class='ghl-link ghl-link--muted'><i class='fa-solid fa-link-slash'></i>Sin paciente vinculado</span>";
+    }
+
+    function emptyState(icon, title, detail) {
+        return "<div class='ghl-empty'><i class='fa-solid " + icon + "'></i><h2>" + escapeHtml(title) + "</h2><p>" + escapeHtml(detail) + "</p></div>";
+    }
+
+    function renderSummary(data, target) {
+        var html = "<div class='ghl-kpis'>";
+        [
+            ["fa-address-book", "Contactos", data.contactos || 0],
+            ["fa-comments", "Conversaciones", data.conversaciones || 0],
+            ["fa-filter-circle-dollar", "Oportunidades", data.oportunidades || 0],
+            ["fa-calendar-days", "Calendarios", data.calendarios || 0]
+        ].forEach(function (item) {
+            html += "<article><i class='fa-solid " + item[0] + "'></i><span><small>" + item[1] + "</small><strong>" + Number(item[2]) + "</strong></span></article>";
+        });
+        html += "</div><p class='ghl-readonly-note'><i class='fa-solid fa-shield-halved'></i>Datos reales consultados en modo solo lectura. No se disparan workflows.</p>";
+        target.innerHTML = html;
+    }
+
+    function loadSummary(target, force) {
+        if (state.summary && !force) { renderSummary(state.summary, target); return Promise.resolve(state.summary); }
+        target.innerHTML = "<div class='ghl-inline-loading'><i class='fa-solid fa-spinner fa-spin'></i> Actualizando indicadores…</div>";
+        return request("resumen", {}, 45000).then(function (data) {
+            state.summary = data;
+            renderSummary(data, target);
+            return data;
+        }).catch(function (error) {
+            target.innerHTML = "<p class='ghl-inline-error'><i class='fa-solid fa-circle-exclamation'></i> " + escapeHtml(error.message) + "</p>";
+            throw error;
+        });
+    }
+
+    function renderConversations(data) {
+        var items = data.items || [];
+        var html = "<div class='ghl-section-title'><div><small>MESA DE TRABAJO PRINCIPAL</small><h2>Conversaciones recientes</h2><p>Ordenadas desde GoHighLevel y relacionadas automáticamente con Telar.</p></div><span class='ghl-total'>" + Number(data.total || items.length) + " conversaciones</span></div>";
+        if (!items.length) { return html + emptyState("fa-comments", "No hay conversaciones para mostrar", "GoHighLevel no devolvió conversaciones recientes."); }
+        html += "<div class='ghl-conversation-list'>";
+        items.forEach(function (item) {
+            html += "<article class='ghl-conversation'>" + avatar(item.nombre, item.avatar) +
+                "<div class='ghl-conversation__main'><div class='ghl-conversation__top'><strong>" + escapeHtml(item.nombre) + "</strong><time>" + dateLabel(item.fecha) + "</time></div>" +
+                "<div class='ghl-conversation__meta'><span class='ghl-channel'><i class='fa-brands " + (channelLabel(item.canal) === "WhatsApp" ? "fa-whatsapp" : "fa-rocketchat") + "'></i>" + escapeHtml(channelLabel(item.canal)) + "</span>" + linkBadge(item.vinculo) + (item.no_leidos ? "<span class='ghl-unread'>" + Number(item.no_leidos) + " sin leer</span>" : "") + "</div>" +
+                "<p>" + escapeHtml(item.ultimo_mensaje || "Sin vista previa del mensaje") + "</p>" +
+                (item.responsable ? "<small class='ghl-owner'><i class='fa-solid fa-user-check'></i> Responsable: " + escapeHtml(item.responsable) + "</small>" : "") +
+                "</div></article>";
+        });
+        return html + "</div>";
+    }
+
+    function renderContacts(data) {
+        var items = data.items || [];
+        var html = "<div class='ghl-section-title'><div><small>DIRECTORIO SINCRONIZADO</small><h2>Contactos</h2><p>La coincidencia con pacientes se realiza por teléfono exacto y único.</p></div><span class='ghl-total'>" + Number(data.total || items.length) + " contactos</span></div>";
+        if (!items.length) { return html + emptyState("fa-address-book", "No hay contactos para mostrar", "GoHighLevel no devolvió contactos en esta consulta."); }
+        html += "<div class='ghl-contact-grid'>";
+        items.forEach(function (item) {
+            var tags = "";
+            (item.etiquetas || []).slice(0, 4).forEach(function (tag) { tags += "<span>" + escapeHtml(tag) + "</span>"; });
+            html += "<article class='ghl-contact-card'><div class='ghl-contact-card__head'>" + avatar(item.nombre, item.avatar) + "<div><strong>" + escapeHtml(item.nombre) + "</strong><small>" + escapeHtml(item.telefono || "Sin teléfono") + "</small></div></div>" +
+                (item.email ? "<p><i class='fa-solid fa-envelope'></i> " + escapeHtml(item.email) + "</p>" : "") +
+                "<div class='ghl-tags'>" + tags + "</div>" + linkBadge(item.vinculo) + "</article>";
+        });
+        return html + "</div>";
+    }
+
+    function pipelineMaps(pipelines) {
+        var maps = { pipeline: {}, stage: {} };
+        (pipelines || []).forEach(function (pipeline) {
+            maps.pipeline[pipeline.id] = pipeline.nombre;
+            (pipeline.etapas || []).forEach(function (stage) { maps.stage[stage.id] = stage.nombre; });
+        });
+        return maps;
+    }
+
+    function renderOpportunities(data) {
+        var items = data.items || [];
+        var maps = pipelineMaps(data.pipelines || []);
+        var html = "<div class='ghl-section-title'><div><small>PANEL SECUNDARIO</small><h2>Oportunidades</h2><p>Este panel queda separado para no entorpecer la mesa de conversaciones.</p></div><span class='ghl-total'>" + Number(data.total || items.length) + " oportunidades</span></div>";
+        html += "<div class='ghl-pipeline-summary'>";
+        (data.pipelines || []).forEach(function (pipeline) { html += "<span><strong>" + escapeHtml(pipeline.nombre) + "</strong><small>" + Number((pipeline.etapas || []).length) + " etapas</small></span>"; });
+        html += "</div>";
+        if (!items.length) { return html + emptyState("fa-filter-circle-dollar", "No hay oportunidades para mostrar", "Los pipelines existen, pero no se devolvieron oportunidades."); }
+        html += "<div class='ghl-table-wrap'><table class='ghl-table'><thead><tr><th>Oportunidad</th><th>Pipeline</th><th>Etapa</th><th>Estado</th><th>Valor</th><th>Actualizada</th></tr></thead><tbody>";
+        items.forEach(function (item) {
+            html += "<tr><td><strong>" + escapeHtml(item.nombre || "Sin nombre") + "</strong></td><td>" + escapeHtml(maps.pipeline[item.pipeline_id] || "Sin pipeline") + "</td><td>" + escapeHtml(maps.stage[item.etapa_id] || "Sin etapa") + "</td><td><span class='ghl-status'>" + escapeHtml(item.estado || "abierta") + "</span></td><td>" + money(item.valor) + "</td><td>" + dateLabel(item.fecha) + "</td></tr>";
+        });
+        return html + "</tbody></table></div>";
+    }
+
+    function renderCalendars(data) {
+        var items = data.items || [];
+        var html = "<div class='ghl-section-title'><div><small>AGENDA DE HIGHLEVEL</small><h2>Calendarios</h2><p>Vista de calendarios disponibles; no crea ni modifica citas.</p></div><span class='ghl-total'>" + Number(data.total || items.length) + " calendarios</span></div>";
+        if (!items.length) { return html + emptyState("fa-calendar-days", "No hay calendarios para mostrar", "La integración no devolvió calendarios disponibles."); }
+        html += "<div class='ghl-calendar-grid'>";
+        items.forEach(function (item) {
+            html += "<article><i class='fa-solid fa-calendar-check'></i><div><strong>" + escapeHtml(item.nombre || "Calendario") + "</strong><p>" + escapeHtml(item.descripcion || "Calendario disponible en GoHighLevel") + "</p><span class='" + (item.activo ? "is-active" : "") + "'>" + (item.activo ? "Activo" : "Inactivo") + "</span></div></article>";
+        });
+        return html + "</div>";
+    }
+
+    function renderSync(data) {
+        var link = data.vinculos || {};
+        var html = "<div class='ghl-section-title'><div><small>CONTROL DE INTEGRACIÓN</small><h2>Sincronización</h2><p>Estado de la conexión y de los vínculos automáticos.</p></div><span class='ghl-total ghl-total--safe'><i class='fa-solid fa-lock'></i> Solo lectura</span></div>" +
+            "<div class='ghl-sync-grid'><article><i class='fa-solid fa-cloud'></i><small>Integración</small><strong>" + (data.configurado ? "Conectada" : "Pendiente") + "</strong></article><article><i class='fa-solid fa-link'></i><small>Vinculados</small><strong>" + Number(link.vinculados || 0) + "</strong></article><article class='is-warning'><i class='fa-solid fa-triangle-exclamation'></i><small>Ambiguos</small><strong>" + Number(link.ambiguos || 0) + "</strong></article><article><i class='fa-solid fa-link-slash'></i><small>Sin coincidencia</small><strong>" + Number(link.sin_coincidencia || 0) + "</strong></article></div>" +
+            "<section class='ghl-protections'><h3><i class='fa-solid fa-shield-halved'></i> Protecciones activas</h3>";
+        (data.protecciones || []).forEach(function (item) { html += "<p><i class='fa-solid fa-check'></i>" + escapeHtml(item) + "</p>"; });
+        return html + "</section>";
+    }
+
+    function loadTab(force) {
+        var action = state.tab;
+        var content = state.root.querySelector("#ghlContent");
+        var labels = { conversaciones: "Cargando conversaciones reales…", contactos: "Vinculando contactos con pacientes…", oportunidades: "Cargando pipelines y oportunidades…", calendarios: "Cargando calendarios…", resumen: "Actualizando resumen…", sincronizacion: "Comprobando sincronización…" };
+        if (state.cache[action] && !force) { renderTab(action, state.cache[action]); return; }
+        setLoading(labels[action]);
+        request(action, {}, action === "resumen" ? 45000 : 40000).then(function (data) {
+            state.cache[action] = data;
+            state.loading = false;
+            renderTab(action, data);
+        }).catch(function (error) {
+            state.loading = false;
+            content.innerHTML = emptyState("fa-triangle-exclamation", "No se pudo cargar esta sección", error.message);
+            setMessage(error.message, "error");
+        });
+    }
+
+    function renderTab(tab, data) {
+        var content = state.root.querySelector("#ghlContent");
+        setMessage("", "info");
+        if (tab === "conversaciones") { content.innerHTML = renderConversations(data); }
+        else if (tab === "contactos") { content.innerHTML = renderContacts(data); }
+        else if (tab === "oportunidades") { content.innerHTML = renderOpportunities(data); }
+        else if (tab === "calendarios") { content.innerHTML = renderCalendars(data); }
+        else if (tab === "sincronizacion") { content.innerHTML = renderSync(data); }
+        else if (tab === "resumen") {
+            state.summary = data;
+            content.innerHTML = "<div class='ghl-section-title'><div><small>VISIÓN GENERAL</small><h2>Resumen</h2><p>Indicadores generales consultados en tiempo real.</p></div></div><div id='ghlTabSummary'></div>";
+            renderSummary(data, content.querySelector("#ghlTabSummary"));
+        }
+    }
+
+    function selectTab(tab) {
+        state.tab = tab;
+        Array.prototype.forEach.call(state.root.querySelectorAll("[data-ghl-tab]"), function (button) {
+            button.classList.toggle("is-active", button.getAttribute("data-ghl-tab") === tab);
+        });
+        loadTab(false);
+    }
+
+    function toggleSummary() {
+        var body = state.root.querySelector("#ghlSummaryBody");
+        var strip = state.root.querySelector("#ghlSummaryStrip");
+        state.summaryOpen = !state.summaryOpen;
+        body.hidden = !state.summaryOpen;
+        strip.classList.toggle("is-open", state.summaryOpen);
+        if (state.summaryOpen) { loadSummary(body, false).catch(function () {}); }
+    }
+
+    function openSettings() {
+        var layer = state.root.querySelector("#ghlModalLayer");
+        layer.hidden = false;
+        layer.innerHTML = "<section class='ghl-modal'><header><div><small>CONFIGURACIONES Y PERMISOS</small><h2>Preparando equipo…</h2></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-loading'><i class='fa-solid fa-spinner fa-spin'></i></div></section>";
+        request("configuracion_permisos").then(function (data) {
+            state.settings = data;
+            renderSettings();
+        }).catch(function (error) {
+            layer.innerHTML = "<section class='ghl-modal'><header><h2>No se pudo abrir la configuración</h2><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'><p class='ghl-inline-error'>" + escapeHtml(error.message) + "</p></div></section>";
+        });
+    }
+
+    function renderSettings() {
+        var layer = state.root.querySelector("#ghlModalLayer");
+        var rows = "";
+        (state.settings.usuarios || []).forEach(function (user) {
+            rows += "<tr data-user='" + Number(user.cod_usuario) + "'><td><div class='ghl-user'>" + avatar(user.nombre, user.avatar, "ghl-avatar--small") + "<span><strong>" + escapeHtml(user.nombre) + "</strong><small>" + escapeHtml(user.local || "Sin local") + "</small></span></div></td><td><label class='ghl-switch'><input type='checkbox' data-permission='view' " + (user.puede_ver ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='admin' " + (user.puede_configurar ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td></tr>";
+        });
+        layer.innerHTML = "<section class='ghl-modal' role='dialog' aria-modal='true'><header><div><small>ENGRANAJE DEL MÓDULO</small><h2>Configuraciones y permisos</h2><p>Defina quién puede consultar datos y quién puede administrar este mismo panel.</p></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'><div class='ghl-security-note'><i class='fa-solid fa-lock'></i><p><strong>El token nunca se muestra aquí.</strong><br>La integración continúa en solo lectura y las automatizaciones de HighLevel no se modifican.</p></div><div class='ghl-permission-table'><table><thead><tr><th>Usuario</th><th>Puede ver</th><th>Administra</th></tr></thead><tbody>" + rows + "</tbody></table></div><div id='ghlSettingsMessage' class='ghl-modal-message' hidden></div></div><footer><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cancelar</button><button type='button' class='ghl-btn ghl-btn--primary' data-ghl-action='save-settings'><i class='fa-solid fa-floppy-disk'></i>Guardar permisos</button></footer></section>";
+    }
+
+    function closeSettings() {
+        var layer = state.root.querySelector("#ghlModalLayer");
+        layer.hidden = true;
+        layer.innerHTML = "";
+        state.settings = null;
+    }
+
+    function saveSettings(button) {
+        var rows = state.root.querySelectorAll("#ghlModalLayer [data-user]");
+        var permissions = [];
+        var message = state.root.querySelector("#ghlSettingsMessage");
+        Array.prototype.forEach.call(rows, function (row) {
+            var view = row.querySelector("[data-permission='view']");
+            var admin = row.querySelector("[data-permission='admin']");
+            permissions.push({ cod_usuario: Number(row.getAttribute("data-user")), puede_ver: view.checked ? 1 : 0, puede_configurar: admin.checked ? 1 : 0 });
+        });
+        button.disabled = true;
+        message.hidden = false;
+        message.className = "ghl-modal-message ghl-modal-message--info";
+        message.textContent = "Guardando permisos y trazabilidad…";
+        request("guardar_permisos", { permisos: JSON.stringify(permissions) }).then(function (data) {
+            state.settings = data;
+            message.className = "ghl-modal-message ghl-modal-message--success";
+            message.textContent = "Permisos guardados correctamente.";
+            window.setTimeout(closeSettings, 850);
+        }).catch(function (error) {
+            message.className = "ghl-modal-message ghl-modal-message--error";
+            message.textContent = error.message;
+            button.disabled = false;
+        });
+    }
+
+    function loadContext() {
+        var connection = state.root.querySelector("#ghlConnection");
+        connection.textContent = "Comprobando conexión…";
+        connection.className = "ghl-connection";
+        request("contexto").then(function (data) {
+            state.context = data;
+            connection.textContent = data.integracion && data.integracion.configurado ? "Conectado · Solo lectura" : "Configuración pendiente";
+            connection.className = "ghl-connection " + (data.integracion && data.integracion.configurado ? "is-online" : "is-pending");
+            state.root.querySelector("#ghlSettingsButton").hidden = !(data.usuario && data.usuario.puede_configurar);
+            loadTab(true);
+        }).catch(function (error) {
+            connection.textContent = "Sin conexión";
+            connection.className = "ghl-connection is-offline";
+            state.root.querySelector("#ghlContent").innerHTML = emptyState("fa-triangle-exclamation", "No se pudo abrir GoHighLevel", error.message);
+        });
+    }
+
+    function refresh() {
+        state.cache = {};
+        state.summary = null;
+        loadTab(true);
+        if (state.summaryOpen) { loadSummary(state.root.querySelector("#ghlSummaryBody"), true).catch(function () {}); }
+    }
+
+    function bindEvents() {
+        state.root.addEventListener("click", function (event) {
+            var tab = event.target.closest("[data-ghl-tab]");
+            var button = event.target.closest("[data-ghl-action]");
+            var action;
+            if (tab) { selectTab(tab.getAttribute("data-ghl-tab")); return; }
+            if (!button) { return; }
+            action = button.getAttribute("data-ghl-action");
+            if (action === "close") { window.cerrarGoHighLevel(); }
+            else if (action === "minimize") { window.minimizarGoHighLevel(); }
+            else if (action === "refresh") { refresh(); }
+            else if (action === "toggle-summary") { toggleSummary(); }
+            else if (action === "settings") { openSettings(); }
+            else if (action === "close-settings") { closeSettings(); }
+            else if (action === "save-settings") { saveSettings(button); }
+        });
+        state.root.addEventListener("change", function (event) {
+            var field = event.target;
+            var row;
+            if (!field.matches("[data-permission='admin']")) { return; }
+            row = field.closest("[data-user]");
+            if (field.checked && row) { row.querySelector("[data-permission='view']").checked = true; }
+        });
+    }
+
+    window.abrirGoHighLevel = function () {
+        var container = document.getElementById("divGoHighLevel");
+        var marker;
+        if (!container || !mount()) { return; }
+        container.style.display = "";
+        container.setAttribute("aria-hidden", "false");
+        marker = document.getElementById("divMinimizadoGoHighLevel");
+        if (marker) { marker.style.display = "none"; }
+        state.open = true;
+        if (document.body) { document.body.classList.add("gohighlevel-open"); }
+        loadContext();
+    };
+
+    window.cerrarGoHighLevel = function () {
+        var container = document.getElementById("divGoHighLevel");
+        if (container) { container.style.display = "none"; container.setAttribute("aria-hidden", "true"); }
+        state.open = false;
+        closeSettings();
+        if (document.body) { document.body.classList.remove("gohighlevel-open"); }
+    };
+
+    window.minimizarGoHighLevel = function () {
+        var marker = document.getElementById("divMinimizadoGoHighLevel");
+        window.cerrarGoHighLevel();
+        if (marker) { marker.style.display = ""; }
+    };
+
+    window.addEventListener("keydown", function (event) {
+        if (event.key !== "Escape" || !state.open) { return; }
+        if (state.root && !state.root.querySelector("#ghlModalLayer").hidden) { closeSettings(); }
+        else { window.cerrarGoHighLevel(); }
+    });
+})(window, document);
