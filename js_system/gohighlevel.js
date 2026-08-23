@@ -444,9 +444,18 @@
         if (!canReply) {
             return html + "<div class='ghl-composer__blocked'><i class='fa-solid fa-user-lock'></i><div><strong>Consulta disponible</strong><p>Tu usuario no tiene permiso para responder. Puede habilitarse desde el engranaje del módulo.</p></div></div></section>";
         }
-        html += "<div class='ghl-window-open'><i class='fa-brands fa-whatsapp'></i><span><strong>Ventana de respuesta abierta</strong><small>Tiempo restante: " + escapeHtml(remainingWindow(windowData.segundos_restantes)) + "</small></span></div>";
-        html += "<form data-ghl-send-form><label for='ghlManualReply'>Respuesta manual por WhatsApp</label><textarea id='ghlManualReply' maxlength='2000' rows='2' placeholder='Escriba una respuesta relacionada con la consulta del contacto…' required></textarea><div class='ghl-composer__actions ghl-composer__actions--send'><button type='submit' class='ghl-btn ghl-btn--primary ghl-btn--compact'><i class='fa-solid fa-paper-plane'></i> Enviar</button></div><div class='ghl-modal-message ghl-modal-message--error' data-ghl-send-error hidden></div></form>";
+        html = "<section class='ghl-composer ghl-composer--manual'>";
+        html += "<div class='ghl-window-open'><i class='fa-brands fa-whatsapp'></i><span><strong>24 h abierta</strong><small> · quedan " + escapeHtml(remainingWindow(windowData.segundos_restantes)) + "</small></span></div>";
+        html += "<form data-ghl-send-form><div class='ghl-manual-row'><textarea id='ghlManualReply' data-ghl-manual-reply maxlength='2000' rows='1' aria-label='Respuesta manual por WhatsApp' placeholder='Escriba una respuesta…' required></textarea><button type='submit' class='ghl-btn ghl-btn--primary ghl-btn--compact'><i class='fa-solid fa-paper-plane'></i> Enviar</button></div><div class='ghl-modal-message ghl-modal-message--error' data-ghl-send-error hidden></div></form>";
         return html + "</section>";
+    }
+
+    function resizeManualReply(textarea) {
+        var maxHeight = 78;
+        if (!textarea) { return; }
+        textarea.style.height = "auto";
+        textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + "px";
+        textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
     }
 
     function sendManualReply(form) {
@@ -624,9 +633,10 @@
             var body = message.cuerpo || ("Actividad: " + channelLabel(message.tipo));
             html += "<article class='ghl-message-bubble " + (outbound ? "is-outbound" : "is-inbound") + "'><small>" + (outbound ? "Equipo" : escapeHtml(item.nombre || "Contacto")) + " · " + escapeHtml(channelLabel(message.tipo)) + "</small><p>" + escapeHtml(body) + "</p><footer><time>" + dateLabel(message.fecha) + "</time>" + (message.estado ? "<span>" + escapeHtml(message.estado) + "</span>" : "") + (message.adjuntos ? "<span><i class='fa-solid fa-paperclip'></i> " + Number(message.adjuntos) + " adjunto(s)</span>" : "") + "</footer></article>";
         });
-        html += "</div></div>" + renderConversationComposer(item, data) + "</div><footer><span class='ghl-readonly-note'><i class='fa-solid fa-shield-halved'></i>Telar valida permiso, canal y ventana antes de cada envío.</span><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cerrar</button></footer></section>";
+        html += "</div></div>" + renderConversationComposer(item, data) + "</div></section>";
         layer.innerHTML = html;
         updateTemplateSelection();
+        resizeManualReply(layer.querySelector("[data-ghl-manual-reply]"));
     }
 
     function loadTemplatesForConversation(selected) {
@@ -921,6 +931,7 @@
             var tab = event.target.closest("[data-ghl-tab]");
             var button = event.target.closest("[data-ghl-action]");
             var action;
+            if (event.target.id === "ghlModalLayer" && event.target.querySelector(".ghl-conversation-modal")) { closeSettings(); return; }
             if (tab) { selectTab(tab.getAttribute("data-ghl-tab")); return; }
             if (!button) { return; }
             action = button.getAttribute("data-ghl-action");
@@ -975,6 +986,7 @@
             if (field.checked && row) { row.querySelector("[data-permission='view']").checked = true; }
         });
         state.root.addEventListener("input", function (event) {
+            if (event.target.matches("[data-ghl-manual-reply]")) { resizeManualReply(event.target); return; }
             if (event.target.matches("[data-ghl-template-filter]")) { filterTemplateSettings(event.target.value); }
         });
     }

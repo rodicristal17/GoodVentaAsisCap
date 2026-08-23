@@ -109,6 +109,12 @@ ghlVerificar(strpos($js, "data-ghl-action='confirm-send'") === false, 'La respue
 ghlVerificar(strpos($js, 'data-ghl-rules-confirmed') === false, 'La respuesta manual no debe exigir una casilla redundante.');
 ghlVerificar(strpos($js, 'ghl-btn--compact') !== false && strpos($js, '> Enviar</button>') !== false, 'Falta el envio manual compacto de un solo paso.');
 ghlVerificar(strpos($js, "class='ghl-conversation-scroll'") !== false, 'El historial debe tener un contenedor de desplazamiento propio.');
+ghlVerificar(strpos($js, '<strong>24 h abierta</strong>') !== false, 'La ventana abierta debe mostrarse como un indicador compacto.');
+ghlVerificar(strpos($js, "data-ghl-manual-reply maxlength='2000' rows='1'") !== false, 'La respuesta manual debe comenzar en una sola linea.');
+ghlVerificar(strpos($js, 'resizeManualReply') !== false, 'La respuesta manual debe crecer automaticamente hasta su limite.');
+ghlVerificar(strpos($js, '>Respuesta manual por WhatsApp</label>') === false, 'El compositor compacto no debe repetir un titulo visible.');
+ghlVerificar(strpos($js, 'Telar valida permiso, canal y ventana antes de cada envío.') === false, 'El chat no debe reservar un pie redundante para validaciones internas.');
+ghlVerificar(strpos($js, 'event.target.querySelector(".ghl-conversation-modal")') !== false, 'La conversacion debe poder cerrarse al pulsar fuera sin afectar otros modales.');
 ghlVerificar(strpos($js, "data-permission='reply'") !== false, 'Falta el permiso Responde en el engranaje.');
 ghlVerificar(strpos($js, "data-permission='template'") !== false, 'Falta el permiso Plantillas en el engranaje.');
 ghlVerificar(strpos($js, 'Plantillas de WhatsApp') !== false, 'Falta la administracion de plantillas en el engranaje.');
@@ -123,6 +129,8 @@ ghlVerificar(strpos($css, '.ghl-conversation__main { width: 0; min-width: 0;') !
 ghlVerificar(strpos($css, '.ghl-composer') !== false, 'Falta el compositor protegido.');
 ghlVerificar(strpos($css, '.ghl-conversation-scroll { flex: 1 1 auto;') !== false, 'El desplazamiento debe limitarse al historial de mensajes.');
 ghlVerificar(strpos($css, '.ghl-composer { flex: 0 0 auto;') !== false, 'El compositor debe permanecer fijo dentro del modal.');
+ghlVerificar(strpos($css, '.ghl-composer--manual') !== false && strpos($css, '.ghl-manual-row') !== false, 'Falta el compositor manual compacto en una fila.');
+ghlVerificar(strpos($css, '.ghl-conversation-modal > footer') === false, 'La conversacion no debe reservar espacio para un pie redundante.');
 ghlVerificar(strpos($css, '.ghl-template-setting') !== false, 'Falta el estilo del catalogo administrable.');
 ghlVerificar(strpos($css, '.ghl-template-confirm.is-sensitive') !== false, 'Falta diferenciar la confirmacion sensible.');
 

@@ -210,14 +210,14 @@ body.gohighlevel-open { overflow: hidden; }
 #telarGoHighLevel .ghl-message-bubble > small { color: #73869a; font-size: 9px; font-weight: 780; text-transform: uppercase; }
 #telarGoHighLevel .ghl-message-bubble > p { margin: 5px 0 7px; color: #2e4b66; font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
 #telarGoHighLevel .ghl-message-bubble > footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; color: #8190a0; font-size: 9px; }
-#telarGoHighLevel .ghl-conversation-modal > footer { align-items: center; justify-content: space-between; }
 
 #telarGoHighLevel .ghl-composer { flex: 0 0 auto; margin-top: 10px; padding: 10px 12px; border: 1px solid #c9dce5; border-radius: 13px; background: #fff; box-shadow: 0 4px 14px rgba(18,55,86,.06); }
 #telarGoHighLevel .ghl-composer [hidden] { display: none !important; }
-#telarGoHighLevel .ghl-window-open { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; padding: 6px 9px; border: 1px solid #b8e0cf; border-radius: 9px; color: #17664f; background: #ecfdf5; }
-#telarGoHighLevel .ghl-window-open > i { font-size: 16px; }
+#telarGoHighLevel .ghl-composer--manual { margin-top: 7px; padding: 7px 9px 8px; }
+#telarGoHighLevel .ghl-window-open { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; margin-bottom: 6px; padding: 3px 8px; border: 1px solid #b8e0cf; border-radius: 999px; color: #17664f; background: #ecfdf5; }
+#telarGoHighLevel .ghl-window-open > i { font-size: 12px; }
 #telarGoHighLevel .ghl-window-open > span { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-#telarGoHighLevel .ghl-window-open strong { font-size: 10.5px; white-space: nowrap; }
+#telarGoHighLevel .ghl-window-open strong { font-size: 9.5px; white-space: nowrap; }
 #telarGoHighLevel .ghl-window-open small { overflow: hidden; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 #telarGoHighLevel .ghl-window-closed { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 9px 11px; border: 1px solid #f0cf98; border-radius: 10px; color: #885215; background: #fff8e8; }
 #telarGoHighLevel .ghl-window-closed > i { display: grid; place-items: center; flex: 0 0 34px; width: 34px; height: 34px; border-radius: 9px; background: #ffedca; }
@@ -230,6 +230,10 @@ body.gohighlevel-open { overflow: hidden; }
 #telarGoHighLevel .ghl-composer select:focus { border-color: #0a8e9d; box-shadow: 0 0 0 3px rgba(10,142,157,.11); }
 #telarGoHighLevel .ghl-composer textarea { width: 100%; min-height: 58px; max-height: 116px; resize: vertical; padding: 9px 10px; border: 1px solid #c8d7e2; border-radius: 9px; outline: 0; color: #203e5b; background: #fbfdfe; font: inherit; font-size: 12px; line-height: 1.4; }
 #telarGoHighLevel .ghl-composer textarea:focus { border-color: #0a8e9d; box-shadow: 0 0 0 3px rgba(10,142,157,.11); }
+#telarGoHighLevel .ghl-manual-row { display: flex; align-items: flex-end; gap: 8px; }
+#telarGoHighLevel .ghl-composer .ghl-manual-row textarea { flex: 1 1 auto; width: auto; min-width: 0; min-height: 34px; max-height: 78px; resize: none; overflow-y: hidden; padding: 7px 10px; }
+#telarGoHighLevel .ghl-manual-row .ghl-btn { flex: 0 0 auto; min-height: 34px; }
+#telarGoHighLevel .ghl-composer--manual .ghl-modal-message { margin-top: 6px; }
 #telarGoHighLevel .ghl-composer__actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 9px; }
 #telarGoHighLevel .ghl-composer__actions--send { justify-content: flex-end; margin-top: 7px; }
 #telarGoHighLevel .ghl-btn--compact { display: inline-flex; align-items: center; gap: 6px; min-height: 31px; padding: 0 11px; font-size: 10.5px; white-space: nowrap; }
@@ -290,9 +294,10 @@ body.gohighlevel-open { overflow: hidden; }
   #telarGoHighLevel .ghl-message-bubble { max-width: 92%; }
   #telarGoHighLevel .ghl-composer__actions { align-items: stretch; flex-direction: column; }
   #telarGoHighLevel .ghl-composer__actions .ghl-btn { align-self: flex-end; }
-  #telarGoHighLevel .ghl-window-open > span { align-items: flex-start; flex-direction: column; gap: 1px; }
   #telarGoHighLevel .ghl-send-confirm > footer { flex-wrap: wrap; }
-  #telarGoHighLevel .ghl-conversation-modal > footer { align-items: flex-end; flex-direction: column; }
+  #telarGoHighLevel .ghl-composer--manual { padding: 7px; }
+  #telarGoHighLevel .ghl-manual-row { gap: 6px; }
+  #telarGoHighLevel .ghl-manual-row .ghl-btn { padding-left: 9px; padding-right: 9px; }
   #telarGoHighLevel .ghl-template-toolbar { grid-template-columns: 1fr; }
   #telarGoHighLevel .ghl-template-toolbar > a { justify-self: start; }
   #telarGoHighLevel .ghl-template-setting { grid-template-columns: 1fr; }
