@@ -32,9 +32,13 @@
         ], pipelines: [{ id: "p1", nombre: "Ventas", etapas: [{ id: "e1", nombre: "Nuevo" }] }] },
         calendarios: { total: 1, items: [{ id: "c1", nombre: "Primera consulta", descripcion: "Agenda de evaluación", activo: true }] },
         sincronizacion: { configurado: true, vinculos: { vinculados: 11, ambiguos: 2, sin_coincidencia: 5 }, protecciones: ["No crea contactos.", "No mueve oportunidades.", "Solo vincula coincidencias únicas."] },
-        mensajes_conversacion: { conversation_id: "1", puede_responder: true, puede_enviar_plantilla: true, envio_habilitado: true, ventana_whatsapp: { abierta: false, segundos_restantes: 0, requiere_plantilla: true }, paginacion: { hay_mas: true, last_message_id: "mensaje-demo-1" }, items: [
+        mensajes_conversacion: { conversation_id: "1", puede_responder: true, puede_enviar_plantilla: true, envio_habilitado: true, ventana_whatsapp: { abierta: true, segundos_restantes: 81180, requiere_plantilla: false }, paginacion: { hay_mas: true, last_message_id: "mensaje-demo-1" }, items: [
           { id: "mensaje-demo-1", cuerpo: "Hola, quisiera confirmar mi consulta.", direccion: "inbound", tipo: "TYPE_WHATSAPP", estado: "read", fecha: "2026-08-23T09:35:00Z", adjuntos: 0 },
-          { id: "mensaje-demo-2", cuerpo: "Claro, su horario está confirmado.", direccion: "outbound", tipo: "TYPE_WHATSAPP", estado: "delivered", fecha: "2026-08-23T09:42:00Z", adjuntos: 0 }
+          { id: "mensaje-demo-2", cuerpo: "Claro, su horario está confirmado.", direccion: "outbound", tipo: "TYPE_WHATSAPP", estado: "delivered", fecha: "2026-08-23T09:42:00Z", adjuntos: 0 },
+          { id: "mensaje-demo-3", cuerpo: "¿Debo presentarme unos minutos antes?", direccion: "inbound", tipo: "TYPE_WHATSAPP", estado: "read", fecha: "2026-08-23T09:44:00Z", adjuntos: 0 },
+          { id: "mensaje-demo-4", cuerpo: "Sí, le recomendamos llegar diez minutos antes.", direccion: "outbound", tipo: "TYPE_WHATSAPP", estado: "delivered", fecha: "2026-08-23T09:45:00Z", adjuntos: 0 },
+          { id: "mensaje-demo-5", cuerpo: "Perfecto, muchas gracias.", direccion: "inbound", tipo: "TYPE_WHATSAPP", estado: "read", fecha: "2026-08-23T09:46:00Z", adjuntos: 0 },
+          { id: "mensaje-demo-6", cuerpo: "Quedamos atentos ante cualquier otra consulta.", direccion: "outbound", tipo: "TYPE_WHATSAPP", estado: "delivered", fecha: "2026-08-23T09:47:00Z", adjuntos: 0 }
         ] },
         configuracion_permisos: { usuarios: [{ cod_usuario: 5994, nombre: "Administrador Demo", local: "Central", puede_ver: true, puede_responder: true, puede_enviar_plantilla: true, puede_configurar: true, bloqueado: true }] },
         guardar_permisos: { usuarios: [] },

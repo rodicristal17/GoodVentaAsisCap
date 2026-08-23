@@ -6,7 +6,7 @@ El modulo consulta datos reales de una unica subcuenta de GoHighLevel y los pres
 
 La consulta continúa en modo de solo lectura: no crea ni actualiza contactos, no mueve oportunidades y no modifica workflows. La fase 2A agrega una escritura limitada: responder manualmente por WhatsApp desde una conversacion existente cuando el contacto escribio durante las ultimas 24 horas. La fase 2B permite retomar una conversacion vencida con una plantilla aprobada, activa, en español, de categoria Utility y sin variables manuales.
 
-Abrir el historial no marca mensajes ni ejecuta automatizaciones. El envio requiere permiso individual, confirmacion final, validacion de la ventana nuevamente en servidor y el interruptor operativo habilitado. No se admiten adjuntos, envios masivos ni texto libre fuera de la ventana. Fuera de 24 horas Telar solo envia el identificador de una plantilla que vuelve a validar contra el catalogo real de GoHighLevel.
+Abrir el historial no marca mensajes ni ejecuta automatizaciones. El envio manual se realiza con un unico boton, pero conserva el permiso individual, la validacion de la ventana nuevamente en servidor y el interruptor operativo habilitado. El compositor permanece fijo y solamente el historial de mensajes se desplaza. No se admiten adjuntos, envios masivos ni texto libre fuera de la ventana. Fuera de 24 horas Telar solo envia el identificador de una plantilla que vuelve a validar contra el catalogo real de GoHighLevel.
 
 ## Vinculacion con pacientes
 
@@ -67,7 +67,7 @@ Los cambios quedan registrados en `gohighlevel_evento`. Cada intento manual se r
 
 - El contacto se obtiene de nuevo desde la conversacion de HighLevel; no se confia en un identificador enviado por el navegador.
 - El servidor consulta hasta 100 mensajes recientes y exige un inbound de WhatsApp dentro de las ultimas 24 horas.
-- La interfaz exige revision del destinatario y una segunda confirmacion antes del envio.
+- La interfaz envia en un solo paso; el servidor conserva las validaciones de permiso, canal, ventana, longitud, frecuencia e idempotencia.
 - Cada envio usa un token unico para evitar dobles clics y aplica limites de frecuencia.
 - La auditoria guarda actor, conversacion, resultado y longitud; nunca el cuerpo del mensaje.
 - Una conversacion vencida oculta el texto libre y ofrece solamente plantillas habilitadas.

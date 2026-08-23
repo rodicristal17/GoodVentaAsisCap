@@ -19,7 +19,6 @@
         templates: null,
         queries: { conversaciones: "", contactos: "", oportunidades: "" },
         conversation: null,
-        pendingMessage: null,
         pendingTemplate: null
     };
 
@@ -445,62 +444,42 @@
         if (!canReply) {
             return html + "<div class='ghl-composer__blocked'><i class='fa-solid fa-user-lock'></i><div><strong>Consulta disponible</strong><p>Tu usuario no tiene permiso para responder. Puede habilitarse desde el engranaje del módulo.</p></div></div></section>";
         }
-        html += "<div class='ghl-window-open'><i class='fa-brands fa-whatsapp'></i><span><strong>Ventana de respuesta abierta</strong><small>Tiempo aproximado restante: " + escapeHtml(remainingWindow(windowData.segundos_restantes)) + "</small></span></div>";
-        html += "<form data-ghl-send-form><label for='ghlManualReply'>Respuesta manual por WhatsApp</label><textarea id='ghlManualReply' maxlength='2000' rows='3' placeholder='Escriba una respuesta relacionada con la consulta del contacto…' required></textarea><div class='ghl-composer__actions'><label class='ghl-rule-check'><input type='checkbox' data-ghl-rules-confirmed><span>Confirmo que responde a la consulta actual y que revisé el destinatario.</span></label><button type='submit' class='ghl-btn ghl-btn--primary'><i class='fa-solid fa-paper-plane'></i> Revisar envío</button></div><div class='ghl-modal-message ghl-modal-message--error' data-ghl-send-error hidden></div></form>";
-        html += "<div class='ghl-send-confirm' data-ghl-send-confirm hidden><div><small>CONFIRMACIÓN FINAL</small><strong>Se enviará por WhatsApp a " + escapeHtml(item.nombre || "este contacto") + "</strong><p data-ghl-send-preview></p><span>El texto no se guardará en la auditoría de Telar.</span></div><footer><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='cancel-send'>Volver a editar</button><button type='button' class='ghl-btn ghl-btn--primary' data-ghl-action='confirm-send'><i class='fa-solid fa-paper-plane'></i> Confirmar y enviar</button></footer><div class='ghl-modal-message ghl-modal-message--error' data-ghl-confirm-error hidden></div></div>";
+        html += "<div class='ghl-window-open'><i class='fa-brands fa-whatsapp'></i><span><strong>Ventana de respuesta abierta</strong><small>Tiempo restante: " + escapeHtml(remainingWindow(windowData.segundos_restantes)) + "</small></span></div>";
+        html += "<form data-ghl-send-form><label for='ghlManualReply'>Respuesta manual por WhatsApp</label><textarea id='ghlManualReply' maxlength='2000' rows='2' placeholder='Escriba una respuesta relacionada con la consulta del contacto…' required></textarea><div class='ghl-composer__actions ghl-composer__actions--send'><button type='submit' class='ghl-btn ghl-btn--primary ghl-btn--compact'><i class='fa-solid fa-paper-plane'></i> Enviar</button></div><div class='ghl-modal-message ghl-modal-message--error' data-ghl-send-error hidden></div></form>";
         return html + "</section>";
     }
 
-    function prepareManualReply(form) {
+    function sendManualReply(form) {
+        var selected = state.conversation || {};
         var textarea = form.querySelector("textarea");
-        var accepted = form.querySelector("[data-ghl-rules-confirmed]");
         var error = form.querySelector("[data-ghl-send-error]");
+        var button = form.querySelector("button[type='submit']");
         var text = textarea ? textarea.value.trim() : "";
-        var confirmBox;
+        var token;
         if (!text || text.length > 2000) {
             error.hidden = false;
             error.textContent = "Escriba un mensaje de entre 1 y 2000 caracteres.";
             return;
         }
-        if (!accepted || !accepted.checked) {
+        if (!selected.item || !selected.item.id || !button || button.disabled) {
             error.hidden = false;
-            error.textContent = "Confirme que revisó el destinatario y que la respuesta corresponde a la consulta.";
+            error.textContent = "No se pudo preparar el envío. Vuelva a abrir la conversación.";
             return;
         }
         error.hidden = true;
-        state.pendingMessage = { text: text, token: sendToken() };
-        form.hidden = true;
-        confirmBox = state.root.querySelector("[data-ghl-send-confirm]");
-        confirmBox.hidden = false;
-        confirmBox.querySelector("[data-ghl-send-preview]").textContent = text;
-    }
-
-    function cancelManualReply() {
-        var form = state.root.querySelector("[data-ghl-send-form]");
-        var confirmBox = state.root.querySelector("[data-ghl-send-confirm]");
-        state.pendingMessage = null;
-        if (form) { form.hidden = false; }
-        if (confirmBox) { confirmBox.hidden = true; }
-    }
-
-    function sendManualReply(button) {
-        var selected = state.conversation || {};
-        var pending = state.pendingMessage;
-        var error = state.root.querySelector("[data-ghl-confirm-error]");
-        if (!selected.item || !selected.item.id || !pending || button.disabled) { return; }
+        token = sendToken();
         button.disabled = true;
         button.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Enviando…";
-        if (error) { error.hidden = true; }
         request("enviar_respuesta_manual", {
             conversation_id: selected.item.id,
-            mensaje: pending.text,
-            token_envio: pending.token,
+            mensaje: text,
+            token_envio: token,
             confirmar_reglas: 1
         }, 45000).then(function (data) {
             selected.data.items = selected.data.items || [];
             selected.data.items.push({
-                id: data.message_id || pending.token,
-                cuerpo: pending.text,
+                id: data.message_id || token,
+                cuerpo: text,
                 direccion: "outbound",
                 tipo: "WhatsApp",
                 estado: "pendiente",
@@ -509,7 +488,6 @@
             });
             selected.data.ventana_whatsapp = data.ventana_whatsapp || selected.data.ventana_whatsapp;
             state.conversation = selected;
-            state.pendingMessage = null;
             renderConversationDetail();
             setMessage("Respuesta enviada a GoHighLevel y registrada sin guardar el texto en la auditoría.", "info");
         }).catch(function (requestError) {
@@ -518,7 +496,7 @@
                 error.textContent = requestError.message;
             }
             button.disabled = false;
-            button.innerHTML = "<i class='fa-solid fa-paper-plane'></i> Confirmar y enviar";
+            button.innerHTML = "<i class='fa-solid fa-paper-plane'></i> Enviar";
         });
     }
 
@@ -633,7 +611,7 @@
         var item = selected.item || {};
         var data = selected.data || {};
         var messages = data.items || [];
-        var html = "<section class='ghl-modal ghl-conversation-modal' role='dialog' aria-modal='true'><header><div><small>HISTORIAL Y RESPUESTA PROTEGIDA</small><h2>" + escapeHtml(item.nombre || "Conversación") + "</h2><p>" + escapeHtml(channelLabel(item.canal)) + " · " + escapeHtml(item.telefono || "Sin teléfono disponible") + "</p></div><button type='button' data-ghl-action='close-settings' title='Cerrar'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'>";
+        var html = "<section class='ghl-modal ghl-conversation-modal' role='dialog' aria-modal='true'><header><div><small>HISTORIAL Y RESPUESTA PROTEGIDA</small><h2>" + escapeHtml(item.nombre || "Conversación") + "</h2><p>" + escapeHtml(channelLabel(item.canal)) + " · " + escapeHtml(item.telefono || "Sin teléfono disponible") + "</p></div><button type='button' data-ghl-action='close-settings' title='Cerrar'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'><div class='ghl-conversation-scroll'>";
         if (data.paginacion && data.paginacion.hay_mas) {
             html += "<div class='ghl-older'><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='load-older-messages'><i class='fa-solid fa-clock-rotate-left'></i> Cargar mensajes anteriores</button></div>";
         }
@@ -646,7 +624,7 @@
             var body = message.cuerpo || ("Actividad: " + channelLabel(message.tipo));
             html += "<article class='ghl-message-bubble " + (outbound ? "is-outbound" : "is-inbound") + "'><small>" + (outbound ? "Equipo" : escapeHtml(item.nombre || "Contacto")) + " · " + escapeHtml(channelLabel(message.tipo)) + "</small><p>" + escapeHtml(body) + "</p><footer><time>" + dateLabel(message.fecha) + "</time>" + (message.estado ? "<span>" + escapeHtml(message.estado) + "</span>" : "") + (message.adjuntos ? "<span><i class='fa-solid fa-paperclip'></i> " + Number(message.adjuntos) + " adjunto(s)</span>" : "") + "</footer></article>";
         });
-        html += "</div>" + renderConversationComposer(item, data) + "</div><footer><span class='ghl-readonly-note'><i class='fa-solid fa-shield-halved'></i>Telar valida permiso, canal y ventana antes de cada envío.</span><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cerrar</button></footer></section>";
+        html += "</div></div>" + renderConversationComposer(item, data) + "</div><footer><span class='ghl-readonly-note'><i class='fa-solid fa-shield-halved'></i>Telar valida permiso, canal y ventana antes de cada envío.</span><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cerrar</button></footer></section>";
         layer.innerHTML = html;
         updateTemplateSelection();
     }
@@ -834,7 +812,6 @@
         state.settings = null;
         state.templateSettings = null;
         state.conversation = null;
-        state.pendingMessage = null;
         state.pendingTemplate = null;
     }
 
@@ -964,8 +941,6 @@
             else if (action === "load-more") { loadMore(button.getAttribute("data-tab"), button); }
             else if (action === "open-conversation") { openConversation(button.getAttribute("data-conversation-id")); }
             else if (action === "load-older-messages") { loadOlderMessages(button); }
-            else if (action === "cancel-send") { cancelManualReply(); }
-            else if (action === "confirm-send") { sendManualReply(button); }
             else if (action === "cancel-template-send") { cancelTemplateSend(); }
             else if (action === "confirm-template-send") { sendTemplate(button); }
         });
@@ -977,7 +952,7 @@
             var input;
             if (sendForm) {
                 event.preventDefault();
-                prepareManualReply(sendForm);
+                sendManualReply(sendForm);
                 return;
             }
             if (templateForm) {
