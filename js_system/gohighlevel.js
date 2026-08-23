@@ -458,6 +458,22 @@
         textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
     }
 
+    function conversationScrollSnapshot() {
+        var scroll = state.root && state.root.querySelector(".ghl-conversation-scroll");
+        if (!scroll) { return null; }
+        return { top: scroll.scrollTop, height: scroll.scrollHeight };
+    }
+
+    function positionConversationScroll(previous) {
+        var scroll = state.root && state.root.querySelector(".ghl-conversation-scroll");
+        if (!scroll) { return; }
+        if (previous) {
+            scroll.scrollTop = Math.max(0, scroll.scrollHeight - previous.height + previous.top);
+            return;
+        }
+        if (scroll.scrollHeight > scroll.clientHeight) { scroll.scrollTop = scroll.scrollHeight; }
+    }
+
     function sendManualReply(form) {
         var selected = state.conversation || {};
         var textarea = form.querySelector("textarea");
@@ -614,7 +630,7 @@
         });
     }
 
-    function renderConversationDetail() {
+    function renderConversationDetail(previousScroll) {
         var layer = state.root.querySelector("#ghlModalLayer");
         var selected = state.conversation || {};
         var item = selected.item || {};
@@ -637,6 +653,7 @@
         layer.innerHTML = html;
         updateTemplateSelection();
         resizeManualReply(layer.querySelector("[data-ghl-manual-reply]"));
+        positionConversationScroll(previousScroll);
     }
 
     function loadTemplatesForConversation(selected) {
@@ -680,7 +697,9 @@
     function loadOlderMessages(button) {
         var selected = state.conversation || {};
         var pagination = selected.data && selected.data.paginacion || {};
+        var scrollSnapshot;
         if (!selected.item || !pagination.hay_mas || !pagination.last_message_id || button.disabled) { return; }
+        scrollSnapshot = conversationScrollSnapshot();
         button.disabled = true;
         button.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Cargando…";
         request("mensajes_conversacion", {
@@ -697,7 +716,7 @@
             data.plantillas_error = selected.data.plantillas_error;
             selected.data = data;
             state.conversation = selected;
-            renderConversationDetail();
+            renderConversationDetail(scrollSnapshot);
         }).catch(function (error) {
             setMessage(error.message, "error");
             button.disabled = false;

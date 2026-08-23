@@ -112,6 +112,9 @@ ghlVerificar(strpos($js, "class='ghl-conversation-scroll'") !== false, 'El histo
 ghlVerificar(strpos($js, '<strong>24 h abierta</strong>') !== false, 'La ventana abierta debe mostrarse como un indicador compacto.');
 ghlVerificar(strpos($js, "data-ghl-manual-reply maxlength='2000' rows='1'") !== false, 'La respuesta manual debe comenzar en una sola linea.');
 ghlVerificar(strpos($js, 'resizeManualReply') !== false, 'La respuesta manual debe crecer automaticamente hasta su limite.');
+ghlVerificar(strpos($js, 'function conversationScrollSnapshot') !== false, 'Falta recordar la posicion al consultar mensajes anteriores.');
+ghlVerificar(strpos($js, 'scroll.scrollTop = scroll.scrollHeight') !== false, 'La conversacion debe abrir en el mensaje mas reciente.');
+ghlVerificar(strpos($js, 'renderConversationDetail(scrollSnapshot)') !== false, 'Cargar mensajes anteriores debe conservar la posicion de lectura.');
 ghlVerificar(strpos($js, '>Respuesta manual por WhatsApp</label>') === false, 'El compositor compacto no debe repetir un titulo visible.');
 ghlVerificar(strpos($js, 'Telar valida permiso, canal y ventana antes de cada envío.') === false, 'El chat no debe reservar un pie redundante para validaciones internas.');
 ghlVerificar(strpos($js, 'event.target.querySelector(".ghl-conversation-modal")') !== false, 'La conversacion debe poder cerrarse al pulsar fuera sin afectar otros modales.');
