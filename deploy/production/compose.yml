@@ -56,6 +56,7 @@ services:
       TELAR_GOHIGHLEVEL_API_VERSION: ${TELAR_GOHIGHLEVEL_API_VERSION:-2021-07-28}
       TELAR_GOHIGHLEVEL_LOCATION_ID: ${TELAR_GOHIGHLEVEL_LOCATION_ID:-axvRkLhtUCmmbsYeSUXq}
       TELAR_GOHIGHLEVEL_TOKEN_FILE: /run/secrets/gohighlevel_readonly_token
+      TELAR_GOHIGHLEVEL_WRITE_ENABLED: ${TELAR_GOHIGHLEVEL_WRITE_ENABLED:-false}
       TELAR_LAB_MEDIA_DIR: /var/lib/telar/trabajos_laboratorio
       TZ: America/Asuncion
     ports:

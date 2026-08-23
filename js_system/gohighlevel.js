@@ -1,4 +1,4 @@
-/* Sistema Telar - GoHighLevel fase 1 (solo lectura). */
+/* Sistema Telar - GoHighLevel fase 2A: consulta y respuesta manual protegida. */
 (function (window, document) {
     "use strict";
 
@@ -15,7 +15,8 @@
         cache: {},
         settings: null,
         queries: { conversaciones: "", contactos: "", oportunidades: "" },
-        conversation: null
+        conversation: null,
+        pendingMessage: null
     };
 
     function escapeHtml(value) {
@@ -131,7 +132,7 @@
     function setLoading(label) {
         var content = state.root.querySelector("#ghlContent");
         state.loading = true;
-        content.innerHTML = "<div class='ghl-loading'><i class='fa-solid fa-spinner fa-spin'></i><strong>" + escapeHtml(label || "Consultando GoHighLevel…") + "</strong><small>Solo lectura: ninguna automatización será modificada.</small></div>";
+        content.innerHTML = "<div class='ghl-loading'><i class='fa-solid fa-spinner fa-spin'></i><strong>" + escapeHtml(label || "Consultando GoHighLevel…") + "</strong><small>La carga de datos no modifica automatizaciones.</small></div>";
     }
 
     function dateLabel(value) {
@@ -205,7 +206,7 @@
         ].forEach(function (item) {
             html += "<article><i class='fa-solid " + item[0] + "'></i><span><small>" + item[1] + "</small><strong>" + Number(item[2]) + "</strong></span></article>";
         });
-        html += "</div><p class='ghl-readonly-note'><i class='fa-solid fa-shield-halved'></i>Datos reales consultados en modo solo lectura. No se disparan workflows.</p>";
+        html += "</div><p class='ghl-readonly-note'><i class='fa-solid fa-shield-halved'></i>La consulta permanece en solo lectura. Los envíos manuales, cuando están habilitados, requieren permiso y confirmación.</p>";
         target.innerHTML = html;
     }
 
@@ -363,13 +364,126 @@
         return found;
     }
 
+    function sendToken() {
+        var bytes;
+        var output = "";
+        var index;
+        try {
+            if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+                bytes = new Uint8Array(18);
+                window.crypto.getRandomValues(bytes);
+                for (index = 0; index < bytes.length; index += 1) { output += ("0" + bytes[index].toString(16)).slice(-2); }
+                return output;
+            }
+        } catch (ignore) {}
+        return "telar_" + String(Date.now()) + "_" + String(Math.random()).replace("0.", "");
+    }
+
+    function remainingWindow(seconds) {
+        var total = Math.max(0, Number(seconds || 0));
+        var hours = Math.floor(total / 3600);
+        var minutes = Math.floor((total % 3600) / 60);
+        return hours + " h " + minutes + " min";
+    }
+
+    function renderConversationComposer(item, data) {
+        var windowData = data.ventana_whatsapp || {};
+        var canReply = !!data.puede_responder;
+        var enabled = !!data.envio_habilitado;
+        var html = "<section class='ghl-composer'>";
+        if (!canReply) {
+            return html + "<div class='ghl-composer__blocked'><i class='fa-solid fa-user-lock'></i><div><strong>Consulta disponible</strong><p>Tu usuario no tiene permiso para responder. Puede habilitarse desde el engranaje del módulo.</p></div></div></section>";
+        }
+        if (!enabled) {
+            return html + "<div class='ghl-composer__blocked'><i class='fa-solid fa-toggle-off'></i><div><strong>Envío preparado, todavía deshabilitado</strong><p>Falta activar el permiso mínimo de escritura en la conexión privada de HighLevel.</p></div></div></section>";
+        }
+        if (!windowData.abierta) {
+            return html + "<div class='ghl-composer__blocked is-warning'><i class='fa-solid fa-clock'></i><div><strong>Ventana de 24 horas cerrada</strong><p>WhatsApp exige una plantilla aprobada. Esta fase no permite texto libre fuera de la ventana.</p></div></div></section>";
+        }
+        html += "<div class='ghl-window-open'><i class='fa-brands fa-whatsapp'></i><span><strong>Ventana de respuesta abierta</strong><small>Tiempo aproximado restante: " + escapeHtml(remainingWindow(windowData.segundos_restantes)) + "</small></span></div>";
+        html += "<form data-ghl-send-form><label for='ghlManualReply'>Respuesta manual por WhatsApp</label><textarea id='ghlManualReply' maxlength='2000' rows='3' placeholder='Escriba una respuesta relacionada con la consulta del contacto…' required></textarea><div class='ghl-composer__actions'><label class='ghl-rule-check'><input type='checkbox' data-ghl-rules-confirmed><span>Confirmo que responde a la consulta actual y que revisé el destinatario.</span></label><button type='submit' class='ghl-btn ghl-btn--primary'><i class='fa-solid fa-paper-plane'></i> Revisar envío</button></div><div class='ghl-modal-message ghl-modal-message--error' data-ghl-send-error hidden></div></form>";
+        html += "<div class='ghl-send-confirm' data-ghl-send-confirm hidden><div><small>CONFIRMACIÓN FINAL</small><strong>Se enviará por WhatsApp a " + escapeHtml(item.nombre || "este contacto") + "</strong><p data-ghl-send-preview></p><span>El texto no se guardará en la auditoría de Telar.</span></div><footer><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='cancel-send'>Volver a editar</button><button type='button' class='ghl-btn ghl-btn--primary' data-ghl-action='confirm-send'><i class='fa-solid fa-paper-plane'></i> Confirmar y enviar</button></footer><div class='ghl-modal-message ghl-modal-message--error' data-ghl-confirm-error hidden></div></div>";
+        return html + "</section>";
+    }
+
+    function prepareManualReply(form) {
+        var textarea = form.querySelector("textarea");
+        var accepted = form.querySelector("[data-ghl-rules-confirmed]");
+        var error = form.querySelector("[data-ghl-send-error]");
+        var text = textarea ? textarea.value.trim() : "";
+        var confirmBox;
+        if (!text || text.length > 2000) {
+            error.hidden = false;
+            error.textContent = "Escriba un mensaje de entre 1 y 2000 caracteres.";
+            return;
+        }
+        if (!accepted || !accepted.checked) {
+            error.hidden = false;
+            error.textContent = "Confirme que revisó el destinatario y que la respuesta corresponde a la consulta.";
+            return;
+        }
+        error.hidden = true;
+        state.pendingMessage = { text: text, token: sendToken() };
+        form.hidden = true;
+        confirmBox = state.root.querySelector("[data-ghl-send-confirm]");
+        confirmBox.hidden = false;
+        confirmBox.querySelector("[data-ghl-send-preview]").textContent = text;
+    }
+
+    function cancelManualReply() {
+        var form = state.root.querySelector("[data-ghl-send-form]");
+        var confirmBox = state.root.querySelector("[data-ghl-send-confirm]");
+        state.pendingMessage = null;
+        if (form) { form.hidden = false; }
+        if (confirmBox) { confirmBox.hidden = true; }
+    }
+
+    function sendManualReply(button) {
+        var selected = state.conversation || {};
+        var pending = state.pendingMessage;
+        var error = state.root.querySelector("[data-ghl-confirm-error]");
+        if (!selected.item || !selected.item.id || !pending || button.disabled) { return; }
+        button.disabled = true;
+        button.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Enviando…";
+        if (error) { error.hidden = true; }
+        request("enviar_respuesta_manual", {
+            conversation_id: selected.item.id,
+            mensaje: pending.text,
+            token_envio: pending.token,
+            confirmar_reglas: 1
+        }, 45000).then(function (data) {
+            selected.data.items = selected.data.items || [];
+            selected.data.items.push({
+                id: data.message_id || pending.token,
+                cuerpo: pending.text,
+                direccion: "outbound",
+                tipo: "WhatsApp",
+                estado: "pendiente",
+                fecha: new Date().toISOString(),
+                adjuntos: 0
+            });
+            selected.data.ventana_whatsapp = data.ventana_whatsapp || selected.data.ventana_whatsapp;
+            state.conversation = selected;
+            state.pendingMessage = null;
+            renderConversationDetail();
+            setMessage("Respuesta enviada a GoHighLevel y registrada sin guardar el texto en la auditoría.", "info");
+        }).catch(function (requestError) {
+            if (error) {
+                error.hidden = false;
+                error.textContent = requestError.message;
+            }
+            button.disabled = false;
+            button.innerHTML = "<i class='fa-solid fa-paper-plane'></i> Confirmar y enviar";
+        });
+    }
+
     function renderConversationDetail() {
         var layer = state.root.querySelector("#ghlModalLayer");
         var selected = state.conversation || {};
         var item = selected.item || {};
         var data = selected.data || {};
         var messages = data.items || [];
-        var html = "<section class='ghl-modal ghl-conversation-modal' role='dialog' aria-modal='true'><header><div><small>HISTORIAL DE SOLO LECTURA</small><h2>" + escapeHtml(item.nombre || "Conversación") + "</h2><p>" + escapeHtml(channelLabel(item.canal)) + " · " + escapeHtml(item.telefono || "Sin teléfono disponible") + "</p></div><button type='button' data-ghl-action='close-settings' title='Cerrar'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'>";
+        var html = "<section class='ghl-modal ghl-conversation-modal' role='dialog' aria-modal='true'><header><div><small>HISTORIAL Y RESPUESTA PROTEGIDA</small><h2>" + escapeHtml(item.nombre || "Conversación") + "</h2><p>" + escapeHtml(channelLabel(item.canal)) + " · " + escapeHtml(item.telefono || "Sin teléfono disponible") + "</p></div><button type='button' data-ghl-action='close-settings' title='Cerrar'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'>";
         if (data.paginacion && data.paginacion.hay_mas) {
             html += "<div class='ghl-older'><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='load-older-messages'><i class='fa-solid fa-clock-rotate-left'></i> Cargar mensajes anteriores</button></div>";
         }
@@ -382,7 +496,7 @@
             var body = message.cuerpo || ("Actividad: " + channelLabel(message.tipo));
             html += "<article class='ghl-message-bubble " + (outbound ? "is-outbound" : "is-inbound") + "'><small>" + (outbound ? "Equipo" : escapeHtml(item.nombre || "Contacto")) + " · " + escapeHtml(channelLabel(message.tipo)) + "</small><p>" + escapeHtml(body) + "</p><footer><time>" + dateLabel(message.fecha) + "</time>" + (message.estado ? "<span>" + escapeHtml(message.estado) + "</span>" : "") + (message.adjuntos ? "<span><i class='fa-solid fa-paperclip'></i> " + Number(message.adjuntos) + " adjunto(s)</span>" : "") + "</footer></article>";
         });
-        html += "</div></div><footer><span class='ghl-readonly-note'><i class='fa-solid fa-shield-halved'></i>Lectura únicamente; no se marcarán mensajes ni se dispararán automatizaciones.</span><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cerrar</button></footer></section>";
+        html += "</div>" + renderConversationComposer(item, data) + "</div><footer><span class='ghl-readonly-note'><i class='fa-solid fa-shield-halved'></i>Telar valida permiso, canal y ventana antes de cada envío.</span><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cerrar</button></footer></section>";
         layer.innerHTML = html;
     }
 
@@ -391,7 +505,7 @@
         var item = conversationItem(conversationId);
         if (!item || !item.id) { setMessage("La conversación seleccionada no está disponible.", "error"); return; }
         layer.hidden = false;
-        layer.innerHTML = "<section class='ghl-modal ghl-conversation-modal'><header><div><small>HISTORIAL DE SOLO LECTURA</small><h2>" + escapeHtml(item.nombre) + "</h2></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-loading'><i class='fa-solid fa-spinner fa-spin'></i><strong>Cargando conversación…</strong></div></section>";
+        layer.innerHTML = "<section class='ghl-modal ghl-conversation-modal'><header><div><small>HISTORIAL Y RESPUESTA PROTEGIDA</small><h2>" + escapeHtml(item.nombre) + "</h2></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-loading'><i class='fa-solid fa-spinner fa-spin'></i><strong>Cargando conversación…</strong></div></section>";
         request("mensajes_conversacion", { conversation_id: item.id, limite: 50 }, 45000).then(function (data) {
             state.conversation = { item: item, data: data };
             renderConversationDetail();
@@ -412,6 +526,9 @@
             limite: 50
         }, 45000).then(function (data) {
             data.items = uniqueItems(data.items, selected.data.items);
+            data.ventana_whatsapp = selected.data.ventana_whatsapp || data.ventana_whatsapp;
+            data.puede_responder = selected.data.puede_responder;
+            data.envio_habilitado = selected.data.envio_habilitado;
             selected.data = data;
             state.conversation = selected;
             renderConversationDetail();
@@ -487,9 +604,9 @@
         var layer = state.root.querySelector("#ghlModalLayer");
         var rows = "";
         (state.settings.usuarios || []).forEach(function (user) {
-            rows += "<tr data-user='" + Number(user.cod_usuario) + "'><td><div class='ghl-user'>" + avatar(user.nombre, user.avatar, "ghl-avatar--small") + "<span><strong>" + escapeHtml(user.nombre) + "</strong><small>" + escapeHtml(user.local || "Sin local") + "</small></span></div></td><td><label class='ghl-switch'><input type='checkbox' data-permission='view' " + (user.puede_ver ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='admin' " + (user.puede_configurar ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td></tr>";
+            rows += "<tr data-user='" + Number(user.cod_usuario) + "'><td><div class='ghl-user'>" + avatar(user.nombre, user.avatar, "ghl-avatar--small") + "<span><strong>" + escapeHtml(user.nombre) + "</strong><small>" + escapeHtml(user.local || "Sin local") + "</small></span></div></td><td><label class='ghl-switch'><input type='checkbox' data-permission='view' " + (user.puede_ver ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='reply' " + (user.puede_responder ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='admin' " + (user.puede_configurar ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td></tr>";
         });
-        layer.innerHTML = "<section class='ghl-modal' role='dialog' aria-modal='true'><header><div><small>ENGRANAJE DEL MÓDULO</small><h2>Configuraciones y permisos</h2><p>Defina quién puede consultar datos y quién puede administrar este mismo panel.</p></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'><div class='ghl-security-note'><i class='fa-solid fa-lock'></i><p><strong>El token nunca se muestra aquí.</strong><br>La integración continúa en solo lectura y las automatizaciones de HighLevel no se modifican.</p></div><div class='ghl-permission-table'><table><thead><tr><th>Usuario</th><th>Puede ver</th><th>Administra</th></tr></thead><tbody>" + rows + "</tbody></table></div><div id='ghlSettingsMessage' class='ghl-modal-message' hidden></div></div><footer><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cancelar</button><button type='button' class='ghl-btn ghl-btn--primary' data-ghl-action='save-settings'><i class='fa-solid fa-floppy-disk'></i>Guardar permisos</button></footer></section>";
+        layer.innerHTML = "<section class='ghl-modal' role='dialog' aria-modal='true'><header><div><small>ENGRANAJE DEL MÓDULO</small><h2>Configuraciones y permisos</h2><p>Defina por separado quién consulta, quién responde y quién administra.</p></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'><div class='ghl-security-note'><i class='fa-solid fa-lock'></i><p><strong>El token nunca se muestra aquí.</strong><br>Responder solo habilita envíos manuales dentro de la ventana de WhatsApp; no permite editar contactos, oportunidades ni flujos.</p></div><div class='ghl-permission-table'><table><thead><tr><th>Usuario</th><th>Puede ver</th><th>Responde</th><th>Administra</th></tr></thead><tbody>" + rows + "</tbody></table></div><div id='ghlSettingsMessage' class='ghl-modal-message' hidden></div></div><footer><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cancelar</button><button type='button' class='ghl-btn ghl-btn--primary' data-ghl-action='save-settings'><i class='fa-solid fa-floppy-disk'></i>Guardar permisos</button></footer></section>";
     }
 
     function closeSettings() {
@@ -498,6 +615,7 @@
         layer.innerHTML = "";
         state.settings = null;
         state.conversation = null;
+        state.pendingMessage = null;
     }
 
     function saveSettings(button) {
@@ -506,8 +624,9 @@
         var message = state.root.querySelector("#ghlSettingsMessage");
         Array.prototype.forEach.call(rows, function (row) {
             var view = row.querySelector("[data-permission='view']");
+            var reply = row.querySelector("[data-permission='reply']");
             var admin = row.querySelector("[data-permission='admin']");
-            permissions.push({ cod_usuario: Number(row.getAttribute("data-user")), puede_ver: view.checked ? 1 : 0, puede_configurar: admin.checked ? 1 : 0 });
+            permissions.push({ cod_usuario: Number(row.getAttribute("data-user")), puede_ver: view.checked ? 1 : 0, puede_responder: reply.checked ? 1 : 0, puede_configurar: admin.checked ? 1 : 0 });
         });
         button.disabled = true;
         message.hidden = false;
@@ -531,7 +650,9 @@
         connection.className = "ghl-connection";
         request("contexto").then(function (data) {
             state.context = data;
-            connection.textContent = data.integracion && data.integracion.configurado ? "Conectado · Solo lectura" : "Configuración pendiente";
+            connection.textContent = data.integracion && data.integracion.configurado
+                ? (data.integracion.respuestas_habilitadas ? "Conectado · Respuestas protegidas" : "Conectado · Solo lectura")
+                : "Configuración pendiente";
             connection.className = "ghl-connection " + (data.integracion && data.integracion.configurado ? "is-online" : "is-pending");
             state.root.querySelector("#ghlSettingsButton").hidden = !(data.usuario && data.usuario.puede_configurar);
             loadTab(true);
@@ -572,11 +693,19 @@
             else if (action === "load-more") { loadMore(button.getAttribute("data-tab"), button); }
             else if (action === "open-conversation") { openConversation(button.getAttribute("data-conversation-id")); }
             else if (action === "load-older-messages") { loadOlderMessages(button); }
+            else if (action === "cancel-send") { cancelManualReply(); }
+            else if (action === "confirm-send") { sendManualReply(button); }
         });
         state.root.addEventListener("submit", function (event) {
             var form = event.target.closest("[data-ghl-search-form]");
+            var sendForm = event.target.closest("[data-ghl-send-form]");
             var tab;
             var input;
+            if (sendForm) {
+                event.preventDefault();
+                prepareManualReply(sendForm);
+                return;
+            }
             if (!form) { return; }
             event.preventDefault();
             tab = form.getAttribute("data-ghl-search-form");
@@ -586,7 +715,7 @@
         state.root.addEventListener("change", function (event) {
             var field = event.target;
             var row;
-            if (!field.matches("[data-permission='admin']")) { return; }
+            if (!field.matches("[data-permission='admin'],[data-permission='reply']")) { return; }
             row = field.closest("[data-user]");
             if (field.checked && row) { row.querySelector("[data-permission='view']").checked = true; }
         });

@@ -64,7 +64,8 @@ try {
                 'usuario' => $contexto,
                 'integracion' => array(
                     'configurado' => goHighLevelConfigurado($config),
-                    'modo' => 'solo_lectura',
+                    'modo' => !empty($config['write_enabled']) ? 'respuestas_manuales' : 'solo_lectura',
+                    'respuestas_habilitadas' => !empty($config['write_enabled']),
                     'location_id' => (string)$config['location_id']
                 )
             ), 200);
@@ -74,8 +75,19 @@ try {
                 goHighLevelListarConversaciones($mysqli, $config, $_POST), 200);
             break;
         case 'mensajes_conversacion':
-            goHighLevelResponder(true, 'mensajes_obtenidos', 'Historial actualizado.',
-                goHighLevelListarMensajesConversacion($config, $_POST), 200);
+            $historial = goHighLevelListarMensajesConversacion($config, $_POST);
+            $historial['puede_responder'] = !empty($contexto['puede_responder']);
+            $historial['envio_habilitado'] = !empty($config['write_enabled']);
+            goHighLevelResponder(true, 'mensajes_obtenidos', 'Historial actualizado.', $historial, 200);
+            break;
+        case 'enviar_respuesta_manual':
+            goHighLevelResponder(
+                true,
+                'respuesta_enviada',
+                'La respuesta fue aceptada por GoHighLevel.',
+                goHighLevelEnviarRespuestaManual($mysqli, $config, $contexto, $_POST),
+                200
+            );
             break;
         case 'contactos':
             goHighLevelResponder(true, 'contactos_obtenidos', 'Contactos actualizados.',
@@ -125,7 +137,7 @@ try {
     goHighLevelResponder(
         false,
         'error_interno',
-        'No se pudo completar la consulta de GoHighLevel.',
+        'No se pudo completar la operacion de GoHighLevel.',
         array(),
         500
     );

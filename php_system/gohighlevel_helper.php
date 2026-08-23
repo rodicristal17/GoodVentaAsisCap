@@ -1,7 +1,9 @@
 <?php
 
 /**
- * Integracion de solo lectura entre Sistema Telar y GoHighLevel.
+ * Integracion entre Sistema Telar y GoHighLevel.
+ * La consulta es general y la unica escritura permitida es una respuesta manual
+ * de WhatsApp, protegida por permiso, ventana de 24 horas y auditoria.
  * Compatible con PHP 7.2. Los tokens se leen desde un archivo privado.
  */
 
@@ -76,7 +78,8 @@ function goHighLevelEstructuraDisponible($mysqli)
 {
     return goHighLevelTablaExiste($mysqli, 'gohighlevel_permiso_usuario')
         && goHighLevelTablaExiste($mysqli, 'gohighlevel_vinculo_contacto')
-        && goHighLevelTablaExiste($mysqli, 'gohighlevel_evento');
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_evento')
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_envio_manual');
 }
 
 function goHighLevelContextoUsuario($mysqli, $codUsuario)
@@ -84,7 +87,8 @@ function goHighLevelContextoUsuario($mysqli, $codUsuario)
     $codUsuario = intval($codUsuario);
     $stmt = $mysqli->prepare(
         "SELECT u.cod_usuario,IFNULL(p.nombre_persona,u.login) nombre,IFNULL(u.url,'') avatar,"
-        ."IFNULL(g.puede_ver,0) puede_ver,IFNULL(g.puede_configurar,0) puede_configurar "
+        ."IFNULL(g.puede_ver,0) puede_ver,IFNULL(g.puede_responder,0) puede_responder,"
+        ."IFNULL(g.puede_configurar,0) puede_configurar "
         ."FROM usuario u LEFT JOIN persona p ON p.cod_persona=u.cod_usuario "
         ."LEFT JOIN gohighlevel_permiso_usuario g ON g.cod_usuarioFK=u.cod_usuario AND g.activo=1 "
         ."WHERE u.cod_usuario=? AND UPPER(TRIM(u.estado))='ACTIVO' LIMIT 1"
@@ -104,6 +108,7 @@ function goHighLevelContextoUsuario($mysqli, $codUsuario)
     }
     $esPropietario = $codUsuario === 5994;
     $puedeVer = $esPropietario || intval($fila['puede_ver']) === 1;
+    $puedeResponder = $esPropietario || intval($fila['puede_responder']) === 1;
     $puedeConfigurar = $esPropietario || intval($fila['puede_configurar']) === 1;
     if (!$puedeVer) {
         goHighLevelLanzar('accion_no_autorizada', 'No tiene acceso al modulo GoHighLevel.', array(), 403);
@@ -113,6 +118,7 @@ function goHighLevelContextoUsuario($mysqli, $codUsuario)
         'nombre' => (string)$fila['nombre'],
         'avatar' => (string)$fila['avatar'],
         'puede_ver' => $puedeVer,
+        'puede_responder' => $puedeResponder,
         'puede_configurar' => $puedeConfigurar,
         'es_propietario' => $esPropietario
     );
@@ -143,12 +149,14 @@ function goHighLevelConfiguracion()
     if (is_file($tokenFile) && is_readable($tokenFile)) {
         $token = trim((string)@file_get_contents($tokenFile));
     }
+    $writeEnabled = strtolower(trim((string)getenv('TELAR_GOHIGHLEVEL_WRITE_ENABLED')));
     return array(
         'base' => rtrim($base, '/'),
         'location_id' => preg_match('/^[A-Za-z0-9_-]{8,80}$/', $locationId) ? $locationId : '',
         'token' => strlen($token) >= 20 ? $token : '',
         'version' => preg_match('/^[A-Za-z0-9._-]{1,32}$/', $version) ? $version : '2021-07-28',
-        'token_file' => $tokenFile
+        'token_file' => $tokenFile,
+        'write_enabled' => in_array($writeEnabled, array('1', 'true', 'yes', 'on'), true)
     );
 }
 
@@ -177,7 +185,8 @@ function goHighLevelApiGet($config, $ruta, $parametros)
         '/calendars/' => true
     );
     $rutaMensajes = preg_match('#^/conversations/[A-Za-z0-9_-]{8,80}/messages$#', $ruta) === 1;
-    if (!isset($rutasPermitidas[$ruta]) && !$rutaMensajes) {
+    $rutaConversacion = preg_match('#^/conversations/[A-Za-z0-9_-]{8,80}$#', $ruta) === 1;
+    if (!isset($rutasPermitidas[$ruta]) && !$rutaMensajes && !$rutaConversacion) {
         goHighLevelLanzar('ruta_no_permitida', 'La consulta solicitada no esta permitida.', array(), 400);
     }
     if (!function_exists('curl_init')) {
@@ -221,6 +230,65 @@ function goHighLevelApiGet($config, $ruta, $parametros)
             ? 'La integracion de GoHighLevel no tiene autorizacion para esta consulta.'
             : 'GoHighLevel no pudo completar la consulta en este momento.';
         goHighLevelLanzar('gohighlevel_respuesta_invalida', $mensaje, array('estado' => $estado), 502);
+    }
+    return $datos;
+}
+
+function goHighLevelApiPostMensaje($config, $entrada)
+{
+    if (!goHighLevelConfigurado($config) || empty($config['write_enabled'])) {
+        goHighLevelLanzar(
+            'envio_no_habilitado',
+            'Las respuestas manuales todavia no estan habilitadas en la conexion privada.',
+            array(),
+            503
+        );
+    }
+    if (!function_exists('curl_init')) {
+        goHighLevelLanzar('cliente_http_no_disponible', 'El servidor no tiene habilitado el cliente seguro.', array(), 503);
+    }
+    $cuerpoJson = json_encode($entrada, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if (!is_string($cuerpoJson)) {
+        goHighLevelLanzar('mensaje_invalido', 'No se pudo preparar el mensaje.', array(), 400);
+    }
+    $ruta = '/conversations/messages';
+    $curl = curl_init($config['base'].$ruta);
+    curl_setopt_array($curl, array(
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_CONNECTTIMEOUT => 8,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $cuerpoJson,
+        CURLOPT_HTTPHEADER => array(
+            'Accept: application/json',
+            'Content-Type: application/json',
+            'Authorization: Bearer '.$config['token'],
+            'Version: '.$config['version'],
+            'User-Agent: Sistema-Telar-GoHighLevel/2.0'
+        )
+    ));
+    $cuerpo = curl_exec($curl);
+    $estado = intval(curl_getinfo($curl, CURLINFO_HTTP_CODE));
+    $errorNumero = curl_errno($curl);
+    if (PHP_VERSION_ID < 80500) {
+        curl_close($curl);
+    } else {
+        unset($curl);
+    }
+    if ($cuerpo === false || $errorNumero !== 0) {
+        error_log('GoHighLevel: fallo de red al enviar mensaje (curl '.$errorNumero.')');
+        goHighLevelLanzar('envio_no_disponible', 'No se pudo conectar con GoHighLevel para enviar.', array(), 502);
+    }
+    $datos = json_decode($cuerpo, true);
+    if ($estado < 200 || $estado >= 300 || !is_array($datos)) {
+        error_log('GoHighLevel: respuesta HTTP '.$estado.' al enviar mensaje');
+        $mensaje = $estado === 401 || $estado === 403
+            ? 'La integracion privada no tiene el permiso conversations/message.write.'
+            : 'GoHighLevel no pudo enviar el mensaje en este momento.';
+        goHighLevelLanzar('envio_rechazado', $mensaje, array('estado' => $estado), 502);
     }
     return $datos;
 }
@@ -273,6 +341,49 @@ function goHighLevelMarcaTiempo($valor)
     }
     $tiempo = $texto !== '' ? strtotime($texto) : false;
     return $tiempo !== false ? (string)($tiempo * 1000) : '';
+}
+
+function goHighLevelSegundos($valor)
+{
+    $marca = goHighLevelMarcaTiempo($valor);
+    if ($marca === '' || !is_numeric($marca)) {
+        return 0;
+    }
+    $segundos = (float)$marca;
+    while ($segundos > 20000000000) {
+        $segundos = floor($segundos / 1000);
+    }
+    $segundos = intval($segundos);
+    return $segundos >= 946684800 && $segundos <= 4102444800 ? $segundos : 0;
+}
+
+function goHighLevelVentanaWhatsApp($mensajes)
+{
+    $ultimoInbound = 0;
+    foreach ((array)$mensajes as $mensaje) {
+        if (!is_array($mensaje)) {
+            continue;
+        }
+        $direccion = strtolower(trim((string)goHighLevelValor($mensaje, array('direccion', 'direction'), '')));
+        $tipo = strtolower(trim((string)goHighLevelValor($mensaje, array('tipo', 'messageType', 'type'), '')));
+        if ($direccion !== 'inbound' || strpos($tipo, 'whatsapp') === false) {
+            continue;
+        }
+        $fecha = goHighLevelSegundos(goHighLevelValor($mensaje, array('fecha', 'dateAdded', 'createdAt'), ''));
+        if ($fecha > $ultimoInbound) {
+            $ultimoInbound = $fecha;
+        }
+    }
+    $ahora = time();
+    $vence = $ultimoInbound > 0 ? $ultimoInbound + 86400 : 0;
+    $abierta = $ultimoInbound > 0 && $ultimoInbound <= ($ahora + 300) && $vence > $ahora;
+    return array(
+        'abierta' => $abierta,
+        'ultimo_inbound' => $ultimoInbound > 0 ? date('c', $ultimoInbound) : '',
+        'vence' => $vence > 0 ? date('c', $vence) : '',
+        'segundos_restantes' => $abierta ? max(0, $vence - $ahora) : 0,
+        'requiere_plantilla' => !$abierta
+    );
 }
 
 function goHighLevelHayMas($total, $cantidad, $limite)
@@ -634,11 +745,217 @@ function goHighLevelListarMensajesConversacion($config, $parametros)
     return array(
         'conversation_id' => $conversationId,
         'items' => $mensajes,
+        'ventana_whatsapp' => goHighLevelVentanaWhatsApp($mensajes),
         'paginacion' => array(
             'hay_mas' => !empty($contenedor['nextPage']),
             'last_message_id' => goHighLevelIdSeguro(goHighLevelValor($contenedor, array('lastMessageId'), ''))
         )
     );
+}
+
+function goHighLevelObtenerConversacion($config, $conversationId)
+{
+    $conversationId = goHighLevelIdSeguro($conversationId);
+    if ($conversationId === '') {
+        goHighLevelLanzar('conversacion_invalida', 'La conversacion seleccionada no es valida.', array(), 400);
+    }
+    $respuesta = goHighLevelApiGet($config, '/conversations/'.rawurlencode($conversationId), array());
+    $conversacion = isset($respuesta['conversation']) && is_array($respuesta['conversation'])
+        ? $respuesta['conversation'] : $respuesta;
+    $contactId = goHighLevelIdSeguro(goHighLevelValor($conversacion, array('contactId', 'contact_id'), ''));
+    if ($contactId === '') {
+        goHighLevelLanzar('contacto_no_disponible', 'La conversacion no tiene un contacto valido para responder.', array(), 422);
+    }
+    return array(
+        'id' => $conversationId,
+        'contact_id' => $contactId,
+        'canal' => goHighLevelTexto(goHighLevelValor($conversacion, array('lastMessageType', 'type', 'channel')), 40)
+    );
+}
+
+function goHighLevelControlFrecuenciaEnvio($mysqli, $contexto, $conversationId)
+{
+    $actor = intval($contexto['cod_usuario']);
+    $stmt = $mysqli->prepare(
+        "SELECT SUM(CASE WHEN cod_usuarioFK=? AND fecha_creacion>=DATE_SUB(NOW(),INTERVAL 1 MINUTE) THEN 1 ELSE 0 END) actor_minuto,"
+        ."SUM(CASE WHEN ghl_conversation_id=? AND fecha_creacion>=DATE_SUB(NOW(),INTERVAL 5 SECOND) THEN 1 ELSE 0 END) conversacion_reciente "
+        ."FROM gohighlevel_envio_manual WHERE fecha_creacion>=DATE_SUB(NOW(),INTERVAL 1 MINUTE)"
+    );
+    if (!$stmt) {
+        goHighLevelLanzar('auditoria_no_disponible', 'No se pudo comprobar la frecuencia de envio.', array(), 500);
+    }
+    $stmt->bind_param('is', $actor, $conversationId);
+    $actorMinuto = 0;
+    $conversacionReciente = 0;
+    if ($stmt->execute()) {
+        $stmt->bind_result($actorMinuto, $conversacionReciente);
+        $stmt->fetch();
+    }
+    $stmt->close();
+    if (intval($actorMinuto) >= 20 || intval($conversacionReciente) > 0) {
+        goHighLevelLanzar(
+            'envio_demasiado_rapido',
+            'Espere unos segundos antes de volver a enviar en esta conversacion.',
+            array(),
+            429
+        );
+    }
+}
+
+function goHighLevelRegistrarIntentoEnvio($mysqli, $contexto, $token, $conversationId, $contactId, $longitud, $ultimoInbound)
+{
+    $stmt = $mysqli->prepare(
+        "INSERT INTO gohighlevel_envio_manual "
+        ."(token_cliente,cod_usuarioFK,ghl_conversation_id,ghl_contact_id,canal,estado,longitud_mensaje,"
+        ."fecha_ultimo_inbound,fecha_creacion,fecha_actualizacion) "
+        ."VALUES (?,?,?,?,'WhatsApp','procesando',?,FROM_UNIXTIME(?),NOW(),NOW())"
+    );
+    if (!$stmt) {
+        goHighLevelLanzar('auditoria_no_disponible', 'No se pudo preparar la auditoria del envio.', array(), 500);
+    }
+    $actor = intval($contexto['cod_usuario']);
+    $ultimoInbound = intval($ultimoInbound);
+    $stmt->bind_param('sissii', $token, $actor, $conversationId, $contactId, $longitud, $ultimoInbound);
+    $ok = $stmt->execute();
+    $errno = intval($stmt->errno);
+    $stmt->close();
+    if ($ok) {
+        return null;
+    }
+    if ($errno !== 1062) {
+        goHighLevelLanzar('auditoria_no_disponible', 'No se pudo registrar el intento de envio.', array(), 500);
+    }
+    $consulta = $mysqli->prepare(
+        "SELECT estado,ghl_message_id FROM gohighlevel_envio_manual "
+        ."WHERE token_cliente=? AND cod_usuarioFK=? LIMIT 1"
+    );
+    if (!$consulta) {
+        goHighLevelLanzar('envio_duplicado', 'Este envio ya fue procesado.', array(), 409);
+    }
+    $consulta->bind_param('si', $token, $actor);
+    $estado = '';
+    $messageId = '';
+    if ($consulta->execute()) {
+        $consulta->bind_result($estado, $messageId);
+        $consulta->fetch();
+    }
+    $consulta->close();
+    if ($estado === 'enviado') {
+        return array('message_id' => (string)$messageId, 'duplicado' => true);
+    }
+    goHighLevelLanzar('envio_duplicado', 'Este envio ya esta siendo procesado o fallo anteriormente.', array(), 409);
+}
+
+function goHighLevelActualizarIntentoEnvio($mysqli, $token, $estado, $messageId, $codigo)
+{
+    $stmt = $mysqli->prepare(
+        "UPDATE gohighlevel_envio_manual SET estado=?,ghl_message_id=?,codigo_resultado=?,"
+        ."fecha_actualizacion=NOW() WHERE token_cliente=? LIMIT 1"
+    );
+    if (!$stmt) {
+        return false;
+    }
+    $estado = goHighLevelTexto($estado, 16);
+    $messageId = goHighLevelTexto($messageId, 80);
+    $codigo = goHighLevelTexto($codigo, 48);
+    $stmt->bind_param('ssss', $estado, $messageId, $codigo, $token);
+    $ok = $stmt->execute();
+    $stmt->close();
+    return $ok;
+}
+
+function goHighLevelEnviarRespuestaManual($mysqli, $config, $contexto, $parametros)
+{
+    if (empty($contexto['puede_responder'])) {
+        goHighLevelLanzar('accion_no_autorizada', 'No tiene permiso para responder conversaciones.', array(), 403);
+    }
+    if (empty($config['write_enabled'])) {
+        goHighLevelLanzar('envio_no_habilitado', 'El envio manual todavia no fue habilitado por el administrador.', array(), 503);
+    }
+    if (intval(goHighLevelValor($parametros, array('confirmar_reglas'), 0)) !== 1) {
+        goHighLevelLanzar('confirmacion_requerida', 'Debe confirmar las reglas antes de enviar.', array(), 400);
+    }
+    $conversationId = goHighLevelIdSeguro(goHighLevelValor($parametros, array('conversation_id'), ''));
+    $token = goHighLevelTexto(goHighLevelValor($parametros, array('token_envio'), ''), 64);
+    $mensaje = trim((string)goHighLevelValor($parametros, array('mensaje'), ''));
+    if ($conversationId === '' || !preg_match('/^[A-Za-z0-9_-]{16,64}$/', $token)) {
+        goHighLevelLanzar('envio_invalido', 'La solicitud de envio no es valida.', array(), 400);
+    }
+    $longitud = mb_strlen($mensaje, 'UTF-8');
+    if ($longitud < 1 || $longitud > 2000) {
+        goHighLevelLanzar('mensaje_invalido', 'El mensaje debe tener entre 1 y 2000 caracteres.', array(), 400);
+    }
+    $conversacion = goHighLevelObtenerConversacion($config, $conversationId);
+    $historial = goHighLevelListarMensajesConversacion($config, array(
+        'conversation_id' => $conversationId,
+        'limite' => 100
+    ));
+    $ventana = isset($historial['ventana_whatsapp']) && is_array($historial['ventana_whatsapp'])
+        ? $historial['ventana_whatsapp'] : array('abierta' => false, 'segundos_restantes' => 0);
+    if (empty($ventana['abierta'])) {
+        goHighLevelLanzar(
+            'ventana_whatsapp_cerrada',
+            'La ventana de 24 horas esta cerrada. Se requiere una plantilla aprobada.',
+            array('requiere_plantilla' => true),
+            409
+        );
+    }
+    goHighLevelControlFrecuenciaEnvio($mysqli, $contexto, $conversationId);
+    $ultimoInbound = goHighLevelSegundos(isset($ventana['ultimo_inbound']) ? $ventana['ultimo_inbound'] : '');
+    $duplicado = goHighLevelRegistrarIntentoEnvio(
+        $mysqli,
+        $contexto,
+        $token,
+        $conversationId,
+        $conversacion['contact_id'],
+        $longitud,
+        $ultimoInbound
+    );
+    if (is_array($duplicado)) {
+        return array(
+            'enviado' => true,
+            'duplicado' => true,
+            'conversation_id' => $conversationId,
+            'message_id' => (string)$duplicado['message_id'],
+            'ventana_whatsapp' => $ventana
+        );
+    }
+    try {
+        $respuesta = goHighLevelApiPostMensaje($config, array(
+            'type' => 'WhatsApp',
+            'contactId' => $conversacion['contact_id'],
+            'message' => $mensaje,
+            'status' => 'pending'
+        ));
+        $messageId = goHighLevelIdSeguro(goHighLevelValor($respuesta, array('messageId'), ''));
+        goHighLevelActualizarIntentoEnvio($mysqli, $token, 'enviado', $messageId, 'aceptado');
+        goHighLevelRegistrarEvento(
+            $mysqli,
+            $contexto,
+            'respuesta_manual_enviada',
+            'conversacion',
+            $conversationId,
+            'Canal: WhatsApp; caracteres: '.$longitud.'; texto no almacenado'
+        );
+        return array(
+            'enviado' => true,
+            'duplicado' => false,
+            'conversation_id' => goHighLevelIdSeguro(goHighLevelValor($respuesta, array('conversationId'), $conversationId)),
+            'message_id' => $messageId,
+            'ventana_whatsapp' => $ventana
+        );
+    } catch (GoHighLevelExcepcion $e) {
+        goHighLevelActualizarIntentoEnvio($mysqli, $token, 'fallido', '', $e->codigoOperacion);
+        goHighLevelRegistrarEvento(
+            $mysqli,
+            $contexto,
+            'respuesta_manual_fallida',
+            'conversacion',
+            $conversationId,
+            'Codigo: '.$e->codigoOperacion.'; caracteres: '.$longitud.'; texto no almacenado'
+        );
+        throw $e;
+    }
 }
 
 function goHighLevelListarCalendarios($config)
@@ -714,6 +1031,7 @@ function goHighLevelUsuariosPermisos($mysqli, $contexto)
     }
     $sql = "SELECT u.cod_usuario,IFNULL(p.nombre_persona,u.login) nombre,IFNULL(u.url,'') avatar,"
         ."IFNULL(l.Nombre,'') local,IFNULL(g.puede_ver,0) puede_ver,"
+        ."IFNULL(g.puede_responder,0) puede_responder,"
         ."IFNULL(g.puede_configurar,0) puede_configurar "
         ."FROM usuario u LEFT JOIN persona p ON p.cod_persona=u.cod_usuario "
         ."LEFT JOIN local l ON l.cod_local=u.cod_localFK "
@@ -732,6 +1050,7 @@ function goHighLevelUsuariosPermisos($mysqli, $contexto)
             'avatar' => (string)$fila['avatar'],
             'local' => (string)$fila['local'],
             'puede_ver' => $id === 5994 || intval($fila['puede_ver']) === 1,
+            'puede_responder' => $id === 5994 || intval($fila['puede_responder']) === 1,
             'puede_configurar' => $id === 5994 || intval($fila['puede_configurar']) === 1,
             'bloqueado' => $id === 5994
         );
@@ -769,7 +1088,7 @@ function goHighLevelGuardarPermisos($mysqli, $contexto, $entrada)
     if (!is_array($lista) || count($lista) > 250) {
         goHighLevelLanzar('permisos_invalidos', 'La configuracion de permisos no es valida.');
     }
-    $permisos = array(5994 => array('ver' => 1, 'configurar' => 1));
+    $permisos = array(5994 => array('ver' => 1, 'responder' => 1, 'configurar' => 1));
     foreach ($lista as $item) {
         if (!is_array($item)) {
             continue;
@@ -779,27 +1098,30 @@ function goHighLevelGuardarPermisos($mysqli, $contexto, $entrada)
             continue;
         }
         $configurar = intval(goHighLevelValor($item, array('puede_configurar'), 0)) === 1 ? 1 : 0;
-        $ver = ($configurar || intval(goHighLevelValor($item, array('puede_ver'), 0)) === 1) ? 1 : 0;
+        $responder = intval(goHighLevelValor($item, array('puede_responder'), 0)) === 1 ? 1 : 0;
+        $ver = ($configurar || $responder || intval(goHighLevelValor($item, array('puede_ver'), 0)) === 1) ? 1 : 0;
         if ($id === 5994) {
             $ver = 1;
+            $responder = 1;
             $configurar = 1;
         }
-        $permisos[$id] = array('ver' => $ver, 'configurar' => $configurar);
+        $permisos[$id] = array('ver' => $ver, 'responder' => $responder, 'configurar' => $configurar);
     }
     $actor = intval($contexto['cod_usuario']);
     $mysqli->begin_transaction();
     try {
         if (!$mysqli->query(
-            "UPDATE gohighlevel_permiso_usuario SET puede_ver=0,puede_configurar=0,activo=0,"
+            "UPDATE gohighlevel_permiso_usuario SET puede_ver=0,puede_responder=0,puede_configurar=0,activo=0,"
             ."cod_usuario_actualizaFK=".$actor.",fecha_actualizacion=NOW()"
         )) {
             throw new Exception('No se pudieron preparar los permisos.');
         }
         $stmt = $mysqli->prepare(
             "INSERT INTO gohighlevel_permiso_usuario "
-            ."(cod_usuarioFK,puede_ver,puede_configurar,activo,cod_usuario_actualizaFK,fecha_creacion,fecha_actualizacion) "
-            ."VALUES (?,?,?,?,?,NOW(),NOW()) ON DUPLICATE KEY UPDATE "
-            ."puede_ver=VALUES(puede_ver),puede_configurar=VALUES(puede_configurar),activo=VALUES(activo),"
+            ."(cod_usuarioFK,puede_ver,puede_responder,puede_configurar,activo,cod_usuario_actualizaFK,fecha_creacion,fecha_actualizacion) "
+            ."VALUES (?,?,?,?,?,?,NOW(),NOW()) ON DUPLICATE KEY UPDATE "
+            ."puede_ver=VALUES(puede_ver),puede_responder=VALUES(puede_responder),"
+            ."puede_configurar=VALUES(puede_configurar),activo=VALUES(activo),"
             ."cod_usuario_actualizaFK=VALUES(cod_usuario_actualizaFK),fecha_actualizacion=NOW()"
         );
         if (!$stmt) {
@@ -809,8 +1131,9 @@ function goHighLevelGuardarPermisos($mysqli, $contexto, $entrada)
             $activo = $permiso['ver'] ? 1 : 0;
             $idUsuario = intval($id);
             $puedeVer = intval($permiso['ver']);
+            $puedeResponder = intval($permiso['responder']);
             $puedeConfigurar = intval($permiso['configurar']);
-            $stmt->bind_param('iiiii', $idUsuario, $puedeVer, $puedeConfigurar, $activo, $actor);
+            $stmt->bind_param('iiiiii', $idUsuario, $puedeVer, $puedeResponder, $puedeConfigurar, $activo, $actor);
             if (!$stmt->execute()) {
                 throw new Exception('No se pudo guardar un permiso.');
             }

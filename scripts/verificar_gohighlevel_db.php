@@ -11,7 +11,8 @@ if (!$mysqli || $mysqli->connect_errno) {
 $tablas = array(
     'gohighlevel_permiso_usuario',
     'gohighlevel_vinculo_contacto',
-    'gohighlevel_evento'
+    'gohighlevel_evento',
+    'gohighlevel_envio_manual'
 );
 $faltantes = array();
 foreach ($tablas as $tabla) {
@@ -39,7 +40,8 @@ if (intval($fila['total']) !== 1) {
 
 $propietario = $mysqli->query(
     "SELECT COUNT(*) total FROM gohighlevel_permiso_usuario "
-    ."WHERE cod_usuarioFK=5994 AND puede_ver=1 AND puede_configurar=1 AND activo=1"
+    ."WHERE cod_usuarioFK=5994 AND puede_ver=1 AND puede_responder=1 "
+    ."AND puede_configurar=1 AND activo=1"
 );
 $fila = $propietario ? $propietario->fetch_assoc() : array('total' => 0);
 if (intval($fila['total']) !== 1) {
