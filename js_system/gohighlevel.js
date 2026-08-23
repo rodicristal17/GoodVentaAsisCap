@@ -13,7 +13,9 @@
         summaryOpen: false,
         summary: null,
         cache: {},
-        settings: null
+        settings: null,
+        queries: { conversaciones: "", contactos: "", oportunidades: "" },
+        conversation: null
     };
 
     function escapeHtml(value) {
@@ -172,6 +174,19 @@
         return "<div class='ghl-empty'><i class='fa-solid " + icon + "'></i><h2>" + escapeHtml(title) + "</h2><p>" + escapeHtml(detail) + "</p></div>";
     }
 
+    function searchToolbar(tab, placeholder, data) {
+        var query = state.queries[tab] || "";
+        var shown = (data.items || []).length;
+        var total = Number(data.total || shown);
+        return "<section class='ghl-toolbar'><form data-ghl-search-form='" + escapeHtml(tab) + "'><label><i class='fa-solid fa-magnifying-glass'></i><input type='search' maxlength='75' autocomplete='off' data-ghl-search-input='" + escapeHtml(tab) + "' placeholder='" + escapeHtml(placeholder) + "' value='" + escapeHtml(query) + "'></label><button type='submit' class='ghl-btn ghl-btn--primary'>Buscar</button>" + (query ? "<button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='clear-search' data-tab='" + escapeHtml(tab) + "'>Limpiar</button>" : "") + "</form><span>Mostrando <strong>" + shown + "</strong> de <strong>" + total + "</strong></span></section>";
+    }
+
+    function paginationFooter(tab, data) {
+        var pagination = data.paginacion || {};
+        if (!pagination.hay_mas) { return ""; }
+        return "<div class='ghl-pagination'><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='load-more' data-tab='" + escapeHtml(tab) + "'><i class='fa-solid fa-chevron-down'></i> Mostrar más</button><small>La lista se amplía por páginas para mantener Telar fluido.</small></div>";
+    }
+
     function renderSummary(data, target) {
         var html = "<div class='ghl-kpis'>";
         [
@@ -202,7 +217,8 @@
     function renderConversations(data) {
         var items = data.items || [];
         var html = "<div class='ghl-section-title'><div><small>MESA DE TRABAJO PRINCIPAL</small><h2>Conversaciones recientes</h2><p>Ordenadas desde GoHighLevel y relacionadas automáticamente con Telar.</p></div><span class='ghl-total'>" + Number(data.total || items.length) + " conversaciones</span></div>";
-        if (!items.length) { return html + emptyState("fa-comments", "No hay conversaciones para mostrar", "GoHighLevel no devolvió conversaciones recientes."); }
+        html += searchToolbar("conversaciones", "Buscar por nombre, teléfono o mensaje…", data);
+        if (!items.length) { return html + emptyState("fa-comments", "No hay conversaciones para mostrar", state.queries.conversaciones ? "No hubo coincidencias para esta búsqueda." : "GoHighLevel no devolvió conversaciones recientes."); }
         html += "<div class='ghl-conversation-list'>";
         items.forEach(function (item) {
             html += "<article class='ghl-conversation'>" + avatar(item.nombre, item.avatar) +
@@ -210,15 +226,16 @@
                 "<div class='ghl-conversation__meta'><span class='ghl-channel'><i class='fa-brands " + (channelLabel(item.canal) === "WhatsApp" ? "fa-whatsapp" : "fa-rocketchat") + "'></i>" + escapeHtml(channelLabel(item.canal)) + "</span>" + linkBadge(item.vinculo) + (item.no_leidos ? "<span class='ghl-unread'>" + Number(item.no_leidos) + " sin leer</span>" : "") + "</div>" +
                 "<p>" + escapeHtml(item.ultimo_mensaje || "Sin vista previa del mensaje") + "</p>" +
                 (item.responsable ? "<small class='ghl-owner'><i class='fa-solid fa-user-check'></i> Responsable: " + escapeHtml(item.responsable) + "</small>" : "") +
-                "</div></article>";
+                "</div><button type='button' class='ghl-open-conversation' data-ghl-action='open-conversation' data-conversation-id='" + escapeHtml(item.id) + "' title='Abrir historial'><i class='fa-solid fa-chevron-right'></i></button></article>";
         });
-        return html + "</div>";
+        return html + "</div>" + paginationFooter("conversaciones", data);
     }
 
     function renderContacts(data) {
         var items = data.items || [];
         var html = "<div class='ghl-section-title'><div><small>DIRECTORIO SINCRONIZADO</small><h2>Contactos</h2><p>La coincidencia con pacientes se realiza por teléfono exacto y único.</p></div><span class='ghl-total'>" + Number(data.total || items.length) + " contactos</span></div>";
-        if (!items.length) { return html + emptyState("fa-address-book", "No hay contactos para mostrar", "GoHighLevel no devolvió contactos en esta consulta."); }
+        html += searchToolbar("contactos", "Buscar por nombre, teléfono o correo…", data);
+        if (!items.length) { return html + emptyState("fa-address-book", "No hay contactos para mostrar", state.queries.contactos ? "No hubo coincidencias para esta búsqueda." : "GoHighLevel no devolvió contactos en esta consulta."); }
         html += "<div class='ghl-contact-grid'>";
         items.forEach(function (item) {
             var tags = "";
@@ -227,7 +244,7 @@
                 (item.email ? "<p><i class='fa-solid fa-envelope'></i> " + escapeHtml(item.email) + "</p>" : "") +
                 "<div class='ghl-tags'>" + tags + "</div>" + linkBadge(item.vinculo) + "</article>";
         });
-        return html + "</div>";
+        return html + "</div>" + paginationFooter("contactos", data);
     }
 
     function pipelineMaps(pipelines) {
@@ -243,15 +260,16 @@
         var items = data.items || [];
         var maps = pipelineMaps(data.pipelines || []);
         var html = "<div class='ghl-section-title'><div><small>PANEL SECUNDARIO</small><h2>Oportunidades</h2><p>Este panel queda separado para no entorpecer la mesa de conversaciones.</p></div><span class='ghl-total'>" + Number(data.total || items.length) + " oportunidades</span></div>";
+        html += searchToolbar("oportunidades", "Buscar oportunidad, contacto o correo…", data);
         html += "<div class='ghl-pipeline-summary'>";
         (data.pipelines || []).forEach(function (pipeline) { html += "<span><strong>" + escapeHtml(pipeline.nombre) + "</strong><small>" + Number((pipeline.etapas || []).length) + " etapas</small></span>"; });
         html += "</div>";
-        if (!items.length) { return html + emptyState("fa-filter-circle-dollar", "No hay oportunidades para mostrar", "Los pipelines existen, pero no se devolvieron oportunidades."); }
+        if (!items.length) { return html + emptyState("fa-filter-circle-dollar", "No hay oportunidades para mostrar", state.queries.oportunidades ? "No hubo coincidencias para esta búsqueda." : "Los pipelines existen, pero no se devolvieron oportunidades."); }
         html += "<div class='ghl-table-wrap'><table class='ghl-table'><thead><tr><th>Oportunidad</th><th>Pipeline</th><th>Etapa</th><th>Estado</th><th>Valor</th><th>Actualizada</th></tr></thead><tbody>";
         items.forEach(function (item) {
             html += "<tr><td><strong>" + escapeHtml(item.nombre || "Sin nombre") + "</strong></td><td>" + escapeHtml(maps.pipeline[item.pipeline_id] || "Sin pipeline") + "</td><td>" + escapeHtml(maps.stage[item.etapa_id] || "Sin etapa") + "</td><td><span class='ghl-status'>" + escapeHtml(item.estado || "abierta") + "</span></td><td>" + money(item.valor) + "</td><td>" + dateLabel(item.fecha) + "</td></tr>";
         });
-        return html + "</tbody></table></div>";
+        return html + "</tbody></table></div>" + paginationFooter("oportunidades", data);
     }
 
     function renderCalendars(data) {
@@ -274,13 +292,135 @@
         return html + "</section>";
     }
 
+    function requestPayload(tab, extra) {
+        var payload = {};
+        var query = state.queries[tab] || "";
+        var key;
+        if (query) { payload.buscar = query; }
+        extra = extra || {};
+        for (key in extra) {
+            if (Object.prototype.hasOwnProperty.call(extra, key)) { payload[key] = extra[key]; }
+        }
+        return payload;
+    }
+
+    function uniqueItems(current, incoming) {
+        var seen = {};
+        var result = [];
+        (current || []).concat(incoming || []).forEach(function (item) {
+            var id = String(item && item.id || "");
+            var key = id || "sin-id-" + result.length;
+            if (!seen[key]) { seen[key] = true; result.push(item); }
+        });
+        return result;
+    }
+
+    function search(tab, value) {
+        state.queries[tab] = String(value || "").trim().substring(0, 75);
+        delete state.cache[tab];
+        loadTab(true);
+    }
+
+    function loadMore(tab, button) {
+        var current = state.cache[tab] || {};
+        var pagination = current.paginacion || {};
+        var extra = {};
+        if (!pagination.hay_mas || button.disabled) { return; }
+        if (tab === "oportunidades") { extra.pagina = pagination.siguiente_pagina || 2; }
+        else {
+            extra.cursor_fecha = pagination.cursor_fecha || "";
+            extra.cursor_id = pagination.cursor_id || "";
+        }
+        button.disabled = true;
+        button.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Cargando…";
+        request(tab, requestPayload(tab, extra), 45000).then(function (data) {
+            data.items = uniqueItems(current.items, data.items);
+            if ((!data.pipelines || !data.pipelines.length) && current.pipelines) { data.pipelines = current.pipelines; }
+            state.cache[tab] = data;
+            renderTab(tab, data);
+        }).catch(function (error) {
+            setMessage(error.message, "error");
+            button.disabled = false;
+            button.innerHTML = "<i class='fa-solid fa-chevron-down'></i> Mostrar más";
+        });
+    }
+
+    function conversationItem(conversationId) {
+        var conversations = state.cache.conversaciones && state.cache.conversaciones.items || [];
+        var found = null;
+        conversations.some(function (item) {
+            if (String(item.id) === String(conversationId)) { found = item; return true; }
+            return false;
+        });
+        return found;
+    }
+
+    function renderConversationDetail() {
+        var layer = state.root.querySelector("#ghlModalLayer");
+        var selected = state.conversation || {};
+        var item = selected.item || {};
+        var data = selected.data || {};
+        var messages = data.items || [];
+        var html = "<section class='ghl-modal ghl-conversation-modal' role='dialog' aria-modal='true'><header><div><small>HISTORIAL DE SOLO LECTURA</small><h2>" + escapeHtml(item.nombre || "Conversación") + "</h2><p>" + escapeHtml(channelLabel(item.canal)) + " · " + escapeHtml(item.telefono || "Sin teléfono disponible") + "</p></div><button type='button' data-ghl-action='close-settings' title='Cerrar'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'>";
+        if (data.paginacion && data.paginacion.hay_mas) {
+            html += "<div class='ghl-older'><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='load-older-messages'><i class='fa-solid fa-clock-rotate-left'></i> Cargar mensajes anteriores</button></div>";
+        }
+        html += "<div class='ghl-message-history'>";
+        if (!messages.length) {
+            html += "<p class='ghl-inline-error'>Esta conversación todavía no devolvió mensajes.</p>";
+        }
+        messages.forEach(function (message) {
+            var outbound = String(message.direccion || "").toLowerCase() === "outbound";
+            var body = message.cuerpo || ("Actividad: " + channelLabel(message.tipo));
+            html += "<article class='ghl-message-bubble " + (outbound ? "is-outbound" : "is-inbound") + "'><small>" + (outbound ? "Equipo" : escapeHtml(item.nombre || "Contacto")) + " · " + escapeHtml(channelLabel(message.tipo)) + "</small><p>" + escapeHtml(body) + "</p><footer><time>" + dateLabel(message.fecha) + "</time>" + (message.estado ? "<span>" + escapeHtml(message.estado) + "</span>" : "") + (message.adjuntos ? "<span><i class='fa-solid fa-paperclip'></i> " + Number(message.adjuntos) + " adjunto(s)</span>" : "") + "</footer></article>";
+        });
+        html += "</div></div><footer><span class='ghl-readonly-note'><i class='fa-solid fa-shield-halved'></i>Lectura únicamente; no se marcarán mensajes ni se dispararán automatizaciones.</span><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cerrar</button></footer></section>";
+        layer.innerHTML = html;
+    }
+
+    function openConversation(conversationId) {
+        var layer = state.root.querySelector("#ghlModalLayer");
+        var item = conversationItem(conversationId);
+        if (!item || !item.id) { setMessage("La conversación seleccionada no está disponible.", "error"); return; }
+        layer.hidden = false;
+        layer.innerHTML = "<section class='ghl-modal ghl-conversation-modal'><header><div><small>HISTORIAL DE SOLO LECTURA</small><h2>" + escapeHtml(item.nombre) + "</h2></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-loading'><i class='fa-solid fa-spinner fa-spin'></i><strong>Cargando conversación…</strong></div></section>";
+        request("mensajes_conversacion", { conversation_id: item.id, limite: 50 }, 45000).then(function (data) {
+            state.conversation = { item: item, data: data };
+            renderConversationDetail();
+        }).catch(function (error) {
+            layer.innerHTML = "<section class='ghl-modal ghl-conversation-modal'><header><h2>No se pudo abrir la conversación</h2><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'><p class='ghl-inline-error'>" + escapeHtml(error.message) + "</p></div></section>";
+        });
+    }
+
+    function loadOlderMessages(button) {
+        var selected = state.conversation || {};
+        var pagination = selected.data && selected.data.paginacion || {};
+        if (!selected.item || !pagination.hay_mas || !pagination.last_message_id || button.disabled) { return; }
+        button.disabled = true;
+        button.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Cargando…";
+        request("mensajes_conversacion", {
+            conversation_id: selected.item.id,
+            last_message_id: pagination.last_message_id,
+            limite: 50
+        }, 45000).then(function (data) {
+            data.items = uniqueItems(data.items, selected.data.items);
+            selected.data = data;
+            state.conversation = selected;
+            renderConversationDetail();
+        }).catch(function (error) {
+            setMessage(error.message, "error");
+            button.disabled = false;
+            button.innerHTML = "<i class='fa-solid fa-clock-rotate-left'></i> Cargar mensajes anteriores";
+        });
+    }
+
     function loadTab(force) {
         var action = state.tab;
         var content = state.root.querySelector("#ghlContent");
         var labels = { conversaciones: "Cargando conversaciones reales…", contactos: "Vinculando contactos con pacientes…", oportunidades: "Cargando pipelines y oportunidades…", calendarios: "Cargando calendarios…", resumen: "Actualizando resumen…", sincronizacion: "Comprobando sincronización…" };
         if (state.cache[action] && !force) { renderTab(action, state.cache[action]); return; }
         setLoading(labels[action]);
-        request(action, {}, action === "resumen" ? 45000 : 40000).then(function (data) {
+        request(action, requestPayload(action), action === "resumen" ? 45000 : 40000).then(function (data) {
             state.cache[action] = data;
             state.loading = false;
             renderTab(action, data);
@@ -349,6 +489,7 @@
         layer.hidden = true;
         layer.innerHTML = "";
         state.settings = null;
+        state.conversation = null;
     }
 
     function saveSettings(button) {
@@ -415,6 +556,24 @@
             else if (action === "settings") { openSettings(); }
             else if (action === "close-settings") { closeSettings(); }
             else if (action === "save-settings") { saveSettings(button); }
+            else if (action === "clear-search") {
+                state.queries[button.getAttribute("data-tab")] = "";
+                delete state.cache[button.getAttribute("data-tab")];
+                loadTab(true);
+            }
+            else if (action === "load-more") { loadMore(button.getAttribute("data-tab"), button); }
+            else if (action === "open-conversation") { openConversation(button.getAttribute("data-conversation-id")); }
+            else if (action === "load-older-messages") { loadOlderMessages(button); }
+        });
+        state.root.addEventListener("submit", function (event) {
+            var form = event.target.closest("[data-ghl-search-form]");
+            var tab;
+            var input;
+            if (!form) { return; }
+            event.preventDefault();
+            tab = form.getAttribute("data-ghl-search-form");
+            input = form.querySelector("[data-ghl-search-input]");
+            search(tab, input ? input.value : "");
         });
         state.root.addEventListener("change", function (event) {
             var field = event.target;

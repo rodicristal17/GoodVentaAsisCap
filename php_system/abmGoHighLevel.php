@@ -54,6 +54,9 @@ try {
         );
     }
     $contexto = goHighLevelContextoUsuario($mysqli, $codUsuario);
+    if (empty($contexto['puede_ver'])) {
+        goHighLevelLanzar('acceso_denegado', 'No tiene permiso para consultar GoHighLevel.', array(), 403);
+    }
     $config = goHighLevelConfiguracion();
     switch ($accion) {
         case 'contexto':
@@ -69,6 +72,10 @@ try {
         case 'conversaciones':
             goHighLevelResponder(true, 'conversaciones_obtenidas', 'Conversaciones actualizadas.',
                 goHighLevelListarConversaciones($mysqli, $config, $_POST), 200);
+            break;
+        case 'mensajes_conversacion':
+            goHighLevelResponder(true, 'mensajes_obtenidos', 'Historial actualizado.',
+                goHighLevelListarMensajesConversacion($config, $_POST), 200);
             break;
         case 'contactos':
             goHighLevelResponder(true, 'contactos_obtenidos', 'Contactos actualizados.',

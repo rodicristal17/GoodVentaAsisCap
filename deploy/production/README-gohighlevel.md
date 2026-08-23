@@ -2,9 +2,11 @@
 
 ## Alcance de la fase 1
 
-El modulo consulta datos reales de una unica subcuenta de GoHighLevel y los presenta dentro de Telar. Incluye conversaciones, contactos, oportunidades, pipelines y calendarios. La vista inicial es **Conversaciones**; el resumen superior y las oportunidades quedan separados para no interferir con la operatoria diaria.
+El modulo consulta datos reales de una unica subcuenta de GoHighLevel y los presenta dentro de Telar. Incluye conversaciones, contactos, oportunidades, pipelines y calendarios. La vista inicial es **Conversaciones**; el resumen superior y las oportunidades quedan separados para no interferir con la operatoria diaria. Contactos, conversaciones y oportunidades incluyen busqueda y carga progresiva para recorrer el conjunto completo sin volver pesada la mesa de trabajo.
 
 La integracion es estrictamente de solo lectura. No crea ni actualiza contactos, no mueve oportunidades, no envia mensajes y no dispara workflows. Esta restriccion protege especialmente las automatizaciones que reaccionan a `Contact Created` o a cambios de etapa.
+
+El historial de una conversacion tambien se consulta en modo solo lectura: abrirlo no marca mensajes, no responde y no ejecuta automatizaciones.
 
 ## Vinculacion con pacientes
 
@@ -21,6 +23,14 @@ La foto nativa del perfil de WhatsApp no se presupone porque no esta garantizada
 ## Seguridad y credenciales
 
 Se debe crear una integracion privada exclusiva para Telar con permisos de lectura. No se debe reutilizar, editar ni rotar otra integracion existente.
+
+Alcances requeridos en la integracion privada:
+
+- `contacts.readonly`
+- `conversations.readonly`
+- `conversations/message.readonly`
+- `opportunities.readonly`
+- `calendars.readonly`
 
 El token se instala fuera del repositorio en:
 

@@ -47,6 +47,16 @@ body.gohighlevel-open { overflow: hidden; }
 #telarGoHighLevel .ghl-total { padding: 7px 11px; border-radius: 999px; color: #285170; background: #e2ebf2; font-size: 11px; font-weight: 780; white-space: nowrap; }
 #telarGoHighLevel .ghl-total--safe { color: #166534; background: #dcfce7; }
 
+#telarGoHighLevel .ghl-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: -4px 0 16px; padding: 12px; border: 1px solid #d9e4ec; border-radius: 12px; background: #fff; }
+#telarGoHighLevel .ghl-toolbar form { flex: 1 1 650px; display: flex; align-items: center; gap: 8px; }
+#telarGoHighLevel .ghl-toolbar label { flex: 1 1 auto; min-width: 180px; display: flex; align-items: center; gap: 9px; height: 39px; padding: 0 12px; border: 1px solid #cddae4; border-radius: 9px; color: #6d8195; background: #f8fafc; }
+#telarGoHighLevel .ghl-toolbar label:focus-within { border-color: #0b92a1; box-shadow: 0 0 0 3px rgba(11,146,161,.12); }
+#telarGoHighLevel .ghl-toolbar input { min-width: 0; flex: 1; border: 0; outline: 0; color: #17365b; background: transparent; font-size: 12px; }
+#telarGoHighLevel .ghl-toolbar > span { color: #708297; font-size: 11px; white-space: nowrap; }
+#telarGoHighLevel .ghl-toolbar > span strong { color: #244968; }
+#telarGoHighLevel .ghl-pagination { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 18px 0 4px; }
+#telarGoHighLevel .ghl-pagination small { color: #8190a0; font-size: 10px; }
+
 #telarGoHighLevel .ghl-kpis { display: grid; grid-template-columns: repeat(4, minmax(145px, 1fr)); gap: 11px; }
 #telarGoHighLevel .ghl-kpis article { display: flex; align-items: center; gap: 12px; min-height: 74px; padding: 14px; border: 1px solid #dce6ee; border-radius: 12px; background: #fff; }
 #telarGoHighLevel .ghl-kpis article > i { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; color: #077a8f; background: #dff5f4; }
@@ -76,6 +86,8 @@ body.gohighlevel-open { overflow: hidden; }
 #telarGoHighLevel .ghl-unread { color: #fff; background: #7c3aed; }
 #telarGoHighLevel .ghl-conversation p { margin: 4px 0; overflow: hidden; color: #50667d; font-size: 13px; line-height: 1.42; text-overflow: ellipsis; white-space: nowrap; }
 #telarGoHighLevel .ghl-owner { color: #7b8ba0; font-size: 10px; }
+#telarGoHighLevel .ghl-open-conversation { flex: 0 0 34px; align-self: center; width: 34px; height: 34px; border: 1px solid #cfe0e8; border-radius: 9px; color: #087b8e; background: #edf8f8; cursor: pointer; }
+#telarGoHighLevel .ghl-open-conversation:hover { color: #fff; background: #087f90; border-color: #087f90; }
 
 #telarGoHighLevel .ghl-contact-grid { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 12px; }
 #telarGoHighLevel .ghl-contact-card { min-width: 0; padding: 15px; border: 1px solid #dae5ed; border-radius: 13px; background: #fff; }
@@ -162,6 +174,17 @@ body.gohighlevel-open { overflow: hidden; }
 #telarGoHighLevel .ghl-btn--primary { border: 1px solid #087f90; color: #fff; background: #087f90; }
 #telarGoHighLevel .ghl-btn:disabled { cursor: wait; opacity: .6; }
 
+#telarGoHighLevel .ghl-conversation-modal { width: min(980px, 96vw); }
+#telarGoHighLevel .ghl-conversation-modal .ghl-modal__body { background: #eef3f7; }
+#telarGoHighLevel .ghl-older { display: flex; justify-content: center; margin-bottom: 13px; }
+#telarGoHighLevel .ghl-message-history { display: flex; flex-direction: column; gap: 9px; }
+#telarGoHighLevel .ghl-message-bubble { max-width: 78%; padding: 10px 12px; border: 1px solid #d4e0e8; border-radius: 13px 13px 13px 4px; color: #324e69; background: #fff; box-shadow: 0 2px 7px rgba(22,56,84,.05); }
+#telarGoHighLevel .ghl-message-bubble.is-outbound { align-self: flex-end; border-color: #b9e2dd; border-radius: 13px 13px 4px 13px; background: #e5f7f2; }
+#telarGoHighLevel .ghl-message-bubble > small { color: #73869a; font-size: 9px; font-weight: 780; text-transform: uppercase; }
+#telarGoHighLevel .ghl-message-bubble > p { margin: 5px 0 7px; color: #2e4b66; font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+#telarGoHighLevel .ghl-message-bubble > footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; color: #8190a0; font-size: 9px; }
+#telarGoHighLevel .ghl-conversation-modal > footer { align-items: center; justify-content: space-between; }
+
 @media (max-width: 980px) {
   #telarGoHighLevel .ghl-kpis, #telarGoHighLevel .ghl-sync-grid { grid-template-columns: repeat(2, 1fr); }
   #telarGoHighLevel .ghl-contact-grid, #telarGoHighLevel .ghl-calendar-grid { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
@@ -183,4 +206,10 @@ body.gohighlevel-open { overflow: hidden; }
   #telarGoHighLevel .ghl-conversation p { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   #telarGoHighLevel .ghl-modal-layer { padding: 8px; }
   #telarGoHighLevel .ghl-modal { width: 100%; max-height: 96vh; }
+  #telarGoHighLevel .ghl-toolbar { align-items: stretch; flex-direction: column; }
+  #telarGoHighLevel .ghl-toolbar form { flex-basis: auto; flex-wrap: wrap; }
+  #telarGoHighLevel .ghl-toolbar label { flex-basis: 100%; }
+  #telarGoHighLevel .ghl-toolbar > span { align-self: flex-end; }
+  #telarGoHighLevel .ghl-message-bubble { max-width: 92%; }
+  #telarGoHighLevel .ghl-conversation-modal > footer { align-items: flex-end; flex-direction: column; }
 }

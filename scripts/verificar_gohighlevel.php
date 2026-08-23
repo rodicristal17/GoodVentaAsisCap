@@ -55,13 +55,19 @@ ghlVerificar(strpos($helper, "'gohighlevel_vinculo_contacto'") !== false, 'Debe 
 ghlVerificar(strpos($helper, "'ambiguo'") !== false, 'Debe advertir coincidencias ambiguas.');
 ghlVerificar(strpos($helper, 'count($filas) === 1') !== false, 'Solo debe vincular una coincidencia unica.');
 ghlVerificar(strpos($helper, 'permisos_actualizados') !== false, 'Los cambios de permisos deben ser trazables.');
+ghlVerificar(strpos($helper, "'startAfter'") !== false, 'Contactos debe soportar paginacion segura.');
+ghlVerificar(strpos($helper, "'startAfterDate'") !== false, 'Conversaciones debe soportar paginacion segura.');
+ghlVerificar(strpos($helper, 'goHighLevelListarMensajesConversacion') !== false, 'Falta el historial de mensajes.');
+ghlVerificar(strpos($helper, "'/messages'") !== false, 'Falta la ruta de mensajes de solo lectura.');
 
 ghlVerificar(strpos($endpoint, "case 'conversaciones'") !== false, 'Falta accion conversaciones.');
+ghlVerificar(strpos($endpoint, "case 'mensajes_conversacion'") !== false, 'Falta accion historial de mensajes.');
 ghlVerificar(strpos($endpoint, "case 'contactos'") !== false, 'Falta accion contactos.');
 ghlVerificar(strpos($endpoint, "case 'oportunidades'") !== false, 'Falta accion oportunidades.');
 ghlVerificar(strpos($endpoint, "case 'calendarios'") !== false, 'Falta accion calendarios.');
 ghlVerificar(strpos($endpoint, "case 'guardar_permisos'") !== false, 'Falta accion guardar permisos.');
 ghlVerificar(strpos($endpoint, 'verificar_navegador') !== false, 'El endpoint debe validar la sesion.');
+ghlVerificar(strpos($endpoint, 'empty($contexto[\'puede_ver\'])') !== false, 'El endpoint debe aplicar el permiso de consulta.');
 
 ghlVerificar(strpos($js, 'tab: "conversaciones"') !== false, 'Conversaciones debe ser la vista inicial.');
 ghlVerificar(strpos($js, 'data-ghl-action=\'toggle-summary\'') !== false, 'El resumen debe ser plegable.');
@@ -69,6 +75,9 @@ ghlVerificar(strpos($js, 'data-ghl-action=\'settings\'') !== false, 'Debe existi
 ghlVerificar(strpos($js, 'Coincidencia ambigua') !== false, 'La UI debe advertir coincidencias ambiguas.');
 ghlVerificar(strpos($js, 'Solo lectura') !== false, 'La UI debe indicar solo lectura.');
 ghlVerificar(strpos($js, 'abrirGoHighLevel') !== false, 'Falta la funcion de apertura.');
+ghlVerificar(strpos($js, 'data-ghl-search-form') !== false, 'Falta la busqueda dentro del modulo.');
+ghlVerificar(strpos($js, "data-ghl-action='load-more'") !== false, 'Falta el acceso a paginas adicionales.');
+ghlVerificar(strpos($js, 'mensajes_conversacion') !== false, 'Falta el visor de conversaciones.');
 ghlVerificar(strpos($css, '#telarGoHighLevel') !== false, 'El CSS debe estar limitado al modulo.');
 
 ghlVerificar(strpos($inicio, 'divMenuGoHighLevel') !== false, 'Falta el acceso GoHighLevel.');

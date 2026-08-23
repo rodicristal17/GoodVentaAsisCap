@@ -17,16 +17,25 @@
     (function () {
       var responses = {
         contexto: { usuario: { puede_configurar: true }, integracion: { configurado: true, modo: "solo_lectura" } },
-        conversaciones: { total: 3, items: [
+        conversaciones: { total: 83, paginacion: { hay_mas: true, cursor_fecha: "1787463300000", cursor_id: "" }, items: [
           { id: "1", nombre: "Ana Demo", telefono: "+595900000001", canal: "TYPE_WHATSAPP", ultimo_mensaje: "Quisiera confirmar el horario de mi consulta.", fecha: "2026-08-23T09:42:00Z", no_leidos: 2, responsable: "Recepción", vinculo: { estado: "vinculado", paciente: { nombre: "Ana Demo" } } },
           { id: "2", nombre: "Bruno Ejemplo", telefono: "+595900000002", canal: "TYPE_WHATSAPP", ultimo_mensaje: "Gracias, quedo atento.", fecha: "2026-08-23T09:25:00Z", no_leidos: 0, vinculo: { estado: "ambiguo", coincidencias: 2 } },
           { id: "3", nombre: "Carla Prueba", canal: "TYPE_EMAIL", ultimo_mensaje: "Consulta recibida desde el formulario.", fecha: "2026-08-23T08:15:00Z", vinculo: { estado: "sin_coincidencia" } }
         ] },
         resumen: { contactos: 124, conversaciones: 38, oportunidades: 17, calendarios: 4 },
-        contactos: { total: 2, items: [] },
-        oportunidades: { total: 0, items: [], pipelines: [{ id: "p1", nombre: "Ventas", etapas: [{ id: "e1", nombre: "Nuevo" }] }] },
+        contactos: { total: 124, paginacion: { hay_mas: true, cursor_fecha: "1787463300000", cursor_id: "contacto-demo-2" }, items: [
+          { id: "contacto-demo-1", nombre: "Ana Demo", telefono: "+595900000001", email: "ana@example.test", etiquetas: ["consulta"], vinculo: { estado: "vinculado", paciente: { nombre: "Ana Demo" } } },
+          { id: "contacto-demo-2", nombre: "Bruno Ejemplo", telefono: "+595900000002", etiquetas: ["seguimiento"], vinculo: { estado: "ambiguo", coincidencias: 2 } }
+        ] },
+        oportunidades: { total: 17, paginacion: { hay_mas: true, pagina: 1, siguiente_pagina: 2 }, items: [
+          { id: "oportunidad-demo-1", nombre: "Consulta odontológica", pipeline_id: "p1", etapa_id: "e1", estado: "open", valor: 850000, fecha: "2026-08-23T09:30:00Z" }
+        ], pipelines: [{ id: "p1", nombre: "Ventas", etapas: [{ id: "e1", nombre: "Nuevo" }] }] },
         calendarios: { total: 1, items: [{ id: "c1", nombre: "Primera consulta", descripcion: "Agenda de evaluación", activo: true }] },
         sincronizacion: { configurado: true, vinculos: { vinculados: 11, ambiguos: 2, sin_coincidencia: 5 }, protecciones: ["No crea contactos.", "No mueve oportunidades.", "Solo vincula coincidencias únicas."] },
+        mensajes_conversacion: { conversation_id: "1", paginacion: { hay_mas: true, last_message_id: "mensaje-demo-1" }, items: [
+          { id: "mensaje-demo-1", cuerpo: "Hola, quisiera confirmar mi consulta.", direccion: "inbound", tipo: "TYPE_WHATSAPP", estado: "read", fecha: "2026-08-23T09:35:00Z", adjuntos: 0 },
+          { id: "mensaje-demo-2", cuerpo: "Claro, su horario está confirmado.", direccion: "outbound", tipo: "TYPE_WHATSAPP", estado: "delivered", fecha: "2026-08-23T09:42:00Z", adjuntos: 0 }
+        ] },
         configuracion_permisos: { usuarios: [{ cod_usuario: 5994, nombre: "Administrador Demo", local: "Central", puede_ver: true, puede_configurar: true, bloqueado: true }] },
         guardar_permisos: { usuarios: [] }
       };

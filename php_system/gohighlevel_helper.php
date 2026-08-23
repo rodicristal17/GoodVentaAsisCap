@@ -176,7 +176,8 @@ function goHighLevelApiGet($config, $ruta, $parametros)
         '/opportunities/pipelines' => true,
         '/calendars/' => true
     );
-    if (!isset($rutasPermitidas[$ruta])) {
+    $rutaMensajes = preg_match('#^/conversations/[A-Za-z0-9_-]{8,80}/messages$#', $ruta) === 1;
+    if (!isset($rutasPermitidas[$ruta]) && !$rutaMensajes) {
         goHighLevelLanzar('ruta_no_permitida', 'La consulta solicitada no esta permitida.', array(), 400);
     }
     if (!function_exists('curl_init')) {
@@ -251,6 +252,32 @@ function goHighLevelLimite($valor, $predeterminado)
         $limite = intval($predeterminado);
     }
     return max(1, min(100, $limite));
+}
+
+function goHighLevelBusqueda($parametros)
+{
+    return goHighLevelTexto(isset($parametros['buscar']) ? $parametros['buscar'] : '', 75);
+}
+
+function goHighLevelIdSeguro($valor)
+{
+    $id = trim((string)$valor);
+    return preg_match('/^[A-Za-z0-9_-]{8,80}$/', $id) ? $id : '';
+}
+
+function goHighLevelMarcaTiempo($valor)
+{
+    $texto = trim((string)$valor);
+    if (preg_match('/^[0-9]{10,16}$/', $texto)) {
+        return $texto;
+    }
+    $tiempo = $texto !== '' ? strtotime($texto) : false;
+    return $tiempo !== false ? (string)($tiempo * 1000) : '';
+}
+
+function goHighLevelHayMas($total, $cantidad, $limite)
+{
+    return $cantidad >= $limite && ($total <= 0 || $cantidad < $total);
 }
 
 function goHighLevelNombreContacto($contacto)
@@ -370,10 +397,21 @@ function goHighLevelFormatearContacto($mysqli, $contacto, $guardarVinculo)
 function goHighLevelListarContactos($mysqli, $config, $parametros)
 {
     $limite = goHighLevelLimite(isset($parametros['limite']) ? $parametros['limite'] : 50, 50);
-    $respuesta = goHighLevelApiGet($config, '/contacts/', array(
+    $buscar = goHighLevelBusqueda($parametros);
+    $apiParametros = array(
         'locationId' => $config['location_id'],
         'limit' => $limite
-    ));
+    );
+    if ($buscar !== '') {
+        $apiParametros['query'] = $buscar;
+    }
+    $cursorFecha = goHighLevelMarcaTiempo(isset($parametros['cursor_fecha']) ? $parametros['cursor_fecha'] : '');
+    $cursorId = goHighLevelIdSeguro(isset($parametros['cursor_id']) ? $parametros['cursor_id'] : '');
+    if ($cursorFecha !== '' && $cursorId !== '') {
+        $apiParametros['startAfter'] = $cursorFecha;
+        $apiParametros['startAfterId'] = $cursorId;
+    }
+    $respuesta = goHighLevelApiGet($config, '/contacts/', $apiParametros);
     $items = goHighLevelItems($respuesta, array('contacts'));
     $contactos = array();
     foreach ($items as $item) {
@@ -381,7 +419,22 @@ function goHighLevelListarContactos($mysqli, $config, $parametros)
             $contactos[] = goHighLevelFormatearContacto($mysqli, $item, true);
         }
     }
-    return array('items' => $contactos, 'total' => goHighLevelTotal($respuesta, $items));
+    $total = goHighLevelTotal($respuesta, $items);
+    $ultimo = count($items) > 0 && is_array($items[count($items) - 1]) ? $items[count($items) - 1] : array();
+    $siguienteFecha = goHighLevelMarcaTiempo(goHighLevelValor($ultimo, array('dateAdded', 'createdAt'), ''));
+    $siguienteId = goHighLevelIdSeguro(goHighLevelValor($ultimo, array('id', '_id', 'contactId'), ''));
+    $hayMas = goHighLevelHayMas($total, count($items), $limite) && $siguienteFecha !== '' && $siguienteId !== '';
+    return array(
+        'items' => $contactos,
+        'total' => $total,
+        'busqueda' => $buscar,
+        'paginacion' => array(
+            'hay_mas' => $hayMas,
+            'cursor_fecha' => $hayMas ? $siguienteFecha : '',
+            'cursor_id' => $hayMas ? $siguienteId : '',
+            'mostrados' => count($contactos)
+        )
+    );
 }
 
 function goHighLevelContactosPorId($contactos)
@@ -398,12 +451,20 @@ function goHighLevelContactosPorId($contactos)
 function goHighLevelListarConversaciones($mysqli, $config, $parametros)
 {
     $limite = goHighLevelLimite(isset($parametros['limite']) ? $parametros['limite'] : 40, 40);
-    $contactosDatos = goHighLevelListarContactos($mysqli, $config, array('limite' => 100));
-    $contactos = goHighLevelContactosPorId($contactosDatos['items']);
-    $respuesta = goHighLevelApiGet($config, '/conversations/search', array(
+    $buscar = goHighLevelBusqueda($parametros);
+    $apiParametros = array(
         'locationId' => $config['location_id'],
-        'limit' => $limite
-    ));
+        'limit' => $limite,
+        'sort' => 'desc'
+    );
+    if ($buscar !== '') {
+        $apiParametros['query'] = $buscar;
+    }
+    $cursorFecha = goHighLevelMarcaTiempo(isset($parametros['cursor_fecha']) ? $parametros['cursor_fecha'] : '');
+    if ($cursorFecha !== '') {
+        $apiParametros['startAfterDate'] = $cursorFecha;
+    }
+    $respuesta = goHighLevelApiGet($config, '/conversations/search', $apiParametros);
     $items = goHighLevelItems($respuesta, array('conversations'));
     $conversaciones = array();
     foreach ($items as $item) {
@@ -411,15 +472,19 @@ function goHighLevelListarConversaciones($mysqli, $config, $parametros)
             continue;
         }
         $contactId = goHighLevelTexto(goHighLevelValor($item, array('contactId', 'contact_id')), 80);
-        $contacto = isset($contactos[$contactId]) ? $contactos[$contactId] : null;
-        $nombre = $contacto ? $contacto['nombre'] : goHighLevelNombreContacto($item);
+        $contactoCrudo = $item;
+        if ($contactId !== '') {
+            $contactoCrudo['id'] = $contactId;
+        }
+        $contacto = goHighLevelFormatearContacto($mysqli, $contactoCrudo, $contactId !== '');
+        $nombre = $contacto['nombre'];
         $conversaciones[] = array(
             'id' => goHighLevelTexto(goHighLevelValor($item, array('id', '_id')), 80),
             'contact_id' => $contactId,
             'nombre' => $nombre,
-            'telefono' => $contacto ? $contacto['telefono'] : '',
-            'avatar' => $contacto ? $contacto['avatar'] : '',
-            'vinculo' => $contacto ? $contacto['vinculo'] : array('estado' => 'sin_coincidencia', 'coincidencias' => 0, 'paciente' => null),
+            'telefono' => $contacto['telefono'],
+            'avatar' => $contacto['avatar'],
+            'vinculo' => $contacto['vinculo'],
             'ultimo_mensaje' => goHighLevelTexto(goHighLevelValor($item, array('lastMessageBody', 'lastMessage', 'message')), 500),
             'fecha' => goHighLevelTexto(goHighLevelValor($item, array('lastMessageDate', 'dateUpdated', 'updatedAt')), 40),
             'canal' => goHighLevelTexto(goHighLevelValor($item, array('lastMessageType', 'type', 'channel')), 40),
@@ -428,12 +493,29 @@ function goHighLevelListarConversaciones($mysqli, $config, $parametros)
             'estado' => goHighLevelTexto(goHighLevelValor($item, array('status')), 40)
         );
     }
-    return array('items' => $conversaciones, 'total' => goHighLevelTotal($respuesta, $items));
+    $total = goHighLevelTotal($respuesta, $items);
+    $ultimo = count($items) > 0 && is_array($items[count($items) - 1]) ? $items[count($items) - 1] : array();
+    $siguienteFecha = goHighLevelMarcaTiempo(goHighLevelValor($ultimo, array('lastMessageDate', 'dateUpdated', 'updatedAt'), ''));
+    $hayMas = goHighLevelHayMas($total, count($items), $limite) && $siguienteFecha !== '';
+    return array(
+        'items' => $conversaciones,
+        'total' => $total,
+        'busqueda' => $buscar,
+        'paginacion' => array(
+            'hay_mas' => $hayMas,
+            'cursor_fecha' => $hayMas ? $siguienteFecha : '',
+            'cursor_id' => '',
+            'mostrados' => count($conversaciones)
+        )
+    );
 }
 
 function goHighLevelListarOportunidades($mysqli, $config, $parametros)
 {
     $limite = goHighLevelLimite(isset($parametros['limite']) ? $parametros['limite'] : 60, 60);
+    $buscar = goHighLevelBusqueda($parametros);
+    $pagina = isset($parametros['pagina']) ? intval($parametros['pagina']) : 1;
+    $pagina = max(1, min(100000, $pagina));
     $pipelinesRespuesta = goHighLevelApiGet($config, '/opportunities/pipelines', array(
         'locationId' => $config['location_id']
     ));
@@ -458,10 +540,15 @@ function goHighLevelListarOportunidades($mysqli, $config, $parametros)
             'etapas' => $etapas
         );
     }
-    $respuesta = goHighLevelApiGet($config, '/opportunities/search', array(
+    $apiParametros = array(
         'location_id' => $config['location_id'],
-        'limit' => $limite
-    ));
+        'limit' => $limite,
+        'page' => $pagina
+    );
+    if ($buscar !== '') {
+        $apiParametros['q'] = $buscar;
+    }
+    $respuesta = goHighLevelApiGet($config, '/opportunities/search', $apiParametros);
     $items = goHighLevelItems($respuesta, array('opportunities'));
     $oportunidades = array();
     foreach ($items as $item) {
@@ -479,10 +566,78 @@ function goHighLevelListarOportunidades($mysqli, $config, $parametros)
             'fecha' => goHighLevelTexto(goHighLevelValor($item, array('updatedAt', 'dateUpdated', 'createdAt')), 40)
         );
     }
+    $total = goHighLevelTotal($respuesta, $items);
     return array(
         'items' => $oportunidades,
-        'total' => goHighLevelTotal($respuesta, $items),
-        'pipelines' => $pipelines
+        'total' => $total,
+        'pipelines' => $pipelines,
+        'busqueda' => $buscar,
+        'paginacion' => array(
+            'hay_mas' => count($items) >= $limite && ($pagina * $limite) < $total,
+            'pagina' => $pagina,
+            'siguiente_pagina' => $pagina + 1,
+            'mostrados' => count($oportunidades)
+        )
+    );
+}
+
+function goHighLevelListarMensajesConversacion($config, $parametros)
+{
+    $conversationId = goHighLevelIdSeguro(isset($parametros['conversation_id']) ? $parametros['conversation_id'] : '');
+    if ($conversationId === '') {
+        goHighLevelLanzar('conversacion_invalida', 'La conversacion seleccionada no es valida.', array(), 400);
+    }
+    $limite = goHighLevelLimite(isset($parametros['limite']) ? $parametros['limite'] : 50, 50);
+    $apiParametros = array('limit' => $limite);
+    $ultimoMensajeId = goHighLevelIdSeguro(isset($parametros['last_message_id']) ? $parametros['last_message_id'] : '');
+    if ($ultimoMensajeId !== '') {
+        $apiParametros['lastMessageId'] = $ultimoMensajeId;
+    }
+    $respuesta = goHighLevelApiGet(
+        $config,
+        '/conversations/'.rawurlencode($conversationId).'/messages',
+        $apiParametros
+    );
+    $contenedor = isset($respuesta['messages']) && is_array($respuesta['messages'])
+        ? $respuesta['messages'] : array();
+    $items = isset($contenedor['messages']) && is_array($contenedor['messages'])
+        ? $contenedor['messages'] : array();
+    $mensajes = array();
+    foreach ($items as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+        $cuerpo = (string)goHighLevelValor($item, array('body', 'message', 'text'), '');
+        $cuerpo = html_entity_decode(strip_tags($cuerpo), ENT_QUOTES, 'UTF-8');
+        $adjuntos = goHighLevelValor($item, array('attachments'), array());
+        if (!is_array($adjuntos)) {
+            $adjuntos = array();
+        }
+        $mensajes[] = array(
+            'id' => goHighLevelTexto(goHighLevelValor($item, array('id', '_id')), 80),
+            'cuerpo' => goHighLevelTexto($cuerpo, 4000),
+            'direccion' => goHighLevelTexto(goHighLevelValor($item, array('direction')), 16),
+            'tipo' => goHighLevelTexto(goHighLevelValor($item, array('messageType', 'type')), 60),
+            'estado' => goHighLevelTexto(goHighLevelValor($item, array('status')), 40),
+            'fecha' => goHighLevelTexto(goHighLevelValor($item, array('dateAdded', 'createdAt')), 40),
+            'adjuntos' => min(20, count($adjuntos))
+        );
+    }
+    usort($mensajes, function ($a, $b) {
+        $fechaA = (float)goHighLevelMarcaTiempo($a['fecha']);
+        $fechaB = (float)goHighLevelMarcaTiempo($b['fecha']);
+        if ($fechaA === $fechaB) {
+            return strcmp((string)$a['id'], (string)$b['id']);
+        }
+        return $fechaA < $fechaB ? -1 : 1;
+    });
+    return array(
+        'conversation_id' => $conversationId,
+        'items' => $mensajes,
+        'paginacion' => array(
+            'hay_mas' => !empty($contenedor['nextPage']),
+            'last_message_id' => goHighLevelIdSeguro(goHighLevelValor($contenedor, array('lastMessageId'), ''))
+        )
     );
 }
 
