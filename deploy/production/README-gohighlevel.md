@@ -26,7 +26,7 @@ El token se instala fuera del repositorio en:
 
 `deploy/production/secrets/gohighlevel_readonly_token`
 
-El archivo debe pertenecer a `root:www-data`, usar modo `0440` y montarse como solo lectura en `/run/secrets/gohighlevel_readonly_token`. Nunca debe agregarse al archivo `.env`, la base de datos, Git, la documentacion o los logs.
+El directorio `deploy/production/secrets` debe pertenecer a `root:www-data` y usar modo `0750`, para que el proceso web pueda atravesarlo sin exponerlo a otros usuarios. El archivo debe pertenecer a `root:www-data`, usar modo `0440` y montarse como solo lectura en `/run/secrets/gohighlevel_readonly_token`. Nunca debe agregarse al archivo `.env`, la base de datos, Git, la documentacion o los logs.
 
 Variables no sensibles:
 
