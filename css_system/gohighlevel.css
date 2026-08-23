@@ -39,15 +39,15 @@ body.gohighlevel-open { overflow: hidden; }
 #telarGoHighLevel .ghl-tabs button.is-active { color: #056f86; border-bottom-color: #09a5a4; }
 #telarGoHighLevel .ghl-tabs button:hover { color: #056f86; background: #eaf5f7; }
 
-#telarGoHighLevel .ghl-content { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 21px 28px 35px; }
-#telarGoHighLevel .ghl-section-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+#telarGoHighLevel .ghl-content { flex: 1 1 auto; min-width: 0; max-width: 100%; min-height: 0; overflow-x: hidden; overflow-y: auto; padding: 14px 20px 24px; }
+#telarGoHighLevel .ghl-section-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 12px; }
 #telarGoHighLevel .ghl-section-title small { color: #07869a; font-size: 10px; font-weight: 850; letter-spacing: .12em; }
 #telarGoHighLevel .ghl-section-title h2 { margin: 3px 0 3px; color: #17365b; font-size: 24px; }
 #telarGoHighLevel .ghl-section-title p { margin: 0; color: #6a7d92; font-size: 13px; }
 #telarGoHighLevel .ghl-total { padding: 7px 11px; border-radius: 999px; color: #285170; background: #e2ebf2; font-size: 11px; font-weight: 780; white-space: nowrap; }
 #telarGoHighLevel .ghl-total--safe { color: #166534; background: #dcfce7; }
 
-#telarGoHighLevel .ghl-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: -4px 0 16px; padding: 12px; border: 1px solid #d9e4ec; border-radius: 12px; background: #fff; }
+#telarGoHighLevel .ghl-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -2px 0 10px; padding: 8px; border: 1px solid #d9e4ec; border-radius: 12px; background: #fff; }
 #telarGoHighLevel .ghl-toolbar form { flex: 1 1 650px; display: flex; align-items: center; gap: 8px; }
 #telarGoHighLevel .ghl-toolbar label { flex: 1 1 auto; min-width: 180px; display: flex; align-items: center; gap: 9px; height: 39px; padding: 0 12px; border: 1px solid #cddae4; border-radius: 9px; color: #6d8195; background: #f8fafc; }
 #telarGoHighLevel .ghl-toolbar label:focus-within { border-color: #0b92a1; box-shadow: 0 0 0 3px rgba(11,146,161,.12); }
@@ -70,23 +70,24 @@ body.gohighlevel-open { overflow: hidden; }
 #telarGoHighLevel .ghl-avatar img { width: 100%; height: 100%; object-fit: cover; }
 #telarGoHighLevel .ghl-avatar--small { flex-basis: 36px; width: 36px; height: 36px; font-size: 11px; }
 
-#telarGoHighLevel .ghl-conversation-list { display: grid; gap: 9px; }
-#telarGoHighLevel .ghl-conversation { display: flex; gap: 13px; padding: 15px 17px; border: 1px solid #dce5ec; border-radius: 13px; background: #fff; box-shadow: 0 2px 8px rgba(27, 60, 91, .04); transition: .18s ease; }
+#telarGoHighLevel .ghl-conversation-list { width: 100%; min-width: 0; max-width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+#telarGoHighLevel .ghl-conversation { width: 100%; min-width: 0; max-width: 100%; display: flex; align-items: center; gap: 9px; padding: 8px 11px; border: 1px solid #dce5ec; border-radius: 10px; background: #fff; box-shadow: 0 2px 8px rgba(27, 60, 91, .04); transition: .18s ease; }
 #telarGoHighLevel .ghl-conversation:hover { border-color: #9ed8dd; box-shadow: 0 6px 20px rgba(25, 77, 104, .08); }
-#telarGoHighLevel .ghl-conversation__main { min-width: 0; flex: 1; }
-#telarGoHighLevel .ghl-conversation__top { display: flex; justify-content: space-between; gap: 15px; }
-#telarGoHighLevel .ghl-conversation__top strong { overflow: hidden; color: #15365b; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
-#telarGoHighLevel .ghl-conversation__top time { color: #8291a2; font-size: 11px; white-space: nowrap; }
-#telarGoHighLevel .ghl-conversation__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin: 6px 0; }
-#telarGoHighLevel .ghl-channel, #telarGoHighLevel .ghl-link, #telarGoHighLevel .ghl-unread { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 999px; font-size: 10px; font-weight: 760; }
+#telarGoHighLevel .ghl-conversation > .ghl-avatar { flex-basis: 38px; width: 38px; height: 38px; font-size: 11px; }
+#telarGoHighLevel .ghl-conversation__main { width: 0; min-width: 0; flex: 1 1 auto; overflow: hidden; }
+#telarGoHighLevel .ghl-conversation__top { display: flex; justify-content: space-between; gap: 10px; }
+#telarGoHighLevel .ghl-conversation__top strong { overflow: hidden; color: #15365b; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+#telarGoHighLevel .ghl-conversation__top time { color: #8291a2; font-size: 10px; white-space: nowrap; }
+#telarGoHighLevel .ghl-conversation__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 3px 0; }
+#telarGoHighLevel .ghl-channel, #telarGoHighLevel .ghl-link, #telarGoHighLevel .ghl-unread { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 999px; font-size: 9px; font-weight: 760; }
 #telarGoHighLevel .ghl-channel { color: #047857; background: #dff9ee; }
 #telarGoHighLevel .ghl-link--ok { color: #075985; background: #e0f2fe; }
 #telarGoHighLevel .ghl-link--warning { color: #9a3412; background: #ffedd5; }
 #telarGoHighLevel .ghl-link--muted { color: #64748b; background: #edf1f5; }
 #telarGoHighLevel .ghl-unread { color: #fff; background: #7c3aed; }
-#telarGoHighLevel .ghl-conversation p { margin: 4px 0; overflow: hidden; color: #50667d; font-size: 13px; line-height: 1.42; text-overflow: ellipsis; white-space: nowrap; }
-#telarGoHighLevel .ghl-owner { color: #7b8ba0; font-size: 10px; }
-#telarGoHighLevel .ghl-open-conversation { flex: 0 0 34px; align-self: center; width: 34px; height: 34px; border: 1px solid #cfe0e8; border-radius: 9px; color: #087b8e; background: #edf8f8; cursor: pointer; }
+#telarGoHighLevel .ghl-conversation p { margin: 2px 0; overflow: hidden; color: #50667d; font-size: 12px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+#telarGoHighLevel .ghl-owner { display: block; overflow: hidden; color: #7b8ba0; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+#telarGoHighLevel .ghl-open-conversation { flex: 0 0 30px; align-self: center; width: 30px; height: 30px; border: 1px solid #cfe0e8; border-radius: 8px; color: #087b8e; background: #edf8f8; cursor: pointer; }
 #telarGoHighLevel .ghl-open-conversation:hover { color: #fff; background: #087f90; border-color: #087f90; }
 
 #telarGoHighLevel .ghl-contact-grid { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 12px; }
@@ -198,10 +199,10 @@ body.gohighlevel-open { overflow: hidden; }
   #telarGoHighLevel .ghl-header__actions { gap: 5px; }
   #telarGoHighLevel .ghl-header__actions button { width: 36px; height: 36px; }
   #telarGoHighLevel .ghl-summary-strip, #telarGoHighLevel .ghl-tabs { margin-left: 12px; margin-right: 12px; }
-  #telarGoHighLevel .ghl-content { padding: 17px 12px 28px; }
+  #telarGoHighLevel .ghl-content { padding: 13px 12px 22px; }
   #telarGoHighLevel .ghl-section-title { flex-direction: column; gap: 10px; }
   #telarGoHighLevel .ghl-kpis, #telarGoHighLevel .ghl-sync-grid, #telarGoHighLevel .ghl-contact-grid, #telarGoHighLevel .ghl-calendar-grid { grid-template-columns: 1fr; }
-  #telarGoHighLevel .ghl-conversation { padding: 12px; }
+  #telarGoHighLevel .ghl-conversation { padding: 9px; }
   #telarGoHighLevel .ghl-conversation__top { flex-direction: column; gap: 3px; }
   #telarGoHighLevel .ghl-conversation p { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   #telarGoHighLevel .ghl-modal-layer { padding: 8px; }

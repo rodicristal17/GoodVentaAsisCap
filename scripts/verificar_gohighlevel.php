@@ -79,6 +79,9 @@ ghlVerificar(strpos($js, 'data-ghl-search-form') !== false, 'Falta la busqueda d
 ghlVerificar(strpos($js, "data-ghl-action='load-more'") !== false, 'Falta el acceso a paginas adicionales.');
 ghlVerificar(strpos($js, 'mensajes_conversacion') !== false, 'Falta el visor de conversaciones.');
 ghlVerificar(strpos($css, '#telarGoHighLevel') !== false, 'El CSS debe estar limitado al modulo.');
+ghlVerificar(strpos($css, 'grid-template-columns: minmax(0, 1fr)') !== false, 'La lista de conversaciones debe respetar el ancho visible.');
+ghlVerificar(strpos($css, 'overflow-x: hidden') !== false, 'El modulo debe impedir el desplazamiento horizontal involuntario.');
+ghlVerificar(strpos($css, '.ghl-conversation__main { width: 0; min-width: 0;') !== false, 'El contenido de cada conversacion debe poder contraerse.');
 
 ghlVerificar(strpos($inicio, 'divMenuGoHighLevel') !== false, 'Falta el acceso GoHighLevel.');
 ghlVerificar(strpos($inicio, 'divGoHighLevel') !== false, 'Falta el contenedor GoHighLevel.');
