@@ -1,6 +1,6 @@
 <?php
 
-/** Verificador estructural de GoHighLevel fases 1 y 2A. Compatible con PHP 7.2. */
+/** Verificador estructural de GoHighLevel fases 1, 2A y 2B. Compatible con PHP 7.2. */
 
 $raiz = dirname(__DIR__);
 $errores = array();
@@ -31,6 +31,11 @@ $archivos = array(
     'actualizacion_23082026_gohighlevel_fase1_rollback.sql',
     'actualizacion_23082026_gohighlevel_respuestas_manual.sql',
     'actualizacion_23082026_gohighlevel_respuestas_manual_rollback.sql',
+    'actualizacion_23082026_gohighlevel_plantillas_whatsapp.sql',
+    'actualizacion_23082026_gohighlevel_plantillas_whatsapp_rollback.sql',
+    'scripts/verificar_gohighlevel_plantillas.php',
+    'scripts/verificar_migracion_gohighlevel_plantillas.sh',
+    'scripts/fixtures/gohighlevel_plantillas_schema_minimo.sql',
     'deploy/production/README-gohighlevel.md'
 );
 foreach ($archivos as $archivo) {
@@ -47,6 +52,7 @@ $dashboardJs = ghlContenido($raiz, 'js_system/dashboard_shortcuts.js');
 $compose = ghlContenido($raiz, 'deploy/production/compose.yml');
 $migracion = ghlContenido($raiz, 'actualizacion_23082026_gohighlevel_fase1.sql');
 $migracionEnvio = ghlContenido($raiz, 'actualizacion_23082026_gohighlevel_respuestas_manual.sql');
+$migracionPlantillas = ghlContenido($raiz, 'actualizacion_23082026_gohighlevel_plantillas_whatsapp.sql');
 
 ghlVerificar(strpos($helper, 'CURLOPT_SSL_VERIFYPEER => true') !== false, 'La API debe validar TLS.');
 ghlVerificar(strpos($helper, 'CURLOPT_FOLLOWLOCATION => false') !== false, 'La API no debe seguir redirecciones.');
@@ -67,10 +73,21 @@ ghlVerificar(strpos($helper, "'/messages'") !== false, 'Falta la ruta de mensaje
 ghlVerificar(strpos($helper, 'goHighLevelVentanaWhatsApp') !== false, 'Falta validar la ventana de 24 horas.');
 ghlVerificar(strpos($helper, 'goHighLevelControlFrecuenciaEnvio') !== false, 'Falta limitar la frecuencia de envios.');
 ghlVerificar(strpos($helper, 'texto no almacenado') !== false, 'La auditoria debe excluir el contenido del mensaje.');
+ghlVerificar(strpos($helper, "'v3'") !== false, 'El catalogo de plantillas debe usar la version oficial v3.');
+ghlVerificar(strpos($helper, "'originId' => \$config['location_id']") !== false, 'El catalogo debe limitarse a la subcuenta configurada.');
+ghlVerificar(strpos($helper, 'goHighLevelListarPlantillasWhatsApp') !== false, 'Falta consultar plantillas de WhatsApp.');
+ghlVerificar(strpos($helper, 'goHighLevelEnviarPlantillaWhatsApp') !== false, 'Falta el envio protegido de plantillas.');
+ghlVerificar(strpos($helper, 'goHighLevelPlantillaEsSensibleDetectada') !== false, 'Falta detectar avisos sensibles.');
+ghlVerificar(strpos($helper, "'templateId' => \$plantilla['id']") !== false, 'El envio debe usar el identificador aprobado.');
+ghlVerificar(strpos($helper, "empty(\$plantilla['tiene_variables'])") !== false, 'El servidor debe bloquear variables manuales.');
+ghlVerificar(strpos($helper, 'cuerpo no almacenado') !== false, 'La auditoria de plantillas no debe copiar el cuerpo.');
 
 ghlVerificar(strpos($endpoint, "case 'conversaciones'") !== false, 'Falta accion conversaciones.');
 ghlVerificar(strpos($endpoint, "case 'mensajes_conversacion'") !== false, 'Falta accion historial de mensajes.');
 ghlVerificar(strpos($endpoint, "case 'enviar_respuesta_manual'") !== false, 'Falta la accion de respuesta manual.');
+ghlVerificar(strpos($endpoint, "case 'plantillas_whatsapp'") !== false, 'Falta la accion de catalogo de plantillas.');
+ghlVerificar(strpos($endpoint, "case 'enviar_plantilla_whatsapp'") !== false, 'Falta la accion de envio de plantillas.');
+ghlVerificar(strpos($endpoint, "case 'guardar_plantillas'") !== false, 'Falta la accion para administrar plantillas.');
 ghlVerificar(strpos($endpoint, "case 'contactos'") !== false, 'Falta accion contactos.');
 ghlVerificar(strpos($endpoint, "case 'oportunidades'") !== false, 'Falta accion oportunidades.');
 ghlVerificar(strpos($endpoint, "case 'calendarios'") !== false, 'Falta accion calendarios.');
@@ -90,12 +107,19 @@ ghlVerificar(strpos($js, 'mensajes_conversacion') !== false, 'Falta el visor de 
 ghlVerificar(strpos($js, 'enviar_respuesta_manual') !== false, 'Falta conectar la respuesta manual.');
 ghlVerificar(strpos($js, "data-ghl-action='confirm-send'") !== false, 'Falta la confirmacion final antes de enviar.');
 ghlVerificar(strpos($js, "data-permission='reply'") !== false, 'Falta el permiso Responde en el engranaje.');
+ghlVerificar(strpos($js, "data-permission='template'") !== false, 'Falta el permiso Plantillas en el engranaje.');
+ghlVerificar(strpos($js, 'Plantillas de WhatsApp') !== false, 'Falta la administracion de plantillas en el engranaje.');
+ghlVerificar(strpos($js, 'enviar_plantilla_whatsapp') !== false, 'Falta conectar el envio de plantillas.');
+ghlVerificar(strpos($js, "data-ghl-sensitive-confirm") !== false, 'Falta la confirmacion reforzada para avisos sensibles.');
+ghlVerificar(strpos($js, 'variables manuales') !== false, 'La UI debe explicar el bloqueo de variables manuales.');
 ghlVerificar(strpos($js, 'Ventana de 24 horas cerrada') !== false, 'La UI debe bloquear texto libre fuera de ventana.');
 ghlVerificar(strpos($css, '#telarGoHighLevel') !== false, 'El CSS debe estar limitado al modulo.');
 ghlVerificar(strpos($css, 'grid-template-columns: minmax(0, 1fr)') !== false, 'La lista de conversaciones debe respetar el ancho visible.');
 ghlVerificar(strpos($css, 'overflow-x: hidden') !== false, 'El modulo debe impedir el desplazamiento horizontal involuntario.');
 ghlVerificar(strpos($css, '.ghl-conversation__main { width: 0; min-width: 0;') !== false, 'El contenido de cada conversacion debe poder contraerse.');
 ghlVerificar(strpos($css, '.ghl-composer') !== false, 'Falta el compositor protegido.');
+ghlVerificar(strpos($css, '.ghl-template-setting') !== false, 'Falta el estilo del catalogo administrable.');
+ghlVerificar(strpos($css, '.ghl-template-confirm.is-sensitive') !== false, 'Falta diferenciar la confirmacion sensible.');
 
 ghlVerificar(strpos($inicio, 'divMenuGoHighLevel') !== false, 'Falta el acceso GoHighLevel.');
 ghlVerificar(strpos($inicio, 'divGoHighLevel') !== false, 'Falta el contenedor GoHighLevel.');
@@ -114,10 +138,14 @@ ghlVerificar(strpos($migracion, "'gohighlevel','GoHighLevel'") !== false, 'Falta
 ghlVerificar(strpos($migracionEnvio, 'puede_responder') !== false, 'Falta el permiso de respuesta.');
 ghlVerificar(strpos($migracionEnvio, 'gohighlevel_envio_manual') !== false, 'Falta la auditoria de envios manuales.');
 ghlVerificar(strpos($migracionEnvio, 'longitud_mensaje') !== false, 'La auditoria debe guardar solo longitud, no contenido.');
+ghlVerificar(strpos($migracionPlantillas, 'puede_enviar_plantilla') !== false, 'Falta el permiso separado para plantillas.');
+ghlVerificar(strpos($migracionPlantillas, 'gohighlevel_plantilla_config') !== false, 'Falta el catalogo local de plantillas.');
+ghlVerificar(strpos($migracionPlantillas, 'gohighlevel_envio_plantilla') !== false, 'Falta la auditoria separada de plantillas.');
+ghlVerificar(strpos($migracionPlantillas, 'cuerpo TEXT') === false, 'La migracion no debe almacenar el cuerpo de las plantillas.');
 
 $sensibles = array('/pit-[A-Za-z0-9_-]{20,}/', '/Bearer\s+[A-Za-z0-9_-]{25,}/');
 foreach ($sensibles as $patron) {
-    ghlVerificar(!preg_match($patron, $helper.$endpoint.$js.$compose.$migracion.$migracionEnvio), 'Se encontro una credencial con apariencia real.');
+    ghlVerificar(!preg_match($patron, $helper.$endpoint.$js.$compose.$migracion.$migracionEnvio.$migracionPlantillas), 'Se encontro una credencial con apariencia real.');
 }
 
 if (count($errores) > 0) {

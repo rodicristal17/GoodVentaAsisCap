@@ -4,9 +4,9 @@
 
 El modulo consulta datos reales de una unica subcuenta de GoHighLevel y los presenta dentro de Telar. Incluye conversaciones, contactos, oportunidades, pipelines y calendarios. La vista inicial es **Conversaciones**; el resumen superior y las oportunidades quedan separados para no interferir con la operatoria diaria. Contactos, conversaciones y oportunidades incluyen busqueda y carga progresiva para recorrer el conjunto completo sin volver pesada la mesa de trabajo.
 
-La consulta continúa en modo de solo lectura: no crea ni actualiza contactos, no mueve oportunidades y no modifica workflows. La fase 2A agrega una unica escritura permitida: responder manualmente por WhatsApp desde una conversacion existente cuando el contacto escribio durante las ultimas 24 horas.
+La consulta continúa en modo de solo lectura: no crea ni actualiza contactos, no mueve oportunidades y no modifica workflows. La fase 2A agrega una escritura limitada: responder manualmente por WhatsApp desde una conversacion existente cuando el contacto escribio durante las ultimas 24 horas. La fase 2B permite retomar una conversacion vencida con una plantilla aprobada, activa, en español, de categoria Utility y sin variables manuales.
 
-Abrir el historial no marca mensajes ni ejecuta automatizaciones. El envio requiere permiso individual, confirmacion final, una ventana de 24 horas verificada nuevamente en servidor y el interruptor operativo habilitado. No se admiten plantillas, adjuntos, envios masivos ni texto libre fuera de la ventana.
+Abrir el historial no marca mensajes ni ejecuta automatizaciones. El envio requiere permiso individual, confirmacion final, validacion de la ventana nuevamente en servidor y el interruptor operativo habilitado. No se admiten adjuntos, envios masivos ni texto libre fuera de la ventana. Fuera de 24 horas Telar solo envia el identificador de una plantilla que vuelve a validar contra el catalogo real de GoHighLevel.
 
 ## Vinculacion con pacientes
 
@@ -29,7 +29,8 @@ Alcances requeridos en la integracion privada:
 - `contacts.readonly`
 - `conversations.readonly`
 - `conversations/message.readonly`
-- `conversations/message.write` (solamente para la fase 2A)
+- `conversations/message.write` (envios protegidos de las fases 2A y 2B)
+- `locations/templates.readonly` (catalogo aprobado de la fase 2B)
 - `opportunities.readonly`
 - `calendars.readonly`
 
@@ -51,13 +52,16 @@ El permiso externo y el interruptor deben habilitarse juntos. Si cualquiera falt
 
 ## Permisos
 
-El engranaje superior derecho administra tres capacidades:
+El engranaje superior derecho administra cuatro capacidades y el catalogo local:
 
 - **Puede ver:** acceso al modulo y a los datos consultados.
 - **Responde:** envio manual por WhatsApp dentro de la ventana; implica tambien poder ver.
+- **Plantillas:** envio de plantillas aprobadas fuera de 24 horas; implica tambien poder ver.
 - **Administra:** acceso al engranaje y gestion de permisos; implica tambien poder ver.
 
-Los cambios quedan registrados en `gohighlevel_evento`. Cada intento de envio se registra ademas en `gohighlevel_envio_manual` sin almacenar el texto. El usuario propietario inicial no puede quedar sin acceso administrativo ni de respuesta.
+La pestaña **Plantillas de WhatsApp** del engranaje importa el catalogo real, permite habilitar o deshabilitar cada plantilla y marcar advertencias adicionales. El contenido aprobado se crea o edita en GoHighLevel porque Meta debe volver a revisarlo. Telar detecta como sensibles los nombres o cuerpos relacionados con Informconf, judiciales o area legal; esa advertencia no puede quitarse y exige una confirmacion reforzada.
+
+Los cambios quedan registrados en `gohighlevel_evento`. Cada intento manual se registra en `gohighlevel_envio_manual` y cada plantilla en `gohighlevel_envio_plantilla`; ninguna auditoria almacena el cuerpo del mensaje o de la plantilla. El usuario propietario inicial no puede quedar sin acceso administrativo, de respuesta ni de plantillas.
 
 ## Protecciones del envio manual
 
@@ -66,13 +70,19 @@ Los cambios quedan registrados en `gohighlevel_evento`. Cada intento de envio se
 - La interfaz exige revision del destinatario y una segunda confirmacion antes del envio.
 - Cada envio usa un token unico para evitar dobles clics y aplica limites de frecuencia.
 - La auditoria guarda actor, conversacion, resultado y longitud; nunca el cuerpo del mensaje.
-- Una conversacion vencida queda bloqueada hasta implementar plantillas aprobadas en una fase posterior.
+- Una conversacion vencida oculta el texto libre y ofrece solamente plantillas habilitadas.
+- El servidor vuelve a consultar estado, idioma, categoria, variables y habilitacion inmediatamente antes del envio.
+- Las plantillas con variables sin resolver quedan bloqueadas. En esta fase no se solicitan valores manuales.
+- Los avisos Informconf/judiciales permanecen disponibles, pero con señal sensible y doble confirmacion.
+- Enviar una plantilla no abre la ventana de 24 horas; la respuesta manual se habilita recien cuando el contacto responde.
 
 ## Migracion y reversion
 
 - Aplicar `actualizacion_23082026_gohighlevel_fase1.sql`.
 - Aplicar `actualizacion_23082026_gohighlevel_respuestas_manual.sql`.
+- Aplicar `actualizacion_23082026_gohighlevel_plantillas_whatsapp.sql`.
 - Revertir, si fuera necesario, con `actualizacion_23082026_gohighlevel_fase1_rollback.sql`.
 - La fase 2A puede revertirse por separado con `actualizacion_23082026_gohighlevel_respuestas_manual_rollback.sql`.
+- La fase 2B puede revertirse por separado con `actualizacion_23082026_gohighlevel_plantillas_whatsapp_rollback.sql`.
 
 La reversion elimina solamente tablas, acceso y permisos propios del modulo. No toca datos ni automatizaciones de GoHighLevel.

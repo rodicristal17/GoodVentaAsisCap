@@ -2,8 +2,8 @@
 
 /**
  * Integracion entre Sistema Telar y GoHighLevel.
- * La consulta es general y la unica escritura permitida es una respuesta manual
- * de WhatsApp, protegida por permiso, ventana de 24 horas y auditoria.
+ * La consulta es general y las unicas escrituras permitidas son respuestas manuales
+ * dentro de 24 horas y plantillas aprobadas fuera de esa ventana, siempre auditadas.
  * Compatible con PHP 7.2. Los tokens se leen desde un archivo privado.
  */
 
@@ -79,7 +79,9 @@ function goHighLevelEstructuraDisponible($mysqli)
     return goHighLevelTablaExiste($mysqli, 'gohighlevel_permiso_usuario')
         && goHighLevelTablaExiste($mysqli, 'gohighlevel_vinculo_contacto')
         && goHighLevelTablaExiste($mysqli, 'gohighlevel_evento')
-        && goHighLevelTablaExiste($mysqli, 'gohighlevel_envio_manual');
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_envio_manual')
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_plantilla_config')
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_envio_plantilla');
 }
 
 function goHighLevelContextoUsuario($mysqli, $codUsuario)
@@ -88,6 +90,7 @@ function goHighLevelContextoUsuario($mysqli, $codUsuario)
     $stmt = $mysqli->prepare(
         "SELECT u.cod_usuario,IFNULL(p.nombre_persona,u.login) nombre,IFNULL(u.url,'') avatar,"
         ."IFNULL(g.puede_ver,0) puede_ver,IFNULL(g.puede_responder,0) puede_responder,"
+        ."IFNULL(g.puede_enviar_plantilla,0) puede_enviar_plantilla,"
         ."IFNULL(g.puede_configurar,0) puede_configurar "
         ."FROM usuario u LEFT JOIN persona p ON p.cod_persona=u.cod_usuario "
         ."LEFT JOIN gohighlevel_permiso_usuario g ON g.cod_usuarioFK=u.cod_usuario AND g.activo=1 "
@@ -109,6 +112,7 @@ function goHighLevelContextoUsuario($mysqli, $codUsuario)
     $esPropietario = $codUsuario === 5994;
     $puedeVer = $esPropietario || intval($fila['puede_ver']) === 1;
     $puedeResponder = $esPropietario || intval($fila['puede_responder']) === 1;
+    $puedeEnviarPlantilla = $esPropietario || intval($fila['puede_enviar_plantilla']) === 1;
     $puedeConfigurar = $esPropietario || intval($fila['puede_configurar']) === 1;
     if (!$puedeVer) {
         goHighLevelLanzar('accion_no_autorizada', 'No tiene acceso al modulo GoHighLevel.', array(), 403);
@@ -119,6 +123,7 @@ function goHighLevelContextoUsuario($mysqli, $codUsuario)
         'avatar' => (string)$fila['avatar'],
         'puede_ver' => $puedeVer,
         'puede_responder' => $puedeResponder,
+        'puede_enviar_plantilla' => $puedeEnviarPlantilla,
         'puede_configurar' => $puedeConfigurar,
         'es_propietario' => $esPropietario
     );
@@ -167,7 +172,7 @@ function goHighLevelConfigurado($config)
         && trim((string)$config['token']) !== '';
 }
 
-function goHighLevelApiGet($config, $ruta, $parametros)
+function goHighLevelApiGet($config, $ruta, $parametros, $versionForzada = '')
 {
     if (!goHighLevelConfigurado($config)) {
         goHighLevelLanzar(
@@ -186,7 +191,8 @@ function goHighLevelApiGet($config, $ruta, $parametros)
     );
     $rutaMensajes = preg_match('#^/conversations/[A-Za-z0-9_-]{8,80}/messages$#', $ruta) === 1;
     $rutaConversacion = preg_match('#^/conversations/[A-Za-z0-9_-]{8,80}$#', $ruta) === 1;
-    if (!isset($rutasPermitidas[$ruta]) && !$rutaMensajes && !$rutaConversacion) {
+    $rutaPlantillas = preg_match('#^/locations/[A-Za-z0-9_-]{8,80}/templates$#', $ruta) === 1;
+    if (!isset($rutasPermitidas[$ruta]) && !$rutaMensajes && !$rutaConversacion && !$rutaPlantillas) {
         goHighLevelLanzar('ruta_no_permitida', 'La consulta solicitada no esta permitida.', array(), 400);
     }
     if (!function_exists('curl_init')) {
@@ -195,6 +201,10 @@ function goHighLevelApiGet($config, $ruta, $parametros)
     $url = $config['base'].$ruta;
     if (is_array($parametros) && count($parametros) > 0) {
         $url .= '?'.http_build_query($parametros, '', '&');
+    }
+    $versionApi = trim((string)$versionForzada);
+    if (!preg_match('/^[A-Za-z0-9._-]{1,32}$/', $versionApi)) {
+        $versionApi = $config['version'];
     }
     $curl = curl_init($url);
     curl_setopt_array($curl, array(
@@ -207,7 +217,7 @@ function goHighLevelApiGet($config, $ruta, $parametros)
         CURLOPT_HTTPHEADER => array(
             'Accept: application/json',
             'Authorization: Bearer '.$config['token'],
-            'Version: '.$config['version'],
+            'Version: '.$versionApi,
             'User-Agent: Sistema-Telar-GoHighLevel/1.0'
         )
     ));
@@ -777,14 +787,16 @@ function goHighLevelControlFrecuenciaEnvio($mysqli, $contexto, $conversationId)
 {
     $actor = intval($contexto['cod_usuario']);
     $stmt = $mysqli->prepare(
-        "SELECT SUM(CASE WHEN cod_usuarioFK=? AND fecha_creacion>=DATE_SUB(NOW(),INTERVAL 1 MINUTE) THEN 1 ELSE 0 END) actor_minuto,"
-        ."SUM(CASE WHEN ghl_conversation_id=? AND fecha_creacion>=DATE_SUB(NOW(),INTERVAL 5 SECOND) THEN 1 ELSE 0 END) conversacion_reciente "
-        ."FROM gohighlevel_envio_manual WHERE fecha_creacion>=DATE_SUB(NOW(),INTERVAL 1 MINUTE)"
+        "SELECT "
+        ."((SELECT COUNT(*) FROM gohighlevel_envio_manual WHERE cod_usuarioFK=? AND fecha_creacion>=DATE_SUB(NOW(),INTERVAL 1 MINUTE))"
+        ."+(SELECT COUNT(*) FROM gohighlevel_envio_plantilla WHERE cod_usuarioFK=? AND fecha_creacion>=DATE_SUB(NOW(),INTERVAL 1 MINUTE))) actor_minuto,"
+        ."((SELECT COUNT(*) FROM gohighlevel_envio_manual WHERE ghl_conversation_id=? AND fecha_creacion>=DATE_SUB(NOW(),INTERVAL 5 SECOND))"
+        ."+(SELECT COUNT(*) FROM gohighlevel_envio_plantilla WHERE ghl_conversation_id=? AND fecha_creacion>=DATE_SUB(NOW(),INTERVAL 5 SECOND))) conversacion_reciente"
     );
     if (!$stmt) {
         goHighLevelLanzar('auditoria_no_disponible', 'No se pudo comprobar la frecuencia de envio.', array(), 500);
     }
-    $stmt->bind_param('is', $actor, $conversationId);
+    $stmt->bind_param('iiss', $actor, $actor, $conversationId, $conversationId);
     $actorMinuto = 0;
     $conversacionReciente = 0;
     if ($stmt->execute()) {
@@ -958,6 +970,492 @@ function goHighLevelEnviarRespuestaManual($mysqli, $config, $contexto, $parametr
     }
 }
 
+function goHighLevelPlantillaIdSeguro($valor)
+{
+    $id = trim((string)$valor);
+    return preg_match('/^[A-Za-z0-9_.-]{8,120}$/', $id) ? $id : '';
+}
+
+function goHighLevelPlantillaCuerpo($item)
+{
+    if (!is_array($item)) {
+        return '';
+    }
+    $detalle = goHighLevelValor($item, array('template', 'templateData', 'content'), array());
+    if (!is_array($detalle)) {
+        $detalle = array();
+    }
+    $cuerpo = goHighLevelValor($detalle, array('body', 'text', 'message'), '');
+    if (trim((string)$cuerpo) === '') {
+        $cuerpo = goHighLevelValor($item, array('body', 'text', 'message'), '');
+    }
+    if (trim((string)$cuerpo) === '') {
+        $componentes = goHighLevelValor($detalle, array('components'), array());
+        if (!is_array($componentes)) {
+            $componentes = goHighLevelValor($item, array('components'), array());
+        }
+        foreach ((array)$componentes as $componente) {
+            if (!is_array($componente)) {
+                continue;
+            }
+            $tipo = strtolower(trim((string)goHighLevelValor($componente, array('type'), '')));
+            if ($tipo === 'body') {
+                $cuerpo = goHighLevelValor($componente, array('text', 'body'), '');
+                break;
+            }
+        }
+    }
+    $cuerpo = html_entity_decode(strip_tags((string)$cuerpo), ENT_QUOTES, 'UTF-8');
+    return goHighLevelTexto($cuerpo, 4000);
+}
+
+function goHighLevelPlantillaValor($item, $claves, $predeterminado = '')
+{
+    $valor = goHighLevelValor($item, $claves, null);
+    if ($valor !== null && !is_array($valor)) {
+        return $valor;
+    }
+    foreach (array('template', 'templateData', 'meta', 'whatsappTemplate') as $contenedor) {
+        if (!isset($item[$contenedor]) || !is_array($item[$contenedor])) {
+            continue;
+        }
+        $valor = goHighLevelValor($item[$contenedor], $claves, null);
+        if ($valor !== null && !is_array($valor)) {
+            return $valor;
+        }
+    }
+    return $predeterminado;
+}
+
+function goHighLevelPlantillaEsSensibleDetectada($nombre, $cuerpo)
+{
+    $texto = mb_strtolower((string)$nombre.' '.(string)$cuerpo, 'UTF-8');
+    foreach (array('informconf', 'judicial', 'juridic', 'area legal', 'área legal', 'demanda', 'mora_90', '90_dias') as $marca) {
+        if (mb_strpos($texto, $marca, 0, 'UTF-8') !== false) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function goHighLevelNormalizarPlantilla($item)
+{
+    $id = goHighLevelPlantillaIdSeguro(goHighLevelPlantillaValor($item, array('id', '_id', 'templateId'), ''));
+    $nombre = goHighLevelTexto(goHighLevelPlantillaValor($item, array('name', 'templateName'), ''), 200);
+    $idioma = goHighLevelTexto(goHighLevelPlantillaValor($item, array('language', 'languageCode', 'locale'), ''), 32);
+    $categoria = goHighLevelTexto(goHighLevelPlantillaValor($item, array('category'), ''), 32);
+    $estado = goHighLevelTexto(goHighLevelPlantillaValor($item, array('status', 'state'), ''), 32);
+    $tipo = goHighLevelTexto(goHighLevelPlantillaValor($item, array('type', 'channel'), 'whatsapp'), 32);
+    $cuerpo = goHighLevelPlantillaCuerpo($item);
+    $estadoNormalizado = mb_strtolower($estado, 'UTF-8');
+    $idiomaNormalizado = mb_strtolower(str_replace('-', '_', $idioma), 'UTF-8');
+    $categoriaNormalizada = mb_strtolower($categoria, 'UTF-8');
+    $tipoNormalizado = mb_strtolower($tipo, 'UTF-8');
+    $estadoActivo = in_array($estadoNormalizado, array('active', 'activo', 'approved', 'aprobado'), true);
+    $idiomaEspanol = $idiomaNormalizado === 'spanish' || $idiomaNormalizado === 'es'
+        || strpos($idiomaNormalizado, 'es_') === 0;
+    $categoriaUtilidad = in_array($categoriaNormalizada, array('utility', 'utilidad'), true);
+    $esWhatsApp = $tipoNormalizado === '' || strpos($tipoNormalizado, 'whatsapp') !== false;
+    $tieneVariables = preg_match('/\{\{[^{}]+\}\}/u', $cuerpo) === 1;
+    $elegible = $id !== '' && $nombre !== '' && $cuerpo !== '' && $estadoActivo
+        && $idiomaEspanol && $categoriaUtilidad && $esWhatsApp;
+    $motivo = '';
+    if (!$estadoActivo) {
+        $motivo = 'La plantilla no esta activa o aprobada.';
+    } elseif (!$idiomaEspanol) {
+        $motivo = 'La plantilla no esta en español.';
+    } elseif (!$categoriaUtilidad) {
+        $motivo = 'Solo se habilitan plantillas de utilidad.';
+    } elseif (!$esWhatsApp) {
+        $motivo = 'La plantilla no corresponde a WhatsApp.';
+    } elseif ($cuerpo === '') {
+        $motivo = 'La plantilla no tiene una vista previa disponible.';
+    } elseif ($tieneVariables) {
+        $motivo = 'Contiene variables que requieren resolucion manual.';
+    }
+    return array(
+        'id' => $id,
+        'nombre' => $nombre !== '' ? $nombre : 'Plantilla sin nombre',
+        'idioma' => $idioma,
+        'categoria' => $categoria,
+        'estado' => $estado,
+        'tipo' => $tipo,
+        'cuerpo' => $cuerpo,
+        'tiene_variables' => $tieneVariables,
+        'elegible' => $elegible && !$tieneVariables,
+        'bloqueada_motivo' => $motivo,
+        'sensible_detectada' => goHighLevelPlantillaEsSensibleDetectada($nombre, $cuerpo)
+    );
+}
+
+function goHighLevelSincronizarPlantillasLocales($mysqli, $plantillas)
+{
+    $stmt = $mysqli->prepare(
+        "INSERT INTO gohighlevel_plantilla_config "
+        ."(ghl_template_id,nombre,idioma,categoria,estado,habilitada,sensible_manual,tiene_variables,"
+        ."cod_usuario_actualizaFK,fecha_ultima_consulta,fecha_creacion,fecha_actualizacion) "
+        ."VALUES (?,?,?,?,?,?,0,?,NULL,NOW(),NOW(),NOW()) ON DUPLICATE KEY UPDATE "
+        ."nombre=VALUES(nombre),idioma=VALUES(idioma),categoria=VALUES(categoria),estado=VALUES(estado),"
+        ."tiene_variables=VALUES(tiene_variables),fecha_ultima_consulta=NOW(),fecha_actualizacion=NOW()"
+    );
+    if (!$stmt) {
+        goHighLevelLanzar('catalogo_local_no_disponible', 'No se pudo preparar el catalogo local de plantillas.', array(), 500);
+    }
+    foreach ((array)$plantillas as $plantilla) {
+        if (!is_array($plantilla) || $plantilla['id'] === '') {
+            continue;
+        }
+        $id = $plantilla['id'];
+        $nombre = $plantilla['nombre'];
+        $idioma = $plantilla['idioma'];
+        $categoria = $plantilla['categoria'];
+        $estado = $plantilla['estado'];
+        $habilitada = !empty($plantilla['elegible']) ? 1 : 0;
+        $variables = !empty($plantilla['tiene_variables']) ? 1 : 0;
+        $stmt->bind_param('sssssii', $id, $nombre, $idioma, $categoria, $estado, $habilitada, $variables);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            goHighLevelLanzar('catalogo_local_no_disponible', 'No se pudo actualizar el catalogo local de plantillas.', array(), 500);
+        }
+    }
+    $stmt->close();
+}
+
+function goHighLevelConfiguracionPlantillasLocales($mysqli)
+{
+    $salida = array();
+    $resultado = $mysqli->query(
+        "SELECT ghl_template_id,habilitada,sensible_manual,tiene_variables "
+        ."FROM gohighlevel_plantilla_config"
+    );
+    while ($resultado && ($fila = $resultado->fetch_assoc())) {
+        $salida[(string)$fila['ghl_template_id']] = array(
+            'habilitada' => intval($fila['habilitada']) === 1,
+            'sensible_manual' => intval($fila['sensible_manual']) === 1,
+            'tiene_variables' => intval($fila['tiene_variables']) === 1
+        );
+    }
+    return $salida;
+}
+
+function goHighLevelListarPlantillasWhatsApp($mysqli, $config, $parametros = array())
+{
+    $plantillas = array();
+    $totalRemoto = 0;
+    $salto = 0;
+    $limite = 100;
+    do {
+        $respuesta = goHighLevelApiGet(
+            $config,
+            '/locations/'.rawurlencode($config['location_id']).'/templates',
+            array(
+                'deleted' => 'false',
+                'skip' => (string)$salto,
+                'limit' => (string)$limite,
+                'type' => 'whatsapp',
+                'originId' => $config['location_id']
+            ),
+            'v3'
+        );
+        $items = goHighLevelItems($respuesta, array('templates'));
+        $totalRemoto = max($totalRemoto, intval(goHighLevelValor($respuesta, array('totalCount', 'total'), count($items))));
+        foreach ($items as $item) {
+            if (is_array($item)) {
+                $normalizada = goHighLevelNormalizarPlantilla($item);
+                if ($normalizada['id'] !== '') {
+                    $plantillas[$normalizada['id']] = $normalizada;
+                }
+            }
+        }
+        $salto += count($items);
+        if (count($items) < $limite || $salto >= $totalRemoto || $salto >= 500) {
+            break;
+        }
+    } while (true);
+    $plantillas = array_values($plantillas);
+    goHighLevelSincronizarPlantillasLocales($mysqli, $plantillas);
+    $locales = goHighLevelConfiguracionPlantillasLocales($mysqli);
+    $soloHabilitadas = intval(goHighLevelValor($parametros, array('solo_habilitadas'), 0)) === 1;
+    $salida = array();
+    $habilitadas = 0;
+    $sensibles = 0;
+    $bloqueadas = 0;
+    foreach ($plantillas as $plantilla) {
+        $local = isset($locales[$plantilla['id']]) ? $locales[$plantilla['id']] : array();
+        $plantilla['habilitada'] = !empty($local['habilitada']) && !empty($plantilla['elegible']);
+        $plantilla['sensible_manual'] = !empty($local['sensible_manual']);
+        $plantilla['sensible'] = !empty($plantilla['sensible_detectada']) || $plantilla['sensible_manual'];
+        if ($plantilla['habilitada']) {
+            $habilitadas++;
+        }
+        if ($plantilla['sensible']) {
+            $sensibles++;
+        }
+        if (empty($plantilla['elegible'])) {
+            $bloqueadas++;
+        }
+        if (!$soloHabilitadas || $plantilla['habilitada']) {
+            $salida[] = $plantilla;
+        }
+    }
+    usort($salida, function ($a, $b) {
+        if (!empty($a['sensible']) !== !empty($b['sensible'])) {
+            return !empty($a['sensible']) ? 1 : -1;
+        }
+        return strcasecmp((string)$a['nombre'], (string)$b['nombre']);
+    });
+    return array(
+        'items' => $salida,
+        'total_remoto' => $totalRemoto,
+        'total_catalogado' => count($plantillas),
+        'habilitadas' => $habilitadas,
+        'sensibles' => $sensibles,
+        'bloqueadas' => $bloqueadas,
+        'criterio_inicial' => 'Activas, en español, de utilidad y sin variables manuales.',
+        'administracion_externa' => 'https://crm.fivox.app/v2/location/'.$config['location_id'].'/settings/whatsapp?tab=templates'
+    );
+}
+
+function goHighLevelGuardarConfiguracionPlantillas($mysqli, $config, $contexto, $entrada)
+{
+    if (empty($contexto['puede_configurar'])) {
+        goHighLevelLanzar('accion_no_autorizada', 'No tiene permiso para administrar plantillas.', array(), 403);
+    }
+    $lista = json_decode((string)$entrada, true);
+    if (!is_array($lista) || count($lista) > 500) {
+        goHighLevelLanzar('plantillas_invalidas', 'La configuracion de plantillas no es valida.', array(), 400);
+    }
+    $catalogo = goHighLevelListarPlantillasWhatsApp($mysqli, $config, array());
+    $remotas = array();
+    foreach ($catalogo['items'] as $plantilla) {
+        $remotas[$plantilla['id']] = $plantilla;
+    }
+    $stmt = $mysqli->prepare(
+        "UPDATE gohighlevel_plantilla_config SET habilitada=?,sensible_manual=?,"
+        ."cod_usuario_actualizaFK=?,fecha_actualizacion=NOW() WHERE ghl_template_id=? LIMIT 1"
+    );
+    if (!$stmt) {
+        goHighLevelLanzar('catalogo_local_no_disponible', 'No se pudo preparar la configuracion de plantillas.', array(), 500);
+    }
+    $actor = intval($contexto['cod_usuario']);
+    $guardadas = 0;
+    $mysqli->begin_transaction();
+    try {
+        foreach ($lista as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $id = goHighLevelPlantillaIdSeguro(goHighLevelValor($item, array('id'), ''));
+            if ($id === '' || !isset($remotas[$id])) {
+                continue;
+            }
+            $habilitada = intval(goHighLevelValor($item, array('habilitada'), 0)) === 1
+                && !empty($remotas[$id]['elegible']) ? 1 : 0;
+            $sensibleManual = intval(goHighLevelValor($item, array('sensible_manual'), 0)) === 1 ? 1 : 0;
+            $stmt->bind_param('iiis', $habilitada, $sensibleManual, $actor, $id);
+            if (!$stmt->execute()) {
+                throw new Exception('No se pudo guardar una plantilla.');
+            }
+            $guardadas++;
+        }
+        $stmt->close();
+        goHighLevelRegistrarEvento(
+            $mysqli,
+            $contexto,
+            'plantillas_configuradas',
+            'plantilla_whatsapp',
+            '',
+            'Plantillas revisadas: '.$guardadas.'; cuerpos no almacenados'
+        );
+        $mysqli->commit();
+    } catch (Exception $e) {
+        $mysqli->rollback();
+        goHighLevelLanzar('plantillas_no_guardadas', 'No se pudo guardar la configuracion de plantillas.', array(), 500);
+    }
+    return array('guardadas' => $guardadas);
+}
+
+function goHighLevelRegistrarIntentoPlantilla($mysqli, $contexto, $token, $conversationId, $contactId, $plantilla)
+{
+    $stmt = $mysqli->prepare(
+        "INSERT INTO gohighlevel_envio_plantilla "
+        ."(token_cliente,cod_usuarioFK,ghl_conversation_id,ghl_contact_id,ghl_template_id,nombre_plantilla,"
+        ."idioma,categoria,sensible,estado,fecha_creacion,fecha_actualizacion) "
+        ."VALUES (?,?,?,?,?,?,?,?,?,'procesando',NOW(),NOW())"
+    );
+    if (!$stmt) {
+        goHighLevelLanzar('auditoria_no_disponible', 'No se pudo preparar la auditoria de la plantilla.', array(), 500);
+    }
+    $actor = intval($contexto['cod_usuario']);
+    $sensible = !empty($plantilla['sensible']) ? 1 : 0;
+    $id = $plantilla['id'];
+    $nombre = $plantilla['nombre'];
+    $idioma = $plantilla['idioma'];
+    $categoria = $plantilla['categoria'];
+    $stmt->bind_param('sissssssi', $token, $actor, $conversationId, $contactId, $id, $nombre, $idioma, $categoria, $sensible);
+    $ok = $stmt->execute();
+    $errno = intval($stmt->errno);
+    $stmt->close();
+    if ($ok) {
+        return null;
+    }
+    if ($errno !== 1062) {
+        goHighLevelLanzar('auditoria_no_disponible', 'No se pudo registrar el intento de plantilla.', array(), 500);
+    }
+    $consulta = $mysqli->prepare(
+        "SELECT estado,ghl_message_id FROM gohighlevel_envio_plantilla "
+        ."WHERE token_cliente=? AND cod_usuarioFK=? LIMIT 1"
+    );
+    if (!$consulta) {
+        goHighLevelLanzar('envio_duplicado', 'Este envio ya fue procesado.', array(), 409);
+    }
+    $consulta->bind_param('si', $token, $actor);
+    $estado = '';
+    $messageId = '';
+    if ($consulta->execute()) {
+        $consulta->bind_result($estado, $messageId);
+        $consulta->fetch();
+    }
+    $consulta->close();
+    if ($estado === 'enviado') {
+        return array('message_id' => (string)$messageId, 'duplicado' => true);
+    }
+    goHighLevelLanzar('envio_duplicado', 'Este envio ya esta siendo procesado o fallo anteriormente.', array(), 409);
+}
+
+function goHighLevelActualizarIntentoPlantilla($mysqli, $token, $estado, $messageId, $codigo)
+{
+    $stmt = $mysqli->prepare(
+        "UPDATE gohighlevel_envio_plantilla SET estado=?,ghl_message_id=?,codigo_resultado=?,"
+        ."fecha_actualizacion=NOW() WHERE token_cliente=? LIMIT 1"
+    );
+    if (!$stmt) {
+        return false;
+    }
+    $estado = goHighLevelTexto($estado, 16);
+    $messageId = goHighLevelTexto($messageId, 80);
+    $codigo = goHighLevelTexto($codigo, 48);
+    $stmt->bind_param('ssss', $estado, $messageId, $codigo, $token);
+    $ok = $stmt->execute();
+    $stmt->close();
+    return $ok;
+}
+
+function goHighLevelEnviarPlantillaWhatsApp($mysqli, $config, $contexto, $parametros)
+{
+    if (empty($contexto['puede_enviar_plantilla'])) {
+        goHighLevelLanzar('accion_no_autorizada', 'No tiene permiso para enviar plantillas.', array(), 403);
+    }
+    if (empty($config['write_enabled'])) {
+        goHighLevelLanzar('envio_no_habilitado', 'El envio de WhatsApp todavia no fue habilitado por el administrador.', array(), 503);
+    }
+    if (intval(goHighLevelValor($parametros, array('confirmar_reglas'), 0)) !== 1) {
+        goHighLevelLanzar('confirmacion_requerida', 'Debe confirmar las reglas antes de enviar.', array(), 400);
+    }
+    $conversationId = goHighLevelIdSeguro(goHighLevelValor($parametros, array('conversation_id'), ''));
+    $templateId = goHighLevelPlantillaIdSeguro(goHighLevelValor($parametros, array('template_id'), ''));
+    $token = goHighLevelTexto(goHighLevelValor($parametros, array('token_envio'), ''), 64);
+    if ($conversationId === '' || $templateId === '' || !preg_match('/^[A-Za-z0-9_-]{16,64}$/', $token)) {
+        goHighLevelLanzar('envio_invalido', 'La solicitud de plantilla no es valida.', array(), 400);
+    }
+    $conversacion = goHighLevelObtenerConversacion($config, $conversationId);
+    $historial = goHighLevelListarMensajesConversacion($config, array(
+        'conversation_id' => $conversationId,
+        'limite' => 100
+    ));
+    $ventana = isset($historial['ventana_whatsapp']) && is_array($historial['ventana_whatsapp'])
+        ? $historial['ventana_whatsapp'] : array('abierta' => false);
+    if (!empty($ventana['abierta'])) {
+        goHighLevelLanzar(
+            'ventana_whatsapp_abierta',
+            'La ventana esta abierta. Responda con texto libre para mantener el flujo normal.',
+            array(),
+            409
+        );
+    }
+    $catalogo = goHighLevelListarPlantillasWhatsApp($mysqli, $config, array());
+    $plantilla = null;
+    foreach ($catalogo['items'] as $item) {
+        if ((string)$item['id'] === $templateId) {
+            $plantilla = $item;
+            break;
+        }
+    }
+    if (!$plantilla || empty($plantilla['elegible']) || empty($plantilla['habilitada']) || !empty($plantilla['tiene_variables'])) {
+        goHighLevelLanzar(
+            'plantilla_no_disponible',
+            'La plantilla ya no esta aprobada, habilitada o requiere variables manuales.',
+            array(),
+            409
+        );
+    }
+    if (!empty($plantilla['sensible'])
+        && intval(goHighLevelValor($parametros, array('confirmar_sensible'), 0)) !== 1) {
+        goHighLevelLanzar(
+            'confirmacion_sensible_requerida',
+            'Debe confirmar expresamente el envio del aviso sensible.',
+            array(),
+            400
+        );
+    }
+    goHighLevelControlFrecuenciaEnvio($mysqli, $contexto, $conversationId);
+    $duplicado = goHighLevelRegistrarIntentoPlantilla(
+        $mysqli,
+        $contexto,
+        $token,
+        $conversationId,
+        $conversacion['contact_id'],
+        $plantilla
+    );
+    if (is_array($duplicado)) {
+        return array(
+            'enviado' => true,
+            'duplicado' => true,
+            'conversation_id' => $conversationId,
+            'message_id' => (string)$duplicado['message_id'],
+            'plantilla' => array('id' => $plantilla['id'], 'nombre' => $plantilla['nombre'], 'sensible' => $plantilla['sensible']),
+            'ventana_whatsapp' => $ventana
+        );
+    }
+    try {
+        $respuesta = goHighLevelApiPostMensaje($config, array(
+            'type' => 'WhatsApp',
+            'contactId' => $conversacion['contact_id'],
+            'templateId' => $plantilla['id'],
+            'status' => 'pending'
+        ));
+        $messageId = goHighLevelIdSeguro(goHighLevelValor($respuesta, array('messageId'), ''));
+        goHighLevelActualizarIntentoPlantilla($mysqli, $token, 'enviado', $messageId, 'aceptado');
+        goHighLevelRegistrarEvento(
+            $mysqli,
+            $contexto,
+            'plantilla_whatsapp_enviada',
+            'conversacion',
+            $conversationId,
+            'Plantilla: '.$plantilla['nombre'].'; categoria: '.$plantilla['categoria'].'; cuerpo no almacenado'
+        );
+        return array(
+            'enviado' => true,
+            'duplicado' => false,
+            'conversation_id' => goHighLevelIdSeguro(goHighLevelValor($respuesta, array('conversationId'), $conversationId)),
+            'message_id' => $messageId,
+            'plantilla' => array('id' => $plantilla['id'], 'nombre' => $plantilla['nombre'], 'sensible' => $plantilla['sensible']),
+            'ventana_whatsapp' => $ventana
+        );
+    } catch (GoHighLevelExcepcion $e) {
+        goHighLevelActualizarIntentoPlantilla($mysqli, $token, 'fallido', '', $e->codigoOperacion);
+        goHighLevelRegistrarEvento(
+            $mysqli,
+            $contexto,
+            'plantilla_whatsapp_fallida',
+            'conversacion',
+            $conversationId,
+            'Plantilla: '.$plantilla['nombre'].'; codigo: '.$e->codigoOperacion.'; cuerpo no almacenado'
+        );
+        throw $e;
+    }
+}
+
 function goHighLevelListarCalendarios($config)
 {
     $respuesta = goHighLevelApiGet($config, '/calendars/', array('locationId' => $config['location_id']));
@@ -1032,6 +1530,7 @@ function goHighLevelUsuariosPermisos($mysqli, $contexto)
     $sql = "SELECT u.cod_usuario,IFNULL(p.nombre_persona,u.login) nombre,IFNULL(u.url,'') avatar,"
         ."IFNULL(l.Nombre,'') local,IFNULL(g.puede_ver,0) puede_ver,"
         ."IFNULL(g.puede_responder,0) puede_responder,"
+        ."IFNULL(g.puede_enviar_plantilla,0) puede_enviar_plantilla,"
         ."IFNULL(g.puede_configurar,0) puede_configurar "
         ."FROM usuario u LEFT JOIN persona p ON p.cod_persona=u.cod_usuario "
         ."LEFT JOIN local l ON l.cod_local=u.cod_localFK "
@@ -1051,6 +1550,7 @@ function goHighLevelUsuariosPermisos($mysqli, $contexto)
             'local' => (string)$fila['local'],
             'puede_ver' => $id === 5994 || intval($fila['puede_ver']) === 1,
             'puede_responder' => $id === 5994 || intval($fila['puede_responder']) === 1,
+            'puede_enviar_plantilla' => $id === 5994 || intval($fila['puede_enviar_plantilla']) === 1,
             'puede_configurar' => $id === 5994 || intval($fila['puede_configurar']) === 1,
             'bloqueado' => $id === 5994
         );
@@ -1088,7 +1588,7 @@ function goHighLevelGuardarPermisos($mysqli, $contexto, $entrada)
     if (!is_array($lista) || count($lista) > 250) {
         goHighLevelLanzar('permisos_invalidos', 'La configuracion de permisos no es valida.');
     }
-    $permisos = array(5994 => array('ver' => 1, 'responder' => 1, 'configurar' => 1));
+    $permisos = array(5994 => array('ver' => 1, 'responder' => 1, 'plantilla' => 1, 'configurar' => 1));
     foreach ($lista as $item) {
         if (!is_array($item)) {
             continue;
@@ -1099,28 +1599,31 @@ function goHighLevelGuardarPermisos($mysqli, $contexto, $entrada)
         }
         $configurar = intval(goHighLevelValor($item, array('puede_configurar'), 0)) === 1 ? 1 : 0;
         $responder = intval(goHighLevelValor($item, array('puede_responder'), 0)) === 1 ? 1 : 0;
-        $ver = ($configurar || $responder || intval(goHighLevelValor($item, array('puede_ver'), 0)) === 1) ? 1 : 0;
+        $plantilla = intval(goHighLevelValor($item, array('puede_enviar_plantilla'), 0)) === 1 ? 1 : 0;
+        $ver = ($configurar || $responder || $plantilla || intval(goHighLevelValor($item, array('puede_ver'), 0)) === 1) ? 1 : 0;
         if ($id === 5994) {
             $ver = 1;
             $responder = 1;
+            $plantilla = 1;
             $configurar = 1;
         }
-        $permisos[$id] = array('ver' => $ver, 'responder' => $responder, 'configurar' => $configurar);
+        $permisos[$id] = array('ver' => $ver, 'responder' => $responder, 'plantilla' => $plantilla, 'configurar' => $configurar);
     }
     $actor = intval($contexto['cod_usuario']);
     $mysqli->begin_transaction();
     try {
         if (!$mysqli->query(
-            "UPDATE gohighlevel_permiso_usuario SET puede_ver=0,puede_responder=0,puede_configurar=0,activo=0,"
+            "UPDATE gohighlevel_permiso_usuario SET puede_ver=0,puede_responder=0,puede_enviar_plantilla=0,puede_configurar=0,activo=0,"
             ."cod_usuario_actualizaFK=".$actor.",fecha_actualizacion=NOW()"
         )) {
             throw new Exception('No se pudieron preparar los permisos.');
         }
         $stmt = $mysqli->prepare(
             "INSERT INTO gohighlevel_permiso_usuario "
-            ."(cod_usuarioFK,puede_ver,puede_responder,puede_configurar,activo,cod_usuario_actualizaFK,fecha_creacion,fecha_actualizacion) "
-            ."VALUES (?,?,?,?,?,?,NOW(),NOW()) ON DUPLICATE KEY UPDATE "
+            ."(cod_usuarioFK,puede_ver,puede_responder,puede_enviar_plantilla,puede_configurar,activo,cod_usuario_actualizaFK,fecha_creacion,fecha_actualizacion) "
+            ."VALUES (?,?,?,?,?,?,?,NOW(),NOW()) ON DUPLICATE KEY UPDATE "
             ."puede_ver=VALUES(puede_ver),puede_responder=VALUES(puede_responder),"
+            ."puede_enviar_plantilla=VALUES(puede_enviar_plantilla),"
             ."puede_configurar=VALUES(puede_configurar),activo=VALUES(activo),"
             ."cod_usuario_actualizaFK=VALUES(cod_usuario_actualizaFK),fecha_actualizacion=NOW()"
         );
@@ -1132,8 +1635,9 @@ function goHighLevelGuardarPermisos($mysqli, $contexto, $entrada)
             $idUsuario = intval($id);
             $puedeVer = intval($permiso['ver']);
             $puedeResponder = intval($permiso['responder']);
+            $puedePlantilla = intval($permiso['plantilla']);
             $puedeConfigurar = intval($permiso['configurar']);
-            $stmt->bind_param('iiiiii', $idUsuario, $puedeVer, $puedeResponder, $puedeConfigurar, $activo, $actor);
+            $stmt->bind_param('iiiiiii', $idUsuario, $puedeVer, $puedeResponder, $puedePlantilla, $puedeConfigurar, $activo, $actor);
             if (!$stmt->execute()) {
                 throw new Exception('No se pudo guardar un permiso.');
             }

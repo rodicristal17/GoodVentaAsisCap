@@ -64,7 +64,7 @@ try {
                 'usuario' => $contexto,
                 'integracion' => array(
                     'configurado' => goHighLevelConfigurado($config),
-                    'modo' => !empty($config['write_enabled']) ? 'respuestas_manuales' : 'solo_lectura',
+                    'modo' => !empty($config['write_enabled']) ? 'respuestas_y_plantillas' : 'solo_lectura',
                     'respuestas_habilitadas' => !empty($config['write_enabled']),
                     'location_id' => (string)$config['location_id']
                 )
@@ -77,6 +77,7 @@ try {
         case 'mensajes_conversacion':
             $historial = goHighLevelListarMensajesConversacion($config, $_POST);
             $historial['puede_responder'] = !empty($contexto['puede_responder']);
+            $historial['puede_enviar_plantilla'] = !empty($contexto['puede_enviar_plantilla']);
             $historial['envio_habilitado'] = !empty($config['write_enabled']);
             goHighLevelResponder(true, 'mensajes_obtenidos', 'Historial actualizado.', $historial, 200);
             break;
@@ -86,6 +87,24 @@ try {
                 'respuesta_enviada',
                 'La respuesta fue aceptada por GoHighLevel.',
                 goHighLevelEnviarRespuestaManual($mysqli, $config, $contexto, $_POST),
+                200
+            );
+            break;
+        case 'plantillas_whatsapp':
+            goHighLevelResponder(
+                true,
+                'plantillas_obtenidas',
+                'Catalogo de plantillas actualizado.',
+                goHighLevelListarPlantillasWhatsApp($mysqli, $config, $_POST),
+                200
+            );
+            break;
+        case 'enviar_plantilla_whatsapp':
+            goHighLevelResponder(
+                true,
+                'plantilla_enviada',
+                'La plantilla fue aceptada por GoHighLevel.',
+                goHighLevelEnviarPlantillaWhatsApp($mysqli, $config, $contexto, $_POST),
                 200
             );
             break;
@@ -120,6 +139,20 @@ try {
                     $contexto,
                     goHighLevelParametro('permisos', '[]')
                 ), 200);
+            break;
+        case 'guardar_plantillas':
+            goHighLevelResponder(
+                true,
+                'plantillas_guardadas',
+                'Configuracion local de plantillas guardada.',
+                goHighLevelGuardarConfiguracionPlantillas(
+                    $mysqli,
+                    $config,
+                    $contexto,
+                    goHighLevelParametro('plantillas', '[]')
+                ),
+                200
+            );
             break;
         default:
             goHighLevelLanzar('accion_no_reconocida', 'La accion solicitada no existe.', array(), 400);

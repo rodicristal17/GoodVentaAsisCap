@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Fixture GoHighLevel fases 1 y 2A</title>
+  <title>Fixture GoHighLevel fases 1, 2A y 2B</title>
   <link rel="stylesheet" href="/css_system/gohighlevel.css">
 </head>
 <body>
@@ -16,7 +16,7 @@
     window.obtener_datos_user = function () {};
     (function () {
       var responses = {
-        contexto: { usuario: { puede_configurar: true, puede_responder: true }, integracion: { configurado: true, modo: "respuestas_manuales", respuestas_habilitadas: true } },
+        contexto: { usuario: { puede_configurar: true, puede_responder: true, puede_enviar_plantilla: true }, integracion: { configurado: true, modo: "respuestas_y_plantillas", respuestas_habilitadas: true } },
         conversaciones: { total: 83, paginacion: { hay_mas: true, cursor_fecha: "1787463300000", cursor_id: "" }, items: [
           { id: "1", nombre: "Ana Demo", telefono: "+595900000001", canal: "TYPE_WHATSAPP", ultimo_mensaje: "Quisiera confirmar el horario de mi consulta.", fecha: "2026-08-23T09:42:00Z", no_leidos: 2, responsable: "Recepción", vinculo: { estado: "vinculado", paciente: { nombre: "Ana Demo" } } },
           { id: "2", nombre: "Bruno Ejemplo", telefono: "+595900000002", canal: "TYPE_WHATSAPP", ultimo_mensaje: "Gracias, quedo atento.", fecha: "2026-08-23T09:25:00Z", no_leidos: 0, vinculo: { estado: "ambiguo", coincidencias: 2 } },
@@ -32,13 +32,20 @@
         ], pipelines: [{ id: "p1", nombre: "Ventas", etapas: [{ id: "e1", nombre: "Nuevo" }] }] },
         calendarios: { total: 1, items: [{ id: "c1", nombre: "Primera consulta", descripcion: "Agenda de evaluación", activo: true }] },
         sincronizacion: { configurado: true, vinculos: { vinculados: 11, ambiguos: 2, sin_coincidencia: 5 }, protecciones: ["No crea contactos.", "No mueve oportunidades.", "Solo vincula coincidencias únicas."] },
-        mensajes_conversacion: { conversation_id: "1", puede_responder: true, envio_habilitado: true, ventana_whatsapp: { abierta: true, segundos_restantes: 19800, requiere_plantilla: false }, paginacion: { hay_mas: true, last_message_id: "mensaje-demo-1" }, items: [
+        mensajes_conversacion: { conversation_id: "1", puede_responder: true, puede_enviar_plantilla: true, envio_habilitado: true, ventana_whatsapp: { abierta: false, segundos_restantes: 0, requiere_plantilla: true }, paginacion: { hay_mas: true, last_message_id: "mensaje-demo-1" }, items: [
           { id: "mensaje-demo-1", cuerpo: "Hola, quisiera confirmar mi consulta.", direccion: "inbound", tipo: "TYPE_WHATSAPP", estado: "read", fecha: "2026-08-23T09:35:00Z", adjuntos: 0 },
           { id: "mensaje-demo-2", cuerpo: "Claro, su horario está confirmado.", direccion: "outbound", tipo: "TYPE_WHATSAPP", estado: "delivered", fecha: "2026-08-23T09:42:00Z", adjuntos: 0 }
         ] },
-        configuracion_permisos: { usuarios: [{ cod_usuario: 5994, nombre: "Administrador Demo", local: "Central", puede_ver: true, puede_responder: true, puede_configurar: true, bloqueado: true }] },
+        configuracion_permisos: { usuarios: [{ cod_usuario: 5994, nombre: "Administrador Demo", local: "Central", puede_ver: true, puede_responder: true, puede_enviar_plantilla: true, puede_configurar: true, bloqueado: true }] },
         guardar_permisos: { usuarios: [] },
-        enviar_respuesta_manual: { enviado: true, duplicado: false, conversation_id: "1", message_id: "mensaje-demo-enviado", ventana_whatsapp: { abierta: true, segundos_restantes: 19790 } }
+        plantillas_whatsapp: { total_remoto: 3, total_catalogado: 3, habilitadas: 2, sensibles: 1, bloqueadas: 1, criterio_inicial: "Activas, en español, de utilidad y sin variables manuales.", administracion_externa: "https://example.test/settings/whatsapp?tab=templates", items: [
+          { id: "plantilla-demo-confirmacion", nombre: "confirmacion_cita_demo", idioma: "Spanish", categoria: "Utility", estado: "Activo", cuerpo: "Queremos confirmar si desea reagendar su cita. Responda a este mensaje y le ayudamos.", elegible: true, habilitada: true, sensible: false, sensible_detectada: false, sensible_manual: false, tiene_variables: false },
+          { id: "plantilla-demo-sensible", nombre: "aviso_cobranza_sensible_demo", idioma: "Spanish", categoria: "Utility", estado: "Activo", cuerpo: "Le pedimos comunicarse con administración para revisar un compromiso pendiente.", elegible: true, habilitada: true, sensible: true, sensible_detectada: true, sensible_manual: false, tiene_variables: false },
+          { id: "plantilla-demo-variable", nombre: "seguimiento_con_variable_demo", idioma: "Spanish", categoria: "Utility", estado: "Activo", cuerpo: "Hola {{1}}, confirme su cita.", elegible: false, habilitada: false, sensible: false, sensible_detectada: false, sensible_manual: false, tiene_variables: true, bloqueada_motivo: "Contiene variables que requieren resolución manual." }
+        ] },
+        guardar_plantillas: { guardadas: 3 },
+        enviar_respuesta_manual: { enviado: true, duplicado: false, conversation_id: "1", message_id: "mensaje-demo-enviado", ventana_whatsapp: { abierta: true, segundos_restantes: 19790 } },
+        enviar_plantilla_whatsapp: { enviado: true, duplicado: false, conversation_id: "1", message_id: "mensaje-demo-plantilla", plantilla: { id: "plantilla-demo-confirmacion", nombre: "confirmacion_cita_demo", sensible: false }, ventana_whatsapp: { abierta: false, segundos_restantes: 0, requiere_plantilla: true } }
       };
       function MockXHR() { this.readyState = 0; this.status = 0; this.responseText = ""; this.onreadystatechange = null; }
       MockXHR.prototype.open = function () {};
