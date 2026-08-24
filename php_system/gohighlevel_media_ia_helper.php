@@ -604,7 +604,24 @@ function goHighLevelRegistrarOperacionIa($mysqli, $contexto, $token, $tipo, $con
     $stmt->close();
 }
 
-function goHighLevelDeepSeekSolicitar($deepseek, $modelo, $sistema, $usuario)
+function goHighLevelDecodificarRespuestaIa($contenido)
+{
+    $contenido = trim((string)$contenido);
+    $contenido = preg_replace('/^```(?:json)?\s*|\s*```$/iu', '', $contenido);
+    $resultado = json_decode($contenido, true);
+    if (is_array($resultado)) {
+        return $resultado;
+    }
+    $inicio = strpos($contenido, '{');
+    $fin = strrpos($contenido, '}');
+    if ($inicio === false || $fin === false || $fin <= $inicio) {
+        return array();
+    }
+    $resultado = json_decode(substr($contenido, $inicio, ($fin - $inicio) + 1), true);
+    return is_array($resultado) ? $resultado : array();
+}
+
+function goHighLevelDeepSeekSolicitar($deepseek, $modelo, $sistema, $usuario, $intento = 0)
 {
     if ($deepseek['clave'] === '' || !function_exists('curl_init')) {
         goHighLevelLanzar('deepseek_no_configurado', 'DeepSeek todavia no esta configurado en el servidor.', array(), 503);
@@ -654,9 +671,20 @@ function goHighLevelDeepSeekSolicitar($deepseek, $modelo, $sistema, $usuario)
     $datos = json_decode($cuerpo, true);
     $contenido = is_array($datos) && isset($datos['choices'][0]['message']['content'])
         ? trim((string)$datos['choices'][0]['message']['content']) : '';
-    $contenido = preg_replace('/^```(?:json)?\s*|\s*```$/iu', '', $contenido);
-    $resultado = json_decode($contenido, true);
+    $resultado = goHighLevelDecodificarRespuestaIa($contenido);
     if (!is_array($resultado)) {
+        $resultado = array();
+    }
+    if (count($resultado) === 0 && intval($intento) < 1) {
+        return goHighLevelDeepSeekSolicitar(
+            $deepseek,
+            $modelo,
+            $sistema."\nDevolve exclusivamente un objeto JSON valido, sin bloques Markdown ni texto adicional.",
+            $usuario,
+            intval($intento) + 1
+        );
+    }
+    if (count($resultado) === 0) {
         goHighLevelLanzar('deepseek_respuesta_invalida', 'La IA no devolvio una sugerencia valida.', array(), 502);
     }
     return $resultado;

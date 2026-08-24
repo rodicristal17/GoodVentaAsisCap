@@ -76,6 +76,19 @@ pilotoIaVerificar(
     'La consulta sensible actual debe seguir derivandose a una persona.'
 );
 
+$respuestaEnvuelta = "Respuesta administrativa:\n```json\n"
+    .'{"respuesta":"Tenemos cuatro sedes.","intencion":"ubicacion","confianza":0.95}'
+    ."\n```";
+$respuestaDecodificada = goHighLevelDecodificarRespuestaIa($respuestaEnvuelta);
+pilotoIaVerificar(
+    isset($respuestaDecodificada['intencion']) && $respuestaDecodificada['intencion'] === 'ubicacion',
+    'El analizador debe recuperar un JSON valido aunque DeepSeek agregue texto exterior.'
+);
+pilotoIaVerificar(
+    count(goHighLevelDecodificarRespuestaIa('respuesta sin estructura')) === 0,
+    'El analizador no debe convertir texto libre en una respuesta automatica.'
+);
+
 @unlink($archivo);
 if (count($errores) > 0) {
     fwrite(STDERR, "Piloto IA: ".count($errores)." error(es).\n");
