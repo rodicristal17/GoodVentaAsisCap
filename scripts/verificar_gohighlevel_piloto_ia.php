@@ -18,7 +18,7 @@ if ($archivo === false) {
     fwrite(STDERR, "Piloto IA: no se pudo preparar el archivo temporal.\n");
     exit(1);
 }
-file_put_contents($archivo, "ContactoPiloto123\nContactoPiloto456\nvalor invalido\n");
+file_put_contents($archivo, "ContactoPiloto123\nContactoPiloto456\nvalor-invalido!\n");
 putenv('TELAR_DEEPSEEK_AUTO_SCOPE=pilot');
 putenv('TELAR_DEEPSEEK_AUTO_REPLY_DELAY_SECONDS=120');
 putenv('TELAR_DEEPSEEK_PILOT_CONTACT_IDS_FILE='.$archivo);
