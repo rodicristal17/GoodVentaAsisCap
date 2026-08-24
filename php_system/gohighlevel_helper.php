@@ -2,8 +2,8 @@
 
 /**
  * Integracion entre Sistema Telar y GoHighLevel.
- * La consulta es general y las unicas escrituras permitidas son respuestas manuales
- * dentro de 24 horas y plantillas aprobadas fuera de esa ventana, siempre auditadas.
+ * La consulta es general. Las escrituras permitidas son respuestas manuales,
+ * plantillas aprobadas y tareas de contactos; todas quedan limitadas y auditadas.
  * Compatible con PHP 7.2. Los tokens se leen desde un archivo privado.
  */
 
@@ -81,7 +81,11 @@ function goHighLevelEstructuraDisponible($mysqli)
         && goHighLevelTablaExiste($mysqli, 'gohighlevel_evento')
         && goHighLevelTablaExiste($mysqli, 'gohighlevel_envio_manual')
         && goHighLevelTablaExiste($mysqli, 'gohighlevel_plantilla_config')
-        && goHighLevelTablaExiste($mysqli, 'gohighlevel_envio_plantilla');
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_envio_plantilla')
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_usuario_vinculo')
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_tarea_cache')
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_tarea_sync')
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_tarea_operacion');
 }
 
 function goHighLevelContextoUsuario($mysqli, $codUsuario)
@@ -91,9 +95,13 @@ function goHighLevelContextoUsuario($mysqli, $codUsuario)
         "SELECT u.cod_usuario,IFNULL(p.nombre_persona,u.login) nombre,IFNULL(u.url,'') avatar,"
         ."IFNULL(g.puede_ver,0) puede_ver,IFNULL(g.puede_responder,0) puede_responder,"
         ."IFNULL(g.puede_enviar_plantilla,0) puede_enviar_plantilla,"
-        ."IFNULL(g.puede_configurar,0) puede_configurar "
+        ."IFNULL(g.puede_ver_tareas,0) puede_ver_tareas,"
+        ."IFNULL(g.puede_ver_equipo,0) puede_ver_equipo,"
+        ."IFNULL(g.puede_gestionar_tareas,0) puede_gestionar_tareas,"
+        ."IFNULL(g.puede_configurar,0) puede_configurar,IFNULL(uv.ghl_user_id,'') ghl_user_id "
         ."FROM usuario u LEFT JOIN persona p ON p.cod_persona=u.cod_usuario "
         ."LEFT JOIN gohighlevel_permiso_usuario g ON g.cod_usuarioFK=u.cod_usuario AND g.activo=1 "
+        ."LEFT JOIN gohighlevel_usuario_vinculo uv ON uv.cod_usuarioFK=u.cod_usuario AND uv.estado='vinculado' "
         ."WHERE u.cod_usuario=? AND UPPER(TRIM(u.estado))='ACTIVO' LIMIT 1"
     );
     if (!$stmt) {
@@ -113,6 +121,9 @@ function goHighLevelContextoUsuario($mysqli, $codUsuario)
     $puedeVer = $esPropietario || intval($fila['puede_ver']) === 1;
     $puedeResponder = $esPropietario || intval($fila['puede_responder']) === 1;
     $puedeEnviarPlantilla = $esPropietario || intval($fila['puede_enviar_plantilla']) === 1;
+    $puedeVerTareas = $esPropietario || intval($fila['puede_ver_tareas']) === 1;
+    $puedeVerEquipo = $esPropietario || intval($fila['puede_ver_equipo']) === 1;
+    $puedeGestionarTareas = $esPropietario || intval($fila['puede_gestionar_tareas']) === 1;
     $puedeConfigurar = $esPropietario || intval($fila['puede_configurar']) === 1;
     if (!$puedeVer) {
         goHighLevelLanzar('accion_no_autorizada', 'No tiene acceso al modulo GoHighLevel.', array(), 403);
@@ -124,7 +135,11 @@ function goHighLevelContextoUsuario($mysqli, $codUsuario)
         'puede_ver' => $puedeVer,
         'puede_responder' => $puedeResponder,
         'puede_enviar_plantilla' => $puedeEnviarPlantilla,
+        'puede_ver_tareas' => $puedeVerTareas,
+        'puede_ver_equipo' => $puedeVerEquipo,
+        'puede_gestionar_tareas' => $puedeGestionarTareas,
         'puede_configurar' => $puedeConfigurar,
+        'ghl_user_id' => (string)$fila['ghl_user_id'],
         'es_propietario' => $esPropietario
     );
 }
@@ -142,6 +157,7 @@ function goHighLevelConfiguracion()
         $base = 'https://services.leadconnectorhq.com';
     }
     $locationId = trim((string)getenv('TELAR_GOHIGHLEVEL_LOCATION_ID'));
+    $companyId = trim((string)getenv('TELAR_GOHIGHLEVEL_COMPANY_ID'));
     $tokenFile = trim((string)getenv('TELAR_GOHIGHLEVEL_TOKEN_FILE'));
     if ($tokenFile === '') {
         $tokenFile = '/run/secrets/gohighlevel_readonly_token';
@@ -155,13 +171,16 @@ function goHighLevelConfiguracion()
         $token = trim((string)@file_get_contents($tokenFile));
     }
     $writeEnabled = strtolower(trim((string)getenv('TELAR_GOHIGHLEVEL_WRITE_ENABLED')));
+    $taskWriteEnabled = strtolower(trim((string)getenv('TELAR_GOHIGHLEVEL_TASK_WRITE_ENABLED')));
     return array(
         'base' => rtrim($base, '/'),
         'location_id' => preg_match('/^[A-Za-z0-9_-]{8,80}$/', $locationId) ? $locationId : '',
+        'company_id' => preg_match('/^[A-Za-z0-9_-]{8,80}$/', $companyId) ? $companyId : '',
         'token' => strlen($token) >= 20 ? $token : '',
         'version' => preg_match('/^[A-Za-z0-9._-]{1,32}$/', $version) ? $version : '2021-07-28',
         'token_file' => $tokenFile,
-        'write_enabled' => in_array($writeEnabled, array('1', 'true', 'yes', 'on'), true)
+        'write_enabled' => in_array($writeEnabled, array('1', 'true', 'yes', 'on'), true),
+        'task_write_enabled' => in_array($taskWriteEnabled, array('1', 'true', 'yes', 'on'), true)
     );
 }
 
@@ -187,12 +206,15 @@ function goHighLevelApiGet($config, $ruta, $parametros, $versionForzada = '')
         '/conversations/search' => true,
         '/opportunities/search' => true,
         '/opportunities/pipelines' => true,
-        '/calendars/' => true
+        '/calendars/' => true,
+        '/users/' => true,
+        '/users/search' => true
     );
     $rutaMensajes = preg_match('#^/conversations/[A-Za-z0-9_-]{8,80}/messages$#', $ruta) === 1;
     $rutaConversacion = preg_match('#^/conversations/[A-Za-z0-9_-]{8,80}$#', $ruta) === 1;
     $rutaPlantillas = preg_match('#^/locations/[A-Za-z0-9_-]{8,80}/templates$#', $ruta) === 1;
-    if (!isset($rutasPermitidas[$ruta]) && !$rutaMensajes && !$rutaConversacion && !$rutaPlantillas) {
+    $rutaTareas = preg_match('#^/contacts/[A-Za-z0-9_-]{8,80}/tasks$#', $ruta) === 1;
+    if (!isset($rutasPermitidas[$ruta]) && !$rutaMensajes && !$rutaConversacion && !$rutaPlantillas && !$rutaTareas) {
         goHighLevelLanzar('ruta_no_permitida', 'La consulta solicitada no esta permitida.', array(), 400);
     }
     if (!function_exists('curl_init')) {
@@ -303,6 +325,86 @@ function goHighLevelApiPostMensaje($config, $entrada)
     return $datos;
 }
 
+function goHighLevelApiEscribirTarea($config, $metodo, $contactId, $taskId, $completar, $entrada)
+{
+    if (!goHighLevelConfigurado($config) || empty($config['task_write_enabled'])) {
+        goHighLevelLanzar(
+            'tareas_no_habilitadas',
+            'La gestion de tareas todavia no esta habilitada en la conexion privada.',
+            array(),
+            503
+        );
+    }
+    $metodo = strtoupper(trim((string)$metodo));
+    $contactId = goHighLevelIdSeguro($contactId);
+    $taskId = goHighLevelIdSeguro($taskId);
+    if ($contactId === '' || !in_array($metodo, array('POST', 'PUT'), true)) {
+        goHighLevelLanzar('tarea_invalida', 'La operacion de tarea no es valida.', array(), 400);
+    }
+    if ($metodo === 'POST') {
+        $ruta = '/contacts/'.rawurlencode($contactId).'/tasks';
+    } else {
+        if ($taskId === '') {
+            goHighLevelLanzar('tarea_invalida', 'La tarea seleccionada no es valida.', array(), 400);
+        }
+        $ruta = '/contacts/'.rawurlencode($contactId).'/tasks/'.rawurlencode($taskId)
+            .($completar ? '/completed' : '');
+    }
+    if (!function_exists('curl_init')) {
+        goHighLevelLanzar('cliente_http_no_disponible', 'El servidor no tiene habilitado el cliente seguro.', array(), 503);
+    }
+    $cuerpoJson = json_encode($entrada, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if (!is_string($cuerpoJson)) {
+        goHighLevelLanzar('tarea_invalida', 'No se pudo preparar la tarea.', array(), 400);
+    }
+    $curl = curl_init($config['base'].$ruta);
+    curl_setopt_array($curl, array(
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_CONNECTTIMEOUT => 8,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+        CURLOPT_CUSTOMREQUEST => $metodo,
+        CURLOPT_POSTFIELDS => $cuerpoJson,
+        CURLOPT_HTTPHEADER => array(
+            'Accept: application/json',
+            'Content-Type: application/json',
+            'Authorization: Bearer '.$config['token'],
+            'Version: v3',
+            'User-Agent: Sistema-Telar-GoHighLevel/3.0'
+        )
+    ));
+    $cuerpo = curl_exec($curl);
+    $estado = intval(curl_getinfo($curl, CURLINFO_HTTP_CODE));
+    $errorNumero = curl_errno($curl);
+    if (PHP_VERSION_ID < 80500) {
+        curl_close($curl);
+    } else {
+        unset($curl);
+    }
+    if ($cuerpo === false || $errorNumero !== 0) {
+        error_log('GoHighLevel: fallo de red en operacion de tarea (curl '.$errorNumero.')');
+        goHighLevelLanzar('tarea_no_disponible', 'No se pudo conectar con GoHighLevel para gestionar la tarea.', array(), 502);
+    }
+    $datos = json_decode($cuerpo, true);
+    if ($estado >= 200 && $estado < 300 && trim((string)$cuerpo) === '') {
+        $datos = array(
+            'id' => $taskId,
+            'contactId' => $contactId,
+            'completed' => !empty($entrada['completed'])
+        );
+    }
+    if ($estado < 200 || $estado >= 300 || !is_array($datos)) {
+        error_log('GoHighLevel: respuesta HTTP '.$estado.' en operacion de tarea');
+        $mensaje = $estado === 401 || $estado === 403
+            ? 'La integracion privada no tiene el permiso contacts.write.'
+            : 'GoHighLevel no pudo completar la operacion de tarea.';
+        goHighLevelLanzar('tarea_rechazada', $mensaje, array('estado' => $estado), 502);
+    }
+    return $datos;
+}
+
 function goHighLevelItems($respuesta, $claves)
 {
     foreach ((array)$claves as $clave) {
@@ -399,6 +501,327 @@ function goHighLevelVentanaWhatsApp($mensajes)
 function goHighLevelHayMas($total, $cantidad, $limite)
 {
     return $cantidad >= $limite && ($total <= 0 || $cantidad < $total);
+}
+
+function goHighLevelEmailNormalizado($valor)
+{
+    $email = strtolower(trim((string)$valor));
+    return filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : '';
+}
+
+function goHighLevelUsuariosApi($config)
+{
+    $items = array();
+    $companyId = isset($config['company_id']) ? goHighLevelIdSeguro($config['company_id']) : '';
+    if ($companyId !== '') {
+        try {
+            $skip = 0;
+            do {
+                $respuesta = goHighLevelApiGet($config, '/users/search', array(
+                    'companyId' => $companyId,
+                    'locationId' => $config['location_id'],
+                    'skip' => $skip,
+                    'limit' => 100
+                ), 'v3');
+                $pagina = goHighLevelItems($respuesta, array('users'));
+                foreach ($pagina as $item) {
+                    if (is_array($item)) {
+                        $items[] = $item;
+                    }
+                }
+                $skip += count($pagina);
+                $total = goHighLevelTotal($respuesta, $pagina);
+            } while (count($pagina) === 100 && $skip < $total && $skip < 1000);
+            return $items;
+        } catch (GoHighLevelExcepcion $e) {
+            error_log('GoHighLevel: busqueda v3 de usuarios no disponible; se intenta la ruta compatible');
+        }
+    }
+    $respuesta = goHighLevelApiGet($config, '/users/', array(
+        'locationId' => $config['location_id']
+    ), '2021-07-28');
+    return goHighLevelItems($respuesta, array('users'));
+}
+
+function goHighLevelUsuariosTelarActivos($mysqli)
+{
+    $resultado = $mysqli->query(
+        "SELECT u.cod_usuario,IFNULL(p.nombre_persona,u.login) nombre,IFNULL(p.email,'') email,"
+        ."IFNULL(u.url,'') avatar,IFNULL(l.Nombre,'') local "
+        ."FROM usuario u LEFT JOIN persona p ON p.cod_persona=u.cod_usuario "
+        ."LEFT JOIN local l ON l.cod_local=u.cod_localFK "
+        ."WHERE UPPER(TRIM(u.estado))='ACTIVO' ORDER BY nombre"
+    );
+    if (!$resultado) {
+        goHighLevelLanzar('usuarios_telar_no_disponibles', 'No se pudo cargar el equipo de Telar.', array(), 500);
+    }
+    $items = array();
+    while ($fila = $resultado->fetch_assoc()) {
+        $items[] = array(
+            'cod_usuario' => intval($fila['cod_usuario']),
+            'nombre' => (string)$fila['nombre'],
+            'email' => goHighLevelEmailNormalizado($fila['email']),
+            'avatar' => (string)$fila['avatar'],
+            'local' => (string)$fila['local']
+        );
+    }
+    return $items;
+}
+
+function goHighLevelSincronizarUsuarios($mysqli, $config, $contexto)
+{
+    $usuariosGhl = goHighLevelUsuariosApi($config);
+    $usuariosTelar = goHighLevelUsuariosTelarActivos($mysqli);
+    $porCorreo = array();
+    foreach ($usuariosTelar as $usuarioTelar) {
+        $email = $usuarioTelar['email'];
+        if ($email === '') {
+            continue;
+        }
+        if (!isset($porCorreo[$email])) {
+            $porCorreo[$email] = array();
+        }
+        $porCorreo[$email][] = $usuarioTelar;
+    }
+    $manuales = array();
+    $usados = array();
+    $resultadoManual = $mysqli->query(
+        "SELECT ghl_user_id,cod_usuarioFK,estado,fuente FROM gohighlevel_usuario_vinculo"
+    );
+    while ($resultadoManual && ($filaManual = $resultadoManual->fetch_assoc())) {
+        if ((string)$filaManual['fuente'] === 'manual') {
+            $manuales[(string)$filaManual['ghl_user_id']] = $filaManual;
+            if (intval($filaManual['cod_usuarioFK']) > 0) {
+                $usados[intval($filaManual['cod_usuarioFK'])] = true;
+            }
+        }
+    }
+    $stmt = $mysqli->prepare(
+        "INSERT INTO gohighlevel_usuario_vinculo "
+        ."(ghl_user_id,cod_usuarioFK,nombre_ghl,email_hash,avatar_ghl,estado,fuente,"
+        ."cod_usuario_actualizaFK,fecha_vinculacion,fecha_creacion,fecha_actualizacion) "
+        ."VALUES (?,?,?,?,?,?,?,?,?,NOW(),NOW()) ON DUPLICATE KEY UPDATE "
+        ."cod_usuarioFK=VALUES(cod_usuarioFK),nombre_ghl=VALUES(nombre_ghl),"
+        ."email_hash=VALUES(email_hash),avatar_ghl=VALUES(avatar_ghl),estado=VALUES(estado),"
+        ."fuente=VALUES(fuente),cod_usuario_actualizaFK=VALUES(cod_usuario_actualizaFK),"
+        ."fecha_vinculacion=VALUES(fecha_vinculacion),fecha_actualizacion=NOW()"
+    );
+    if (!$stmt) {
+        goHighLevelLanzar('usuarios_ghl_no_disponibles', 'No se pudo preparar la vinculacion de usuarios.', array(), 500);
+    }
+    $actor = intval($contexto['cod_usuario']);
+    foreach ($usuariosGhl as $usuarioGhl) {
+        if (!is_array($usuarioGhl) || !empty($usuarioGhl['deleted'])) {
+            continue;
+        }
+        $id = goHighLevelIdSeguro(goHighLevelValor($usuarioGhl, array('id', '_id'), ''));
+        if ($id === '') {
+            continue;
+        }
+        $nombre = trim((string)goHighLevelValor($usuarioGhl, array('name'), ''));
+        if ($nombre === '') {
+            $nombre = trim((string)goHighLevelValor($usuarioGhl, array('firstName'), '').' '
+                .(string)goHighLevelValor($usuarioGhl, array('lastName'), ''));
+        }
+        $nombre = goHighLevelTexto($nombre !== '' ? $nombre : 'Usuario GoHighLevel', 180);
+        $email = goHighLevelEmailNormalizado(goHighLevelValor($usuarioGhl, array('email'), ''));
+        $emailHash = $email !== '' ? hash('sha256', $email) : '';
+        $avatar = goHighLevelTexto(goHighLevelValor($usuarioGhl, array('profilePhoto', 'avatar', 'photo')), 500);
+        $codUsuario = null;
+        $estado = 'sin_coincidencia';
+        $fuente = 'correo_exacto';
+        if (isset($manuales[$id])) {
+            $codManual = intval($manuales[$id]['cod_usuarioFK']);
+            $codUsuario = $codManual > 0 ? $codManual : null;
+            $estado = $codUsuario ? 'vinculado' : 'sin_coincidencia';
+            $fuente = 'manual';
+        } elseif ($email !== '' && isset($porCorreo[$email]) && count($porCorreo[$email]) === 1) {
+            $candidato = intval($porCorreo[$email][0]['cod_usuario']);
+            if (!isset($usados[$candidato])) {
+                $codUsuario = $candidato;
+                $estado = 'vinculado';
+                $usados[$candidato] = true;
+            } else {
+                $estado = 'ambiguo';
+            }
+        } elseif ($email !== '' && isset($porCorreo[$email]) && count($porCorreo[$email]) > 1) {
+            $estado = 'ambiguo';
+        }
+        $fechaVinculo = $estado === 'vinculado' ? date('Y-m-d H:i:s') : null;
+        $stmt->bind_param(
+            'sisssssis',
+            $id,
+            $codUsuario,
+            $nombre,
+            $emailHash,
+            $avatar,
+            $estado,
+            $fuente,
+            $actor,
+            $fechaVinculo
+        );
+        if (!$stmt->execute()) {
+            $stmt->close();
+            goHighLevelLanzar('usuarios_ghl_no_disponibles', 'No se pudo actualizar la vinculacion de usuarios.', array(), 500);
+        }
+    }
+    $stmt->close();
+}
+
+function goHighLevelCatalogoUsuariosLocal($mysqli, $contexto, $incluirTelar = false)
+{
+    $resultado = $mysqli->query(
+        "SELECT uv.ghl_user_id,uv.nombre_ghl,uv.avatar_ghl,uv.estado,uv.fuente,"
+        ."IFNULL(uv.cod_usuarioFK,0) cod_usuario,"
+        ."IFNULL(p.nombre_persona,u.login) nombre_telar,IFNULL(u.url,'') avatar_telar,"
+        ."IFNULL(l.Nombre,'') local "
+        ."FROM gohighlevel_usuario_vinculo uv "
+        ."LEFT JOIN usuario u ON u.cod_usuario=uv.cod_usuarioFK "
+        ."LEFT JOIN persona p ON p.cod_persona=u.cod_usuario "
+        ."LEFT JOIN local l ON l.cod_local=u.cod_localFK "
+        ."ORDER BY uv.nombre_ghl"
+    );
+    if (!$resultado) {
+        goHighLevelLanzar('usuarios_ghl_no_disponibles', 'No se pudo cargar el equipo de GoHighLevel.', array(), 500);
+    }
+    $items = array();
+    $actual = '';
+    while ($fila = $resultado->fetch_assoc()) {
+        $codUsuario = intval($fila['cod_usuario']);
+        if ($codUsuario === intval($contexto['cod_usuario']) && (string)$fila['estado'] === 'vinculado') {
+            $actual = (string)$fila['ghl_user_id'];
+        }
+        $items[] = array(
+            'id' => (string)$fila['ghl_user_id'],
+            'nombre' => (string)$fila['nombre_ghl'],
+            'avatar' => (string)$fila['avatar_ghl'],
+            'estado' => (string)$fila['estado'],
+            'fuente' => (string)$fila['fuente'],
+            'cod_usuario' => $codUsuario,
+            'nombre_telar' => (string)$fila['nombre_telar'],
+            'avatar_telar' => (string)$fila['avatar_telar'],
+            'local' => (string)$fila['local']
+        );
+    }
+    $salida = array('items' => $items, 'usuario_actual_ghl_id' => $actual);
+    if ($incluirTelar) {
+        $salida['usuarios_telar'] = array_map(function ($usuario) {
+            unset($usuario['email']);
+            return $usuario;
+        }, goHighLevelUsuariosTelarActivos($mysqli));
+    }
+    return $salida;
+}
+
+function goHighLevelCatalogoUsuarios($mysqli, $config, $contexto, $incluirTelar = false)
+{
+    $advertencia = '';
+    try {
+        goHighLevelSincronizarUsuarios($mysqli, $config, $contexto);
+    } catch (GoHighLevelExcepcion $e) {
+        $advertencia = $e->getMessage();
+    }
+    $salida = goHighLevelCatalogoUsuariosLocal($mysqli, $contexto, $incluirTelar);
+    if ($advertencia !== '') {
+        $salida['advertencia'] = $advertencia;
+    }
+    return $salida;
+}
+
+function goHighLevelGuardarVinculosUsuarios($mysqli, $config, $contexto, $entrada)
+{
+    if (empty($contexto['puede_configurar'])) {
+        goHighLevelLanzar('accion_no_autorizada', 'No tiene permiso para vincular usuarios.', array(), 403);
+    }
+    $lista = json_decode((string)$entrada, true);
+    if (!is_array($lista) || count($lista) > 250) {
+        goHighLevelLanzar('vinculos_invalidos', 'La vinculacion de usuarios no es valida.', array(), 400);
+    }
+    $validos = array();
+    $resultado = $mysqli->query("SELECT ghl_user_id FROM gohighlevel_usuario_vinculo");
+    while ($resultado && ($fila = $resultado->fetch_assoc())) {
+        $validos[(string)$fila['ghl_user_id']] = true;
+    }
+    $usuariosActivos = array();
+    foreach (goHighLevelUsuariosTelarActivos($mysqli) as $usuario) {
+        $usuariosActivos[intval($usuario['cod_usuario'])] = true;
+    }
+    $asignados = array();
+    $stmt = $mysqli->prepare(
+        "UPDATE gohighlevel_usuario_vinculo SET cod_usuarioFK=?,estado=?,fuente='manual',"
+        ."cod_usuario_actualizaFK=?,fecha_vinculacion=?,fecha_actualizacion=NOW() "
+        ."WHERE ghl_user_id=? LIMIT 1"
+    );
+    if (!$stmt) {
+        goHighLevelLanzar('vinculos_no_guardados', 'No se pudo preparar la vinculacion de usuarios.', array(), 500);
+    }
+    $actor = intval($contexto['cod_usuario']);
+    $procesables = array();
+    foreach ($lista as $item) {
+        $id = goHighLevelIdSeguro(goHighLevelValor($item, array('ghl_user_id'), ''));
+        $codUsuario = intval(goHighLevelValor($item, array('cod_usuario'), 0));
+        if ($id === '' || !isset($validos[$id])) {
+            continue;
+        }
+        if ($codUsuario > 0 && (!isset($usuariosActivos[$codUsuario]) || isset($asignados[$codUsuario]))) {
+            $stmt->close();
+            goHighLevelLanzar(
+                'vinculos_no_guardados',
+                'La vinculacion contiene usuarios repetidos o inactivos.',
+                array(),
+                422
+            );
+        }
+        if ($codUsuario > 0) {
+            $asignados[$codUsuario] = true;
+        }
+        $procesables[] = array('id' => $id, 'cod_usuario' => $codUsuario);
+    }
+    $mysqli->begin_transaction();
+    try {
+        $limpiar = $mysqli->prepare(
+            "UPDATE gohighlevel_usuario_vinculo SET cod_usuarioFK=NULL,estado='sin_coincidencia',"
+            ."fuente='manual',cod_usuario_actualizaFK=?,fecha_vinculacion=NULL,fecha_actualizacion=NOW() "
+            ."WHERE ghl_user_id=? LIMIT 1"
+        );
+        if (!$limpiar) {
+            throw new Exception('No se pudieron preparar los vinculos existentes.');
+        }
+        foreach ($procesables as $item) {
+            $id = $item['id'];
+            $limpiar->bind_param('is', $actor, $id);
+            if (!$limpiar->execute()) {
+                throw new Exception('No se pudo preparar un vinculo existente.');
+            }
+        }
+        $limpiar->close();
+        foreach ($procesables as $item) {
+            $id = $item['id'];
+            $codUsuario = intval($item['cod_usuario']);
+            $codGuardar = $codUsuario > 0 ? $codUsuario : null;
+            $estado = $codUsuario > 0 ? 'vinculado' : 'sin_coincidencia';
+            $fecha = $codUsuario > 0 ? date('Y-m-d H:i:s') : null;
+            $stmt->bind_param('isiss', $codGuardar, $estado, $actor, $fecha, $id);
+            if (!$stmt->execute()) {
+                throw new Exception('No se pudo guardar un vinculo.');
+            }
+        }
+        goHighLevelRegistrarEvento(
+            $mysqli,
+            $contexto,
+            'usuarios_vinculados',
+            'usuarios_ghl',
+            $config['location_id'],
+            'Vinculos revisados: '.count($procesables)
+        );
+        $mysqli->commit();
+    } catch (Exception $e) {
+        $mysqli->rollback();
+        $stmt->close();
+        goHighLevelLanzar('vinculos_no_guardados', $e->getMessage(), array(), 422);
+    }
+    $stmt->close();
+    return goHighLevelCatalogoUsuariosLocal($mysqli, $contexto, true);
 }
 
 function goHighLevelNombreContacto($contacto)
@@ -569,10 +992,103 @@ function goHighLevelContactosPorId($contactos)
     return $mapa;
 }
 
-function goHighLevelListarConversaciones($mysqli, $config, $parametros)
+function goHighLevelMapaUsuariosLocal($mysqli)
+{
+    $mapa = array();
+    $resultado = $mysqli->query(
+        "SELECT uv.ghl_user_id,uv.nombre_ghl,uv.avatar_ghl,uv.estado,"
+        ."IFNULL(uv.cod_usuarioFK,0) cod_usuario,IFNULL(u.url,'') avatar_telar,"
+        ."IFNULL(p.nombre_persona,u.login) nombre_telar "
+        ."FROM gohighlevel_usuario_vinculo uv "
+        ."LEFT JOIN usuario u ON u.cod_usuario=uv.cod_usuarioFK "
+        ."LEFT JOIN persona p ON p.cod_persona=u.cod_usuario"
+    );
+    while ($resultado && ($fila = $resultado->fetch_assoc())) {
+        $id = (string)$fila['ghl_user_id'];
+        $nombreTelar = trim((string)$fila['nombre_telar']);
+        $mapa[$id] = array(
+            'id' => $id,
+            'nombre' => $nombreTelar !== '' ? $nombreTelar : (string)$fila['nombre_ghl'],
+            'avatar' => (string)$fila['avatar_telar'] !== ''
+                ? (string)$fila['avatar_telar'] : (string)$fila['avatar_ghl'],
+            'cod_usuario' => intval($fila['cod_usuario']),
+            'vinculado' => (string)$fila['estado'] === 'vinculado'
+        );
+    }
+    return $mapa;
+}
+
+function goHighLevelRegistrarUsuarioObservado($mysqli, $id, $nombre)
+{
+    $id = goHighLevelIdSeguro($id);
+    $nombre = goHighLevelTexto($nombre, 180);
+    if ($id === '' || $nombre === '') {
+        return;
+    }
+    $stmt = $mysqli->prepare(
+        "INSERT INTO gohighlevel_usuario_vinculo "
+        ."(ghl_user_id,cod_usuarioFK,nombre_ghl,email_hash,avatar_ghl,estado,fuente,"
+        ."cod_usuario_actualizaFK,fecha_vinculacion,fecha_creacion,fecha_actualizacion) "
+        ."VALUES (?,NULL,?,'','','sin_coincidencia','observado',NULL,NULL,NOW(),NOW()) "
+        ."ON DUPLICATE KEY UPDATE nombre_ghl=IF(nombre_ghl='',VALUES(nombre_ghl),nombre_ghl),"
+        ."fecha_actualizacion=NOW()"
+    );
+    if ($stmt) {
+        $stmt->bind_param('ss', $id, $nombre);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
+function goHighLevelFiltroResponsableConversacion($mysqli, $contexto, $valor)
+{
+    $valor = trim((string)$valor);
+    $actual = isset($contexto['ghl_user_id']) ? goHighLevelIdSeguro($contexto['ghl_user_id']) : '';
+    if (empty($contexto['puede_ver_equipo'])) {
+        if ($valor === 'unassigned') {
+            return 'unassigned';
+        }
+        return $actual !== '' ? $actual.',unassigned' : 'unassigned';
+    }
+    if ($valor === '' || $valor === 'all') {
+        return '';
+    }
+    if ($valor === 'mine') {
+        return $actual !== '' ? $actual : 'unassigned';
+    }
+    if ($valor === 'unassigned') {
+        return 'unassigned';
+    }
+    $id = goHighLevelIdSeguro($valor);
+    if ($id === '') {
+        return '';
+    }
+    $stmt = $mysqli->prepare("SELECT COUNT(*) total FROM gohighlevel_usuario_vinculo WHERE ghl_user_id=?");
+    $total = 0;
+    if ($stmt) {
+        $stmt->bind_param('s', $id);
+        if ($stmt->execute()) {
+            $stmt->bind_result($total);
+            $stmt->fetch();
+        }
+        $stmt->close();
+    }
+    return intval($total) > 0 ? $id : '';
+}
+
+function goHighLevelListarConversaciones($mysqli, $config, $parametros, $contexto)
 {
     $limite = goHighLevelLimite(isset($parametros['limite']) ? $parametros['limite'] : 40, 40);
     $buscar = goHighLevelBusqueda($parametros);
+    $filtroResponsable = goHighLevelFiltroResponsableConversacion(
+        $mysqli,
+        $contexto,
+        isset($parametros['assigned_to']) ? $parametros['assigned_to'] : ''
+    );
+    $filtroEstado = strtolower(trim((string)(isset($parametros['estado']) ? $parametros['estado'] : 'all')));
+    if (!in_array($filtroEstado, array('all', 'read', 'unread', 'starred', 'recents'), true)) {
+        $filtroEstado = 'all';
+    }
     $apiParametros = array(
         'locationId' => $config['location_id'],
         'limit' => $limite,
@@ -581,12 +1097,19 @@ function goHighLevelListarConversaciones($mysqli, $config, $parametros)
     if ($buscar !== '') {
         $apiParametros['query'] = $buscar;
     }
+    if ($filtroResponsable !== '') {
+        $apiParametros['assignedTo'] = $filtroResponsable;
+    }
+    if ($filtroEstado !== 'all') {
+        $apiParametros['status'] = $filtroEstado;
+    }
     $cursorFecha = goHighLevelMarcaTiempo(isset($parametros['cursor_fecha']) ? $parametros['cursor_fecha'] : '');
     if ($cursorFecha !== '') {
         $apiParametros['startAfterDate'] = $cursorFecha;
     }
     $respuesta = goHighLevelApiGet($config, '/conversations/search', $apiParametros);
     $items = goHighLevelItems($respuesta, array('conversations'));
+    $usuarios = goHighLevelMapaUsuariosLocal($mysqli);
     $conversaciones = array();
     foreach ($items as $item) {
         if (!is_array($item)) {
@@ -599,6 +1122,10 @@ function goHighLevelListarConversaciones($mysqli, $config, $parametros)
         }
         $contacto = goHighLevelFormatearContacto($mysqli, $contactoCrudo, $contactId !== '');
         $nombre = $contacto['nombre'];
+        $responsableId = goHighLevelIdSeguro(goHighLevelValor($item, array('assignedTo', 'userId'), ''));
+        $responsableApi = goHighLevelTexto(goHighLevelValor($item, array('assignedUserName')), 120);
+        goHighLevelRegistrarUsuarioObservado($mysqli, $responsableId, $responsableApi);
+        $responsable = isset($usuarios[$responsableId]) ? $usuarios[$responsableId] : array();
         $conversaciones[] = array(
             'id' => goHighLevelTexto(goHighLevelValor($item, array('id', '_id')), 80),
             'contact_id' => $contactId,
@@ -610,7 +1137,10 @@ function goHighLevelListarConversaciones($mysqli, $config, $parametros)
             'fecha' => goHighLevelTexto(goHighLevelValor($item, array('lastMessageDate', 'dateUpdated', 'updatedAt')), 40),
             'canal' => goHighLevelTexto(goHighLevelValor($item, array('lastMessageType', 'type', 'channel')), 40),
             'no_leidos' => max(0, intval(goHighLevelValor($item, array('unreadCount'), 0))),
-            'responsable' => goHighLevelTexto(goHighLevelValor($item, array('assignedTo', 'assignedUserName')), 120),
+            'responsable_id' => $responsableId,
+            'responsable' => isset($responsable['nombre']) ? $responsable['nombre'] : $responsableApi,
+            'responsable_avatar' => isset($responsable['avatar']) ? $responsable['avatar'] : '',
+            'responsable_vinculado' => !empty($responsable['vinculado']),
             'estado' => goHighLevelTexto(goHighLevelValor($item, array('status')), 40)
         );
     }
@@ -622,6 +1152,9 @@ function goHighLevelListarConversaciones($mysqli, $config, $parametros)
         'items' => $conversaciones,
         'total' => $total,
         'busqueda' => $buscar,
+        'filtro_responsable' => $filtroResponsable,
+        'filtro_estado' => $filtroEstado,
+        'usuarios' => array_values(goHighLevelMapaUsuariosLocal($mysqli)),
         'paginacion' => array(
             'hay_mas' => $hayMas,
             'cursor_fecha' => $hayMas ? $siguienteFecha : '',
@@ -761,6 +1294,625 @@ function goHighLevelListarMensajesConversacion($config, $parametros)
             'last_message_id' => goHighLevelIdSeguro(goHighLevelValor($contenedor, array('lastMessageId'), ''))
         )
     );
+}
+
+function goHighLevelFechaTareaUtc($valor)
+{
+    $segundos = goHighLevelSegundos($valor);
+    if ($segundos <= 0) {
+        $texto = trim((string)$valor);
+        $segundos = $texto !== '' ? strtotime($texto) : false;
+    }
+    return $segundos ? gmdate('Y-m-d H:i:s', intval($segundos)) : null;
+}
+
+function goHighLevelFormatearTarea($item, $contactId = '')
+{
+    $contacto = goHighLevelIdSeguro(goHighLevelValor($item, array('contactId', 'contact_id'), $contactId));
+    $valorCompletada = goHighLevelValor($item, array('completed', 'isCompleted'), false);
+    $completada = $valorCompletada === true || $valorCompletada === 1
+        || strtolower(trim((string)$valorCompletada)) === 'true';
+    return array(
+        'id' => goHighLevelIdSeguro(goHighLevelValor($item, array('id', '_id'), '')),
+        'contact_id' => $contacto,
+        'titulo' => goHighLevelTexto(goHighLevelValor($item, array('title', 'name'), ''), 255),
+        'descripcion' => goHighLevelTexto(goHighLevelValor($item, array('body', 'description'), ''), 4000),
+        'assigned_to' => goHighLevelIdSeguro(goHighLevelValor($item, array('assignedTo', 'assigned_to'), '')),
+        'fecha_vencimiento' => goHighLevelTexto(goHighLevelValor($item, array('dueDate', 'due_date'), ''), 40),
+        'fecha_vencimiento_utc' => goHighLevelFechaTareaUtc(goHighLevelValor($item, array('dueDate', 'due_date'), '')),
+        'completada' => $completada,
+        'fecha_origen' => goHighLevelTexto(goHighLevelValor($item, array('dateAdded', 'createdAt', 'updatedAt'), ''), 40)
+    );
+}
+
+function goHighLevelGuardarCacheTareas($mysqli, $contactId, $contactoNombre, $tareas, $marcarAusentes)
+{
+    $contactId = goHighLevelIdSeguro($contactId);
+    if ($contactId === '') {
+        return 0;
+    }
+    if ($marcarAusentes) {
+        $stmtAusentes = $mysqli->prepare(
+            "UPDATE gohighlevel_tarea_cache SET eliminada=1,fecha_sincronizacion=NOW() WHERE ghl_contact_id=?"
+        );
+        if ($stmtAusentes) {
+            $stmtAusentes->bind_param('s', $contactId);
+            $stmtAusentes->execute();
+            $stmtAusentes->close();
+        }
+    }
+    $stmt = $mysqli->prepare(
+        "INSERT INTO gohighlevel_tarea_cache "
+        ."(ghl_task_id,ghl_contact_id,ghl_assigned_user_id,titulo,descripcion,contacto_nombre,"
+        ."fecha_vencimiento_utc,completada,eliminada,fecha_origen,fecha_sincronizacion) "
+        ."VALUES (?,?,?,?,?,?,?, ?,0,?,NOW()) ON DUPLICATE KEY UPDATE "
+        ."ghl_contact_id=VALUES(ghl_contact_id),ghl_assigned_user_id=VALUES(ghl_assigned_user_id),"
+        ."titulo=VALUES(titulo),descripcion=VALUES(descripcion),contacto_nombre=VALUES(contacto_nombre),"
+        ."fecha_vencimiento_utc=VALUES(fecha_vencimiento_utc),completada=VALUES(completada),"
+        ."eliminada=0,fecha_origen=VALUES(fecha_origen),fecha_sincronizacion=NOW()"
+    );
+    if (!$stmt) {
+        goHighLevelLanzar('cache_tareas_no_disponible', 'No se pudo preparar el indice de tareas.', array(), 500);
+    }
+    $guardadas = 0;
+    $limiteCompletadas = time() - (90 * 86400);
+    $contactoNombre = goHighLevelTexto($contactoNombre, 255);
+    foreach ((array)$tareas as $tarea) {
+        if (!is_array($tarea)) {
+            continue;
+        }
+        $id = goHighLevelIdSeguro(goHighLevelValor($tarea, array('id'), ''));
+        if ($id === '') {
+            continue;
+        }
+        $completada = !empty($tarea['completada']) ? 1 : 0;
+        $fechaUtc = isset($tarea['fecha_vencimiento_utc']) ? $tarea['fecha_vencimiento_utc'] : null;
+        $fechaSegundos = $fechaUtc ? strtotime($fechaUtc.' UTC') : 0;
+        if ($completada && $fechaSegundos > 0 && $fechaSegundos < $limiteCompletadas) {
+            continue;
+        }
+        $assignedTo = goHighLevelIdSeguro(goHighLevelValor($tarea, array('assigned_to'), ''));
+        $titulo = goHighLevelTexto(goHighLevelValor($tarea, array('titulo'), ''), 255);
+        $descripcion = goHighLevelTexto(goHighLevelValor($tarea, array('descripcion'), ''), 4000);
+        $fechaOrigen = goHighLevelTexto(goHighLevelValor($tarea, array('fecha_origen'), ''), 40);
+        $stmt->bind_param(
+            'sssssssis',
+            $id,
+            $contactId,
+            $assignedTo,
+            $titulo,
+            $descripcion,
+            $contactoNombre,
+            $fechaUtc,
+            $completada,
+            $fechaOrigen
+        );
+        if (!$stmt->execute()) {
+            $stmt->close();
+            goHighLevelLanzar('cache_tareas_no_disponible', 'No se pudo actualizar el indice de tareas.', array(), 500);
+        }
+        $guardadas += 1;
+    }
+    $stmt->close();
+    return $guardadas;
+}
+
+function goHighLevelTareaVisibleParaUsuario($tarea, $contexto)
+{
+    if (!empty($contexto['puede_ver_equipo'])) {
+        return true;
+    }
+    $asignado = goHighLevelIdSeguro(goHighLevelValor($tarea, array('assigned_to'), ''));
+    $actual = goHighLevelIdSeguro(goHighLevelValor($contexto, array('ghl_user_id'), ''));
+    return $asignado === '' || ($actual !== '' && $asignado === $actual);
+}
+
+function goHighLevelListarTareasContacto($mysqli, $config, $contexto, $parametros)
+{
+    if (empty($contexto['puede_ver_tareas'])) {
+        goHighLevelLanzar('accion_no_autorizada', 'No tiene permiso para consultar tareas de GoHighLevel.', array(), 403);
+    }
+    $contactId = goHighLevelIdSeguro(isset($parametros['contact_id']) ? $parametros['contact_id'] : '');
+    if ($contactId === '') {
+        goHighLevelLanzar('contacto_invalido', 'El contacto seleccionado no es valido.', array(), 400);
+    }
+    $respuesta = goHighLevelApiGet(
+        $config,
+        '/contacts/'.rawurlencode($contactId).'/tasks',
+        array(),
+        'v3'
+    );
+    $itemsApi = goHighLevelItems($respuesta, array('tasks'));
+    $todas = array();
+    $visibles = array();
+    foreach ($itemsApi as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+        $tarea = goHighLevelFormatearTarea($item, $contactId);
+        if ($tarea['id'] === '') {
+            continue;
+        }
+        $todas[] = $tarea;
+        if (goHighLevelTareaVisibleParaUsuario($tarea, $contexto)) {
+            $visibles[] = $tarea;
+        }
+    }
+    $contactoNombre = goHighLevelTexto(
+        isset($parametros['contacto_nombre']) ? $parametros['contacto_nombre'] : '',
+        255
+    );
+    goHighLevelGuardarCacheTareas($mysqli, $contactId, $contactoNombre, $todas, true);
+    $usuarios = goHighLevelMapaUsuariosLocal($mysqli);
+    foreach ($visibles as $indice => $tareaVisible) {
+        $asignado = isset($tareaVisible['assigned_to']) ? (string)$tareaVisible['assigned_to'] : '';
+        $visibles[$indice]['responsable'] = isset($usuarios[$asignado]) ? $usuarios[$asignado]['nombre'] : '';
+        $visibles[$indice]['responsable_avatar'] = isset($usuarios[$asignado]) ? $usuarios[$asignado]['avatar'] : '';
+    }
+    return array(
+        'contact_id' => $contactId,
+        'items' => $visibles,
+        'total' => count($visibles),
+        'puede_gestionar' => !empty($contexto['puede_gestionar_tareas']) && !empty($config['task_write_enabled']),
+        'permiso_gestionar' => !empty($contexto['puede_gestionar_tareas']),
+        'gestion_habilitada' => !empty($config['task_write_enabled']),
+        'puede_sincronizar' => !empty($contexto['puede_gestionar_tareas']) || !empty($contexto['puede_configurar']),
+        'usuarios' => array_values($usuarios)
+    );
+}
+
+function goHighLevelFiltroResponsableTarea($mysqli, $contexto, $valor, $incluirPropiasYSinAsignar)
+{
+    $valor = trim((string)$valor);
+    $actual = goHighLevelIdSeguro(goHighLevelValor($contexto, array('ghl_user_id'), ''));
+    if (empty($contexto['puede_ver_equipo'])) {
+        if ($valor === 'unassigned') {
+            return array('modo' => 'unassigned', 'id' => '');
+        }
+        if ($incluirPropiasYSinAsignar) {
+            return array('modo' => 'mine_or_unassigned', 'id' => $actual);
+        }
+        return array('modo' => 'mine', 'id' => $actual);
+    }
+    if ($valor === '' || $valor === 'all') {
+        return array('modo' => 'all', 'id' => '');
+    }
+    if ($valor === 'mine') {
+        return array('modo' => 'mine', 'id' => $actual);
+    }
+    if ($valor === 'unassigned') {
+        return array('modo' => 'unassigned', 'id' => '');
+    }
+    $id = goHighLevelIdSeguro($valor);
+    $mapa = goHighLevelMapaUsuariosLocal($mysqli);
+    return isset($mapa[$id])
+        ? array('modo' => 'user', 'id' => $id)
+        : array('modo' => 'all', 'id' => '');
+}
+
+function goHighLevelEstadoTareaSql($estado)
+{
+    if ($estado === 'completed') {
+        return 't.completada=1';
+    }
+    if ($estado === 'overdue') {
+        return 't.completada=0 AND t.fecha_vencimiento_utc<UTC_TIMESTAMP()';
+    }
+    if ($estado === 'today') {
+        return 't.completada=0 AND DATE(t.fecha_vencimiento_utc)=UTC_DATE()';
+    }
+    if ($estado === 'upcoming') {
+        return 't.completada=0 AND t.fecha_vencimiento_utc>UTC_TIMESTAMP()';
+    }
+    if ($estado === 'all') {
+        return '1=1';
+    }
+    return 't.completada=0';
+}
+
+function goHighLevelEstadoSyncTareas($mysqli, $locationId)
+{
+    $locationId = $mysqli->real_escape_string($locationId);
+    $resultado = $mysqli->query(
+        "SELECT en_curso,contactos_procesados,tareas_procesadas,codigo_estado,"
+        ."fecha_inicio,fecha_ultima_ejecucion,fecha_completa FROM gohighlevel_tarea_sync "
+        ."WHERE location_id='".$locationId."' LIMIT 1"
+    );
+    $fila = $resultado ? $resultado->fetch_assoc() : null;
+    return $fila ? array(
+        'en_curso' => intval($fila['en_curso']) === 1,
+        'contactos_procesados' => intval($fila['contactos_procesados']),
+        'tareas_procesadas' => intval($fila['tareas_procesadas']),
+        'codigo' => (string)$fila['codigo_estado'],
+        'fecha_inicio' => (string)$fila['fecha_inicio'],
+        'fecha_ultima' => (string)$fila['fecha_ultima_ejecucion'],
+        'fecha_completa' => (string)$fila['fecha_completa']
+    ) : array(
+        'en_curso' => false,
+        'contactos_procesados' => 0,
+        'tareas_procesadas' => 0,
+        'codigo' => 'pendiente',
+        'fecha_inicio' => '',
+        'fecha_ultima' => '',
+        'fecha_completa' => ''
+    );
+}
+
+function goHighLevelListarTareasCache($mysqli, $config, $contexto, $parametros)
+{
+    if (empty($contexto['puede_ver_tareas'])) {
+        goHighLevelLanzar('accion_no_autorizada', 'No tiene permiso para consultar tareas de GoHighLevel.', array(), 403);
+    }
+    $buscar = goHighLevelBusqueda($parametros);
+    $estado = strtolower(trim((string)(isset($parametros['estado']) ? $parametros['estado'] : 'pending')));
+    if (!in_array($estado, array('pending', 'overdue', 'today', 'upcoming', 'completed', 'all'), true)) {
+        $estado = 'pending';
+    }
+    $pagina = max(1, min(100000, intval(isset($parametros['pagina']) ? $parametros['pagina'] : 1)));
+    $limite = goHighLevelLimite(isset($parametros['limite']) ? $parametros['limite'] : 30, 30);
+    $filtro = goHighLevelFiltroResponsableTarea(
+        $mysqli,
+        $contexto,
+        isset($parametros['assigned_to']) ? $parametros['assigned_to'] : '',
+        true
+    );
+    $condiciones = array('t.eliminada=0', goHighLevelEstadoTareaSql($estado));
+    $idEscapado = $mysqli->real_escape_string($filtro['id']);
+    if ($filtro['modo'] === 'mine_or_unassigned') {
+        $condiciones[] = $idEscapado !== ''
+            ? "(t.ghl_assigned_user_id='' OR t.ghl_assigned_user_id='".$idEscapado."')"
+            : "t.ghl_assigned_user_id=''";
+    } elseif ($filtro['modo'] === 'mine' || $filtro['modo'] === 'user') {
+        $condiciones[] = $idEscapado !== ''
+            ? "t.ghl_assigned_user_id='".$idEscapado."'"
+            : "t.ghl_assigned_user_id=''";
+    } elseif ($filtro['modo'] === 'unassigned') {
+        $condiciones[] = "t.ghl_assigned_user_id=''";
+    }
+    if ($buscar !== '') {
+        $q = $mysqli->real_escape_string($buscar);
+        $condiciones[] = "(t.titulo LIKE '%".$q."%' OR t.descripcion LIKE '%".$q."%' "
+            ."OR t.contacto_nombre LIKE '%".$q."%')";
+    }
+    $where = implode(' AND ', $condiciones);
+    $total = 0;
+    $resultadoTotal = $mysqli->query("SELECT COUNT(*) total FROM gohighlevel_tarea_cache t WHERE ".$where);
+    if ($resultadoTotal && ($filaTotal = $resultadoTotal->fetch_assoc())) {
+        $total = intval($filaTotal['total']);
+    }
+    $offset = ($pagina - 1) * $limite;
+    $resultado = $mysqli->query(
+        "SELECT t.ghl_task_id,t.ghl_contact_id,t.ghl_assigned_user_id,t.titulo,t.descripcion,"
+        ."t.contacto_nombre,t.fecha_vencimiento_utc,t.completada,t.fecha_origen,"
+        ."IFNULL(uv.nombre_ghl,'') responsable,IFNULL(uv.avatar_ghl,'') responsable_avatar "
+        ."FROM gohighlevel_tarea_cache t LEFT JOIN gohighlevel_usuario_vinculo uv "
+        ."ON uv.ghl_user_id=t.ghl_assigned_user_id WHERE ".$where." "
+        ."ORDER BY t.completada ASC,t.fecha_vencimiento_utc ASC,t.ghl_task_id ASC "
+        ."LIMIT ".$offset.",".$limite
+    );
+    if (!$resultado) {
+        goHighLevelLanzar('tareas_no_disponibles', 'No se pudo cargar el indice de tareas.', array(), 500);
+    }
+    $items = array();
+    while ($fila = $resultado->fetch_assoc()) {
+        $items[] = array(
+            'id' => (string)$fila['ghl_task_id'],
+            'contact_id' => (string)$fila['ghl_contact_id'],
+            'assigned_to' => (string)$fila['ghl_assigned_user_id'],
+            'titulo' => (string)$fila['titulo'],
+            'descripcion' => (string)$fila['descripcion'],
+            'contacto_nombre' => (string)$fila['contacto_nombre'],
+            'fecha_vencimiento' => $fila['fecha_vencimiento_utc'] !== null
+                ? str_replace(' ', 'T', (string)$fila['fecha_vencimiento_utc']).'Z' : '',
+            'completada' => intval($fila['completada']) === 1,
+            'fecha_origen' => (string)$fila['fecha_origen'],
+            'responsable' => (string)$fila['responsable'],
+            'responsable_avatar' => (string)$fila['responsable_avatar']
+        );
+    }
+    return array(
+        'items' => $items,
+        'total' => $total,
+        'busqueda' => $buscar,
+        'estado' => $estado,
+        'filtro_responsable' => $filtro,
+        'puede_gestionar' => !empty($contexto['puede_gestionar_tareas']) && !empty($config['task_write_enabled']),
+        'permiso_gestionar' => !empty($contexto['puede_gestionar_tareas']),
+        'gestion_habilitada' => !empty($config['task_write_enabled']),
+        'puede_ver_equipo' => !empty($contexto['puede_ver_equipo']),
+        'usuarios' => array_values(goHighLevelMapaUsuariosLocal($mysqli)),
+        'sincronizacion' => goHighLevelEstadoSyncTareas($mysqli, $config['location_id']),
+        'paginacion' => array(
+            'pagina' => $pagina,
+            'hay_mas' => ($pagina * $limite) < $total,
+            'siguiente_pagina' => $pagina + 1,
+            'mostrados' => count($items)
+        )
+    );
+}
+
+function goHighLevelSincronizarTareasPaso($mysqli, $config, $contexto, $parametros)
+{
+    if (empty($contexto['puede_configurar']) && empty($contexto['puede_gestionar_tareas'])) {
+        goHighLevelLanzar('accion_no_autorizada', 'No tiene permiso para sincronizar tareas.', array(), 403);
+    }
+    $locationId = $config['location_id'];
+    $reiniciar = intval(isset($parametros['reiniciar']) ? $parametros['reiniciar'] : 0) === 1;
+    $locationSql = $mysqli->real_escape_string($locationId);
+    if ($reiniciar) {
+        $mysqli->query(
+            "INSERT INTO gohighlevel_tarea_sync "
+            ."(location_id,en_curso,contactos_procesados,tareas_procesadas,codigo_estado,"
+            ."cod_usuario_iniciaFK,fecha_inicio,fecha_ultima_ejecucion) VALUES ('".$locationSql."',1,0,0,'en_curso',"
+            .intval($contexto['cod_usuario']).",NOW(),NOW()) ON DUPLICATE KEY UPDATE "
+            ."cursor_fecha='',cursor_id='',en_curso=1,contactos_procesados=0,tareas_procesadas=0,"
+            ."codigo_estado='en_curso',cod_usuario_iniciaFK=VALUES(cod_usuario_iniciaFK),"
+            ."fecha_inicio=NOW(),fecha_ultima_ejecucion=NOW(),fecha_completa=NULL"
+        );
+    } else {
+        $mysqli->query(
+            "INSERT IGNORE INTO gohighlevel_tarea_sync "
+            ."(location_id,en_curso,codigo_estado,cod_usuario_iniciaFK,fecha_inicio,fecha_ultima_ejecucion) "
+            ."VALUES ('".$locationSql."',1,'en_curso',".intval($contexto['cod_usuario']).",NOW(),NOW())"
+        );
+    }
+    $resultadoEstado = $mysqli->query(
+        "SELECT cursor_fecha,cursor_id,en_curso,contactos_procesados,tareas_procesadas "
+        ."FROM gohighlevel_tarea_sync WHERE location_id='".$locationSql."' LIMIT 1"
+    );
+    $estado = $resultadoEstado ? $resultadoEstado->fetch_assoc() : null;
+    if (!$estado) {
+        goHighLevelLanzar('sincronizacion_no_disponible', 'No se pudo preparar la sincronizacion de tareas.', array(), 500);
+    }
+    if (!$reiniciar && intval($estado['en_curso']) !== 1) {
+        return goHighLevelEstadoSyncTareas($mysqli, $locationId);
+    }
+    $contactos = goHighLevelListarContactos($mysqli, $config, array(
+        'limite' => 3,
+        'cursor_fecha' => (string)$estado['cursor_fecha'],
+        'cursor_id' => (string)$estado['cursor_id']
+    ));
+    $tareasPaso = 0;
+    foreach ((array)$contactos['items'] as $contacto) {
+        $contactId = goHighLevelIdSeguro(goHighLevelValor($contacto, array('id'), ''));
+        if ($contactId === '') {
+            continue;
+        }
+        $respuesta = goHighLevelApiGet(
+            $config,
+            '/contacts/'.rawurlencode($contactId).'/tasks',
+            array(),
+            'v3'
+        );
+        $tareas = array();
+        foreach (goHighLevelItems($respuesta, array('tasks')) as $item) {
+            if (is_array($item)) {
+                $tareas[] = goHighLevelFormatearTarea($item, $contactId);
+            }
+        }
+        $tareasPaso += goHighLevelGuardarCacheTareas(
+            $mysqli,
+            $contactId,
+            goHighLevelValor($contacto, array('nombre'), ''),
+            $tareas,
+            true
+        );
+    }
+    $paginacion = isset($contactos['paginacion']) ? $contactos['paginacion'] : array();
+    $hayMas = !empty($paginacion['hay_mas']);
+    $cursorFecha = $hayMas ? goHighLevelTexto(goHighLevelValor($paginacion, array('cursor_fecha'), ''), 40) : '';
+    $cursorId = $hayMas ? goHighLevelIdSeguro(goHighLevelValor($paginacion, array('cursor_id'), '')) : '';
+    $contactosPaso = count((array)$contactos['items']);
+    $stmt = $mysqli->prepare(
+        "UPDATE gohighlevel_tarea_sync SET cursor_fecha=?,cursor_id=?,en_curso=?,"
+        ."contactos_procesados=contactos_procesados+?,tareas_procesadas=tareas_procesadas+?,"
+        ."codigo_estado=?,fecha_ultima_ejecucion=NOW(),"
+        ."fecha_completa=IF(?=0,NOW(),fecha_completa) WHERE location_id=? LIMIT 1"
+    );
+    if (!$stmt) {
+        goHighLevelLanzar('sincronizacion_no_disponible', 'No se pudo guardar el avance de tareas.', array(), 500);
+    }
+    $enCurso = $hayMas ? 1 : 0;
+    $codigo = $hayMas ? 'en_curso' : 'completa';
+    $stmt->bind_param(
+        'ssiiisis',
+        $cursorFecha,
+        $cursorId,
+        $enCurso,
+        $contactosPaso,
+        $tareasPaso,
+        $codigo,
+        $enCurso,
+        $locationId
+    );
+    if (!$stmt->execute()) {
+        $stmt->close();
+        goHighLevelLanzar('sincronizacion_no_disponible', 'No se pudo guardar el avance de tareas.', array(), 500);
+    }
+    $stmt->close();
+    return goHighLevelEstadoSyncTareas($mysqli, $locationId);
+}
+
+function goHighLevelResponsableTareaPermitido($mysqli, $contexto, $valor)
+{
+    $actual = goHighLevelIdSeguro(goHighLevelValor($contexto, array('ghl_user_id'), ''));
+    if (empty($contexto['puede_ver_equipo'])) {
+        if ($actual === '') {
+            goHighLevelLanzar('usuario_no_vinculado', 'Su usuario de Telar no esta vinculado con GoHighLevel.', array(), 422);
+        }
+        return $actual;
+    }
+    $id = goHighLevelIdSeguro($valor);
+    if ($id === '') {
+        return '';
+    }
+    $mapa = goHighLevelMapaUsuariosLocal($mysqli);
+    if (!isset($mapa[$id])) {
+        goHighLevelLanzar('responsable_invalido', 'El responsable seleccionado no pertenece a la subcuenta.', array(), 422);
+    }
+    return $id;
+}
+
+function goHighLevelRegistrarOperacionTarea($mysqli, $contexto, $token, $accion, $taskId, $contactId, $assignedTo)
+{
+    $token = trim((string)$token);
+    if (!preg_match('/^[A-Za-z0-9_-]{16,64}$/', $token)) {
+        goHighLevelLanzar('token_tarea_invalido', 'La solicitud de tarea no es valida.', array(), 400);
+    }
+    $stmt = $mysqli->prepare(
+        "INSERT INTO gohighlevel_tarea_operacion "
+        ."(token_cliente,cod_usuarioFK,accion,ghl_task_id,ghl_contact_id,ghl_assigned_user_id,"
+        ."estado,fecha_creacion,fecha_actualizacion) VALUES (?,?,?,?,?,?,'procesando',NOW(),NOW())"
+    );
+    if (!$stmt) {
+        goHighLevelLanzar('auditoria_no_disponible', 'No se pudo preparar la operacion de tarea.', array(), 500);
+    }
+    $actor = intval($contexto['cod_usuario']);
+    $stmt->bind_param('sissss', $token, $actor, $accion, $taskId, $contactId, $assignedTo);
+    if ($stmt->execute()) {
+        $stmt->close();
+        return array('repetida' => false, 'task_id' => $taskId);
+    }
+    $stmt->close();
+    $consulta = $mysqli->prepare(
+        "SELECT estado,ghl_task_id FROM gohighlevel_tarea_operacion "
+        ."WHERE token_cliente=? AND cod_usuarioFK=? LIMIT 1"
+    );
+    if ($consulta) {
+        $consulta->bind_param('si', $token, $actor);
+        if ($consulta->execute()) {
+            $consulta->bind_result($estado, $taskExistente);
+            if ($consulta->fetch() && $estado === 'exito') {
+                $consulta->close();
+                return array('repetida' => true, 'task_id' => (string)$taskExistente);
+            }
+        }
+        $consulta->close();
+    }
+    goHighLevelLanzar('tarea_en_proceso', 'Esta operacion ya fue recibida. Actualice la lista antes de repetirla.', array(), 409);
+}
+
+function goHighLevelActualizarOperacionTarea($mysqli, $token, $estado, $taskId, $codigo)
+{
+    $stmt = $mysqli->prepare(
+        "UPDATE gohighlevel_tarea_operacion SET estado=?,ghl_task_id=?,codigo_resultado=?,"
+        ."fecha_actualizacion=NOW() WHERE token_cliente=? LIMIT 1"
+    );
+    if ($stmt) {
+        $stmt->bind_param('ssss', $estado, $taskId, $codigo, $token);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
+function goHighLevelGestionarTarea($mysqli, $config, $contexto, $parametros)
+{
+    if (empty($contexto['puede_gestionar_tareas'])) {
+        goHighLevelLanzar('accion_no_autorizada', 'No tiene permiso para gestionar tareas.', array(), 403);
+    }
+    $accion = strtolower(trim((string)(isset($parametros['operacion']) ? $parametros['operacion'] : '')));
+    if (!in_array($accion, array('crear', 'actualizar', 'completar'), true)) {
+        goHighLevelLanzar('tarea_invalida', 'La operacion de tarea no es valida.', array(), 400);
+    }
+    $contactId = goHighLevelIdSeguro(isset($parametros['contact_id']) ? $parametros['contact_id'] : '');
+    $taskId = goHighLevelIdSeguro(isset($parametros['task_id']) ? $parametros['task_id'] : '');
+    if ($contactId === '' || ($accion !== 'crear' && $taskId === '')) {
+        goHighLevelLanzar('tarea_invalida', 'La tarea o el contacto no son validos.', array(), 400);
+    }
+    $assignedTo = goHighLevelResponsableTareaPermitido(
+        $mysqli,
+        $contexto,
+        isset($parametros['assigned_to']) ? $parametros['assigned_to'] : ''
+    );
+    $token = trim((string)(isset($parametros['token_cliente']) ? $parametros['token_cliente'] : ''));
+    $registro = goHighLevelRegistrarOperacionTarea(
+        $mysqli,
+        $contexto,
+        $token,
+        $accion,
+        $taskId,
+        $contactId,
+        $assignedTo
+    );
+    if (!empty($registro['repetida'])) {
+        return array('id' => $registro['task_id'], 'repetida' => true);
+    }
+    $entrada = array();
+    $metodo = $accion === 'crear' ? 'POST' : 'PUT';
+    $completar = $accion === 'completar';
+    if ($completar) {
+        $entrada['completed'] = intval(isset($parametros['completada']) ? $parametros['completada'] : 1) === 1;
+    } else {
+        $titulo = goHighLevelTexto(isset($parametros['titulo']) ? $parametros['titulo'] : '', 180);
+        $descripcion = goHighLevelTexto(isset($parametros['descripcion']) ? $parametros['descripcion'] : '', 1000);
+        $fechaEntrada = trim((string)(isset($parametros['fecha_vencimiento']) ? $parametros['fecha_vencimiento'] : ''));
+        $fecha = $fechaEntrada !== '' ? strtotime($fechaEntrada) : false;
+        if ($titulo === '' || !$fecha) {
+            goHighLevelActualizarOperacionTarea($mysqli, $token, 'fallo', $taskId, 'datos_invalidos');
+            goHighLevelLanzar('tarea_invalida', 'Indique un titulo y una fecha de vencimiento valida.', array(), 422);
+        }
+        $entrada = array(
+            'title' => $titulo,
+            'body' => $descripcion,
+            'dueDate' => date('c', $fecha),
+            'completed' => intval(isset($parametros['completada']) ? $parametros['completada'] : 0) === 1
+        );
+        if ($assignedTo !== '' || !empty($contexto['puede_ver_equipo'])) {
+            $entrada['assignedTo'] = $assignedTo;
+        }
+    }
+    try {
+        $respuesta = goHighLevelApiEscribirTarea(
+            $config,
+            $metodo,
+            $contactId,
+            $taskId,
+            $completar,
+            $entrada
+        );
+    } catch (GoHighLevelExcepcion $e) {
+        goHighLevelActualizarOperacionTarea($mysqli, $token, 'fallo', $taskId, $e->codigoOperacion);
+        throw $e;
+    }
+    $item = isset($respuesta['task']) && is_array($respuesta['task']) ? $respuesta['task'] : $respuesta;
+    $tarea = goHighLevelFormatearTarea($item, $contactId);
+    if ($tarea['id'] === '') {
+        $tarea['id'] = $taskId;
+    }
+    if ($completar) {
+        $tarea['completada'] = !empty($entrada['completed']);
+    }
+    if ($completar && $tarea['id'] !== '') {
+        $stmtCompleta = $mysqli->prepare(
+            "UPDATE gohighlevel_tarea_cache SET completada=?,eliminada=0,fecha_sincronizacion=NOW() "
+            ."WHERE ghl_task_id=? AND ghl_contact_id=? LIMIT 1"
+        );
+        if ($stmtCompleta) {
+            $valorCompleta = !empty($entrada['completed']) ? 1 : 0;
+            $stmtCompleta->bind_param('iss', $valorCompleta, $tarea['id'], $contactId);
+            $stmtCompleta->execute();
+            $stmtCompleta->close();
+        }
+    } elseif ($tarea['id'] !== '') {
+        goHighLevelGuardarCacheTareas(
+            $mysqli,
+            $contactId,
+            isset($parametros['contacto_nombre']) ? $parametros['contacto_nombre'] : '',
+            array($tarea),
+            false
+        );
+    }
+    goHighLevelActualizarOperacionTarea($mysqli, $token, 'exito', $tarea['id'], 'aceptada');
+    goHighLevelRegistrarEvento(
+        $mysqli,
+        $contexto,
+        'tarea_'.$accion,
+        'tarea_ghl',
+        $tarea['id'],
+        'Contacto GHL: '.$contactId.'; responsable configurado: '.($assignedTo !== '' ? 'si' : 'no')
+    );
+    $tarea['repetida'] = false;
+    return $tarea;
 }
 
 function goHighLevelObtenerConversacion($config, $conversationId)
@@ -1531,6 +2683,9 @@ function goHighLevelUsuariosPermisos($mysqli, $contexto)
         ."IFNULL(l.Nombre,'') local,IFNULL(g.puede_ver,0) puede_ver,"
         ."IFNULL(g.puede_responder,0) puede_responder,"
         ."IFNULL(g.puede_enviar_plantilla,0) puede_enviar_plantilla,"
+        ."IFNULL(g.puede_ver_tareas,0) puede_ver_tareas,"
+        ."IFNULL(g.puede_ver_equipo,0) puede_ver_equipo,"
+        ."IFNULL(g.puede_gestionar_tareas,0) puede_gestionar_tareas,"
         ."IFNULL(g.puede_configurar,0) puede_configurar "
         ."FROM usuario u LEFT JOIN persona p ON p.cod_persona=u.cod_usuario "
         ."LEFT JOIN local l ON l.cod_local=u.cod_localFK "
@@ -1551,6 +2706,9 @@ function goHighLevelUsuariosPermisos($mysqli, $contexto)
             'puede_ver' => $id === 5994 || intval($fila['puede_ver']) === 1,
             'puede_responder' => $id === 5994 || intval($fila['puede_responder']) === 1,
             'puede_enviar_plantilla' => $id === 5994 || intval($fila['puede_enviar_plantilla']) === 1,
+            'puede_ver_tareas' => $id === 5994 || intval($fila['puede_ver_tareas']) === 1,
+            'puede_ver_equipo' => $id === 5994 || intval($fila['puede_ver_equipo']) === 1,
+            'puede_gestionar_tareas' => $id === 5994 || intval($fila['puede_gestionar_tareas']) === 1,
             'puede_configurar' => $id === 5994 || intval($fila['puede_configurar']) === 1,
             'bloqueado' => $id === 5994
         );
@@ -1588,7 +2746,15 @@ function goHighLevelGuardarPermisos($mysqli, $contexto, $entrada)
     if (!is_array($lista) || count($lista) > 250) {
         goHighLevelLanzar('permisos_invalidos', 'La configuracion de permisos no es valida.');
     }
-    $permisos = array(5994 => array('ver' => 1, 'responder' => 1, 'plantilla' => 1, 'configurar' => 1));
+    $permisos = array(5994 => array(
+        'ver' => 1,
+        'responder' => 1,
+        'plantilla' => 1,
+        'ver_tareas' => 1,
+        'ver_equipo' => 1,
+        'gestionar_tareas' => 1,
+        'configurar' => 1
+    ));
     foreach ($lista as $item) {
         if (!is_array($item)) {
             continue;
@@ -1600,30 +2766,52 @@ function goHighLevelGuardarPermisos($mysqli, $contexto, $entrada)
         $configurar = intval(goHighLevelValor($item, array('puede_configurar'), 0)) === 1 ? 1 : 0;
         $responder = intval(goHighLevelValor($item, array('puede_responder'), 0)) === 1 ? 1 : 0;
         $plantilla = intval(goHighLevelValor($item, array('puede_enviar_plantilla'), 0)) === 1 ? 1 : 0;
-        $ver = ($configurar || $responder || $plantilla || intval(goHighLevelValor($item, array('puede_ver'), 0)) === 1) ? 1 : 0;
+        $verTareas = intval(goHighLevelValor($item, array('puede_ver_tareas'), 0)) === 1 ? 1 : 0;
+        $verEquipo = intval(goHighLevelValor($item, array('puede_ver_equipo'), 0)) === 1 ? 1 : 0;
+        $gestionarTareas = intval(goHighLevelValor($item, array('puede_gestionar_tareas'), 0)) === 1 ? 1 : 0;
+        if ($gestionarTareas) {
+            $verTareas = 1;
+        }
+        $ver = ($configurar || $responder || $plantilla || $verTareas || $verEquipo
+            || intval(goHighLevelValor($item, array('puede_ver'), 0)) === 1) ? 1 : 0;
         if ($id === 5994) {
             $ver = 1;
             $responder = 1;
             $plantilla = 1;
+            $verTareas = 1;
+            $verEquipo = 1;
+            $gestionarTareas = 1;
             $configurar = 1;
         }
-        $permisos[$id] = array('ver' => $ver, 'responder' => $responder, 'plantilla' => $plantilla, 'configurar' => $configurar);
+        $permisos[$id] = array(
+            'ver' => $ver,
+            'responder' => $responder,
+            'plantilla' => $plantilla,
+            'ver_tareas' => $verTareas,
+            'ver_equipo' => $verEquipo,
+            'gestionar_tareas' => $gestionarTareas,
+            'configurar' => $configurar
+        );
     }
     $actor = intval($contexto['cod_usuario']);
     $mysqli->begin_transaction();
     try {
         if (!$mysqli->query(
-            "UPDATE gohighlevel_permiso_usuario SET puede_ver=0,puede_responder=0,puede_enviar_plantilla=0,puede_configurar=0,activo=0,"
+            "UPDATE gohighlevel_permiso_usuario SET puede_ver=0,puede_responder=0,puede_enviar_plantilla=0,"
+            ."puede_ver_tareas=0,puede_ver_equipo=0,puede_gestionar_tareas=0,puede_configurar=0,activo=0,"
             ."cod_usuario_actualizaFK=".$actor.",fecha_actualizacion=NOW()"
         )) {
             throw new Exception('No se pudieron preparar los permisos.');
         }
         $stmt = $mysqli->prepare(
             "INSERT INTO gohighlevel_permiso_usuario "
-            ."(cod_usuarioFK,puede_ver,puede_responder,puede_enviar_plantilla,puede_configurar,activo,cod_usuario_actualizaFK,fecha_creacion,fecha_actualizacion) "
-            ."VALUES (?,?,?,?,?,?,?,NOW(),NOW()) ON DUPLICATE KEY UPDATE "
+            ."(cod_usuarioFK,puede_ver,puede_responder,puede_enviar_plantilla,puede_ver_tareas,puede_ver_equipo,"
+            ."puede_gestionar_tareas,puede_configurar,activo,cod_usuario_actualizaFK,fecha_creacion,fecha_actualizacion) "
+            ."VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),NOW()) ON DUPLICATE KEY UPDATE "
             ."puede_ver=VALUES(puede_ver),puede_responder=VALUES(puede_responder),"
             ."puede_enviar_plantilla=VALUES(puede_enviar_plantilla),"
+            ."puede_ver_tareas=VALUES(puede_ver_tareas),puede_ver_equipo=VALUES(puede_ver_equipo),"
+            ."puede_gestionar_tareas=VALUES(puede_gestionar_tareas),"
             ."puede_configurar=VALUES(puede_configurar),activo=VALUES(activo),"
             ."cod_usuario_actualizaFK=VALUES(cod_usuario_actualizaFK),fecha_actualizacion=NOW()"
         );
@@ -1636,8 +2824,23 @@ function goHighLevelGuardarPermisos($mysqli, $contexto, $entrada)
             $puedeVer = intval($permiso['ver']);
             $puedeResponder = intval($permiso['responder']);
             $puedePlantilla = intval($permiso['plantilla']);
+            $puedeVerTareas = intval($permiso['ver_tareas']);
+            $puedeVerEquipo = intval($permiso['ver_equipo']);
+            $puedeGestionarTareas = intval($permiso['gestionar_tareas']);
             $puedeConfigurar = intval($permiso['configurar']);
-            $stmt->bind_param('iiiiiii', $idUsuario, $puedeVer, $puedeResponder, $puedePlantilla, $puedeConfigurar, $activo, $actor);
+            $stmt->bind_param(
+                'iiiiiiiiii',
+                $idUsuario,
+                $puedeVer,
+                $puedeResponder,
+                $puedePlantilla,
+                $puedeVerTareas,
+                $puedeVerEquipo,
+                $puedeGestionarTareas,
+                $puedeConfigurar,
+                $activo,
+                $actor
+            );
             if (!$stmt->execute()) {
                 throw new Exception('No se pudo guardar un permiso.');
             }

@@ -14,7 +14,11 @@ $tablas = array(
     'gohighlevel_evento',
     'gohighlevel_envio_manual',
     'gohighlevel_plantilla_config',
-    'gohighlevel_envio_plantilla'
+    'gohighlevel_envio_plantilla',
+    'gohighlevel_usuario_vinculo',
+    'gohighlevel_tarea_cache',
+    'gohighlevel_tarea_sync',
+    'gohighlevel_tarea_operacion'
 );
 $faltantes = array();
 foreach ($tablas as $tabla) {
@@ -44,6 +48,7 @@ $propietario = $mysqli->query(
     "SELECT COUNT(*) total FROM gohighlevel_permiso_usuario "
     ."WHERE cod_usuarioFK=5994 AND puede_ver=1 AND puede_responder=1 "
     ."AND puede_enviar_plantilla=1 "
+    ."AND puede_ver_tareas=1 AND puede_ver_equipo=1 AND puede_gestionar_tareas=1 "
     ."AND puede_configurar=1 AND activo=1"
 );
 $fila = $propietario ? $propietario->fetch_assoc() : array('total' => 0);

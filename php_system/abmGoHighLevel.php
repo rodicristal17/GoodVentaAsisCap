@@ -64,20 +64,25 @@ try {
                 'usuario' => $contexto,
                 'integracion' => array(
                     'configurado' => goHighLevelConfigurado($config),
-                    'modo' => !empty($config['write_enabled']) ? 'respuestas_y_plantillas' : 'solo_lectura',
+                    'modo' => !empty($config['write_enabled'])
+                        ? (!empty($config['task_write_enabled']) ? 'mensajes_plantillas_y_tareas' : 'respuestas_y_plantillas')
+                        : (!empty($config['task_write_enabled']) ? 'solo_tareas' : 'solo_lectura'),
                     'respuestas_habilitadas' => !empty($config['write_enabled']),
+                    'tareas_habilitadas' => !empty($config['task_write_enabled']),
                     'location_id' => (string)$config['location_id']
                 )
             ), 200);
             break;
         case 'conversaciones':
             goHighLevelResponder(true, 'conversaciones_obtenidas', 'Conversaciones actualizadas.',
-                goHighLevelListarConversaciones($mysqli, $config, $_POST), 200);
+                goHighLevelListarConversaciones($mysqli, $config, $_POST, $contexto), 200);
             break;
         case 'mensajes_conversacion':
             $historial = goHighLevelListarMensajesConversacion($config, $_POST);
             $historial['puede_responder'] = !empty($contexto['puede_responder']);
             $historial['puede_enviar_plantilla'] = !empty($contexto['puede_enviar_plantilla']);
+            $historial['puede_ver_tareas'] = !empty($contexto['puede_ver_tareas']);
+            $historial['puede_gestionar_tareas'] = !empty($contexto['puede_gestionar_tareas']);
             $historial['envio_habilitado'] = !empty($config['write_enabled']);
             goHighLevelResponder(true, 'mensajes_obtenidos', 'Historial actualizado.', $historial, 200);
             break;
@@ -127,6 +132,39 @@ try {
         case 'sincronizacion':
             goHighLevelResponder(true, 'sincronizacion_obtenida', 'Estado actualizado.',
                 goHighLevelEstadoSincronizacion($mysqli, $config), 200);
+            break;
+        case 'usuarios_ghl':
+            goHighLevelResponder(true, 'usuarios_ghl_obtenidos', 'Responsables actualizados.',
+                goHighLevelCatalogoUsuarios($mysqli, $config, $contexto, false), 200);
+            break;
+        case 'configuracion_usuarios_ghl':
+            goHighLevelResponder(true, 'usuarios_ghl_obtenidos', 'Vinculos de responsables actualizados.',
+                goHighLevelCatalogoUsuarios($mysqli, $config, $contexto, true), 200);
+            break;
+        case 'guardar_vinculos_usuarios':
+            goHighLevelResponder(true, 'vinculos_usuarios_guardados', 'Vinculos de responsables guardados.',
+                goHighLevelGuardarVinculosUsuarios(
+                    $mysqli,
+                    $config,
+                    $contexto,
+                    goHighLevelParametro('vinculos', '[]')
+                ), 200);
+            break;
+        case 'tareas_contacto':
+            goHighLevelResponder(true, 'tareas_contacto_obtenidas', 'Tareas del contacto actualizadas.',
+                goHighLevelListarTareasContacto($mysqli, $config, $contexto, $_POST), 200);
+            break;
+        case 'tareas':
+            goHighLevelResponder(true, 'tareas_obtenidas', 'Tareas actualizadas.',
+                goHighLevelListarTareasCache($mysqli, $config, $contexto, $_POST), 200);
+            break;
+        case 'sincronizar_tareas_paso':
+            goHighLevelResponder(true, 'sincronizacion_tareas_actualizada', 'Sincronizacion de tareas actualizada.',
+                goHighLevelSincronizarTareasPaso($mysqli, $config, $contexto, $_POST), 200);
+            break;
+        case 'gestionar_tarea':
+            goHighLevelResponder(true, 'tarea_guardada', 'La tarea fue aceptada por GoHighLevel.',
+                goHighLevelGestionarTarea($mysqli, $config, $contexto, $_POST), 200);
             break;
         case 'configuracion_permisos':
             goHighLevelResponder(true, 'permisos_obtenidos', 'Permisos actualizados.',

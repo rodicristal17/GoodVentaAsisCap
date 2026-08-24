@@ -1,4 +1,4 @@
-/* Sistema Telar - GoHighLevel fase 2B: consulta, respuestas y plantillas protegidas. */
+/* Sistema Telar - GoHighLevel fase 3: equipo, conversaciones y tareas protegidas. */
 (function (window, document) {
     "use strict";
 
@@ -15,11 +15,19 @@
         cache: {},
         settings: null,
         settingsTab: "permisos",
+        userSettings: null,
         templateSettings: null,
         templates: null,
-        queries: { conversaciones: "", contactos: "", oportunidades: "" },
+        users: { items: [], advertencia: "" },
+        queries: { conversaciones: "", contactos: "", oportunidades: "", tareas: "" },
+        filters: {
+            conversaciones: { assignedTo: "", estado: "all" },
+            tareas: { assignedTo: "", estado: "pending" }
+        },
         conversation: null,
-        pendingTemplate: null
+        pendingTemplate: null,
+        taskEditor: null,
+        taskSyncRunning: false
     };
 
     function escapeHtml(value) {
@@ -108,6 +116,7 @@
                     tabButton("contactos", "fa-address-book", "Contactos") +
                     tabButton("oportunidades", "fa-filter-circle-dollar", "Oportunidades") +
                     tabButton("conversaciones", "fa-comments", "Conversaciones", true) +
+                    tabButton("tareas", "fa-list-check", "Tareas") +
                     tabButton("calendarios", "fa-calendar-days", "Calendarios") +
                     tabButton("sincronizacion", "fa-arrows-rotate", "Sincronización") +
                 "</nav>" +
@@ -229,6 +238,9 @@
     function renderConversations(data) {
         var items = data.items || [];
         var html = "<div class='ghl-section-title'><div><small>MESA DE TRABAJO PRINCIPAL</small><h2>Conversaciones recientes</h2><p>Ordenadas desde GoHighLevel y relacionadas automáticamente con Telar.</p></div><span class='ghl-total'>" + Number(data.total || items.length) + " conversaciones</span></div>";
+        html += renderResponsibleFilters("conversaciones", data.usuarios || (state.users && state.users.items), [
+            ["all", "Todas"], ["unread", "No leídas"], ["read", "Leídas"], ["starred", "Destacadas"], ["recents", "Recientes"]
+        ]);
         html += searchToolbar("conversaciones", "Buscar por nombre, teléfono o mensaje…", data);
         if (!items.length) { return html + emptyState("fa-comments", "No hay conversaciones para mostrar", state.queries.conversaciones ? "No hubo coincidencias para esta búsqueda." : "GoHighLevel no devolvió conversaciones recientes."); }
         html += "<div class='ghl-conversation-list'>";
@@ -237,10 +249,59 @@
                 "<div class='ghl-conversation__main'><div class='ghl-conversation__top'><strong>" + escapeHtml(item.nombre) + "</strong><time>" + dateLabel(item.fecha) + "</time></div>" +
                 "<div class='ghl-conversation__meta'><span class='ghl-channel'><i class='fa-brands " + (channelLabel(item.canal) === "WhatsApp" ? "fa-whatsapp" : "fa-rocketchat") + "'></i>" + escapeHtml(channelLabel(item.canal)) + "</span>" + linkBadge(item.vinculo) + (item.no_leidos ? "<span class='ghl-unread'>" + Number(item.no_leidos) + " sin leer</span>" : "") + "</div>" +
                 "<p>" + escapeHtml(item.ultimo_mensaje || "Sin vista previa del mensaje") + "</p>" +
-                (item.responsable ? "<small class='ghl-owner'><i class='fa-solid fa-user-check'></i> Responsable: " + escapeHtml(item.responsable) + "</small>" : "") +
+                "<small class='ghl-owner'>" + avatar(item.responsable || "Sin asignar", item.responsable_avatar, "ghl-avatar--micro") + "<span>" + escapeHtml(item.responsable || "Sin asignar") + "</span></small>" +
                 "</div><button type='button' class='ghl-open-conversation' data-ghl-action='open-conversation' data-conversation-id='" + escapeHtml(item.id) + "' title='Abrir historial'><i class='fa-solid fa-chevron-right'></i></button></article>";
         });
         return html + "</div>" + paginationFooter("conversaciones", data);
+    }
+
+    function userOptions(users, selected, includeAll) {
+        var html = includeAll ? "<option value='all' " + (selected === "all" || selected === "" ? "selected" : "") + ">Todo el equipo</option>" : "";
+        html += "<option value='mine' " + (selected === "mine" ? "selected" : "") + ">" + (includeAll ? "Mis asignaciones" : "Mías y sin asignar") + "</option>";
+        html += "<option value='unassigned' " + (selected === "unassigned" ? "selected" : "") + ">Sin asignar</option>";
+        if (includeAll) {
+            (users || []).forEach(function (user) {
+                html += "<option value='" + escapeHtml(user.id) + "' " + (String(selected) === String(user.id) ? "selected" : "") + ">" + escapeHtml(user.nombre || "Usuario") + "</option>";
+            });
+        }
+        return html;
+    }
+
+    function renderResponsibleFilters(tab, users, statuses) {
+        var filter = state.filters[tab] || {};
+        var canTeam = !!(state.context && state.context.usuario && state.context.usuario.puede_ver_equipo);
+        var statusOptions = "";
+        statuses.forEach(function (status) {
+            statusOptions += "<option value='" + status[0] + "' " + (filter.estado === status[0] ? "selected" : "") + ">" + status[1] + "</option>";
+        });
+        return "<div class='ghl-filterbar'><label><i class='fa-solid fa-user-tag'></i><select data-ghl-filter='assigned' data-filter-tab='" + tab + "'>" + userOptions(users, filter.assignedTo || (canTeam ? "all" : "mine"), canTeam) + "</select></label><label><i class='fa-solid fa-filter'></i><select data-ghl-filter='status' data-filter-tab='" + tab + "'>" + statusOptions + "</select></label></div>";
+    }
+
+    function taskStatus(item) {
+        var due = item.fecha_vencimiento ? new Date(item.fecha_vencimiento) : null;
+        if (item.completada) { return { css: "is-complete", label: "Completada" }; }
+        if (due && !isNaN(due.getTime()) && due.getTime() < Date.now()) { return { css: "is-overdue", label: "Atrasada" }; }
+        return { css: "is-pending", label: "Pendiente" };
+    }
+
+    function renderTasks(data) {
+        var items = data.items || [];
+        var sync = data.sincronizacion || {};
+        var html = "<div class='ghl-section-title'><div><small>AGENDA OPERATIVA</small><h2>Tareas de GoHighLevel</h2><p>GoHighLevel conserva el registro principal; Telar muestra y gestiona las tareas permitidas.</p></div><span class='ghl-total'>" + Number(data.total || 0) + " tareas</span></div>";
+        html += "<div class='ghl-task-sync'><span><i class='fa-solid fa-arrows-rotate'></i><strong>Índice de tareas</strong><small>" + (sync.fecha_completa ? "Actualizado " + dateLabel(sync.fecha_completa) : "Pendiente de sincronización inicial") + (sync.en_curso ? " · en curso" : "") + "</small></span>" + (data.puede_sincronizar ? "<button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='sync-tasks'><i class='fa-solid fa-rotate'></i> " + (sync.en_curso ? "Continuar" : "Sincronizar") + "</button>" : "") + "</div>";
+        if (data.permiso_gestionar && !data.gestion_habilitada) { html += "<div class='ghl-task-write-pending'><i class='fa-solid fa-shield-halved'></i><span><strong>Gestión preparada, pendiente de habilitación privada</strong><small>La lectura y sincronización funcionan; crear, editar y completar se activarán al confirmar el alcance contacts.write.</small></span></div>"; }
+        html += renderResponsibleFilters("tareas", data.usuarios || [], [
+            ["pending", "Pendientes"], ["overdue", "Atrasadas"], ["today", "Vencen hoy"], ["upcoming", "Próximas"], ["completed", "Completadas"], ["all", "Todas"]
+        ]);
+        html += searchToolbar("tareas", "Buscar tarea, contacto o descripción…", data);
+        if (state.taskEditor) { html += renderTaskEditor(state.taskEditor, data.usuarios || []); }
+        if (!items.length) { return html + emptyState("fa-list-check", "No hay tareas para mostrar", state.queries.tareas ? "No hubo coincidencias para esta búsqueda." : "Sincronice el índice o cambie los filtros."); }
+        html += "<div class='ghl-task-list'>";
+        items.forEach(function (item) {
+            var status = taskStatus(item);
+            html += "<article class='ghl-task-card " + status.css + "'><button type='button' class='ghl-task-check' data-ghl-action='complete-task' data-task-id='" + escapeHtml(item.id) + "' data-contact-id='" + escapeHtml(item.contact_id) + "' data-assigned-to='" + escapeHtml(item.assigned_to || "") + "' data-completed='" + (item.completada ? "1" : "0") + "' " + (!data.puede_gestionar ? "disabled" : "") + " title='" + (item.completada ? "Reabrir tarea" : "Completar tarea") + "'><i class='fa-solid " + (item.completada ? "fa-circle-check" : "fa-circle") + "'></i></button><div class='ghl-task-card__main'><div><strong>" + escapeHtml(item.titulo || "Tarea sin título") + "</strong><span class='ghl-task-status'>" + status.label + "</span></div><p>" + escapeHtml(item.descripcion || "Sin descripción") + "</p><footer><span><i class='fa-solid fa-user'></i> " + escapeHtml(item.contacto_nombre || "Contacto") + "</span><span>" + avatar(item.responsable || "Sin asignar", item.responsable_avatar, "ghl-avatar--micro") + escapeHtml(item.responsable || "Sin asignar") + "</span><time><i class='fa-solid fa-calendar-day'></i> " + dateLabel(item.fecha_vencimiento) + "</time></footer></div>" + (data.puede_gestionar ? "<button type='button' class='ghl-icon-btn' data-ghl-action='edit-task' data-task-id='" + escapeHtml(item.id) + "' title='Editar tarea'><i class='fa-solid fa-pen'></i></button>" : "") + "</article>";
+        });
+        return html + "</div>" + paginationFooter("tareas", data);
     }
 
     function renderContacts(data) {
@@ -309,6 +370,10 @@
         var query = state.queries[tab] || "";
         var key;
         if (query) { payload.buscar = query; }
+        if (tab === "conversaciones" || tab === "tareas") {
+            payload.assigned_to = state.filters[tab].assignedTo;
+            payload.estado = state.filters[tab].estado;
+        }
         extra = extra || {};
         for (key in extra) {
             if (Object.prototype.hasOwnProperty.call(extra, key)) { payload[key] = extra[key]; }
@@ -338,7 +403,7 @@
         var pagination = current.paginacion || {};
         var extra = {};
         if (!pagination.hay_mas || button.disabled) { return; }
-        if (tab === "oportunidades") { extra.pagina = pagination.siguiente_pagina || 2; }
+        if (tab === "oportunidades" || tab === "tareas") { extra.pagina = pagination.siguiente_pagina || 2; }
         else {
             extra.cursor_fecha = pagination.cursor_fecha || "";
             extra.cursor_id = pagination.cursor_id || "";
@@ -380,6 +445,71 @@
             }
         } catch (ignore) {}
         return "telar_" + String(Date.now()) + "_" + String(Math.random()).replace("0.", "");
+    }
+
+    function dateInputValue(value) {
+        var date = value ? new Date(value) : new Date(Date.now() + 86400000);
+        var local;
+        if (isNaN(date.getTime())) { date = new Date(Date.now() + 86400000); }
+        local = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+        return local.toISOString().slice(0, 16);
+    }
+
+    function taskItem(taskId) {
+        var sources = [
+            state.cache.tareas && state.cache.tareas.items || [],
+            state.conversation && state.conversation.data && state.conversation.data.tasks && state.conversation.data.tasks.items || []
+        ];
+        var found = null;
+        sources.some(function (items) {
+            return items.some(function (item) {
+                if (String(item.id) === String(taskId)) { found = item; return true; }
+                return false;
+            });
+        });
+        return found;
+    }
+
+    function taskAssignedOptions(users, selected) {
+        var canTeam = !!(state.context && state.context.usuario && state.context.usuario.puede_ver_equipo);
+        var currentId = state.context && state.context.usuario && state.context.usuario.ghl_user_id || "";
+        var html = canTeam ? "<option value='' " + (!selected ? "selected" : "") + ">Sin asignar</option>" : "";
+        (users || []).forEach(function (user) {
+            if (!canTeam && String(user.id) !== String(currentId)) { return; }
+            html += "<option value='" + escapeHtml(user.id) + "' " + (String(selected) === String(user.id) ? "selected" : "") + ">" + escapeHtml(user.nombre || "Usuario") + "</option>";
+        });
+        return html;
+    }
+
+    function renderTaskEditor(editor, users) {
+        var task = editor.task || {};
+        var creating = !task.id;
+        return "<form class='ghl-task-editor' data-ghl-task-form><header><div><small>" + (creating ? "NUEVA TAREA" : "EDITAR TAREA") + "</small><strong>" + escapeHtml(editor.contactName || task.contacto_nombre || "Contacto") + "</strong></div><button type='button' data-ghl-action='cancel-task-editor' title='Cerrar editor'><i class='fa-solid fa-xmark'></i></button></header><input type='hidden' name='task_id' value='" + escapeHtml(task.id || "") + "'><input type='hidden' name='contact_id' value='" + escapeHtml(editor.contactId || task.contact_id || "") + "'><label><span>Título</span><input name='titulo' maxlength='180' required value='" + escapeHtml(task.titulo || "") + "'></label><label><span>Descripción</span><textarea name='descripcion' maxlength='1000' rows='2'>" + escapeHtml(task.descripcion || "") + "</textarea></label><div class='ghl-task-editor__row'><label><span>Vencimiento</span><input type='datetime-local' name='fecha_vencimiento' required value='" + escapeHtml(dateInputValue(task.fecha_vencimiento)) + "'></label><label><span>Responsable</span><select name='assigned_to'>" + taskAssignedOptions(users, task.assigned_to || "") + "</select></label><button type='submit' class='ghl-btn ghl-btn--primary'><i class='fa-solid fa-floppy-disk'></i> Guardar</button></div><div class='ghl-modal-message ghl-modal-message--error' data-task-error hidden></div></form>";
+    }
+
+    function renderContactTasks(data, item) {
+        var tasks = data.tasks;
+        var html = "<details class='ghl-contact-tasks' " + (state.taskEditor && state.taskEditor.source === "contact" ? "open" : "") + "><summary><span><i class='fa-solid fa-list-check'></i><strong>Tareas del contacto</strong><small>";
+        if (!data.puede_ver_tareas) { return ""; }
+        if (!tasks || tasks.loading) { html += "Consultando…"; }
+        else if (tasks.error) { html += "No disponibles"; }
+        else { html += Number(tasks.total || 0) + " visible(s)"; }
+        html += "</small></span><i class='fa-solid fa-chevron-down'></i></summary><div class='ghl-contact-tasks__body'>";
+        if (!tasks || tasks.loading) {
+            html += "<p><i class='fa-solid fa-spinner fa-spin'></i> Actualizando tareas…</p>";
+        } else if (tasks.error) {
+            html += "<p class='ghl-inline-error'>" + escapeHtml(tasks.error) + "</p>";
+        } else {
+            if (tasks.permiso_gestionar && !tasks.gestion_habilitada) { html += "<p class='ghl-task-write-pending'><i class='fa-solid fa-shield-halved'></i> Gestión pendiente de habilitación privada.</p>"; }
+            if (tasks.puede_gestionar) { html += "<button type='button' class='ghl-btn ghl-btn--ghost ghl-task-new' data-ghl-action='new-contact-task'><i class='fa-solid fa-plus'></i> Nueva tarea</button>"; }
+            if (state.taskEditor && state.taskEditor.source === "contact") { html += renderTaskEditor(state.taskEditor, tasks.usuarios || []); }
+            (tasks.items || []).forEach(function (task) {
+                var status = taskStatus(task);
+                html += "<article class='ghl-contact-task " + status.css + "'><button type='button' data-ghl-action='complete-task' data-task-id='" + escapeHtml(task.id) + "' data-contact-id='" + escapeHtml(task.contact_id || item.contact_id) + "' data-assigned-to='" + escapeHtml(task.assigned_to || "") + "' data-completed='" + (task.completada ? "1" : "0") + "' " + (!tasks.puede_gestionar ? "disabled" : "") + "><i class='fa-solid " + (task.completada ? "fa-circle-check" : "fa-circle") + "'></i></button><div><strong>" + escapeHtml(task.titulo || "Tarea") + "</strong><small>" + dateLabel(task.fecha_vencimiento) + " · " + escapeHtml(task.responsable || "Sin asignar") + "</small></div>" + (tasks.puede_gestionar ? "<button type='button' data-ghl-action='edit-contact-task' data-task-id='" + escapeHtml(task.id) + "' title='Editar'><i class='fa-solid fa-pen'></i></button>" : "") + "</article>";
+            });
+            if (!(tasks.items || []).length && !(state.taskEditor && state.taskEditor.source === "contact")) { html += "<p>No hay tareas visibles para este contacto.</p>"; }
+        }
+        return html + "</div></details>";
     }
 
     function remainingWindow(seconds) {
@@ -636,7 +766,7 @@
         var item = selected.item || {};
         var data = selected.data || {};
         var messages = data.items || [];
-        var html = "<section class='ghl-modal ghl-conversation-modal' role='dialog' aria-modal='true'><header><div><small>HISTORIAL Y RESPUESTA PROTEGIDA</small><h2>" + escapeHtml(item.nombre || "Conversación") + "</h2><p>" + escapeHtml(channelLabel(item.canal)) + " · " + escapeHtml(item.telefono || "Sin teléfono disponible") + "</p></div><button type='button' data-ghl-action='close-settings' title='Cerrar'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'><div class='ghl-conversation-scroll'>";
+        var html = "<section class='ghl-modal ghl-conversation-modal' role='dialog' aria-modal='true'><header><div><small>HISTORIAL Y RESPUESTA PROTEGIDA</small><h2>" + escapeHtml(item.nombre || "Conversación") + "</h2><p>" + escapeHtml(channelLabel(item.canal)) + " · " + escapeHtml(item.telefono || "Sin teléfono disponible") + "</p></div><button type='button' data-ghl-action='close-settings' title='Cerrar'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'>" + renderContactTasks(data, item) + "<div class='ghl-conversation-scroll'>";
         if (data.paginacion && data.paginacion.hay_mas) {
             html += "<div class='ghl-older'><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='load-older-messages'><i class='fa-solid fa-clock-rotate-left'></i> Cargar mensajes anteriores</button></div>";
         }
@@ -687,8 +817,20 @@
         layer.innerHTML = "<section class='ghl-modal ghl-conversation-modal'><header><div><small>HISTORIAL Y RESPUESTA PROTEGIDA</small><h2>" + escapeHtml(item.nombre) + "</h2></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-loading'><i class='fa-solid fa-spinner fa-spin'></i><strong>Cargando conversación…</strong></div></section>";
         request("mensajes_conversacion", { conversation_id: item.id, limite: 50 }, 45000).then(function (data) {
             state.conversation = { item: item, data: data };
+            if (data.puede_ver_tareas && item.contact_id) { state.conversation.data.tasks = { loading: true }; }
             renderConversationDetail();
             loadTemplatesForConversation(state.conversation);
+            if (data.puede_ver_tareas && item.contact_id) {
+                request("tareas_contacto", { contact_id: item.contact_id, contacto_nombre: item.nombre }, 45000).then(function (tasks) {
+                    if (!state.conversation || String(state.conversation.item.id) !== String(item.id)) { return; }
+                    state.conversation.data.tasks = tasks;
+                    renderConversationDetail();
+                }).catch(function (taskError) {
+                    if (!state.conversation || String(state.conversation.item.id) !== String(item.id)) { return; }
+                    state.conversation.data.tasks = { error: taskError.message, total: 0, items: [] };
+                    renderConversationDetail();
+                });
+            }
         }).catch(function (error) {
             layer.innerHTML = "<section class='ghl-modal ghl-conversation-modal'><header><h2>No se pudo abrir la conversación</h2><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-modal__body'><p class='ghl-inline-error'>" + escapeHtml(error.message) + "</p></div></section>";
         });
@@ -711,7 +853,10 @@
             data.ventana_whatsapp = selected.data.ventana_whatsapp || data.ventana_whatsapp;
             data.puede_responder = selected.data.puede_responder;
             data.puede_enviar_plantilla = selected.data.puede_enviar_plantilla;
+            data.puede_ver_tareas = selected.data.puede_ver_tareas;
+            data.puede_gestionar_tareas = selected.data.puede_gestionar_tareas;
             data.envio_habilitado = selected.data.envio_habilitado;
+            data.tasks = selected.data.tasks;
             data.plantillas = selected.data.plantillas;
             data.plantillas_error = selected.data.plantillas_error;
             selected.data = data;
@@ -724,10 +869,129 @@
         });
     }
 
+    function openTaskEditor(taskId, source) {
+        var task = taskId ? taskItem(taskId) : {};
+        var item = state.conversation && state.conversation.item || {};
+        if (taskId && !task) { setMessage("La tarea seleccionada ya no está disponible.", "error"); return; }
+        state.taskEditor = {
+            source: source,
+            task: task || {},
+            contactId: task && task.contact_id || item.contact_id || "",
+            contactName: task && task.contacto_nombre || item.nombre || "Contacto"
+        };
+        if (source === "contact") { renderConversationDetail(); }
+        else { renderTab("tareas", state.cache.tareas || { items: [], usuarios: [] }); }
+    }
+
+    function closeTaskEditor() {
+        var source = state.taskEditor && state.taskEditor.source;
+        state.taskEditor = null;
+        if (source === "contact" && state.conversation) { renderConversationDetail(); }
+        else if (state.tab === "tareas" && state.cache.tareas) { renderTab("tareas", state.cache.tareas); }
+    }
+
+    function refreshContactTasks() {
+        var selected = state.conversation;
+        if (!selected || !selected.item || !selected.item.contact_id) { return Promise.resolve(); }
+        selected.data.tasks = { loading: true };
+        renderConversationDetail();
+        return request("tareas_contacto", {
+            contact_id: selected.item.contact_id,
+            contacto_nombre: selected.item.nombre
+        }, 45000).then(function (tasks) {
+            if (!state.conversation || String(state.conversation.item.id) !== String(selected.item.id)) { return; }
+            state.conversation.data.tasks = tasks;
+            renderConversationDetail();
+        }).catch(function (error) {
+            if (state.conversation) {
+                state.conversation.data.tasks = { error: error.message, total: 0, items: [] };
+                renderConversationDetail();
+            }
+        });
+    }
+
+    function submitTask(form) {
+        var button = form.querySelector("button[type='submit']");
+        var error = form.querySelector("[data-task-error]");
+        var taskId = form.querySelector("[name='task_id']").value;
+        var contactId = form.querySelector("[name='contact_id']").value;
+        var title = form.querySelector("[name='titulo']").value.trim();
+        var due = form.querySelector("[name='fecha_vencimiento']").value;
+        var source = state.taskEditor && state.taskEditor.source || "global";
+        if (!contactId || !title || !due) { error.hidden = false; error.textContent = "Complete título, contacto y vencimiento."; return; }
+        button.disabled = true;
+        error.hidden = true;
+        request("gestionar_tarea", {
+            operacion: taskId ? "actualizar" : "crear",
+            task_id: taskId,
+            contact_id: contactId,
+            contacto_nombre: state.taskEditor && state.taskEditor.contactName || "",
+            titulo: title,
+            descripcion: form.querySelector("[name='descripcion']").value.trim(),
+            fecha_vencimiento: new Date(due).toISOString(),
+            assigned_to: form.querySelector("[name='assigned_to']").value,
+            token_cliente: sendToken()
+        }, 50000).then(function () {
+            state.taskEditor = null;
+            delete state.cache.tareas;
+            setMessage("Tarea guardada en GoHighLevel.", "success");
+            if (source === "contact") { refreshContactTasks(); }
+            else { loadTab(true); }
+        }).catch(function (requestError) {
+            error.hidden = false;
+            error.textContent = requestError.message;
+            button.disabled = false;
+        });
+    }
+
+    function completeTask(button) {
+        var completed = button.getAttribute("data-completed") === "1";
+        button.disabled = true;
+        request("gestionar_tarea", {
+            operacion: "completar",
+            task_id: button.getAttribute("data-task-id"),
+            contact_id: button.getAttribute("data-contact-id"),
+            assigned_to: button.getAttribute("data-assigned-to") || "",
+            completada: completed ? 0 : 1,
+            token_cliente: sendToken()
+        }, 50000).then(function () {
+            delete state.cache.tareas;
+            setMessage(completed ? "Tarea reabierta en GoHighLevel." : "Tarea completada en GoHighLevel.", "success");
+            if (state.conversation && !state.root.querySelector("#ghlModalLayer").hidden) { refreshContactTasks(); }
+            else { loadTab(true); }
+        }).catch(function (error) {
+            setMessage(error.message, "error");
+            button.disabled = false;
+        });
+    }
+
+    function syncTasks(button, restart) {
+        if (state.taskSyncRunning && restart) { return; }
+        state.taskSyncRunning = true;
+        button.disabled = true;
+        button.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Sincronizando…";
+        request("sincronizar_tareas_paso", { reiniciar: restart ? 1 : 0 }, 55000).then(function (sync) {
+            if (!state.taskSyncRunning) { return; }
+            if (sync.en_curso) {
+                window.setTimeout(function () { syncTasks(button, false); }, 250);
+                return;
+            }
+            state.taskSyncRunning = false;
+            delete state.cache.tareas;
+            setMessage("Índice de tareas sincronizado: " + Number(sync.contactos_procesados || 0) + " contactos revisados.", "success");
+            loadTab(true);
+        }).catch(function (error) {
+            state.taskSyncRunning = false;
+            setMessage(error.message, "error");
+            button.disabled = false;
+            button.innerHTML = "<i class='fa-solid fa-rotate'></i> Reintentar";
+        });
+    }
+
     function loadTab(force) {
         var action = state.tab;
         var content = state.root.querySelector("#ghlContent");
-        var labels = { conversaciones: "Cargando conversaciones reales…", contactos: "Vinculando contactos con pacientes…", oportunidades: "Cargando pipelines y oportunidades…", calendarios: "Cargando calendarios…", resumen: "Actualizando resumen…", sincronizacion: "Comprobando sincronización…" };
+        var labels = { conversaciones: "Cargando conversaciones reales…", contactos: "Vinculando contactos con pacientes…", oportunidades: "Cargando pipelines y oportunidades…", tareas: "Cargando tareas asignadas…", calendarios: "Cargando calendarios…", resumen: "Actualizando resumen…", sincronizacion: "Comprobando sincronización…" };
         if (state.cache[action] && !force) { renderTab(action, state.cache[action]); return; }
         setLoading(labels[action]);
         request(action, requestPayload(action), action === "resumen" ? 45000 : 40000).then(function (data) {
@@ -747,6 +1011,7 @@
         if (tab === "conversaciones") { content.innerHTML = renderConversations(data); }
         else if (tab === "contactos") { content.innerHTML = renderContacts(data); }
         else if (tab === "oportunidades") { content.innerHTML = renderOpportunities(data); }
+        else if (tab === "tareas") { content.innerHTML = renderTasks(data); }
         else if (tab === "calendarios") { content.innerHTML = renderCalendars(data); }
         else if (tab === "sincronizacion") { content.innerHTML = renderSync(data); }
         else if (tab === "resumen") {
@@ -777,11 +1042,20 @@
         var layer = state.root.querySelector("#ghlModalLayer");
         state.settingsTab = "permisos";
         state.templateSettings = null;
+        state.userSettings = null;
         layer.hidden = false;
         layer.innerHTML = "<section class='ghl-modal'><header><div><small>CONFIGURACIONES Y PERMISOS</small><h2>Preparando equipo…</h2></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-loading'><i class='fa-solid fa-spinner fa-spin'></i></div></section>";
         request("configuracion_permisos").then(function (data) {
             state.settings = data;
             renderSettings();
+            request("configuracion_usuarios_ghl", {}, 50000).then(function (users) {
+                state.userSettings = users;
+                state.users = users;
+                if (state.settings) { renderSettings(); }
+            }).catch(function (userError) {
+                state.userSettings = { items: [], usuarios_telar: [], error: userError.message };
+                if (state.settings) { renderSettings(); }
+            });
             request("plantillas_whatsapp", {}, 50000).then(function (templates) {
                 state.templateSettings = templates;
                 state.templates = null;
@@ -798,9 +1072,25 @@
     function renderPermissionSettings() {
         var rows = "";
         (state.settings.usuarios || []).forEach(function (user) {
-            rows += "<tr data-user='" + Number(user.cod_usuario) + "'><td><div class='ghl-user'>" + avatar(user.nombre, user.avatar, "ghl-avatar--small") + "<span><strong>" + escapeHtml(user.nombre) + "</strong><small>" + escapeHtml(user.local || "Sin local") + "</small></span></div></td><td><label class='ghl-switch'><input type='checkbox' data-permission='view' " + (user.puede_ver ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='reply' " + (user.puede_responder ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='template' " + (user.puede_enviar_plantilla ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='admin' " + (user.puede_configurar ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td></tr>";
+            rows += "<tr data-user='" + Number(user.cod_usuario) + "'><td><div class='ghl-user'>" + avatar(user.nombre, user.avatar, "ghl-avatar--small") + "<span><strong>" + escapeHtml(user.nombre) + "</strong><small>" + escapeHtml(user.local || "Sin local") + "</small></span></div></td><td><label class='ghl-switch'><input type='checkbox' data-permission='view' " + (user.puede_ver ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='reply' " + (user.puede_responder ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='template' " + (user.puede_enviar_plantilla ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='tasks' " + (user.puede_ver_tareas ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='team' " + (user.puede_ver_equipo ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='manage-tasks' " + (user.puede_gestionar_tareas ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td><td><label class='ghl-switch'><input type='checkbox' data-permission='admin' " + (user.puede_configurar ? "checked" : "") + " " + (user.bloqueado ? "disabled" : "") + "><span></span></label></td></tr>";
         });
-        return "<div class='ghl-security-note'><i class='fa-solid fa-lock'></i><p><strong>El token nunca se muestra aquí.</strong><br>Responde habilita texto libre dentro de 24 horas; Plantillas habilita mensajes aprobados fuera de esa ventana. Ninguno permite editar contactos, oportunidades ni flujos.</p></div><div class='ghl-permission-table'><table><thead><tr><th>Usuario</th><th>Puede ver</th><th>Responde</th><th>Plantillas</th><th>Administra</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
+        return "<div class='ghl-security-note'><i class='fa-solid fa-lock'></i><p><strong>Permisos independientes y auditados.</strong><br>Equipo permite filtrar asignaciones ajenas; Gestiona tareas permite crear, editar y completar en GoHighLevel. No habilita cambios en oportunidades ni automatizaciones.</p></div><div class='ghl-permission-table'><table><thead><tr><th>Usuario</th><th>Puede ver</th><th>Responde</th><th>Plantillas</th><th>Ve tareas</th><th>Ve equipo</th><th>Gestiona tareas</th><th>Administra</th></tr></thead><tbody>" + rows + "</tbody></table></div>";
+    }
+
+    function renderUserSettings() {
+        var data = state.userSettings;
+        var telarOptions;
+        var rows = "";
+        if (!data) { return "<div class='ghl-template-loading'><i class='fa-solid fa-spinner fa-spin'></i><span>Consultando responsables…</span></div>"; }
+        if (data.error) { return "<div class='ghl-security-note is-warning'><i class='fa-solid fa-triangle-exclamation'></i><p><strong>No se pudo consultar el equipo.</strong><br>" + escapeHtml(data.error) + "</p></div>"; }
+        (data.items || []).forEach(function (user) {
+            telarOptions = "<option value='0'>Sin vincular</option>";
+            (data.usuarios_telar || []).forEach(function (telar) {
+                telarOptions += "<option value='" + Number(telar.cod_usuario) + "' " + (Number(user.cod_usuario) === Number(telar.cod_usuario) ? "selected" : "") + ">" + escapeHtml(telar.nombre) + " · " + escapeHtml(telar.local || "Sin local") + "</option>";
+            });
+            rows += "<article class='ghl-user-link' data-ghl-user-id='" + escapeHtml(user.id) + "'><div>" + avatar(user.nombre, user.avatar, "ghl-avatar--small") + "<span><strong>" + escapeHtml(user.nombre) + "</strong><small>" + escapeHtml(user.estado === "vinculado" ? "Vinculado" : "Requiere revisión") + " · " + escapeHtml(user.fuente || "sin fuente") + "</small></span></div><label><span>Usuario de Telar</span><select data-ghl-telar-user>" + telarOptions + "</select></label></article>";
+        });
+        return (data.advertencia ? "<div class='ghl-security-note is-warning'><i class='fa-solid fa-triangle-exclamation'></i><p>" + escapeHtml(data.advertencia) + " Se conserva el último catálogo disponible.</p></div>" : "") + "<div class='ghl-user-link-note'><i class='fa-solid fa-link'></i><p>Telar intenta vincular por correo exacto y único. Aquí puede corregirlo manualmente; no se guarda ni se muestra el correo de GoHighLevel.</p></div><div class='ghl-user-links'>" + (rows || "<p class='ghl-inline-error'>No se recibieron usuarios de la subcuenta.</p>") + "</div>";
     }
 
     function renderTemplateSettings() {
@@ -822,15 +1112,16 @@
     function renderSettings() {
         var layer = state.root.querySelector("#ghlModalLayer");
         var permissionsActive = state.settingsTab === "permisos";
-        var body = permissionsActive ? renderPermissionSettings() : renderTemplateSettings();
-        var saveAction = permissionsActive ? "save-settings" : "save-template-settings";
-        var saveLabel = permissionsActive ? "Guardar permisos" : "Guardar catálogo";
-        var disableSave = !permissionsActive && (!state.templateSettings || state.templateSettings.error);
-        layer.innerHTML = "<section class='ghl-modal ghl-settings-modal' role='dialog' aria-modal='true'><header><div><small>ENGRANAJE DEL MÓDULO</small><h2>Configuraciones y permisos</h2><p>Administre accesos y el catálogo aprobado sin modificar automatizaciones.</p></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><nav class='ghl-settings-tabs'><button type='button' data-ghl-action='settings-tab' data-settings-tab='permisos' class='" + (permissionsActive ? "is-active" : "") + "'><i class='fa-solid fa-user-shield'></i> Permisos</button><button type='button' data-ghl-action='settings-tab' data-settings-tab='plantillas' class='" + (!permissionsActive ? "is-active" : "") + "'><i class='fa-solid fa-file-lines'></i> Plantillas de WhatsApp</button></nav><div class='ghl-modal__body'>" + body + "<div id='ghlSettingsMessage' class='ghl-modal-message' hidden></div></div><footer><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cerrar</button><button type='button' class='ghl-btn ghl-btn--primary' data-ghl-action='" + saveAction + "' " + (disableSave ? "disabled" : "") + "><i class='fa-solid fa-floppy-disk'></i>" + saveLabel + "</button></footer></section>";
+        var usersActive = state.settingsTab === "usuarios";
+        var body = permissionsActive ? renderPermissionSettings() : (usersActive ? renderUserSettings() : renderTemplateSettings());
+        var saveAction = permissionsActive ? "save-settings" : (usersActive ? "save-user-settings" : "save-template-settings");
+        var saveLabel = permissionsActive ? "Guardar permisos" : (usersActive ? "Guardar vínculos" : "Guardar catálogo");
+        var disableSave = usersActive ? (!state.userSettings || state.userSettings.error) : (!permissionsActive && (!state.templateSettings || state.templateSettings.error));
+        layer.innerHTML = "<section class='ghl-modal ghl-settings-modal' role='dialog' aria-modal='true'><header><div><small>ENGRANAJE DEL MÓDULO</small><h2>Configuraciones y permisos</h2><p>Administre accesos, responsables y catálogo sin modificar automatizaciones.</p></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><nav class='ghl-settings-tabs'><button type='button' data-ghl-action='settings-tab' data-settings-tab='permisos' class='" + (permissionsActive ? "is-active" : "") + "'><i class='fa-solid fa-user-shield'></i> Permisos</button><button type='button' data-ghl-action='settings-tab' data-settings-tab='usuarios' class='" + (usersActive ? "is-active" : "") + "'><i class='fa-solid fa-users-gear'></i> Responsables</button><button type='button' data-ghl-action='settings-tab' data-settings-tab='plantillas' class='" + (state.settingsTab === "plantillas" ? "is-active" : "") + "'><i class='fa-solid fa-file-lines'></i> Plantillas de WhatsApp</button></nav><div class='ghl-modal__body'>" + body + "<div id='ghlSettingsMessage' class='ghl-modal-message' hidden></div></div><footer><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cerrar</button><button type='button' class='ghl-btn ghl-btn--primary' data-ghl-action='" + saveAction + "' " + (disableSave ? "disabled" : "") + "><i class='fa-solid fa-floppy-disk'></i>" + saveLabel + "</button></footer></section>";
     }
 
     function selectSettingsTab(tab) {
-        state.settingsTab = tab === "plantillas" ? "plantillas" : "permisos";
+        state.settingsTab = tab === "plantillas" || tab === "usuarios" ? tab : "permisos";
         renderSettings();
     }
 
@@ -840,6 +1131,7 @@
         layer.innerHTML = "";
         state.settings = null;
         state.templateSettings = null;
+        state.userSettings = null;
         state.conversation = null;
         state.pendingTemplate = null;
     }
@@ -852,8 +1144,11 @@
             var view = row.querySelector("[data-permission='view']");
             var reply = row.querySelector("[data-permission='reply']");
             var template = row.querySelector("[data-permission='template']");
+            var tasks = row.querySelector("[data-permission='tasks']");
+            var team = row.querySelector("[data-permission='team']");
+            var manageTasks = row.querySelector("[data-permission='manage-tasks']");
             var admin = row.querySelector("[data-permission='admin']");
-            permissions.push({ cod_usuario: Number(row.getAttribute("data-user")), puede_ver: view.checked ? 1 : 0, puede_responder: reply.checked ? 1 : 0, puede_enviar_plantilla: template.checked ? 1 : 0, puede_configurar: admin.checked ? 1 : 0 });
+            permissions.push({ cod_usuario: Number(row.getAttribute("data-user")), puede_ver: view.checked ? 1 : 0, puede_responder: reply.checked ? 1 : 0, puede_enviar_plantilla: template.checked ? 1 : 0, puede_ver_tareas: tasks.checked ? 1 : 0, puede_ver_equipo: team.checked ? 1 : 0, puede_gestionar_tareas: manageTasks.checked ? 1 : 0, puede_configurar: admin.checked ? 1 : 0 });
         });
         button.disabled = true;
         message.hidden = false;
@@ -864,6 +1159,35 @@
             message.className = "ghl-modal-message ghl-modal-message--success";
             message.textContent = "Permisos guardados correctamente.";
             button.disabled = false;
+        }).catch(function (error) {
+            message.className = "ghl-modal-message ghl-modal-message--error";
+            message.textContent = error.message;
+            button.disabled = false;
+        });
+    }
+
+    function saveUserSettings(button) {
+        var links = [];
+        var message = state.root.querySelector("#ghlSettingsMessage");
+        Array.prototype.forEach.call(state.root.querySelectorAll("[data-ghl-user-id]"), function (row) {
+            links.push({
+                ghl_user_id: row.getAttribute("data-ghl-user-id"),
+                cod_usuario: Number(row.querySelector("[data-ghl-telar-user]").value || 0)
+            });
+        });
+        button.disabled = true;
+        message.hidden = false;
+        message.className = "ghl-modal-message ghl-modal-message--info";
+        message.textContent = "Guardando vínculos y trazabilidad…";
+        request("guardar_vinculos_usuarios", { vinculos: JSON.stringify(links) }, 50000).then(function (data) {
+            state.userSettings = data;
+            state.users = data;
+            if (state.context && state.context.usuario) { state.context.usuario.ghl_user_id = data.usuario_actual_ghl_id || ""; }
+            renderSettings();
+            message = state.root.querySelector("#ghlSettingsMessage");
+            message.hidden = false;
+            message.className = "ghl-modal-message ghl-modal-message--success";
+            message.textContent = "Responsables vinculados correctamente.";
         }).catch(function (error) {
             message.className = "ghl-modal-message ghl-modal-message--error";
             message.textContent = error.message;
@@ -929,7 +1253,20 @@
                 : "Configuración pendiente";
             connection.className = "ghl-connection " + (data.integracion && data.integracion.configurado ? "is-online" : "is-pending");
             state.root.querySelector("#ghlSettingsButton").hidden = !(data.usuario && data.usuario.puede_configurar);
-            loadTab(true);
+            Array.prototype.forEach.call(state.root.querySelectorAll("[data-ghl-tab='tareas']"), function (button) {
+                button.hidden = !(data.usuario && data.usuario.puede_ver_tareas);
+            });
+            state.filters.conversaciones.assignedTo = data.usuario && data.usuario.puede_ver_equipo ? "all" : "mine";
+            state.filters.tareas.assignedTo = data.usuario && data.usuario.puede_ver_equipo ? "all" : "mine";
+            request("usuarios_ghl", {}, 50000).then(function (users) {
+                state.users = users;
+                if (state.context && state.context.usuario) { state.context.usuario.ghl_user_id = users.usuario_actual_ghl_id || state.context.usuario.ghl_user_id || ""; }
+                if (users.advertencia) { setMessage(users.advertencia, "info"); }
+                loadTab(true);
+            }).catch(function () {
+                state.users = { items: [] };
+                loadTab(true);
+            });
         }).catch(function (error) {
             connection.textContent = "Sin conexión";
             connection.className = "ghl-connection is-offline";
@@ -961,6 +1298,7 @@
             else if (action === "settings") { openSettings(); }
             else if (action === "close-settings") { closeSettings(); }
             else if (action === "save-settings") { saveSettings(button); }
+            else if (action === "save-user-settings") { saveUserSettings(button); }
             else if (action === "save-template-settings") { saveTemplateSettings(button); }
             else if (action === "settings-tab") { selectSettingsTab(button.getAttribute("data-settings-tab")); }
             else if (action === "clear-search") {
@@ -973,11 +1311,18 @@
             else if (action === "load-older-messages") { loadOlderMessages(button); }
             else if (action === "cancel-template-send") { cancelTemplateSend(); }
             else if (action === "confirm-template-send") { sendTemplate(button); }
+            else if (action === "sync-tasks") { syncTasks(button, true); }
+            else if (action === "new-contact-task") { openTaskEditor("", "contact"); }
+            else if (action === "edit-contact-task") { openTaskEditor(button.getAttribute("data-task-id"), "contact"); }
+            else if (action === "edit-task") { openTaskEditor(button.getAttribute("data-task-id"), "global"); }
+            else if (action === "cancel-task-editor") { closeTaskEditor(); }
+            else if (action === "complete-task") { completeTask(button); }
         });
         state.root.addEventListener("submit", function (event) {
             var form = event.target.closest("[data-ghl-search-form]");
             var sendForm = event.target.closest("[data-ghl-send-form]");
             var templateForm = event.target.closest("[data-ghl-template-form]");
+            var taskForm = event.target.closest("[data-ghl-task-form]");
             var tab;
             var input;
             if (sendForm) {
@@ -990,6 +1335,11 @@
                 prepareTemplateSend(templateForm);
                 return;
             }
+            if (taskForm) {
+                event.preventDefault();
+                submitTask(taskForm);
+                return;
+            }
             if (!form) { return; }
             event.preventDefault();
             tab = form.getAttribute("data-ghl-search-form");
@@ -1000,9 +1350,18 @@
             var field = event.target;
             var row;
             if (field.matches("[data-ghl-template-select]")) { updateTemplateSelection(); return; }
-            if (!field.matches("[data-permission='admin'],[data-permission='reply'],[data-permission='template']")) { return; }
+            if (field.matches("[data-ghl-filter]")) {
+                var filterTab = field.getAttribute("data-filter-tab");
+                if (field.getAttribute("data-ghl-filter") === "assigned") { state.filters[filterTab].assignedTo = field.value; }
+                else { state.filters[filterTab].estado = field.value; }
+                delete state.cache[filterTab];
+                loadTab(true);
+                return;
+            }
+            if (!field.matches("[data-permission='admin'],[data-permission='reply'],[data-permission='template'],[data-permission='tasks'],[data-permission='team'],[data-permission='manage-tasks']")) { return; }
             row = field.closest("[data-user]");
             if (field.checked && row) { row.querySelector("[data-permission='view']").checked = true; }
+            if (field.checked && field.getAttribute("data-permission") === "manage-tasks" && row) { row.querySelector("[data-permission='tasks']").checked = true; }
         });
         state.root.addEventListener("input", function (event) {
             if (event.target.matches("[data-ghl-manual-reply]")) { resizeManualReply(event.target); return; }
