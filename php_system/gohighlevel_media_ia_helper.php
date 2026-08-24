@@ -320,8 +320,10 @@ function goHighLevelDescargarAdjunto($mysqli, $fila, $config)
     }
     $finfo = function_exists('finfo_open') ? finfo_open(FILEINFO_MIME_TYPE) : false;
     $mime = $finfo ? (string)finfo_file($finfo, $temporal) : strtok($mimeCabecera, ';');
-    if ($finfo) {
+    if ($finfo && PHP_VERSION_ID < 80500) {
         finfo_close($finfo);
+    } elseif ($finfo) {
+        unset($finfo);
     }
     $mime = strtolower(trim((string)$mime));
     if (!goHighLevelMimeAdjuntoPermitido($mime)) {
