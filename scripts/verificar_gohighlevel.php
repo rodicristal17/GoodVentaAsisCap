@@ -40,6 +40,7 @@ $archivos = array(
     'actualizacion_24082026_gohighlevel_adjuntos_ia.sql',
     'actualizacion_24082026_gohighlevel_adjuntos_ia_rollback.sql',
     'scripts/procesar_gohighlevel_ia.php',
+    'scripts/verificar_gohighlevel_piloto_ia.php',
     'scripts/verificar_migracion_gohighlevel_tareas.sh',
     'scripts/verificar_gohighlevel_capacidades.php',
     'scripts/fixtures/gohighlevel_tareas_schema_minimo.sql',
@@ -211,6 +212,12 @@ ghlVerificar(strpos($compose, 'TELAR_GOHIGHLEVEL_WRITE_ENABLED: ${TELAR_GOHIGHLE
 ghlVerificar(strpos($compose, 'TELAR_GOHIGHLEVEL_TASK_WRITE_ENABLED: ${TELAR_GOHIGHLEVEL_TASK_WRITE_ENABLED:-false}') !== false, 'La escritura de tareas debe permanecer apagada por defecto.');
 ghlVerificar(strpos($compose, 'TELAR_GOHIGHLEVEL_COMPANY_ID') !== false, 'Compose debe admitir el company ID opcional.');
 ghlVerificar(strpos($compose, 'TELAR_DEEPSEEK_AUTO_REPLY_ENABLED: ${TELAR_DEEPSEEK_AUTO_REPLY_ENABLED:-false}') !== false, 'La respuesta automatica debe permanecer apagada por defecto.');
+ghlVerificar(strpos($compose, 'TELAR_DEEPSEEK_AUTO_SCOPE: ${TELAR_DEEPSEEK_AUTO_SCOPE:-pilot}') !== false, 'La respuesta automatica debe iniciar limitada al piloto.');
+ghlVerificar(strpos($compose, 'TELAR_DEEPSEEK_AUTO_REPLY_DELAY_SECONDS: ${TELAR_DEEPSEEK_AUTO_REPLY_DELAY_SECONDS:-120}') !== false, 'El relevo automatico debe esperar dos minutos por defecto.');
+ghlVerificar(strpos($compose, 'TELAR_DEEPSEEK_PILOT_CONTACT_IDS_FILE: /run/secrets/deepseek_pilot_contact_ids') !== false, 'La lista piloto debe permanecer fuera del repositorio.');
+ghlVerificar(strpos($mediaIa, 'goHighLevelAutomaticoContactoPermitido') !== false, 'Falta limitar el automatico a contactos autorizados.');
+ghlVerificar(strpos($mediaIa, 'goHighLevelAutomaticoMensajeListo') !== false, 'Falta respetar el tiempo de relevo.');
+ghlVerificar(strpos($helper, 'esperar_ultimo_mensaje_id') !== false, 'Falta revalidar la conversacion inmediatamente antes de enviar.');
 ghlVerificar(strpos($compose, 'telar_ghl_media:/var/lib/telar/gohighlevel_adjuntos') !== false, 'Los adjuntos deben usar un volumen persistente.');
 ghlVerificar(strpos($compose, './secrets:/run/secrets:ro') !== false, 'El secreto debe montarse en modo lectura.');
 ghlVerificar(strpos($migracion, 'gohighlevel_permiso_usuario') !== false, 'Falta tabla de permisos.');

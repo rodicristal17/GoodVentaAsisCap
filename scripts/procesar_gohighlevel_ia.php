@@ -28,15 +28,33 @@ try {
         || empty($ia['automatico_habilitado']) || empty($ia['clave_configurada'])) {
         exit(0);
     }
+    $automatico = array(
+        'alcance' => isset($deepseek['automatico_alcance']) ? $deepseek['automatico_alcance'] : 'pilot',
+        'retardo_segundos' => isset($deepseek['automatico_retardo_segundos'])
+            ? intval($deepseek['automatico_retardo_segundos']) : 120,
+        'contactos_piloto' => isset($deepseek['automatico_contactos_piloto'])
+            && is_array($deepseek['automatico_contactos_piloto'])
+            ? $deepseek['automatico_contactos_piloto'] : array()
+    );
+    if ($automatico['alcance'] !== 'all' && count($automatico['contactos_piloto']) === 0) {
+        exit(0);
+    }
     $contexto = goHighLevelContextoUsuario($mysqli, 5994);
     $respuesta = goHighLevelApiGet($config, '/conversations/search', array(
         'locationId' => $config['location_id'],
-        'limit' => 20
+        'limit' => 100,
+        'sort' => 'desc'
     ));
     $procesadas = 0;
     foreach (goHighLevelItems($respuesta, array('conversations')) as $conversacion) {
         if ($procesadas >= 2 || !is_array($conversacion)) {
             break;
+        }
+        $contactId = goHighLevelIdSeguro(
+            goHighLevelValor($conversacion, array('contactId', 'contact_id'), '')
+        );
+        if (!goHighLevelAutomaticoContactoPermitido($automatico, $contactId)) {
+            continue;
         }
         $conversationId = goHighLevelIdSeguro(goHighLevelValor($conversacion, array('id', '_id'), ''));
         if ($conversationId === '') {
@@ -51,8 +69,10 @@ try {
             continue;
         }
         $ultimo = $mensajes[count($mensajes) - 1];
-        if (strtolower((string)$ultimo['direccion']) !== 'inbound'
-            || strpos(strtolower((string)$ultimo['tipo']), 'whatsapp') === false) {
+        if (!goHighLevelAutomaticoMensajeListo(
+            $ultimo,
+            $automatico['retardo_segundos']
+        )) {
             continue;
         }
         $messageId = goHighLevelIdSeguro($ultimo['id']);
@@ -86,12 +106,34 @@ try {
             || floatval($sugerencia['confianza']) < 0.88) {
             continue;
         }
+        $historialActual = goHighLevelListarMensajesConversacion($config, array(
+            'conversation_id' => $conversationId,
+            'limite' => 20
+        ));
+        $mensajesActuales = isset($historialActual['items']) ? $historialActual['items'] : array();
+        $ultimoActual = count($mensajesActuales) > 0
+            ? $mensajesActuales[count($mensajesActuales) - 1] : array();
+        $ultimoActualId = goHighLevelIdSeguro(goHighLevelValor($ultimoActual, array('id'), ''));
+        if ($ultimoActualId !== $messageId
+            || !goHighLevelAutomaticoMensajeListo($ultimoActual, $automatico['retardo_segundos'])) {
+            $stmtCancelado = $mysqli->prepare(
+                "UPDATE gohighlevel_ia_operacion SET estado='cancelada',codigo_resultado='relevo_cancelado',"
+                ."fecha_actualizacion=NOW() WHERE token_cliente=? LIMIT 1"
+            );
+            if ($stmtCancelado) {
+                $stmtCancelado->bind_param('s', $token);
+                $stmtCancelado->execute();
+                $stmtCancelado->close();
+            }
+            continue;
+        }
         $tokenEnvio = substr(hash('sha256', 'auto-envio|'.$config['location_id'].'|'.$messageId), 0, 48);
         goHighLevelEnviarRespuestaManual($mysqli, $config, $contexto, array(
             'conversation_id' => $conversationId,
             'mensaje' => $sugerencia['respuesta'],
             'token_envio' => $tokenEnvio,
-            'confirmar_reglas' => 1
+            'confirmar_reglas' => 1,
+            'esperar_ultimo_mensaje_id' => $messageId
         ));
         $stmtEnviado = $mysqli->prepare(
             "UPDATE gohighlevel_ia_operacion SET estado='enviada',codigo_resultado='respuesta_enviada',"

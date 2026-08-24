@@ -30,6 +30,10 @@ El modo inicial es un borrador: el boton **Sugerir** anonimiza telefonos, correo
 
 Las respuestas automaticas tienen tres interruptores acumulativos: clave instalada, `TELAR_DEEPSEEK_AUTO_REPLY_ENABLED=true` en el servidor y opcion activa en el engranaje. Los tres comienzan apagados. El servicio `gohighlevel-ai-auto` procesa como maximo dos conversaciones por ciclo, exige una confianza minima de 0,88 y reutiliza todas las validaciones del envio manual. Mientras el interruptor del servidor siga en `false`, la opcion visual permanece bloqueada y el servicio no consulta DeepSeek ni envia mensajes.
 
+La activacion inicial usa alcance `pilot`. Los identificadores de contacto permitidos se leen desde el archivo privado `deepseek_pilot_contact_ids`; si el archivo falta o queda vacio, el procesador no responde a nadie. Cada nuevo mensaje entrante debe permanecer sin respuesta durante 120 segundos antes del relevo. Un mensaje posterior del contacto reinicia la espera, mientras que cualquier respuesta saliente de GoHighLevel o de un funcionario la cancela. Despues de preparar la sugerencia y nuevamente dentro del envio, Telar valida que el ultimo mensaje siga siendo el mismo inbound; esto evita superponer respuestas aunque la conversacion cambie durante la consulta a DeepSeek.
+
+El alcance `all` existe para una etapa futura, pero requiere configurarlo de manera explicita. No debe usarse durante el piloto ni antes de verificar paginacion completa, derivacion con tareas y convivencia con los workflows existentes.
+
 ## Vinculacion con pacientes
 
 Cada contacto consultado se compara con `central_telefonica_paciente_telefono` usando el telefono normalizado. Se vincula automaticamente solo cuando existe exactamente un paciente coincidente. Si existen varias coincidencias, el modulo muestra una advertencia y no elige un paciente. Si no existe coincidencia, permanece sin vincular.
@@ -83,6 +87,9 @@ Variables no sensibles:
 - `TELAR_DEEPSEEK_MODEL` (`deepseek-v4-flash` por defecto)
 - `TELAR_DEEPSEEK_AUTO_REPLY_ENABLED` (`false` por defecto)
 - `TELAR_DEEPSEEK_AUTO_INTERVAL_SECONDS` (30 segundos por defecto)
+- `TELAR_DEEPSEEK_AUTO_SCOPE` (`pilot` por defecto; `all` requiere una decision operativa posterior)
+- `TELAR_DEEPSEEK_AUTO_REPLY_DELAY_SECONDS` (120 segundos por defecto)
+- `TELAR_DEEPSEEK_PILOT_CONTACT_IDS_FILE` (archivo privado montado en `/run/secrets/deepseek_pilot_contact_ids`)
 
 Los permisos externos y sus interruptores deben habilitarse juntos. Mensajes y tareas usan interruptores separados para que ampliar tareas no altere WhatsApp.
 

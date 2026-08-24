@@ -376,13 +376,80 @@ function goHighLevelDeepSeekConfiguracion()
         $modelo = 'deepseek-v4-flash';
     }
     $auto = strtolower(trim((string)getenv('TELAR_DEEPSEEK_AUTO_REPLY_ENABLED')));
+    $automatico = goHighLevelAutomaticoConfiguracion();
     return array(
         'base' => 'https://api.deepseek.com',
         'clave' => strlen($clave) >= 20 ? $clave : '',
         'clave_archivo' => $archivo,
         'modelo' => $modelo,
-        'automatico_servidor' => in_array($auto, array('1', 'true', 'yes', 'on'), true)
+        'automatico_servidor' => in_array($auto, array('1', 'true', 'yes', 'on'), true),
+        'automatico_alcance' => $automatico['alcance'],
+        'automatico_retardo_segundos' => $automatico['retardo_segundos'],
+        'automatico_contactos_piloto' => $automatico['contactos_piloto'],
+        'automatico_piloto_configurado' => count($automatico['contactos_piloto']) > 0
     );
+}
+
+function goHighLevelAutomaticoConfiguracion()
+{
+    $alcance = strtolower(trim((string)getenv('TELAR_DEEPSEEK_AUTO_SCOPE')));
+    if (!in_array($alcance, array('pilot', 'all'), true)) {
+        $alcance = 'pilot';
+    }
+    $retardo = intval(getenv('TELAR_DEEPSEEK_AUTO_REPLY_DELAY_SECONDS'));
+    if ($retardo <= 0) {
+        $retardo = 120;
+    }
+    $retardo = max(60, min(1800, $retardo));
+    $archivo = trim((string)getenv('TELAR_DEEPSEEK_PILOT_CONTACT_IDS_FILE'));
+    if ($archivo === '') {
+        $archivo = '/run/secrets/deepseek_pilot_contact_ids';
+    }
+    $contactos = array();
+    if (is_file($archivo) && is_readable($archivo)) {
+        $contenido = trim((string)@file_get_contents($archivo));
+        foreach (preg_split('/[\s,;]+/', $contenido, -1, PREG_SPLIT_NO_EMPTY) as $valor) {
+            $id = goHighLevelIdSeguro($valor);
+            if ($id !== '') {
+                $contactos[$id] = true;
+            }
+        }
+    }
+    return array(
+        'alcance' => $alcance,
+        'retardo_segundos' => $retardo,
+        'contactos_piloto' => array_keys($contactos),
+        'archivo_piloto' => $archivo
+    );
+}
+
+function goHighLevelAutomaticoContactoPermitido($automatico, $contactId)
+{
+    $contactId = goHighLevelIdSeguro($contactId);
+    if ($contactId === '') {
+        return false;
+    }
+    if (isset($automatico['alcance']) && $automatico['alcance'] === 'all') {
+        return true;
+    }
+    $permitidos = isset($automatico['contactos_piloto']) && is_array($automatico['contactos_piloto'])
+        ? $automatico['contactos_piloto'] : array();
+    return in_array($contactId, $permitidos, true);
+}
+
+function goHighLevelAutomaticoMensajeListo($mensaje, $retardoSegundos, $ahora = null)
+{
+    if (!is_array($mensaje)) {
+        return false;
+    }
+    $direccion = strtolower(trim((string)goHighLevelValor($mensaje, array('direccion', 'direction'), '')));
+    $tipo = strtolower(trim((string)goHighLevelValor($mensaje, array('tipo', 'messageType', 'type'), '')));
+    $messageId = goHighLevelIdSeguro(goHighLevelValor($mensaje, array('id', '_id'), ''));
+    $fecha = goHighLevelSegundos(goHighLevelValor($mensaje, array('fecha', 'dateAdded', 'createdAt'), ''));
+    $ahora = $ahora === null ? time() : intval($ahora);
+    $retardoSegundos = max(60, min(1800, intval($retardoSegundos)));
+    return $direccion === 'inbound' && strpos($tipo, 'whatsapp') !== false
+        && $messageId !== '' && $fecha > 0 && $fecha <= ($ahora - $retardoSegundos);
 }
 
 function goHighLevelIaConfiguracionLocal($mysqli)
@@ -409,6 +476,9 @@ function goHighLevelIaConfiguracionLocal($mysqli)
         'reglas_derivacion' => (string)$fila['reglas_derivacion'],
         'clave_configurada' => $deepseek['clave'] !== '',
         'automatico_servidor' => !empty($deepseek['automatico_servidor']),
+        'automatico_alcance' => (string)$deepseek['automatico_alcance'],
+        'automatico_retardo_segundos' => intval($deepseek['automatico_retardo_segundos']),
+        'automatico_piloto_configurado' => !empty($deepseek['automatico_piloto_configurado']),
         'fecha_actualizacion' => (string)$fila['fecha_actualizacion']
     );
 }
@@ -476,7 +546,14 @@ function goHighLevelRiesgoIa($mensajes)
     $inboundRevisados = 0;
     for ($i = count($mensajes) - 1; $i >= 0; $i--) {
         $mensaje = $mensajes[$i];
-        if (!is_array($mensaje) || strtolower((string)$mensaje['direccion']) !== 'inbound') {
+        if (!is_array($mensaje)) {
+            continue;
+        }
+        $direccion = strtolower((string)$mensaje['direccion']);
+        if ($direccion === 'outbound') {
+            break;
+        }
+        if ($direccion !== 'inbound') {
             continue;
         }
         $inboundRevisados++;

@@ -1189,6 +1189,9 @@
         var ai = state.aiSettings;
         var keyReady;
         var autoReady;
+        var pilotMode;
+        var pilotReady;
+        var delayMinutes;
         if (!ai) {
             return "<div class='ghl-template-loading'><i class='fa-solid fa-spinner fa-spin'></i><span>Cargando configuración privada de IA…</span></div>";
         }
@@ -1196,9 +1199,13 @@
             return "<div class='ghl-security-note is-warning'><i class='fa-solid fa-triangle-exclamation'></i><p><strong>No se pudo consultar la IA.</strong><br>" + escapeHtml(ai.error) + "</p></div>";
         }
         keyReady = !!ai.clave_configurada;
-        autoReady = keyReady && !!ai.automatico_servidor;
+        pilotMode = String(ai.automatico_alcance || "pilot") === "pilot";
+        pilotReady = !pilotMode || !!ai.automatico_piloto_configurado;
+        delayMinutes = Math.max(1, Math.round(Number(ai.automatico_retardo_segundos || 120) / 60));
+        autoReady = keyReady && !!ai.automatico_servidor && pilotReady;
         return "<div class='ghl-ai-status " + (keyReady ? "is-ready" : "is-pending") + "'><i class='fa-solid " + (keyReady ? "fa-circle-check" : "fa-key") + "'></i><div><strong>DeepSeek " + (keyReady ? "conectado" : "pendiente de clave privada") + "</strong><p>La clave se instala únicamente en el servidor y nunca se muestra ni se guarda en esta pantalla.</p></div></div>"
             + "<div class='ghl-ai-switches'><label><span><strong>Asistente para borradores</strong><small>Agrega “Sugerir” al chat; el funcionario siempre revisa y envía.</small></span><span class='ghl-switch'><input type='checkbox' data-ghl-ai-field='assistant' " + (ai.asistente_habilitado ? "checked" : "") + " " + (!keyReady ? "disabled" : "") + "><span></span></span></label><label><span><strong>Respuestas automáticas</strong><small>Circuito separado, apagado por defecto y bloqueado para casos sensibles.</small></span><span class='ghl-switch'><input type='checkbox' data-ghl-ai-field='automatic' " + (ai.automatico_habilitado ? "checked" : "") + " " + (!autoReady ? "disabled" : "") + "><span></span></span></label></div>"
+            + (pilotMode ? "<div class='ghl-security-note'><i class='fa-solid fa-flask'></i><p><strong>Modo piloto aislado.</strong><br>Telar sólo puede responder a los contactos autorizados y espera " + delayMinutes + " minuto" + (delayMinutes === 1 ? "" : "s") + " sin respuesta antes de tomar el relevo.</p></div>" : "")
             + (!autoReady ? "<div class='ghl-security-note is-warning'><i class='fa-solid fa-shield-halved'></i><p><strong>Automatización todavía bloqueada.</strong><br>Se habilitará sólo después de instalar la clave, probar los borradores y activar el interruptor privado del servidor.</p></div>" : "")
             + "<div class='ghl-ai-form'><label><span>Modelo</span><select data-ghl-ai-field='model'><option value='deepseek-v4-flash' " + (ai.modelo === "deepseek-v4-flash" ? "selected" : "") + ">DeepSeek V4 Flash</option><option value='deepseek-v4-pro' " + (ai.modelo === "deepseek-v4-pro" ? "selected" : "") + ">DeepSeek V4 Pro</option></select></label>"
             + "<label><span>Tono de las respuestas</span><input type='text' maxlength='255' data-ghl-ai-field='tone' value='" + escapeHtml(ai.tono || "") + "' placeholder='Cordial, claro y breve.'></label>"

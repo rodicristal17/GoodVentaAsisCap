@@ -2182,6 +2182,25 @@ function goHighLevelEnviarRespuestaManual($mysqli, $config, $contexto, $parametr
         'conversation_id' => $conversationId,
         'limite' => 100
     ));
+    $esperarUltimoMensajeId = goHighLevelIdSeguro(
+        goHighLevelValor($parametros, array('esperar_ultimo_mensaje_id'), '')
+    );
+    if ($esperarUltimoMensajeId !== '') {
+        $mensajesActuales = isset($historial['items']) && is_array($historial['items'])
+            ? $historial['items'] : array();
+        $ultimoActual = count($mensajesActuales) > 0
+            ? $mensajesActuales[count($mensajesActuales) - 1] : array();
+        $ultimoActualId = goHighLevelIdSeguro(goHighLevelValor($ultimoActual, array('id'), ''));
+        $ultimaDireccion = strtolower(trim((string)goHighLevelValor($ultimoActual, array('direccion'), '')));
+        if ($ultimoActualId !== $esperarUltimoMensajeId || $ultimaDireccion !== 'inbound') {
+            goHighLevelLanzar(
+                'conversacion_actualizada',
+                'La conversacion recibio otra respuesta antes del envio automatico.',
+                array(),
+                409
+            );
+        }
+    }
     $ventana = isset($historial['ventana_whatsapp']) && is_array($historial['ventana_whatsapp'])
         ? $historial['ventana_whatsapp'] : array('abierta' => false, 'segundos_restantes' => 0);
     if (empty($ventana['abierta'])) {
