@@ -70,6 +70,7 @@ ghlVerificar(strpos($helper, "\$ruta = '/conversations/messages';") !== false, '
 ghlVerificar(strpos($helper, 'CURLOPT_POST => true') !== false, 'Falta el POST limitado para respuestas manuales.');
 ghlVerificar(strpos($helper, "empty(\$config['write_enabled'])") !== false, 'La escritura debe depender de un interruptor seguro.');
 ghlVerificar(strpos($helper, "empty(\$config['task_write_enabled'])") !== false, 'Las tareas deben tener un interruptor independiente.');
+ghlVerificar(substr_count($helper, "'puede_sincronizar'") >= 2, 'La sincronizacion global de tareas debe exponer el permiso de ejecucion.');
 ghlVerificar(strpos($helper, "'gohighlevel_vinculo_contacto'") !== false, 'Debe persistir vinculos locales.');
 ghlVerificar(strpos($helper, "'ambiguo'") !== false, 'Debe advertir coincidencias ambiguas.');
 ghlVerificar(strpos($helper, 'count($filas) === 1') !== false, 'Solo debe vincular una coincidencia unica.');
@@ -121,7 +122,8 @@ ghlVerificar(strpos($js, 'tab: "conversaciones"') !== false, 'Conversaciones deb
 ghlVerificar(strpos($js, 'data-ghl-action=\'toggle-summary\'') !== false, 'El resumen debe ser plegable.');
 ghlVerificar(strpos($js, 'data-ghl-action=\'settings\'') !== false, 'Debe existir el engranaje del modulo.');
 ghlVerificar(strpos($js, 'Coincidencia ambigua') !== false, 'La UI debe advertir coincidencias ambiguas.');
-ghlVerificar(strpos($js, 'Solo lectura') !== false, 'La UI debe indicar cuando la conexion sigue en solo lectura.');
+ghlVerificar(strpos($js, 'Tareas habilitadas') !== false, 'La UI debe indicar cuando la gestion de tareas esta habilitada.');
+ghlVerificar(strpos($js, 'Solo lectura') !== false, 'La UI debe conservar el estado de solo lectura cuando corresponda.');
 ghlVerificar(strpos($js, 'abrirGoHighLevel') !== false, 'Falta la funcion de apertura.');
 ghlVerificar(strpos($js, 'data-ghl-search-form') !== false, 'Falta la busqueda dentro del modulo.');
 ghlVerificar(strpos($js, "data-ghl-action='load-more'") !== false, 'Falta el acceso a paginas adicionales.');

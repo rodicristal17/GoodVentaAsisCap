@@ -358,7 +358,9 @@
 
     function renderSync(data) {
         var link = data.vinculos || {};
-        var html = "<div class='ghl-section-title'><div><small>CONTROL DE INTEGRACIÓN</small><h2>Sincronización</h2><p>Estado de la conexión y de los vínculos automáticos.</p></div><span class='ghl-total ghl-total--safe'><i class='fa-solid fa-lock'></i> Solo lectura</span></div>" +
+        var modeIcon = data.modo === "gestion_tareas" ? "fa-list-check" : (data.modo === "respuestas" ? "fa-comment-dots" : "fa-lock");
+        var modeLabel = data.modo === "gestion_tareas" ? "Tareas habilitadas" : (data.modo === "respuestas" ? "Respuestas habilitadas" : "Solo lectura");
+        var html = "<div class='ghl-section-title'><div><small>CONTROL DE INTEGRACIÓN</small><h2>Sincronización</h2><p>Estado de la conexión y de los vínculos automáticos.</p></div><span class='ghl-total ghl-total--safe'><i class='fa-solid " + modeIcon + "'></i> " + modeLabel + "</span></div>" +
             "<div class='ghl-sync-grid'><article><i class='fa-solid fa-cloud'></i><small>Integración</small><strong>" + (data.configurado ? "Conectada" : "Pendiente") + "</strong></article><article><i class='fa-solid fa-link'></i><small>Vinculados</small><strong>" + Number(link.vinculados || 0) + "</strong></article><article class='is-warning'><i class='fa-solid fa-triangle-exclamation'></i><small>Ambiguos</small><strong>" + Number(link.ambiguos || 0) + "</strong></article><article><i class='fa-solid fa-link-slash'></i><small>Sin coincidencia</small><strong>" + Number(link.sin_coincidencia || 0) + "</strong></article></div>" +
             "<section class='ghl-protections'><h3><i class='fa-solid fa-shield-halved'></i> Protecciones activas</h3>";
         (data.protecciones || []).forEach(function (item) { html += "<p><i class='fa-solid fa-check'></i>" + escapeHtml(item) + "</p>"; });

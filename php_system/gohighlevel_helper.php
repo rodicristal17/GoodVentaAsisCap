@@ -1619,6 +1619,7 @@ function goHighLevelListarTareasCache($mysqli, $config, $contexto, $parametros)
         'puede_gestionar' => !empty($contexto['puede_gestionar_tareas']) && !empty($config['task_write_enabled']),
         'permiso_gestionar' => !empty($contexto['puede_gestionar_tareas']),
         'gestion_habilitada' => !empty($config['task_write_enabled']),
+        'puede_sincronizar' => !empty($contexto['puede_gestionar_tareas']) || !empty($contexto['puede_configurar']),
         'puede_ver_equipo' => !empty($contexto['puede_ver_equipo']),
         'usuarios' => array_values(goHighLevelMapaUsuariosLocal($mysqli)),
         'sincronizacion' => goHighLevelEstadoSyncTareas($mysqli, $config['location_id']),
@@ -2661,16 +2662,27 @@ function goHighLevelEstadoSincronizacion($mysqli, $config)
         }
         $resumen['actualizados'] += intval($fila['total']);
     }
+    $modo = !empty($config['task_write_enabled'])
+        ? 'gestion_tareas'
+        : (!empty($config['write_enabled']) ? 'respuestas' : 'solo_lectura');
+    $protecciones = array(
+        'No mueve oportunidades ni dispara automatizaciones.',
+        'Solo vincula un paciente cuando existe una coincidencia telefonica unica.'
+    );
+    if (!empty($config['task_write_enabled'])) {
+        array_unshift(
+            $protecciones,
+            'La escritura de contactos se limita a crear, editar o completar tareas; no elimina tareas.'
+        );
+    } else {
+        array_unshift($protecciones, 'No crea ni actualiza contactos en GoHighLevel.');
+    }
     return array(
         'configurado' => goHighLevelConfigurado($config),
-        'modo' => 'solo_lectura',
+        'modo' => $modo,
         'location_id' => (string)$config['location_id'],
         'vinculos' => $resumen,
-        'protecciones' => array(
-            'No crea ni actualiza contactos en GoHighLevel.',
-            'No mueve oportunidades ni dispara automatizaciones.',
-            'Solo vincula un paciente cuando existe una coincidencia telefonica unica.'
-        )
+        'protecciones' => $protecciones
     );
 }
 
