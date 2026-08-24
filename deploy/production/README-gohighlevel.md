@@ -2,7 +2,7 @@
 
 ## Alcance actual
 
-El modulo consulta datos reales de una unica subcuenta de GoHighLevel y los presenta dentro de Telar. Incluye conversaciones, contactos, oportunidades, pipelines, calendarios, responsables y tareas. La vista inicial es **Conversaciones**; el resumen superior y las oportunidades quedan separados para no interferir con la operatoria diaria. Contactos, conversaciones, oportunidades y tareas incluyen busqueda y carga progresiva.
+El modulo consulta datos reales de una unica subcuenta de GoHighLevel y los presenta dentro de Telar. Incluye conversaciones, contactos, oportunidades, pipelines, calendarios, responsables, tareas y adjuntos. La vista inicial es **Conversaciones**; el resumen superior y las oportunidades quedan separados para no interferir con la operatoria diaria. Contactos, conversaciones, oportunidades y tareas incluyen busqueda y carga progresiva.
 
 La consulta no crea ni actualiza contactos, no mueve oportunidades y no modifica workflows. La fase 2A agrega una escritura limitada: responder manualmente por WhatsApp desde una conversacion existente cuando el contacto escribio durante las ultimas 24 horas. La fase 2B permite retomar una conversacion vencida con una plantilla aprobada, activa, en español, de categoria Utility y sin variables manuales. La fase 3 permite crear, editar, completar y reabrir tareas de contactos; no permite eliminarlas.
 
@@ -18,7 +18,17 @@ Telar importa el catalogo de usuarios de la subcuenta e intenta vincularlo con u
 - La sincronizacion inicial usa la busqueda oficial de tareas en lotes de 100, sin recorrer los casi cuarenta mil contactos uno por uno. Se conservan pendientes y completadas de los ultimos 90 dias; no se duplican tareas.
 - Crear, editar, completar o reabrir una tarea se envia primero a GoHighLevel y se registra con token de idempotencia y auditoria sin copiar su descripcion.
 
-Abrir el historial no marca mensajes ni ejecuta automatizaciones. Cada conversacion se posiciona inicialmente en el mensaje mas reciente; al cargar mensajes anteriores conserva el punto de lectura en lugar de saltar. El envio manual se realiza con un unico boton, pero conserva el permiso individual, la validacion de la ventana nuevamente en servidor y el interruptor operativo habilitado. El compositor permanece fijo, comienza en una linea y crece hasta tres; el estado de las 24 horas se muestra como indicador compacto y solamente el historial de mensajes se desplaza. La conversacion no reserva un pie inferior: la X, Escape y el fondo del modal permiten cerrarla. No se admiten adjuntos, envios masivos ni texto libre fuera de la ventana. Fuera de 24 horas Telar solo envia el identificador de una plantilla que vuelve a validar contra el catalogo real de GoHighLevel.
+Abrir el historial no marca mensajes ni ejecuta automatizaciones. Cada conversacion se posiciona inicialmente en el mensaje mas reciente; al cargar mensajes anteriores conserva el punto de lectura en lugar de saltar. El envio manual se realiza con un unico boton, pero conserva el permiso individual, la validacion de la ventana nuevamente en servidor y el interruptor operativo habilitado. El compositor permanece fijo, comienza en una linea y crece hasta tres; el estado de las 24 horas se muestra como indicador compacto y solamente el historial de mensajes se desplaza. La conversacion no reserva un pie inferior: la X, Escape y el fondo del modal permiten cerrarla. No se admiten envios masivos ni texto libre fuera de la ventana. Fuera de 24 horas Telar solo envia el identificador de una plantilla que vuelve a validar contra el catalogo real de GoHighLevel.
+
+Los adjuntos recibidos se registran al abrir el historial y se descargan al visualizarlos por primera vez. GoHighLevel sigue siendo la fuente original, pero Telar conserva una copia permanente privada para que una URL vencida no elimine el antecedente. El navegador nunca recibe la URL original. Solamente se aceptan los dominios configurados, HTTPS, resolucion a una IP publica, archivos de hasta 20 MB y tipos expresamente permitidos. Imagenes, audio y video se muestran dentro del chat; los documentos se abren o descargan desde un enlace firmado de una hora. Los archivos quedan en el volumen `telar_ghl_media` bajo `/var/lib/telar/gohighlevel_adjuntos`.
+
+## Asistente DeepSeek
+
+El engranaje incorpora una pestaña **Asistente IA**. Alli se administran el tono, la instruccion principal, la informacion autorizada de la clinica, preguntas frecuentes, reglas de derivacion y el modelo. La clave de DeepSeek no se escribe ni se muestra en la interfaz: se instala en `deploy/production/secrets/deepseek_api_key`, se monta en `/run/secrets/deepseek_api_key` y debe usar propietario `root:www-data` y modo `0440`.
+
+El modo inicial es un borrador: el boton **Sugerir** anonimiza telefonos, correos e identificadores, consulta DeepSeek y coloca el texto en el compositor para que un funcionario lo revise. Nunca envia por si solo. Salud, pagos, reclamos, asuntos legales y mensajes con adjuntos se derivan sin consultar o responder automaticamente. La auditoria conserva actor, conversacion, modelo, resultado, intencion, confianza y cantidades de caracteres; no conserva el historial enviado a la IA ni el texto sugerido.
+
+Las respuestas automaticas tienen tres interruptores acumulativos: clave instalada, `TELAR_DEEPSEEK_AUTO_REPLY_ENABLED=true` en el servidor y opcion activa en el engranaje. Los tres comienzan apagados. El servicio `gohighlevel-ai-auto` procesa como maximo dos conversaciones por ciclo, exige una confianza minima de 0,88 y reutiliza todas las validaciones del envio manual. Mientras el interruptor del servidor siga en `false`, la opcion visual permanece bloqueada y el servicio no consulta DeepSeek ni envia mensajes.
 
 ## Vinculacion con pacientes
 
@@ -53,6 +63,10 @@ El token se instala fuera del repositorio en:
 
 `deploy/production/secrets/gohighlevel_readonly_token`
 
+La firma temporal de los adjuntos se instala en:
+
+`deploy/production/secrets/gohighlevel_attachment_signing_key`
+
 El directorio `deploy/production/secrets` debe pertenecer a `root:www-data` y usar modo `0750`, para que el proceso web pueda atravesarlo sin exponerlo a otros usuarios. El archivo debe pertenecer a `root:www-data`, usar modo `0440` y montarse como solo lectura en `/run/secrets/gohighlevel_readonly_token`. Nunca debe agregarse al archivo `.env`, la base de datos, Git, la documentacion o los logs.
 
 Variables no sensibles:
@@ -64,6 +78,11 @@ Variables no sensibles:
 - `TELAR_GOHIGHLEVEL_TOKEN_FILE`
 - `TELAR_GOHIGHLEVEL_WRITE_ENABLED` (`false` por defecto)
 - `TELAR_GOHIGHLEVEL_TASK_WRITE_ENABLED` (`false` por defecto; se activa separadamente tras confirmar `contacts.write`)
+- `TELAR_GOHIGHLEVEL_ATTACHMENT_HOSTS` (lista exacta de origenes HTTPS permitidos)
+- `TELAR_GOHIGHLEVEL_ATTACHMENT_MAX_BYTES` (20 MB por defecto)
+- `TELAR_DEEPSEEK_MODEL` (`deepseek-v4-flash` por defecto)
+- `TELAR_DEEPSEEK_AUTO_REPLY_ENABLED` (`false` por defecto)
+- `TELAR_DEEPSEEK_AUTO_INTERVAL_SECONDS` (30 segundos por defecto)
 
 Los permisos externos y sus interruptores deben habilitarse juntos. Mensajes y tareas usan interruptores separados para que ampliar tareas no altere WhatsApp.
 
@@ -102,10 +121,12 @@ Los cambios quedan registrados en `gohighlevel_evento`. Cada intento manual se r
 - Aplicar `actualizacion_23082026_gohighlevel_respuestas_manual.sql`.
 - Aplicar `actualizacion_23082026_gohighlevel_plantillas_whatsapp.sql`.
 - Aplicar `actualizacion_23082026_gohighlevel_tareas.sql`.
+- Aplicar `actualizacion_24082026_gohighlevel_adjuntos_ia.sql`.
 - Revertir, si fuera necesario, con `actualizacion_23082026_gohighlevel_fase1_rollback.sql`.
 - La fase 2A puede revertirse por separado con `actualizacion_23082026_gohighlevel_respuestas_manual_rollback.sql`.
 - La fase 2B puede revertirse por separado con `actualizacion_23082026_gohighlevel_plantillas_whatsapp_rollback.sql`.
 - La fase 3 puede revertirse por separado con `actualizacion_23082026_gohighlevel_tareas_rollback.sql`.
+- La fase 4 puede revertirse por separado con `actualizacion_24082026_gohighlevel_adjuntos_ia_rollback.sql`. La reversion no borra los archivos permanentes; eliminarlos requiere una autorizacion destructiva separada.
 
 La reversion elimina solamente el indice local, los vinculos y permisos propios de la fase. No toca tareas, usuarios, conversaciones ni automatizaciones de GoHighLevel.
 

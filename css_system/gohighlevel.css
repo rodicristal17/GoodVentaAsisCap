@@ -276,6 +276,15 @@ body.gohighlevel-open { overflow: hidden; }
 #telarGoHighLevel .ghl-message-bubble > small { color: #73869a; font-size: 9px; font-weight: 780; text-transform: uppercase; }
 #telarGoHighLevel .ghl-message-bubble > p { margin: 5px 0 7px; color: #2e4b66; font-size: 12px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
 #telarGoHighLevel .ghl-message-bubble > footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; color: #8190a0; font-size: 9px; }
+#telarGoHighLevel .ghl-attachments { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 7px; margin: 7px 0; }
+#telarGoHighLevel .ghl-attachment { max-width: 100%; }
+#telarGoHighLevel .ghl-attachment--image { display: block; overflow: hidden; border: 1px solid #cbdbe4; border-radius: 10px; background: #f5f8fa; }
+#telarGoHighLevel .ghl-attachment--image img { display: block; width: auto; max-width: min(310px, 100%); height: auto; max-height: 220px; object-fit: contain; }
+#telarGoHighLevel .ghl-attachment--media { width: min(360px, 100%); max-height: 245px; border-radius: 9px; background: #102334; }
+#telarGoHighLevel .ghl-attachment--audio { width: min(340px, 100%); height: 36px; }
+#telarGoHighLevel .ghl-attachment--file, #telarGoHighLevel .ghl-attachment.is-unavailable { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 6px 9px; border: 1px solid #cbdbe4; border-radius: 9px; color: #17677c; background: #f7fbfc; font-size: 10px; text-decoration: none; }
+#telarGoHighLevel .ghl-attachment--file:hover { border-color: #48a9b6; background: #ebf8f9; }
+#telarGoHighLevel .ghl-attachment.is-unavailable { color: #8a5c25; background: #fff8e8; }
 
 #telarGoHighLevel .ghl-composer { flex: 0 0 auto; margin-top: 10px; padding: 10px 12px; border: 1px solid #c9dce5; border-radius: 13px; background: #fff; box-shadow: 0 4px 14px rgba(18,55,86,.06); }
 #telarGoHighLevel .ghl-composer [hidden] { display: none !important; }
@@ -299,6 +308,8 @@ body.gohighlevel-open { overflow: hidden; }
 #telarGoHighLevel .ghl-manual-row { display: flex; align-items: flex-end; gap: 8px; }
 #telarGoHighLevel .ghl-composer .ghl-manual-row textarea { flex: 1 1 auto; width: auto; min-width: 0; min-height: 34px; max-height: 78px; resize: none; overflow-y: hidden; padding: 7px 10px; }
 #telarGoHighLevel .ghl-manual-row .ghl-btn { flex: 0 0 auto; min-height: 34px; }
+#telarGoHighLevel .ghl-btn--ai { border: 1px solid #b9c9ec; color: #405f9d; background: #eef3ff; }
+#telarGoHighLevel .ghl-btn--ai:hover { border-color: #7995cf; background: #e2eaff; }
 #telarGoHighLevel .ghl-composer--manual .ghl-modal-message { margin-top: 6px; }
 #telarGoHighLevel .ghl-composer__actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 9px; }
 #telarGoHighLevel .ghl-composer__actions--send { justify-content: flex-end; margin-top: 7px; }
@@ -329,6 +340,23 @@ body.gohighlevel-open { overflow: hidden; }
 #telarGoHighLevel .ghl-send-confirm p { max-height: 125px; overflow: auto; margin: 8px 0; color: #304d66; font-size: 12px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
 #telarGoHighLevel .ghl-send-confirm span { color: #678093; font-size: 9px; }
 #telarGoHighLevel .ghl-send-confirm > footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+
+#telarGoHighLevel .ghl-ai-status { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; padding: 11px 13px; border: 1px solid #ead9a7; border-radius: 11px; color: #7a5a18; background: #fff9e9; }
+#telarGoHighLevel .ghl-ai-status.is-ready { border-color: #b9dfcf; color: #176348; background: #effbf6; }
+#telarGoHighLevel .ghl-ai-status > i { font-size: 18px; }
+#telarGoHighLevel .ghl-ai-status strong { display: block; font-size: 11px; }
+#telarGoHighLevel .ghl-ai-status p { margin: 2px 0 0; font-size: 9px; }
+#telarGoHighLevel .ghl-ai-switches { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; margin-bottom: 11px; }
+#telarGoHighLevel .ghl-ai-switches > label { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid #d7e2e9; border-radius: 10px; background: #f9fbfc; }
+#telarGoHighLevel .ghl-ai-switches > label > span:first-child { display: flex; flex-direction: column; gap: 2px; }
+#telarGoHighLevel .ghl-ai-switches strong { color: #294963; font-size: 11px; }
+#telarGoHighLevel .ghl-ai-switches small { color: #74879a; font-size: 9px; line-height: 1.35; }
+#telarGoHighLevel .ghl-ai-form { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin: 12px 0; }
+#telarGoHighLevel .ghl-ai-form label { display: flex; flex-direction: column; gap: 4px; color: #506a80; font-size: 9px; font-weight: 760; }
+#telarGoHighLevel .ghl-ai-form label.is-wide { grid-column: 1 / -1; }
+#telarGoHighLevel .ghl-ai-form input, #telarGoHighLevel .ghl-ai-form select, #telarGoHighLevel .ghl-ai-form textarea { box-sizing: border-box; width: 100%; padding: 8px 9px; border: 1px solid #cbd9e2; border-radius: 8px; outline: 0; color: #294963; background: #fff; font: inherit; font-size: 10px; line-height: 1.4; }
+#telarGoHighLevel .ghl-ai-form textarea { min-height: 70px; resize: vertical; }
+#telarGoHighLevel .ghl-ai-form input:focus, #telarGoHighLevel .ghl-ai-form select:focus, #telarGoHighLevel .ghl-ai-form textarea:focus { border-color: #788fd0; box-shadow: 0 0 0 3px rgba(84,111,181,.1); }
 
 @media (max-width: 980px) {
   #telarGoHighLevel .ghl-kpis, #telarGoHighLevel .ghl-sync-grid { grid-template-columns: repeat(2, 1fr); }
@@ -364,6 +392,8 @@ body.gohighlevel-open { overflow: hidden; }
   #telarGoHighLevel .ghl-composer--manual { padding: 7px; }
   #telarGoHighLevel .ghl-manual-row { gap: 6px; }
   #telarGoHighLevel .ghl-manual-row .ghl-btn { padding-left: 9px; padding-right: 9px; }
+  #telarGoHighLevel .ghl-btn--ai { font-size: 0; }
+  #telarGoHighLevel .ghl-btn--ai i { font-size: 12px; }
   #telarGoHighLevel .ghl-template-toolbar { grid-template-columns: 1fr; }
   #telarGoHighLevel .ghl-template-toolbar > a { justify-self: start; }
   #telarGoHighLevel .ghl-template-setting { grid-template-columns: 1fr; }
@@ -373,4 +403,6 @@ body.gohighlevel-open { overflow: hidden; }
   #telarGoHighLevel .ghl-task-sync { align-items: stretch; flex-direction: column; }
   #telarGoHighLevel .ghl-task-editor__row, #telarGoHighLevel .ghl-user-link { grid-template-columns: 1fr; }
   #telarGoHighLevel .ghl-task-card { grid-template-columns: 30px minmax(0,1fr) 30px; }
+  #telarGoHighLevel .ghl-ai-switches, #telarGoHighLevel .ghl-ai-form { grid-template-columns: 1fr; }
+  #telarGoHighLevel .ghl-ai-form label.is-wide { grid-column: auto; }
 }

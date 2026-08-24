@@ -10,7 +10,7 @@ services:
       - sh
       - -c
       - |
-        install -d -o www-data -g www-data -m 0770 /var/log/telar /var/lib/telar/trabajos_laboratorio || exit 1
+        install -d -o www-data -g www-data -m 0770 /var/log/telar /var/lib/telar/trabajos_laboratorio /var/lib/telar/gohighlevel_adjuntos || exit 1
         adjuntos_hilos=/var/www/html/fotos/fotosMensaje
         evidencias_caja=/var/www/html/archivos/cierres_caja/evidencias
         firmas_caja=/var/www/html/archivos/cierres_caja/firmas
@@ -59,6 +59,13 @@ services:
       TELAR_GOHIGHLEVEL_TOKEN_FILE: /run/secrets/gohighlevel_readonly_token
       TELAR_GOHIGHLEVEL_WRITE_ENABLED: ${TELAR_GOHIGHLEVEL_WRITE_ENABLED:-false}
       TELAR_GOHIGHLEVEL_TASK_WRITE_ENABLED: ${TELAR_GOHIGHLEVEL_TASK_WRITE_ENABLED:-false}
+      TELAR_GOHIGHLEVEL_ATTACHMENT_DIR: /var/lib/telar/gohighlevel_adjuntos
+      TELAR_GOHIGHLEVEL_ATTACHMENT_KEY_FILE: /run/secrets/gohighlevel_attachment_signing_key
+      TELAR_GOHIGHLEVEL_ATTACHMENT_HOSTS: ${TELAR_GOHIGHLEVEL_ATTACHMENT_HOSTS:-api-crm.fivox.app,firebasestorage.googleapis.com}
+      TELAR_GOHIGHLEVEL_ATTACHMENT_MAX_BYTES: ${TELAR_GOHIGHLEVEL_ATTACHMENT_MAX_BYTES:-20971520}
+      TELAR_DEEPSEEK_API_KEY_FILE: /run/secrets/deepseek_api_key
+      TELAR_DEEPSEEK_MODEL: ${TELAR_DEEPSEEK_MODEL:-deepseek-v4-flash}
+      TELAR_DEEPSEEK_AUTO_REPLY_ENABLED: ${TELAR_DEEPSEEK_AUTO_REPLY_ENABLED:-false}
       TELAR_LAB_MEDIA_DIR: /var/lib/telar/trabajos_laboratorio
       TZ: America/Asuncion
     ports:
@@ -68,6 +75,7 @@ services:
       - ../../:/var/www/html
       - telar_error_logs:/var/log/telar
       - telar_lab_media:/var/lib/telar/trabajos_laboratorio
+      - telar_ghl_media:/var/lib/telar/gohighlevel_adjuntos
       - ./certs:/etc/apache2/ssl:ro
       - ./secrets:/run/secrets:ro
     security_opt:
@@ -239,6 +247,60 @@ services:
         max-size: 10m
         max-file: "3"
 
+  gohighlevel-ai-auto:
+    image: production-web:latest
+    restart: unless-stopped
+    init: true
+    user: "www-data:www-data"
+    command:
+      - sh
+      - -c
+      - |
+        interval="$${TELAR_DEEPSEEK_AUTO_INTERVAL_SECONDS:-30}"
+        case "$$interval" in
+          ''|*[!0-9]*) interval=30 ;;
+        esac
+        if [ "$$interval" -lt 20 ]; then interval=30; fi
+        trap 'exit 0' TERM INT
+        while true; do
+          php /var/www/html/scripts/procesar_gohighlevel_ia.php
+          sleep "$$interval" & wait $$!
+        done
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      TELAR_DB_HOST: database
+      TELAR_DB_NAME: ${TELAR_DB_NAME}
+      TELAR_DB_USER: ${TELAR_DB_USER}
+      TELAR_DB_PASSWORD: ${TELAR_DB_PASSWORD}
+      TELAR_GOHIGHLEVEL_API_BASE: ${TELAR_GOHIGHLEVEL_API_BASE:-https://services.leadconnectorhq.com}
+      TELAR_GOHIGHLEVEL_API_VERSION: ${TELAR_GOHIGHLEVEL_API_VERSION:-2021-07-28}
+      TELAR_GOHIGHLEVEL_LOCATION_ID: ${TELAR_GOHIGHLEVEL_LOCATION_ID:-axvRkLhtUCmmbsYeSUXq}
+      TELAR_GOHIGHLEVEL_TOKEN_FILE: /run/secrets/gohighlevel_readonly_token
+      TELAR_GOHIGHLEVEL_WRITE_ENABLED: ${TELAR_GOHIGHLEVEL_WRITE_ENABLED:-false}
+      TELAR_GOHIGHLEVEL_TASK_WRITE_ENABLED: ${TELAR_GOHIGHLEVEL_TASK_WRITE_ENABLED:-false}
+      TELAR_DEEPSEEK_API_KEY_FILE: /run/secrets/deepseek_api_key
+      TELAR_DEEPSEEK_MODEL: ${TELAR_DEEPSEEK_MODEL:-deepseek-v4-flash}
+      TELAR_DEEPSEEK_AUTO_REPLY_ENABLED: ${TELAR_DEEPSEEK_AUTO_REPLY_ENABLED:-false}
+      TELAR_DEEPSEEK_AUTO_INTERVAL_SECONDS: ${TELAR_DEEPSEEK_AUTO_INTERVAL_SECONDS:-30}
+      TZ: America/Asuncion
+    volumes:
+      - ../../:/var/www/html:ro
+      - ./secrets:/run/secrets:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=0700,uid=33,gid=33
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    cpus: 0.25
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
   database:
     image: mariadb:10.6
     restart: unless-stopped
@@ -267,3 +329,4 @@ volumes:
   telar_database:
   telar_error_logs:
   telar_lab_media:
+  telar_ghl_media:

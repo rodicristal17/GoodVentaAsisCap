@@ -1,6 +1,6 @@
 <?php
 
-/** Verificador estructural de GoHighLevel fases 1, 2A, 2B y 3. Compatible con PHP 7.2. */
+/** Verificador estructural de GoHighLevel fases 1, 2A, 2B, 3 y 4. Compatible con PHP 7.2. */
 
 $raiz = dirname(__DIR__);
 $errores = array();
@@ -24,6 +24,8 @@ function ghlContenido($raiz, $ruta)
 $archivos = array(
     'php_system/abmGoHighLevel.php',
     'php_system/gohighlevel_helper.php',
+    'php_system/gohighlevel_media_ia_helper.php',
+    'php_system/gohighlevel_adjunto.php',
     'js_system/gohighlevel.js',
     'css_system/gohighlevel.css',
     'iconos/gohighlevel.svg',
@@ -35,6 +37,9 @@ $archivos = array(
     'actualizacion_23082026_gohighlevel_plantillas_whatsapp_rollback.sql',
     'actualizacion_23082026_gohighlevel_tareas.sql',
     'actualizacion_23082026_gohighlevel_tareas_rollback.sql',
+    'actualizacion_24082026_gohighlevel_adjuntos_ia.sql',
+    'actualizacion_24082026_gohighlevel_adjuntos_ia_rollback.sql',
+    'scripts/procesar_gohighlevel_ia.php',
     'scripts/verificar_migracion_gohighlevel_tareas.sh',
     'scripts/verificar_gohighlevel_capacidades.php',
     'scripts/fixtures/gohighlevel_tareas_schema_minimo.sql',
@@ -48,6 +53,8 @@ foreach ($archivos as $archivo) {
 }
 
 $helper = ghlContenido($raiz, 'php_system/gohighlevel_helper.php');
+$mediaIa = ghlContenido($raiz, 'php_system/gohighlevel_media_ia_helper.php');
+$adjuntoEndpoint = ghlContenido($raiz, 'php_system/gohighlevel_adjunto.php');
 $endpoint = ghlContenido($raiz, 'php_system/abmGoHighLevel.php');
 $js = ghlContenido($raiz, 'js_system/gohighlevel.js');
 $css = ghlContenido($raiz, 'css_system/gohighlevel.css');
@@ -59,6 +66,7 @@ $migracion = ghlContenido($raiz, 'actualizacion_23082026_gohighlevel_fase1.sql')
 $migracionEnvio = ghlContenido($raiz, 'actualizacion_23082026_gohighlevel_respuestas_manual.sql');
 $migracionPlantillas = ghlContenido($raiz, 'actualizacion_23082026_gohighlevel_plantillas_whatsapp.sql');
 $migracionTareas = ghlContenido($raiz, 'actualizacion_23082026_gohighlevel_tareas.sql');
+$migracionFase4 = ghlContenido($raiz, 'actualizacion_24082026_gohighlevel_adjuntos_ia.sql');
 
 ghlVerificar(strpos($helper, 'CURLOPT_SSL_VERIFYPEER => true') !== false, 'La API debe validar TLS.');
 ghlVerificar(strpos($helper, 'CURLOPT_FOLLOWLOCATION => false') !== false, 'La API no debe seguir redirecciones.');
@@ -102,6 +110,15 @@ ghlVerificar(strpos($helper, 'mine_or_unassigned') !== false, 'Las tareas ordina
 ghlVerificar(strpos($helper, "\$actual.',unassigned'") !== false, 'Las conversaciones ordinarias deben incluir propias y sin asignar.');
 ghlVerificar(strpos($helper, "in_array(\$accion, array('crear', 'actualizar', 'completar'), true)") !== false, 'No debe habilitarse el borrado de tareas.');
 ghlVerificar(strpos($helper, 'descripcion') !== false && strpos($helper, 'descripcion no almacenada') === false, 'La auditoria no debe afirmar que almacena descripciones.');
+ghlVerificar(strpos($helper, 'goHighLevelRegistrarAdjuntosMensaje') !== false, 'El historial debe registrar adjuntos persistentes.');
+ghlVerificar(strpos($mediaIa, 'TELAR_GOHIGHLEVEL_ATTACHMENT_KEY_FILE') !== false, 'La firma de adjuntos debe usar un secreto privado.');
+ghlVerificar(strpos($mediaIa, 'CURLOPT_RESOLVE') !== false, 'La descarga de adjuntos debe fijar una IP publica validada.');
+ghlVerificar(strpos($mediaIa, 'FILTER_FLAG_NO_PRIV_RANGE') !== false, 'La descarga debe bloquear redes privadas.');
+ghlVerificar(strpos($mediaIa, 'goHighLevelMimeAdjuntoPermitido') !== false, 'Los adjuntos deben limitar tipos MIME.');
+ghlVerificar(strpos($mediaIa, "'https://api.deepseek.com'") !== false, 'DeepSeek debe usar el host oficial fijado.');
+ghlVerificar(strpos($mediaIa, 'TELAR_DEEPSEEK_API_KEY_FILE') !== false, 'La clave de DeepSeek debe leerse desde archivo privado.');
+ghlVerificar(strpos($mediaIa, 'goHighLevelAnonimizarTextoIa') !== false, 'La IA debe anonimizar el contexto.');
+ghlVerificar(strpos($mediaIa, 'goHighLevelRiesgoIa') !== false, 'La IA debe derivar consultas sensibles.');
 
 ghlVerificar(strpos($endpoint, "case 'conversaciones'") !== false, 'Falta accion conversaciones.');
 ghlVerificar(strpos($endpoint, "case 'mensajes_conversacion'") !== false, 'Falta accion historial de mensajes.');
@@ -121,6 +138,10 @@ ghlVerificar(strpos($endpoint, "case 'sincronizar_tareas_paso'") !== false, 'Fal
 ghlVerificar(strpos($endpoint, "case 'gestionar_tarea'") !== false, 'Falta accion protegida de tareas.');
 ghlVerificar(strpos($endpoint, 'verificar_navegador') !== false, 'El endpoint debe validar la sesion.');
 ghlVerificar(strpos($endpoint, 'empty($contexto[\'puede_ver\'])') !== false, 'El endpoint debe aplicar el permiso de consulta.');
+ghlVerificar(strpos($endpoint, "case 'sugerir_respuesta_ia'") !== false, 'Falta la accion de sugerencia con IA.');
+ghlVerificar(strpos($endpoint, "case 'guardar_configuracion_ia'") !== false, 'Falta administrar la IA desde el engranaje.');
+ghlVerificar(strpos($adjuntoEndpoint, 'hash_equals') !== false, 'El adjunto debe validar una firma temporal.');
+ghlVerificar(strpos($adjuntoEndpoint, 'realpath') !== false, 'El adjunto debe impedir escapes de ruta.');
 
 ghlVerificar(strpos($js, 'tab: "conversaciones"') !== false, 'Conversaciones debe ser la vista inicial.');
 ghlVerificar(strpos($js, 'data-ghl-action=\'toggle-summary\'') !== false, 'El resumen debe ser plegable.');
@@ -160,6 +181,9 @@ ghlVerificar(strpos($js, 'data-ghl-task-form') !== false, 'Falta el editor de ta
 ghlVerificar(strpos($js, 'data-settings-tab=\'usuarios\'') !== false, 'Falta administrar responsables desde el engranaje.');
 ghlVerificar(strpos($js, "data-permission='team'") !== false, 'Falta el permiso Ver equipo.');
 ghlVerificar(strpos($js, "data-permission='manage-tasks'") !== false, 'Falta el permiso Gestiona tareas.');
+ghlVerificar(strpos($js, "data-settings-tab='ia'") !== false, 'Falta la configuracion de IA en el engranaje.');
+ghlVerificar(strpos($js, "data-ghl-action='suggest-ai'") !== false, 'Falta el boton de borrador con IA.');
+ghlVerificar(strpos($js, 'renderMessageAttachments') !== false, 'Falta visualizar adjuntos dentro del chat.');
 ghlVerificar(strpos($css, '#telarGoHighLevel') !== false, 'El CSS debe estar limitado al modulo.');
 ghlVerificar(strpos($css, 'grid-template-columns: minmax(0, 1fr)') !== false, 'La lista de conversaciones debe respetar el ancho visible.');
 ghlVerificar(strpos($css, 'overflow-x: hidden') !== false, 'El modulo debe impedir el desplazamiento horizontal involuntario.');
@@ -186,6 +210,8 @@ ghlVerificar(strpos($compose, 'TELAR_GOHIGHLEVEL_TOKEN_FILE: /run/secrets/gohigh
 ghlVerificar(strpos($compose, 'TELAR_GOHIGHLEVEL_WRITE_ENABLED: ${TELAR_GOHIGHLEVEL_WRITE_ENABLED:-false}') !== false, 'El envio debe permanecer apagado por defecto.');
 ghlVerificar(strpos($compose, 'TELAR_GOHIGHLEVEL_TASK_WRITE_ENABLED: ${TELAR_GOHIGHLEVEL_TASK_WRITE_ENABLED:-false}') !== false, 'La escritura de tareas debe permanecer apagada por defecto.');
 ghlVerificar(strpos($compose, 'TELAR_GOHIGHLEVEL_COMPANY_ID') !== false, 'Compose debe admitir el company ID opcional.');
+ghlVerificar(strpos($compose, 'TELAR_DEEPSEEK_AUTO_REPLY_ENABLED: ${TELAR_DEEPSEEK_AUTO_REPLY_ENABLED:-false}') !== false, 'La respuesta automatica debe permanecer apagada por defecto.');
+ghlVerificar(strpos($compose, 'telar_ghl_media:/var/lib/telar/gohighlevel_adjuntos') !== false, 'Los adjuntos deben usar un volumen persistente.');
 ghlVerificar(strpos($compose, './secrets:/run/secrets:ro') !== false, 'El secreto debe montarse en modo lectura.');
 ghlVerificar(strpos($migracion, 'gohighlevel_permiso_usuario') !== false, 'Falta tabla de permisos.');
 ghlVerificar(strpos($migracion, 'gohighlevel_vinculo_contacto') !== false, 'Falta tabla de vinculos.');
@@ -202,10 +228,14 @@ ghlVerificar(strpos($migracionTareas, 'gohighlevel_usuario_vinculo') !== false, 
 ghlVerificar(strpos($migracionTareas, 'gohighlevel_tarea_cache') !== false, 'Falta el indice local de tareas.');
 ghlVerificar(strpos($migracionTareas, 'gohighlevel_tarea_operacion') !== false, 'Falta la idempotencia de tareas.');
 ghlVerificar(strpos($migracionTareas, 'email_hash') !== false && strpos($migracionTareas, 'email VARCHAR') === false, 'No debe persistirse el correo de GoHighLevel en claro.');
+ghlVerificar(strpos($migracionFase4, 'gohighlevel_adjunto_cache') !== false, 'Falta el indice persistente de adjuntos.');
+ghlVerificar(strpos($migracionFase4, 'gohighlevel_ia_config') !== false, 'Falta la configuracion local de IA.');
+ghlVerificar(strpos($migracionFase4, 'gohighlevel_ia_operacion') !== false, 'Falta la auditoria de IA.');
+ghlVerificar(strpos($migracionFase4, 'api_key') === false, 'La migracion no debe almacenar la clave de DeepSeek.');
 
 $sensibles = array('/pit-[A-Za-z0-9_-]{20,}/', '/Bearer\s+[A-Za-z0-9_-]{25,}/');
 foreach ($sensibles as $patron) {
-    ghlVerificar(!preg_match($patron, $helper.$endpoint.$js.$compose.$migracion.$migracionEnvio.$migracionPlantillas.$migracionTareas), 'Se encontro una credencial con apariencia real.');
+    ghlVerificar(!preg_match($patron, $helper.$mediaIa.$endpoint.$adjuntoEndpoint.$js.$compose.$migracion.$migracionEnvio.$migracionPlantillas.$migracionTareas.$migracionFase4), 'Se encontro una credencial con apariencia real.');
 }
 
 if (count($errores) > 0) {

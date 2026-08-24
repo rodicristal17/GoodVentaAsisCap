@@ -17,6 +17,7 @@
         settingsTab: "permisos",
         userSettings: null,
         templateSettings: null,
+        aiSettings: null,
         templates: null,
         users: { items: [], advertencia: "" },
         queries: { conversaciones: "", contactos: "", oportunidades: "", tareas: "" },
@@ -578,7 +579,11 @@
         }
         html = "<section class='ghl-composer ghl-composer--manual'>";
         html += "<div class='ghl-window-open'><i class='fa-brands fa-whatsapp'></i><span><strong>24 h abierta</strong><small> · quedan " + escapeHtml(remainingWindow(windowData.segundos_restantes)) + "</small></span></div>";
-        html += "<form data-ghl-send-form><div class='ghl-manual-row'><textarea id='ghlManualReply' data-ghl-manual-reply maxlength='2000' rows='1' aria-label='Respuesta manual por WhatsApp' placeholder='Escriba una respuesta…' required></textarea><button type='submit' class='ghl-btn ghl-btn--primary ghl-btn--compact'><i class='fa-solid fa-paper-plane'></i> Enviar</button></div><div class='ghl-modal-message ghl-modal-message--error' data-ghl-send-error hidden></div></form>";
+        html += "<form data-ghl-send-form><div class='ghl-manual-row'><textarea id='ghlManualReply' data-ghl-manual-reply maxlength='2000' rows='1' aria-label='Respuesta manual por WhatsApp' placeholder='Escriba una respuesta…' required></textarea>";
+        if (data.ia && data.ia.puede_sugerir) {
+            html += "<button type='button' class='ghl-btn ghl-btn--ai ghl-btn--compact' data-ghl-action='suggest-ai' title='Preparar una sugerencia para revisar'><i class='fa-solid fa-wand-magic-sparkles'></i> Sugerir</button>";
+        }
+        html += "<button type='submit' class='ghl-btn ghl-btn--primary ghl-btn--compact'><i class='fa-solid fa-paper-plane'></i> Enviar</button></div><div class='ghl-modal-message' data-ghl-ai-message hidden></div><div class='ghl-modal-message ghl-modal-message--error' data-ghl-send-error hidden></div></form>";
         return html + "</section>";
     }
 
@@ -641,7 +646,8 @@
                 tipo: "WhatsApp",
                 estado: "pendiente",
                 fecha: new Date().toISOString(),
-                adjuntos: 0
+                adjuntos: 0,
+                archivos: []
             });
             selected.data.ventana_whatsapp = data.ventana_whatsapp || selected.data.ventana_whatsapp;
             state.conversation = selected;
@@ -655,6 +661,65 @@
             button.disabled = false;
             button.innerHTML = "<i class='fa-solid fa-paper-plane'></i> Enviar";
         });
+    }
+
+    function suggestAiReply(button) {
+        var selected = state.conversation || {};
+        var textarea = state.root.querySelector("[data-ghl-manual-reply]");
+        var message = state.root.querySelector("[data-ghl-ai-message]");
+        if (!selected.item || !selected.item.id || !textarea || !message || button.disabled) { return; }
+        button.disabled = true;
+        button.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Analizando…";
+        message.hidden = false;
+        message.className = "ghl-modal-message ghl-modal-message--info";
+        message.textContent = "DeepSeek está preparando un borrador; no se enviará automáticamente.";
+        request("sugerir_respuesta_ia", {
+            conversation_id: selected.item.id,
+            token_ia: sendToken()
+        }, 60000).then(function (data) {
+            if (data.requiere_humano || !data.respuesta) {
+                message.className = "ghl-modal-message ghl-modal-message--error";
+                message.textContent = data.motivo || "Esta consulta requiere revisión humana.";
+                return;
+            }
+            textarea.value = data.respuesta;
+            resizeManualReply(textarea);
+            textarea.focus();
+            message.className = "ghl-modal-message ghl-modal-message--success";
+            message.textContent = "Borrador insertado. Revíselo antes de enviarlo.";
+        }).catch(function (error) {
+            message.className = "ghl-modal-message ghl-modal-message--error";
+            message.textContent = error.message;
+        }).then(function () {
+            button.disabled = false;
+            button.innerHTML = "<i class='fa-solid fa-wand-magic-sparkles'></i> Sugerir";
+        });
+    }
+
+    function renderMessageAttachments(message) {
+        var files = message.archivos || [];
+        var html = "";
+        files.forEach(function (file) {
+            var url = safeImage(file.url);
+            var label = escapeHtml(file.nombre || "Adjunto");
+            if (!url || !file.disponible) {
+                html += "<span class='ghl-attachment is-unavailable'><i class='fa-solid fa-paperclip'></i> " + label + "</span>";
+                return;
+            }
+            if (file.tipo === "imagen") {
+                html += "<a class='ghl-attachment ghl-attachment--image' href='" + url + "' target='_blank' rel='noopener noreferrer' title='Abrir " + label + "'><img src='" + url + "' alt='" + label + "' loading='lazy'></a>";
+            } else if (file.tipo === "video") {
+                html += "<video class='ghl-attachment ghl-attachment--media' controls preload='metadata' src='" + url + "' aria-label='" + label + "'></video>";
+            } else if (file.tipo === "audio") {
+                html += "<audio class='ghl-attachment ghl-attachment--audio' controls preload='metadata' src='" + url + "' aria-label='" + label + "'></audio>";
+            } else {
+                html += "<a class='ghl-attachment ghl-attachment--file' href='" + url + "' target='_blank' rel='noopener noreferrer'><i class='fa-solid fa-file-arrow-down'></i><span>" + label + "</span></a>";
+            }
+        });
+        if (Number(message.adjuntos || 0) > files.length) {
+            html += "<span class='ghl-attachment is-unavailable'><i class='fa-solid fa-triangle-exclamation'></i> " + (Number(message.adjuntos) - files.length) + " archivo(s) no disponible(s)</span>";
+        }
+        return html ? "<div class='ghl-attachments'>" + html + "</div>" : "";
     }
 
     function updateTemplateSelection() {
@@ -748,7 +813,8 @@
                 tipo: "WhatsApp",
                 estado: "pendiente · esperando respuesta",
                 fecha: new Date().toISOString(),
-                adjuntos: 0
+                adjuntos: 0,
+                archivos: []
             });
             selected.data.ventana_whatsapp = data.ventana_whatsapp || selected.data.ventana_whatsapp;
             state.conversation = selected;
@@ -778,8 +844,8 @@
         }
         messages.forEach(function (message) {
             var outbound = String(message.direccion || "").toLowerCase() === "outbound";
-            var body = message.cuerpo || ("Actividad: " + channelLabel(message.tipo));
-            html += "<article class='ghl-message-bubble " + (outbound ? "is-outbound" : "is-inbound") + "'><small>" + (outbound ? "Equipo" : escapeHtml(item.nombre || "Contacto")) + " · " + escapeHtml(channelLabel(message.tipo)) + "</small><p>" + escapeHtml(body) + "</p><footer><time>" + dateLabel(message.fecha) + "</time>" + (message.estado ? "<span>" + escapeHtml(message.estado) + "</span>" : "") + (message.adjuntos ? "<span><i class='fa-solid fa-paperclip'></i> " + Number(message.adjuntos) + " adjunto(s)</span>" : "") + "</footer></article>";
+            var body = message.cuerpo || (message.adjuntos ? "" : ("Actividad: " + channelLabel(message.tipo)));
+            html += "<article class='ghl-message-bubble " + (outbound ? "is-outbound" : "is-inbound") + "'><small>" + (outbound ? "Equipo" : escapeHtml(item.nombre || "Contacto")) + " · " + escapeHtml(channelLabel(message.tipo)) + "</small>" + (body ? "<p>" + escapeHtml(body) + "</p>" : "") + renderMessageAttachments(message) + "<footer><time>" + dateLabel(message.fecha) + "</time>" + (message.estado ? "<span>" + escapeHtml(message.estado) + "</span>" : "") + (message.adjuntos ? "<span><i class='fa-solid fa-paperclip'></i> " + Number(message.adjuntos) + " adjunto(s)</span>" : "") + "</footer></article>";
         });
         html += "</div></div>" + renderConversationComposer(item, data) + "</div></section>";
         layer.innerHTML = html;
@@ -1045,6 +1111,7 @@
         state.settingsTab = "permisos";
         state.templateSettings = null;
         state.userSettings = null;
+        state.aiSettings = null;
         layer.hidden = false;
         layer.innerHTML = "<section class='ghl-modal'><header><div><small>CONFIGURACIONES Y PERMISOS</small><h2>Preparando equipo…</h2></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><div class='ghl-loading'><i class='fa-solid fa-spinner fa-spin'></i></div></section>";
         request("configuracion_permisos").then(function (data) {
@@ -1064,6 +1131,13 @@
                 if (state.settings) { renderSettings(); }
             }).catch(function (templateError) {
                 state.templateSettings = { items: [], error: templateError.message };
+                if (state.settings) { renderSettings(); }
+            });
+            request("configuracion_ia", {}, 45000).then(function (ai) {
+                state.aiSettings = ai;
+                if (state.settings) { renderSettings(); }
+            }).catch(function (aiError) {
+                state.aiSettings = { error: aiError.message };
                 if (state.settings) { renderSettings(); }
             });
         }).catch(function (error) {
@@ -1111,19 +1185,44 @@
         return "<div class='ghl-template-toolbar'><label><i class='fa-solid fa-magnifying-glass'></i><input type='search' data-ghl-template-filter placeholder='Buscar plantilla…'></label><span><strong>" + Number(catalog.habilitadas || 0) + "</strong> habilitadas · <strong>" + Number(catalog.sensibles || 0) + "</strong> sensibles</span><a href='" + escapeHtml(catalog.administracion_externa || "#") + "' target='_blank' rel='noopener noreferrer'><i class='fa-solid fa-arrow-up-right-from-square'></i> Administrar contenido aprobado en GoHighLevel</a></div><div class='ghl-template-policy'><i class='fa-solid fa-shield-halved'></i><p><strong>Criterio inicial:</strong> " + escapeHtml(catalog.criterio_inicial || "Activas, en español y de utilidad.") + " El contenido se crea o edita en GoHighLevel porque WhatsApp debe volver a aprobarlo; aquí se decide quién puede usarlo y qué avisos requieren cautela adicional.</p></div><div class='ghl-template-settings-list'>" + (rows || "<p class='ghl-inline-error'>No se encontraron plantillas de WhatsApp.</p>") + "</div>";
     }
 
+    function renderAiSettings() {
+        var ai = state.aiSettings;
+        var keyReady;
+        var autoReady;
+        if (!ai) {
+            return "<div class='ghl-template-loading'><i class='fa-solid fa-spinner fa-spin'></i><span>Cargando configuración privada de IA…</span></div>";
+        }
+        if (ai.error) {
+            return "<div class='ghl-security-note is-warning'><i class='fa-solid fa-triangle-exclamation'></i><p><strong>No se pudo consultar la IA.</strong><br>" + escapeHtml(ai.error) + "</p></div>";
+        }
+        keyReady = !!ai.clave_configurada;
+        autoReady = keyReady && !!ai.automatico_servidor;
+        return "<div class='ghl-ai-status " + (keyReady ? "is-ready" : "is-pending") + "'><i class='fa-solid " + (keyReady ? "fa-circle-check" : "fa-key") + "'></i><div><strong>DeepSeek " + (keyReady ? "conectado" : "pendiente de clave privada") + "</strong><p>La clave se instala únicamente en el servidor y nunca se muestra ni se guarda en esta pantalla.</p></div></div>"
+            + "<div class='ghl-ai-switches'><label><span><strong>Asistente para borradores</strong><small>Agrega “Sugerir” al chat; el funcionario siempre revisa y envía.</small></span><span class='ghl-switch'><input type='checkbox' data-ghl-ai-field='assistant' " + (ai.asistente_habilitado ? "checked" : "") + " " + (!keyReady ? "disabled" : "") + "><span></span></span></label><label><span><strong>Respuestas automáticas</strong><small>Circuito separado, apagado por defecto y bloqueado para casos sensibles.</small></span><span class='ghl-switch'><input type='checkbox' data-ghl-ai-field='automatic' " + (ai.automatico_habilitado ? "checked" : "") + " " + (!autoReady ? "disabled" : "") + "><span></span></span></label></div>"
+            + (!autoReady ? "<div class='ghl-security-note is-warning'><i class='fa-solid fa-shield-halved'></i><p><strong>Automatización todavía bloqueada.</strong><br>Se habilitará sólo después de instalar la clave, probar los borradores y activar el interruptor privado del servidor.</p></div>" : "")
+            + "<div class='ghl-ai-form'><label><span>Modelo</span><select data-ghl-ai-field='model'><option value='deepseek-v4-flash' " + (ai.modelo === "deepseek-v4-flash" ? "selected" : "") + ">DeepSeek V4 Flash</option><option value='deepseek-v4-pro' " + (ai.modelo === "deepseek-v4-pro" ? "selected" : "") + ">DeepSeek V4 Pro</option></select></label>"
+            + "<label><span>Tono de las respuestas</span><input type='text' maxlength='255' data-ghl-ai-field='tone' value='" + escapeHtml(ai.tono || "") + "' placeholder='Cordial, claro y breve.'></label>"
+            + "<label class='is-wide'><span>Instrucción principal</span><textarea maxlength='12000' rows='4' data-ghl-ai-field='prompt' placeholder='Qué debe hacer el asistente y cómo debe responder…'>" + escapeHtml(ai.prompt_base || "") + "</textarea></label>"
+            + "<label class='is-wide'><span>Información autorizada de la clínica</span><textarea maxlength='20000' rows='5' data-ghl-ai-field='clinic' placeholder='Horarios, sucursales, servicios y datos administrativos confirmados…'>" + escapeHtml(ai.informacion_clinica || "") + "</textarea></label>"
+            + "<label class='is-wide'><span>Preguntas frecuentes y respuestas aprobadas</span><textarea maxlength='30000' rows='6' data-ghl-ai-field='faq' placeholder='Pregunta: … / Respuesta aprobada: …'>" + escapeHtml(ai.preguntas_frecuentes || "") + "</textarea></label>"
+            + "<label class='is-wide'><span>Reglas de derivación humana</span><textarea maxlength='12000' rows='4' data-ghl-ai-field='handoff' placeholder='Situaciones que nunca debe responder la IA…'>" + escapeHtml(ai.reglas_derivacion || "") + "</textarea></label></div>"
+            + "<div class='ghl-security-note'><i class='fa-solid fa-user-shield'></i><p><strong>Protección activa.</strong><br>Telar anonimiza teléfonos, correos e identificadores antes de consultar DeepSeek. Salud, pagos, reclamos, asuntos legales y adjuntos se derivan a una persona. El texto completo no se copia en la auditoría de IA.</p></div>";
+    }
+
     function renderSettings() {
         var layer = state.root.querySelector("#ghlModalLayer");
         var permissionsActive = state.settingsTab === "permisos";
         var usersActive = state.settingsTab === "usuarios";
-        var body = permissionsActive ? renderPermissionSettings() : (usersActive ? renderUserSettings() : renderTemplateSettings());
-        var saveAction = permissionsActive ? "save-settings" : (usersActive ? "save-user-settings" : "save-template-settings");
-        var saveLabel = permissionsActive ? "Guardar permisos" : (usersActive ? "Guardar vínculos" : "Guardar catálogo");
-        var disableSave = usersActive ? (!state.userSettings || state.userSettings.error) : (!permissionsActive && (!state.templateSettings || state.templateSettings.error));
-        layer.innerHTML = "<section class='ghl-modal ghl-settings-modal' role='dialog' aria-modal='true'><header><div><small>ENGRANAJE DEL MÓDULO</small><h2>Configuraciones y permisos</h2><p>Administre accesos, responsables y catálogo sin modificar automatizaciones.</p></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><nav class='ghl-settings-tabs'><button type='button' data-ghl-action='settings-tab' data-settings-tab='permisos' class='" + (permissionsActive ? "is-active" : "") + "'><i class='fa-solid fa-user-shield'></i> Permisos</button><button type='button' data-ghl-action='settings-tab' data-settings-tab='usuarios' class='" + (usersActive ? "is-active" : "") + "'><i class='fa-solid fa-users-gear'></i> Responsables</button><button type='button' data-ghl-action='settings-tab' data-settings-tab='plantillas' class='" + (state.settingsTab === "plantillas" ? "is-active" : "") + "'><i class='fa-solid fa-file-lines'></i> Plantillas de WhatsApp</button></nav><div class='ghl-modal__body'>" + body + "<div id='ghlSettingsMessage' class='ghl-modal-message' hidden></div></div><footer><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cerrar</button><button type='button' class='ghl-btn ghl-btn--primary' data-ghl-action='" + saveAction + "' " + (disableSave ? "disabled" : "") + "><i class='fa-solid fa-floppy-disk'></i>" + saveLabel + "</button></footer></section>";
+        var aiActive = state.settingsTab === "ia";
+        var body = permissionsActive ? renderPermissionSettings() : (usersActive ? renderUserSettings() : (aiActive ? renderAiSettings() : renderTemplateSettings()));
+        var saveAction = permissionsActive ? "save-settings" : (usersActive ? "save-user-settings" : (aiActive ? "save-ai-settings" : "save-template-settings"));
+        var saveLabel = permissionsActive ? "Guardar permisos" : (usersActive ? "Guardar vínculos" : (aiActive ? "Guardar IA" : "Guardar catálogo"));
+        var disableSave = usersActive ? (!state.userSettings || state.userSettings.error) : (aiActive ? (!state.aiSettings || state.aiSettings.error) : (!permissionsActive && (!state.templateSettings || state.templateSettings.error)));
+        layer.innerHTML = "<section class='ghl-modal ghl-settings-modal' role='dialog' aria-modal='true'><header><div><small>ENGRANAJE DEL MÓDULO</small><h2>Configuraciones y permisos</h2><p>Administre accesos, responsables, IA y catálogo sin modificar automatizaciones.</p></div><button type='button' data-ghl-action='close-settings'><i class='fa-solid fa-xmark'></i></button></header><nav class='ghl-settings-tabs'><button type='button' data-ghl-action='settings-tab' data-settings-tab='permisos' class='" + (permissionsActive ? "is-active" : "") + "'><i class='fa-solid fa-user-shield'></i> Permisos</button><button type='button' data-ghl-action='settings-tab' data-settings-tab='usuarios' class='" + (usersActive ? "is-active" : "") + "'><i class='fa-solid fa-users-gear'></i> Responsables</button><button type='button' data-ghl-action='settings-tab' data-settings-tab='plantillas' class='" + (state.settingsTab === "plantillas" ? "is-active" : "") + "'><i class='fa-solid fa-file-lines'></i> Plantillas de WhatsApp</button><button type='button' data-ghl-action='settings-tab' data-settings-tab='ia' class='" + (aiActive ? "is-active" : "") + "'><i class='fa-solid fa-wand-magic-sparkles'></i> Asistente IA</button></nav><div class='ghl-modal__body'>" + body + "<div id='ghlSettingsMessage' class='ghl-modal-message' hidden></div></div><footer><button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='close-settings'>Cerrar</button><button type='button' class='ghl-btn ghl-btn--primary' data-ghl-action='" + saveAction + "' " + (disableSave ? "disabled" : "") + "><i class='fa-solid fa-floppy-disk'></i>" + saveLabel + "</button></footer></section>";
     }
 
     function selectSettingsTab(tab) {
-        state.settingsTab = tab === "plantillas" || tab === "usuarios" ? tab : "permisos";
+        state.settingsTab = tab === "plantillas" || tab === "usuarios" || tab === "ia" ? tab : "permisos";
         renderSettings();
     }
 
@@ -1134,6 +1233,7 @@
         state.settings = null;
         state.templateSettings = null;
         state.userSettings = null;
+        state.aiSettings = null;
         state.conversation = null;
         state.pendingTemplate = null;
     }
@@ -1237,6 +1337,38 @@
         });
     }
 
+    function saveAiSettings(button) {
+        var field = function (name) { return state.root.querySelector("[data-ghl-ai-field='" + name + "']"); };
+        var assistant = field("assistant");
+        var automatic = field("automatic");
+        var message = state.root.querySelector("#ghlSettingsMessage");
+        button.disabled = true;
+        message.hidden = false;
+        message.className = "ghl-modal-message ghl-modal-message--info";
+        message.textContent = "Guardando configuración y trazabilidad…";
+        request("guardar_configuracion_ia", {
+            asistente_habilitado: assistant && assistant.checked ? 1 : 0,
+            automatico_habilitado: automatic && automatic.checked ? 1 : 0,
+            modelo: field("model") ? field("model").value : "deepseek-v4-flash",
+            tono: field("tone") ? field("tone").value : "",
+            prompt_base: field("prompt") ? field("prompt").value : "",
+            informacion_clinica: field("clinic") ? field("clinic").value : "",
+            preguntas_frecuentes: field("faq") ? field("faq").value : "",
+            reglas_derivacion: field("handoff") ? field("handoff").value : ""
+        }, 50000).then(function (data) {
+            state.aiSettings = data;
+            renderSettings();
+            message = state.root.querySelector("#ghlSettingsMessage");
+            message.hidden = false;
+            message.className = "ghl-modal-message ghl-modal-message--success";
+            message.textContent = "Configuración de IA guardada. Los borradores nunca se envían sin revisión.";
+        }).catch(function (error) {
+            message.className = "ghl-modal-message ghl-modal-message--error";
+            message.textContent = error.message;
+            button.disabled = false;
+        });
+    }
+
     function filterTemplateSettings(value) {
         var query = String(value || "").trim().toLowerCase();
         Array.prototype.forEach.call(state.root.querySelectorAll("[data-template-search]"), function (row) {
@@ -1302,6 +1434,7 @@
             else if (action === "save-settings") { saveSettings(button); }
             else if (action === "save-user-settings") { saveUserSettings(button); }
             else if (action === "save-template-settings") { saveTemplateSettings(button); }
+            else if (action === "save-ai-settings") { saveAiSettings(button); }
             else if (action === "settings-tab") { selectSettingsTab(button.getAttribute("data-settings-tab")); }
             else if (action === "clear-search") {
                 state.queries[button.getAttribute("data-tab")] = "";
@@ -1311,6 +1444,7 @@
             else if (action === "load-more") { loadMore(button.getAttribute("data-tab"), button); }
             else if (action === "open-conversation") { openConversation(button.getAttribute("data-conversation-id")); }
             else if (action === "load-older-messages") { loadOlderMessages(button); }
+            else if (action === "suggest-ai") { suggestAiReply(button); }
             else if (action === "cancel-template-send") { cancelTemplateSend(); }
             else if (action === "confirm-template-send") { sendTemplate(button); }
             else if (action === "sync-tasks") { syncTasks(button, true); }

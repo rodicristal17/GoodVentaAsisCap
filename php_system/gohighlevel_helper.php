@@ -85,7 +85,10 @@ function goHighLevelEstructuraDisponible($mysqli)
         && goHighLevelTablaExiste($mysqli, 'gohighlevel_usuario_vinculo')
         && goHighLevelTablaExiste($mysqli, 'gohighlevel_tarea_cache')
         && goHighLevelTablaExiste($mysqli, 'gohighlevel_tarea_sync')
-        && goHighLevelTablaExiste($mysqli, 'gohighlevel_tarea_operacion');
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_tarea_operacion')
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_adjunto_cache')
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_ia_config')
+        && goHighLevelTablaExiste($mysqli, 'gohighlevel_ia_operacion');
 }
 
 function goHighLevelContextoUsuario($mysqli, $codUsuario)
@@ -1300,7 +1303,7 @@ function goHighLevelListarOportunidades($mysqli, $config, $parametros)
     );
 }
 
-function goHighLevelListarMensajesConversacion($config, $parametros)
+function goHighLevelListarMensajesConversacion($config, $parametros, $mysqli = null)
 {
     $conversationId = goHighLevelIdSeguro(isset($parametros['conversation_id']) ? $parametros['conversation_id'] : '');
     if ($conversationId === '') {
@@ -1332,14 +1335,20 @@ function goHighLevelListarMensajesConversacion($config, $parametros)
         if (!is_array($adjuntos)) {
             $adjuntos = array();
         }
+        $messageId = goHighLevelTexto(goHighLevelValor($item, array('id', '_id')), 80);
+        $fecha = goHighLevelTexto(goHighLevelValor($item, array('dateAdded', 'createdAt')), 40);
+        $archivos = $mysqli
+            ? goHighLevelRegistrarAdjuntosMensaje($mysqli, $conversationId, $messageId, $fecha, $adjuntos)
+            : array();
         $mensajes[] = array(
-            'id' => goHighLevelTexto(goHighLevelValor($item, array('id', '_id')), 80),
+            'id' => $messageId,
             'cuerpo' => goHighLevelTexto($cuerpo, 4000),
             'direccion' => goHighLevelTexto(goHighLevelValor($item, array('direction')), 16),
             'tipo' => goHighLevelTexto(goHighLevelValor($item, array('messageType', 'type')), 60),
             'estado' => goHighLevelTexto(goHighLevelValor($item, array('status')), 40),
-            'fecha' => goHighLevelTexto(goHighLevelValor($item, array('dateAdded', 'createdAt')), 40),
-            'adjuntos' => min(20, count($adjuntos))
+            'fecha' => $fecha,
+            'adjuntos' => min(20, count($adjuntos)),
+            'archivos' => $archivos
         );
     }
     usort($mensajes, function ($a, $b) {
@@ -3032,5 +3041,7 @@ function goHighLevelGuardarPermisos($mysqli, $contexto, $entrada)
     }
     return goHighLevelUsuariosPermisos($mysqli, $contexto);
 }
+
+require_once __DIR__.'/gohighlevel_media_ia_helper.php';
 
 ?>

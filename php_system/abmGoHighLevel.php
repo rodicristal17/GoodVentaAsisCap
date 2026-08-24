@@ -78,12 +78,20 @@ try {
                 goHighLevelListarConversaciones($mysqli, $config, $_POST, $contexto), 200);
             break;
         case 'mensajes_conversacion':
-            $historial = goHighLevelListarMensajesConversacion($config, $_POST);
+            $historial = goHighLevelListarMensajesConversacion($config, $_POST, $mysqli);
             $historial['puede_responder'] = !empty($contexto['puede_responder']);
             $historial['puede_enviar_plantilla'] = !empty($contexto['puede_enviar_plantilla']);
             $historial['puede_ver_tareas'] = !empty($contexto['puede_ver_tareas']);
             $historial['puede_gestionar_tareas'] = !empty($contexto['puede_gestionar_tareas']);
             $historial['envio_habilitado'] = !empty($config['write_enabled']);
+            $iaLocal = goHighLevelIaConfiguracionLocal($mysqli);
+            $historial['ia'] = array(
+                'asistente_habilitado' => !empty($iaLocal['asistente_habilitado']),
+                'clave_configurada' => !empty($iaLocal['clave_configurada']),
+                'puede_sugerir' => !empty($contexto['puede_responder'])
+                    && !empty($iaLocal['asistente_habilitado'])
+                    && !empty($iaLocal['clave_configurada'])
+            );
             goHighLevelResponder(true, 'mensajes_obtenidos', 'Historial actualizado.', $historial, 200);
             break;
         case 'enviar_respuesta_manual':
@@ -169,6 +177,21 @@ try {
         case 'configuracion_permisos':
             goHighLevelResponder(true, 'permisos_obtenidos', 'Permisos actualizados.',
                 goHighLevelUsuariosPermisos($mysqli, $contexto), 200);
+            break;
+        case 'configuracion_ia':
+            if (empty($contexto['puede_configurar'])) {
+                goHighLevelLanzar('accion_no_autorizada', 'No tiene permiso para configurar la IA.', array(), 403);
+            }
+            goHighLevelResponder(true, 'configuracion_ia_obtenida', 'Configuracion de IA actualizada.',
+                goHighLevelIaConfiguracionLocal($mysqli), 200);
+            break;
+        case 'guardar_configuracion_ia':
+            goHighLevelResponder(true, 'configuracion_ia_guardada', 'Configuracion de IA guardada.',
+                goHighLevelGuardarConfiguracionIa($mysqli, $contexto, $_POST), 200);
+            break;
+        case 'sugerir_respuesta_ia':
+            goHighLevelResponder(true, 'sugerencia_ia_obtenida', 'Sugerencia preparada para revision.',
+                goHighLevelSugerirRespuestaIa($mysqli, $config, $contexto, $_POST), 200);
             break;
         case 'guardar_permisos':
             goHighLevelResponder(true, 'permisos_guardados', 'Configuracion y permisos guardados.',

@@ -18,7 +18,10 @@ $tablas = array(
     'gohighlevel_usuario_vinculo',
     'gohighlevel_tarea_cache',
     'gohighlevel_tarea_sync',
-    'gohighlevel_tarea_operacion'
+    'gohighlevel_tarea_operacion',
+    'gohighlevel_adjunto_cache',
+    'gohighlevel_ia_config',
+    'gohighlevel_ia_operacion'
 );
 $faltantes = array();
 foreach ($tablas as $tabla) {
