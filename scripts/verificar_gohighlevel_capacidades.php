@@ -13,6 +13,7 @@ $resultado = array(
     'usuarios_lectura' => 'no_comprobado',
     'contactos_lectura' => 'no_comprobado',
     'tareas_lectura' => 'no_comprobado',
+    'tareas_busqueda_lectura' => 'no_comprobado',
     'tareas_escritura' => !empty($config['task_write_enabled']) ? 'interruptor_activo' : 'interruptor_inactivo'
 );
 
@@ -59,11 +60,19 @@ try {
     }
 }
 
+try {
+    goHighLevelApiBuscarTareas($config, 1, 0);
+    $resultado['tareas_busqueda_lectura'] = 'ok';
+} catch (GoHighLevelExcepcion $e) {
+    $resultado['tareas_busqueda_lectura'] = $e->codigoOperacion;
+}
+
 echo json_encode($resultado, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n";
 exit(
     $resultado['usuarios_lectura'] === 'ok'
     && $resultado['contactos_lectura'] === 'ok'
-    && $resultado['tareas_lectura'] === 'ok' ? 0 : 2
+    && $resultado['tareas_lectura'] === 'ok'
+    && $resultado['tareas_busqueda_lectura'] === 'ok' ? 0 : 2
 );
 
 ?>

@@ -288,7 +288,7 @@
         var items = data.items || [];
         var sync = data.sincronizacion || {};
         var html = "<div class='ghl-section-title'><div><small>AGENDA OPERATIVA</small><h2>Tareas de GoHighLevel</h2><p>GoHighLevel conserva el registro principal; Telar muestra y gestiona las tareas permitidas.</p></div><span class='ghl-total'>" + Number(data.total || 0) + " tareas</span></div>";
-        html += "<div class='ghl-task-sync'><span><i class='fa-solid fa-arrows-rotate'></i><strong>Índice de tareas</strong><small>" + (sync.fecha_completa ? "Actualizado " + dateLabel(sync.fecha_completa) : "Pendiente de sincronización inicial") + (sync.en_curso ? " · en curso" : "") + "</small></span>" + (data.puede_sincronizar ? "<button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='sync-tasks'><i class='fa-solid fa-rotate'></i> " + (sync.en_curso ? "Continuar" : "Sincronizar") + "</button>" : "") + "</div>";
+        html += "<div class='ghl-task-sync'><span><i class='fa-solid fa-arrows-rotate'></i><strong>Índice de tareas</strong><small>" + (sync.fecha_completa ? "Actualizado " + dateLabel(sync.fecha_completa) : "Pendiente de sincronización inicial") + (sync.en_curso ? " · " + Number(sync.registros_procesados || 0) + " tareas revisadas" : "") + "</small></span>" + (data.puede_sincronizar ? "<button type='button' class='ghl-btn ghl-btn--ghost' data-ghl-action='sync-tasks'><i class='fa-solid fa-rotate'></i> " + (sync.en_curso ? "Continuar" : "Sincronizar") + "</button>" : "") + "</div>";
         if (data.permiso_gestionar && !data.gestion_habilitada) { html += "<div class='ghl-task-write-pending'><i class='fa-solid fa-shield-halved'></i><span><strong>Gestión preparada, pendiente de habilitación privada</strong><small>La lectura y sincronización funcionan; crear, editar y completar se activarán al confirmar el alcance contacts.write.</small></span></div>"; }
         html += renderResponsibleFilters("tareas", data.usuarios || [], [
             ["pending", "Pendientes"], ["overdue", "Atrasadas"], ["today", "Vencen hoy"], ["upcoming", "Próximas"], ["completed", "Completadas"], ["all", "Todas"]
@@ -980,7 +980,7 @@
             }
             state.taskSyncRunning = false;
             delete state.cache.tareas;
-            setMessage("Índice de tareas sincronizado: " + Number(sync.contactos_procesados || 0) + " contactos revisados.", "success");
+            setMessage("Índice sincronizado: " + Number(sync.registros_procesados || 0) + " tareas revisadas, " + Number(sync.tareas_procesadas || 0) + " disponibles.", "success");
             loadTab(true);
         }).catch(function (error) {
             state.taskSyncRunning = false;

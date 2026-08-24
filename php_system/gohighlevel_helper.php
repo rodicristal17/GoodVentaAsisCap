@@ -266,6 +266,71 @@ function goHighLevelApiGet($config, $ruta, $parametros, $versionForzada = '')
     return $datos;
 }
 
+function goHighLevelApiBuscarTareas($config, $limite, $skip)
+{
+    if (!goHighLevelConfigurado($config)) {
+        goHighLevelLanzar(
+            'integracion_no_configurada',
+            'La conexion privada con GoHighLevel todavia no esta disponible.',
+            array(),
+            503
+        );
+    }
+    if (!function_exists('curl_init')) {
+        goHighLevelLanzar('cliente_http_no_disponible', 'El servidor no tiene habilitado el cliente seguro.', array(), 503);
+    }
+    $locationId = goHighLevelIdSeguro(isset($config['location_id']) ? $config['location_id'] : '');
+    if ($locationId === '') {
+        goHighLevelLanzar('integracion_no_configurada', 'La subcuenta de GoHighLevel no es valida.', array(), 503);
+    }
+    $limite = max(1, min(100, intval($limite)));
+    $skip = max(0, min(10000000, intval($skip)));
+    $ruta = '/locations/'.rawurlencode($locationId).'/tasks/search';
+    $entrada = json_encode(array('limit' => $limite, 'skip' => $skip));
+    if (!is_string($entrada)) {
+        goHighLevelLanzar('tareas_no_disponibles', 'No se pudo preparar la consulta de tareas.', array(), 500);
+    }
+    $curl = curl_init($config['base'].$ruta);
+    curl_setopt_array($curl, array(
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_CONNECTTIMEOUT => 8,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $entrada,
+        CURLOPT_HTTPHEADER => array(
+            'Accept: application/json',
+            'Content-Type: application/json',
+            'Authorization: Bearer '.$config['token'],
+            'Version: v3',
+            'User-Agent: Sistema-Telar-GoHighLevel/3.1'
+        )
+    ));
+    $cuerpo = curl_exec($curl);
+    $estado = intval(curl_getinfo($curl, CURLINFO_HTTP_CODE));
+    $errorNumero = curl_errno($curl);
+    if (PHP_VERSION_ID < 80500) {
+        curl_close($curl);
+    } else {
+        unset($curl);
+    }
+    if ($cuerpo === false || $errorNumero !== 0) {
+        error_log('GoHighLevel: fallo de red al buscar tareas (curl '.$errorNumero.')');
+        goHighLevelLanzar('tareas_no_disponibles', 'No se pudo conectar con GoHighLevel para consultar tareas.', array(), 502);
+    }
+    $datos = json_decode($cuerpo, true);
+    if (!in_array($estado, array(200, 201), true) || !is_array($datos)) {
+        error_log('GoHighLevel: respuesta HTTP '.$estado.' al buscar tareas');
+        $mensaje = $estado === 401 || $estado === 403
+            ? 'La integracion privada no tiene el permiso locations/tasks.readonly.'
+            : 'GoHighLevel no pudo consultar las tareas en este momento.';
+        goHighLevelLanzar('tareas_no_disponibles', $mensaje, array('estado' => $estado), 502);
+    }
+    return $datos;
+}
+
 function goHighLevelApiPostMensaje($config, $entrada)
 {
     if (!goHighLevelConfigurado($config) || empty($config['write_enabled'])) {
@@ -1397,6 +1462,77 @@ function goHighLevelGuardarCacheTareas($mysqli, $contactId, $contactoNombre, $ta
     return $guardadas;
 }
 
+function goHighLevelGuardarCacheTareasGlobal($mysqli, $items)
+{
+    $stmt = $mysqli->prepare(
+        "INSERT INTO gohighlevel_tarea_cache "
+        ."(ghl_task_id,ghl_contact_id,ghl_assigned_user_id,titulo,descripcion,contacto_nombre,"
+        ."fecha_vencimiento_utc,completada,eliminada,fecha_origen,fecha_sincronizacion) "
+        ."VALUES (?,?,?,?,?,?,?, ?,0,?,NOW()) ON DUPLICATE KEY UPDATE "
+        ."ghl_contact_id=VALUES(ghl_contact_id),ghl_assigned_user_id=VALUES(ghl_assigned_user_id),"
+        ."titulo=VALUES(titulo),descripcion=VALUES(descripcion),contacto_nombre=VALUES(contacto_nombre),"
+        ."fecha_vencimiento_utc=VALUES(fecha_vencimiento_utc),completada=VALUES(completada),"
+        ."eliminada=0,fecha_origen=VALUES(fecha_origen),fecha_sincronizacion=NOW()"
+    );
+    if (!$stmt) {
+        goHighLevelLanzar('cache_tareas_no_disponible', 'No se pudo preparar el indice de tareas.', array(), 500);
+    }
+    $guardadas = 0;
+    $limiteCompletadas = time() - (90 * 86400);
+    foreach ((array)$items as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+        $eliminada = goHighLevelValor($item, array('deleted'), false);
+        if ($eliminada === true || $eliminada === 1 || strtolower(trim((string)$eliminada)) === 'true') {
+            continue;
+        }
+        $tarea = goHighLevelFormatearTarea($item);
+        $id = $tarea['id'];
+        $contactId = $tarea['contact_id'];
+        if ($id === '' || $contactId === '') {
+            continue;
+        }
+        $completada = !empty($tarea['completada']) ? 1 : 0;
+        $fechaUtc = $tarea['fecha_vencimiento_utc'];
+        $fechaSegundos = $fechaUtc ? strtotime($fechaUtc.' UTC') : 0;
+        if ($completada && $fechaSegundos > 0 && $fechaSegundos < $limiteCompletadas) {
+            continue;
+        }
+        $contactoDetalles = goHighLevelValor($item, array('contactDetails'), array());
+        $contactoNombre = is_array($contactoDetalles) ? goHighLevelNombreContacto($contactoDetalles) : 'Contacto sin nombre';
+        $usuarioDetalles = goHighLevelValor($item, array('assignedToUserDetails'), array());
+        if (is_array($usuarioDetalles)) {
+            $usuarioId = goHighLevelIdSeguro(goHighLevelValor($usuarioDetalles, array('id', '_id'), $tarea['assigned_to']));
+            $usuarioNombre = goHighLevelNombreContacto($usuarioDetalles);
+            goHighLevelRegistrarUsuarioObservado($mysqli, $usuarioId, $usuarioNombre);
+        }
+        $assignedTo = $tarea['assigned_to'];
+        $titulo = $tarea['titulo'];
+        $descripcion = $tarea['descripcion'];
+        $fechaOrigen = $tarea['fecha_origen'];
+        $stmt->bind_param(
+            'sssssssis',
+            $id,
+            $contactId,
+            $assignedTo,
+            $titulo,
+            $descripcion,
+            $contactoNombre,
+            $fechaUtc,
+            $completada,
+            $fechaOrigen
+        );
+        if (!$stmt->execute()) {
+            $stmt->close();
+            goHighLevelLanzar('cache_tareas_no_disponible', 'No se pudo actualizar el indice de tareas.', array(), 500);
+        }
+        $guardadas += 1;
+    }
+    $stmt->close();
+    return $guardadas;
+}
+
 function goHighLevelTareaVisibleParaUsuario($tarea, $contexto)
 {
     if (!empty($contexto['puede_ver_equipo'])) {
@@ -1522,7 +1658,9 @@ function goHighLevelEstadoSyncTareas($mysqli, $locationId)
     return $fila ? array(
         'en_curso' => intval($fila['en_curso']) === 1,
         'contactos_procesados' => intval($fila['contactos_procesados']),
+        'registros_procesados' => intval($fila['contactos_procesados']),
         'tareas_procesadas' => intval($fila['tareas_procesadas']),
+        'metodo' => 'busqueda_directa',
         'codigo' => (string)$fila['codigo_estado'],
         'fecha_inicio' => (string)$fila['fecha_inicio'],
         'fecha_ultima' => (string)$fila['fecha_ultima_ejecucion'],
@@ -1530,7 +1668,9 @@ function goHighLevelEstadoSyncTareas($mysqli, $locationId)
     ) : array(
         'en_curso' => false,
         'contactos_procesados' => 0,
+        'registros_procesados' => 0,
         'tareas_procesadas' => 0,
+        'metodo' => 'busqueda_directa',
         'codigo' => 'pendiente',
         'fecha_inicio' => '',
         'fecha_ultima' => '',
@@ -1646,7 +1786,7 @@ function goHighLevelSincronizarTareasPaso($mysqli, $config, $contexto, $parametr
             ."(location_id,en_curso,contactos_procesados,tareas_procesadas,codigo_estado,"
             ."cod_usuario_iniciaFK,fecha_inicio,fecha_ultima_ejecucion) VALUES ('".$locationSql."',1,0,0,'en_curso',"
             .intval($contexto['cod_usuario']).",NOW(),NOW()) ON DUPLICATE KEY UPDATE "
-            ."cursor_fecha='',cursor_id='',en_curso=1,contactos_procesados=0,tareas_procesadas=0,"
+            ."cursor_fecha='',cursor_id='0',en_curso=1,contactos_procesados=0,tareas_procesadas=0,"
             ."codigo_estado='en_curso',cod_usuario_iniciaFK=VALUES(cod_usuario_iniciaFK),"
             ."fecha_inicio=NOW(),fecha_ultima_ejecucion=NOW(),fecha_completa=NULL"
         );
@@ -1668,42 +1808,20 @@ function goHighLevelSincronizarTareasPaso($mysqli, $config, $contexto, $parametr
     if (!$reiniciar && intval($estado['en_curso']) !== 1) {
         return goHighLevelEstadoSyncTareas($mysqli, $locationId);
     }
-    $contactos = goHighLevelListarContactos($mysqli, $config, array(
-        'limite' => 3,
-        'cursor_fecha' => (string)$estado['cursor_fecha'],
-        'cursor_id' => (string)$estado['cursor_id']
-    ));
-    $tareasPaso = 0;
-    foreach ((array)$contactos['items'] as $contacto) {
-        $contactId = goHighLevelIdSeguro(goHighLevelValor($contacto, array('id'), ''));
-        if ($contactId === '') {
-            continue;
+    $skip = max(0, min(10000000, intval($estado['cursor_id'])));
+    $respuesta = goHighLevelApiBuscarTareas($config, 100, $skip);
+    $items = goHighLevelItems($respuesta, array('tasks'));
+    if ($reiniciar) {
+        if (!$mysqli->query("UPDATE gohighlevel_tarea_cache SET eliminada=1,fecha_sincronizacion=NOW()")) {
+            goHighLevelLanzar('cache_tareas_no_disponible', 'No se pudo reiniciar el indice de tareas.', array(), 500);
         }
-        $respuesta = goHighLevelApiGet(
-            $config,
-            '/contacts/'.rawurlencode($contactId).'/tasks',
-            array(),
-            'v3'
-        );
-        $tareas = array();
-        foreach (goHighLevelItems($respuesta, array('tasks')) as $item) {
-            if (is_array($item)) {
-                $tareas[] = goHighLevelFormatearTarea($item, $contactId);
-            }
-        }
-        $tareasPaso += goHighLevelGuardarCacheTareas(
-            $mysqli,
-            $contactId,
-            goHighLevelValor($contacto, array('nombre'), ''),
-            $tareas,
-            true
-        );
     }
-    $paginacion = isset($contactos['paginacion']) ? $contactos['paginacion'] : array();
-    $hayMas = !empty($paginacion['hay_mas']);
-    $cursorFecha = $hayMas ? goHighLevelTexto(goHighLevelValor($paginacion, array('cursor_fecha'), ''), 40) : '';
-    $cursorId = $hayMas ? goHighLevelIdSeguro(goHighLevelValor($paginacion, array('cursor_id'), '')) : '';
-    $contactosPaso = count((array)$contactos['items']);
+    $registrosPaso = count($items);
+    $tareasPaso = goHighLevelGuardarCacheTareasGlobal($mysqli, $items);
+    $siguienteSkip = $skip + $registrosPaso;
+    $hayMas = $registrosPaso === 100;
+    $cursorFecha = '';
+    $cursorId = $hayMas ? (string)$siguienteSkip : '';
     $stmt = $mysqli->prepare(
         "UPDATE gohighlevel_tarea_sync SET cursor_fecha=?,cursor_id=?,en_curso=?,"
         ."contactos_procesados=contactos_procesados+?,tareas_procesadas=tareas_procesadas+?,"
@@ -1720,7 +1838,7 @@ function goHighLevelSincronizarTareasPaso($mysqli, $config, $contexto, $parametr
         $cursorFecha,
         $cursorId,
         $enCurso,
-        $contactosPaso,
+        $registrosPaso,
         $tareasPaso,
         $codigo,
         $enCurso,

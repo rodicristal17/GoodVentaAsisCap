@@ -15,7 +15,7 @@ Telar importa el catalogo de usuarios de la subcuenta e intenta vincularlo con u
 - La asignacion de conversaciones se consulta y filtra, pero no se modifica desde Telar porque la API oficial de conversaciones no expone esa escritura en el contrato usado.
 - Las tareas de cada contacto aparecen en un panel plegable dentro del chat, para no quitar espacio al historial.
 - La pestaña **Tareas** usa un indice local reversible. GoHighLevel sigue siendo la fuente oficial.
-- La sincronizacion inicial recorre contactos en lotes pequeños. Se conservan pendientes y completadas de los ultimos 90 dias; no se duplican tareas.
+- La sincronizacion inicial usa la busqueda oficial de tareas en lotes de 100, sin recorrer los casi cuarenta mil contactos uno por uno. Se conservan pendientes y completadas de los ultimos 90 dias; no se duplican tareas.
 - Crear, editar, completar o reabrir una tarea se envia primero a GoHighLevel y se registra con token de idempotencia y auditoria sin copiar su descripcion.
 
 Abrir el historial no marca mensajes ni ejecuta automatizaciones. Cada conversacion se posiciona inicialmente en el mensaje mas reciente; al cargar mensajes anteriores conserva el punto de lectura en lugar de saltar. El envio manual se realiza con un unico boton, pero conserva el permiso individual, la validacion de la ventana nuevamente en servidor y el interruptor operativo habilitado. El compositor permanece fijo, comienza en una linea y crece hasta tres; el estado de las 24 horas se muestra como indicador compacto y solamente el historial de mensajes se desplaza. La conversacion no reserva un pie inferior: la X, Escape y el fondo del modal permiten cerrarla. No se admiten adjuntos, envios masivos ni texto libre fuera de la ventana. Fuera de 24 horas Telar solo envia el identificador de una plantilla que vuelve a validar contra el catalogo real de GoHighLevel.
@@ -47,6 +47,7 @@ Alcances requeridos en la integracion privada:
 - `opportunities.readonly`
 - `calendars.readonly`
 - `users.readonly` (catalogo y vinculacion de responsables)
+- `locations/tasks.readonly` (busqueda global y sincronizacion eficiente de tareas)
 
 El token se instala fuera del repositorio en:
 

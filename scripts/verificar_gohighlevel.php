@@ -70,6 +70,10 @@ ghlVerificar(strpos($helper, "\$ruta = '/conversations/messages';") !== false, '
 ghlVerificar(strpos($helper, 'CURLOPT_POST => true') !== false, 'Falta el POST limitado para respuestas manuales.');
 ghlVerificar(strpos($helper, "empty(\$config['write_enabled'])") !== false, 'La escritura debe depender de un interruptor seguro.');
 ghlVerificar(strpos($helper, "empty(\$config['task_write_enabled'])") !== false, 'Las tareas deben tener un interruptor independiente.');
+ghlVerificar(strpos($helper, "'/locations/'.rawurlencode(\$locationId).'/tasks/search'") !== false, 'La sincronizacion global debe usar la busqueda oficial de tareas.');
+ghlVerificar(strpos($helper, "array('limit' => \$limite, 'skip' => \$skip)") !== false, 'La busqueda de tareas debe paginar con limite y desplazamiento acotados.');
+ghlVerificar(strpos($helper, "'Version: v3'") !== false, 'La busqueda y gestion de tareas deben usar la version v3.');
+ghlVerificar(strpos($helper, "'metodo' => 'busqueda_directa'") !== false, 'El estado debe identificar la sincronizacion directa de tareas.');
 ghlVerificar(substr_count($helper, "'puede_sincronizar'") >= 2, 'La sincronizacion global de tareas debe exponer el permiso de ejecucion.');
 ghlVerificar(strpos($helper, "'gohighlevel_vinculo_contacto'") !== false, 'Debe persistir vinculos locales.');
 ghlVerificar(strpos($helper, "'ambiguo'") !== false, 'Debe advertir coincidencias ambiguas.');
