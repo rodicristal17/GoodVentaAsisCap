@@ -18,7 +18,7 @@ docker compose -f "$COMPOSE" exec -T database sh -lc \
 
 docker compose -f "$COMPOSE" exec -T database sh -lc \
   'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" telar_codex_test_plantillas' \
-  < "$RAIZ_ARCHIVOS/gohighlevel_plantillas_schema_minimo.sql"
+  < "$RAIZ_ARCHIVOS/scripts/fixtures/gohighlevel_plantillas_schema_minimo.sql"
 
 docker compose -f "$COMPOSE" exec -T database sh -lc \
   'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" telar_codex_test_plantillas' \
