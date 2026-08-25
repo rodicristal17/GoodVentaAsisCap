@@ -26,6 +26,19 @@ function gastoFechaFiltroIsoValida($valor)
 	return $fecha && $fecha->format('Y-m-d') === $valor;
 }
 
+function gastoLimitarAsuntoHilo($valor, $limite= 180)
+{
+	$texto= trim((string)$valor);
+	if ($texto == '') {
+		return 'Movimiento financiero';
+	}
+	$limite= max(1, (int)$limite);
+	if (function_exists('mb_substr')) {
+		return mb_substr($texto, 0, $limite, 'ISO-8859-1');
+	}
+	return substr($texto, 0, $limite);
+}
+
 function esConceptoDepositoCentral($descripcion)
 {
 	return strtoupper(trim((string)$descripcion)) == 'DEPOSITO BANCARIO - FARAONE CAPITAL S.A.';
@@ -3441,10 +3454,7 @@ function crearInterConsultaParaGasto($motivo, $tipo, $cod_usuario, $cod_local, $
 	if (!function_exists('abmInterConsulta')) {
 		return '';
 	}
-	$asunto= trim((string)$motivo);
-	if ($asunto == '') {
-		$asunto= 'Movimiento financiero';
-	}
+	$asunto= gastoLimitarAsuntoHilo($motivo);
 	$tipoHilo= (strtolower(trim((string)$tipo)) == 'ingreso') ? 'pago' : 'egreso';
 	if ($mysqliTransaccion instanceof mysqli) {
 		$observacion= 'Hilo creado automaticamente desde Resumen de flujo financiero.';
@@ -3476,10 +3486,7 @@ function crearInterConsultaParaGasto($motivo, $tipo, $cod_usuario, $cod_local, $
 }
 
 function obtenerOCrearInterConsultaMovimientoFinanciero($motivo, $tipo, $cod_usuario, $cod_local) {
-	$asunto= trim((string)$motivo);
-	if ($asunto == '') {
-		$asunto= 'Movimiento financiero';
-	}
+	$asunto= gastoLimitarAsuntoHilo($motivo);
 	$tipoHilo= (strtolower(trim((string)$tipo)) == 'ingreso') ? 'pago' : 'egreso';
 	$mysqli= conectar_al_servidor();
 	$sql= "SELECT cod_interConsulta FROM interconsulta WHERE estado <> 'inactivo' AND UPPER(TRIM(asunto)) = UPPER(TRIM(?)) AND LOWER(TRIM(IFNULL(tipo, ''))) IN (?, ?) ";
