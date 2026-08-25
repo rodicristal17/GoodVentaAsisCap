@@ -41,6 +41,8 @@ $cod_persona=$_POST['cod_persona'];
 $cod_persona = mb_convert_encoding((string)($cod_persona), 'ISO-8859-1', 'UTF-8');
 $nombre_persona=$_POST['nombre_persona'];
 $nombre_persona = mb_convert_encoding((string)($nombre_persona), 'ISO-8859-1', 'UTF-8');
+$apellido_persona=isset($_POST['apellido_persona']) ? $_POST['apellido_persona'] : '';
+$apellido_persona = mb_convert_encoding((string)($apellido_persona), 'ISO-8859-1', 'UTF-8');
 $direccion=$_POST['direccion'];
 $direccion = mb_convert_encoding((string)($direccion), 'ISO-8859-1', 'UTF-8');
 $telefono=$_POST['telefono'];
@@ -74,6 +76,21 @@ $direcciontrab=$_POST['direcciontrab'];
 $direcciontrab = mb_convert_encoding((string)($direcciontrab), 'ISO-8859-1', 'UTF-8');
 $accesocredito=$_POST['accesocredito'];
 $accesocredito = mb_convert_encoding((string)($accesocredito), 'ISO-8859-1', 'UTF-8');
+
+$nombre_persona = trim((string)$nombre_persona);
+$apellido_persona = trim((string)$apellido_persona);
+$telefono = trim((string)$telefono);
+$ci_cliente = trim((string)$ci_cliente);
+$telefonoDigitos = preg_replace('/\D+/', '', $telefono);
+if($nombre_persona==='' || $apellido_persona==='' || $telefono==='' || $ci_cliente===''){
+	echo json_encode(array("1" => "CAMPOSVACIOS"));
+	exit;
+}
+if(!preg_match('/^[+0-9()\s.\-]+$/', $telefono) || strlen($telefonoDigitos)<6 || strlen($telefonoDigitos)>15){
+	echo json_encode(array("1" => "telefono_invalido"));
+	exit;
+}
+$nombre_persona = $nombre_persona.' '.$apellido_persona;
 
 abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_persona,$direccion,$telefono,$email,$cod_cliente,$rut_cliente,$ci_cliente,$Calificacion,$lugardetrabajo,$salario,$antiguedad,$teleftrab1,$teleftrab2,$direcciontrab,$operacion);
 

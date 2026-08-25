@@ -6015,7 +6015,12 @@ console.log(responseText);
                         limpiarFichaPacienteCalendario();
                     }
                 } else {
-                    alert(resp["mensaje"] || "No se pudo actualizar el horario.");
+                    var mensajeErrorAgenda = resp["mensaje"] || "No se pudo actualizar el horario. La cita conserva su estado anterior.";
+                    if (typeof ver_vetana_informativa === "function") {
+                        ver_vetana_informativa(mensajeErrorAgenda, "No se actualizo la cita", "error");
+                    } else {
+                        alert(mensajeErrorAgenda);
+                    }
                     setAccionesDetalleAgendaProcesando(false);
                 }
             } catch (error) {

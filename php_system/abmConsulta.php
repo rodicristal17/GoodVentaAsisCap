@@ -1045,11 +1045,18 @@ function registrarEvolucionTratamientoConsultaRegistro($mysqli,$detalle,$user,$p
 		$stmtEvolucion->bind_param("ssii", $idDetalle, $user, $porcentaje, $codAgendaValor);
 	}
 	if (!$stmtEvolucion->execute()) {
+		error_log("[Consulta] No se pudo registrar la evolucion del tratamiento. Detalle=".$idDetalle." Agenda=".(string)$codAgendaValor." MySQL=".$stmtEvolucion->errno." ".$stmtEvolucion->error);
+		$stmtEvolucion->close();
 		return array("ok" => false, "mensaje" => "No se pudo registrar la evolucion del tratamiento.");
 	}
 	$codEvolucion = intval($stmtEvolucion->insert_id);
 	$stmtEvolucion->close();
 	return array("ok" => true, "porcentaje_anterior" => $porcentajeAnterior, "porcentaje_nuevo" => $porcentaje, "cod_evolucion" => $codEvolucion);
+}
+
+function longitudEvolucionTratamientoConsultaValida($texto,$limite)
+{
+	return mb_strlen((string)$texto, 'ISO-8859-1') <= (int)$limite;
 }
 
 
@@ -1124,6 +1131,10 @@ function abm($cod_consulta,$motivo,$diagnostico,$prxtrabajo,$trabajoreali,$fecha
     if (trim((string)$trabajoreali) == "") {
         responderConsultaJson("camposvacio","Debe registrar la evolucion del tratamiento realizado.");
     }
+	$limiteEvolucion = 1000;
+	if (!longitudEvolucionTratamientoConsultaValida($trabajoreali,$limiteEvolucion)) {
+		responderConsultaJson("camposvacio","La evolucion del tratamiento no puede superar los 1.000 caracteres.");
+	}
     $cod_detalle_tratamiento = trim((string)$cod_detalle_tratamiento);
     if ($cod_detalle_tratamiento == "" || !ctype_digit($cod_detalle_tratamiento)) {
         responderConsultaJson("camposvacio","Seleccione el tratamiento realizado del plan madre.");

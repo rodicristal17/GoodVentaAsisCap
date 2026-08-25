@@ -4,6 +4,10 @@ if (!defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
     define('JSON_INVALID_UTF8_SUBSTITUTE', 0);
 }
 
+class AgendaValidacionException extends Exception
+{
+}
+
 if (!defined('ABM_CALENDAR_JSON_FATAL_HANDLER')) {
     define('ABM_CALENDAR_JSON_FATAL_HANDLER', true);
     ob_start();
@@ -18,9 +22,10 @@ if (!defined('ABM_CALENDAR_JSON_FATAL_HANDLER')) {
                 header('Content-Type: application/json; charset=UTF-8');
                 http_response_code(200);
             }
+            error_log('[Agenda] Error fatal: '.$error['message']);
             echo json_encode(array(
                 "1" => "Error",
-                "mensaje" => "Error interno al procesar calendario: " . $error['message']
+                "mensaje" => "Ocurrio un error interno al procesar el calendario. La cita no fue modificada."
             ), JSON_INVALID_UTF8_SUBSTITUTE);
         }
     });
@@ -294,7 +299,7 @@ function asegurarEstructuraAgendaInsumos($mysqli)
         KEY idx_agenda_trat_agenda (id_agenda),
         KEY idx_agenda_trat_venta (cod_ventaFK),
         KEY idx_agenda_trat_detalle (cod_detalle_ventaFK)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
     $mysqli->query($sqlAgendaTratamientos);
 
     $sqlBase = "CREATE TABLE IF NOT EXISTS agenda_insumo_base (
@@ -306,7 +311,7 @@ function asegurarEstructuraAgendaInsumos($mysqli)
         creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
         UNIQUE KEY uq_agenda_insumo_base (id_insumo)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
     $mysqli->query($sqlBase);
 
     $sqlInsumoProducto = "CREATE TABLE IF NOT EXISTS insumo_producto (
@@ -318,7 +323,7 @@ function asegurarEstructuraAgendaInsumos($mysqli)
         UNIQUE KEY uq_insumo_producto (id_insumo, cod_producto),
         KEY idx_insumo_producto_insumo (id_insumo),
         KEY idx_insumo_producto_producto (cod_producto)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
     $mysqli->query($sqlInsumoProducto);
 
     $sqlConsumo = "CREATE TABLE IF NOT EXISTS agenda_consumo_insumos (
@@ -336,7 +341,7 @@ function asegurarEstructuraAgendaInsumos($mysqli)
         UNIQUE KEY uq_agenda_consumo (id_agenda, id_insumo),
         KEY idx_agenda_consumo_agenda (id_agenda),
         KEY idx_agenda_consumo_insumo (id_insumo)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
     $mysqli->query($sqlConsumo);
     agregarColumnaAgendaSiNoExiste($mysqli, "insumosconsl", "tiene_variantes", "tiene_variantes TINYINT(1) NOT NULL DEFAULT 0");
     agregarColumnaAgendaSiNoExiste($mysqli, "insumosconsl", "tipo_variante", "tipo_variante VARCHAR(60) NULL");
@@ -363,7 +368,7 @@ function asegurarEstructuraAgendaInsumos($mysqli)
         PRIMARY KEY (id),
         KEY idx_agenda_ajuste_agenda (id_agenda),
         KEY idx_agenda_ajuste_insumo (id_insumo)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
     $mysqli->query($sqlAjustes);
 
     $sqlStock = "CREATE TABLE IF NOT EXISTS insumo_stock_consultorio (
@@ -378,7 +383,7 @@ function asegurarEstructuraAgendaInsumos($mysqli)
         UNIQUE KEY uq_insumo_local_consultorio_variante (id_insumo, id_variante, cod_local, id_consultorio),
         KEY idx_insumo_stock_local (cod_local),
         KEY idx_insumo_stock_consultorio (id_consultorio)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
     $mysqli->query($sqlStock);
     agregarColumnaAgendaSiNoExiste($mysqli, "insumo_stock_consultorio", "id_variante", "id_variante INT NOT NULL DEFAULT 0");
     quitarIndiceAgendaSiExiste($mysqli, "insumo_stock_consultorio", "uq_insumo_local_consultorio");
@@ -398,7 +403,7 @@ function asegurarEstructuraAgendaInsumos($mysqli)
         PRIMARY KEY (id_movimiento),
         KEY idx_mov_insumo (insumo_id),
         KEY idx_mov_grupo (grupo_movimiento)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
     $mysqli->query($sqlMovimientos);
     agregarColumnaAgendaSiNoExiste($mysqli, "movimientos_insumos", "grupo_movimiento", "grupo_movimiento VARCHAR(40) NULL");
     agregarColumnaAgendaSiNoExiste($mysqli, "movimientos_insumos", "id_variante", "id_variante INT NOT NULL DEFAULT 0");
@@ -419,7 +424,7 @@ function asegurarTablaVariantesAgenda($mysqli)
         UNIQUE KEY uq_insumo_variante (insumo_id, nombre_variante),
         KEY idx_variante_insumo (insumo_id),
         KEY idx_variante_estado (estado)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3";
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
     $mysqli->query($sql);
 }
 
@@ -814,7 +819,7 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru, $estadoForza
     $idAgenda = (int)$idAgenda;
     $usuario = (int)$useru;
     if ($idAgenda <= 0) {
-        throw new Exception("Falta el agendamiento para descontar insumos.");
+        throw new AgendaValidacionException("Falta identificar el agendamiento. La cita no fue modificada.");
     }
     if (!tablaAgendaExiste($mysqli, "insumosconsl")) {
         return 0;
@@ -825,13 +830,13 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru, $estadoForza
         LEFT JOIN persona p ON p.cod_persona = a.id_paciente
         WHERE a.id_agenda = '".$idAgenda."' LIMIT 1");
     if (!$resultAgenda || !($agenda = $resultAgenda->fetch_assoc())) {
-        throw new Exception("No se encontro la cita para descontar insumos.");
+        throw new AgendaValidacionException("No se encontro la cita seleccionada. Actualice la agenda y vuelva a intentarlo.");
     }
 
     $consultorio = (int)$agenda["id_consultorio"];
     $codLocal = obtenerCodLocalConsultorioAgenda($mysqli, $consultorio);
     if ($consultorio <= 0 || $codLocal <= 0) {
-        throw new Exception("La cita no tiene consultorio/local valido para descontar insumos.");
+        throw new AgendaValidacionException("La cita no tiene un consultorio y local validos para descontar sus insumos.");
     }
 
     $resultConsumo = $mysqli->query("SELECT COUNT(*) AS total FROM agenda_consumo_insumos WHERE id_agenda = '".$idAgenda."'");
@@ -862,7 +867,7 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru, $estadoForza
         FOR UPDATE";
     $resultConsumos = $mysqli->query($sqlConsumos);
     if (!$resultConsumos) {
-        throw new Exception("No se pudieron obtener los insumos de la cita.");
+        throw new Exception("No se pudieron consultar los insumos de la cita: ".$mysqli->error);
     }
 
     $consumos = array();
@@ -879,11 +884,12 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru, $estadoForza
         }
     }
     if (count($faltanVariantes) > 0) {
-        throw new Exception("Faltan seleccionar variantes de insumos: ".implode(", ", $faltanVariantes).".");
+        throw new AgendaValidacionException("No se puede marcar la cita como atendida. Seleccione primero las variantes de estos insumos: ".implode(", ", $faltanVariantes).".");
     }
 
     $grupoMovimiento = "agenda_".$idAgenda."_".date("YmdHis");
     $totalDescontados = 0;
+    $insumosSinStock = array();
     foreach ($consumos as $consumo) {
         $idConsumo = (int)$consumo["id"];
         $idInsumo = (int)$consumo["id_insumo"];
@@ -902,12 +908,7 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru, $estadoForza
             $stockActual = normalizarNumeroAgenda($rowStock["cantidad"]);
         }
         if ($stockActual < $cantidad) {
-            $mysqli->query("UPDATE agenda_consumo_insumos
-                SET estado = IF(estado = 'previsto', 'confirmado', estado),
-                    cantidad_confirmada = IF(cantidad_confirmada IS NULL, cantidad_prevista, cantidad_confirmada),
-                    usuario_confirmo = IF(usuario_confirmo IS NULL, '".$usuario."', usuario_confirmo),
-                    fecha_confirmo = IF(fecha_confirmo IS NULL, NOW(), fecha_confirmo)
-                WHERE id = '".$idConsumo."' LIMIT 1");
+            $insumosSinStock[] = $nombreInsumo." (disponible ".number_format($stockActual, 3, ',', '.').", requerido ".number_format($cantidad, 3, ',', '.').")";
             continue;
         }
 
@@ -940,6 +941,10 @@ function descontarInsumosAgendaAtendida($mysqli, $idAgenda, $useru, $estadoForza
                 fecha_confirmo = IF(fecha_confirmo IS NULL, NOW(), fecha_confirmo)
             WHERE id = '".$idConsumo."' LIMIT 1");
         $totalDescontados++;
+    }
+
+    if (count($insumosSinStock) > 0) {
+        throw new AgendaValidacionException("No se puede marcar la cita como atendida por stock insuficiente: ".implode("; ", $insumosSinStock).".");
     }
 
     return $totalDescontados;
@@ -4081,11 +4086,14 @@ function actualizarCita($mysqli, $useru){
         $mysqli->commit();
     } catch (Exception $e) {
         $mysqli->rollback();
+        $mensajeUsuario = "No se pudo actualizar el agendamiento por un error interno. La cita conserva su estado anterior.";
+        if ($e instanceof AgendaValidacionException) {
+            $mensajeUsuario = $e->getMessage();
+        }
+        error_log("[Agenda][actualizarCita] id=".(int)$id_agenda." usuario=".(int)$useru." error=".$e->getMessage());
         echo json_encode(array(
             "1" => "Error al actualizar cita",
-            "mensaje" => "No se pudo actualizar el agendamiento",
-            "sql" => $sql,
-            "mysql" => $e->getMessage()
+            "mensaje" => $mensajeUsuario
         ));
         exit;
     }

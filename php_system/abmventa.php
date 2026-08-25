@@ -14,6 +14,7 @@ include("calcularintereses.php");
 // include("calcularInteresDirecto.php");
 include("classTable.php");
 require_once("interconsulta_seguimiento_paciente_helper.php");
+require_once("cliente_venta_validacion_helper.php");
 function verificar($operacion)
 {
 	
@@ -72,6 +73,8 @@ $tipo_comprobante=$_POST['tipo_comprobante'];
 $tipo_comprobante = mb_convert_encoding((string)($tipo_comprobante), 'ISO-8859-1', 'UTF-8');
 $puntoexpedicion=$_POST['puntoexpedicion'];
 $puntoexpedicion = mb_convert_encoding((string)($puntoexpedicion), 'ISO-8859-1', 'UTF-8');
+
+clienteVentaValidarParaGuardar($cod_clienteFK,$operacion,$cod_venta);
 
 if($operacion=="editar")
 {

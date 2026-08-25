@@ -13,6 +13,7 @@ include("calcularintereses.php");
 include("classTable.php");
 require_once("interconsulta_seguimiento_paciente_helper.php");
 require_once("trabajo_laboratorio_helper.php");
+require_once("cliente_venta_validacion_helper.php");
 
 function validarCantidadUnitariaTratamientoVenta($mysqli,$codProducto,$cantidad,$responder = true)
 {
@@ -182,6 +183,7 @@ $tipo = mb_convert_encoding((string)($tipo), 'ISO-8859-1', 'UTF-8');
 $descuento=$_POST['descuento'];
 $descuento = mb_convert_encoding((string)($descuento), 'ISO-8859-1', 'UTF-8');
 
+clienteVentaValidarParaGuardar($cod_clienteFK,"nuevo",0);
 $datosventa=iniciarVenta($codSolicitudCreditoFK,$puntoexpedicion,$tipo_comprobante,$fecha_venta,$cod_usuarioFK,$cod_clienteFK,$num_factura,$cod_cobradorFK,$TipoVenta,$TipoPago,$vendedor1,$vendedor2,$comisioncobrador,$descuento,$cod_local,$idGaranteFk);
 $cod_ventaFK=$datosventa[0];
 $num_factura=$datosventa[1];

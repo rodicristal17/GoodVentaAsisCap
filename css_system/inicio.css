@@ -34353,6 +34353,19 @@ button.dashboard-summary-item:hover {
     box-sizing: border-box;
 }
 
+#divAbmDetalleConsulta .clinical-text-counter {
+  margin-top: 5px;
+  color: #52657a;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: right;
+}
+
+#divAbmDetalleConsulta .clinical-text-counter--warning {
+  color: #b42318;
+  font-weight: 700;
+}
+
 #divAbmDetalleConsulta .clinical-treatment-select {
     width: 100%;
     min-height: 36px;

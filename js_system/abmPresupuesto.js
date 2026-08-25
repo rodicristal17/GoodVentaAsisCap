@@ -3792,7 +3792,7 @@ function presupuestoAVenta(){
 
 	var documentoAbmCliente = String(document.getElementById('inptNroDocCliente').value || "").split('-')[0].trim();
 	if (String(idAbmCliente || "") != String(codClientePresupuesto) || documentoAbmCliente != documentoClientePresupuesto) {
-		document.getElementById('inptNombreApellidoCliente').value = nombreClientePresupuesto;
+		cargarNombreApellidoCliente(nombreClientePresupuesto);
 		document.getElementById('inptNroDocCliente').value = documentoClientePresupuesto;
 		document.getElementById('inptNroTelefCliente').value = "";
 		document.getElementById('inptNrowhatsappCliente').value = "";

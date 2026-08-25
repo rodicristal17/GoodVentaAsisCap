@@ -20844,8 +20844,8 @@ function limpiarcamposventa(ctrl) {
 	document.getElementById('inptSeleccTipoComprobanteVenta').value="NOTA DE VENTA"
 	document.getElementById('inptDescripcionPrVenta').value=""
 	document.getElementById('inptFechaVenta').value = f.getFullYear() + "-" + mes + "-" + dia;
-	document.getElementById('inptClienteVenta').value = "CLIENTE OCASIONAL";
-	document.getElementById('inptClienteVenta2').value = "CLIENTE OCASIONAL";
+	document.getElementById('inptClienteVenta').value = "";
+	document.getElementById('inptClienteVenta2').value = "";
 		document.getElementById('inptEntregaVenta').value = "0";
 		document.getElementById('inptDocClienteVenta').value = "";
 		document.getElementById('inptDocClienteVenta2').value = "";
@@ -21577,6 +21577,34 @@ controlDetalle=1;
 	}
 }
 var idDetalleVenta = "";
+function validarClienteObligatorioParaVenta() {
+	var clienteId = String(idFkCliente || "");
+	var esEdicionOcasionalHistorica = String(idabmVenta || "") !== "" && clienteId === "7";
+	if (esEdicionOcasionalHistorica) {
+		return true;
+	}
+	if (clienteId === "" || clienteId === "7") {
+		ver_vetana_informativa("DEBE SELECCIONAR UN CLIENTE REGISTRADO")
+		return false;
+	}
+	var nombre = String(document.getElementById('inptClienteVenta').value || "").trim();
+	var documento = String(document.getElementById('inptDocClienteVenta').value || "").trim();
+	var telefono = String(document.getElementById('inptTelefVenta').value || "").trim();
+	var digitosTelefono = telefono.replace(/\D/g, "").length;
+	if (nombre.split(/\s+/).filter(Boolean).length < 2) {
+		ver_vetana_informativa("EL CLIENTE DEBE TENER NOMBRE Y APELLIDO. COMPLETE SU FICHA")
+		return false;
+	}
+	if (documento === "") {
+		ver_vetana_informativa("EL CLIENTE NO TIENE NUMERO DE DOCUMENTO. COMPLETE SU FICHA")
+		return false;
+	}
+	if (!/^[+0-9()\s.-]+$/.test(telefono) || digitosTelefono < 6 || digitosTelefono > 15) {
+		ver_vetana_informativa("EL CLIENTE NO TIENE UN TELEFONO VALIDO. COMPLETE SU FICHA")
+		return false;
+	}
+	return true;
+}
 /*SI SE MODIFICA LA FUNCION VERIFICAR DETALLE VENTA TAMBIEN HAY QUE CAMBIAR VERIFICAR DETALLE VENTA CREDITO*/
 function verificarcamposdetallesventa() {
 	if (typeof bloquearAccionMientrasGuardaCliente == "function" && bloquearAccionMientrasGuardaCliente()) {
@@ -21626,12 +21654,8 @@ controldetalle=controldetalle+1;
 		inptComisionVentaCobrador="0"
 	}
 
-	if (idFkCliente == "") {
-		document.getElementById('inptClienteVenta').value = "CLIENTE OCASIONAL";
-		document.getElementById('inptClienteVenta2').value = "CLIENTE OCASIONAL";
-		document.getElementById('inptDocClienteVenta').value = "";
-		document.getElementById('inptDocClienteVenta2').value = "";
-		idFkCliente = "7";
+	if (!validarClienteObligatorioParaVenta()) {
+		return false;
 	}
 	
 
@@ -21755,12 +21779,8 @@ controldetalle=controldetalle+1;
 		inptComisionVentaCobrador="0"
 	}
 
-	if (idFkCliente == "") {
-		document.getElementById('inptClienteVenta').value = "CLIENTE OCASIONAL";
-		document.getElementById('inptClienteVenta2').value = "CLIENTE OCASIONAL";
-		document.getElementById('inptDocClienteVenta').value = "";
-		document.getElementById('inptDocClienteVenta2').value = "";
-		idFkCliente = "7";
+	if (!validarClienteObligatorioParaVenta()) {
+		return false;
 	}
 	
 
@@ -21842,12 +21862,8 @@ controldetalle=controldetalle+1;
 		inptComisionVentaCobrador="0"
 	}
 
-	if (idFkCliente == "") {
-		document.getElementById('inptClienteVenta').value = "CLIENTE OCASIONAL";
-		document.getElementById('inptClienteVenta2').value = "CLIENTE OCASIONAL";
-		document.getElementById('inptDocClienteVenta').value = "";
-		document.getElementById('inptDocClienteVenta2').value = "";
-		idFkCliente = "7";
+	if (!validarClienteObligatorioParaVenta()) {
+		return false;
 	}
 	
 
@@ -23078,8 +23094,8 @@ var inptSeleccTipoComprobanteVenta = document.getElementById('inptSeleccTipoComp
 		ver_vetana_informativa("FALTO INGRESAR LA COMISIÓN DEL COBRADOR")
 		return false;
 	}
-	if (idFkCliente == "") {
-		idFkCliente = "7";
+	if (!validarClienteObligatorioParaVenta()) {
+		return false;
 	}
 	if (inptCobradorVenta == "") {
 		idFkCobrador = "9";
@@ -34984,6 +35000,26 @@ function respuestaJqueryAjax(Respuesta){
     ver_vetana_informativa("FALTO INGRESAR ALGUNOS CAMPOS...")
 	return false;
     }
+	if (Respuesta == "CLIENTE_OBLIGATORIO" || Respuesta == "CLIENTE_INVALIDO") {
+		ver_vetana_informativa("DEBE SELECCIONAR UN CLIENTE REGISTRADO Y VALIDO")
+		return false;
+	}
+	if (Respuesta == "CLIENTE_SIN_NOMBRE_APELLIDO") {
+		ver_vetana_informativa("EL CLIENTE DEBE TENER NOMBRE Y APELLIDO. COMPLETE SU FICHA")
+		return false;
+	}
+	if (Respuesta == "CLIENTE_SIN_DOCUMENTO") {
+		ver_vetana_informativa("EL CLIENTE NO TIENE NUMERO DE DOCUMENTO. COMPLETE SU FICHA")
+		return false;
+	}
+	if (Respuesta == "CLIENTE_SIN_TELEFONO") {
+		ver_vetana_informativa("EL CLIENTE NO TIENE UN TELEFONO VALIDO. COMPLETE SU FICHA")
+		return false;
+	}
+	if (Respuesta == "telefono_invalido") {
+		ver_vetana_informativa("EL TELEFONO DEBE TENER ENTRE 6 Y 15 DIGITOS")
+		return false;
+	}
 	if(Respuesta == "EX") {
     ver_vetana_informativa("YA EXISTE UNA CLIENTE SIMILAR...")
 	return false;

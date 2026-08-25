@@ -2707,6 +2707,7 @@ function prepararFormularioNuevaConsulta(){
 	document.getElementById("inptMotivoConsulta").value="";	
 	document.getElementById("inptDiagnosticoConsulta").value=""; 
 	document.getElementById("inptTrabajoRealizadoConsulta").value=""; 
+	actualizarContadorEvolucionTratamientoConsulta();
 	document.getElementById("inptProximaConsultaConsulta").value=""; 
 	if (document.getElementById("inptAvanceTratamientoConsulta")) {
 		document.getElementById("inptAvanceTratamientoConsulta").value = "0";
@@ -2735,6 +2736,23 @@ function limpiarcamposConsulta(){
 }
 
 let cod_consulta ="";
+var LIMITE_EVOLUCION_TRATAMIENTO_CONSULTA = 1000;
+
+function actualizarContadorEvolucionTratamientoConsulta() {
+	var campo = document.getElementById("inptTrabajoRealizadoConsulta");
+	var contador = document.getElementById("contadorTrabajoRealizadoConsulta");
+	if (!campo || !contador) {
+		return 0;
+	}
+	var longitud = campo.value.length;
+	var valor = contador.querySelector("span");
+	if (valor) {
+		valor.textContent = longitud;
+	}
+	contador.classList.toggle("clinical-text-counter--warning", longitud > LIMITE_EVOLUCION_TRATAMIENTO_CONSULTA);
+	return longitud;
+}
+
 function VerificarAbmConsulta() {
 	
 	let inptMotivoConsulta  = document.getElementById("inptMotivoConsulta").value
@@ -2772,6 +2790,12 @@ function VerificarAbmConsulta() {
 	if(inptTrabajoRealizadoConsulta==""){
 		document.getElementById("inptTrabajoRealizadoConsulta").focus()
 		ver_vetana_informativa("Falto agregar la evolucion del tratamiento realizado")
+		return
+	}
+	if(inptTrabajoRealizadoConsulta.length > LIMITE_EVOLUCION_TRATAMIENTO_CONSULTA){
+		document.getElementById("inptTrabajoRealizadoConsulta").focus()
+		actualizarContadorEvolucionTratamientoConsulta()
+		ver_vetana_informativa("La evolucion del tratamiento no puede superar los 1.000 caracteres")
 		return
 	}
 

@@ -1,0 +1,4 @@
+[2026-08-25T14:40:27-04:00] Inicio. Fuentes: exclusivamente los nueve personas_v2.
+[2026-08-25T14:40:27-04:00] ERROR MySQL devolvio codigo 1: 'C:\wamp\bin\mysql\mysql5.6.17\bin\mysql.exe" -u root --default-character-set=utf8mb4 "registro_policial' is not recognized as an internal or external command,
+operable program or batch file.
+

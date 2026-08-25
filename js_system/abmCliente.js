@@ -4,6 +4,23 @@ ABM CLIENTES
 var cod_clienteFK= "";
 var guardandoClienteVenta = false;
 
+function separarNombreApellidoCliente(nombreCompleto) {
+	var partes = String(nombreCompleto || "").trim().split(/\s+/).filter(Boolean);
+	return { nombre: partes.length > 0 ? partes.shift() : "", apellido: partes.join(" ") };
+}
+
+function cargarNombreApellidoCliente(nombreCompleto) {
+	var datosNombre = separarNombreApellidoCliente(nombreCompleto);
+	document.getElementById('inptNombreApellidoCliente').value = datosNombre.nombre;
+	document.getElementById('inptApellidoCliente').value = datosNombre.apellido;
+}
+
+function telefonoClienteValido(telefono) {
+	var valor = String(telefono || "").trim();
+	var cantidadDigitos = valor.replace(/\D/g, "").length;
+	return /^[+0-9()\s.-]+$/.test(valor) && cantidadDigitos >= 6 && cantidadDigitos <= 15;
+}
+
 function estaGuardandoClienteVenta() {
 	return guardandoClienteVenta === true;
 }
@@ -243,7 +260,7 @@ function obtenerdatosabmCliente(datostr){
 		
 	   });
     datostr.className='tableRegistroSelec'
-	document.getElementById('inptNombreApellidoCliente').value=$(datostr).children('td[id="td_datos_1"]').html();
+	cargarNombreApellidoCliente($(datostr).children('td[id="td_datos_1"]').html());
 	document.getElementById('inptFechaNacCliente').value=$(datostr).children('td[id="td_datos_105"]').html();
 	document.getElementById('inptRegistroSeleccCliente').value=$(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptNroDocCliente').value=$(datostr).children('td[id="td_datos_13"]').html();
@@ -373,6 +390,7 @@ function LimpiarMasReferencia(){
 function verificarcamposCliente() {
 	var inptFechaNacCliente = document.getElementById('inptFechaNacCliente').value
 	var inptNombreApellidoCliente = document.getElementById('inptNombreApellidoCliente').value
+	var inptApellidoCliente = document.getElementById('inptApellidoCliente').value
 	var inptNroDocCliente = document.getElementById('inptNroDocCliente').value
 	var inptNroRucCliente = document.getElementById('inptNroRucCliente').value
 	var inptNroTelefCliente = document.getElementById('inptNroTelefCliente').value
@@ -390,12 +408,28 @@ function verificarcamposCliente() {
 	var inptAccesoCreditoCliente = document.getElementById('inptAccesoCreditoCliente').value
 	var sms = "";
 
+	inptNombreApellidoCliente = String(inptNombreApellidoCliente || "").trim();
+	inptApellidoCliente = String(inptApellidoCliente || "").trim();
+	inptNroDocCliente = String(inptNroDocCliente || "").trim();
+	inptNroTelefCliente = String(inptNroTelefCliente || "").trim();
 	if (inptNombreApellidoCliente == "") {
 		ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NOMBRE DEL CLIENTE", "advertencia")
 		return false;
 	}
+	if (inptApellidoCliente == "") {
+		ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL APELLIDO DEL CLIENTE", "advertencia")
+		return false;
+	}
 	if (inptNroDocCliente == "") {
 		ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NRO DE DOCUMENTO", "advertencia")
+		return false;
+	}
+	if (inptNroTelefCliente == "") {
+		ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NRO DE TELEFONO", "advertencia")
+		return false;
+	}
+	if (!telefonoClienteValido(inptNroTelefCliente)) {
+		ver_vetana_informativa("DATO INCORRECTO", "EL TELEFONO DEBE TENER ENTRE 6 Y 15 DIGITOS", "advertencia")
 		return false;
 	}
 	
@@ -417,11 +451,6 @@ function verificarcamposCliente() {
 			return false;
 		}
 	
-		if (inptNroTelefCliente == "") {
-			ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR EL NRO DE TELEFONO", "advertencia")
-			return false;
-		}
-	
 		if (inptReferenciaCliente == "") {
 			ver_vetana_informativa("FALTAN DATOS", "FALTO INGRESAR UNA REFERENCIA DEL CLIENTE", "advertencia")
 			return false;
@@ -437,14 +466,15 @@ function verificarcamposCliente() {
 		accion = "nuevo";
 	}
 
-	abmcliente(inptFechaNacCliente, sms, inptAccesoCreditoCliente, inptLugrarTrabajoCliente, inptDireccionTrabajoCliente, inptSalarioCliente, inptAntiguedadCliente, inptNroTelefTrabajoCliente1, inptNroTelefTrabajoCliente2, idFKZona, inptNombreApellidoCliente, inptNroRucCliente, inptNroDocCliente, inptNroTelefCliente, inptNrowhatsappCliente, inptDireccionCliente, inptReferenciaCliente, inptCalificaCliente, inptEstadoCliente, idAbmCliente, accion);
+	abmcliente(inptFechaNacCliente, sms, inptAccesoCreditoCliente, inptLugrarTrabajoCliente, inptDireccionTrabajoCliente, inptSalarioCliente, inptAntiguedadCliente, inptNroTelefTrabajoCliente1, inptNroTelefTrabajoCliente2, idFKZona, inptNombreApellidoCliente, inptApellidoCliente, inptNroRucCliente, inptNroDocCliente, inptNroTelefCliente, inptNrowhatsappCliente, inptDireccionCliente, inptReferenciaCliente, inptCalificaCliente, inptEstadoCliente, idAbmCliente, accion);
 }
 
-function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,salario,antiguedad,teleftrab1,teleftrab2,idzonaFk,nombre_persona,rut_cliente,ci_cliente,telefono,whapp,direccion,email,Calificacion,estado,cod_persona,accion){
+function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,salario,antiguedad,teleftrab1,teleftrab2,idzonaFk,nombre_persona,apellido_persona,rut_cliente,ci_cliente,telefono,whapp,direccion,email,Calificacion,estado,cod_persona,accion){
 	if (bloquearAccionMientrasGuardaCliente()) {
 		return false;
 	}
 	guardandoClienteVenta = true;
+	var nombreCompletoCliente = (String(nombre_persona || "").trim() + " " + String(apellido_persona || "").trim()).trim();
 	verCerrarEfectoCargando("1")
 
 	var datos = new FormData();
@@ -455,6 +485,7 @@ function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,sal
 	datos.append("funt", accion)
 	datos.append("cod_persona" , cod_persona)
 	datos.append("nombre_persona" , nombre_persona)
+	datos.append("apellido_persona" , apellido_persona)
 	datos.append("direccion" , direccion)
 	datos.append("FechaNac" , FechaNac)
 	datos.append("telefono" , telefono)
@@ -540,7 +571,7 @@ function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,sal
                             "<td id='td_id' style='display:none'>" + datos["2"] + "</td>" +
                             "<td id='td_datos_2' data-label='Doc.'>" + ci_cliente + "</td>" +
                             "<td id='td_datos_13' data-label='RUC'>" + rut_cliente + "</td>" +
-                            "<td id='td_datos_1' data-label='Cliente'>" + nombre_persona + "</td>" +
+                            "<td id='td_datos_1' data-label='Cliente'>" + nombreCompletoCliente + "</td>" +
                             "<td id='td_datos_10' style='display:none'>" + zonaCliente + "</td>" +
                             "<td id='td_datos_3' data-label='Direccion'>" + direccion + "</td>" +
                             "<td id='td_datos_4' data-label='Nro. telef.'>" + telefono + "</td>" +
@@ -595,8 +626,8 @@ function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,sal
 				if(controlventananuevocliente=="venta"){
 					document.getElementById("divAbmCliente").style.display="none"
 					
-		document.getElementById('inptClienteVenta').value = nombre_persona;
-		document.getElementById('inptClienteVenta2').value = nombre_persona;
+		document.getElementById('inptClienteVenta').value = nombreCompletoCliente;
+		document.getElementById('inptClienteVenta2').value = nombreCompletoCliente;
 		document.getElementById('inptDocClienteVenta').value = ci_cliente
 		document.getElementById('inptDocClienteVenta2').value = ci_cliente
 		document.getElementById('inptDireccionVenta').value = direccion
@@ -617,7 +648,7 @@ volverAtrasCliente();
 					idAbmCliente = regCliente['cod_persona'];
 					idFKZona = regCliente['idzonaFk'];
 					document.getElementById('inptFechaNacCliente').value = regCliente['fechanac'];
-					document.getElementById('inptNombreApellidoCliente').value = regCliente['nombre_persona'];
+					cargarNombreApellidoCliente(regCliente['nombre_persona']);
 					document.getElementById('inptNroDocCliente').value = regCliente['ci_cliente'];
 					document.getElementById('inptNroRucCliente').value = regCliente['rut_cliente'];
 					document.getElementById('inptNroTelefCliente').value = regCliente['telefono'];
@@ -1083,6 +1114,7 @@ function limpiarcamposCliente(){
 	document.getElementById('inptNroTelefTrabajoCliente1').value="";
 	document.getElementById('inptNroTelefTrabajoCliente2').value="";
 	document.getElementById('inptNombreApellidoCliente').value="";
+	document.getElementById('inptApellidoCliente').value="";
 	document.getElementById('inptFechaNacCliente').value="";
 	document.getElementById('inptRegistroSeleccCliente').value="";
 	document.getElementById('inptNroDocCliente').value="";
@@ -1226,7 +1258,7 @@ function obtenerdatosvistacliente(datostr) {
     elementoCliente=datostr;
 
 	// Completa los datos del abmCliente
-	document.getElementById('inptNombreApellidoCliente').value=$(datostr).children('td[id="td_datos_1"]').html();
+	cargarNombreApellidoCliente($(datostr).children('td[id="td_datos_1"]').html());
 	document.getElementById('inptRegistroSeleccCliente').value=$(datostr).children('td[id="td_datos_1"]').html();
 	document.getElementById('inptNroDocCliente').value=$(datostr).children('td[id="td_datos_2"]').html();
 	document.getElementById('inptNroTelefCliente').value=$(datostr).children('td[id="td_datos_4"]').html();
@@ -1320,7 +1352,7 @@ function EnviarClienteDesde() {
 			document.getElementById('inptDocumentoClientePresupuesto').value = $(datostr).children('td[id="td_datos_2"]').html();	
 			document.getElementById('inptNombreClientePresupuesto').value = $(datostr).children('td[id="td_datos_1"]').html();
 			idAbmCliente = idFkCliente;
-			document.getElementById('inptNombreApellidoCliente').value = $(datostr).children('td[id="td_datos_1"]').html();
+			cargarNombreApellidoCliente($(datostr).children('td[id="td_datos_1"]').html());
 			document.getElementById('inptNroDocCliente').value = $(datostr).children('td[id="td_datos_2"]').html();
 			document.getElementById('inptNroTelefCliente').value = $(datostr).children('td[id="td_datos_4"]').html();
 			document.getElementById('inptNrowhatsappCliente').value = $(datostr).children('td[id="td_datos_7"]').html();
@@ -1349,7 +1381,7 @@ function EnviarClienteDesde() {
 				document.getElementById('inptDireccionClientePresupuestoDoc').value = $(datostr).children('td[id="td_datos_3"]').html();
 			}
 			idAbmCliente = idFkCliente;
-			document.getElementById('inptNombreApellidoCliente').value = $(datostr).children('td[id="td_datos_1"]').html();
+			cargarNombreApellidoCliente($(datostr).children('td[id="td_datos_1"]').html());
 			document.getElementById('inptNroDocCliente').value = $(datostr).children('td[id="td_datos_2"]').html();
 			document.getElementById('inptNroTelefCliente').value = $(datostr).children('td[id="td_datos_4"]').html();
 			document.getElementById('inptNrowhatsappCliente').value = $(datostr).children('td[id="td_datos_7"]').html();
@@ -2400,13 +2432,15 @@ function buscarClientePorCiVista(elementoLlamando, nombreElementoCedula, nombreE
 
 function verificarDatosCliente(solo_basicos) {
 	const nombre= document.getElementById('inptNombreApellidoCliente').value;
+	const apellido= document.getElementById('inptApellidoCliente').value;
 	const nroDoc= document.getElementById('inptNroDocCliente').value;
-	const whapp= document.getElementById('inptNrowhatsappCliente').value;
+	const telefono= document.getElementById('inptNroTelefCliente').value;
 	if (solo_basicos) {
 		if (
 			nombre == "" ||
+			apellido == "" ||
 			nroDoc == "" ||
-			whapp == "" ||
+			!telefonoClienteValido(telefono) ||
 			idFKZona == "" || idFKZona == 0
 		) {
 			document.getElementById('divAbmCliente').style.display= "";
@@ -2424,8 +2458,9 @@ function verificarDatosCliente(solo_basicos) {
 	} else {
 		if (
 			nombre == "" ||
+			apellido == "" ||
 			nroDoc == "" ||
-			whapp == "" ||
+			!telefonoClienteValido(telefono) ||
 			idFKZona == "" || idFKZona == 0 ||
 			document.getElementById('inptDireccionCliente').value == ""
 		) {
