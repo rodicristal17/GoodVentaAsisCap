@@ -163,7 +163,7 @@ function seguimientoPacienteObtenerVentaReal($mysqli, $codVenta) {
     $exprCedula = seguimientoPacienteSqlNormalizar("cl.ci_cliente");
     $sql = "SELECT vt.cod_venta, vt.cod_clienteFK, vt.cod_usuarioFK, vt.cod_local, vt.num_factura,
             vt.fecha_venta, vt.total_venta, cl.ci_cliente, ".$exprCedula." AS cedula_normalizada,
-            CONCAT_WS(CHAR(32),p.apellido_persona,p.nombre_persona) AS nombre_persona,
+            CONCAT_WS(CHAR(32),p.apellido_persona,p.nombre_persona),
             IFNULL((SELECT COUNT(*) FROM cancelaciones c WHERE c.cod_venta = vt.cod_venta LIMIT 1),0) AS cancelado
         FROM venta vt
         INNER JOIN cliente cl ON cl.cod_cliente = vt.cod_clienteFK
@@ -197,8 +197,7 @@ function seguimientoPacienteObtenerVentaReal($mysqli, $codVenta) {
 
 function seguimientoPacienteObtenerClientesPorCedula($mysqli, $cedulaNormalizada) {
     $exprCedula = seguimientoPacienteSqlNormalizar("cl.ci_cliente");
-    $sql = "SELECT cl.cod_cliente, cl.ci_cliente,
-            CONCAT_WS(CHAR(32),p.apellido_persona,p.nombre_persona) AS nombre_persona
+    $sql = "SELECT cl.cod_cliente, cl.ci_cliente, CONCAT_WS(CHAR(32),p.apellido_persona,p.nombre_persona)
         FROM cliente cl
         LEFT JOIN persona p ON p.cod_persona = cl.cod_cliente
         WHERE ".$exprCedula." = ?
@@ -623,7 +622,7 @@ function seguimientoPacienteVentasPorCedula($mysqli, $cedulaNormalizada) {
     $exprCedula = seguimientoPacienteSqlNormalizar("cl.ci_cliente");
     $sql = "SELECT vt.cod_venta, vt.cod_clienteFK, vt.cod_usuarioFK, vt.cod_local, vt.num_factura,
             vt.fecha_venta, vt.total_venta, cl.ci_cliente, ".$exprCedula." AS cedula_normalizada,
-            p.nombre_persona
+            CONCAT_WS(CHAR(32),p.apellido_persona,p.nombre_persona)
         FROM venta vt
         INNER JOIN cliente cl ON cl.cod_cliente = vt.cod_clienteFK
         LEFT JOIN persona p ON p.cod_persona = vt.cod_clienteFK
@@ -1033,7 +1032,7 @@ function seguimientoPacienteHilosCandidatosUnificacion($mysqli, $cedulaNormaliza
             ic.cod_localFK, ic.fecha_creacion,
             (SELECT Nombre FROM local WHERE cod_local = ic.cod_localFK) AS nombre_local,
             (SELECT nombre_persona FROM persona WHERE cod_persona = ic.cod_usuarioFK_create) AS nombre_creador,
-            COALESCE(p_dir.nombre_persona,
+            COALESCE(CONCAT_WS(CHAR(32),p_dir.apellido_persona,p_dir.nombre_persona),
                 (SELECT ip.nombre_paciente_snapshot FROM interconsulta_paciente ip WHERE ip.cod_interConsultaFK = ic.cod_interConsulta AND ip.estado = 'activo' LIMIT 1),
                 '') AS nombre_paciente,
             COALESCE(cl_dir.ci_cliente,

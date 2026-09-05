@@ -265,22 +265,22 @@ window.onload = function () {
 	}
 
 	if (temaActual == "white") {
-		$("link[id=cssTema]").attr("href", "/Sistema-Telar/css_system/inicio.css?x=identidad-policial-venta-presupuesto-20260901-1")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicio.css?x=identidad-policial-venta-presupuesto-20260901-1")
 	}
 	if (temaActual == "black") {
-		$("link[id=cssTema]").attr("href", "/Sistema-Telar/css_system/inicioblack.css")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioblack.css")
 	}
 	if (temaActual == "azul") {
-		$("link[id=cssTema]").attr("href", "/Sistema-Telar/css_system/inicioazul.css?X-IOSV.03")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioazul.css?X-IOSV.03")
 	}
 	if (temaActual == "crema") {
-		$("link[id=cssTema]").attr("href", "/Sistema-Telar/css_system/inicioanaranjado.css?X-IOSV.03")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/inicioanaranjado.css?X-IOSV.03")
 	}
 	if (temaActual == "rosado") {
-		$("link[id=cssTema]").attr("href", "/Sistema-Telar/css_system/iniciorosado.css?X-IOSV.03")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/iniciorosado.css?X-IOSV.03")
 	}
 	if (temaActual == "iniciogrisazul") {
-		$("link[id=cssTema]").attr("href", "/Sistema-Telar/css_system/iniciogrisazul.css?X-IOSV.03")
+		$("link[id=cssTema]").attr("href", "/GoodVentaAsisCap/css_system/iniciogrisazul.css?X-IOSV.03")
 	}
 
 	var FondoUrl = localStorage.getItem("fondourl" + userid);
@@ -603,7 +603,7 @@ var datosPerfilUsuarioActual = {};
 function normalizarFotoUsuario(urlFoto) {
 	var foto = (urlFoto || "").toString().trim();
 	if (foto == "" || foto == "null" || foto == "undefined") {
-		return "/Sistema-Telar/iconos/sinperfil.png";
+		return "/GoodVentaAsisCap/iconos/sinperfil.png";
 	}
 	return foto;
 }
@@ -618,7 +618,7 @@ function aplicarFotoUsuario(urlFoto) {
 	if (imgPerfil) {
 		imgPerfil.onerror = function () {
 			this.onerror = null;
-			this.src = "/Sistema-Telar/iconos/sinperfil.png";
+			this.src = "/GoodVentaAsisCap/iconos/sinperfil.png";
 		};
 		imgPerfil.src = foto;
 	}
@@ -626,7 +626,7 @@ function aplicarFotoUsuario(urlFoto) {
 	if (imgPerfilTopbar) {
 		imgPerfilTopbar.onerror = function () {
 			this.onerror = null;
-			this.src = "/Sistema-Telar/iconos/sinperfil.png";
+			this.src = "/GoodVentaAsisCap/iconos/sinperfil.png";
 		};
 		imgPerfilTopbar.src = foto;
 	}
@@ -1667,7 +1667,7 @@ function responderSolicitudAusenciaFuncionario(idSolicitud, estado) {
 	verCerrarEfectoCargando("1");
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		complete: function() {
 			verCerrarEfectoCargando("");
@@ -1866,7 +1866,7 @@ function abrirSelectorSeguimientoFuncionario(codUsuario) {
 	datos.append("limite", 20);
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInterConsulta.php",
+		url: "/GoodVentaAsisCap/php_system/abmInterConsulta.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -1948,7 +1948,7 @@ function vincularSeguimientoFuncionarioConCodigo(codUsuario, codInterConsulta) {
 			"observacion": observacion,
 			"motivo": motivo
 		},
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		complete: function() {
 			verCerrarEfectoCargando("");
@@ -2012,7 +2012,7 @@ function crearSeguimientoFuncionarioSeleccionado(codUsuario) {
 			"observacion": observacion,
 			"motivo": motivo
 		},
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		complete: function() {
 			verCerrarEfectoCargando("");
@@ -2365,7 +2365,7 @@ function renderFilaFuncionarioRrhh(registro) {
 	var estadoFuncionario = textoNormalizadoFuncionario(registro.estado || "") != "activo" ? chipRrhhFuncionario(registro.estado || "Inactivo", "muted") : "";
 	var alertas = renderAlertasVisiblesFuncionario(registro, resumen);
 	var html = "<article class='funcionario-row funcionario-row--rrhh funcionario-row--resumen" + (expandido ? " funcionario-row--expanded" : "") + "' id='funcionarioRow_" + cod + "' onclick='seleccionarFuncionarioDesdeDirectorio(\"" + cod + "\")' role='button' tabindex='0' onkeydown='activarSeleccionFuncionarioRrhh(event,\"" + cod + "\")'>" +
-		"<div class='funcionario-row__person'><img class='funcionario-row__avatar' src='" + escaparHtmlFuncionario(foto) + "' onerror=\"this.src='/Sistema-Telar/iconos/sinperfil.png'\" alt='' /><div class='funcionario-cell funcionario-cell--persona'><strong>" + escaparHtmlFuncionario(registro.nombre_persona || "Sin nombre") + "</strong><small>" + escaparHtmlFuncionario(registro.tipo || "Sin cargo") + " - " + escaparHtmlFuncionario(registro.local || "Sin sucursal") + "</small>" + estadoFuncionario + "</div></div>" +
+		"<div class='funcionario-row__person'><img class='funcionario-row__avatar' src='" + escaparHtmlFuncionario(foto) + "' onerror=\"this.src='/GoodVentaAsisCap/iconos/sinperfil.png'\" alt='' /><div class='funcionario-cell funcionario-cell--persona'><strong>" + escaparHtmlFuncionario(registro.nombre_persona || "Sin nombre") + "</strong><small>" + escaparHtmlFuncionario(registro.tipo || "Sin cargo") + " - " + escaparHtmlFuncionario(registro.local || "Sin sucursal") + "</small>" + estadoFuncionario + "</div></div>" +
 		"<div class='funcionario-cell funcionario-cell--contrato'>" + chipRrhhFuncionario(resumen.contrato.texto, resumen.contrato.clase) + "<small>" + escaparHtmlFuncionario(textoFechasContratoFuncionario(registro)) + "</small></div>" +
 		"<div class='funcionario-alertas'>" + alertas + "</div>" +
 		"<div class='funcionario-row__actions'>" +
@@ -2561,7 +2561,7 @@ function registrarSolicitudAusenciaFuncionarioRapida(tipo, codUsuario) {
 	verCerrarEfectoCargando("1");
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		processData: false,
 		contentType: false,
@@ -2665,7 +2665,7 @@ function registrarSancionFuncionarioRapida(codUsuario) {
 		verCerrarEfectoCargando("1");
 		$.ajax({
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmusuarios.php",
+			url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 			type: "post",
 			processData: false,
 			contentType: false,
@@ -2759,7 +2759,7 @@ function abrirHistorialSancionesFuncionario(codUsuario) {
 			"funt": "buscarSancionesFuncionario",
 			"cod_usuarioFK": codUsuario
 		},
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		success: function(responseText) {
 			try {
@@ -2820,7 +2820,7 @@ function editarSancionFuncionarioRapida(idSancion, codUsuario) {
 			"observaciones": observaciones,
 			"notificacion": notificacion
 		},
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		complete: function() {
 			verCerrarEfectoCargando("");
@@ -2858,7 +2858,7 @@ function anularSancionFuncionarioRapida(idSancion, codUsuario) {
 			"id_sancion": idSancion,
 			"motivo": motivo
 		},
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		complete: function() {
 			verCerrarEfectoCargando("");
@@ -2988,7 +2988,7 @@ function cargarDocumentosLegajoFuncionario(codUsuario, forzar, callback) {
 			"funt": "buscarDocumentosLegajoUsuario",
 			"cod_usuarioFK": codUsuario
 		},
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		success: function(responseText) {
 			try {
@@ -3252,7 +3252,7 @@ function guardarDocumentoLegajoFuncionario(tipoDocumento, nombreArchivo, ext, ar
 	datos.append("contrato_sin_vencimiento", datosContrato && datosContrato.contrato_sin_vencimiento ? datosContrato.contrato_sin_vencimiento : "0");
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		processData: false,
 		contentType: false,
@@ -3304,7 +3304,7 @@ function validarDocumentoLegajoFuncionario(tipoDocumento) {
 	datos.append("estado", "Completo");
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		processData: false,
 		contentType: false,
@@ -3653,7 +3653,7 @@ function cargarDocumentosLegajoMiPerfil(forzar) {
 			"navegador": navegador,
 			"funt": "buscarMisDocumentosLegajoUsuario"
 		},
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		success: function(responseText) {
 			try {
@@ -3740,7 +3740,7 @@ function guardarDocumentoLegajoMiPerfil(tipoDocumento, nombreArchivo, ext, archi
 	verCerrarEfectoCargando("1");
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		processData: false,
 		contentType: false,
@@ -3899,7 +3899,7 @@ function enviarSolicitudAusenciaMiPerfil() {
 		verCerrarEfectoCargando("1");
 		$.ajax({
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmusuarios.php",
+			url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 			type: "post",
 			processData: false,
 			contentType: false,
@@ -3978,7 +3978,7 @@ function cargarSolicitudesAusenciaMiPerfil() {
 			"navegador": navegador,
 			"funt": "buscarMisSolicitudesAusenciaUsuario"
 		},
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		success: function(responseText) {
 			try {
@@ -4004,7 +4004,7 @@ function cancelarSolicitudAusenciaMiPerfil(idSolicitud) {
 			"funt": "cancelarSolicitudAusenciaUsuario",
 			"id_solicitud": idSolicitud
 		},
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		complete: function() {
 			verCerrarEfectoCargando("");
@@ -4250,7 +4250,7 @@ function cargarMecanicosDisponiblesAltaFuncionario(forzar) {
 			"navegador": navegador,
 			"funt": "buscarMecanicosDisponiblesAlta"
 		},
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		success: function(responseText) {
 			select.disabled = false;
@@ -4620,7 +4620,7 @@ function cargarHistorialCambiosFuncionario() {
 			"funt": "obtenerHistorialCambiosUsuario",
 			"cod_usuarioFK": idAbmUsuario
 		},
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		success: function(responseText) {
 			try {
@@ -4728,7 +4728,7 @@ function inicializarLayoutMiPerfil() {
 					"<small id='miPerfilResumenEstado'>Faltan datos</small>" +
 					"<button type='button' id='miPerfilCompletarPendientesBtn' onclick='enfocarPendienteMiPerfil()'>Completar pendientes</button>" +
 				"</div>" +
-				"<button type='button' class='mi-perfil-close' title='Cerrar ventana' onclick='verCerrarMisDatos(\"2\")'><img src='/Sistema-Telar/iconos/botonCerrar.png' alt='Cerrar' /></button>" +
+				"<button type='button' class='mi-perfil-close' title='Cerrar ventana' onclick='verCerrarMisDatos(\"2\")'><img src='/GoodVentaAsisCap/iconos/botonCerrar.png' alt='Cerrar' /></button>" +
 			"</div>" +
 			"<div class='mi-perfil-status'>" +
 				"<div><strong>Tu perfil esta incompleto.</strong><p>Completa los datos pendientes para mantener actualizada tu ficha laboral.</p></div>" +
@@ -4941,7 +4941,7 @@ function buscar_datos_del_usuario() {
 	datos.append("navegador", navegador)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/buscar_datos_usuario.php",
+		url: "/GoodVentaAsisCap/php_system/buscar_datos_usuario.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -5195,7 +5195,7 @@ function controldeactualizacion(codigopc) {
 	datos.append("funt", "asistenciadeactualizacion")
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/system.php",
+		url: "/GoodVentaAsisCap/php_system/system.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -5255,7 +5255,7 @@ function resgistrardispositivo(codigopc) {
 	datos.append("funt", "registrardispositivo")
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/system.php",
+		url: "/GoodVentaAsisCap/php_system/system.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -5318,7 +5318,7 @@ function resgistraractualizacion(datos) {
 	datos.append("funt", "registraractualizacion")
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/system.php",
+		url: "/GoodVentaAsisCap/php_system/system.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -5380,22 +5380,22 @@ function CambiarTema(d){
 	obtener_datos_user();
 	 localStorage.setItem("tema"+userid, d);	 
 	 if(d=="white"){
-	$("link[id=cssTema]").attr("href","/Sistema-Telar/css_system/inicio.css?x=identidad-policial-venta-presupuesto-20260901-1")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicio.css?x=identidad-policial-venta-presupuesto-20260901-1")
 }
 if(d=="black"){
-	$("link[id=cssTema]").attr("href","/Sistema-Telar/css_system/inicioblack.css")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioblack.css")
 }
 if(d=="azul"){
-	$("link[id=cssTema]").attr("href","/Sistema-Telar/css_system/inicioazul.css?X-IOSV.03")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioazul.css?X-IOSV.03")
 }
 if(d=="crema"){
-	$("link[id=cssTema]").attr("href","/Sistema-Telar/css_system/inicioanaranjado.css?X-IOSV.03")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/inicioanaranjado.css?X-IOSV.03")
 }
 if(d=="rosado"){
-	$("link[id=cssTema]").attr("href","/Sistema-Telar/css_system/iniciorosado.css?X-IOSV.03")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/iniciorosado.css?X-IOSV.03")
 }
 if(d=="iniciogrisazul"){
-	$("link[id=cssTema]").attr("href","/Sistema-Telar/css_system/iniciogrisazul.css?X-IOSV.03")
+	$("link[id=cssTema]").attr("href","/GoodVentaAsisCap/css_system/iniciogrisazul.css?X-IOSV.03")
 }
 ver_vetana_informativa("SE HA CAMBIADO EL TEMA")
 }
@@ -5442,7 +5442,7 @@ function cerrarSesion2() {
 	datos.append("navegador", navegador)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/cerrarsesion.php",
+		url: "/GoodVentaAsisCap/php_system/cerrarsesion.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -6733,7 +6733,7 @@ function registrarEventoRecordatorioEntradaPendiente(accion, contexto, recordato
 
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmAsistencia.php",
+		url: "/GoodVentaAsisCap/php_system/abmAsistencia.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -7010,7 +7010,7 @@ function solicitarJustificacionesJornadaMesUsuario(inicio, fin) {
 
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmAsistencia.php",
+		url: "/GoodVentaAsisCap/php_system/abmAsistencia.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -7076,7 +7076,7 @@ function solicitarMarcacionesJornadaMesUsuario(inicio, fin) {
 
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmAsistencia.php",
+		url: "/GoodVentaAsisCap/php_system/abmAsistencia.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -7544,7 +7544,7 @@ function abmusuario(tipo,nombre_persona, rut_usuario, telefono, login, pass, acc
 	datos.append("mecanico_vinculo", mecanico_vinculo || "");
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		 cache:false,
 			contentType: false,
@@ -7681,7 +7681,7 @@ function AbmEditarMisDatos() {
 	var OpAjax = $.ajax({
 		
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -7785,7 +7785,7 @@ function cargarUsuariosMencionesInterConsulta(callback) {
 
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInterConsulta.php",
+		url: "/GoodVentaAsisCap/php_system/abmInterConsulta.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -7852,7 +7852,7 @@ function buscarabmusuario2(codigo, documento, usuario, estado, local) {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		 xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -7944,8 +7944,8 @@ function limpiarcamposusuarios() {
 	document.getElementById('inptFechaCreacionMUser').value = fecahActual.getFullYear()+'-'+String(fecahActual.getMonth() + 1).padStart(2, '0')+'-'+String(fecahActual.getDate()).padStart(2, '0');
 	document.getElementById('inptFechaVencimientoContratoUser').value = "";
 	
-		$("div[id=imgFotoPerfil1]").css({"background-image":"url(/Sistema-Telar/iconos/sinperfil.png)"})
-		fotocliente3="/Sistema-Telar/iconos/sinperfil.png";
+		$("div[id=imgFotoPerfil1]").css({"background-image":"url(/GoodVentaAsisCap/iconos/sinperfil.png)"})
+		fotocliente3="/GoodVentaAsisCap/iconos/sinperfil.png";
 		extcliente3="";
 	
 	document.getElementById('inptDireccionUser').value="";
@@ -7977,7 +7977,7 @@ function buscarHistorialUsuariosAnteriores(cod_usuario) {
 	datos.append("funt", "obtenerHistorialUsuario");
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		cache:false,
 		contentType: false,
@@ -8102,7 +8102,7 @@ function gestorAccesosPeticion(datos) {
 	datos.navegador=navegador;
 	return $.ajax({
 		data:datos,
-		url:"/Sistema-Telar/php_system/abmAccesos.php",
+		url:"/GoodVentaAsisCap/php_system/abmAccesos.php",
 		type:"post",
 		cache:false
 	});
@@ -8690,7 +8690,7 @@ function buscarAccesosUser() {
 	};
 	$.ajax({
 		data: datos,
-        url: "/Sistema-Telar/php_system/abmAccesos.php",
+        url: "/GoodVentaAsisCap/php_system/abmAccesos.php",
 		type: "post",
 		
 		xhr: function () {
@@ -8774,7 +8774,7 @@ function recuperarAccesosSuperAdministradorClinident() {
 			navegador:navegador,
 			funt:"recuperarSuperAdministrador"
 		},
-		url:"/Sistema-Telar/php_system/abmAccesos.php",
+		url:"/GoodVentaAsisCap/php_system/abmAccesos.php",
 		type:"post",
 		cache:false
 	}).done(function(responseText){
@@ -9126,7 +9126,7 @@ function guardarAccesoVisible(check,accion) {
 	datos.append("acciones", accion);
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmAccesos.php",
+		url: "/GoodVentaAsisCap/php_system/abmAccesos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -9198,7 +9198,7 @@ function abmacceso(d) {
 	datos.append("acciones", accion)
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmAccesos.php",
+		url: "/GoodVentaAsisCap/php_system/abmAccesos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -9332,7 +9332,7 @@ function abmProductobaja(cantidad, motivo , idAbmProducto, accion) {
 	datos.append("Cod_productoFK", idAbmProducto)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmDebaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmDebaja.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -9464,7 +9464,7 @@ controldebusquedadProductosdeBaja=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmDebaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmDebaja.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -9566,7 +9566,7 @@ controldebusquedadProductosdeBaja=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmDebaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmDebaja.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -9753,7 +9753,7 @@ function buscarvistacobrador() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -9967,7 +9967,7 @@ function abmproveedor(nombre_persona, rut_proveedor, telefono, direccion, email,
 	datos.append("estado", estado)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproveedor.php",
+		url: "/GoodVentaAsisCap/php_system/abmproveedor.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -10061,7 +10061,7 @@ if(controlacceso("BUSCARLISTADOPROVEEDORES","accion")==false){return;}
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproveedor.php",
+		url: "/GoodVentaAsisCap/php_system/abmproveedor.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -10155,7 +10155,7 @@ function buscarvistaproveedor() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproveedor.php",
+		url: "/GoodVentaAsisCap/php_system/abmproveedor.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -10697,7 +10697,7 @@ function abmproducto(linkproducto,codFabricaFK,CodProveedorFK,tipoproducto,codBa
 	datos.append("modo_individualizacion", configuracionLaboratorioProducto.modo_individualizacion)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -10994,7 +10994,7 @@ function guardarLaboratorioProductoCatalogo(selector){
 			requiere_laboratorio:selector.value,
 			funt:"editar_laboratorio_producto"
 		},
-		url:"/Sistema-Telar/php_system/abmproductos.php",
+		url:"/GoodVentaAsisCap/php_system/abmproductos.php",
 		type:"post",
 		error:function(jqXHR,textstatus,errorThrowm){
 			catalogoLaboratorioRestaurar(codProducto,valorAnterior,"No se pudo guardar el cambio. Revisa la conexion e intenta nuevamente.");
@@ -11205,7 +11205,7 @@ function guardarRiesgoFinancieroCatalogo(){
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		error: function (jqXHR, textstatus, errorThrowm) {
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
@@ -11250,7 +11250,7 @@ function volverAutomaticoRiesgoCatalogo(){
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		error: function (jqXHR, textstatus, errorThrowm) {
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
@@ -11290,7 +11290,7 @@ function obtenerNivelRiesgoTratamiento(productoId, callback){
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		error: function () {
 			if(typeof callback=="function"){callback(null);}
@@ -11366,7 +11366,7 @@ if(controlacceso("BUSCARLISTADOPRODUCTOS","accion")==false){return;}
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -11487,7 +11487,7 @@ if(controlacceso("BUSCARLISTADOPRODUCTOS","accion")==false){return;}
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -11646,7 +11646,7 @@ function cargarInsumosProductoAbmProducto(codProducto) {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		error: function (jqXHR, textstatus, errorThrowm) {
 			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
@@ -11763,7 +11763,7 @@ function buscarvistaproducto() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -11911,7 +11911,7 @@ function buscarTratamientosVentaModal() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		error: function (jqXHR, textstatus, errorThrowm) {
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
@@ -11964,7 +11964,7 @@ function buscarvistaproductodesdeventa() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -12059,7 +12059,7 @@ function buscarvistaproductodesdecompra() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -12134,7 +12134,7 @@ function buscarvistaproductodesdelistadospacho() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -12205,7 +12205,7 @@ function buscarvistaproductodesdesalidadeposito() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -12496,7 +12496,7 @@ function EditarProductodesdecompra() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -12587,7 +12587,7 @@ function buscarproductoporcodigo(d) {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -12775,7 +12775,7 @@ function AbmCategoria(descripcion,Estado,requiereLaboratorio,modoIndividualizaci
 	datos.append("modo_individualizacion", modoIndividualizacion)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMCategoria.php",
+		url: "/GoodVentaAsisCap/php_system/ABMCategoria.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -12854,7 +12854,7 @@ function BuscarAbmCategoria() {
 	};
 	$.ajax({
 		data: datos,
-        url: "/Sistema-Telar/php_system/ABMCategoria.php",
+        url: "/GoodVentaAsisCap/php_system/ABMCategoria.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -12921,7 +12921,7 @@ function BuscarSelecCategoria() {
 	};
 	$.ajax({
 		data: datos,
-        url: "/Sistema-Telar/php_system/ABMCategoria.php",
+        url: "/GoodVentaAsisCap/php_system/ABMCategoria.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -13069,7 +13069,7 @@ function AbmMarca(descripcion,Estado,idabm,accion) {
 	datos.append("Estado", Estado)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMMarca.php",
+		url: "/GoodVentaAsisCap/php_system/ABMMarca.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -13143,7 +13143,7 @@ function BuscarAbmMarca() {
 	};
 	$.ajax({
 		data: datos,
-        url: "/Sistema-Telar/php_system/ABMMarca.php",
+        url: "/GoodVentaAsisCap/php_system/ABMMarca.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -13211,7 +13211,7 @@ function BuscarSelectMarca() {
 	};
 	$.ajax({
 		data: datos,
-        url: "/Sistema-Telar/php_system/ABMMarca.php",
+        url: "/GoodVentaAsisCap/php_system/ABMMarca.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -13342,7 +13342,7 @@ function AbmEnviarSalidaDeposito(fecha,stock,cod_local_deposito,accion) {
 	datos.append("cod_producto_fk", codProductoFkSalidaDeposito)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -13469,7 +13469,7 @@ function AbmAnularSalidaDeposito() {
 	datos.append("cod_ext", cod_ext)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -13604,7 +13604,7 @@ document.getElementById("DivImprimir").innerHTML=ficha;
    var documento= document.getElementById("DivImprimir").innerHTML;
      localStorage.setItem("reporte", documento);
 	   localStorage.setItem("tipo", "ticket");
-	 window.open("/Sistema-Telar/system/reportTicket.html");
+	 window.open("/GoodVentaAsisCap/system/reportTicket.html");
 	 document.getElementById("DivImprimir").innerHTML = "";
 }
 
@@ -13674,7 +13674,7 @@ function AbmEnviarProductoA(cod_local_de,fecha,stock,cod_local_a,accion) {
 	datos.append("cod_ext", "Undefined")
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -13812,7 +13812,7 @@ function AbmEnviarListadoDespacho(cod_local_de,cod_local_a,fecha,stock,accion) {
 	datos.append("cod_ext", codigo_table)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -13938,7 +13938,7 @@ function AbmAnularListadoDespacho() {
 	datos.append("cod_ext", cod_ext)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -14120,7 +14120,7 @@ controldebusquedadDespachado=true
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmproductos.php",
+			url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -14236,7 +14236,7 @@ controldebusquedadDespachado=true
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmproductos.php",
+			url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -14398,7 +14398,7 @@ function AbmTipoImpuesto(descripcion,Estado,monto_impuesto,idabm,accion) {
 	datos.append("Estado", Estado)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMTipoImpuesto.php",
+		url: "/GoodVentaAsisCap/php_system/ABMTipoImpuesto.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -14473,7 +14473,7 @@ function BuscarAbmTipoImpuesto() {
 	$.ajax({
 
 		data: datos,
-        url: "/Sistema-Telar/php_system/ABMTipoImpuesto.php",
+        url: "/GoodVentaAsisCap/php_system/ABMTipoImpuesto.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -14582,7 +14582,7 @@ function EditarEstePrecioDetalleTabla(datos) {
 	datos.append("Cod_producto", Cod_producto)
 		var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetallesprecio.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetallesprecio.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -14832,7 +14832,7 @@ function abmdetallesprecio(precio, descripcion, comision,Porcentaje,preciocuota 
 	datos.append("userid", userid)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetallesprecio.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetallesprecio.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -14909,7 +14909,7 @@ function buscardetallesprecio() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetallesprecio.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetallesprecio.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -14983,7 +14983,7 @@ function buscardetallesprecioTabla() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetallesprecio.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetallesprecio.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -15053,7 +15053,7 @@ function buscardetallesprecioenbuscarproductos() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetallesprecio.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetallesprecio.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -15126,7 +15126,7 @@ document.getElementById("table_vista_producto_venta_costos").innerHTML = paginac
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetallesprecio.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetallesprecio.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -15333,7 +15333,7 @@ function abmdetallesprecioCompra(precio, descripcion, comision,Porcentaje,precio
 	datos.append("userid", userid)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetallesprecio.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetallesprecio.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -15410,7 +15410,7 @@ function abmeditarprecioproductodesdecompra() {
 	datos.append("cod_producto", idFkProductocompra)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -15499,7 +15499,7 @@ document.getElementById("table_vista_detalles_precioCompra").innerHTML = paginac
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetallesprecio.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetallesprecio.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -15877,7 +15877,7 @@ function abmcobrador(accesocliente,accesoproducto,accesocuentas,modosinconexion,
 	datos.append("realizarcobranzas", realizarcobranzas)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcobrador.php",
+		url: "/GoodVentaAsisCap/php_system/abmcobrador.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -15971,7 +15971,7 @@ if(controlacceso("BUSCARLISTADOCOBRADORES","accion")==false){return;}
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcobrador.php",
+		url: "/GoodVentaAsisCap/php_system/abmcobrador.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -16063,7 +16063,7 @@ function buscarvistacobrador() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcobrador.php",
+		url: "/GoodVentaAsisCap/php_system/abmcobrador.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -16315,7 +16315,7 @@ function abmvendedor(cod_localfk,nombre, nrotelef, estado, idvendedor, accion) {
 	var OpAjax = $.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmvendedor.php",
+		url: "/GoodVentaAsisCap/php_system/abmvendedor.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -16417,7 +16417,7 @@ if(controlacceso("EDITARLISTADOVENDEDORES","accion")==false){return;}
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmvendedor.php",
+		url: "/GoodVentaAsisCap/php_system/abmvendedor.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -16495,7 +16495,7 @@ function buscarVendedorSelec() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmvendedor.php",
+		url: "/GoodVentaAsisCap/php_system/abmvendedor.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -16681,7 +16681,7 @@ function resolverVendedorVentaDesdeServicio(nombreReferencia, codlocal, esperarR
 			"codlocal": codlocal || "",
 			"funt": "buscarvista"
 		},
-		url: "/Sistema-Telar/php_system/abmvendedor.php",
+		url: "/GoodVentaAsisCap/php_system/abmvendedor.php",
 		type: "post",
 		success: function(responseText) {
 			resuelto = aplicarVendedorVentaDesdeRespuesta(responseText, nombreReferencia);
@@ -16809,7 +16809,7 @@ function buscarvistavendedor() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmvendedor.php",
+		url: "/GoodVentaAsisCap/php_system/abmvendedor.php",
 		type: "post",
 		beforeSend: function () {
 
@@ -17042,7 +17042,7 @@ function abmzonas(nombre, estado, idzona, encargado , accion) {
 	var OpAjax = $.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmzona.php",
+		url: "/GoodVentaAsisCap/php_system/abmzona.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -17134,7 +17134,7 @@ if(controlacceso("BUSCARLISTADODEZONAS","accion")==false){return;}
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmzona.php",
+		url: "/GoodVentaAsisCap/php_system/abmzona.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -17230,7 +17230,7 @@ function buscarVistaZona() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmzona.php",
+		url: "/GoodVentaAsisCap/php_system/abmzona.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -17334,7 +17334,7 @@ function buscarabmZonaOption() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmzona.php",
+		url: "/GoodVentaAsisCap/php_system/abmzona.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -17506,7 +17506,7 @@ function abmCaja(cajanro, puntoexpedicion ,cod_localFK ,estado , idcaja, accion)
 	datos.append("cod_localFK", cod_localFK)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmCaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmCaja.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -17602,7 +17602,7 @@ if(controlacceso("BUSCARLISTADODECAJA","accion")==false){return;}
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmCaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmCaja.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -17690,7 +17690,7 @@ function buscarOptionCaja() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmCaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmCaja.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -17800,7 +17800,7 @@ function buscarOptionCaja2(d) {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmCaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmCaja.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -18016,7 +18016,7 @@ function controldecaja() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmaperturacierrecaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -18152,7 +18152,7 @@ function buscartotalmovimientos() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmaperturacierrecaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -18279,7 +18279,7 @@ function cajaCierreBuscarUenoCierre(idArqueo, destino) {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmaperturacierrecaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
 		type: "post",
 		error: function (jqXHR, textstatus) {
 			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
@@ -19090,7 +19090,7 @@ verCerrarEfectoCargando("1")
 	}
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmaperturacierrecaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -19261,7 +19261,7 @@ function buscarvistaaperturacierrecaja() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmaperturacierrecaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -19434,7 +19434,7 @@ document.getElementById("DivImprimir").innerHTML=ficha;
    var documento= document.getElementById("DivImprimir").innerHTML;
      localStorage.setItem("reporte", documento);
 	   localStorage.setItem("tipo", "ticket");
-	 window.open("/Sistema-Telar/system/reportTicket.html");
+	 window.open("/GoodVentaAsisCap/system/reportTicket.html");
 	 document.getElementById("DivImprimir").innerHTML = "";
 //buscarDatosVentaticket(idabmVenta)
      
@@ -19550,7 +19550,7 @@ document.getElementById("DivImprimir").innerHTML=ficha;
    var documento= document.getElementById("DivImprimir").innerHTML;
      localStorage.setItem("reporte", documento);
 	   localStorage.setItem("tipo", "ticket");
-	 window.open("/Sistema-Telar/system/reportTicket.html");
+	 window.open("/GoodVentaAsisCap/system/reportTicket.html");
 	 document.getElementById("DivImprimir").innerHTML = "";
 //buscarDatosVentaticket(idabmVenta)
      
@@ -19628,7 +19628,7 @@ document.getElementById("tbDatosImpresiones").innerHTML=document.getElementById(
 
 	 localStorage.setItem("reporte", documento);
 	   localStorage.setItem("tipo", "reporte");
-	 window.open("/Sistema-Telar/system/reportInformes.html");
+	 window.open("/GoodVentaAsisCap/system/reportInformes.html");
 
      
 }
@@ -19707,7 +19707,7 @@ function cajaReporteFirmaBloque(etiqueta, nombre, firmaData) {
 }
 
 function cajaReporteMarcaAgua() {
-	return "<img class='caja-print-watermark' src='/Sistema-Telar/iconos/Logo.png' onerror=\"this.onerror=null;this.src='/Sistema-Telar/iconos/Logo.jpg';\" />";
+	return "<img class='caja-print-watermark' src='/GoodVentaAsisCap/iconos/Logo.png' onerror=\"this.onerror=null;this.src='/GoodVentaAsisCap/iconos/Logo.jpg';\" />";
 }
 
 function cajaReporteAbrirCarta(pagina) {
@@ -19720,7 +19720,7 @@ function cajaReporteAbrirCarta(pagina) {
 	}
 	localStorage.setItem("reporte", documento);
 	localStorage.setItem("tipo", "reporte-carta");
-	window.open("/Sistema-Telar/system/reportInformes.html");
+	window.open("/GoodVentaAsisCap/system/reportInformes.html");
 }
 
 function ImprimirTicketReportCierreCaja(){
@@ -19902,7 +19902,7 @@ document.getElementById("DivImprimir").innerHTML=ficha;
    var documento= document.getElementById("DivImprimir").innerHTML;
      localStorage.setItem("reporte", documento);
 	   localStorage.setItem("tipo", "ticket");
-	 window.open("/Sistema-Telar/system/reportTicket.html");
+	 window.open("/GoodVentaAsisCap/system/reportTicket.html");
 	 document.getElementById("DivImprimir").innerHTML = "";
 //buscarDatosVentaticket(idabmVenta)
      
@@ -20005,7 +20005,7 @@ function abmcasa(nombre, estado, cod_local, accion) {
 	datos.append("estado", estado)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcasa.php",
+		url: "/GoodVentaAsisCap/php_system/abmcasa.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -20103,7 +20103,7 @@ if(controlacceso("BUSCARLISTADODELOCALES","accion")==false){return;}
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcasa.php",
+		url: "/GoodVentaAsisCap/php_system/abmcasa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -20245,7 +20245,7 @@ function buscarabmCasaOption() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcasa.php",
+		url: "/GoodVentaAsisCap/php_system/abmcasa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -20364,12 +20364,9 @@ manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana")
 	               document.getElementById("inptBuscarHistorialConsulta5").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 	               document.getElementById("inptlocalAsignarLocal").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
 	               document.getElementById("inptlocalProximoPago").innerHTML ="<option value=''>SELECCIONAR</option>" + datos_buscados
-	               document.getElementById("inptCodLocalFiltroPresupuesto").innerHTML ="<option value=''>Todas las sucursales</option>" + datos_buscados
+	               document.getElementById("inptCodLocalFiltroPresupuesto").innerHTML ="<option value=''>TODOS</option>" + datos_buscados
 	               document.getElementById("inptBuscarTipoUsuarioAsignarTarea").innerHTML ="<option value=''>TODOS</option>" + datos_buscados
 				  seleccionarLocalUSer()
-				  if (typeof presupuestoConfigurarSucursalInicial == "function") {
-					  presupuestoConfigurarSucursalInicial(false)
-				  }
                  buscarOptionCaja();
 				}
 			} catch (error) {
@@ -20395,7 +20392,7 @@ function buscarabmCasaOptionCuentas() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcasa.php",
+		url: "/GoodVentaAsisCap/php_system/abmcasa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -20620,7 +20617,7 @@ function AbmNroFactura(nro,fecha,cod_localfk,nrocaja,idabm,accion) {
 	datos.append("cod_localfk", cod_localfk)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMNroFactura.php",
+		url: "/GoodVentaAsisCap/php_system/ABMNroFactura.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -20698,7 +20695,7 @@ function BuscarAbmNroFactura() {
 	$.ajax({
 
 		data: datos,
-        url: "/Sistema-Telar/php_system/ABMNroFactura.php",
+        url: "/GoodVentaAsisCap/php_system/ABMNroFactura.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -20989,7 +20986,7 @@ function buscarnrodeventas() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -22043,7 +22040,7 @@ function cargarPlanesMadreClienteVenta(codCliente, callback) {
 			"funt": "buscarPlanesMadreCliente",
 			"cod_cliente": codCliente
 		},
-		url: "/Sistema-Telar/php_system/abmConsulta.php",
+		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
 		type: "post",
 		error: function (jqXHR, textstatus) {
 			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
@@ -22180,7 +22177,7 @@ function asignarVentaAPlanMadrePostGuardado(codVenta, seleccion, refrescarVista)
 			"plan_id": seleccion.plan_id || "",
 			"apodo": seleccion.apodo || ""
 		},
-		url: "/Sistema-Telar/php_system/abmConsulta.php",
+		url: "/GoodVentaAsisCap/php_system/abmConsulta.php",
 		type: "post",
 		complete: function () {
 			verCerrarEfectoCargando("");
@@ -22284,7 +22281,7 @@ function abmdetalleventa(descuento, caja,puntoexpedicion,tipo_comprobante,fecha_
 	var OpAjax = $.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetalleventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -22404,7 +22401,7 @@ function buscardetallesventa() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetalleventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -22576,7 +22573,7 @@ function guardarNroFactura(num_comprobante, fecha_facturado) {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		xhr: function () {
 			var xhr = new window.XMLHttpRequest();
@@ -22895,7 +22892,7 @@ function abmcreditosVenta(pagoentrega,nroCuota, Monto, iniciopago, metodopago, i
 	datos.append("cod_vendedorFK", cod_vendedorFK)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcreditos.php",
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -23078,7 +23075,7 @@ function ActualizarNroFacturaVenta() {
 	datos.append("TipoRecibo", TipoRecibo)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -23246,7 +23243,7 @@ function abmventa(caja,puntoexpedicion,tipo_comprobante,idGaranteFk,fecha_venta,
 	datos.append("caja", caja)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -23350,7 +23347,7 @@ function buscarvistaventa() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -23549,7 +23546,7 @@ function eliminardetalleventa() {
 	var OpAjax = $.ajax({
 
 		data: datos,
-			url: "/Sistema-Telar/php_system/abmdetalleventa.php",
+			url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -23751,7 +23748,7 @@ function abmconfirmarPagoContado() {
 	var OpAjax = $.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -23877,7 +23874,7 @@ function buscarDatosOpcionesPagos() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcreditos.php",
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -24006,7 +24003,7 @@ function buscarcreditos() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcreditos.php",
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -24156,7 +24153,7 @@ function buscarcreditosaeditar() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcreditos.php",
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -24234,7 +24231,7 @@ function EditarEsteCredito(datos) {
 	datos.append("interes", interes)
 		var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcreditos.php",
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -24349,7 +24346,7 @@ if(confirm("Estas Seguro que quieres eliminar este pago")){
 	datos.append("nrofactura", nrofacturaaeliminar)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -24431,7 +24428,7 @@ function buscarhistorialdepagos() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -24503,7 +24500,7 @@ if(confirm("Estas Seguro que quieres eliminar este pago")){
 	datos.append("codVenta", cod_ventaFKPago)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -24765,7 +24762,7 @@ function abmconfirmarpago(CargoAdministrativo,MontoTarjeta,totalDeudaCuota, desc
 	datos.append("CargoAdministrativo", CargoAdministrativo)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -24888,7 +24885,7 @@ if(controlacceso("EDITARCREDITO","accion")==false){return;}
 	datos.append("descuento", descuento)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcreditos.php",
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -25159,7 +25156,7 @@ if(controlacceso("INSERTARPAGOSCREDITO","accion")==false){return;}
 	datos.append("CargoAdministrativo", CargoAdministrativo)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -25296,7 +25293,7 @@ function buscarhistorialdepagosreimpresion() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -25614,7 +25611,7 @@ document.getElementById("tbProcessHistorialVenta").style.display="none"
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -25765,7 +25762,7 @@ document.getElementById("divProgressHistorialVenta").style.backgroundColor=''
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -25862,7 +25859,7 @@ function obtenerDatosVenta(cod_venta, ventanaOrigen) {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -25993,7 +25990,7 @@ function buscarcreditosHistorialVenta() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcreditos.php",
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -26059,7 +26056,7 @@ function buscarDetallesHistorialVenta() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetalleventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -26335,7 +26332,7 @@ limpiarcamposhistorialventa()
 			 datos.append("nroFactura" , nroFactura)			
 			var OpAjax= $.ajax({
 						data: datos,
-			url: "/Sistema-Telar/php_system/abmventa.php",
+			url: "/GoodVentaAsisCap/php_system/abmventa.php",
 			type:"post",
 	        cache:false,
 			contentType: false,
@@ -26474,7 +26471,7 @@ function abmcancelarventa(stock,montodevuelto,motivo,fecha,cod_venta){
 			 datos.append("stock" , stock)					
 			var OpAjax= $.ajax({			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmventa.php",
+			url: "/GoodVentaAsisCap/php_system/abmventa.php",
 			type:"post",
 	        cache:false,
 			contentType: false,
@@ -26658,7 +26655,7 @@ function abmrefinacimientoCuota(interes,descuento,total,metodopago,nroCuota,Mont
 			 datos.append("descuento" , descuento)			
 			var OpAjax= $.ajax({			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmcreditos.php",
+			url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 			type:"post",
 	        cache:false,
 			contentType: false,
@@ -26860,7 +26857,7 @@ if(codClienteFkExpediente==""){
 			};
 	 $.ajax({			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmventa.php",
+			url: "/GoodVentaAsisCap/php_system/abmventa.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -26938,7 +26935,7 @@ if(codClienteFkExpediente==""){
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmdetalleventa.php",
+			url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -27013,7 +27010,7 @@ if(codClienteFkExpediente==""){
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmventa.php",
+			url: "/GoodVentaAsisCap/php_system/abmventa.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -27091,7 +27088,7 @@ if(codClienteFkExpediente==""){
 			};
 	 $.ajax({			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmventa.php",
+			url: "/GoodVentaAsisCap/php_system/abmventa.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -27174,7 +27171,7 @@ if(codClienteFkExpediente==""){
 			};
 	 $.ajax({			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmcreditos.php",
+			url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -27248,7 +27245,7 @@ if(codClienteFkExpediente==""){
 			};
 	 $.ajax({			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmcreditos.php",
+			url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -27592,7 +27589,7 @@ function buscarCuentasPendientes(fecha1, fecha2, cliente, documento, telefono, f
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcreditos.php",
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -27818,7 +27815,7 @@ if(controlacceso("VERCUENTASACOBRAR","accion")==false){return;}
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcreditos.php",
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -28002,7 +27999,7 @@ document.getElementById("DivDatosVenta").innerHTML="";
 	datos.append("buscar", buscador)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -28213,7 +28210,7 @@ controldebusquedadCuentaCobrar=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcreditos.php",
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -28332,7 +28329,7 @@ controldebusquedadCuentaCobrar=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcreditos.php",
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -28546,7 +28543,7 @@ controldebusquedadHistorialCompra=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcompra.php",
+		url: "/GoodVentaAsisCap/php_system/abmcompra.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -28678,7 +28675,7 @@ controldebusquedadHistorialCompra=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcompra.php",
+		url: "/GoodVentaAsisCap/php_system/abmcompra.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -28803,7 +28800,7 @@ function buscarDetallesHistorialCompra() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetallecompra.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetallecompra.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -28872,7 +28869,7 @@ function buscarPagosHistorialCompra() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcompra.php",
+		url: "/GoodVentaAsisCap/php_system/abmcompra.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -29050,7 +29047,7 @@ function abmgarantia(telefonoaviso,observacion,fecharecibido,cod_detalle, cod_pr
 	datos.append("telefonoaviso", telefonoaviso)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetalleventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -29328,7 +29325,7 @@ function abmcambio(cod_detalle, cod_ventaFK,MetodoPagoCambio) {
 	datos.append("Local_FK", cod_localFKUSer)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetalleventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -29450,7 +29447,7 @@ function abmrefinacimiento(dias,interes,Monto,total,  metodopago, nroCuota,  ini
 	datos.append("interes", interes)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcreditos.php",
+		url: "/GoodVentaAsisCap/php_system/abmcreditos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -29638,7 +29635,7 @@ function abmsueldo(totalrecaudado, comision, sueldo, fecha, estado, cod_persona,
 	datos.append("tipouser", tipouser)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmsueldo.php",
+		url: "/GoodVentaAsisCap/php_system/abmsueldo.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -29734,7 +29731,7 @@ if(controlacceso("BUSCARCARGARSUELDO","accion")==false){return;}
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmsueldo.php",
+		url: "/GoodVentaAsisCap/php_system/abmsueldo.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -29825,7 +29822,7 @@ function buscarvistafuncionario() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmusuarios.php",
+		url: "/GoodVentaAsisCap/php_system/abmusuarios.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -29965,7 +29962,7 @@ function buscarvistacajaapp() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmaperturacierrecaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -30296,7 +30293,7 @@ function reimprimirReciboArqueo(boton) {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		error: function (jqXHR, textstatus, errorThrowm) {
 			manejadordeerroresjquery(jqXHR.status,textstatus,"abmventana");
@@ -30383,7 +30380,7 @@ var paginas = controldeSelecCodigoBarra()
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -30479,7 +30476,7 @@ function ImprimirCodigoBarra(){
 	+"<div style='width:600px'>"
 	+"<table style='width: 100%;' ><tr>"
 	+"<td style='width:40%'>"
-	+" <center><img src='/Sistema-Telar/iconos/elim.jpg' style='width:100px;'/> </center>"
+	+" <center><img src='/GoodVentaAsisCap/iconos/elim.jpg' style='width:100px;'/> </center>"
 	+"</td>"
 	+"<td style='width:60%'>"
 	
@@ -30518,7 +30515,7 @@ function ImprimirCodigoBarra(){
 	// documento=b64EncodeUnicode(documento)
 	 localStorage.setItem("reporte", documento);
 	  localStorage.setItem("tipo", "reporte");
-	 window.open("/Sistema-Telar/system/report.html");
+	 window.open("/GoodVentaAsisCap/system/report.html");
 	document.getElementById("DivTablasBarras").innerHTML="";
 }
 /*
@@ -30588,7 +30585,7 @@ controldebusquedadCatalogo=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -30677,7 +30674,7 @@ document.getElementById("divProgressCatalogo").style.backgroundColor=''
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -30837,7 +30834,7 @@ controldebusquedadClientesInactivos=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -30941,7 +30938,7 @@ controldebusquedadClientesInactivos=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -31033,7 +31030,7 @@ function buscarproductoshistorialclienteinactivo() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetalleventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -31095,7 +31092,7 @@ function buscarmensajeslclienteinactivo() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmclientes.php",
+		url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -31173,7 +31170,7 @@ verCerrarEfectoCargando("1")
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmclientes.php",
+		url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -31327,7 +31324,7 @@ function buscarcuentasapagar() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcompra.php",
+		url: "/GoodVentaAsisCap/php_system/abmcompra.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -31713,7 +31710,7 @@ function cajaControlBuscar(pagina) {
 	var solicitud = ++cajaControlSolicitudActual;
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmaperturacierrecaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
 		type: "post",
 		xhr: function () {
 			var xhr = new window.XMLHttpRequest();
@@ -32518,7 +32515,7 @@ function buscarinformecaja() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abminforemcaja.php",
+		url: "/GoodVentaAsisCap/php_system/abminforemcaja.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -32603,7 +32600,7 @@ function buscar_recaudo_opciones_pago() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmaperturacierrecaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmaperturacierrecaja.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -32790,7 +32787,7 @@ controldebusquedadProductosVendidos=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetalleventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -32914,7 +32911,7 @@ controldebusquedadProductosVendidos=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetalleventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -33169,7 +33166,7 @@ controldebusquedadComisionCobrador=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -33283,7 +33280,7 @@ controldebusquedadComisionCobrador=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -33486,7 +33483,7 @@ if(controlacceso("VERINFORMEDECOMISIONVENDEDOR","accion")==false){return;}
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetalleventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -33625,7 +33622,7 @@ var Descuento="";
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmdetalleventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmdetalleventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -33778,7 +33775,7 @@ if(controlacceso("VERINFORMEDEPAGOSELIMINADOS","accion")==false){return;}
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -33916,7 +33913,7 @@ if(controlacceso("VERINFORMEDECOMPRASELIMINADO","accion")==false){return;}
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcompra.php",
+		url: "/GoodVentaAsisCap/php_system/abmcompra.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -34062,7 +34059,7 @@ function buscarhistorialdevoluciones() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -34213,7 +34210,7 @@ document.getElementById("tbProcessInventario").style.display='none'
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -34321,7 +34318,7 @@ var totalcostos=document.getElementById("inptTotalRegistroProductosCostoInventar
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -34539,7 +34536,7 @@ controldebusquedadGananciaPorVenta=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -34680,7 +34677,7 @@ controldebusquedadGananciaPorVenta=true
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -34877,7 +34874,7 @@ function buscarhistorialventaCancelada(){
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmventa.php",
+			url: "/GoodVentaAsisCap/php_system/abmventa.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -34989,7 +34986,7 @@ function buscarMashistorialventaCancelada(c){
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmventa.php",
+			url: "/GoodVentaAsisCap/php_system/abmventa.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -35264,7 +35261,7 @@ function cargarComparativaVentasCobranzas(forzar){
 			navegador: navegador,
 			funt: "comparativa"
 		},
-		url: "/Sistema-Telar/php_system/dashboard_comparativa_ventas_cobranzas.php",
+		url: "/GoodVentaAsisCap/php_system/dashboard_comparativa_ventas_cobranzas.php",
 		type: "post",
 		error: function (jqXHR, textstatus) {
 			comparativaVentasCobranzasCargando = false;
@@ -35552,11 +35549,6 @@ var dashboardFlujoDetalleCodLocalActual = null;
 var dashboardFlujoDetalleCargando = false;
 var dashboardFlujoDetalleCategoriaFijada = "";
 var dashboardFlujoDetalleCategoriaHover = "";
-var dashboardFlujoDetalleModo = "individual";
-var dashboardFlujoDetalleComparativo = [];
-var dashboardFlujoDetalleComparativoCargando = false;
-var dashboardFlujoDetalleComparativoCategoria = "operativo";
-var dashboardFlujoDetalleComparativoResizePreparado = false;
 var dashboardFlujoFinancieroPermiso = "VERDASHBOARDFLUJOFINANCIERO";
 
 function usuarioPuedeVerDashboardFlujoFinanciero(){
@@ -35726,7 +35718,7 @@ function cargarDashboardFlujoFinanciero(forzar){
 			funt: "resumen",
 			periodo: periodoConsulta
 		},
-		url: "/Sistema-Telar/php_system/dashboard_flujo_financiero.php",
+		url: "/GoodVentaAsisCap/php_system/dashboard_flujo_financiero.php",
 		type: "post",
 		error: function (jqXHR, textstatus) {
 			dashboardFlujoFinancieroCargando = false;
@@ -36030,47 +36022,11 @@ function renderErrorDashboardFlujoFinancieroDetalle(mensaje){
 	if(!body){
 		return;
 	}
-	var reintento = dashboardFlujoDetalleModo == "comparativo"
-		? "cargarComparativaDashboardFlujoFinancieroDetalle(true)"
-		: "cargarDetalleDashboardFlujoFinanciero(" + (dashboardFlujoDetalleCodLocalActual || 0) + ", true)";
 	body.innerHTML = "<div class='dashboard-flujo-state dashboard-flujo-state--error'>"
 		+ "<strong>No se pudo cargar el detalle</strong>"
 		+ "<span>" + escaparHtmlDashboardFlujoFinanciero(mensaje || "Intenta nuevamente en unos segundos.") + "</span>"
-		+ "<button type='button' onclick='" + reintento + "'>Reintentar</button>"
+		+ "<button type='button' onclick='cargarDetalleDashboardFlujoFinanciero(" + (dashboardFlujoDetalleCodLocalActual || 0) + ", true)'>Reintentar</button>"
 		+ "</div>";
-}
-
-function actualizarModoDashboardFlujoFinancieroDetalle(){
-	var individual = document.getElementById("dashboardFlujoModoIndividual");
-	var comparativo = document.getElementById("dashboardFlujoModoComparativo");
-	if(individual){
-		individual.setAttribute("aria-pressed", dashboardFlujoDetalleModo == "individual" ? "true" : "false");
-	}
-	if(comparativo){
-		comparativo.setAttribute("aria-pressed", dashboardFlujoDetalleModo == "comparativo" ? "true" : "false");
-	}
-}
-
-function cambiarModoDashboardFlujoFinancieroDetalle(modo){
-	modo = modo == "comparativo" ? "comparativo" : "individual";
-	if(dashboardFlujoDetalleModo == modo){
-		return;
-	}
-	dashboardFlujoDetalleModo = modo;
-	actualizarModoDashboardFlujoFinancieroDetalle();
-	if(modo == "comparativo"){
-		cargarComparativaDashboardFlujoFinancieroDetalle(false);
-		return;
-	}
-	var claveCache = claveCacheDetalleDashboardFlujoFinanciero(
-		dashboardFlujoDetalleCodLocalActual,
-		dashboardFlujoFinancieroPeriodoActual
-	);
-	if(dashboardFlujoDetalleCache[claveCache]){
-		renderDashboardFlujoFinancieroDetalle(dashboardFlujoDetalleCache[claveCache]);
-	}else{
-		cargarDetalleDashboardFlujoFinanciero(dashboardFlujoDetalleCodLocalActual, false);
-	}
 }
 
 function ocultarBarraSuperiorDashboardFlujoDetalle(){
@@ -36151,14 +36107,10 @@ function abrirDashboardFlujoFinancieroLocal(codLocal){
 		return;
 	}
 	dashboardFlujoDetalleCodLocalActual = codLocal;
-	dashboardFlujoDetalleModo = "individual";
-	dashboardFlujoDetalleComparativo = [];
-	dashboardFlujoDetalleComparativoCategoria = "operativo";
 	var periodoActual = dashboardFlujoFinancieroPeriodoActual;
 	var claveCache = claveCacheDetalleDashboardFlujoFinanciero(codLocal, periodoActual);
 	ocultarBarraSuperiorDashboardFlujoDetalle();
 	modal.style.display = "flex";
-	actualizarModoDashboardFlujoFinancieroDetalle();
 	var titulo = document.getElementById("dashboardFlujoDetalleTitulo");
 	var subtitulo = document.getElementById("dashboardFlujoDetalleSubtitulo");
 	if(titulo){
@@ -36187,9 +36139,7 @@ function cargarDetalleDashboardFlujoFinanciero(codLocal, forzar){
 	var periodoConsulta = dashboardFlujoFinancieroPeriodoActual;
 	var claveCache = claveCacheDetalleDashboardFlujoFinanciero(codLocal, periodoConsulta);
 	if(dashboardFlujoDetalleCache[claveCache] && !forzar){
-		if(dashboardFlujoDetalleModo == "individual"){
-			renderDashboardFlujoFinancieroDetalle(dashboardFlujoDetalleCache[claveCache]);
-		}
+		renderDashboardFlujoFinancieroDetalle(dashboardFlujoDetalleCache[claveCache]);
 		return;
 	}
 	dashboardFlujoDetalleCargando = true;
@@ -36205,7 +36155,7 @@ function cargarDetalleDashboardFlujoFinanciero(codLocal, forzar){
 			cod_local: codLocal,
 			periodo: periodoConsulta
 		},
-		url: "/Sistema-Telar/php_system/dashboard_flujo_financiero.php",
+		url: "/GoodVentaAsisCap/php_system/dashboard_flujo_financiero.php",
 		type: "post",
 		error: function (jqXHR, textstatus) {
 			dashboardFlujoDetalleCargando = false;
@@ -36236,9 +36186,7 @@ function cargarDetalleDashboardFlujoFinanciero(codLocal, forzar){
 					var periodoRespuesta = datos.periodo && datos.periodo.mes ? datos.periodo.mes : periodoConsulta;
 					var claveRespuesta = claveCacheDetalleDashboardFlujoFinanciero(codLocal, periodoRespuesta);
 					dashboardFlujoDetalleCache[claveRespuesta] = datos;
-					if(dashboardFlujoDetalleModo == "individual"){
-						renderDashboardFlujoFinancieroDetalle(datos);
-					}
+					renderDashboardFlujoFinancieroDetalle(datos);
 					return;
 				}
 				renderErrorDashboardFlujoFinancieroDetalle(datos["2"] || "Respuesta no reconocida.");
@@ -36250,125 +36198,6 @@ function cargarDetalleDashboardFlujoFinanciero(codLocal, forzar){
 			}
 		}
 	});
-}
-
-function periodosComparativaDashboardFlujoFinanciero(periodoBase){
-	var periodos = [];
-	var periodo = periodoBase;
-	if(!periodoValidoDashboardFlujoFinanciero(periodo)){
-		return periodos;
-	}
-	for(var i = 0; i < 3; i++){
-		if(periodo < dashboardFlujoFinancieroPeriodoMinimo){
-			break;
-		}
-		periodos.unshift(periodo);
-		periodo = desplazarPeriodoDashboardFlujoFinanciero(periodo, -1);
-	}
-	return periodos;
-}
-
-function cargarComparativaDashboardFlujoFinancieroDetalle(forzar){
-	var codLocal = dashboardFlujoDetalleCodLocalActual;
-	if(!codLocal || !usuarioPuedeVerDashboardFlujoFinanciero() || dashboardFlujoDetalleComparativoCargando){
-		return;
-	}
-	var periodos = periodosComparativaDashboardFlujoFinanciero(dashboardFlujoFinancieroPeriodoActual);
-	if(!periodos.length){
-		renderErrorDashboardFlujoFinancieroDetalle("No hay periodos disponibles para comparar.");
-		return;
-	}
-	dashboardFlujoDetalleComparativoCargando = true;
-	dashboardFlujoDetalleComparativo = [];
-	renderCargandoDashboardFlujoFinancieroDetalle();
-	obtener_datos_user();
-
-	var resultados = [];
-	var cargarPeriodo = function(indice){
-		if(indice >= periodos.length){
-			dashboardFlujoDetalleComparativoCargando = false;
-			dashboardFlujoDetalleComparativo = resultados;
-			if(dashboardFlujoDetalleModo == "comparativo"){
-				renderComparativaDashboardFlujoFinancieroDetalle(resultados);
-			}
-			return;
-		}
-		var periodo = periodos[indice];
-		var clave = claveCacheDetalleDashboardFlujoFinanciero(codLocal, periodo);
-		if(forzar){
-			delete dashboardFlujoDetalleCache[clave];
-		}
-		if(dashboardFlujoDetalleCache[clave]){
-			resultados.push(dashboardFlujoDetalleCache[clave]);
-			cargarPeriodo(indice + 1);
-			return;
-		}
-		$.ajax({
-			data: {
-				useru: userid,
-				passu: passuser,
-				navegador: navegador,
-				funt: "detalle",
-				cod_local: codLocal,
-				periodo: periodo
-			},
-			url: "/GoodVentaAsisCap/php_system/dashboard_flujo_financiero.php",
-			type: "post",
-			error: function(jqXHR, textstatus){
-				dashboardFlujoDetalleComparativoCargando = false;
-				if(dashboardFlujoDetalleModo == "comparativo"){
-					renderErrorDashboardFlujoFinancieroDetalle("No se pudo consultar uno de los periodos.");
-				}
-				if(typeof manejadordeerroresjquery == "function"){
-					manejadordeerroresjquery(jqXHR.status, textstatus, "dashboard_flujo_financiero_comparativa");
-				}
-			},
-			success: function(responseText){
-				try {
-					var datos = typeof responseText == "string" ? $.parseJSON(responseText) : responseText;
-					var respuesta = datos["1"];
-					if(datos["1"] == "UI"){
-						dashboardFlujoDetalleComparativoCargando = false;
-						if(typeof ir_a_login == "function"){
-							ir_a_login();
-						}
-						return;
-					}
-					if(datos["1"] == "NI"){
-						dashboardFlujoDetalleComparativoCargando = false;
-						if(dashboardFlujoDetalleModo == "comparativo"){
-							renderErrorDashboardFlujoFinancieroDetalle(datos["2"] || "No tienes permiso para ver este detalle.");
-						}
-						return;
-					}
-					if(typeof respuestaJqueryAjax == "function"){
-						respuesta = respuestaJqueryAjax(respuesta);
-					}
-					if(respuesta === true || datos["1"] == "exito"){
-						var periodoRespuesta = datos.periodo && datos.periodo.mes ? datos.periodo.mes : periodo;
-						var claveRespuesta = claveCacheDetalleDashboardFlujoFinanciero(codLocal, periodoRespuesta);
-						dashboardFlujoDetalleCache[claveRespuesta] = datos;
-						resultados.push(datos);
-						cargarPeriodo(indice + 1);
-						return;
-					}
-					dashboardFlujoDetalleComparativoCargando = false;
-					if(dashboardFlujoDetalleModo == "comparativo"){
-						renderErrorDashboardFlujoFinancieroDetalle(datos["2"] || "Respuesta no reconocida.");
-					}
-				} catch(error){
-					dashboardFlujoDetalleComparativoCargando = false;
-					if(dashboardFlujoDetalleModo == "comparativo"){
-						renderErrorDashboardFlujoFinancieroDetalle("La respuesta recibida no tiene el formato esperado.");
-					}
-					if(typeof GuardarArchivosLog == "function"){
-						GuardarArchivosLog("Error comparativa dashboard flujo financiero: " + error);
-					}
-				}
-			}
-		});
-	};
-	cargarPeriodo(0);
 }
 
 function cantidadMovimientosDashboardFlujoDetalle(conceptos){
@@ -36540,294 +36369,6 @@ function htmlCategoriasDashboardFlujoDetalle(datos){
 			+ "</details>";
 	}
 	return html || "<div class='dashboard-flujo-detalle-empty'>Sin categorias para mostrar.</div>";
-}
-
-function claveRubroComparativaDashboardFlujo(nombre){
-	nombre = (nombre || "").toString().toUpperCase();
-	nombre = nombre.replace(/[ÁÀÄÂ]/g, "A").replace(/[ÉÈËÊ]/g, "E")
-		.replace(/[ÍÌÏÎ]/g, "I").replace(/[ÓÒÖÔ]/g, "O")
-		.replace(/[ÚÙÜÛ]/g, "U").replace(/Ñ/g, "N");
-	return nombre.replace(/[^A-Z0-9]+/g, " ").replace(/^\s+|\s+$/g, "").replace(/\s+/g, "_") || "SIN_NOMBRE";
-}
-
-function paletaRubrosComparativaDashboardFlujo(codigo){
-	if(codigo == "administracion"){
-		return ["#255f99", "#3778b5", "#4f8dcc", "#69a2da", "#83b5e1", "#9bc6e8"];
-	}
-	return ["#b92535", "#cc3340", "#dc4851", "#e9656b", "#ef8588", "#f2a1a3"];
-}
-
-function rubrosComparativaDashboardFlujo(datosLista, codigo){
-	var mapa = {};
-	var periodos = [];
-	for(var i = 0; i < datosLista.length; i++){
-		var datos = datosLista[i] || {};
-		var periodo = datos.periodo && datos.periodo.mes ? datos.periodo.mes : String(i);
-		periodos.push(periodo);
-		var categoria = obtenerCategoriaDashboardFlujoDetalle(datos, codigo);
-		var conceptos = categoria.conceptos || [];
-		for(var c = 0; c < conceptos.length; c++){
-			var concepto = conceptos[c] || {};
-			var clave = claveRubroComparativaDashboardFlujo(concepto.nombre || "Sin concepto");
-			if(!mapa[clave]){
-				mapa[clave] = { clave: clave, nombre: concepto.nombre || "Sin concepto", total: 0, valores: {} };
-			}
-			var monto = Math.max(0, numeroValorDashboardFlujoFinanciero(concepto.total));
-			mapa[clave].total += monto;
-			mapa[clave].valores[periodo] = (mapa[clave].valores[periodo] || 0) + monto;
-		}
-	}
-	var rubros = [];
-	for(var claveMapa in mapa){
-		if(Object.prototype.hasOwnProperty.call(mapa, claveMapa)){
-			rubros.push(mapa[claveMapa]);
-		}
-	}
-	rubros.sort(function(a, b){
-		if(b.total != a.total){
-			return b.total - a.total;
-		}
-		return a.nombre < b.nombre ? -1 : 1;
-	});
-	var principales = rubros.slice(0, 5);
-	if(rubros.length > 5){
-		var otros = { clave: "OTROS", nombre: "Otros rubros", total: 0, valores: {} };
-		for(var r = 5; r < rubros.length; r++){
-			otros.total += rubros[r].total;
-			for(var p = 0; p < periodos.length; p++){
-				var periodoClave = periodos[p];
-				otros.valores[periodoClave] = (otros.valores[periodoClave] || 0) + (rubros[r].valores[periodoClave] || 0);
-			}
-		}
-		principales.push(otros);
-	}
-	var paleta = paletaRubrosComparativaDashboardFlujo(codigo);
-	for(var j = 0; j < principales.length; j++){
-		principales[j].color = paleta[Math.min(j, paleta.length - 1)];
-		principales[j].indice = j;
-	}
-	return principales;
-}
-
-function montoRubroPeriodoComparativaDashboardFlujo(rubro, datos){
-	var periodo = datos && datos.periodo ? datos.periodo.mes : "";
-	return rubro && rubro.valores ? numeroValorDashboardFlujoFinanciero(rubro.valores[periodo]) : 0;
-}
-
-function htmlSegmentoRubroComparativaDashboardFlujo(rubro, datos, escala, grupo){
-	var monto = montoRubroPeriodoComparativaDashboardFlujo(rubro, datos);
-	if(monto <= 0){
-		return "";
-	}
-	var alto = porcentajeDashboardFlujoFinanciero(monto, escala);
-	var ingresos = datos && datos.totales ? numeroValorDashboardFlujoFinanciero(datos.totales.ingresos) : 0;
-	var activo = dashboardFlujoDetalleComparativoCategoria == grupo;
-	var claseClaro = rubro.indice >= 3 ? " dashboard-flujo-comparativa-segmento--claro" : "";
-	var etiqueta = rubro.indice === 0 && alto >= 8 ? (rubro.nombre || "").split(/\s+/)[0] : "";
-	var titulo = rubro.nombre + ": " + monedaDashboardFlujoFinanciero(monto)
-		+ " | " + formatoPorcentajeDashboardFlujoFinanciero(porcentajeDashboardFlujoFinanciero(monto, ingresos)) + " sobre ingresos";
-	return "<span class='dashboard-flujo-comparativa-segmento" + claseClaro + "'"
-		+ " data-flujo-comparativa-grupo='" + escaparHtmlDashboardFlujoFinanciero(grupo) + "'"
-		+ " data-flujo-comparativa-rubro='" + escaparHtmlDashboardFlujoFinanciero(rubro.clave) + "'"
-		+ " onclick=\"seleccionarCategoriaComparativaDashboardFlujoFinanciero('" + escaparHtmlDashboardFlujoFinanciero(grupo) + "')\""
-		+ " style='height:" + estiloPorcentajeDashboardFlujoFinanciero(alto) + "%;background:" + escaparHtmlDashboardFlujoFinanciero(rubro.color) + "'"
-		+ " title='" + escaparHtmlDashboardFlujoFinanciero(titulo) + "'>"
-		+ (activo ? "<i class='dashboard-flujo-comparativa-punto' data-flujo-comparativa-rubro='" + escaparHtmlDashboardFlujoFinanciero(rubro.clave) + "'></i>" : "")
-		+ escaparHtmlDashboardFlujoFinanciero(etiqueta)
-		+ "</span>";
-}
-
-function htmlSegmentoSimpleComparativaDashboardFlujo(clase, etiqueta, monto, escala, ingresos, color){
-	monto = Math.max(0, numeroValorDashboardFlujoFinanciero(monto));
-	if(monto <= 0){
-		return "";
-	}
-	var alto = porcentajeDashboardFlujoFinanciero(monto, escala);
-	var mostrar = alto >= 9;
-	var titulo = etiqueta + ": " + monedaDashboardFlujoFinanciero(monto)
-		+ " | " + formatoPorcentajeDashboardFlujoFinanciero(porcentajeDashboardFlujoFinanciero(monto, ingresos)) + " sobre ingresos";
-	return "<span class='dashboard-flujo-comparativa-segmento dashboard-flujo-comparativa-segmento--" + clase + "'"
-		+ " style='height:" + estiloPorcentajeDashboardFlujoFinanciero(alto) + "%;background:" + escaparHtmlDashboardFlujoFinanciero(color) + "'"
-		+ " title='" + escaparHtmlDashboardFlujoFinanciero(titulo) + "'>"
-		+ (mostrar ? escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(porcentajeDashboardFlujoFinanciero(monto, ingresos))) : "")
-		+ "</span>";
-}
-
-function escalaComparativaDashboardFlujoFinanciero(datosLista){
-	var escala = 1;
-	for(var i = 0; i < datosLista.length; i++){
-		var datos = datosLista[i] || {};
-		var totales = datos.totales || {};
-		escala = Math.max(
-			escala,
-			numeroValorDashboardFlujoFinanciero(datos.escala),
-			numeroValorDashboardFlujoFinanciero(totales.ingresos),
-			numeroValorDashboardFlujoFinanciero(totales.egresos)
-		);
-	}
-	return escala;
-}
-
-function etiquetaEjeComparativaDashboardFlujo(valor){
-	if(valor <= 0){
-		return "0";
-	}
-	return monedaCompactaDashboardFlujoFinanciero(valor).replace("Gs. ", "");
-}
-
-function htmlMesComparativaDashboardFlujo(datos, escala, rubrosFijos, rubrosAdmin){
-	var periodo = datos && datos.periodo ? datos.periodo : {};
-	var totales = datos && datos.totales ? datos.totales : {};
-	var ingresos = numeroValorDashboardFlujoFinanciero(totales.ingresos);
-	var resultado = numeroValorDashboardFlujoFinanciero(totales.resultado);
-	var catVariables = obtenerCategoriaDashboardFlujoDetalle(datos, "directo");
-	var catSin = obtenerCategoriaDashboardFlujoDetalle(datos, "sinCategoria");
-	var html = "<div class='dashboard-flujo-comparativa-mes'><div class='dashboard-flujo-comparativa-stack'>";
-	for(var a = 0; a < rubrosAdmin.length; a++){
-		html += htmlSegmentoRubroComparativaDashboardFlujo(rubrosAdmin[a], datos, escala, "administracion");
-	}
-	for(var f = 0; f < rubrosFijos.length; f++){
-		html += htmlSegmentoRubroComparativaDashboardFlujo(rubrosFijos[f], datos, escala, "operativo");
-	}
-	html += htmlSegmentoSimpleComparativaDashboardFlujo("sin-categoria", "Sin categorizar", catSin.total, escala, ingresos, catSin.color || "#7b8794")
-		+ htmlSegmentoSimpleComparativaDashboardFlujo("variables", "Costos variables", catVariables.total, escala, ingresos, catVariables.color || "#e58a12")
-		+ htmlSegmentoSimpleComparativaDashboardFlujo("resultado", "Resultado", Math.max(0, resultado), escala, ingresos, "#16946e")
-		+ "</div><div class='dashboard-flujo-comparativa-mes-label'><strong>" + escaparHtmlDashboardFlujoFinanciero((periodo.etiqueta || periodo.mes || "-").toUpperCase()) + "</strong>"
-		+ "<span>" + escaparHtmlDashboardFlujoFinanciero(monedaCompactaDashboardFlujoFinanciero(ingresos)) + (periodo.esActual ? " · hasta hoy" : " · cerrado") + "</span></div></div>";
-	return html;
-}
-
-function htmlTablaRubrosComparativaDashboardFlujo(datosLista, rubros){
-	var html = "<table class='dashboard-flujo-comparativa-tabla'><thead><tr><th>Rubro</th>";
-	for(var p = 0; p < datosLista.length; p++){
-		html += "<th>" + escaparHtmlDashboardFlujoFinanciero((datosLista[p].periodo.etiqueta || datosLista[p].periodo.mes || "-").split(" ")[0]) + "</th>";
-	}
-	html += "</tr></thead><tbody>";
-	for(var r = 0; r < rubros.length; r++){
-		var rubro = rubros[r];
-		html += "<tr><td><span class='dashboard-flujo-comparativa-rubro' style='--flujo-comparativa-rubro-color:" + escaparHtmlDashboardFlujoFinanciero(rubro.color) + "'><i></i>" + escaparHtmlDashboardFlujoFinanciero(rubro.nombre) + "</span></td>";
-		for(var d = 0; d < datosLista.length; d++){
-			var monto = montoRubroPeriodoComparativaDashboardFlujo(rubro, datosLista[d]);
-			var ingresos = datosLista[d].totales ? numeroValorDashboardFlujoFinanciero(datosLista[d].totales.ingresos) : 0;
-			html += "<td>" + escaparHtmlDashboardFlujoFinanciero(monedaCompactaDashboardFlujoFinanciero(monto))
-				+ "<span>" + escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(porcentajeDashboardFlujoFinanciero(monto, ingresos))) + "</span></td>";
-		}
-		html += "</tr>";
-	}
-	return html + "</tbody></table>";
-}
-
-function seleccionarCategoriaComparativaDashboardFlujoFinanciero(codigo){
-	if(codigo != "administracion"){
-		codigo = "operativo";
-	}
-	if(dashboardFlujoDetalleComparativoCategoria == codigo){
-		return;
-	}
-	dashboardFlujoDetalleComparativoCategoria = codigo;
-	renderComparativaDashboardFlujoFinancieroDetalle(dashboardFlujoDetalleComparativo);
-}
-
-function dibujarLineasComparativaDashboardFlujoFinanciero(){
-	var plot = document.querySelector("#dashboardFlujoDetalleBody .dashboard-flujo-comparativa-plot");
-	var svg = plot ? plot.querySelector(".dashboard-flujo-comparativa-lineas") : null;
-	if(!plot || !svg){
-		return;
-	}
-	var rectPlot = plot.getBoundingClientRect();
-	if(rectPlot.width <= 0 || rectPlot.height <= 0){
-		return;
-	}
-	svg.setAttribute("viewBox", "0 0 " + rectPlot.width + " " + rectPlot.height);
-	while(svg.firstChild){
-		svg.removeChild(svg.firstChild);
-	}
-	var puntos = plot.querySelectorAll(".dashboard-flujo-comparativa-punto[data-flujo-comparativa-rubro]");
-	var grupos = {};
-	for(var i = 0; i < puntos.length; i++){
-		var clave = puntos[i].getAttribute("data-flujo-comparativa-rubro") || "";
-		if(!grupos[clave]){
-			grupos[clave] = [];
-		}
-		grupos[clave].push(puntos[i]);
-	}
-	for(var clave in grupos){
-		if(!Object.prototype.hasOwnProperty.call(grupos, clave) || grupos[clave].length < 2){
-			continue;
-		}
-		var coordenadas = [];
-		for(var p = 0; p < grupos[clave].length; p++){
-			var rectPunto = grupos[clave][p].getBoundingClientRect();
-			coordenadas.push((rectPunto.left + rectPunto.width / 2 - rectPlot.left) + "," + (rectPunto.top + rectPunto.height / 2 - rectPlot.top));
-		}
-		var segmento = grupos[clave][0].parentNode;
-		var color = segmento ? window.getComputedStyle(segmento).backgroundColor : "#c92f43";
-		var linea = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-		linea.setAttribute("class", "dashboard-flujo-comparativa-linea");
-		linea.setAttribute("points", coordenadas.join(" "));
-		linea.style.setProperty("--flujo-comparativa-linea-color", color);
-		svg.appendChild(linea);
-	}
-}
-
-function renderComparativaDashboardFlujoFinancieroDetalle(datosLista){
-	datosLista = datosLista || [];
-	if(!datosLista.length){
-		renderErrorDashboardFlujoFinancieroDetalle("No hay datos disponibles para comparar.");
-		return;
-	}
-	dashboardFlujoDetalleComparativo = datosLista;
-	var body = document.getElementById("dashboardFlujoDetalleBody");
-	var titulo = document.getElementById("dashboardFlujoDetalleTitulo");
-	var subtitulo = document.getElementById("dashboardFlujoDetalleSubtitulo");
-	var base = datosLista[datosLista.length - 1] || {};
-	var local = base.local || {};
-	var escala = escalaComparativaDashboardFlujoFinanciero(datosLista);
-	var rubrosFijos = rubrosComparativaDashboardFlujo(datosLista, "operativo");
-	var rubrosAdmin = rubrosComparativaDashboardFlujo(datosLista, "administracion");
-	var rubrosActivos = dashboardFlujoDetalleComparativoCategoria == "administracion" ? rubrosAdmin : rubrosFijos;
-	if(titulo){
-		titulo.textContent = "Analisis de flujo - " + nombreLocalDashboardFlujoFinanciero(local.sucursalNombre || "");
-	}
-	if(subtitulo){
-		subtitulo.textContent = "Comparativa de " + datosLista.length + " meses | meses cerrados y mes actual hasta hoy | solo lectura";
-	}
-	actualizarModoDashboardFlujoFinancieroDetalle();
-	var htmlGrafico = "<div class='dashboard-flujo-comparativa-chart'><div class='dashboard-flujo-comparativa-axis'>"
-		+ "<span>" + escaparHtmlDashboardFlujoFinanciero(etiquetaEjeComparativaDashboardFlujo(escala)) + "</span>"
-		+ "<span>" + escaparHtmlDashboardFlujoFinanciero(etiquetaEjeComparativaDashboardFlujo(escala * .75)) + "</span>"
-		+ "<span>" + escaparHtmlDashboardFlujoFinanciero(etiquetaEjeComparativaDashboardFlujo(escala * .5)) + "</span>"
-		+ "<span>" + escaparHtmlDashboardFlujoFinanciero(etiquetaEjeComparativaDashboardFlujo(escala * .25)) + "</span><span>0</span></div>"
-		+ "<div class='dashboard-flujo-comparativa-plot'><svg class='dashboard-flujo-comparativa-lineas' aria-hidden='true'></svg>";
-	for(var i = 0; i < datosLista.length; i++){
-		htmlGrafico += htmlMesComparativaDashboardFlujo(datosLista[i], escala, rubrosFijos, rubrosAdmin);
-	}
-	htmlGrafico += "</div></div><div class='dashboard-flujo-comparativa-margenes'>";
-	for(var m = 0; m < datosLista.length; m++){
-		var totales = datosLista[m].totales || {};
-		htmlGrafico += "<div class='dashboard-flujo-comparativa-margen'>" + escaparHtmlDashboardFlujoFinanciero((datosLista[m].periodo.etiqueta || "-").split(" ")[0]) + " · margen<strong>"
-			+ escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(porcentajeDashboardFlujoFinanciero(totales.resultado, totales.ingresos))) + "</strong></div>";
-	}
-	htmlGrafico += "</div>";
-	var tituloGrupo = dashboardFlujoDetalleComparativoCategoria == "administracion" ? "Administracion asignada" : "Gastos fijos";
-	body.innerHTML = "<section class='dashboard-flujo-detalle-panel dashboard-flujo-detalle-panel--grafico'>"
-		+ "<div class='dashboard-flujo-detalle-title'><span>Composicion economica comparada</span><strong>" + escaparHtmlDashboardFlujoFinanciero(nombreLocalDashboardFlujoFinanciero(local.sucursalNombre || "")) + "</strong></div>"
-		+ htmlGrafico + "</section>"
-		+ "<section class='dashboard-flujo-detalle-panel dashboard-flujo-detalle-panel--detalle'>"
-		+ "<div class='dashboard-flujo-comparativa-tipo'><div><button type='button' aria-pressed='" + (dashboardFlujoDetalleComparativoCategoria == "operativo" ? "true" : "false") + "' onclick=\"seleccionarCategoriaComparativaDashboardFlujoFinanciero('operativo')\">Gastos fijos</button>"
-		+ "<button type='button' aria-pressed='" + (dashboardFlujoDetalleComparativoCategoria == "administracion" ? "true" : "false") + "' onclick=\"seleccionarCategoriaComparativaDashboardFlujoFinanciero('administracion')\">Administracion</button></div>"
-		+ "<span>" + escaparHtmlDashboardFlujoFinanciero(tituloGrupo) + " · 5 rubros principales + otros</span></div>"
-		+ htmlTablaRubrosComparativaDashboardFlujo(datosLista, rubrosActivos)
-		+ "</section>";
-	setTimeout(dibujarLineasComparativaDashboardFlujoFinanciero, 0);
-	if(!dashboardFlujoDetalleComparativoResizePreparado){
-		dashboardFlujoDetalleComparativoResizePreparado = true;
-		window.addEventListener("resize", function(){
-			if(dashboardFlujoDetalleModo == "comparativo"){
-				dibujarLineasComparativaDashboardFlujoFinanciero();
-			}
-		});
-	}
 }
 
 function obtenerModalDashboardFlujoDetalle(){
@@ -37031,7 +36572,6 @@ function renderDashboardFlujoFinancieroDetalle(datos){
 	if(!body){
 		return;
 	}
-	actualizarModoDashboardFlujoFinancieroDetalle();
 	var local = datos && datos.local ? datos.local : {};
 	var periodo = datos && datos.periodo ? datos.periodo : {};
 	if(modal){
@@ -37114,47 +36654,6 @@ function htmlInformeFormalDashboardFlujoFinanciero(datos){
 	return html;
 }
 
-function htmlInformeFormalComparativaDashboardFlujoFinanciero(datosLista){
-	datosLista = datosLista || [];
-	if(!datosLista.length){
-		return "";
-	}
-	var base = datosLista[datosLista.length - 1] || {};
-	var local = base.local || {};
-	var codigo = dashboardFlujoDetalleComparativoCategoria == "administracion" ? "administracion" : "operativo";
-	var rubros = rubrosComparativaDashboardFlujo(datosLista, codigo);
-	var tituloGrupo = codigo == "administracion" ? "Administracion asignada" : "Gastos fijos";
-	var html = "<div style='font-family:Arial,sans-serif;color:#172033;padding:18px;'>"
-		+ "<h2 style='margin:0 0 4px;'>Comparativa de flujo financiero</h2>"
-		+ "<p style='margin:0 0 12px;font-size:12px;'><b>Sucursal:</b> " + escaparHtmlDashboardFlujoFinanciero(local.sucursalNombre || "") + " | <b>Criterio:</b> meses cerrados y mes actual hasta hoy</p>"
-		+ "<table style='width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12px;'>"
-		+ "<tr><th style='border:1px solid #ddd;padding:6px;text-align:left;'>Periodo</th><th style='border:1px solid #ddd;padding:6px;text-align:right;'>Ingresos</th><th style='border:1px solid #ddd;padding:6px;text-align:right;'>Egresos</th><th style='border:1px solid #ddd;padding:6px;text-align:right;'>Resultado</th><th style='border:1px solid #ddd;padding:6px;text-align:right;'>Margen</th></tr>";
-	for(var i = 0; i < datosLista.length; i++){
-		var datos = datosLista[i] || {};
-		var periodo = datos.periodo || {};
-		var totales = datos.totales || {};
-		html += "<tr><td style='border:1px solid #ddd;padding:6px;'>" + escaparHtmlDashboardFlujoFinanciero(periodo.etiqueta || periodo.mes || "-") + (periodo.esActual ? " (hasta hoy)" : " (cerrado)") + "</td>"
-			+ "<td style='border:1px solid #ddd;padding:6px;text-align:right;'>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(totales.ingresos)) + "</td>"
-			+ "<td style='border:1px solid #ddd;padding:6px;text-align:right;'>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(totales.egresos)) + "</td>"
-			+ "<td style='border:1px solid #ddd;padding:6px;text-align:right;'>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(totales.resultado)) + "</td>"
-			+ "<td style='border:1px solid #ddd;padding:6px;text-align:right;'>" + escaparHtmlDashboardFlujoFinanciero(formatoPorcentajeDashboardFlujoFinanciero(porcentajeDashboardFlujoFinanciero(totales.resultado, totales.ingresos))) + "</td></tr>";
-	}
-	html += "</table><h3 style='margin:14px 0 6px;font-size:15px;'>" + escaparHtmlDashboardFlujoFinanciero(tituloGrupo) + " · 5 rubros principales + otros</h3>"
-		+ "<table style='width:100%;border-collapse:collapse;font-size:11px;'><tr><th style='border:1px solid #ddd;padding:5px;text-align:left;'>Rubro</th>";
-	for(var p = 0; p < datosLista.length; p++){
-		html += "<th style='border:1px solid #ddd;padding:5px;text-align:right;'>" + escaparHtmlDashboardFlujoFinanciero(datosLista[p].periodo.etiqueta || datosLista[p].periodo.mes || "-") + "</th>";
-	}
-	html += "</tr>";
-	for(var r = 0; r < rubros.length; r++){
-		html += "<tr><td style='border:1px solid #ddd;padding:5px;'>" + escaparHtmlDashboardFlujoFinanciero(rubros[r].nombre) + "</td>";
-		for(var d = 0; d < datosLista.length; d++){
-			html += "<td style='border:1px solid #ddd;padding:5px;text-align:right;'>" + escaparHtmlDashboardFlujoFinanciero(monedaDashboardFlujoFinanciero(montoRubroPeriodoComparativaDashboardFlujo(rubros[r], datosLista[d]))) + "</td>";
-		}
-		html += "</tr>";
-	}
-	return html + "</table></div>";
-}
-
 function imprimirVistaDashboardFlujoFinancieroDetalle(){
 	var panel = document.getElementById("dashboardFlujoDetallePanel");
 	if(!panel){
@@ -37165,35 +36664,22 @@ function imprimirVistaDashboardFlujoFinancieroDetalle(){
 	if(acciones && acciones.parentNode){
 		acciones.parentNode.removeChild(acciones);
 	}
-	var modos = copia.querySelector ? copia.querySelector(".dashboard-flujo-detalle-modos") : null;
-	if(modos && modos.parentNode){
-		modos.parentNode.removeChild(modos);
-	}
 	var estilosNodo = document.getElementById("dashboardFlujoFinancieroEstilos");
 	var estilos = estilosNodo ? estilosNodo.innerHTML : "";
 	var ajustesImpresion = ".dashboard-flujo-detalle-modal__panel{height:auto!important;width:100%!important;box-shadow:none!important;border:0!important}.dashboard-flujo-detalle-modal__body{height:auto!important;overflow:visible!important}.dashboard-flujo-detalle-panel--detalle{overflow:visible!important}.dashboard-flujo-detalle-chart{height:420px!important}.dashboard-flujo-detalle-concepto,.dashboard-flujo-detalle-categoria{break-inside:avoid!important;page-break-inside:avoid!important}";
 	localStorage.setItem("reporte", "<style>" + estilos + ajustesImpresion + "</style><div style='font-family:Arial,sans-serif'>" + copia.innerHTML + "</div>");
 	localStorage.setItem("tipo", "ticket");
-	window.open("/Sistema-Telar/system/reportInformes.html");
+	window.open("/GoodVentaAsisCap/system/reportInformes.html");
 }
 
 function imprimirInformeDashboardFlujoFinancieroDetalle(){
-	if(dashboardFlujoDetalleModo == "comparativo"){
-		if(!dashboardFlujoDetalleComparativo.length){
-			return;
-		}
-		localStorage.setItem("reporte", htmlInformeFormalComparativaDashboardFlujoFinanciero(dashboardFlujoDetalleComparativo));
-		localStorage.setItem("tipo", "ticket");
-		window.open("/GoodVentaAsisCap/system/reportInformes.html");
-		return;
-	}
 	var datos = obtenerDashboardFlujoDetalleActual();
 	if(!datos){
 		return;
 	}
 	localStorage.setItem("reporte", htmlInformeFormalDashboardFlujoFinanciero(datos));
 	localStorage.setItem("tipo", "ticket");
-	window.open("/Sistema-Telar/system/reportInformes.html");
+	window.open("/GoodVentaAsisCap/system/reportInformes.html");
 }
 
 function csvValorDashboardFlujoFinanciero(valor){
@@ -37203,10 +36689,6 @@ function csvValorDashboardFlujoFinanciero(valor){
 }
 
 function exportarCsvDashboardFlujoFinancieroDetalle(){
-	if(dashboardFlujoDetalleModo == "comparativo"){
-		exportarCsvComparativaDashboardFlujoFinancieroDetalle();
-		return;
-	}
 	var datos = obtenerDashboardFlujoDetalleActual();
 	if(!datos){
 		return;
@@ -37245,55 +36727,6 @@ function exportarCsvDashboardFlujoFinancieroDetalle(){
 	var local = datos.local || {};
 	var periodo = datos.periodo || {};
 	var nombreArchivo = "flujo_" + nombreLocalDashboardFlujoFinanciero(local.sucursalNombre || "sucursal").replace(/\s+/g, "_").toLowerCase() + "_" + (periodo.mes || "periodo") + ".csv";
-	var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-	var enlace = document.createElement("a");
-	enlace.href = window.URL.createObjectURL(blob);
-	enlace.download = nombreArchivo;
-	document.body.appendChild(enlace);
-	enlace.click();
-	document.body.removeChild(enlace);
-	window.URL.revokeObjectURL(enlace.href);
-}
-
-function exportarCsvComparativaDashboardFlujoFinancieroDetalle(){
-	var datosLista = dashboardFlujoDetalleComparativo || [];
-	if(!datosLista.length){
-		return;
-	}
-	var filas = [["Periodo","Tipo periodo","Categoria","Concepto","Total","Porcentaje sobre ingresos"]];
-	for(var i = 0; i < datosLista.length; i++){
-		var datos = datosLista[i] || {};
-		var periodo = datos.periodo || {};
-		var ingresos = datos.totales ? numeroValorDashboardFlujoFinanciero(datos.totales.ingresos) : 0;
-		var categorias = datos.categorias || [];
-		for(var c = 0; c < categorias.length; c++){
-			var categoria = categorias[c] || {};
-			if(categoria.codigo == "deposito"){
-				continue;
-			}
-			var conceptos = categoria.conceptos || [];
-			for(var r = 0; r < conceptos.length; r++){
-				var concepto = conceptos[r] || {};
-				var total = numeroValorDashboardFlujoFinanciero(concepto.total);
-				filas.push([
-					periodo.etiqueta || periodo.mes || "",
-					periodo.esActual ? "Hasta hoy" : "Mes cerrado",
-					categoria.titulo || categoria.codigo || "",
-					concepto.nombre || "",
-					total,
-					formatoPorcentajeDashboardFlujoFinanciero(porcentajeDashboardFlujoFinanciero(total, ingresos))
-				]);
-			}
-		}
-	}
-	var csv = filas.map(function(fila){
-		return fila.map(csvValorDashboardFlujoFinanciero).join(";");
-	}).join("\r\n");
-	var base = datosLista[datosLista.length - 1] || {};
-	var local = base.local || {};
-	var primerPeriodo = datosLista[0].periodo ? datosLista[0].periodo.mes : "inicio";
-	var ultimoPeriodo = base.periodo ? base.periodo.mes : "fin";
-	var nombreArchivo = "flujo_comparativo_" + nombreLocalDashboardFlujoFinanciero(local.sucursalNombre || "sucursal").replace(/\s+/g, "_").toLowerCase() + "_" + primerPeriodo + "_" + ultimoPeriodo + ".csv";
 	var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
 	var enlace = document.createElement("a");
 	enlace.href = window.URL.createObjectURL(blob);
@@ -37615,7 +37048,7 @@ var cobrador = valorArqueo('inptBuscarCobrosRealizados4')
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -37724,7 +37157,7 @@ function buscararqueo3() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -37815,7 +37248,7 @@ function guardarendriverimpresion(codigo, tipo,estado, caja, local, diasa, subto
 	datos.append("cod_usuarioFK", cod_usuarioFK)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/driverimpresion.php",
+		url: "/GoodVentaAsisCap/php_system/driverimpresion.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -38015,7 +37448,7 @@ function AbmListaNombreAccesos(nombre,idabm, accion) {
 	datos.append("nombre", nombre)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMListadoacceso.php",
+		url: "/GoodVentaAsisCap/php_system/ABMListadoacceso.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -38088,7 +37521,7 @@ function guardarordenlistadoacceso(datos) {
 	datos.append("orden", orden)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMListadoacceso.php",
+		url: "/GoodVentaAsisCap/php_system/ABMListadoacceso.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -38175,7 +37608,7 @@ function AbmListaFormularioAccesos(nombre,idabm, accion) {
 	datos.append("nombre", nombre)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMListadoacceso.php",
+		url: "/GoodVentaAsisCap/php_system/ABMListadoacceso.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -38253,7 +37686,7 @@ if(controlacceso("VERLISTADODEACCESO","accion")==false){ return;}
 	$.ajax({
 
 		data: datos,
-        url: "/Sistema-Telar/php_system/ABMListadoacceso.php",
+        url: "/GoodVentaAsisCap/php_system/ABMListadoacceso.php",
 		type: "post",
 			 xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -38389,7 +37822,7 @@ function AbmAddAccesos(formulario,orden,codigo,nombre,acceso, accion) {
 	datos.append("formulario", formulario)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMListadoacceso.php",
+		url: "/GoodVentaAsisCap/php_system/ABMListadoacceso.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -38589,7 +38022,7 @@ function AbmListaNiveles(nombre,estado, idabm, accion) {
 	datos.append("estado", estado)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMListadoNiveles.php",
+		url: "/GoodVentaAsisCap/php_system/ABMListadoNiveles.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -38717,7 +38150,7 @@ function BuscarAbmListaNiveles() {
 	$.ajax({
 
 		data: datos,
-        url: "/Sistema-Telar/php_system/ABMListadoNiveles.php",
+        url: "/GoodVentaAsisCap/php_system/ABMListadoNiveles.php",
 		type: "post",
 			 xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -38831,7 +38264,7 @@ function buscardetalleslistaniveles() {
 	$.ajax({
 
 		data: datos,
-        url: "/Sistema-Telar/php_system/ABMListadoNiveles.php",
+        url: "/GoodVentaAsisCap/php_system/ABMListadoNiveles.php",
 		type: "post",
 			 xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -39176,7 +38609,7 @@ function BuscarNivelesSelect() {
 	$.ajax({
 
 		data: datos,
-        url: "/Sistema-Telar/php_system/ABMListadoNiveles.php",
+        url: "/GoodVentaAsisCap/php_system/ABMListadoNiveles.php",
 		type: "post",
 			 xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -39710,7 +39143,7 @@ function buscarVendedorMetas() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmvendedor.php",
+		url: "/GoodVentaAsisCap/php_system/abmvendedor.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -39784,7 +39217,7 @@ function abmaccesoMetas(d) {
 	datos.append("nro", nro)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmvendedor.php",
+		url: "/GoodVentaAsisCap/php_system/abmvendedor.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -39915,7 +39348,7 @@ function buscarMetasVendedores() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmvendedor.php",
+		url: "/GoodVentaAsisCap/php_system/abmvendedor.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -40050,7 +39483,7 @@ function buscarcuentaMoroso() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -40121,7 +39554,7 @@ function copiarAlPortapapeles() {
 
 var paginacargando = window.TelarLoader && window.TelarLoader.html
 	? window.TelarLoader.html("Cargando...", "content")
-	: "<div class=\"telar-loader telar-loader--content\" role=\"status\" aria-live=\"polite\" aria-atomic=\"true\"><img class=\"telar-loader__mark\" src=\"/Sistema-Telar/iconos/telar-loader.svg?v=20260721-2\" width=\"58\" height=\"58\" alt=\"\" aria-hidden=\"true\" draggable=\"false\"><span class=\"telar-loader__label\">Cargando...</span></div>";
+	: "<div class=\"telar-loader telar-loader--content\" role=\"status\" aria-live=\"polite\" aria-atomic=\"true\"><img class=\"telar-loader__mark\" src=\"/GoodVentaAsisCap/iconos/telar-loader.svg?v=20260721-2\" width=\"58\" height=\"58\" alt=\"\" aria-hidden=\"true\" draggable=\"false\"><span class=\"telar-loader__label\">Cargando...</span></div>";
 
 
 
@@ -40260,7 +39693,7 @@ function buscarcuentaImpago2() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -40345,7 +39778,7 @@ function addprecio() {
 	datos.append("contado", contadoprecio)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -40526,7 +39959,7 @@ function abmTipoPago(nombre, dato  ,estado , idtipo, accion) {
 	datos.append("estado", estado)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmTipoVenta.php",
+		url: "/GoodVentaAsisCap/php_system/abmTipoVenta.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -40621,7 +40054,7 @@ function buscarabmTipoPago() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmTipoVenta.php",
+		url: "/GoodVentaAsisCap/php_system/abmTipoVenta.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -40805,7 +40238,7 @@ function buscarcuentaImpago() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmclientes.php",
+		url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 		type: "post",
 		
 		
@@ -40939,7 +40372,7 @@ function buscarAudiProducto() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -41081,7 +40514,7 @@ function buscarClienteFiel() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -41182,7 +40615,7 @@ function buscarCumpleCliente() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmclientes.php",
+		url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -41568,7 +41001,7 @@ function abmTipoPagosVentaContado(idVentaFK) {
 	datos.append("exigir_movimiento_ueno", "SI")
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -41682,7 +41115,7 @@ function buscarTipoPagoOption() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmTipoVenta.php",
+		url: "/GoodVentaAsisCap/php_system/abmTipoVenta.php",
 		type: "post",
 		
 		
@@ -42090,7 +41523,7 @@ function pagoContadoBuscarMovimientosUeno(verTodos) {
 	datos.append("ver_todos", verTodos ? "SI" : "NO");
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmConciliacionUeno.php",
+		url: "/GoodVentaAsisCap/php_system/abmConciliacionUeno.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -42477,7 +41910,7 @@ function abmcargaropcionespago(CargoAdministrativo,MontoTarjeta,totalDeudaCuota,
 	datos.append("totalregistro", control)
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -42829,7 +42262,7 @@ function abmcargaropcionespagoparcial(CargoAdministrativo,MontoTarjeta,Descuento
 	
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -43137,7 +42570,7 @@ function buscarvistaventaSolicitud() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -43461,7 +42894,7 @@ function  SolicitudCredito(estado,observacion,accion){
 			var OpAjax= $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 			type:"post",
 	        cache:false,
 			contentType: false,
@@ -43588,7 +43021,7 @@ function  AbmClienteSolicitudCredito(nroTelefono,nroWhatsapp,lugarTrabajo,derecc
 			var OpAjax= $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 			type:"post",
 	        cache:false,
 			contentType: false,
@@ -43699,7 +43132,7 @@ function  abmmasreferenciasSolicitudCliente(idcliente){
 			var OpAjax= $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 			type:"post",
 	        cache:false,
 			contentType: false,
@@ -43769,7 +43202,7 @@ function buscarmasreferenciasSolicitudCredito(idcliente){
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -43874,7 +43307,7 @@ function  abmProductoSolicitudCredito(idSolicitudCredito){
 			var OpAjax= $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 			type:"post",
 	        cache:false,
 			contentType: false,
@@ -43944,7 +43377,7 @@ function buscarProductoSolicitudCredito(idSolicitudCredito){
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -44053,7 +43486,7 @@ function buscarSolicitudCredito(){
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -44232,7 +43665,7 @@ function buscarvistaSolicitudCredito() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+		url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 		type: "post",
 		beforeSend: function () {
 
@@ -44391,7 +43824,7 @@ function BuscarImprimirSolicitudCredito(){
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -44555,7 +43988,7 @@ function  AbmSolicitudDescuento(cantidad,precio,accion){
 			var OpAjax= $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudDescuento.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudDescuento.php",
 			type:"post",
 	        cache:false,
 			contentType: false,
@@ -44670,7 +44103,7 @@ function buscarproductosDescuento() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmSolicitudDescuento.php",
+		url: "/GoodVentaAsisCap/php_system/abmSolicitudDescuento.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -44824,7 +44257,7 @@ function  AbmSolicitudDescuentoDetalle(cantidad,precio,estado,accion){
 			var OpAjax= $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudDescuento.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudDescuento.php",
 			type:"post",
 	        cache:false,
 			contentType: false,
@@ -44918,7 +44351,7 @@ function buscarvistaSolicitudDesccuento() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmSolicitudDescuento.php",
+		url: "/GoodVentaAsisCap/php_system/abmSolicitudDescuento.php",
 		type: "post",
 		beforeSend: function () {
 
@@ -45036,7 +44469,7 @@ function  AbmEditarDescuento(){
 			var OpAjax= $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudDescuento.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudDescuento.php",
 			type:"post",
 	        cache:false,
 			contentType: false,
@@ -45181,7 +44614,7 @@ function buscarSoliDescuento() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmSolicitudDescuento.php",
+		url: "/GoodVentaAsisCap/php_system/abmSolicitudDescuento.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -45267,7 +44700,7 @@ function comprobar_cod_barra() {
 
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -45395,7 +44828,7 @@ function buscarContabilidad() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -45533,7 +44966,7 @@ function buscarContabilidadCompra() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -45677,7 +45110,7 @@ function buscarCobradorSelec() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcobrador.php",
+		url: "/GoodVentaAsisCap/php_system/abmcobrador.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -45757,7 +45190,7 @@ if(confirm("Estas Seguro que quieres eliminar este solicitud")){
 	datos.append("idSolicitudCredito", idSolicitudCredito)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+		url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -45861,7 +45294,7 @@ function buscarFotosGaleria(CodClienteFK){
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -45940,7 +45373,7 @@ function buscarmasreferenciasSolicitudCreditoVista(idcliente){
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -46013,7 +45446,7 @@ function buscarProductoSolicitudVista(idSolicitudCredito){
 	 $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmSolicitudCredito.php",
+			url: "/GoodVentaAsisCap/php_system/abmSolicitudCredito.php",
 			type:"post",
 			xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -46096,7 +45529,7 @@ function abmEliminarproducto(idAbmProducto, accion) {
 	
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmproductos.php",
+		url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -46176,14 +45609,9 @@ var variantesAbmInsumos = [];
 var codigoReposicionInsumoSeleccionada = "";
 var temporizadorBusquedaHilosReposicionInsumos = null;
 var solicitudBusquedaHilosReposicionInsumos = 0;
-var solicitudFichaCatalogoInsumos = 0;
-var ultimoFocoFichaCatalogoInsumos = null;
 
 function verTabInsumos(tab) {
-	if (tab != "abm" && document.getElementById("modalFichaCatalogoInsumos") && document.getElementById("modalFichaCatalogoInsumos").style.display != "none") {
-		cerrarFichaCatalogoInsumos(false);
-	}
-	var tabs = ["lotes", "stock", "movimientos", "abm", "alertas"];
+	var tabs = ["abm", "stock", "movimientos", "alertas"];
 	for (var i = 0; i < tabs.length; i++) {
 		var contenido = document.getElementById("tabInsumos" + tabs[i].charAt(0).toUpperCase() + tabs[i].slice(1));
 		var boton = document.getElementById("btnTabInsumos" + tabs[i].charAt(0).toUpperCase() + tabs[i].slice(1));
@@ -46193,9 +45621,6 @@ function verTabInsumos(tab) {
 		if (boton) {
 			boton.classList.toggle("activo", tabs[i] == tab);
 		}
-	}
-	if (tab == "lotes" && typeof inicializarLotesInsumos == "function") {
-		inicializarLotesInsumos();
 	}
 	if (tab == "stock") {
 		cargarCatalogosDashboardInsumos(function () { buscarDashboardInsumosStock(); });
@@ -46286,9 +45711,9 @@ function limpiarCamposAbmInsumos() {
 
 function ObtenerdatosAbmInsumos(datostr) {
 	$("tr[id=tbSelecRegistroInsumos]").each(function (i, td) {
-		td.classList.remove("tableRegistroSelec");
+		td.className = "";
 	});
-	datostr.classList.add("tableRegistroSelec");
+	datostr.className = "tableRegistroSelec";
 	filaAbmInsumos = datostr;
 	idAbmInsumos = obtenerTextoCeldaAbmInsumos(datostr, "td_id");
 	if (document.getElementById("inptRegistroSeleccInsumos")) {
@@ -46329,197 +45754,17 @@ function verVentanaEditarAbmInsumos() {
 	cargarProductosAsociadosAbmInsumos(idAbmInsumos);
 }
 
-function abrirFichaCatalogoInsumosDesdeFila(idInsumo, event) {
+function editarAbmInsumosDesdeFila(idInsumo, event) {
 	if (event) {
 		event.stopPropagation();
-		ultimoFocoFichaCatalogoInsumos = event.currentTarget || event.target || null;
 	}
 	var fila = document.querySelector('#table_abm_Insumos tr[data-id-insumo="' + String(idInsumo) + '"]');
 	if (fila) {
 		ObtenerdatosAbmInsumos(fila);
 	}
 	idAbmInsumos = String(idInsumo || "");
-	var datos = abmInsumosFilasPorId[idAbmInsumos];
-	if (!datos) {
-		ver_vetana_informativa("NO SE ENCONTRARON LOS DATOS DEL INSUMO", "Actualice el catalogo y vuelva a intentarlo.", "error");
-		return;
-	}
-	poblarFichaCatalogoInsumos(datos);
-	var modal = document.getElementById("modalFichaCatalogoInsumos");
-	modal.style.display = "flex";
-	modal.setAttribute("aria-hidden", "false");
-	var cerrar = modal.querySelector(".insumos-catalogo-ficha-cerrar");
-	if (cerrar) {
-		setTimeout(function () { cerrar.focus(); }, 0);
-	}
-	cargarTratamientosFichaCatalogoInsumos(idAbmInsumos);
-}
-
-function poblarFichaCatalogoInsumos(datos) {
-	var unidad = String(datos.unidad_medida || "Sin unidad");
-	var estado = String(datos.estado_texto || datos.estado || "Activo");
-	var tieneVariantes = String(datos.tiene_variantes || "0") == "1";
-	var stock = normalizarNumeroFichaCatalogoInsumos(datos.cant_stock);
-	var minimo = normalizarNumeroFichaCatalogoInsumos(datos.stock_minimo);
-	var disponible = stock - minimo;
-	actualizarTextoFichaCatalogoInsumos("tituloFichaCatalogoInsumos", datos.nombre || "Ficha del insumo");
-	actualizarTextoFichaCatalogoInsumos("nombreFichaCatalogoInsumos", datos.nombre || "-");
-	actualizarTextoFichaCatalogoInsumos("descripcionFichaCatalogoInsumos", datos.descripcion || "Sin descripcion");
-	actualizarTextoFichaCatalogoInsumos("unidadFichaCatalogoInsumos", unidad.toUpperCase());
-	actualizarTextoFichaCatalogoInsumos("unidadDatoFichaCatalogoInsumos", unidad);
-	actualizarTextoFichaCatalogoInsumos("estadoFichaCatalogoInsumos", estado.toUpperCase());
-	actualizarTextoFichaCatalogoInsumos("estadoDatoFichaCatalogoInsumos", estado);
-	actualizarTextoFichaCatalogoInsumos("variantesFichaCatalogoInsumos", tieneVariantes ? "CON VARIANTES" : "SIN VARIANTES");
-	actualizarTextoFichaCatalogoInsumos("stockFichaCatalogoInsumos", formatearNumeroFichaCatalogoInsumos(stock));
-	actualizarTextoFichaCatalogoInsumos("minimoFichaCatalogoInsumos", formatearNumeroFichaCatalogoInsumos(minimo));
-	actualizarTextoFichaCatalogoInsumos("disponibleFichaCatalogoInsumos", formatearNumeroFichaCatalogoInsumos(Math.abs(disponible)));
-	actualizarTextoFichaCatalogoInsumos("stockUnidadFichaCatalogoInsumos", unidad);
-	actualizarTextoFichaCatalogoInsumos("minimoUnidadFichaCatalogoInsumos", unidad);
-	actualizarTextoFichaCatalogoInsumos("disponibleUnidadFichaCatalogoInsumos", unidad);
-	actualizarTextoFichaCatalogoInsumos("disponibleLabelFichaCatalogoInsumos", disponible >= 0 ? "Disponible sobre minimo" : "Faltante para el minimo");
-	actualizarTextoFichaCatalogoInsumos("metaFichaCatalogoInsumos", "Insumo #" + String(datos.id_insumo || idAbmInsumos) + " · Catalogo de insumos");
-	var etiquetaEstado = document.getElementById("estadoFichaCatalogoInsumos");
-	if (etiquetaEstado) {
-		etiquetaEstado.classList.toggle("inactivo", estado.toLowerCase() == "inactivo");
-	}
-	var disponibleCard = document.getElementById("disponibleCardFichaCatalogoInsumos");
-	if (disponibleCard) {
-		disponibleCard.classList.toggle("con-faltante", disponible < 0);
-	}
-	renderVariantesFichaCatalogoInsumos(datos.variantes || [], unidad, tieneVariantes);
-	actualizarTextoFichaCatalogoInsumos("contadorTratamientosFichaCatalogoInsumos", "");
-	var tratamientos = document.getElementById("tratamientosFichaCatalogoInsumos");
-	if (tratamientos) {
-		tratamientos.innerHTML = "<div class='insumos-catalogo-ficha-vacio'><i class='fa-solid fa-spinner fa-spin' aria-hidden='true'></i> Cargando tratamientos...</div>";
-	}
-}
-
-function actualizarTextoFichaCatalogoInsumos(id, texto) {
-	var elemento = document.getElementById(id);
-	if (elemento) {
-		elemento.textContent = texto;
-	}
-}
-
-function normalizarNumeroFichaCatalogoInsumos(valor) {
-	var numero = parseFloat(String(valor == null ? "0" : valor).replace(",", "."));
-	return isNaN(numero) ? 0 : numero;
-}
-
-function formatearNumeroFichaCatalogoInsumos(valor) {
-	return Number(valor || 0).toLocaleString("es-PY", { minimumFractionDigits: 0, maximumFractionDigits: 3 });
-}
-
-function renderVariantesFichaCatalogoInsumos(variantes, unidad, tieneVariantes) {
-	var contenedor = document.getElementById("detalleVariantesFichaCatalogoInsumos");
-	if (!contenedor) {
-		return;
-	}
-	if (!tieneVariantes) {
-		contenedor.style.display = "none";
-		contenedor.innerHTML = "";
-		return;
-	}
-	var html = "<div class='insumos-catalogo-ficha-variantes-titulo'><b>Variantes</b><span>Stock y minimo por presentacion</span></div><div class='insumos-catalogo-ficha-variantes-lista'>";
-	for (var i = 0; i < variantes.length; i++) {
-		var variante = variantes[i];
-		html += "<article" + (String(variante.estado || "Activo").toLowerCase() == "inactivo" ? " class='inactiva'" : "") + "><b>" + escaparHtmlAbmInsumos(variante.nombre_variante || "Sin nombre") + "</b><span>Stock " + escaparHtmlAbmInsumos(formatearNumeroFichaCatalogoInsumos(normalizarNumeroFichaCatalogoInsumos(variante.stock))) + " " + escaparHtmlAbmInsumos(unidad) + " · Minimo " + escaparHtmlAbmInsumos(formatearNumeroFichaCatalogoInsumos(normalizarNumeroFichaCatalogoInsumos(variante.stock_minimo))) + "</span></article>";
-	}
-	html += "</div>";
-	contenedor.innerHTML = html;
-	contenedor.style.display = "";
-}
-
-function cargarTratamientosFichaCatalogoInsumos(idInsumo) {
-	var numeroSolicitud = ++solicitudFichaCatalogoInsumos;
-	obtener_datos_user();
-	$.ajax({
-		data: {
-			"useru": userid,
-			"passu": passuser,
-			"navegador": navegador,
-			"id_insumo": idInsumo,
-			"funt": "obtener_productos_asociados"
-		},
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
-		type: "post",
-		error: function (jqXHR, textstatus, errorThrowm) {
-			if (numeroSolicitud != solicitudFichaCatalogoInsumos) {
-				return;
-			}
-			renderTratamientosFichaCatalogoInsumos([], "No se pudieron cargar los tratamientos vinculados.");
-		},
-		success: function (responseText) {
-			if (numeroSolicitud != solicitudFichaCatalogoInsumos || String(idInsumo) != String(idAbmInsumos)) {
-				return;
-			}
-			try {
-				var respuesta = $.parseJSON(responseText);
-				if (respuestaJqueryAjax(respuesta["1"]) != true) {
-					renderTratamientosFichaCatalogoInsumos([], respuesta.mensaje || "No se pudieron cargar los tratamientos vinculados.");
-					return;
-				}
-				renderTratamientosFichaCatalogoInsumos(respuesta.productos || []);
-			} catch (error) {
-				renderTratamientosFichaCatalogoInsumos([], "No se pudieron interpretar los tratamientos vinculados.");
-			}
-		}
-	});
-}
-
-function renderTratamientosFichaCatalogoInsumos(productos, mensajeVacio) {
-	var contenedor = document.getElementById("tratamientosFichaCatalogoInsumos");
-	if (!contenedor) {
-		return;
-	}
-	productos = productos || [];
-	productos.sort(function (a, b) {
-		return String(a.cod_producto || "").localeCompare(String(b.cod_producto || ""), undefined, { numeric: true });
-	});
-	actualizarTextoFichaCatalogoInsumos("contadorTratamientosFichaCatalogoInsumos", productos.length == 1 ? "1 tratamiento" : productos.length + " tratamientos");
-	if (productos.length == 0) {
-		contenedor.innerHTML = "<div class='insumos-catalogo-ficha-vacio'>" + escaparHtmlAbmInsumos(mensajeVacio || "Este insumo no tiene tratamientos vinculados.") + "</div>";
-		return;
-	}
-	var unidad = abmInsumosFilasPorId[String(idAbmInsumos)] ? (abmInsumosFilasPorId[String(idAbmInsumos)].unidad_medida || "unidad") : "unidad";
-	var html = "";
-	for (var i = 0; i < productos.length; i++) {
-		var producto = productos[i];
-		html += "<div class='insumos-catalogo-ficha-tratamiento'><span><b>" + escaparHtmlAbmInsumos(producto.cod_producto || "-") + "</b><strong>" + escaparHtmlAbmInsumos(producto.nombre_producto || "Tratamiento") + "</strong></span><em>" + escaparHtmlAbmInsumos(formatearNumeroFichaCatalogoInsumos(normalizarNumeroFichaCatalogoInsumos(producto.cantidad || 1))) + " " + escaparHtmlAbmInsumos(unidad) + "</em></div>";
-	}
-	contenedor.innerHTML = html;
-}
-
-function cerrarFichaCatalogoInsumos(restaurarFoco) {
-	var modal = document.getElementById("modalFichaCatalogoInsumos");
-	if (!modal) {
-		return;
-	}
-	solicitudFichaCatalogoInsumos++;
-	modal.style.display = "none";
-	modal.setAttribute("aria-hidden", "true");
-	if (restaurarFoco !== false && ultimoFocoFichaCatalogoInsumos && typeof ultimoFocoFichaCatalogoInsumos.focus == "function") {
-		ultimoFocoFichaCatalogoInsumos.focus();
-	}
-}
-
-function editarDesdeFichaCatalogoInsumos() {
-	if (idAbmInsumos == "") {
-		return;
-	}
-	cerrarFichaCatalogoInsumos(false);
 	verVentanaEditarAbmInsumos();
 }
-
-function editarAbmInsumosDesdeFila(idInsumo, event) {
-	abrirFichaCatalogoInsumosDesdeFila(idInsumo, event);
-}
-
-document.addEventListener("keydown", function (event) {
-	if (event.key == "Escape" && document.getElementById("modalFichaCatalogoInsumos") && document.getElementById("modalFichaCatalogoInsumos").style.display != "none") {
-		cerrarFichaCatalogoInsumos();
-	}
-});
 
 function obtenerTextoCeldaAbmInsumos(fila, idCelda) {
 	var texto = $(fila).children('td[id="' + idCelda + '"]').text();
@@ -46693,7 +45938,7 @@ function abmInsumos(accion) {
 	}
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -46743,7 +45988,7 @@ function buscarAbmInsumos() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		error: function (jqXHR, textstatus, errorThrowm) {
 			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
@@ -46799,7 +46044,7 @@ function renderTablaAbmInsumos(filas) {
 			resumen.bajo++;
 		}
 		html += "<table class='tableRegistroSearch insumos-abm-table' border='1' cellspacing='0' cellpadding='0' style='width:100%'>";
-		html += "<tr id='tbSelecRegistroInsumos' class='insumos-row-editable' data-id-insumo='" + escaparHtmlAbmInsumos(fila.id_insumo) + "' tabindex='0' role='button' aria-label='Abrir ficha de " + escaparHtmlAbmInsumos(fila.nombre || "insumo") + "' onclick='abrirFichaCatalogoInsumosDesdeFila(\"" + escaparHtmlAbmInsumos(fila.id_insumo) + "\", event)' onkeydown='if(event.key===\"Enter\"||event.key===\" \"){event.preventDefault();abrirFichaCatalogoInsumosDesdeFila(\"" + escaparHtmlAbmInsumos(fila.id_insumo) + "\",event)}'>";
+		html += "<tr id='tbSelecRegistroInsumos' class='insumos-row-editable' data-id-insumo='" + escaparHtmlAbmInsumos(fila.id_insumo) + "' onclick='editarAbmInsumosDesdeFila(\"" + escaparHtmlAbmInsumos(fila.id_insumo) + "\", event)'>";
 		html += "<td id='td_id' style='width:7%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.id_insumo) + "</td>";
 		html += "<td id='td_datos_1' style='width:27%' class='tdRegistroSearch'><div class='insumo-cell-title'>" + escaparHtmlAbmInsumos(fila.nombre || "") + "</div>" + variantesTexto + "</td>";
 		html += "<td id='td_datos_2' style='width:22%' class='tdRegistroSearch'>" + escaparHtmlAbmInsumos(fila.descripcion) + "</td>";
@@ -46887,7 +46132,7 @@ function eliminarAbmInsumos() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		error: function (jqXHR, textstatus, errorThrowm) {
 			verCerrarEfectoCargando("");
@@ -46933,7 +46178,7 @@ function cargarProductosDisponiblesAbmInsumos(callback) {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		error: function (jqXHR, textstatus, errorThrowm) {
 			productosDisponiblesAbmInsumosCargando = false;
@@ -46980,7 +46225,7 @@ function cargarProductosAsociadosAbmInsumos(idInsumo) {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		success: function (responseText) {
 			try {
@@ -47163,7 +46408,7 @@ function cargarCatalogosDashboardInsumos(callback) {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		error: function (jqXHR, textstatus, errorThrowm) {
 			manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
@@ -47279,7 +46524,7 @@ function buscarDashboardInsumosStock() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		error: function (jqXHR, textstatus, errorThrowm) {
 			document.getElementById("tableDashboardInsumosStock").innerHTML = "";
@@ -47427,7 +46672,7 @@ function guardarDashboardInsumosStockDatos(idInsumo, codLocal, idConsultorio, ca
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		error: function (jqXHR, textstatus, errorThrowm) {
 			verCerrarEfectoCargando("");
@@ -47591,7 +46836,7 @@ function buscarHilosReposicionInsumos(texto, mostrarLista) {
 			"buscar": texto || "",
 			"funt": "buscar_hilos_reposicion"
 		},
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		success: function (responseText) {
 			if (numeroSolicitud != solicitudBusquedaHilosReposicionInsumos) {
@@ -47861,7 +47106,7 @@ function guardarReposicionInsumos() {
 	if (boton) { boton.disabled = true; }
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -47907,7 +47152,7 @@ function listarReposicionesInsumos() {
 	document.getElementById("tableMovimientosInsumos").innerHTML = paginacargando;
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		success: function (responseText) {
 			try {
@@ -47945,7 +47190,7 @@ function verDetalleReposicionInsumos(codigo) {
 	document.getElementById("tableDetalleMovimientoInsumos").innerHTML = paginacargando;
 	$.ajax({
 		data: {"useru": userid, "passu": passuser, "navegador": navegador, "codigo": codigo, "funt": "detalle_reposicion"},
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		success: function (responseText) {
 			try {
@@ -47985,7 +47230,7 @@ function recibirReposicionInsumos(codigo) {
 	obtener_datos_user();
 	$.ajax({
 		data: {"useru": userid, "passu": passuser, "navegador": navegador, "codigo": codigo, "funt": "recibir_reposicion"},
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		success: function (responseText) {
 			try {
@@ -48026,7 +47271,7 @@ function generarPdfReposicionInsumos(codigo) {
 	verCerrarEfectoCargando("1");
 	$.ajax({
 		data: {"useru": userid, "passu": passuser, "navegador": navegador, "codigo": codigoInforme, "funt": "reporte_reposicion"},
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		success: function (responseText) {
 			verCerrarEfectoCargando("");
@@ -48077,7 +47322,7 @@ function listarAlertasStockInsumos() {
 	document.getElementById("tableAlertasStockInsumos").innerHTML = paginacargando;
 	$.ajax({
 		data: {"useru": userid, "passu": passuser, "navegador": navegador, "funt": "listar_alertas_stock"},
-		url: "/Sistema-Telar/php_system/abmInsumos.php",
+		url: "/GoodVentaAsisCap/php_system/abmInsumos.php",
 		type: "post",
 		success: function (responseText) {
 			try {
@@ -48209,7 +47454,7 @@ function abmBanco(nombre,estado , idBanco, accion) {
 	datos.append("estado", estado)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMBanco.php",
+		url: "/GoodVentaAsisCap/php_system/ABMBanco.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -48304,7 +47549,7 @@ function buscarabmBanco() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMBanco.php",
+		url: "/GoodVentaAsisCap/php_system/ABMBanco.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -48382,7 +47627,7 @@ return;
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMBanco.php",
+		url: "/GoodVentaAsisCap/php_system/ABMBanco.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -48481,7 +47726,7 @@ function buscarImprimirTicketVentaContado(){
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmpagos.php",
+		url: "/GoodVentaAsisCap/php_system/abmpagos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -48616,7 +47861,7 @@ function buscarGeolocalizacion(){
 	};
 	$.ajax({
 		data: datos,
-        url: "/Sistema-Telar/php_system/abmclientes.php",
+        url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 		type: "post",
 		beforeSend: function () {
 		},
@@ -48689,7 +47934,7 @@ function AbmGeoLocalizacion(fecha,descripcion,cod_persona){
 			var OpAjax= $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmclientes.php",
+			url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 			type:"post",
 	        cache:false,
 			contentType: false,
@@ -48712,7 +47957,7 @@ function AbmGeoLocalizacion(fecha,descripcion,cod_persona){
 		
 		  if (Respuesta=="usuarioincorrecto")
 			{
-				window.location="/Sistema-Telar/system/login.html";
+				window.location="/GoodVentaAsisCap/system/login.html";
 				ver_vetana_informativa("USUARIO INCORRECTO VUELVA A INICIAR SESION...","advertencia")
 						return false;
 				} 
@@ -48827,7 +48072,7 @@ function EliminarGeoLocalizacion(){
 			var OpAjax= $.ajax({
 			
 			data: datos,
-			url: "/Sistema-Telar/php_system/abmclientes.php",
+			url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 			type:"post",
 	        cache:false,
 			contentType: false,
@@ -48850,7 +48095,7 @@ function EliminarGeoLocalizacion(){
 		
 		  if (Respuesta=="usuarioincorrecto")
 			{
-				window.location="/Sistema-Telar/system/login.html";
+				window.location="/GoodVentaAsisCap/system/login.html";
 				ver_vetana_informativa("Usuario incorrecto", "Vuelva a iniciar sesion...","error")
 						return false;
 				} 
@@ -48918,7 +48163,7 @@ function buscarDescripcionProducto(idFkProducto,monto,nroid) {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/ABMdescripcionpr.php",
+		url: "/GoodVentaAsisCap/php_system/ABMdescripcionpr.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -49071,7 +48316,7 @@ function BuscarSelecProductos() {
 	};
 	$.ajax({
 		data: datos,
-        url: "/Sistema-Telar/php_system/abmproductos.php",
+        url: "/GoodVentaAsisCap/php_system/abmproductos.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -49155,7 +48400,7 @@ function ActualizarCobradorVenta() {
 	datos.append("cobrador", cobrador)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -49951,7 +49196,7 @@ function AbmCargarFotosClientePrincipal(accion,idAbmCliente){
 
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmclientes.php",
+		url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -50078,7 +49323,7 @@ function EliminarArchivoPrincipal(iddocumento,urldocumento,idcliente){
 	};
 	$.ajax({
 		data: datos,
-        url: "/Sistema-Telar/php_system/abmclientes.php",
+        url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 		type: "post",
 		beforeSend: function () {
 		},
@@ -50153,7 +49398,7 @@ function buscarFotosClientePrincipal(cod_CLienteFOtoFK){
 	};
 	$.ajax({
 		data: datos,
-        url: "/Sistema-Telar/php_system/abmclientes.php",
+        url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 		type: "post",
 		beforeSend: function () {
 	},
@@ -50233,7 +49478,7 @@ function buscarDataListCliente() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmclientes.php",
+		url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 		type: "post",
 		xhr: function () {
         var xhr = new window.XMLHttpRequest();
@@ -50343,7 +49588,7 @@ function buscarVistaGaleriaFoto(){
 	};console.info(datos);
 	$.ajax({
 		data: datos,
-        url: "/Sistema-Telar/php_system/abmclientes.php",
+        url: "/GoodVentaAsisCap/php_system/abmclientes.php",
 		type: "post",
 		beforeSend: function () {
 		},
@@ -50449,7 +49694,7 @@ function ActualizarCobrador() {
 	datos.append("cobrador", cobrador)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -50690,7 +49935,7 @@ function buscarSugerencias(forzar) {
 	sugerenciasAjaxEnCurso = true;
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/obtener_sugerencias.php",
+		url: "/GoodVentaAsisCap/php_system/obtener_sugerencias.php",
 		type: "post",
 		dataType: "text",
 		cache: false,
@@ -50827,7 +50072,7 @@ function ActualizarSugerencia(descripcion,Estado,idabm) {
 	datos.append("estado", Estado)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/obtener_sugerencias.php",
+		url: "/GoodVentaAsisCap/php_system/obtener_sugerencias.php",
 		type: "post",
 		dataType: "text",
 		cache: false,
@@ -50908,7 +50153,7 @@ function buscarDetalleSugerencia() {
 	$.ajax({
 
 		data: datos,
-		url: "/Sistema-Telar/php_system/obtener_sugerencias.php",
+		url: "/GoodVentaAsisCap/php_system/obtener_sugerencias.php",
 		type: "post",
 		dataType: "text",
 		cache: false,
@@ -51086,7 +50331,7 @@ function abmMigrarCaja(monto, obs, usu_RecibirFK , estado, cod_MigrarCaja, accio
 	datos.append("cod_cajaApertura", idabmAperturacierrecaja)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmMigrarCaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmMigrarCaja.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -51158,7 +50403,7 @@ function buscarabmMigrarCaja() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmMigrarCaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmMigrarCaja.php",
 		type: "post",
 		 
 		
@@ -51218,7 +50463,7 @@ function BuscarOptionUsuario() {
 	};
 	return $.ajax({
 		data: datos,
-        url: "/Sistema-Telar/php_system/abmMigrarCaja.php",
+        url: "/GoodVentaAsisCap/php_system/abmMigrarCaja.php",
 		type: "post",
 		
 		beforeSend: function () {
@@ -51335,7 +50580,7 @@ function AbmCajaEscritorio( idabm,accion) {
 	datos.append("codApertura", idabmAperturacierrecaja)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmMigrarCaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmMigrarCaja.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -51390,7 +50635,7 @@ function BuscarAbmCajaEscritorio() {
 	};
 	$.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmMigrarCaja.php",
+		url: "/GoodVentaAsisCap/php_system/abmMigrarCaja.php",
 		type: "post",
 		 
 		
@@ -51469,7 +50714,7 @@ function abmAsignarLocal( cod_ventaAsignarCod_local,inptlocalAsignarLocal,accion
 	datos.append("inptlocalAsignarLocal", inptlocalAsignarLocal)
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmventa.php",
+		url: "/GoodVentaAsisCap/php_system/abmventa.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -51517,7 +50762,7 @@ function relacionarProductosLocal() {
 	datos.append("cod_local", idAbmCasa) 
 	var OpAjax = $.ajax({
 		data: datos,
-		url: "/Sistema-Telar/php_system/abmcasa.php",
+		url: "/GoodVentaAsisCap/php_system/abmcasa.php",
 		type: "post",
 		cache: false,
 		contentType: false,
@@ -51553,9 +50798,9 @@ function relacionarProductosLocal() {
 
 }
 var controlFoto= "";
-var iconoDocumentoAdjunto = "/Sistema-Telar/iconos/informedevolucion.png";
-var iconoImagenProducto = "/Sistema-Telar/iconos/imagenphoto.png";
-var iconoSubirImagen = "/Sistema-Telar/iconos/subir_imagen.png";
+var iconoDocumentoAdjunto = "/GoodVentaAsisCap/iconos/informedevolucion.png";
+var iconoImagenProducto = "/GoodVentaAsisCap/iconos/imagenphoto.png";
+var iconoSubirImagen = "/GoodVentaAsisCap/iconos/subir_imagen.png";
 
 function obtenerExtensionAdjunto(ruta) {
 	if (!ruta) {
@@ -51737,7 +50982,7 @@ function vercerrarcargadefotos(opcion, mostrarOpciones= true) {
 
 		// En caso de que no tenga imagen cargada
 		if (ruta.includes('subir_imagen.png') || ruta.includes('imagenphoto.png')) {
-			ruta= 'url("/Sistema-Telar/iconos/guia_fotos.jpeg")';
+			ruta= 'url("/GoodVentaAsisCap/iconos/guia_fotos.jpeg")';
 			extensionAdjunto = "jpg";
 		}
 		

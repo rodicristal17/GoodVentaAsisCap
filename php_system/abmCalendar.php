@@ -40,6 +40,7 @@ include_once 'producto_riesgo_financiero_helper.php';
 include_once 'abmAgenda.php';
 include_once 'abmusuarios.php';
 require_once __DIR__.'/planificacion_especialistas_helper.php';
+require_once __DIR__.'/cliente_identidad_policial_helper.php';
 
 date_default_timezone_set('America/Asuncion');
 
@@ -121,6 +122,10 @@ if (basename(__FILE__) == basename($_SERVER['PHP_SELF'])) {
     
         case 'guardarPacienteAgenda':
             guardarPacienteAgenda($mysqli, $useru);
+            break;
+
+        case 'listarZonasPacienteAgenda':
+            listarZonasPacienteAgenda($mysqli);
             break;
     
         case 'buscarHistorialPacienteCalendario':
@@ -3361,128 +3366,107 @@ function eliminarAsignacionConsultorio($mysqli, $useru){
 }
 
  
-function guardarPacienteAgenda($mysqli, $useru){
-    $nombre = isset($_POST['nombre']) ? limpiar($mysqli, $_POST['nombre']) : '';
-    $documento = isset($_POST['documento']) ? limpiar($mysqli, $_POST['documento']) : '';
-    $telefono = isset($_POST['telefono']) ? limpiar($mysqli, $_POST['telefono']) : '';
+function listarZonasPacienteAgenda($mysqli)
+{
+    $zonas = array();
+    $resultado = $mysqli->query("SELECT idzona,nombre FROM zona ORDER BY nombre ASC");
+    if (!$resultado) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "No se pudieron cargar las zonas."));
+    }
+    while ($fila = $resultado->fetch_assoc()) {
+        $zonas[] = array("id" => (int)$fila["idzona"], "nombre" => normalizarTextoUtf8($fila["nombre"]));
+    }
+    responderJsonCalendar(array("1" => "exito", "zonas" => $zonas));
+}
+
+function guardarPacienteAgenda($mysqli, $useru)
+{
+    $nombre = isset($_POST['nombre']) ? trim(limpiar($mysqli, $_POST['nombre'])) : '';
+    $apellido = isset($_POST['apellido']) ? trim(limpiar($mysqli, $_POST['apellido'])) : '';
+    $documento = isset($_POST['documento']) ? trim(limpiar($mysqli, $_POST['documento'])) : '';
+    $telefono = isset($_POST['telefono']) ? trim(limpiar($mysqli, $_POST['telefono'])) : '';
     $direccion = isset($_POST['direccion']) ? limpiar($mysqli, $_POST['direccion']) : '';
+    $idzona = isset($_POST['idzona']) ? (int)$_POST['idzona'] : 0;
+    $confirmar = isset($_POST['confirmar_identidad_policial']) && (string)$_POST['confirmar_identidad_policial'] === '1';
+    $telefonoDigitos = preg_replace('/\D+/', '', $telefono);
 
-    if($nombre == ''){
-        echo json_encode(array(
-            "1" => "Error",
-            "mensaje" => "Debe cargar el nombre del paciente"
-        ));
-        exit;
+    if ($nombre === '' || $apellido === '' || $documento === '' || $telefono === '' || $idzona <= 0) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "Complete nombre, apellido, documento, telefono y zona."));
     }
-	 
-    if($documento != ''){
-        $sqlVerificar = "SELECT cod_cliente 
-                         FROM cliente
-                         WHERE ci_cliente = '".$documento."'
-                         LIMIT 1";
-
-        $resultVerificar = $mysqli->query($sqlVerificar);
-
-        if(!$resultVerificar){
-            echo json_encode(array(
-                "1" => "Error",
-                "mensaje" => "No se pudo verificar si el paciente ya existe",
-                "sql" => $sqlVerificar,
-                "mysql" => $mysqli->error
-            ));
-            exit;
-        }
-
-        if($resultVerificar->num_rows > 0){
-            $rowExiste = $resultVerificar->fetch_assoc();
-
-            echo json_encode(array(
-                "1" => "Error",
-                "mensaje" => "Ya existe un paciente con ese documento",
-                "id_paciente" => $rowExiste["cod_cliente"] 
-            ));
-            exit;
-        }
+    if (!preg_match('/^[+0-9()\s.\-]+$/', $telefono) || strlen($telefonoDigitos) < 6 || strlen($telefonoDigitos) > 15) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "El telefono debe tener entre 6 y 15 digitos."));
     }
 
-	
-	
+    $stmtZona = $mysqli->prepare("SELECT idzona FROM zona WHERE idzona=? LIMIT 1");
+    if (!$stmtZona) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "No se pudo validar la zona."));
+    }
+    $stmtZona->bind_param("i", $idzona);
+    $stmtZona->execute();
+    $zonaExiste = $stmtZona->get_result()->fetch_assoc();
+    $stmtZona->close();
+    if (!$zonaExiste) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "Seleccione una zona valida."));
+    }
+
+    $stmtExiste = $mysqli->prepare("SELECT cod_cliente FROM cliente WHERE ci_cliente=? LIMIT 1");
+    if (!$stmtExiste) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "No se pudo validar el documento."));
+    }
+    $stmtExiste->bind_param("s", $documento);
+    $stmtExiste->execute();
+    $existente = $stmtExiste->get_result()->fetch_assoc();
+    $stmtExiste->close();
+    if ($existente) {
+        responderJsonCalendar(array("1" => "Error", "mensaje" => "Ya existe un paciente con ese documento", "id_paciente" => $existente["cod_cliente"]));
+    }
+
+    $identidad = clienteIdentidadPolicialPrepararDatos($mysqli, $documento, $nombre, $apellido, $confirmar);
+    $nombre = $identidad["nombre"];
+    $apellido = $identidad["apellido"];
 
     mysqli_begin_transaction($mysqli);
-
     try {
-        $sqlPersona = "INSERT INTO persona (
-                            nombre_persona, 
-                            direccion,
-                            telefono
-                        ) VALUES (
-                            '".$nombre."', 
-                            '".$direccion."',
-                            '".$telefono."'
-                        )";
-
-        if(!$mysqli->query($sqlPersona)){
-            throw new Exception("Error al guardar en persona: ".$mysqli->error);
+        $stmtPersona = $mysqli->prepare("INSERT INTO persona (nombre_persona,apellido_persona,direccion,telefono) VALUES (UPPER(?),UPPER(?),UPPER(?),UPPER(?))");
+        if (!$stmtPersona) {
+            throw new Exception("No se pudo preparar el alta de la persona.");
         }
-
+        $stmtPersona->bind_param("ssss", $nombre, $apellido, $direccion, $telefono);
+        if (!$stmtPersona->execute()) {
+            throw new Exception("No se pudo guardar la persona.");
+        }
         $idPersona = $mysqli->insert_id;
+        $stmtPersona->close();
 
-        $sqlCliente = "INSERT INTO cliente (
-                            cod_cliente,
-							rut_cliente,
-							ci_cliente,
-                            whapp,
-                            estado,
-                            cod_user_insert,
-                            fecha_insert,
-                            accesocredito,
-							idzonaFk,
-							foto1,
-							foto2,
-							direcciontrab,
-							fecha_edicion_referencia,
-							fechanac,
-							obsTrabajo
-                        ) VALUES (
-                            '".$idPersona."',
-							'',
-							'".$documento."',
-                            '".$telefono."',
-                            'Activo',
-                            '".$useru."',
-                            NOW(),
-                            'Confirmado',
-							0,
-							'',
-							'',
-							'',
-							NOW(),
-							'2000-01-01',
-							''
-                        )";
-
-        if(!$mysqli->query($sqlCliente)){
-            throw new Exception("Error al guardar en cliente: ".$mysqli->error);
+        $stmtCliente = $mysqli->prepare(
+            "INSERT INTO cliente
+             (cod_cliente,rut_cliente,ci_cliente,whapp,estado,cod_user_insert,fecha_insert,
+              accesocredito,idzonaFk,foto1,foto2,direcciontrab,fecha_edicion_referencia,fechanac,obsTrabajo)
+             VALUES (?,'',?,?, 'Activo',?,NOW(),'Confirmado',?,'','','',NOW(),'2000-01-01','')"
+        );
+        if (!$stmtCliente) {
+            throw new Exception("No se pudo preparar el alta del paciente.");
         }
+        $usuario = (int)$useru;
+        $stmtCliente->bind_param("issii", $idPersona, $documento, $telefono, $usuario, $idzona);
+        if (!$stmtCliente->execute()) {
+            throw new Exception("No se pudo guardar el paciente.");
+        }
+        $stmtCliente->close();
 
+        if (!clienteIdentidadPolicialRegistrarAuditoria($mysqli, $idPersona, $usuario, "alta_agenda", $identidad["comparacion"])) {
+            throw new Exception("No se pudo registrar la auditoria de identidad.");
+        }
         mysqli_commit($mysqli);
-
-        echo json_encode(array(
+        responderJsonCalendar(array(
             "1" => "exito",
             "mensaje" => "Paciente guardado correctamente",
             "id_paciente" => $idPersona,
-            "nombre_paciente" => $nombre
+            "nombre_paciente" => clienteIdentidadPolicialTextoUtf8(trim($apellido.' '.$nombre))
         ));
-        exit;
-
     } catch (Exception $e) {
         mysqli_rollback($mysqli);
-
-        echo json_encode(array(
-            "1" => "Error",
-            "mensaje" => $e->getMessage()
-        ));
-        exit;
+        responderJsonCalendar(array("1" => "Error", "mensaje" => $e->getMessage()));
     }
 }
 

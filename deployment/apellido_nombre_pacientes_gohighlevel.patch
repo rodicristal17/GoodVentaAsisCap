@@ -1,0 +1,29 @@
+--- var/www/html/php_system/gohighlevel_contactos_telar_helper.php
++++ var/www/html/php_system/gohighlevel_contactos_telar_helper.php
+@@ -726,7 +726,11 @@
+     $buscar = goHighLevelBusqueda($parametros);
+     if ($buscar !== '') {
+         $like = '%'.$mysqli->real_escape_string($buscar).'%';
+-        $condiciones[] = "(p.nombre_persona LIKE '".$like."' OR ct.telefono_normalizado LIKE '".$like."')";
++        $condiciones[] = "(TRIM(CONCAT_WS(CHAR(32),NULLIF(TRIM(p.apellido_persona),''),NULLIF(TRIM(p.nombre_persona),''))) LIKE '".$like."' "
++            ."OR TRIM(CONCAT_WS(CHAR(32),NULLIF(TRIM(p.nombre_persona),''),NULLIF(TRIM(p.apellido_persona),''))) LIKE '".$like."' "
++            ."OR p.nombre_persona LIKE '".$like."' "
++            ."OR p.apellido_persona LIKE '".$like."' "
++            ."OR ct.telefono_normalizado LIKE '".$like."')";
+     }
+     return implode(' AND ', $condiciones);
+ }
+@@ -758,12 +762,12 @@
+         return $salida;
+     }
+     $resultado = $mysqli->query(
+-        "SELECT c.cod_cliente,IFNULL(p.nombre_persona,'') nombre,"
++        "SELECT c.cod_cliente,TRIM(CONCAT_WS(CHAR(32),NULLIF(TRIM(p.apellido_persona),''),NULLIF(TRIM(p.nombre_persona),''))) nombre,"
+         ."COALESCE(NULLIF(MAX(CASE WHEN op.ghl_contact_id<>'' THEN ct.telefono_normalizado ELSE '' END),''),"
+         ."MIN(ct.telefono_normalizado)) telefono,"
+         ."vt.cod_venta,vt.cod_local,IFNULL(l.Nombre,'') sucursal,IFNULL(vt.fecha_venta,'') fecha_venta,"
+         ."IFNULL(MAX(op.ghl_contact_id),'') ghl_contact_id,IFNULL(MAX(op.estado),'') operacion_estado "
+-        .$joins."WHERE ".$condicion." GROUP BY c.cod_cliente,p.nombre_persona,vt.cod_venta,vt.cod_local,"
++        .$joins."WHERE ".$condicion." GROUP BY c.cod_cliente,p.nombre_persona,p.apellido_persona,vt.cod_venta,vt.cod_local,"
+         ."l.Nombre,vt.fecha_venta ORDER BY vt.fecha_venta DESC,c.cod_cliente DESC LIMIT ".$limite
+     );

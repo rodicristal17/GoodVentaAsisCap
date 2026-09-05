@@ -14,7 +14,6 @@ include("classTable.php");
 require_once("interconsulta_seguimiento_paciente_helper.php");
 require_once("trabajo_laboratorio_helper.php");
 require_once("cliente_venta_validacion_helper.php");
-require_once("cliente_identidad_policial_helper.php");
 
 function validarCantidadUnitariaTratamientoVenta($mysqli,$codProducto,$cantidad,$responder = true)
 {
@@ -185,14 +184,6 @@ $descuento=$_POST['descuento'];
 $descuento = mb_convert_encoding((string)($descuento), 'ISO-8859-1', 'UTF-8');
 
 clienteVentaValidarParaGuardar($cod_clienteFK,"nuevo",0);
-$confirmarIdentidadPolicial = isset($_POST['confirmar_identidad_policial'])
-	&& (string)$_POST['confirmar_identidad_policial'] === '1';
-clienteIdentidadPolicialValidarAntesGuardar(
-	$cod_clienteFK,
-	$user,
-	"venta",
-	$confirmarIdentidadPolicial
-);
 $datosventa=iniciarVenta($codSolicitudCreditoFK,$puntoexpedicion,$tipo_comprobante,$fecha_venta,$cod_usuarioFK,$cod_clienteFK,$num_factura,$cod_cobradorFK,$TipoVenta,$TipoPago,$vendedor1,$vendedor2,$comisioncobrador,$descuento,$cod_local,$idGaranteFk);
 $cod_ventaFK=$datosventa[0];
 $num_factura=$datosventa[1];
@@ -1508,7 +1499,7 @@ function BuscarDatosPagare($cod_venta)
 
 	$mysqli=conectar_al_servidor();
 	$sql= "select vt.cod_venta, vt.num_factura, vt.puntoexpedicion, vt.total_venta, vt.descuento, vt.pago,
-	(Select CONCAT_WS(CHAR(32),apellido_persona,nombre_persona) from persona where cod_persona=vt.cod_clienteFK) as cliente,
+	(Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as cliente,
 	(Select direccion from persona where cod_persona=vt.cod_clienteFK) as cliente_direccion,
 	(Select email from persona where cod_persona=vt.cod_clienteFK) as cliente_referencia,
 	(Select telefono from persona where cod_persona=vt.cod_clienteFK) as cliente_telefono,
@@ -1574,7 +1565,7 @@ $mysqli=conectar_al_servidor();
 
 $sql= "select dtv.descripcion , pr.cod_producto,pr.cod_barra,pr.nombre_producto,dtv.cod_detalle,vt.total_venta,IFNULL(dtv.comision,0) as comision,dtv.estado,detalleproducto,vt.num_factura,vt.puntoexpedicion,concat(vt.puntoexpedicion,'-',vt.num_factura) as fac,
 IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) as totalpagado,
-(Select CONCAT_WS(CHAR(32),apellido_persona,nombre_persona) from persona where cod_persona=cod_clienteFK) as clientenombre,
+(Select nombre_persona from persona where cod_persona=cod_clienteFK) as clientenombre,
 (Select direccion from persona where cod_persona=cod_clienteFK) as clientedireccion,
 (Select concat(direccion,'-',email) from persona where  cod_persona=cod_clienteFK) as zonaCliente,
 (Select telefono from persona where cod_persona=vt.cod_clienteFK) as clientetelefono,
@@ -2070,7 +2061,7 @@ $mysqli=conectar_al_servidor();
 
 $sql= "select pr.cod_producto,pr.nombre_producto,dtv.cod_detalle,vt.total_venta,IFNULL(dtv.comision,0) as comision,dtv.estado,detalleproducto,vt.num_factura,vt.puntoexpedicion,
 IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) as totalpagado,
-(Select CONCAT_WS(CHAR(32),apellido_persona,nombre_persona) from persona where cod_persona=cod_clienteFK) as clientenombre,
+(Select nombre_persona from persona where cod_persona=cod_clienteFK) as clientenombre,
 (Select direccion from persona where cod_persona=cod_clienteFK) as clientedireccion,
 (Select nombre from zona where idzona=(Select idzonaFk from cliente where cod_cliente=vt.cod_clienteFK limit 1) limit 1) as zonaCliente,
 (Select telefono from persona where cod_persona=vt.cod_clienteFK) as clientetelefono,
@@ -2221,7 +2212,7 @@ $mysqli=conectar_al_servidor();
 
 $sql= "select vt.fecha_venta,pr.cod_producto,pr.nombre_producto,dtv.cod_detalle,vt.total_venta,IFNULL(dtv.comision,0) as comision,dtv.estado,detalleproducto,vt.num_factura,vt.puntoexpedicion,
 IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) as totalpagado,
-(Select CONCAT_WS(CHAR(32),apellido_persona,nombre_persona) from persona where cod_persona=cod_clienteFK) as clientenombre,
+(Select nombre_persona from persona where cod_persona=cod_clienteFK) as clientenombre,
 (Select direccion from persona where cod_persona=cod_clienteFK) as clientedireccion,
 (Select nombre from zona where idzona=(Select idzonaFk from cliente where cod_cliente=vt.cod_clienteFK limit 1) limit 1) as zonaCliente,
 (Select telefono from persona where cod_persona=vt.cod_clienteFK) as clientetelefono,
@@ -2819,11 +2810,11 @@ IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0
 (Select fechapago from credito where cod_venta=vt.cod_venta order by fechapago asc limit 1) as fechaprimerpago,
 IFNULL((Select Monto from credito where cod_venta=vt.cod_venta  limit 1),0) as Monto,
 (Select count(fechapago) from credito where cod_venta=vt.cod_venta) as cantidadcuota,
-(Select CONCAT_WS(CHAR(32),apellido_persona,nombre_persona) from persona where cod_persona=cod_clienteFK) as clientenombre,
+(Select nombre_persona from persona where cod_persona=cod_clienteFK) as clientenombre,
 dtv.cantidad_detalle,dtv.cod_productoFK,dtv.precio_producto,dtv.cod_ventaFK,dtv.subtotal,dtv.subPrecioCompra
  from  producto pr inner join detalle_venta dtv on dtv.cod_productoFK=pr.cod_producto
  inner join venta vt on vt.cod_venta=dtv.cod_ventaFK
- where  IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  and concat(pr.cod_producto,' ',pr.nombre_producto,' ',vt.num_factura,' ',(Select telefono from persona where cod_persona=cod_clienteFK),' ',(Select CONCAT_WS(CHAR(32),apellido_persona,nombre_persona) from persona where cod_persona=cod_clienteFK),' ',(Select ci_cliente from cliente where cod_cliente=cod_clienteFK)) like '%".$buscar."%' ".$condicionCodLocal."
+ where  IFNULL((Select count(fecha) from cancelaciones where cod_venta=vt.cod_venta limit 1),0)=0  and concat(pr.cod_producto,' ',pr.nombre_producto,' ',vt.num_factura,' ',(Select telefono from persona where cod_persona=cod_clienteFK),' ',(Select nombre_persona from persona where cod_persona=cod_clienteFK),' ',(Select ci_cliente from cliente where cod_cliente=cod_clienteFK)) like '%".$buscar."%' ".$condicionCodLocal." 
  order by vt.cod_venta desc limit 500";
 
 $pagina = "";   
@@ -3035,7 +3026,7 @@ if($producto!=""){
 
 $condicioncliente="";
 if($cliente!=""){
-	$condicioncliente=" and (Select CONCAT_WS(CHAR(32),apellido_persona,nombre_persona) from persona where cod_persona=vt.cod_clienteFK) like '%".$cliente."%' ";
+	$condicioncliente=" and (Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) like '%".$cliente."%' ";
 }
 
 $condicionLocal="";
@@ -3060,7 +3051,7 @@ IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0
 (Select nombre from vendedor where idvendedor=Vendedor1) as nombrevendedor1,
 (Select Nombre from local l where l.cod_local=vt.cod_local) as nombrelocal,
 (Select nombre from vendedor where idvendedor=Vendedor2) as nombrevendedor2,
-(Select CONCAT_WS(CHAR(32),apellido_persona,nombre_persona) from persona where cod_persona=vt.cod_clienteFK) as Cliente,
+(Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as Cliente,
 dtv.cantidad_detalle,dtv.cod_productoFK,dtv.precio_producto,dtv.cod_ventaFK,dtv.subtotal,dtv.subPrecioCompra
  from  producto pr 
  inner join detalle_venta dtv on dtv.cod_productoFK=pr.cod_producto
@@ -3218,7 +3209,7 @@ if($producto!=""){
 
 $condicioncliente="";
 if($cliente!=""){
-	$condicioncliente=" and (Select CONCAT_WS(CHAR(32),apellido_persona,nombre_persona) from persona where cod_persona=vt.cod_clienteFK) like '%".$cliente."%' ";
+	$condicioncliente=" and (Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) like '%".$cliente."%' ";
 }
 $condicionLocal="";
 if($Local!=""){
@@ -3239,7 +3230,7 @@ $sql= "select pr.cod_producto,pr.nombre_producto,dtv.cod_detalle,vt.puntoexpedic
 IFNULL((select sum(pg.Monto) from pago pg  where vt.cod_venta=pg.cod_venta_fk),0) as totalpagado,
 (Select nombre from vendedor where idvendedor=Vendedor1) as nombrevendedor1,
 (Select nombre from vendedor where idvendedor=Vendedor2) as nombrevendedor2,
-(Select CONCAT_WS(CHAR(32),apellido_persona,nombre_persona) from persona where cod_persona=vt.cod_clienteFK) as Cliente,
+(Select nombre_persona from persona where cod_persona=vt.cod_clienteFK) as Cliente,
 (Select Nombre from local l where l.cod_local=vt.cod_local) as nombrelocal,
 dtv.cantidad_detalle,dtv.cod_productoFK,dtv.precio_producto,dtv.cod_ventaFK,dtv.subtotal,dtv.subPrecioCompra
  from  producto pr inner join detalle_venta dtv on dtv.cod_productoFK=pr.cod_producto
@@ -3410,14 +3401,14 @@ $condiciondocumento=" and (Select ci_cliente from cliente where cod_cliente=cod_
 }
 $condicioncliente="";
 if($cliente!=""){
-$condicioncliente=" and (Select CONCAT_WS(CHAR(32),apellido_persona,nombre_persona) from persona where cod_persona=cod_clienteFK) like '%".$cliente."%' ";
+$condicioncliente=" and (Select nombre_persona from persona where cod_persona=cod_clienteFK) like '%".$cliente."%' ";
 }
 
 $sql= "select gt.idgarantia,gt.fecharecibido,gt.fechaenvio,gt.fechaentrega,gt.fechadevuelto,gt.observacion,gt.estado,gt.cod_productoFK,gt.cod_ventaFK,
 pr.cod_producto,pr.nombre_producto,vt.puntoexpedicion,vt.num_factura,
 (Select ci_cliente from cliente where cod_cliente=cod_clienteFK ) as nrodocliente,
  telefonoaviso as telefono,
-(Select CONCAT_WS(CHAR(32),apellido_persona,nombre_persona) from persona where cod_persona=cod_clienteFK) as clientenombre,
+(Select nombre_persona from persona where cod_persona=cod_clienteFK) as clientenombre,
 (Select nombre_persona from persona where cod_persona=cod_usuarioFKRecibido) as usuariorecibidopor,
 (Select nombre_persona from persona where cod_persona=cod_usuarioFkEnvio) as usuarioenviado,
 (Select nombre_persona from persona where cod_persona=cod_usuarioFkDevuelto) as usuariolisto,

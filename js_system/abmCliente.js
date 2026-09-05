@@ -98,6 +98,11 @@ function volverAtrasCliente() {
 }
 
 function verificarcamposClienteVista() {
+	ver_vetana_informativa("PARA REGISTRAR UN CLIENTE DEBE COMPLETAR LA FICHA CON NOMBRE, APELLIDO, DOCUMENTO, TELEFONO Y ZONA")
+	verCerrarVentanaAbmCliente(true, true)
+	return false;
+	/* La carga abreviada queda deshabilitada: no permite validar apellido por separado. */
+	/*
 	var inptNombreApellidoCliente = document.getElementById('inptNombreApellidoClienteVista').value
 	var inptNroDocCliente = document.getElementById('inptNroDocClienteVista').value
 	var inptNroTelefCliente = document.getElementById('inptNroTelefClienteVista').value
@@ -122,6 +127,7 @@ function verificarcamposClienteVista() {
 	var accion = "nuevo";
 if(controlacceso("INSERTARLISTADODECLIENTES","accion")==false){return;}
 	abmcliente(inptAccesoCreditoCliente,idFKZona, inptNombreApellidoCliente, inptNroDocCliente, inptNroTelefCliente, inptNrowhatsappCliente, inptDireccionCliente, inptReferenciaCliente, inptCalificaCliente, inptEstadoCliente, idAbmCliente, accion);
+	*/
 }
 
 function verCerrarVentanaAbmCliente(mostrar, abm, ocultar_datos_extras= false) {	
@@ -469,12 +475,12 @@ function verificarcamposCliente() {
 	abmcliente(inptFechaNacCliente, sms, inptAccesoCreditoCliente, inptLugrarTrabajoCliente, inptDireccionTrabajoCliente, inptSalarioCliente, inptAntiguedadCliente, inptNroTelefTrabajoCliente1, inptNroTelefTrabajoCliente2, idFKZona, inptNombreApellidoCliente, inptApellidoCliente, inptNroRucCliente, inptNroDocCliente, inptNroTelefCliente, inptNrowhatsappCliente, inptDireccionCliente, inptReferenciaCliente, inptCalificaCliente, inptEstadoCliente, idAbmCliente, accion);
 }
 
-function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,salario,antiguedad,teleftrab1,teleftrab2,idzonaFk,nombre_persona,apellido_persona,rut_cliente,ci_cliente,telefono,whapp,direccion,email,Calificacion,estado,cod_persona,accion){
+function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,salario,antiguedad,teleftrab1,teleftrab2,idzonaFk,nombre_persona,apellido_persona,rut_cliente,ci_cliente,telefono,whapp,direccion,email,Calificacion,estado,cod_persona,accion,confirmarIdentidadPolicial){
 	if (bloquearAccionMientrasGuardaCliente()) {
 		return false;
 	}
 	guardandoClienteVenta = true;
-	var nombreCompletoCliente = (String(nombre_persona || "").trim() + " " + String(apellido_persona || "").trim()).trim();
+	var nombreCompletoCliente = (String(apellido_persona || "").trim() + " " + String(nombre_persona || "").trim()).trim();
 	verCerrarEfectoCargando("1")
 
 	var datos = new FormData();
@@ -508,6 +514,7 @@ function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,sal
 	datos.append("teleftrab1", teleftrab1)		
 	datos.append("teleftrab2", teleftrab2)		
 	datos.append("accesocredito", accesocredito)			
+	datos.append("confirmar_identidad_policial", confirmarIdentidadPolicial === true ? "1" : "0")
 			var OpAjax= $.ajax({
 			
 			data: datos,
@@ -551,7 +558,20 @@ function  abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,sal
 			Respuesta=responseText;			
 				console.log(Respuesta)
 		try{
-				var datos = $.parseJSON(Respuesta); 
+				var datos = $.parseJSON(Respuesta);
+				if (datos["1"] === "IDENTIDAD_DIFERENTE") {
+					abrirModalIdentidadPolicial(datos, function () {
+						var oficial = datos.registro_policial || {};
+						document.getElementById('inptNombreApellidoCliente').value = oficial.nombre || nombre_persona;
+						document.getElementById('inptApellidoCliente').value = oficial.apellido || apellido_persona;
+						abmcliente(FechaNac,sms,accesocredito,lugardetrabajo,direcciontrab,salario,antiguedad,teleftrab1,teleftrab2,idzonaFk,oficial.nombre || nombre_persona,oficial.apellido || apellido_persona,rut_cliente,ci_cliente,telefono,whapp,direccion,email,Calificacion,estado,cod_persona,accion,true);
+					});
+					return;
+				}
+				if (datos["1"] === "IDENTIDAD_NO_DISPONIBLE" || datos["1"] === "IDENTIDAD_CAMBIO_ERROR") {
+					ver_vetana_informativa(datos.mensaje || "No se pudo verificar la identidad del cliente");
+					return;
+				}
           Respuesta=datos["1"];  
 		   Respuesta=respuestaJqueryAjax(Respuesta)
 			if (Respuesta == true) {

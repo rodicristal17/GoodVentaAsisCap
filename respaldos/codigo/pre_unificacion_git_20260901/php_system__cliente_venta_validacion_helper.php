@@ -34,7 +34,7 @@ function clienteVentaValidarParaGuardar($codCliente,$operacion,$codVenta = 0)
     }
 
     $stmt = $mysqli->prepare(
-        "SELECT p.nombre_persona,p.apellido_persona,p.direccion,p.telefono,c.ci_cliente,c.idzonaFk
+        "SELECT p.nombre_persona,p.apellido_persona,p.telefono,c.ci_cliente
          FROM cliente c
          INNER JOIN persona p ON p.cod_persona=c.cod_cliente
          WHERE c.cod_cliente=? LIMIT 1"
@@ -69,12 +69,5 @@ function clienteVentaValidarParaGuardar($codCliente,$operacion,$codVenta = 0)
     if (!preg_match('/^[+0-9()\s.\-]+$/', $telefono) || strlen($digitos) < 6 || strlen($digitos) > 15) {
         clienteVentaResponderValidacion("CLIENTE_SIN_TELEFONO");
     }
-    if ((int)$cliente["idzonaFk"] <= 0) {
-        clienteVentaResponderValidacion("CLIENTE_SIN_ZONA");
-    }
-    if (trim((string)$cliente["direccion"]) === "") {
-        clienteVentaResponderValidacion("CLIENTE_SIN_DIRECCION");
-    }
     return true;
 }
-

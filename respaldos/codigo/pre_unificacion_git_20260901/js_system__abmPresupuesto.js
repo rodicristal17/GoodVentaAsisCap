@@ -14,7 +14,6 @@ function verCerrarAbmDetallesPresupuesto(mostrar, historial){
 			document.getElementById("divAbmDetallesPresupuesto").style.display=""
             document.getElementById('divListPresupuesto').style.display= "";
             document.getElementById("divAbmDetallesPresupuesto2").style.display="none";
-			presupuestoConfigurarSucursalInicial(false);
 			buscarvistaPresupuesto();
 		} else {
 			if(controlacceso("VERHISTORIALPRESUPUESTO","accion")==false){return;}
@@ -3167,9 +3166,6 @@ function crearPresupuestoDoctorSiHaceFalta(callback) {
 		ver_vetana_informativa("Faltan datos", "Favor seleccionar el cliente", "error");
 		return false;
 	}
-	if (!verificarDatosCliente(true)) {
-		return false;
-	}
 
 	if (presupuestoGuardando) {
 		ver_vetana_informativa("Guardando", "Se esta creando el presupuesto, espere un momento.", "info");
@@ -3402,11 +3398,20 @@ busquedaActivaPresupuesto= 0;
 var PRESUPUESTO_LISTADO_LIMITE = 25;
 var presupuestoFiltroRapidoTimer = null;
 var presupuestoListadoCargando = false;
-var presupuestoSucursalInicializada = false;
 
 function presupuestoValorFiltro(id) {
 	const elemento = document.getElementById(id);
 	return elemento ? elemento.value : "";
+}
+
+function presupuestoPrimerValorFiltro() {
+	for (var i = 0; i < arguments.length; i++) {
+		const valor = presupuestoValorFiltro(arguments[i]);
+		if (String(valor || "").trim() != "") {
+			return valor;
+		}
+	}
+	return "";
 }
 
 function presupuestoSetTexto(id, texto) {
@@ -3416,108 +3421,18 @@ function presupuestoSetTexto(id, texto) {
 	}
 }
 
-function presupuestoTextoOpcionSeleccionada(select) {
-	if (!select || select.selectedIndex < 0 || !select.options[select.selectedIndex]) {
-		return "";
-	}
-	return String(select.options[select.selectedIndex].text || "").trim();
-}
-
-function presupuestoConfigurarSucursalInicial(forzar) {
-	const selectSucursal = document.getElementById("inptCodLocalFiltroPresupuesto");
-	if (!selectSucursal) {
-		return;
-	}
-
-	const codigoSucursalUsuario = typeof cod_localFKUSer != "undefined" ? String(cod_localFKUSer || "") : "";
-	if ((forzar || !presupuestoSucursalInicializada) && codigoSucursalUsuario != "") {
-		for (var i = 0; i < selectSucursal.options.length; i++) {
-			if (String(selectSucursal.options[i].value) == codigoSucursalUsuario) {
-				selectSucursal.value = codigoSucursalUsuario;
-				presupuestoSucursalInicializada = true;
-				break;
-			}
-		}
-	}
-
-	presupuestoActualizarResumenFiltros();
-}
-
-function presupuestoNombreEstado(valor) {
-	switch (String(valor || "").toLowerCase()) {
-		case "pendiente":
-			return "Pendiente";
-		case "total":
-			return "Vendido total";
-		case "prioritario":
-			return "Vendido prioritario";
-		default:
-			return "Todos los estados";
-	}
-}
-
-function presupuestoAgregarFiltroActivo(contenedor, etiqueta, valor, destacado) {
-	if (!contenedor || String(valor || "").trim() == "") {
-		return;
-	}
-	const chip = document.createElement("span");
-	chip.className = "presupuesto-search-active-chip" + (destacado ? " presupuesto-search-active-chip--scope" : "");
-	chip.textContent = etiqueta + ": " + valor;
-	contenedor.appendChild(chip);
-}
-
-function presupuestoActualizarResumenFiltros() {
-	const selectSucursal = document.getElementById("inptCodLocalFiltroPresupuesto");
-	const codigoSucursal = selectSucursal ? String(selectSucursal.value || "") : "";
-	const nombreSucursal = codigoSucursal != ""
-		? presupuestoTextoOpcionSeleccionada(selectSucursal)
-		: "Todas las sucursales";
-
-	presupuestoSetTexto("txtSucursalPresupuestoActual", nombreSucursal);
-
-	const contenedor = document.getElementById("presupuestoFiltrosActivos");
-	if (!contenedor) {
-		return;
-	}
-	contenedor.innerHTML = "";
-	presupuestoAgregarFiltroActivo(contenedor, "Sucursal", nombreSucursal, true);
-	presupuestoAgregarFiltroActivo(contenedor, "Paciente", presupuestoValorFiltro("inptClienteCedulaFiltroPresupuesto"), false);
-	presupuestoAgregarFiltroActivo(contenedor, "Presupuesto", presupuestoValorFiltro("inptIdFiltroPresupuesto"), false);
-
-	const estado = presupuestoValorFiltro("inptPlanFiltroPresupuesto");
-	if (estado != "") {
-		presupuestoAgregarFiltroActivo(contenedor, "Estado", presupuestoNombreEstado(estado), false);
-	}
-
-	presupuestoAgregarFiltroActivo(contenedor, "Desde", presupuestoValorFiltro("inptFechaInicioFiltroPresupuesto"), false);
-	presupuestoAgregarFiltroActivo(contenedor, "Hasta", presupuestoValorFiltro("inptFechaFinFiltroPresupuesto"), false);
-	presupuestoAgregarFiltroActivo(contenedor, "Creador", presupuestoValorFiltro("inptNombreCreadorFiltroPresupuesto"), false);
-}
-
-function presupuestoAplicarFiltros() {
-	presupuestoActualizarResumenFiltros();
-	buscarvistaPresupuesto();
-}
-
 function presupuestoActualizarEstadoListado() {
-	const textoEstado = presupuestoListadoCargando
-		? "Actualizando resultados..."
-		: (totalregistroPresupuesto > 0
-			? "Mostrando " + registrocargadoPresupuesto + " de " + totalregistroPresupuesto + " presupuestos"
-			: "No se encontraron presupuestos con estos filtros");
+	const inputTotal = document.getElementById("inptTotalRegistoPresupuesto");
+	if (inputTotal) {
+		inputTotal.value = registrocargadoPresupuesto;
+	}
+
+	presupuestoSetTexto("txtTotalRegistrosPresupuesto", "de " + totalregistroPresupuesto);
 	presupuestoSetTexto(
 		"txtEstadoRegistrosPresupuesto",
-		textoEstado
-	);
-	presupuestoSetTexto(
-		"txtTotalRegistrosPresupuesto",
-		presupuestoListadoCargando
-			? "Buscando..."
-			: totalregistroPresupuesto + (totalregistroPresupuesto == 1 ? " resultado" : " resultados")
-	);
-	presupuestoSetTexto(
-		"txtResumenCargaPresupuesto",
-		"Mostrando " + registrocargadoPresupuesto + " de " + totalregistroPresupuesto + " presupuestos"
+		totalregistroPresupuesto > 0
+			? "Mostrando " + registrocargadoPresupuesto + " de " + totalregistroPresupuesto
+			: "Sin resultados"
 	);
 
 	const btnVerMas = document.getElementById("btnVerMasPresupuesto");
@@ -3525,7 +3440,7 @@ function presupuestoActualizarEstadoListado() {
 		const quedanRegistros = totalregistroPresupuesto > registrocargadoPresupuesto;
 		btnVerMas.style.display = quedanRegistros ? "" : "none";
 		btnVerMas.disabled = presupuestoListadoCargando;
-		btnVerMas.value = presupuestoListadoCargando ? "Cargando..." : "Cargar 25 más";
+		btnVerMas.value = presupuestoListadoCargando ? "Cargando..." : "Ver mas presupuestos";
 	}
 
 	const proceso = document.getElementById("tbProcessPresupuesto");
@@ -3542,8 +3457,8 @@ function presupuestoCrearDatosBusqueda(offset) {
 	datos.append("navegador", navegador);
 	datos.append("accion", "obtenerPresupuesto");
 	datos.append("cod_clienteFK", idFkCliente);
-	datos.append("nombre_cedula_cliente", presupuestoValorFiltro("inptClienteCedulaFiltroPresupuesto"));
-	datos.append("id", presupuestoValorFiltro("inptIdFiltroPresupuesto"));
+	datos.append("nombre_cedula_cliente", presupuestoPrimerValorFiltro("inptClienteCedulaFiltroPresupuestoRapido", "inptClienteCedulaFiltroPresupuesto"));
+	datos.append("id", presupuestoPrimerValorFiltro("inptIdFiltroPresupuestoRapido", "inptIdFiltroPresupuesto"));
 	datos.append("plan_vendido", presupuestoValorFiltro("inptPlanFiltroPresupuesto"));
 	datos.append("cod_localFK", presupuestoValorFiltro("inptCodLocalFiltroPresupuesto"));
 	datos.append("nombre_usuario_create", presupuestoValorFiltro("inptNombreCreadorFiltroPresupuesto"));
@@ -3627,7 +3542,6 @@ function buscarvistaPresupuesto() {
 	registrocargadoPresupuesto= 0;
 	controldebusquedadPresupuesto= true;
 	idabmPresupuesto = "";
-	presupuestoActualizarResumenFiltros();
 	presupuestoActualizarEstadoListado();
 	presupuestoEjecutarBusqueda(0, false);
 }
@@ -3649,11 +3563,7 @@ function presupuestoBuscarRapido(event) {
 		return;
 	}
 
-	const texto = (
-		presupuestoValorFiltro("inptClienteCedulaFiltroPresupuesto")
-		+ presupuestoValorFiltro("inptIdFiltroPresupuesto")
-		+ presupuestoValorFiltro("inptNombreCreadorFiltroPresupuesto")
-	).trim();
+	const texto = (presupuestoValorFiltro("inptClienteCedulaFiltroPresupuestoRapido") + presupuestoValorFiltro("inptIdFiltroPresupuestoRapido")).trim();
 	if (texto.length == 1) {
 		return;
 	}
@@ -3665,21 +3575,19 @@ function presupuestoBuscarRapido(event) {
 
 function limpiarFiltroPresupuesto() {
 	idFkCliente = "";
-	var campos = [
-		"inptClienteCedulaFiltroPresupuesto",
-		"inptIdFiltroPresupuesto",
-		"inptFechaInicioFiltroPresupuesto",
-		"inptNombreCreadorFiltroPresupuesto",
-		"inptPlanFiltroPresupuesto",
-		"inptFechaFinFiltroPresupuesto"
-	];
-	for (var i = 0; i < campos.length; i++) {
-		var campo = document.getElementById(campos[i]);
-		if (campo) {
-			campo.value = "";
-		}
+	if (document.getElementById('inptClienteCedulaFiltroPresupuestoRapido')) {
+		document.getElementById('inptClienteCedulaFiltroPresupuestoRapido').value = "";
 	}
-	presupuestoConfigurarSucursalInicial(true);
+	if (document.getElementById('inptIdFiltroPresupuestoRapido')) {
+		document.getElementById('inptIdFiltroPresupuestoRapido').value = "";
+	}
+	document.getElementById('inptClienteCedulaFiltroPresupuesto').value = "";
+	document.getElementById('inptIdFiltroPresupuesto').value = "";
+	document.getElementById('inptCodLocalFiltroPresupuesto').value = "";
+	document.getElementById('inptFechaInicioFiltroPresupuesto').value = "";
+	document.getElementById('inptNombreCreadorFiltroPresupuesto').value= "";
+	document.getElementById('inptPlanFiltroPresupuesto').value= "";
+	document.getElementById('inptFechaFinFiltroPresupuesto').value = "";
 
 	buscarvistaPresupuesto();
 }
@@ -3697,7 +3605,7 @@ function cancelarListadoPresupuesto() {
 
 function obtenerValorCeldaPresupuesto(elemento, celdaId) {
 	const celda = $(elemento).children('td[id="' + celdaId + '"]');
-	return celda.length ? (celda.text() || "").trim() : "";
+	return celda.length ? (celda.html() || "") : "";
 }
 
 function asignarValorElementoPresupuesto(elementoId, valor) {
@@ -3736,10 +3644,7 @@ function obtenerDatosPresupuesto(elemento) {
     idFkCliente= obtenerValorCeldaPresupuesto(elemento, "td_datos_3");
     idAbmCliente= idFkCliente;
 	verCerrarAbmDetallesPresupuesto(true, false);
-	cargarNombreApellidoCliente(
-		obtenerValorCeldaPresupuesto(elemento, "td_datos_4"),
-		obtenerValorCeldaPresupuesto(elemento, "td_datos_26")
-	);
+	asignarValorElementoPresupuesto('inptNombreApellidoCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_4"));
 	asignarValorElementoPresupuesto('inptNroDocCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_5"));
 	asignarValorElementoPresupuesto('inptNroRucCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_13"));
 	asignarValorElementoPresupuesto('inptNrowhatsappCliente', obtenerValorCeldaPresupuesto(elemento, "td_datos_14"));
@@ -3836,12 +3741,12 @@ function buscarDetallesPresupuesto(cod_presupuestoFK) {
 
 function verCerrarFiltrosPresupuesto(mostrar) {
 	if (mostrar) {
-		const filtros = document.querySelector("#divListPresupuesto .presupuesto-search-filters");
-		if (filtros && typeof filtros.scrollIntoView == "function") {
-			filtros.scrollIntoView({ behavior: "smooth", block: "start" });
-		}
+		//document.getElementById('divListPresupuesto').style.display= "none";
+		document.getElementById('overlayFiltrosPresupuesto').style.display= "";
+	} else {
+		//document.getElementById('divListPresupuesto').style.display= "";
+		document.getElementById('overlayFiltrosPresupuesto').style.display= "none";
 	}
-	presupuestoActualizarResumenFiltros();
 }
 
 function verCerrarAbmDetallesPresupuestoDoc(mostrar){

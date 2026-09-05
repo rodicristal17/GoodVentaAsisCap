@@ -2889,8 +2889,10 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
         + cursorEstilo;
 
     // IMPORTANTE: Envolvemos e.id en comillas (\"" + e.id + "\") para que acepte los IDs de texto de los feriados.
+    var claseDensidad = altura < 58 ? " agenda-evento--compacto" : (altura >= 92 ? " agenda-evento--amplio" : "");
+
     return ''
-    + "<div class='agenda-evento estado-" + e.estado + "' "
+    + "<div class='agenda-evento estado-" + e.estado + claseDensidad + "' "
     + "draggable='" + (eventoNoArrastrable ? "false" : "true") + "' "
     + "data-id='" + e.id + "' "
     + "data-consultorio='" + e.consultorio + "' "
@@ -2901,11 +2903,11 @@ function renderEventoAgenda(e, eventosMismoConsultorio){
     + "onclick='clickEventoAgenda(\"" + e.id + "\", event)'>"
     + renderNodoProfesionalEventoAgenda(e)
     + "<div class='agenda-evento-head'>"
-    + "<span class='paciente'>" + advertencia_datos_incompletos + escaparHtmlAgenda(e.paciente || '') + "</span>"
-    + "<span class='hora agenda-evento-hora'>" + escaparHtmlAgenda(e.inicio || '') + " - " + escaparHtmlAgenda(e.fin || '') + "</span>"
+    + "<span class='paciente'><i class='fa-solid fa-user agenda-evento-icono' aria-hidden='true'></i><span>" + advertencia_datos_incompletos + escaparHtmlAgenda(e.paciente || '') + "</span></span>"
+    + "<span class='hora agenda-evento-hora'><i class='fa-regular fa-clock' aria-hidden='true'></i>" + escaparHtmlAgenda(e.inicio || '') + " - " + escaparHtmlAgenda(e.fin || '') + "</span>"
     + "</div>"
     + badgesAgenda
-    + "<span class='nombre_doctor'>" + escaparHtmlAgenda(e.nombre_doctor || '') + "</span>"
+    + "<span class='nombre_doctor'><i class='fa-solid fa-user-doctor' aria-hidden='true'></i><span>" + escaparHtmlAgenda(e.nombre_doctor || '') + "</span></span>"
     + "<span class='ci_cliente' style='display: none;'>" + (e.ci_cliente || '') + "</span>"
     + tratamientosHtml
     + "<span class='detalle' style='display:none;'>" + (e.motivo || '') + "</span>"
@@ -6242,10 +6244,43 @@ function verCerrarModalNuevoPacienteAgenda(mostrar) {
     if (mostrar) {
         document.getElementById('overlayNuevoPacienteAgenda').style.display = 'block';
         document.getElementById('modalNuevoPacienteAgenda').style.display = 'block';
+        cargarZonasNuevoPacienteAgenda();
+        document.getElementById('inptDocumentoNuevoPacienteAgenda').focus();
     } else {
         document.getElementById('overlayNuevoPacienteAgenda').style.display = 'none';
         document.getElementById('modalNuevoPacienteAgenda').style.display = 'none';
     }
+}
+
+function cargarZonasNuevoPacienteAgenda() {
+    var selector = document.getElementById('inptZonaNuevoPacienteAgenda');
+    if (!selector || selector.getAttribute('data-cargado') === '1') {
+        return;
+    }
+    obtener_datos_user();
+    $.ajax({
+        data: {"useru": userid, "passu": passuser, "navegador": navegador, "funt": "listarZonasPacienteAgenda"},
+        url: "/Sistema-Telar/php_system/abmCalendar.php",
+        type: "post",
+        success: function (responseText) {
+            try {
+                var respuesta = typeof responseText === "string" ? $.parseJSON(responseText) : responseText;
+                if (respuesta["1"] !== "exito") {
+                    throw new Error(respuesta.mensaje || "No se pudieron cargar las zonas");
+                }
+                selector.innerHTML = "<option value=''>Seleccione una zona</option>";
+                (respuesta.zonas || []).forEach(function (zona) {
+                    var opcion = document.createElement('option');
+                    opcion.value = zona.id;
+                    opcion.textContent = zona.nombre;
+                    selector.appendChild(opcion);
+                });
+                selector.setAttribute('data-cargado', '1');
+            } catch (error) {
+                selector.innerHTML = "<option value=''>No se pudieron cargar las zonas</option>";
+            }
+        }
+    });
 }
 
 function buscarPacientesAgenda(){
@@ -6301,16 +6336,18 @@ function seleccionarPacienteAgenda(idPaciente, nombrePaciente){
     verCerrarModalBuscarPacienteAgenda(false);
 }
 
-function guardarNuevoPacienteAgenda(){
+function guardarNuevoPacienteAgenda(confirmarIdentidadPolicial){
     obtener_datos_user();
 
     var nombre = document.getElementById('inptNombreNuevoPacienteAgenda').value;
+    var apellido = document.getElementById('inptApellidoNuevoPacienteAgenda').value;
     var documento = document.getElementById('inptDocumentoNuevoPacienteAgenda').value;
     var telefono = document.getElementById('inptTelefonoNuevoPacienteAgenda').value;
     var direccion = document.getElementById('inptDireccionNuevoPacienteAgenda').value;
+    var idzona = document.getElementById('inptZonaNuevoPacienteAgenda').value;
 
-    if(nombre == ''){
-        alert('Debe cargar el nombre del paciente');
+    if(nombre.trim() === '' || apellido.trim() === '' || documento.trim() === '' || telefono.trim() === '' || idzona === ''){
+        ver_vetana_informativa('Complete nombre, apellido, documento, telefono y zona');
         return;
     }
 
@@ -6319,16 +6356,19 @@ function guardarNuevoPacienteAgenda(){
         "passu": passuser,
         "navegador": navegador,
         "nombre": nombre,
+        "apellido": apellido,
         "documento": documento,
         "telefono": telefono,
         "direccion": direccion,
+        "idzona": idzona,
+        "confirmar_identidad_policial": confirmarIdentidadPolicial === true ? "1" : "0",
         "funt": "guardarPacienteAgenda"
     };
 
 	verCerrarEfectoCargando("1");
     $.ajax({
         data: datos,
-        url: "/GoodVentaAsisCap/php_system/abmCalendar.php",
+        url: "/Sistema-Telar/php_system/abmCalendar.php",
         type: "post",
         error: function (jqXHR, textstatus, errorThrowm) {
             manejadordeerroresjquery(jqXHR.status, textstatus, "abmventana");
@@ -6348,11 +6388,20 @@ function guardarNuevoPacienteAgenda(){
                     document.getElementById('inptPacienteAgenda').value = resp["nombre_paciente"];
 
                     document.getElementById('inptNombreNuevoPacienteAgenda').value = '';
+                    document.getElementById('inptApellidoNuevoPacienteAgenda').value = '';
                     document.getElementById('inptDocumentoNuevoPacienteAgenda').value = '';
                     document.getElementById('inptTelefonoNuevoPacienteAgenda').value = '';
                     document.getElementById('inptDireccionNuevoPacienteAgenda').value = '';
+                    document.getElementById('inptZonaNuevoPacienteAgenda').value = '';
 
                     verCerrarModalNuevoPacienteAgenda(false);
+                } else if (resp["1"] === "IDENTIDAD_DIFERENTE") {
+                    abrirModalIdentidadPolicial(resp, function () {
+                        var oficial = resp.registro_policial || {};
+                        document.getElementById('inptNombreNuevoPacienteAgenda').value = oficial.nombre || nombre;
+                        document.getElementById('inptApellidoNuevoPacienteAgenda').value = oficial.apellido || apellido;
+                        guardarNuevoPacienteAgenda(true);
+                    });
                 } else {
                     alert(resp["mensaje"] || "No se pudo guardar el paciente");
                 }

@@ -6141,7 +6141,11 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             vt_ic.num_factura AS num_factura,
             vt_ic.apodo AS apodo_venta,
             (SELECT SUM(monto) FROM gastos WHERE cod_interConsultaFK = ic.cod_interConsulta) AS total_gastos,
-            COALESCE(NULLIF(ip_seg.nombre_paciente_snapshot, ''), p_ic.nombre_persona) as nombre_persona,
+            COALESCE(
+                NULLIF(NULLIF(TRIM(ip_seg.nombre_paciente_snapshot), ''), 'Paciente sin nombre'),
+                NULLIF(TRIM(CONCAT_WS(CHAR(32),p_seg.apellido_persona,p_seg.nombre_persona)), ''),
+                NULLIF(TRIM(CONCAT_WS(CHAR(32),p_ic.apellido_persona,p_ic.nombre_persona)), '')
+            ) as nombre_persona,
             (SELECT nombre_persona from persona where cod_persona = ic.cod_usuarioFK_create) as nombre_persona_creador,
             COALESCE(NULLIF(ip_seg.cedula, ''), cl_ic.ci_cliente) as cedula,
             IF(ip_seg.id IS NULL,0,1) AS esSeguimientoPaciente,
@@ -6196,6 +6200,7 @@ function obtenerVistaEventoSistemaInterconsulta($contenido, $fecha, $iconoForzad
             LEFT JOIN interconsulta_paciente ip_seg
                 ON ip_seg.cod_interConsultaFK = ic.cod_interConsulta
                 AND ip_seg.estado = 'activo'
+            LEFT JOIN persona p_seg ON p_seg.cod_persona = ip_seg.cod_clienteFK_principal
             LEFT JOIN venta vt_ic ON vt_ic.cod_venta = ic.cod_ventaFK
             LEFT JOIN cliente cl_ic ON cl_ic.cod_cliente = vt_ic.cod_clienteFK
             ".$sqlJoinConflictoCedulaDirecta."

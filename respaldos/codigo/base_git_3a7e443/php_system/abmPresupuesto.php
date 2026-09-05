@@ -6,7 +6,6 @@ include_once("verificar_navegador.php");
 include_once("classTable.php");
 include_once("abmproductos.php");
 require_once("trabajo_laboratorio_helper.php");
-require_once("cliente_identidad_policial_helper.php");
 
 date_default_timezone_set('Etc/GMT+3');
 
@@ -26,24 +25,6 @@ function normalizarPlanVendidoPresupuesto($valor)
     }
 
     return $valor;
-}
-
-function obtenerEstadoListadoPresupuesto($planVendido)
-{
-    $planNormalizado = normalizarPlanVendidoPresupuesto($planVendido);
-    if ($planNormalizado === 'total') {
-        return array('valor' => 'total', 'etiqueta' => 'Vendido total', 'clase' => 'vendido-total');
-    }
-    if ($planNormalizado === 'prioritario') {
-        return array('valor' => 'prioritario', 'etiqueta' => 'Vendido prioritario', 'clase' => 'vendido-prioritario');
-    }
-
-    return array('valor' => 'pendiente', 'etiqueta' => 'Pendiente', 'clase' => 'pendiente');
-}
-
-function escaparHtmlPresupuestoListado($valor)
-{
-    return htmlspecialchars((string)$valor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
 function verificarOperacionPresupuesto($operacion)
@@ -81,50 +62,35 @@ function verificarOperacionPresupuesto($operacion)
             
             $pagina= "";
             foreach ($result as $value) {
-                $estadoListado = obtenerEstadoListadoPresupuesto($value['plan_vendido']);
-                $idPresupuesto = (int)$value['id'];
-                $idVenta = (int)$value['cod_ventaFK'];
-                $nombreSucursal = trim((string)$value['nombre_usuarioFK_local']);
-                if ($nombreSucursal === '') {
-                    $nombreSucursal = 'Sin sucursal asignada';
-                }
-                $numeroFactura = trim((string)$value['num_factura']);
-                $ventaHtml = '<span class="presupuesto-search-no-sale">—</span>';
-                if ($idVenta > 0 && $numeroFactura !== '') {
-                    $ventaHtml = '<button type="button" class="presupuesto-search-sale-link" onclick="event.stopPropagation();obtenerDatosVenta('.$idVenta.', \'divListPresupuesto\')">'.escaparHtmlPresupuestoListado($numeroFactura).'</button>';
-                }
-
                 $pagina .= '<table class="tableRegistroSearch2" border="1" cellspacing="1" cellpadding="5">
                     <tr id="tbSelecRegistro" onclick="obtenerDatosPresupuesto(this)" style="text-align: center;">
-                        <td id="td_id" style="width: 5%;">'.$idPresupuesto.'</td>
-                        <td id="td_datos_1" style="display: none;">'.escaparHtmlPresupuestoListado($value['fecha_create']).'</td>
-                        <td style="width: 12%;">'.date("d-m-Y H:i", strtotime($value['fecha_create'])).'</td>
-                        <td id="td_datos_2" style="display: none;">'.escaparHtmlPresupuestoListado($value['cant_cuotas']).'</td>
-                        <td id="td_datos_3" style="display: none;">'.escaparHtmlPresupuestoListado($value['cod_clienteFK']).'</td>
-                        <td id="td_datos_4" style="width: 14%;text-align: left;">'.escaparHtmlPresupuestoListado($value['nombre_cliente']).'</td>
-                        <td id="td_datos_5" style="width: 9%;">'.escaparHtmlPresupuestoListado($value['ci_cliente']).'</td>
-                        <td style="width: 12%;text-align: left;"><span class="presupuesto-search-branch-badge">'.escaparHtmlPresupuestoListado($nombreSucursal).'</span></td>
+                        <td id="td_id" style="width: 5%;">'.$value['id'].'</td>
+                        <td id="td_datos_1" style="display: none;">'.$value['fecha_create'].'</td>
+                        <td style="width: 15%;">'.date("d-m-Y H:i:s", strtotime($value['fecha_create'])).'</td>
+                        <td id="td_datos_2" style="display: none;">'.$value['cant_cuotas'].'</td>
+                        <td id="td_datos_3" style="display: none;">'.$value['cod_clienteFK'].'</td>
+                        <td id="td_datos_4" style="width: 15%;text-align: left;">'.$value['nombre_cliente'].'</td>
+                        <td id="td_datos_5" style="width: 10%;">'.$value['ci_cliente'].'</td>
                         <td id="td_datos_7" style="width: 10%;text-align: end;">'.number_format($value['monto_total'], 0, ',','.').' Gs.</td>
                         <td id="td_datos_8" style="width: 10%;text-align: end;">'.number_format($value['monto_total_prioritario'], 0, ',','.').' Gs.</td>
-                        <td id="td_datos_9" style="width: 11%;"><span class="presupuesto-search-status presupuesto-search-status--'.$estadoListado['clase'].'">'.$estadoListado['etiqueta'].'</span></td>
-                        <td id="td_datos_10" style="width: 6%;">'.$ventaHtml.'</td>
-                        <td id="td_datos_6" style="width: 11%;">'.escaparHtmlPresupuestoListado($value['nombre_usuarioFK_create']).'</td>
-                        <td id="td_datos_11" style="display: none;">'.escaparHtmlPresupuestoListado($value['nombre_zona']).'</td>
-                        <td id="td_datos_12" style="display: none;">'.escaparHtmlPresupuestoListado($value['idzonaFk']).'</td>
-                        <td id="td_datos_13" style="display: none;">'.escaparHtmlPresupuestoListado($value['rut_cliente']).'</td>
-                        <td id="td_datos_14" style="display: none;">'.escaparHtmlPresupuestoListado($value['whapp']).'</td>
-                        <td id="td_datos_15" style="display: none;">'.escaparHtmlPresupuestoListado($value['fechanac']).'</td>
-                        <td id="td_datos_16" style="display: none;">'.escaparHtmlPresupuestoListado($value['telefono_cliente']).'</td>
-                        <td id="td_datos_17" style="display: none;">'.escaparHtmlPresupuestoListado($value['direccion_cliente']).'</td>
-                        <td id="td_datos_18" style="display: none;">'.escaparHtmlPresupuestoListado($value['referencia_cliente']).'</td>
-                        <td id="td_datos_19" style="display: none;">'.escaparHtmlPresupuestoListado($value['lugar_trabajo_cliente']).'</td>
-                        <td id="td_datos_20" style="display: none;">'.escaparHtmlPresupuestoListado($value['direccion_trabajo_cliente']).'</td>
-                        <td id="td_datos_21" style="display: none;">'.escaparHtmlPresupuestoListado($value['salario_cliente']).'</td>
-                        <td id="td_datos_22" style="display: none;">'.escaparHtmlPresupuestoListado($value['antiguedad_cliente']).'</td>
-                        <td id="td_datos_23" style="display: none;">'.escaparHtmlPresupuestoListado($value['telefono_trabajo_1_cliente']).'</td>
-                        <td id="td_datos_24" style="display: none;">'.escaparHtmlPresupuestoListado($value['telefono_trabajo_2_cliente']).'</td>
-                        <td id="td_datos_25" style="display: none;">'.escaparHtmlPresupuestoListado($value['acceso_credito_cliente']).'</td>
-                        <td id="td_datos_26" style="display: none;">'.escaparHtmlPresupuestoListado($value['apellido_cliente']).'</td>
+                        <td id="td_datos_9" style="width: 10%;text-transform: capitalize;">'.$value['plan_vendido'].'</td>
+                        <td id="td_datos_10" style="width: 5%;"><div style= "text-decoration: underline;color: blue;font-weight: bold;" onclick="obtenerDatosVenta('.$value['cod_ventaFK'].', \'divListPresupuesto\')">'.$value['num_factura'].'</div></td>
+                        <td id="td_datos_6" style="width: 15%;">'.$value['nombre_usuarioFK_create'].'</td>
+                        <td id="td_datos_11" style="display: none;">'.$value['nombre_zona'].'</td>
+                        <td id="td_datos_12" style="display: none;">'.$value['idzonaFk'].'</td>
+                        <td id="td_datos_13" style="display: none;">'.$value['rut_cliente'].'</td>
+                        <td id="td_datos_14" style="display: none;">'.$value['whapp'].'</td>
+                        <td id="td_datos_15" style="display: none;">'.$value['fechanac'].'</td>
+                        <td id="td_datos_16" style="display: none;">'.$value['telefono_cliente'].'</td>
+                        <td id="td_datos_17" style="display: none;">'.$value['direccion_cliente'].'</td>
+                        <td id="td_datos_18" style="display: none;">'.$value['referencia_cliente'].'</td>
+                        <td id="td_datos_19" style="display: none;">'.$value['lugar_trabajo_cliente'].'</td>
+                        <td id="td_datos_20" style="display: none;">'.$value['direccion_trabajo_cliente'].'</td>
+                        <td id="td_datos_21" style="display: none;">'.$value['salario_cliente'].'</td>
+                        <td id="td_datos_22" style="display: none;">'.$value['antiguedad_cliente'].'</td>
+                        <td id="td_datos_23" style="display: none;">'.$value['telefono_trabajo_1_cliente'].'</td>
+                        <td id="td_datos_24" style="display: none;">'.$value['telefono_trabajo_2_cliente'].'</td>
+                        <td id="td_datos_25" style="display: none;">'.$value['acceso_credito_cliente'].'</td>
                     </tr>
                 </table>';
             }
@@ -279,17 +245,7 @@ function obtenerSqlFiltroPresupuesto($filtros = array())
                 $sqlFiltro .= "(SELECT num_factura FROM venta WHERE cod_venta = p.cod_ventaFK) like '%$value%'";
                 break;
             case 'cod_localFK':
-				$codLocal = (int)$value;
-                $sqlFiltro .= "(SELECT cod_localFK FROM usuario WHERE cod_usuario = p.cod_usuarioFK_create) = $codLocal";
-				break;
-			case 'plan_vendido':
-				if ($value === 'pendiente') {
-					$sqlFiltro .= "(p.plan_vendido IS NULL OR TRIM(p.plan_vendido) = '')";
-				} elseif (in_array($value, array('total', 'prioritario'), true)) {
-					$sqlFiltro .= "p.plan_vendido = '$value'";
-				} else {
-					$sqlFiltro .= "1 = 0";
-				}
+                $sqlFiltro .= "(SELECT cod_localFK FROM usuario WHERE cod_usuario = cod_usuarioFK_create) like '%$value%'";
                 break;
             default:
                 if (is_numeric($value)) {
@@ -357,8 +313,7 @@ function obtenerPresupuesto($filtros = array(), $limite = 0, $offset = 0)
     $sql = "SELECT 
             p.*,
             (SELECT z.nombre FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona JOIN zona z ON c.idzonaFk = z.idzona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as nombre_zona,
-            (SELECT CONCAT_WS(CHAR(32),pe.nombre_persona,pe.apellido_persona) FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as nombre_cliente,
-            (SELECT pe.apellido_persona FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as apellido_cliente,
+            (SELECT nombre_persona FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as nombre_cliente,
             (SELECT c.idzonaFk FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as idzonaFk,
             (SELECT c.whapp FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as whapp,
             (SELECT c.fechanac FROM persona pe JOIN cliente c ON c.cod_cliente = pe.cod_persona WHERE c.cod_cliente = p.cod_clienteFK LIMIT 1) as fechanac,
@@ -378,7 +333,7 @@ function obtenerPresupuesto($filtros = array(), $limite = 0, $offset = 0)
             IFNULL((SELECT sum(precio * cantidad) FROM detalles_presupuesto WHERE cod_presupuestoFK = p.id AND es_prioritario = 1), 0) AS monto_total_prioritario,
             (SELECT num_factura FROM venta WHERE cod_venta = p.cod_ventaFK) AS num_factura,
             (SELECT nombre_persona FROM persona WHERE cod_persona = p.cod_usuarioFK_create) as nombre_usuarioFK_create,
-			(SELECT l.Nombre FROM usuario u LEFT JOIN local l ON l.cod_local = u.cod_localFK WHERE u.cod_usuario = p.cod_usuarioFK_create LIMIT 1) as nombre_usuarioFK_local
+            (SELECT cod_localFK FROM usuario WHERE cod_usuario = p.cod_usuarioFK_create) as nombre_usuarioFK_local
             FROM presupuesto p
             $sqlFiltro ORDER BY p.id DESC $limite";
 
@@ -419,50 +374,21 @@ function abmPresupuesto($id, $cant_cuotas, $cod_clienteFK, $cod_usuarioFK_create
             exit;
         }
 
-        $stmtCliente = $mysqli->prepare("SELECT c.cod_cliente,p.nombre_persona,p.apellido_persona,p.telefono,c.ci_cliente,c.idzonaFk FROM cliente c INNER JOIN persona p ON p.cod_persona=c.cod_cliente WHERE c.cod_cliente = ? LIMIT 1");
+        $stmtCliente = $mysqli->prepare("SELECT cod_cliente FROM cliente WHERE cod_cliente = ? LIMIT 1");
         if (!$stmtCliente) {
             error_log("Presupuesto: no se pudo preparar la validacion del paciente: ".$mysqli->error);
             echo json_encode(array("1" => "error", "mensaje" => "No se pudo validar el paciente seleccionado."));
             exit;
         }
         $stmtCliente->bind_param('i', $codCliente);
-        if (!$stmtCliente->execute()) {
-            $stmtCliente->close();
-            error_log("Presupuesto: no se pudo consultar la ficha del paciente seleccionado.");
-            echo json_encode(array("1" => "error", "mensaje" => "No se pudo validar la ficha del paciente seleccionado."));
-            exit;
-        }
-        $resultadoCliente = $stmtCliente->get_result();
-        $clientePresupuesto = $resultadoCliente->fetch_assoc();
-        if (!$clientePresupuesto) {
+        if (!$stmtCliente->execute() || $stmtCliente->get_result()->num_rows === 0) {
             $stmtCliente->close();
             error_log("Presupuesto: codigo de cliente inexistente recibido en alta.");
             echo json_encode(array("1" => "error", "mensaje" => "El paciente seleccionado no tiene un registro de cliente valido. Vuelva a seleccionarlo."));
             exit;
         }
-        $telefonoDigitos = preg_replace('/\D+/', '', (string)$clientePresupuesto['telefono']);
-        $fichaBasicaCompleta = trim((string)$clientePresupuesto['nombre_persona']) !== ''
-            && trim((string)$clientePresupuesto['apellido_persona']) !== ''
-            && trim((string)$clientePresupuesto['ci_cliente']) !== ''
-            && strlen($telefonoDigitos) >= 6
-            && strlen($telefonoDigitos) <= 15
-            && (int)$clientePresupuesto['idzonaFk'] > 0;
-        if (!$fichaBasicaCompleta) {
-            $stmtCliente->close();
-            echo json_encode(array("1" => "error", "mensaje" => "Complete y guarde la ficha basica del paciente antes de crear el presupuesto."));
-            exit;
-        }
         $stmtCliente->close();
         $cod_clienteFK = $codCliente;
-
-        $confirmarIdentidadPolicial = isset($_POST['confirmar_identidad_policial'])
-            && (string)$_POST['confirmar_identidad_policial'] === '1';
-        clienteIdentidadPolicialValidarAntesGuardar(
-            $cod_clienteFK,
-            $cod_usuarioFK_create,
-            "presupuesto",
-            $confirmarIdentidadPolicial
-        );
 
         $sql = "INSERT INTO presupuesto (cant_cuotas, cod_clienteFK, cod_usuarioFK_create, cod_ventaFK, plan_vendido) VALUES (?,?,?,?,?)";
         $stmt = $mysqli->prepare($sql);

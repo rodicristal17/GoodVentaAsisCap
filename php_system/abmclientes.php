@@ -1,5 +1,6 @@
 <?php
 require("conexion.php");
+require_once("cliente_identidad_policial_helper.php");
 require_once("solicitud_eliminado_helper.php");
 include("verificar_navegador.php");
 include("subir_foto_base64.php");
@@ -90,9 +91,21 @@ if(!preg_match('/^[+0-9()\s.\-]+$/', $telefono) || strlen($telefonoDigitos)<6 ||
 	echo json_encode(array("1" => "telefono_invalido"));
 	exit;
 }
-$nombre_persona = $nombre_persona.' '.$apellido_persona;
+$confirmarIdentidadPolicial = isset($_POST['confirmar_identidad_policial'])
+	&& (string)$_POST['confirmar_identidad_policial'] === '1';
+$mysqliIdentidad = conectar_al_servidor();
+$datosIdentidad = clienteIdentidadPolicialPrepararDatos(
+	$mysqliIdentidad,
+	$ci_cliente,
+	$nombre_persona,
+	$apellido_persona,
+	$confirmarIdentidadPolicial
+);
+$mysqliIdentidad->close();
+$nombre_persona = $datosIdentidad['nombre'];
+$apellido_persona = $datosIdentidad['apellido'];
 
-abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_persona,$direccion,$telefono,$email,$cod_cliente,$rut_cliente,$ci_cliente,$Calificacion,$lugardetrabajo,$salario,$antiguedad,$teleftrab1,$teleftrab2,$direcciontrab,$operacion);
+abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_persona,$apellido_persona,$direccion,$telefono,$email,$cod_cliente,$rut_cliente,$ci_cliente,$Calificacion,$lugardetrabajo,$salario,$antiguedad,$teleftrab1,$teleftrab2,$direcciontrab,$operacion,$datosIdentidad['comparacion']);
 
 }
 
@@ -761,7 +774,7 @@ exit;
 
 
 
-function abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_persona,$direccion,$telefono,$email,$cod_cliente,$rut_cliente,$ci_cliente,$Calificacion,$lugardetrabajo,$salario,$antiguedad,$teleftrab1,$teleftrab2,$direcciontrab,$operacion)
+function abm($FechaNac,$sms,$accesocredito,$idzonaFk,$whapp,$estado,$cod_persona,$nombre_persona,$apellido_persona,$direccion,$telefono,$email,$cod_cliente,$rut_cliente,$ci_cliente,$Calificacion,$lugardetrabajo,$salario,$antiguedad,$teleftrab1,$teleftrab2,$direcciontrab,$operacion,$comparacionIdentidad)
 {
 
 if($nombre_persona==""  || $idzonaFk=="" ){
@@ -805,14 +818,14 @@ if($operacion=="nuevo")
 {
 
 
-$consulta1="Insert into persona (nombre_persona,direccion,telefono,email)
-values(Upper(?),Upper(?),Upper(?),Upper(?))";
+$consulta1="Insert into persona (nombre_persona,apellido_persona,direccion,telefono,email)
+values(Upper(?),Upper(?),Upper(?),Upper(?),Upper(?))";
 $stmt1 = $mysqli->prepare($consulta1);
 if (!$stmt1) {
 	cliente_responder_error("No se pudo preparar el guardado de persona.", $mysqli->error);
 }
-$ss='ssss';
-$stmt1->bind_param($ss,$nombre_persona,$direccion,$telefono,$email);
+$ss='sssss';
+$stmt1->bind_param($ss,$nombre_persona,$apellido_persona,$direccion,$telefono,$email);
 
 $consulta2="Insert into cliente (fechanac,rut_cliente,Calificacion,cod_cliente,whapp,estado,idzonaFk,ci_cliente,lugardetrabajo,salario,antiguedad,teleftrab1,teleftrab2,direcciontrab,cod_user_insert,fecha_insert,accesocredito,sms,foto1,foto2,fecha_edicion_referencia,obsTrabajo)
 values(?,?,?,(select cod_persona from persona order by cod_persona desc limit 1),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -834,14 +847,14 @@ if($operacion=="editar")
 {
 
 
-$consulta1="Update persona set nombre_persona=Upper(?),direccion=Upper(?),telefono=Upper(?),email=Upper(?) where cod_persona=?";	
+$consulta1="Update persona set nombre_persona=Upper(?),apellido_persona=Upper(?),direccion=Upper(?),telefono=Upper(?),email=Upper(?) where cod_persona=?";
 
 $stmt1 = $mysqli->prepare($consulta1);
 if (!$stmt1) {
 	cliente_responder_error("No se pudo preparar la actualizacion de persona.", $mysqli->error);
 }
-$ss='sssss';
-$stmt1->bind_param($ss,$nombre_persona,$direccion,$telefono,$email,$cod_persona);
+$ss='ssssss';
+$stmt1->bind_param($ss,$nombre_persona,$apellido_persona,$direccion,$telefono,$email,$cod_persona);
 
 
 $consulta2="update cliente set fechanac=?,rut_cliente=?,Calificacion=?,whapp=?,estado=?,idzonaFk=?,ci_cliente=?,lugardetrabajo=?,salario=?,antiguedad=?,teleftrab1=?,teleftrab2=?,direcciontrab=?,cod_user_edit=?,fecha_edit=?,accesocredito=?,sms=? where cod_cliente=? ";	
@@ -870,6 +883,9 @@ if (!$stmt2->execute()) {
 
 if($operacion=="nuevo") {
 	$cod_persona=obtenerUltimaId();
+}
+if(!clienteIdentidadPolicialRegistrarAuditoria($mysqli,$cod_persona,$user,"ficha_cliente",$comparacionIdentidad)) {
+	cliente_responder_error("Los datos se guardaron, pero no se pudo registrar la auditoria de identidad.");
 }
 cargarFotos($cod_persona);
 

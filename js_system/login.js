@@ -306,7 +306,7 @@ function entrar_al_sistema(datos1,datos2,datos3){
          var u=datos["2"]; 
 var caja=document.getElementById("inptcajauser").value;
 	localStorage.setItem("saludo"+u, "si");	
-  window.location="/GoodVentaAsisCap/system/inicio.html?p="+p+"&q="+u+"&c="+caja;
+  window.location="/Sistema-Telar/system/inicio.html?p="+p+"&q="+u+"&c="+caja;
 				
 				document.getElementById('inpt_user').value=""
 	     document.getElementById('inpt_pass').value=""
